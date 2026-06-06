@@ -1,11 +1,16 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+function normalizeSupabaseUrl(url: string | undefined) {
+  if (!url) return undefined;
+  return url.replace(/\/rest\/v1\/?$/i, "").replace(/\/$/, "");
+}
+
+const supabaseUrl = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export function isSupabaseServerConfigured() {
-  return Boolean(supabaseUrl && supabaseUrl.startsWith("https://") && !supabaseUrl.includes("/rest/v1"));
+  return Boolean(supabaseUrl && supabaseUrl.startsWith("https://"));
 }
 
 export function isSupabaseServiceRoleConfigured() {
