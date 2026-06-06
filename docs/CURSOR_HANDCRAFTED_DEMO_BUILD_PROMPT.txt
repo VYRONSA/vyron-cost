@@ -1,0 +1,135 @@
+VYRON COST — HANDCRAFTED FOOD PRODUCTS CLIENT DEMO BUILD
+
+We now have real client files and assets. Stop using generic fake pie demo data.
+
+CLIENT:
+Metanoia Hospitality (Pty) Ltd
+t/a Handcrafted Food Products
+Reg No: 2018/059243/07
+VAT No: 4800286488
+Tel: +27 87 550 1235
+Email: info@handcraftedfoods.co.za
+Address: 10 Oudepont Street, Wellington Industrial Park, Wellington, 7654
+
+LOGO:
+Use:
+public/clients/handcrafted/logo.jpg
+
+Company details image:
+public/clients/handcrafted/company-details.jpg
+
+IMPORTANT:
+The software remains VYRON COST.
+The demo tenant/client is Handcrafted Food Products.
+Show:
+Handcrafted Food Products
+powered by VYRON COST
+
+Use actual client data seeded from:
+- GOURMET COSTINGS.xlsx
+- REC211 Recipes for Production.xlsx
+- NEW COSTING SHEET.xlsx
+
+The SQL seed file is:
+supabase/handcrafted_demo_seed.sql
+
+Run that SQL first, then build the demo UI around the imported data.
+
+BUILD GOAL:
+Make the app demo-ready for Handcrafted Food Products next week.
+
+The demo must show real Handcrafted products, recipes, ingredients and cost lines — not fake examples.
+
+PRIORITY PAGES TO POLISH:
+
+1. Main Dashboard
+Make this the Handcrafted demo command centre.
+Show:
+- Handcrafted logo
+- Money at Risk
+- Recoverable Value
+- Products Below GP
+- Costing Lines Imported
+- Ingredients Imported
+- Production Recipes Imported
+- Pending Actions
+
+2. Landing Page
+Make a premium VYRON COST marketing/demo page for Handcrafted.
+Use their logo and company details.
+Headline:
+STOP SILENT PROFIT LOSS
+
+3. Product Profitability
+Use imported products from vyron_cost_products.
+Show:
+- product_name
+- category
+- selling_price
+- total_cost
+- target_gp
+- actual GP
+- suggested selling price
+- margin status
+
+4. Production Intelligence
+Use imported production recipes from vyron_cost_recipes.
+Show:
+- Puff Pastry
+- Sausage Rolls
+- Steak & Kidney
+- Pepper Steak
+- Chicken & Mushroom
+- Curry Veg
+- Spinach and Feta
+and other imported production recipes.
+
+5. Product Cost Drilldown
+Use vyron_cost_product_cost_lines.
+For each product, show real ingredient lines from spreadsheets:
+- line_name
+- unit
+- quantity
+- unit_cost
+- line_cost
+- source_sheet
+- source_row
+
+6. Supplier Review
+Use imported suppliers from the material list.
+Show supplier names and ingredient coverage.
+
+7. Recovery Opportunities
+Use real Handcrafted products and ingredients.
+Demo scenarios can be derived from imported data, but keep wording general:
+- Supplier price review
+- Packaging cost review
+- Pastry wastage control
+- Product margin review
+- Duplicate invoice prevention
+
+8. Action Centre
+Show what management must do:
+- Review low GP products
+- Validate imported suppliers
+- Confirm recipe yields
+- Approve product price updates
+- Review packaging costs
+
+RULES:
+- Full files only.
+- Exact file paths.
+- No snippets.
+- Do not break existing app.
+- Keep the current VYRON COST green/black command-centre design.
+- Keep wording short and executive.
+- No long fluffy paragraphs.
+- Make it feel like a live production system built specifically for this client.
+- Keep performance fast.
+- Use pagination where needed.
+- Use demo fallback data from src/lib/handcrafted-demo-data.ts if Supabase is empty.
+
+DELIVER:
+- Full replacement/additional files
+- Clear restart steps
+- Keep the demo premium and client-ready.

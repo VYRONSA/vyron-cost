@@ -1,0 +1,2 @@
+-- DEPRECATED: use supabase/document-ai-v2-field-regions.sql instead.
+-- Kept for reference only; same columns, consolidated in field-regions migration.

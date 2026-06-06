@@ -1,26 +1,69 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --vyron-bg: #f7f8fa;
+  --vyron-card: #ffffff;
+  --vyron-sidebar: #08111a;
+  --vyron-accent: #b6d934;
+  --vyron-text: #0f172a;
+  --vyron-muted: #64748b;
+  --vyron-success: #22c55e;
+  --vyron-warning: #f59e0b;
+  --vyron-danger: #ef4444;
+  --background: var(--vyron-bg);
+  --foreground: var(--vyron-text);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  min-height: 100%;
 }
 
 body {
-  background: var(--background);
+  min-height: 100vh;
+  margin: 0;
+  background: var(--vyron-bg);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.vyron-surface-card {
+  border-radius: 1.75rem;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+.vyron-surface-card-elevated {
+  border-radius: 1.75rem;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 20px 48px rgba(15, 23, 42, 0.08);
+}
+
+.vyron-workspace-light {
+  background: #f7f8fa;
+}
+
+.vyron-section-label {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #64748b;
 }
