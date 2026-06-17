@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronRight,
   Home,
+  LogOut,
   Rocket,
   Settings,
   Shield,
@@ -18,6 +19,18 @@ import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
 
 const M = VYRON_MASTER;
 const SIDEBAR_WIDTH = "292px";
+
+async function exitDeveloper() {
+  try {
+    await fetch("/api/workspace/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch {
+    // Continue redirect even if server logout fails.
+  }
+  window.location.href = "/landing";
+}
 
 const sections = [
   {
@@ -116,6 +129,16 @@ export default function DeveloperShell({
               </div>
             ))}
           </nav>
+          <div className="relative mt-auto shrink-0 border-t border-[#E2E8F0] px-1 pt-4">
+            <button
+              type="button"
+              onClick={() => void exitDeveloper()}
+              className={`w-full ${M.secondaryBtn} justify-center px-3 py-2 text-xs`}
+            >
+              <LogOut size={15} />
+              Exit Developer
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -130,6 +153,14 @@ export default function DeveloperShell({
               <Home size={17} />
               <span className="hidden sm:inline">Back to VYRON COST App</span>
             </Link>
+            <button
+              type="button"
+              onClick={() => void exitDeveloper()}
+              className={`${M.shellTopbarBtn} gap-2`}
+            >
+              <LogOut size={17} />
+              <span className="hidden sm:inline">Exit Developer</span>
+            </button>
           </div>
         </header>
 

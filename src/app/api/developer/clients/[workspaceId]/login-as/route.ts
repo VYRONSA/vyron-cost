@@ -7,6 +7,7 @@ import {
 import { applyWorkspaceAuthCookies } from "@/lib/vyron-workspace-cookies";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(_request: NextRequest, context: { params: Promise<{ workspaceId: string }> }) {
   try {
@@ -33,7 +34,15 @@ export async function POST(_request: NextRequest, context: { params: Promise<{ w
       ownerUserId: result.ownerUserId,
       ownerEmail: result.ownerEmail,
       loginStatus: result.loginStatus,
-      message: result.message,
+      message: result.message || `Workspace active: ${client.companyName}.`,
+      status: {
+        hasActiveClientCookie: true,
+        workspaceId: client.id,
+        workspaceName: client.companyName,
+        companyLinked: Boolean(client.companyId),
+        companyId: client.companyId || null,
+        xeroWorkspaceReady: Boolean(client.companyId),
+      },
     });
 
     applyWorkspaceAuthCookies(response, client, session);

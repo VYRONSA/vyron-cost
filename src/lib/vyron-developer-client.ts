@@ -192,14 +192,20 @@ export function isClientWorkspaceMode() {
   return readActiveClient() !== null;
 }
 
-export function signOutClientWorkspace() {
-  const returnToDeveloper =
-    isPlatformAdminImpersonating();
+export async function signOutClientWorkspace() {
+  const returnToDeveloper = isPlatformAdminImpersonating();
+
+  try {
+    await fetch("/api/workspace/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch {
+    // Continue clearing client state even if server logout fails.
+  }
 
   exitClientWorkspace();
   clearWorkspaceSession();
 
-  window.location.href = returnToDeveloper
-    ? "/developer/clients"
-    : "/login";
+  window.location.href = returnToDeveloper ? "/developer/clients" : "/login";
 }

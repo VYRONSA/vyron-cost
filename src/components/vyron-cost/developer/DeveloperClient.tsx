@@ -41,6 +41,15 @@ type DirectoryView = "active" | "archived" | "all";
 type StatusFilter = ClientStatus | "All";
 export type DeveloperMode = "centre" | "clients" | "setup";
 
+type ServerWorkspaceStatus = {
+  ok: boolean;
+  hasActiveClientCookie: boolean;
+  workspaceId: string | null;
+  workspaceName: string | null;
+  companyLinked: boolean;
+  xeroWorkspaceReady: boolean;
+};
+
 const PACKAGE_OPTIONS = ["Starter", "Professional", "Enterprise", "Demo", "Professional Demo"] as const;
 
 type WorkspaceOwner = {
@@ -326,6 +335,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
   const [loginSaving, setLoginSaving] = useState(false);
   const [usesApiRegistry, setUsesApiRegistry] = useState(false);
   const [directoryActionId, setDirectoryActionId] = useState<string | null>(null);
+  const [serverWorkspaceStatus, setServerWorkspaceStatus] = useState<ServerWorkspaceStatus | null>(null);
 
   const selectedClient = clients.find((client) => client.id === selectedClientId) ?? null;
   const manageLoginClient = clients.find((client) => client.id === manageLoginClientId) ?? null;
@@ -446,6 +456,21 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
 
     void hydrateClients();
   }, []);
+
+  useEffect(() => {
+    if (mode !== "clients") return;
+
+    fetch("/api/workspace/status", { credentials: "include" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data?.ok) {
+          setServerWorkspaceStatus(data as ServerWorkspaceStatus);
+        }
+      })
+      .catch(() => {
+        setServerWorkspaceStatus(null);
+      });
+  }, [mode, selectedClientId, activeClient]);
 
   useEffect(() => {
     if (!hydrated || usesApiRegistry) return;
@@ -966,6 +991,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
     try {
       const res = await fetch(`/api/developer/clients/${encodeURIComponent(client.id)}/login-as`, {
         method: "POST",
+        credentials: "include",
       });
       const data = await res.json();
       if (!data.ok) {
@@ -1011,9 +1037,13 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
       }
       sessionStorage.setItem("vyron_developer_impersonation", "1");
       setActiveClient(payload);
-      setMessage(data.message || `Entered ${client.companyName} workspace.`);
+      const statusMessage =
+        data.status?.hasActiveClientCookie && data.status?.workspaceName
+          ? `Workspace active: ${data.status.workspaceName}`
+          : data.message || `Entered ${client.companyName} workspace.`;
+      setMessage(statusMessage);
       window.dispatchEvent(new Event("vyron-active-client-changed"));
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     } catch {
       setMessage("Login As Client failed. Check network and Supabase configuration.");
       alert("Login As Client failed.");
@@ -1306,6 +1336,33 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
                       </div>
                     </div>
                   ) : null}
+                  <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-slate-700">
+                    <div className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-600">
+                      Workspace session debug
+                    </div>
+                    <dl className="mt-2 space-y-1">
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-slate-500">Local selected workspace ID</dt>
+                        <dd className="font-black text-slate-900">{selectedClient.id}</dd>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-slate-500">Server cookie workspace ID</dt>
+                        <dd className="font-black text-slate-900">{serverWorkspaceStatus?.workspaceId || "—"}</dd>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-slate-500">Server company linked</dt>
+                        <dd className="font-black text-slate-900">
+                          {serverWorkspaceStatus?.companyLinked ? "Yes" : "No"}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-slate-500">Xero workspace visible</dt>
+                        <dd className="font-black text-slate-900">
+                          {serverWorkspaceStatus?.xeroWorkspaceReady ? "Yes" : "No"}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button

@@ -1,14 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ClientBrandLockup from "@/components/ClientBrandLockup";
 import { writeActiveClient } from "@/lib/vyron-developer-client";
 import { writeWorkspaceSession } from "@/lib/vyron-workspace-session";
 
 export default function LoginClient() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,6 +20,7 @@ export default function LoginClient() {
     try {
       const response = await fetch("/api/workspace/login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
@@ -33,7 +32,7 @@ export default function LoginClient() {
 
       writeActiveClient(data.client);
       writeWorkspaceSession(data.session);
-      router.push(data.redirect || "/dashboard");
+      window.location.href = data.redirect || "/dashboard";
     } catch {
       setError("Unable to sign in. Check your connection and try again.");
     } finally {

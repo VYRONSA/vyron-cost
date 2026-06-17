@@ -54,18 +54,24 @@ export async function assertAdminAccess(role: string) {
 
 function parseWorkspaceSession(raw: string | null | undefined): WorkspaceSession | null {
   if (!raw) return null;
+
+  const attempts = [raw];
   try {
-    const decoded = decodeURIComponent(raw);
-    const parsed = JSON.parse(decoded) as WorkspaceSession;
-    return normalizeServerWorkspaceSession(parsed);
+    attempts.push(decodeURIComponent(raw));
   } catch {
+    // ignore decode failure
+  }
+
+  for (const candidate of attempts) {
     try {
-      const parsed = JSON.parse(raw) as WorkspaceSession;
+      const parsed = JSON.parse(candidate) as WorkspaceSession;
       return normalizeServerWorkspaceSession(parsed);
     } catch {
-      return null;
+      // try next candidate
     }
   }
+
+  return null;
 }
 
 function normalizeServerWorkspaceSession(session: WorkspaceSession): WorkspaceSession {

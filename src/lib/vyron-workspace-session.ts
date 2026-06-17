@@ -43,14 +43,16 @@ export function writeWorkspaceSession(session: WorkspaceSession) {
     permissions: resolveEffectivePermissions(role, session.permissions),
   };
   sessionStorage.setItem(WORKSPACE_SESSION_KEY, JSON.stringify(normalized));
-  const value = encodeURIComponent(JSON.stringify(normalized));
-  document.cookie = `${WORKSPACE_SESSION_KEY}=${value}; path=/; max-age=${60 * 60 * 24}; SameSite=Lax`;
+  const value = JSON.stringify(normalized);
+  const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${WORKSPACE_SESSION_KEY}=${value}; path=/; max-age=${60 * 60 * 24}; SameSite=Lax${secure}`;
 }
 
 export function clearWorkspaceSession() {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(WORKSPACE_SESSION_KEY);
-  document.cookie = `${WORKSPACE_SESSION_KEY}=; path=/; max-age=0; SameSite=Lax`;
+  const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${WORKSPACE_SESSION_KEY}=; path=/; max-age=0; SameSite=Lax${secure}`;
 }
 
 export function bootstrapWorkspaceSession(client: ActiveClient, role: WorkspaceUserRole = "OWNER") {

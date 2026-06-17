@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useXeroPermissions } from "@/hooks/useModulePermissions";
 import { VYRON_MASTER, VYRON_TABLE } from "@/components/vyron-ui";
+import { readActiveClient } from "@/lib/vyron-developer-client";
 import {
   DEFAULT_XERO_ACCOUNT_MAPPING,
   defaultXeroConnection,
@@ -109,14 +110,23 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
   const [loading, setLoading] = useState(true);
   const [savingMapping, setSavingMapping] = useState(false);
   const [bulkBusy, setBulkBusy] = useState<string | null>(null);
+  const [localWorkspaceId, setLocalWorkspaceId] = useState<string | null>(null);
+  const [repairing, setRepairing] = useState(false);
+
+  useEffect(() => {
+    const client = readActiveClient();
+    setLocalWorkspaceId(client?.id || null);
+  }, []);
 
   const refresh = useCallback(() => {
     setLoading(true);
 
+    const fetchOpts: RequestInit = { credentials: "include" };
+
     Promise.all([
-      fetch("/api/integrations/xero/connection").then((r) => r.json()),
-      fetch("/api/integrations/xero/sync-queue").then((r) => r.json()),
-      fetch("/api/integrations/xero/mapping").then((r) => r.json()),
+      fetch("/api/integrations/xero/connection", fetchOpts).then((r) => r.json()),
+      fetch("/api/integrations/xero/sync-queue", fetchOpts).then((r) => r.json()),
+      fetch("/api/integrations/xero/mapping", fetchOpts).then((r) => r.json()),
     ])
       .then(([connectionData, queueData, mappingData]) => {
         if (connectionData.hasWorkspace === false) {
@@ -180,6 +190,34 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
     workspaceCtx.hasWorkspace && workspaceCtx.companyLinked && orgSelected && canSync && oauthReady;
 
   const failedQueueRows = useMemo(() => queueRows.filter((row) => row.status === "Failed"), [queueRows]);
+
+  const showRepairWorkspace = !workspaceCtx.hasWorkspace && Boolean(localWorkspaceId);
+
+  async function repairWorkspaceSession() {
+    const client = readActiveClient();
+    if (!client?.id) return;
+
+    setRepairing(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/workspace/repair", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: client.id }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setError(data.error || "Workspace session repair failed.");
+        return;
+      }
+      window.location.reload();
+    } catch {
+      setError("Could not repair workspace session.");
+    } finally {
+      setRepairing(false);
+    }
+  }
 
   function connectXero() {
     setError(null);
@@ -431,6 +469,16 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
                 <li>Return to the Dashboard and confirm the workspace switcher shows your company.</li>
               </ol>
               <div className="mt-5 flex flex-wrap gap-3">
+                {showRepairWorkspace ? (
+                  <button
+                    type="button"
+                    onClick={() => void repairWorkspaceSession()}
+                    disabled={repairing}
+                    className={`${M.primaryBtn} px-4 py-2.5 text-sm disabled:opacity-60`}
+                  >
+                    {repairing ? "Repairing…" : "Repair Workspace Session"}
+                  </button>
+                ) : null}
                 <Link href="/login" className={`${M.primaryBtn} px-4 py-2.5 text-sm`}>
                   Log in
                 </Link>

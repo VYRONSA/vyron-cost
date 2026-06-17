@@ -25,7 +25,7 @@ import {
   sessionHasPermission,
 } from "@/lib/vyron-workspace-permissions";
 import { readWorkspaceSession, writeWorkspaceSession, type WorkspaceSession } from "@/lib/vyron-workspace-session";
-import { isClientWorkspaceMode, readActiveClient, signOutClientWorkspace, type ActiveClient } from "@/lib/vyron-developer-client";
+import { isClientWorkspaceMode, isPlatformAdminImpersonating, readActiveClient, signOutClientWorkspace, type ActiveClient } from "@/lib/vyron-developer-client";
 import { syncActiveClientCookie } from "@/lib/vyron-workspace-context";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
@@ -231,6 +231,12 @@ export default function VyronCostAiShell({
   const [activeClient, setActiveClient] = useState<ActiveClient | null>(null);
   const [workspaceSession, setWorkspaceSession] = useState<WorkspaceSession | null>(null);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [serverWorkspaceReady, setServerWorkspaceReady] = useState(false);
+
+  const hasWorkspaceContext = Boolean(activeClient) || serverWorkspaceReady;
+  const exitWorkspaceLabel = activeClient?.impersonating || isPlatformAdminImpersonating()
+    ? "Exit Client Workspace"
+    : "Logout";
 
   const sections = useMemo(() => {
     if (isDeveloperArea) return developerSections;
@@ -316,6 +322,20 @@ export default function VyronCostAiShell({
       window.removeEventListener("storage", refreshClientMode);
     };
   }, []);
+
+  useEffect(() => {
+    if (isDeveloperArea) return;
+
+    fetch("/api/workspace/status", { credentials: "include" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (!data?.ok) return;
+        setServerWorkspaceReady(Boolean(data.hasActiveClientCookie));
+      })
+      .catch(() => {
+        // ignore status probe failure
+      });
+  }, [isDeveloperArea, pathname]);
 
   useEffect(() => {
     if (isDeveloperArea) return;
@@ -427,7 +447,26 @@ export default function VyronCostAiShell({
                 <div className="mt-1 truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">
                   {activeClient.packageName || "Professional"} Package
                 </div>
+                <button
+                  type="button"
+                  onClick={() => void signOutClientWorkspace()}
+                  className={`mt-3 w-full ${M.secondaryBtn} justify-center px-3 py-2 text-xs`}
+                >
+                  <LogOut size={15} />
+                  {exitWorkspaceLabel}
+                </button>
               </div>
+            </div>
+          ) : hasWorkspaceContext && !isDeveloperArea ? (
+            <div className="relative mt-auto shrink-0 border-t border-[#E2E8F0] px-1 pt-4">
+              <button
+                type="button"
+                onClick={() => void signOutClientWorkspace()}
+                className={`w-full ${M.secondaryBtn} justify-center px-3 py-2 text-xs`}
+              >
+                <LogOut size={15} />
+                {exitWorkspaceLabel}
+              </button>
             </div>
           ) : null}
         </div>
@@ -455,24 +494,26 @@ export default function VyronCostAiShell({
               <div className="flex-1" />
             )}
 
-            {clientWorkspaceMode && !isDeveloperArea && activeClient ? (
+            {hasWorkspaceContext && !isDeveloperArea ? (
               <div className="flex shrink-0 items-center gap-2.5 md:gap-3">
-                <div className={M.shellWorkspaceBadge}>
-                  <div className="min-w-0 text-right">
-                    <div className="truncate text-sm font-bold text-[#0F172A]">{activeClient.companyName}</div>
-                    <div className="truncate text-[11px] font-medium text-[#64748B]">
-                      {activeClient.packageName || "Professional"} Package
-                      {sessionEmail ? ` · ${sessionEmail}` : activeClient.ownerEmail ? ` · ${activeClient.ownerEmail}` : ""}
+                {activeClient ? (
+                  <div className={M.shellWorkspaceBadge}>
+                    <div className="min-w-0 text-right">
+                      <div className="truncate text-sm font-bold text-[#0F172A]">{activeClient.companyName}</div>
+                      <div className="truncate text-[11px] font-medium text-[#64748B]">
+                        {activeClient.packageName || "Professional"} Package
+                        {sessionEmail ? ` · ${sessionEmail}` : activeClient.ownerEmail ? ` · ${activeClient.ownerEmail}` : ""}
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : null}
                 <button
                   type="button"
-                  onClick={() => signOutClientWorkspace()}
+                  onClick={() => void signOutClientWorkspace()}
                   className={`${M.shellTopbarBtn} gap-2`}
                 >
                   <LogOut size={17} />
-                  <span className="hidden sm:inline">Logout</span>
+                  <span className="hidden sm:inline">{exitWorkspaceLabel}</span>
                 </button>
               </div>
             ) : (
