@@ -3,9 +3,12 @@ import { isHandcraftedDataReady, isHandcraftedTenantEnabled } from "@/lib/handcr
 import { ACTIVE_CLIENT_KEY, readActiveClient, type ActiveClient } from "@/lib/vyron-developer-client";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { parseCookieJsonValue } from "@/lib/vyron-workspace-cookie-parse";
+import { expandActiveClientFromCookie } from "@/lib/vyron-workspace-cookies";
 
 export function parseActiveClient(raw: string | null | undefined): ActiveClient | null {
-  return parseCookieJsonValue<ActiveClient>(raw);
+  const parsed = parseCookieJsonValue<ActiveClient>(raw);
+  if (!parsed) return null;
+  return expandActiveClientFromCookie(parsed);
 }
 
 export async function getServerActiveWorkspace(): Promise<ActiveClient | null> {

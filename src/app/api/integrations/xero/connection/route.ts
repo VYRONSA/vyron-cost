@@ -4,6 +4,7 @@ import {
   clearStoredConnection,
   readConnection,
   readStoredConnection,
+  resetConnectionState,
   selectXeroOrganisation,
   writeStoredConnection,
 } from "@/lib/vyron-xero-connection-store";
@@ -80,6 +81,12 @@ export async function POST(request: NextRequest) {
   try {
     const { workspaceId, companyId } = await requireXeroWorkspaceContext(xeroContextFromRequest(request, body));
     const actor = String(body.actor || "user");
+
+    if (action === "reset-connection-state") {
+      await requireWorkspacePermission("xero.connect");
+      const connection = await resetConnectionState(workspaceId, actor, companyId);
+      return NextResponse.json({ ok: true, connection });
+    }
 
     if (action === "disconnect") {
       await requireWorkspacePermission("xero.connect");

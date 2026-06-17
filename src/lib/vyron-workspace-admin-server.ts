@@ -1,4 +1,5 @@
 import { parseCookieJsonValue } from "@/lib/vyron-workspace-cookie-parse";
+import { expandWorkspaceSessionFromCookie } from "@/lib/vyron-workspace-cookies";
 import { WORKSPACE_SESSION_KEY, type WorkspaceSession } from "@/lib/vyron-workspace-session";
 import { getServerActiveWorkspace } from "@/lib/vyron-workspace-server";
 import { getPackageModules } from "@/lib/vyron-package-modules";
@@ -56,7 +57,9 @@ export async function assertAdminAccess(role: string) {
 function parseWorkspaceSession(raw: string | null | undefined): WorkspaceSession | null {
   const parsed = parseCookieJsonValue<WorkspaceSession>(raw);
   if (!parsed) return null;
-  return normalizeServerWorkspaceSession(parsed);
+  const expanded = expandWorkspaceSessionFromCookie(parsed);
+  if (!expanded) return null;
+  return normalizeServerWorkspaceSession(expanded);
 }
 
 function normalizeServerWorkspaceSession(session: WorkspaceSession): WorkspaceSession {

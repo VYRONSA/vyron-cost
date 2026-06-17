@@ -34,7 +34,7 @@ export function readWorkspaceSession(): WorkspaceSession | null {
   }
 }
 
-export function writeWorkspaceSession(session: WorkspaceSession, options?: { skipCookieSync?: boolean }) {
+export function writeWorkspaceSession(session: WorkspaceSession, _options?: { skipCookieSync?: boolean }) {
   if (typeof window === "undefined") return;
   const role = normalizeWorkspaceRole(session.role);
   const normalized: WorkspaceSession = {
@@ -43,17 +43,11 @@ export function writeWorkspaceSession(session: WorkspaceSession, options?: { ski
     permissions: resolveEffectivePermissions(role, session.permissions),
   };
   sessionStorage.setItem(WORKSPACE_SESSION_KEY, JSON.stringify(normalized));
-  if (options?.skipCookieSync) return;
-  const value = encodeURIComponent(JSON.stringify(normalized));
-  const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `${WORKSPACE_SESSION_KEY}=${value}; path=/; max-age=${60 * 60 * 24}; SameSite=Lax${secure}`;
 }
 
 export function clearWorkspaceSession() {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(WORKSPACE_SESSION_KEY);
-  const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `${WORKSPACE_SESSION_KEY}=; path=/; max-age=0; SameSite=Lax${secure}`;
 }
 
 export function bootstrapWorkspaceSession(

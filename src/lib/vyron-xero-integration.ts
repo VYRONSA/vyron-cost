@@ -9,7 +9,8 @@ export type XeroConnectionStatus =
   | "Connected"
   | "Pending Organisation"
   | "Token Expired"
-  | "Sync Error";
+  | "Sync Error"
+  | "Error";
 
 export type XeroQueueEntityType =
   | "Customer"
@@ -49,6 +50,10 @@ export type XeroConnectionState = {
   availableOrganisations?: XeroOrganisationOption[];
   selectedOrganisationId?: string | null;
   auditEvents?: XeroAuditEvent[];
+  lastError?: string | null;
+  lastErrorCode?: string | null;
+  lastAttemptedAt?: string | null;
+  connectStartedAt?: string | null;
 };
 
 export type XeroStoredConnection = XeroConnectionState & {
@@ -56,6 +61,7 @@ export type XeroStoredConnection = XeroConnectionState & {
   refreshToken: string;
   tokenExpiresAt: string | null;
   lastTokenRefreshAt?: string | null;
+  connectStartedAt?: string | null;
 };
 
 export type XeroOAuthTokenResponse = {
@@ -129,7 +135,7 @@ export function sanitizeConnectionForClient(stored: XeroStoredConnection): XeroC
   let connectionHealth: XeroConnectionState["connectionHealth"] = "disconnected";
   if (stored.pendingOrganisationSelection) connectionHealth = "pending_organisation";
   else if (status === "Token Expired" || tokenExpired) connectionHealth = "token_expired";
-  else if (status === "Sync Error") connectionHealth = "sync_error";
+  else if (status === "Sync Error" || status === "Error") connectionHealth = "sync_error";
   else if (stored.connected) connectionHealth = "healthy";
 
   return {
@@ -147,6 +153,10 @@ export function sanitizeConnectionForClient(stored: XeroStoredConnection): XeroC
     availableOrganisations: stored.availableOrganisations,
     selectedOrganisationId: stored.selectedOrganisationId,
     auditEvents: (stored.auditEvents || []).slice(-25),
+    lastError: stored.lastError || null,
+    lastErrorCode: stored.lastErrorCode || null,
+    lastAttemptedAt: stored.lastAttemptedAt || null,
+    connectStartedAt: stored.connectStartedAt || null,
   };
 }
 
@@ -165,30 +175,64 @@ export function isXeroOAuthConfigured() {
   );
 }
 
-/** Official Xero OAuth scopes for web server apps (offline_access required for refresh). */
-export const XERO_OAUTH_SCOPE_LIST = [
+/** Granular Xero OAuth scopes for 2026+ apps (replaces broad accounting.* scopes). */
+export const XERO_OAUTH_GRANULAR_SCOPE_LIST = [
   "openid",
   "profile",
   "email",
   "offline_access",
-  "accounting.transactions",
+  "accounting.contacts.read",
   "accounting.contacts",
-  "accounting.settings",
+  "accounting.transactions.read",
+  "accounting.transactions",
+  "accounting.settings.read",
 ] as const;
 
-export const XERO_OAUTH_SCOPES = XERO_OAUTH_SCOPE_LIST.join(" ");
+/** Minimal scope set when XERO_SCOPE_MODE=minimal (invalid_scope troubleshooting). */
+export const XERO_OAUTH_MINIMAL_SCOPE_LIST = [
+  "openid",
+  "profile",
+  "email",
+  "offline_access",
+  "accounting.contacts.read",
+  "accounting.settings.read",
+] as const;
+
+/** @deprecated Use getXeroOAuthScopeList() — kept for callers expecting the granular default list. */
+export const XERO_OAUTH_SCOPE_LIST = XERO_OAUTH_GRANULAR_SCOPE_LIST;
+
+export type XeroOAuthScopeMode = "granular" | "minimal";
+
+export function getXeroScopeMode(): XeroOAuthScopeMode {
+  return process.env.XERO_SCOPE_MODE === "minimal" ? "minimal" : "granular";
+}
+
+export function getXeroOAuthScopeList(): readonly string[] {
+  return getXeroScopeMode() === "minimal" ? XERO_OAUTH_MINIMAL_SCOPE_LIST : XERO_OAUTH_GRANULAR_SCOPE_LIST;
+}
+
+export function getXeroOAuthScopes(): string {
+  return getXeroOAuthScopeList().join(" ");
+}
+
+/** @deprecated Use getXeroOAuthScopes() for runtime scope resolution. */
+export const XERO_OAUTH_SCOPES = getXeroOAuthScopes();
 
 export type XeroOAuthDebugInfo = {
   clientId: string | null;
   redirectUri: string | null;
   scopes: string;
+  scopeMode: XeroOAuthScopeMode;
+  scopeList: readonly string[];
 };
 
 export function getXeroOAuthDebugInfo(): XeroOAuthDebugInfo {
   return {
     clientId: process.env.XERO_CLIENT_ID?.trim() || null,
     redirectUri: getXeroRedirectUri(),
-    scopes: XERO_OAUTH_SCOPES,
+    scopes: getXeroOAuthScopes(),
+    scopeMode: getXeroScopeMode(),
+    scopeList: getXeroOAuthScopeList(),
   };
 }
 
@@ -265,7 +309,7 @@ export function buildXeroOAuthUrl(workspaceId: string, companyId: string) {
     response_type: "code",
     client_id: clientId,
     redirect_uri: redirectUri,
-    scope: XERO_OAUTH_SCOPES,
+    scope: getXeroOAuthScopes(),
     state: encodeXeroOAuthState(workspaceId, companyId),
   });
 

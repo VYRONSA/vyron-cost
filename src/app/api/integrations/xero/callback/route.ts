@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   appendXeroAuditEvent,
-  clearStoredConnection,
+  markConnectionError,
   writeStoredConnection,
 } from "@/lib/vyron-xero-connection-store";
 import { requireWorkspacePermission } from "@/lib/vyron-workspace-access";
@@ -26,32 +26,45 @@ function xeroRedirect(appUrl: string, params: Record<string, string>) {
   return NextResponse.redirect(url);
 }
 
+async function failCallback(
+  workspaceId: string | null,
+  companyId: string | null,
+  message: string,
+  code: string,
+  appUrl: string
+) {
+  if (workspaceId) {
+    await markConnectionError(workspaceId, message, {
+      code,
+      actor: "xero-callback",
+      companyId,
+      clearTokens: true,
+    });
+  }
+  return xeroRedirect(appUrl, { xero: "error", message });
+}
+
 export async function GET(request: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
   const oauthError = request.nextUrl.searchParams.get("error");
+  const oauthErrorDescription = request.nextUrl.searchParams.get("error_description");
 
   const decodedState = state ? decodeXeroOAuthState(state) : null;
   const activeWorkspace = await getServerActiveWorkspace();
-  const workspaceId = activeWorkspace?.id || null;
+  const workspaceId = activeWorkspace?.id || decodedState?.workspaceId || null;
   const companyId = workspaceId ? await getWorkspaceCompanyId() : null;
 
   if (oauthError) {
-    if (workspaceId && decodedState?.workspaceId === workspaceId) {
-      await clearStoredConnection(workspaceId, "user", companyId);
-    }
-    return xeroRedirect(appUrl, {
-      xero: "error",
-      message: `Xero authorization was declined or failed (${oauthError}).`,
-    });
+    const message = oauthErrorDescription
+      ? `Xero authorization failed (${oauthError}): ${oauthErrorDescription}`
+      : `Xero authorization was declined or failed (${oauthError}).`;
+    return failCallback(workspaceId, companyId, message, oauthError, appUrl);
   }
 
   if (!code || !state) {
-    return xeroRedirect(appUrl, {
-      xero: "error",
-      message: "Missing Xero authorization code.",
-    });
+    return failCallback(workspaceId, companyId, "Missing Xero authorization code.", "missing_code", appUrl);
   }
 
   if (!workspaceId || !companyId) {
@@ -62,40 +75,98 @@ export async function GET(request: NextRequest) {
   }
 
   if (!decodedState || decodedState.workspaceId !== workspaceId) {
-    await clearStoredConnection(workspaceId, "user", companyId);
-    return xeroRedirect(appUrl, {
-      xero: "error",
-      message: "Xero OAuth workspace mismatch. Connect again from the active workspace.",
-    });
+    return failCallback(
+      workspaceId,
+      companyId,
+      "Xero OAuth workspace mismatch. Connect again from the active workspace.",
+      "workspace_mismatch",
+      appUrl
+    );
   }
 
   if (decodedState.companyId && decodedState.companyId !== companyId) {
-    await clearStoredConnection(workspaceId, "user", companyId);
-    return xeroRedirect(appUrl, {
-      xero: "error",
-      message: "Xero OAuth company mismatch. Connect again from the active workspace.",
-    });
+    return failCallback(
+      workspaceId,
+      companyId,
+      "Xero OAuth company mismatch. Connect again from the active workspace.",
+      "company_mismatch",
+      appUrl
+    );
   }
 
   if (!isXeroOAuthConfigured()) {
-    await clearStoredConnection(workspaceId, "user", companyId);
-    return xeroRedirect(appUrl, {
-      xero: "error",
-      message: "Xero OAuth is not configured on the server.",
-    });
+    return failCallback(workspaceId, companyId, "Xero OAuth is not configured on the server.", "oauth_not_configured", appUrl);
   }
 
   try {
     await requireWorkspacePermission("xero.connect");
-    const tokenResponse = await exchangeXeroAuthorizationCode(code);
-    const tenants = await listXeroTenantConnections(tokenResponse.access_token);
+    await appendXeroAuditEvent(
+      workspaceId,
+      {
+        event: "oauth_callback_started",
+        actor: "xero-callback",
+        companyId,
+        detail: "Xero OAuth callback received.",
+      },
+      companyId
+    );
+
+    let tokenResponse;
+    try {
+      tokenResponse = await exchangeXeroAuthorizationCode(code);
+      await appendXeroAuditEvent(
+        workspaceId,
+        {
+          event: "token_exchange_success",
+          actor: "xero-callback",
+          companyId,
+          detail: "Xero authorization code exchanged for tokens.",
+        },
+        companyId
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Xero token exchange failed.";
+      await appendXeroAuditEvent(
+        workspaceId,
+        {
+          event: "token_exchange_failed",
+          actor: "xero-callback",
+          companyId,
+          detail: message,
+          metadata: { code: "token_exchange_failed" },
+        },
+        companyId
+      );
+      return failCallback(workspaceId, companyId, message, "token_exchange_failed", appUrl);
+    }
+
+    let tenants;
+    try {
+      tenants = await listXeroTenantConnections(tokenResponse.access_token);
+      await appendXeroAuditEvent(
+        workspaceId,
+        {
+          event: "tenants_fetched",
+          actor: "xero-callback",
+          companyId,
+          detail: `Fetched ${tenants.length} Xero organisation(s).`,
+          metadata: { organisationCount: tenants.length },
+        },
+        companyId
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Xero organisation lookup failed.";
+      return failCallback(workspaceId, companyId, message, "tenants_fetch_failed", appUrl);
+    }
 
     if (!tenants.length) {
-      await clearStoredConnection(workspaceId, "user", companyId);
-      return xeroRedirect(appUrl, {
-        xero: "error",
-        message: "No Xero organisations were returned for this account.",
-      });
+      return failCallback(
+        workspaceId,
+        companyId,
+        "No Xero organisations were returned for this account.",
+        "no_tenants",
+        appUrl
+      );
     }
 
     const connectedAt = new Date().toISOString();
@@ -112,6 +183,10 @@ export async function GET(request: NextRequest) {
       connectedAt: tenants.length === 1 ? connectedAt : null,
       lastSyncAt: null,
       lastTokenRefreshAt: connectedAt,
+      lastAttemptedAt: connectedAt,
+      connectStartedAt: null,
+      lastError: null,
+      lastErrorCode: null,
       pendingOrganisationSelection: tenants.length > 1,
       availableOrganisations,
       selectedOrganisationId: null,
@@ -174,8 +249,7 @@ export async function GET(request: NextRequest) {
       message: "Select the Xero organisation for this workspace.",
     });
   } catch (error) {
-    await clearStoredConnection(workspaceId, "user", companyId);
     const message = error instanceof Error ? error.message : "Xero connection failed.";
-    return xeroRedirect(appUrl, { xero: "error", message });
+    return failCallback(workspaceId, companyId, message, "callback_failed", appUrl);
   }
 }

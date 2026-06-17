@@ -1,9 +1,7 @@
 import { readActiveClient } from "@/lib/vyron-developer-client";
-import { syncActiveClientCookie } from "@/lib/vyron-workspace-context";
 
 export function poApiWorkspaceContext() {
   const client = readActiveClient();
-  if (client) syncActiveClientCookie(client);
   const params = new URLSearchParams();
   const body: Record<string, string> = {};
   if (client?.id) {

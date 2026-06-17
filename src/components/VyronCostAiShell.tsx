@@ -24,7 +24,7 @@ import {
   getRequiredPermissionForPath,
   sessionHasPermission,
 } from "@/lib/vyron-workspace-permissions";
-import { readWorkspaceSession, type WorkspaceSession } from "@/lib/vyron-workspace-session";
+import { readWorkspaceSession, writeWorkspaceSession, type WorkspaceSession } from "@/lib/vyron-workspace-session";
 import { isClientWorkspaceMode, readActiveClient, signOutClientWorkspace, writeActiveClient, type ActiveClient } from "@/lib/vyron-developer-client";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
@@ -227,44 +227,53 @@ export default function VyronCostAiShell({
   const router = useRouter();
   const isDeveloperArea = pathname.startsWith("/developer");
   const [clientWorkspaceMode, setClientWorkspaceMode] = useState(false);
+  const [serverWorkspaceReady, setServerWorkspaceReady] = useState(false);
+  const [serverHasWorkspace, setServerHasWorkspace] = useState(false);
   const [activeClient, setActiveClient] = useState<ActiveClient | null>(null);
   const [workspaceSession, setWorkspaceSession] = useState<WorkspaceSession | null>(null);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+
+  const effectiveClient = serverWorkspaceReady
+    ? serverHasWorkspace
+      ? activeClient
+      : null
+    : activeClient;
+  const effectiveWorkspaceMode = Boolean(effectiveClient);
 
   const sections = useMemo(() => {
     if (isDeveloperArea) return developerSections;
 
     let visible = navSectionsFromConfig().filter((section) => {
-      if (section.id === "developer" && clientWorkspaceMode) return false;
+      if (section.id === "developer" && effectiveWorkspaceMode) return false;
       return true;
     });
 
-    if (activeClient?.packageName) {
+    if (effectiveClient?.packageName) {
       visible = visible
         .map((section) => ({
           ...section,
           items: section.items.filter((item) =>
-            isNavItemPackageIncluded(activeClient.packageName, item.href, section.id)
+            isNavItemPackageIncluded(effectiveClient.packageName, item.href, section.id)
           ),
         }))
         .filter((section) => section.items.length > 0);
     }
 
-    if (clientWorkspaceMode && workspaceSession) {
+    if (effectiveWorkspaceMode && workspaceSession) {
       visible = filterNavSections(visible, workspaceSession);
     }
 
     return visible;
-  }, [isDeveloperArea, activeClient, clientWorkspaceMode, workspaceSession]);
+  }, [isDeveloperArea, effectiveClient, effectiveWorkspaceMode, workspaceSession]);
 
   const showDashboardNav = useMemo(() => {
     if (isDeveloperArea) return false;
-    if (!clientWorkspaceMode || !workspaceSession) return true;
+    if (!effectiveWorkspaceMode || !workspaceSession) return true;
     return sessionHasPermission(workspaceSession, "dashboard.view");
-  }, [isDeveloperArea, clientWorkspaceMode, workspaceSession]);
+  }, [isDeveloperArea, effectiveWorkspaceMode, workspaceSession]);
 
   const accessDenied = useMemo(() => {
-    if (isDeveloperArea || !clientWorkspaceMode || pathname === "/login") return null;
+    if (isDeveloperArea || !effectiveWorkspaceMode || pathname === "/login") return null;
     if (!workspaceSession) {
       return { pathname, permission: "workspace.session" };
     }
@@ -273,23 +282,23 @@ export default function VyronCostAiShell({
       return { pathname, permission: required };
     }
     return null;
-  }, [isDeveloperArea, clientWorkspaceMode, pathname, workspaceSession]);
+  }, [isDeveloperArea, effectiveWorkspaceMode, pathname, workspaceSession]);
 
   const blockedModule = useMemo(() => {
-    if (!activeClient?.packageName || isDeveloperArea || pathname.startsWith("/admin")) return null;
+    if (!effectiveClient?.packageName || isDeveloperArea || pathname.startsWith("/admin")) return null;
     for (const section of navSectionsFromConfig()) {
       for (const item of section.items) {
         const moduleKey = blockedModuleKeyForHref(item.href, section.id);
         if (!moduleKey) continue;
         if (isActivePath(pathname, item.href)) {
-          if (!isNavItemPackageIncluded(activeClient.packageName, item.href, section.id)) {
+          if (!isNavItemPackageIncluded(effectiveClient.packageName, item.href, section.id)) {
             return moduleKey;
           }
         }
       }
     }
     return null;
-  }, [pathname, activeClient, isDeveloperArea]);
+  }, [pathname, effectiveClient, isDeveloperArea]);
 
   const [open, setOpen] = useState<Record<string, boolean>>({});
 
@@ -317,17 +326,46 @@ export default function VyronCostAiShell({
     fetch("/api/workspace/status", { credentials: "include" })
       .then((response) => response.json())
       .then((data) => {
-        if (!data?.ok) return;
-        if (data.activeClientSummary && !readActiveClient()) {
-          writeActiveClient(data.activeClientSummary, { skipCookieSync: true });
-          window.dispatchEvent(new Event("vyron-active-client-changed"));
+        if (!data?.ok) {
+          setServerWorkspaceReady(true);
+          setServerHasWorkspace(false);
+          return;
         }
-        if (data.impersonating && typeof sessionStorage !== "undefined") {
-          sessionStorage.setItem("vyron_developer_impersonation", "1");
+
+        const hasServerWorkspace = Boolean(data.hasWorkspaceCookie ?? data.hasActiveClientCookie);
+        setServerHasWorkspace(hasServerWorkspace);
+        setServerWorkspaceReady(true);
+
+        if (hasServerWorkspace && data.activeClientSummary) {
+          writeActiveClient(data.activeClientSummary);
+          if (data.hasSessionCookie && data.sessionRole) {
+            const summary = data.activeClientSummary;
+            const hydratedSession: WorkspaceSession = {
+              userId: summary.ownerUserId || `workspace-${summary.id}`,
+              email: data.sessionEmail || summary.ownerEmail || summary.companyName,
+              firstName: summary.companyName.split(" ")[0] || "Workspace",
+              surname: "Owner",
+              role: data.sessionRole,
+              permissions: {},
+            };
+            writeWorkspaceSession(hydratedSession);
+          }
+          if (data.impersonating && typeof sessionStorage !== "undefined") {
+            sessionStorage.setItem("vyron_developer_impersonation", "1");
+          }
+          window.dispatchEvent(new Event("vyron-active-client-changed"));
+          return;
+        }
+
+        if (!hasServerWorkspace) {
+          setActiveClient(null);
+          setClientWorkspaceMode(false);
+          setWorkspaceSession(null);
+          setSessionEmail(null);
         }
       })
       .catch(() => {
-        // ignore status probe failure
+        setServerWorkspaceReady(true);
       });
   }, [isDeveloperArea, pathname]);
 
@@ -436,11 +474,11 @@ export default function VyronCostAiShell({
 
           {!isDeveloperArea ? (
             <div className="relative mt-auto shrink-0 border-t border-[#E2E8F0] px-1 pt-4">
-              {clientWorkspaceMode && activeClient ? (
+              {effectiveWorkspaceMode && effectiveClient ? (
                 <div className={`mb-3 ${M.shellClientCard}`}>
-                  <div className="truncate text-sm font-bold text-[#0F172A]">{activeClient.companyName}</div>
+                  <div className="truncate text-sm font-bold text-[#0F172A]">{effectiveClient.companyName}</div>
                   <div className="mt-1 truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">
-                    {activeClient.packageName || "Professional"} Package
+                    {effectiveClient.packageName || "Professional"} Package
                   </div>
                 </div>
               ) : null}
@@ -481,13 +519,13 @@ export default function VyronCostAiShell({
 
             {!isDeveloperArea ? (
               <div className="flex shrink-0 items-center gap-2.5 md:gap-3">
-                {activeClient ? (
+                {effectiveClient ? (
                   <div className={`hidden lg:block ${M.shellWorkspaceBadge}`}>
                     <div className="min-w-0 text-right">
-                      <div className="truncate text-sm font-bold text-[#0F172A]">{activeClient.companyName}</div>
+                      <div className="truncate text-sm font-bold text-[#0F172A]">{effectiveClient.companyName}</div>
                       <div className="truncate text-[11px] font-medium text-[#64748B]">
-                        {activeClient.packageName || "Professional"} Package
-                        {sessionEmail ? ` · ${sessionEmail}` : activeClient.ownerEmail ? ` · ${activeClient.ownerEmail}` : ""}
+                        {effectiveClient.packageName || "Professional"} Package
+                        {sessionEmail ? ` · ${sessionEmail}` : effectiveClient.ownerEmail ? ` · ${effectiveClient.ownerEmail}` : ""}
                       </div>
                     </div>
                   </div>
@@ -529,8 +567,8 @@ export default function VyronCostAiShell({
             <div className={`flex min-w-0 w-full max-w-full flex-col ${fullWidthMain ? "" : "gap-4"}`}>
               {accessDenied ? (
                 <WorkspaceAccessDenied pathname={accessDenied.pathname} permission={accessDenied.permission} />
-              ) : blockedModule && activeClient ? (
-                <ModuleUpgradeNotice packageName={activeClient.packageName} moduleKey={blockedModule} />
+              ) : blockedModule && effectiveClient ? (
+                <ModuleUpgradeNotice packageName={effectiveClient.packageName} moduleKey={blockedModule} />
               ) : (
                 children
               )}

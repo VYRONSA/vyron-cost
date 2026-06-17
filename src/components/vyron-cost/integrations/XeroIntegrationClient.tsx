@@ -110,6 +110,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
   const searchParams = useSearchParams();
   const { canConnect, canSync, canEditMapping } = useXeroPermissions();
   const [workspaceCtx, setWorkspaceCtx] = useState<WorkspaceContext>(initialWorkspace);
+  const [serverHasWorkspace, setServerHasWorkspace] = useState(initialWorkspace.hasWorkspace);
   const [connection, setConnection] = useState<XeroConnectionState>(defaultXeroConnection());
   const [oauthReady, setOauthReady] = useState(false);
   const [missingEnv, setMissingEnv] = useState<string[]>([]);
@@ -139,34 +140,41 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
   });
 
   useEffect(() => {
-    if (workspaceCtx.hasWorkspace) return;
-
-    const client = readActiveClient();
-    setLocalWorkspaceId(client?.id || null);
-    setWorkspaceDebug((current) => ({
-      ...current,
-      localWorkspaceId: client?.id || null,
-      localCompanyId: client?.companyId || null,
-      hasActiveClientCookieDoc: documentHasCookie(ACTIVE_CLIENT_KEY),
-      hasSessionCookieDoc: documentHasCookie(WORKSPACE_SESSION_KEY),
-    }));
-
     fetch("/api/workspace/status", { credentials: "include" })
       .then((response) => response.json())
       .then((data) => {
-        setWorkspaceDebug((current) => ({
-          ...current,
+        const hasServerWorkspace = Boolean(data?.hasWorkspaceCookie ?? data?.hasActiveClientCookie);
+        setServerHasWorkspace(hasServerWorkspace);
+
+        if (hasServerWorkspace) {
+          setWorkspaceCtx({
+            hasWorkspace: true,
+            workspaceName: data?.workspaceName || initialWorkspace.workspaceName || "",
+            companyLinked: Boolean(data?.companyLinked ?? initialWorkspace.companyLinked),
+          });
+        }
+
+        const client = readActiveClient();
+        setLocalWorkspaceId(client?.id || null);
+        setWorkspaceDebug({
+          localWorkspaceId: client?.id || null,
+          localCompanyId: client?.companyId || null,
+          hasActiveClientCookieDoc: documentHasCookie(ACTIVE_CLIENT_KEY),
+          hasSessionCookieDoc: documentHasCookie(WORKSPACE_SESSION_KEY),
           serverWorkspaceId: data?.serverWorkspaceId || data?.workspaceId || null,
           serverCompanyId: data?.serverCompanyId || data?.companyId || null,
-          hasWorkspaceCookie: Boolean(data?.hasWorkspaceCookie ?? data?.hasActiveClientCookie),
+          hasWorkspaceCookie: hasServerWorkspace,
           hasSessionCookie: Boolean(data?.hasSessionCookie ?? data?.hasWorkspaceSession),
           loaded: true,
-        }));
+        });
       })
       .catch(() => {
         setWorkspaceDebug((current) => ({ ...current, loaded: true }));
       });
-  }, [workspaceCtx.hasWorkspace]);
+  }, [initialWorkspace.companyLinked, initialWorkspace.workspaceName]);
+
+  const hasActiveWorkspace =
+    serverHasWorkspace || workspaceCtx.hasWorkspace || initialWorkspace.hasWorkspace;
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -179,21 +187,27 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       fetch("/api/integrations/xero/mapping", fetchOpts).then((r) => r.json()),
     ])
       .then(([connectionData, queueData, mappingData]) => {
-        if (connectionData.hasWorkspace === false) {
+        if (connectionData.hasWorkspace === false && !serverHasWorkspace && !initialWorkspace.hasWorkspace) {
           setWorkspaceCtx({
             hasWorkspace: false,
             workspaceName: "",
             companyLinked: false,
           });
-        } else if (connectionData.ok) {
+        } else if (connectionData.ok || serverHasWorkspace || initialWorkspace.hasWorkspace) {
           setWorkspaceCtx({
             hasWorkspace: true,
-            workspaceName: String(connectionData.workspaceName || initialWorkspace.workspaceName || ""),
-            companyLinked: Boolean(connectionData.companyLinked ?? initialWorkspace.companyLinked),
+            workspaceName: String(
+              connectionData.workspaceName || initialWorkspace.workspaceName || workspaceCtx.workspaceName || ""
+            ),
+            companyLinked: Boolean(
+              connectionData.companyLinked ?? initialWorkspace.companyLinked ?? workspaceCtx.companyLinked
+            ),
           });
-          setConnection(connectionData.connection || defaultXeroConnection());
-          setOauthReady(Boolean(connectionData.oauthReady));
-          setMissingEnv(Array.isArray(connectionData.missingEnv) ? connectionData.missingEnv : []);
+          if (connectionData.ok) {
+            setConnection(connectionData.connection || defaultXeroConnection());
+            setOauthReady(Boolean(connectionData.oauthReady));
+            setMissingEnv(Array.isArray(connectionData.missingEnv) ? connectionData.missingEnv : []);
+          }
         } else if (connectionData.error) {
           setError(String(connectionData.error));
         }
@@ -213,7 +227,14 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       })
       .catch(() => setError("Could not load Xero integration data."))
       .finally(() => setLoading(false));
-  }, [initialWorkspace.companyLinked, initialWorkspace.workspaceName]);
+  }, [
+    initialWorkspace.companyLinked,
+    initialWorkspace.hasWorkspace,
+    initialWorkspace.workspaceName,
+    serverHasWorkspace,
+    workspaceCtx.companyLinked,
+    workspaceCtx.workspaceName,
+  ]);
 
   useEffect(() => {
     refresh();
@@ -236,12 +257,16 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
   }, [searchParams, refresh]);
 
   const orgSelected = connection.connected && !connection.pendingOrganisationSelection;
+  const isPendingOrganisation =
+    connection.status === "Pending Organisation" || Boolean(connection.pendingOrganisationSelection);
+  const isConnecting = connection.status === "Connecting";
+  const isConnectionError = connection.status === "Error" || connection.status === "Sync Error";
   const syncActionsEnabled =
-    workspaceCtx.hasWorkspace && workspaceCtx.companyLinked && orgSelected && canSync && oauthReady;
+    hasActiveWorkspace && workspaceCtx.companyLinked && orgSelected && canSync && oauthReady;
 
   const failedQueueRows = useMemo(() => queueRows.filter((row) => row.status === "Failed"), [queueRows]);
 
-  const showRepairWorkspace = !workspaceCtx.hasWorkspace && Boolean(localWorkspaceId);
+  const showRepairWorkspace = !hasActiveWorkspace && Boolean(localWorkspaceId);
 
   async function repairWorkspaceSession() {
     const client = readActiveClient();
@@ -275,7 +300,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       setError("You do not have permission to connect Xero.");
       return;
     }
-    if (!workspaceCtx.hasWorkspace) {
+    if (!hasActiveWorkspace) {
       setError("No active workspace. Select a client workspace before connecting Xero.");
       return;
     }
@@ -290,6 +315,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
     setError(null);
     const res = await fetch("/api/integrations/xero/connection", {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, ...extra }),
     });
@@ -305,8 +331,15 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       setMessage("Xero access token refreshed.");
     } else if (action === "test-connection") {
       setMessage("Xero connection test passed.");
+    } else if (action === "reset-connection-state") {
+      setMessage("Xero connection state reset. You can reconnect now.");
     }
     return data;
+  }
+
+  async function resetConnectionState() {
+    await postConnection("reset-connection-state");
+    refresh();
   }
 
   async function disconnectXero() {
@@ -474,7 +507,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
     if (missingEnv.length) {
       list.push(`Missing environment variables: ${missingEnv.join(", ")}`);
     }
-    if (!workspaceCtx.companyLinked && workspaceCtx.hasWorkspace) {
+    if (!workspaceCtx.companyLinked && hasActiveWorkspace) {
       list.push("Active workspace is not linked to a company record. Contact support or re-select the workspace.");
     }
     if (connection.pendingOrganisationSelection) {
@@ -486,7 +519,15 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
     return list;
   }, [missingEnv, workspaceCtx, connection.pendingOrganisationSelection, invoiceSyncReady]);
 
-  if (!workspaceCtx.hasWorkspace) {
+  if (!hasActiveWorkspace) {
+    if (!workspaceDebug.loaded && !initialWorkspace.hasWorkspace) {
+      return (
+        <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 text-sm font-semibold text-[#64748B]">
+          Checking workspace session…
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-6">
         <header className={M.moduleHeaderNavy}>
@@ -507,7 +548,10 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
           <div className="flex items-start gap-3">
             <AlertTriangle size={22} className="mt-0.5 shrink-0 text-amber-700" />
             <div>
-              <h2 className="text-lg font-bold text-amber-950">No active workspace selected</h2>
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-amber-800">
+                Workspace session fix v3 active
+              </p>
+              <h2 className="mt-2 text-lg font-bold text-amber-950">No active workspace selected</h2>
               <p className="mt-2 text-sm font-medium leading-6 text-amber-900">
                 Xero integration is scoped to your active company workspace. The server could not find a workspace
                 cookie — local browser storage alone is not used for security.
@@ -708,16 +752,34 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
             {canConnect ? (
               <>
                 {!connection.connected ? (
-                  <button
-                    type="button"
-                    onClick={connectXero}
-                    disabled={!oauthReady || !workspaceCtx.hasWorkspace}
-                    className={`${M.primaryBtn} px-4 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60`}
-                    title={!oauthReady ? "Configure Xero OAuth environment variables first" : undefined}
-                  >
-                    <Link2 size={16} />
-                    {connectionStatus === "Connecting" ? "Connecting…" : "Connect to Xero"}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={connectXero}
+                      disabled={!oauthReady || !hasActiveWorkspace || isConnecting}
+                      className={`${M.primaryBtn} px-4 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60`}
+                      title={!oauthReady ? "Configure Xero OAuth environment variables first" : undefined}
+                    >
+                      <Link2 size={16} />
+                      {isConnecting
+                        ? "Connecting…"
+                        : isConnectionError
+                          ? "Reconnect to Xero"
+                          : isPendingOrganisation
+                            ? "Reconnect to Xero"
+                            : "Connect to Xero"}
+                    </button>
+                    {(isConnecting || isConnectionError) ? (
+                      <button
+                        type="button"
+                        onClick={() => void resetConnectionState()}
+                        className={`${M.secondaryBtn} px-4 py-2.5 text-sm`}
+                      >
+                        <RotateCcw size={16} />
+                        Clear stale state
+                      </button>
+                    ) : null}
+                  </>
                 ) : (
                   <>
                     <button type="button" onClick={connectXero} className={`${M.secondaryBtn} px-4 py-2.5 text-sm`}>
@@ -767,7 +829,30 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
           <InfoTile label="Last sync" value={formatDate(connection.lastSyncAt)} />
         </div>
 
-        {connection.pendingOrganisationSelection && connection.availableOrganisations?.length ? (
+        {isConnecting ? (
+          <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-900">
+            OAuth redirect in progress. If Xero showed an error or you closed the window, use{" "}
+            <span className="font-bold">Clear stale state</span> then <span className="font-bold">Reconnect to Xero</span>.
+            Stale connecting state auto-expires after 5 minutes.
+          </div>
+        ) : null}
+
+        {connection.lastError ? (
+          <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+            <div className="font-bold">Connection error</div>
+            <div className="mt-1 font-medium">{connection.lastError}</div>
+            {connection.lastErrorCode ? (
+              <div className="mt-1 text-xs font-semibold text-rose-800">Code: {connection.lastErrorCode}</div>
+            ) : null}
+            {connection.lastAttemptedAt ? (
+              <div className="mt-1 text-xs font-semibold text-rose-800">
+                Last attempted: {formatDate(connection.lastAttemptedAt)}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {isPendingOrganisation && connection.availableOrganisations?.length ? (
           <div className="mt-5 rounded-2xl border border-[#7C3AED]/25 bg-[#7C3AED]/8 p-4">
             <h3 className="text-sm font-bold text-[#0F172A]">Select Xero organisation</h3>
             <p className="mt-1 text-xs font-medium text-[#64748B]">
@@ -1059,7 +1144,11 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       </section>
 
       <section className={M.moduleDataSection}>
-        <h2 className="text-xl font-bold text-[#0F172A]">Audit trail</h2>
+        <h2 className="text-xl font-bold text-[#0F172A]">Debug / audit trail</h2>
+        <p className="mt-1 text-sm font-medium text-[#64748B]">
+          Latest OAuth and connection events for this workspace (connect, callback, token exchange, tenants, org
+          selection, errors).
+        </p>
         <div className={`mt-4 ${M.tableSurface}`}>
           <table className="min-w-full text-sm">
             <thead>

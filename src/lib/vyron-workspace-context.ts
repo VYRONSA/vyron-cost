@@ -33,22 +33,14 @@ export function isDemoWorkspace(client: ActiveClient | null | undefined): boolea
   return false;
 }
 
-function clientCookieSuffix() {
-  if (typeof window !== "undefined" && window.location.protocol === "https:") {
-    return "; Secure";
-  }
-  return "";
+/** Server-only cookies — client code must not write workspace auth cookies. */
+export function syncActiveClientCookie(_client: ActiveClient) {
+  // no-op: workspace cookies are set only by server routes
 }
 
-export function syncActiveClientCookie(client: ActiveClient) {
-  if (typeof document === "undefined") return;
-  const value = encodeURIComponent(JSON.stringify(client));
-  document.cookie = `${ACTIVE_CLIENT_KEY}=${value}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${clientCookieSuffix()}`;
-}
-
+/** Server-only cookies — client code must not clear workspace auth cookies. */
 export function clearActiveClientCookie() {
-  if (typeof document === "undefined") return;
-  document.cookie = `${ACTIVE_CLIENT_KEY}=; path=/; max-age=0; SameSite=Lax${clientCookieSuffix()}`;
+  // no-op: use POST /api/workspace/logout
 }
 
 /** Client-side helper for banners and UI gating. */
@@ -61,3 +53,5 @@ export function documentHasCookie(name: string): boolean {
   if (typeof document === "undefined") return false;
   return document.cookie.split(";").some((part) => part.trim().startsWith(`${name}=`));
 }
+
+export { ACTIVE_CLIENT_KEY };

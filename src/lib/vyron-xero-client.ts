@@ -3,7 +3,7 @@ import {
   type XeroOAuthTokenResponse,
   type XeroStoredConnection,
 } from "@/lib/vyron-xero-integration";
-import { appendXeroAuditEvent, readStoredConnection, writeStoredConnection } from "@/lib/vyron-xero-connection-store";
+import { appendXeroAuditEvent, markTokenExpired, readStoredConnection, writeStoredConnection } from "@/lib/vyron-xero-connection-store";
 
 const XERO_API_BASE = "https://api.xero.com/api.xro/2.0";
 
@@ -72,29 +72,40 @@ export async function getValidXeroAccessToken(
     return { accessToken: stored.accessToken, tenantId, stored };
   }
 
-  const refreshed = await refreshXeroAccessToken(stored.refreshToken);
-  const next: XeroStoredConnection = {
-    ...stored,
-    accessToken: refreshed.access_token,
-    refreshToken: refreshed.refresh_token || stored.refreshToken,
-    tokenExpiresAt: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
-    status: stored.connected ? "Connected" : stored.status,
-    lastTokenRefreshAt: new Date().toISOString(),
-  };
+  try {
+    const refreshed = await refreshXeroAccessToken(stored.refreshToken);
+    const next: XeroStoredConnection = {
+      ...stored,
+      accessToken: refreshed.access_token,
+      refreshToken: refreshed.refresh_token || stored.refreshToken,
+      tokenExpiresAt: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
+      status: stored.connected ? "Connected" : stored.status,
+      lastTokenRefreshAt: new Date().toISOString(),
+      lastError: null,
+      lastErrorCode: null,
+    };
 
-  await writeStoredConnection(workspaceId, next);
-  await appendXeroAuditEvent(
-    workspaceId,
-    {
-      event: "token_refreshed",
+    await writeStoredConnection(workspaceId, next);
+    await appendXeroAuditEvent(
+      workspaceId,
+      {
+        event: "token_refreshed",
+        actor: options.actor || "system",
+        companyId: options.companyId ?? null,
+        detail: "Xero access token refreshed.",
+      },
+      options.companyId
+    );
+
+    return { accessToken: next.accessToken, tenantId, stored: next };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Xero token refresh failed.";
+    await markTokenExpired(workspaceId, message, {
       actor: options.actor || "system",
       companyId: options.companyId ?? null,
-      detail: "Xero access token refreshed.",
-    },
-    options.companyId
-  );
-
-  return { accessToken: next.accessToken, tenantId, stored: next };
+    });
+    throw error;
+  }
 }
 
 function parseXeroError(status: number, body: string) {

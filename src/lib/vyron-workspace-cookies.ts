@@ -1,6 +1,7 @@
 import type { NextResponse } from "next/server";
 import { ACTIVE_CLIENT_KEY, type ActiveClient } from "@/lib/vyron-developer-client";
 import { WORKSPACE_SESSION_KEY, type WorkspaceSession } from "@/lib/vyron-workspace-session";
+import type { WorkspaceUserRole } from "@/lib/vyron-workspace-permissions";
 
 export const WORKSPACE_AUTH_COOKIE_NAMES = [
   ACTIVE_CLIENT_KEY,
@@ -8,6 +9,22 @@ export const WORKSPACE_AUTH_COOKIE_NAMES = [
 ] as const;
 
 const WORKSPACE_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+
+export type CompactActiveClientCookie = {
+  id: string;
+  workspaceId: string;
+  companyId: string | null;
+  companyName: string;
+  packageName: string;
+  email: string;
+  impersonating?: boolean;
+};
+
+export type CompactWorkspaceSessionCookie = {
+  workspaceId: string;
+  companyId: string | null;
+  role: WorkspaceUserRole;
+};
 
 export function isProductionCookieEnvironment() {
   return process.env.NODE_ENV === "production";
@@ -24,18 +41,71 @@ export function workspaceCookieOptions(maxAge: number = WORKSPACE_COOKIE_MAX_AGE
 }
 
 export function encodeCookieJson(payload: unknown) {
-  // Next.js response.cookies.set() URL-encodes the value; do not pre-encode here.
-  return JSON.stringify(payload);
+  return encodeURIComponent(JSON.stringify(payload));
 }
 
-/** Store role only in cookie; permissions are resolved server-side from role. */
-export function compactWorkspaceSessionForCookie(session: WorkspaceSession): WorkspaceSession {
+export function compactActiveClientForCookie(client: ActiveClient): CompactActiveClientCookie {
   return {
-    userId: session.userId,
-    email: session.email,
-    firstName: session.firstName,
-    surname: session.surname,
+    id: client.id,
+    workspaceId: client.id,
+    companyId: client.companyId ?? null,
+    companyName: client.companyName,
+    packageName: client.packageName || "Professional",
+    email: client.ownerEmail || client.contactEmail || client.companyName,
+    impersonating: client.impersonating,
+  };
+}
+
+export function expandActiveClientFromCookie(
+  value: CompactActiveClientCookie | (ActiveClient & Partial<CompactActiveClientCookie>)
+): ActiveClient {
+  if (value.companyName && (value as ActiveClient).tradingName) {
+    return value as ActiveClient;
+  }
+
+  const workspaceId = value.workspaceId || value.id;
+  return {
+    id: workspaceId,
+    companyId: value.companyId ?? null,
+    companyName: value.companyName || "Client Workspace",
+    tradingName: value.companyName || "Client Workspace",
+    packageName: value.packageName || "Professional",
+    status: "Active",
+    ownerEmail: value.email,
+    impersonating: value.impersonating,
+  };
+}
+
+export function compactWorkspaceSessionForCookie(
+  session: WorkspaceSession,
+  workspaceId: string,
+  companyId: string | null
+): CompactWorkspaceSessionCookie {
+  return {
+    workspaceId,
+    companyId,
     role: session.role,
+  };
+}
+
+export function expandWorkspaceSessionFromCookie(
+  value: CompactWorkspaceSessionCookie | WorkspaceSession
+): WorkspaceSession | null {
+  if ("userId" in value && value.userId && "email" in value && value.email) {
+    return value as WorkspaceSession;
+  }
+
+  const compact = value as CompactWorkspaceSessionCookie;
+  if (!compact.workspaceId || !compact.role) {
+    return null;
+  }
+
+  return {
+    userId: `workspace-${compact.workspaceId}`,
+    email: "",
+    firstName: "Workspace",
+    surname: "User",
+    role: compact.role,
     permissions: {},
   };
 }
@@ -47,9 +117,10 @@ export function setWorkspaceAuthCookiesOnResponse(
   maxAge: number = WORKSPACE_COOKIE_MAX_AGE
 ) {
   const options = workspaceCookieOptions(maxAge);
-  const sessionCookie = compactWorkspaceSessionForCookie(session);
+  const clientCookie = compactActiveClientForCookie(client);
+  const sessionCookie = compactWorkspaceSessionForCookie(session, client.id, client.companyId ?? null);
 
-  response.cookies.set(ACTIVE_CLIENT_KEY, encodeCookieJson(client), options);
+  response.cookies.set(ACTIVE_CLIENT_KEY, encodeCookieJson(clientCookie), options);
   response.cookies.set(WORKSPACE_SESSION_KEY, encodeCookieJson(sessionCookie), options);
 
   return response;

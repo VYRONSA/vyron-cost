@@ -1,6 +1,7 @@
 import { getServerActiveWorkspace, getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
 import { getServerWorkspaceSession } from "@/lib/vyron-workspace-admin-server";
 import type { ActiveClient } from "@/lib/vyron-developer-client";
+import type { WorkspaceUserRole } from "@/lib/vyron-workspace-permissions";
 
 export type WorkspaceStatusReport = {
   ok: boolean;
@@ -17,6 +18,8 @@ export type WorkspaceStatusReport = {
   impersonating: boolean;
   xeroWorkspaceReady: boolean;
   localStorageHint: string | null;
+  sessionRole: WorkspaceUserRole | null;
+  sessionEmail: string | null;
   activeClientSummary: Pick<
     ActiveClient,
     "id" | "companyName" | "tradingName" | "packageName" | "status" | "companyId" | "impersonating" | "ownerEmail" | "ownerUserId"
@@ -42,6 +45,8 @@ export async function buildWorkspaceStatusReport(): Promise<WorkspaceStatusRepor
     hasSessionCookie: Boolean(session),
     impersonating: Boolean(client?.impersonating),
     xeroWorkspaceReady: Boolean(client?.id && companyId),
+    sessionRole: session?.role || null,
+    sessionEmail: session?.email || client?.ownerEmail || null,
     localStorageHint: client
       ? "Server workspace cookie is active."
       : "No server workspace cookie detected. Use Login As Client or Repair Workspace Session.",

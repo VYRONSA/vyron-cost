@@ -1,5 +1,4 @@
 import { clearWorkspaceSession } from "@/lib/vyron-workspace-session";
-import { clearActiveClientCookie, syncActiveClientCookie } from "@/lib/vyron-workspace-context";
 
 export const ACTIVE_CLIENT_KEY = "vyron_cost_active_client";
 export const DEVELOPER_CLIENTS_KEY = "vyron_cost_developer_clients";
@@ -105,7 +104,7 @@ export function readActiveClient(): ActiveClient | null {
 
 export function writeActiveClient(
   client: ActiveClient,
-  options?: { skipCookieSync?: boolean }
+  _options?: { skipCookieSync?: boolean }
 ) {
   const normalised = normaliseClient(
     client as ActiveClient & { status: string }
@@ -121,10 +120,6 @@ export function writeActiveClient(
       ACTIVE_CLIENT_KEY,
       JSON.stringify(normalised)
     );
-  }
-
-  if (!options?.skipCookieSync) {
-    syncActiveClientCookie(normalised);
   }
 
   if (
@@ -148,8 +143,6 @@ export function clearActiveClient() {
   if (typeof localStorage !== "undefined") {
     localStorage.removeItem(ACTIVE_CLIENT_KEY);
   }
-
-  clearActiveClientCookie();
 
   if (typeof sessionStorage !== "undefined") {
     sessionStorage.removeItem(
