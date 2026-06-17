@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="VYRON COST">
+  <defs>
+    <linearGradient id="vyron-cost-bg" x1="8%" y1="8%" x2="92%" y2="92%">
+      <stop offset="0%" stop-color="#E11D48" />
+      <stop offset="100%" stop-color="#7C3AED" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#vyron-cost-bg)" />
+  <g transform="translate(256 256)">
+    <rect x="-34" y="-132" width="68" height="264" rx="34" fill="#FFFFFF" fill-opacity="0.95" transform="rotate(-24)" />
+    <rect x="-34" y="-132" width="68" height="264" rx="34" fill="#07111F" fill-opacity="0.82" transform="rotate(24)" />
+  </g>
+</svg>
