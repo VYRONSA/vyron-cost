@@ -15,7 +15,9 @@ import {
 } from "lucide-react";
 import { useXeroPermissions } from "@/hooks/useModulePermissions";
 import { VYRON_MASTER, VYRON_TABLE } from "@/components/vyron-ui";
-import { readActiveClient } from "@/lib/vyron-developer-client";
+import { readActiveClient, ACTIVE_CLIENT_KEY } from "@/lib/vyron-developer-client";
+import { documentHasCookie } from "@/lib/vyron-workspace-context";
+import { WORKSPACE_SESSION_KEY } from "@/lib/vyron-workspace-session";
 import {
   DEFAULT_XERO_ACCOUNT_MAPPING,
   defaultXeroConnection,
@@ -57,6 +59,18 @@ type WorkspaceContext = {
 
 type XeroIntegrationClientProps = {
   initialWorkspace: WorkspaceContext;
+};
+
+type WorkspaceDebugState = {
+  localWorkspaceId: string | null;
+  localCompanyId: string | null;
+  hasActiveClientCookieDoc: boolean;
+  hasSessionCookieDoc: boolean;
+  serverWorkspaceId: string | null;
+  serverCompanyId: string | null;
+  hasWorkspaceCookie: boolean;
+  hasSessionCookie: boolean;
+  loaded: boolean;
 };
 
 type SyncNowAction = "sync-all-customers-now" | "sync-all-suppliers-now" | "sync-all-invoices-now";
@@ -112,11 +126,47 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
   const [bulkBusy, setBulkBusy] = useState<string | null>(null);
   const [localWorkspaceId, setLocalWorkspaceId] = useState<string | null>(null);
   const [repairing, setRepairing] = useState(false);
+  const [workspaceDebug, setWorkspaceDebug] = useState<WorkspaceDebugState>({
+    localWorkspaceId: null,
+    localCompanyId: null,
+    hasActiveClientCookieDoc: false,
+    hasSessionCookieDoc: false,
+    serverWorkspaceId: null,
+    serverCompanyId: null,
+    hasWorkspaceCookie: false,
+    hasSessionCookie: false,
+    loaded: false,
+  });
 
   useEffect(() => {
+    if (workspaceCtx.hasWorkspace) return;
+
     const client = readActiveClient();
     setLocalWorkspaceId(client?.id || null);
-  }, []);
+    setWorkspaceDebug((current) => ({
+      ...current,
+      localWorkspaceId: client?.id || null,
+      localCompanyId: client?.companyId || null,
+      hasActiveClientCookieDoc: documentHasCookie(ACTIVE_CLIENT_KEY),
+      hasSessionCookieDoc: documentHasCookie(WORKSPACE_SESSION_KEY),
+    }));
+
+    fetch("/api/workspace/status", { credentials: "include" })
+      .then((response) => response.json())
+      .then((data) => {
+        setWorkspaceDebug((current) => ({
+          ...current,
+          serverWorkspaceId: data?.serverWorkspaceId || data?.workspaceId || null,
+          serverCompanyId: data?.serverCompanyId || data?.companyId || null,
+          hasWorkspaceCookie: Boolean(data?.hasWorkspaceCookie ?? data?.hasActiveClientCookie),
+          hasSessionCookie: Boolean(data?.hasSessionCookie ?? data?.hasWorkspaceSession),
+          loaded: true,
+        }));
+      })
+      .catch(() => {
+        setWorkspaceDebug((current) => ({ ...current, loaded: true }));
+      });
+  }, [workspaceCtx.hasWorkspace]);
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -211,7 +261,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
         setError(data.error || "Workspace session repair failed.");
         return;
       }
-      window.location.reload();
+      window.location.href = "/integrations/xero";
     } catch {
       setError("Could not repair workspace session.");
     } finally {
@@ -491,6 +541,52 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
               </div>
             </div>
           </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <h3 className="text-sm font-black uppercase tracking-[0.12em] text-slate-700">Local debug</h3>
+          <dl className="mt-3 space-y-2 text-sm font-semibold text-slate-800">
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">localStorage active client workspaceId</dt>
+              <dd className="font-black">{workspaceDebug.localWorkspaceId || "—"}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">localStorage companyId</dt>
+              <dd className="font-black">{workspaceDebug.localCompanyId || "—"}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">document.cookie contains vyron_cost_active_client</dt>
+              <dd className="font-black">{workspaceDebug.hasActiveClientCookieDoc ? "yes" : "no"}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">document.cookie contains vyron_workspace_user_session</dt>
+              <dd className="font-black">{workspaceDebug.hasSessionCookieDoc ? "yes" : "no"}</dd>
+            </div>
+          </dl>
+
+          <h3 className="mt-5 text-sm font-black uppercase tracking-[0.12em] text-slate-700">Server debug</h3>
+          <dl className="mt-3 space-y-2 text-sm font-semibold text-slate-800">
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">serverWorkspaceId</dt>
+              <dd className="font-black">{workspaceDebug.serverWorkspaceId || "—"}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">serverCompanyId</dt>
+              <dd className="font-black">{workspaceDebug.serverCompanyId || "—"}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">hasWorkspaceCookie</dt>
+              <dd className="font-black">{workspaceDebug.hasWorkspaceCookie ? "yes" : "no"}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">hasSessionCookie</dt>
+              <dd className="font-black">{workspaceDebug.hasSessionCookie ? "yes" : "no"}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">status loaded</dt>
+              <dd className="font-black">{workspaceDebug.loaded ? "yes" : "no"}</dd>
+            </div>
+          </dl>
         </section>
       </div>
     );

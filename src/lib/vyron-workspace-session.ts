@@ -34,7 +34,7 @@ export function readWorkspaceSession(): WorkspaceSession | null {
   }
 }
 
-export function writeWorkspaceSession(session: WorkspaceSession) {
+export function writeWorkspaceSession(session: WorkspaceSession, options?: { skipCookieSync?: boolean }) {
   if (typeof window === "undefined") return;
   const role = normalizeWorkspaceRole(session.role);
   const normalized: WorkspaceSession = {
@@ -43,7 +43,8 @@ export function writeWorkspaceSession(session: WorkspaceSession) {
     permissions: resolveEffectivePermissions(role, session.permissions),
   };
   sessionStorage.setItem(WORKSPACE_SESSION_KEY, JSON.stringify(normalized));
-  const value = JSON.stringify(normalized);
+  if (options?.skipCookieSync) return;
+  const value = encodeURIComponent(JSON.stringify(normalized));
   const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
   document.cookie = `${WORKSPACE_SESSION_KEY}=${value}; path=/; max-age=${60 * 60 * 24}; SameSite=Lax${secure}`;
 }
@@ -55,14 +56,21 @@ export function clearWorkspaceSession() {
   document.cookie = `${WORKSPACE_SESSION_KEY}=; path=/; max-age=0; SameSite=Lax${secure}`;
 }
 
-export function bootstrapWorkspaceSession(client: ActiveClient, role: WorkspaceUserRole = "OWNER") {
+export function bootstrapWorkspaceSession(
+  client: ActiveClient,
+  role: WorkspaceUserRole = "OWNER",
+  options?: { skipCookieSync?: boolean }
+) {
   const normalizedRole = normalizeWorkspaceRole(role);
-  writeWorkspaceSession({
-    userId: client.ownerUserId || `owner-${client.id}`,
-    email: client.ownerEmail || client.companyName,
-    firstName: client.companyName.split(" ")[0] || "Workspace",
-    surname: "Owner",
-    role: normalizedRole,
-    permissions: defaultPermissionsForRole(normalizedRole),
-  });
+  writeWorkspaceSession(
+    {
+      userId: client.ownerUserId || `owner-${client.id}`,
+      email: client.ownerEmail || client.companyName,
+      firstName: client.companyName.split(" ")[0] || "Workspace",
+      surname: "Owner",
+      role: normalizedRole,
+      permissions: defaultPermissionsForRole(normalizedRole),
+    },
+    options
+  );
 }

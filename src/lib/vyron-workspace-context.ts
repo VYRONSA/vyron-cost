@@ -42,7 +42,7 @@ function clientCookieSuffix() {
 
 export function syncActiveClientCookie(client: ActiveClient) {
   if (typeof document === "undefined") return;
-  const value = JSON.stringify(client);
+  const value = encodeURIComponent(JSON.stringify(client));
   document.cookie = `${ACTIVE_CLIENT_KEY}=${value}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${clientCookieSuffix()}`;
 }
 
@@ -55,4 +55,9 @@ export function clearActiveClientCookie() {
 export function isActiveClientDemoMode(): boolean {
   if (typeof window === "undefined") return false;
   return isDemoWorkspace(readActiveClient());
+}
+
+export function documentHasCookie(name: string): boolean {
+  if (typeof document === "undefined") return false;
+  return document.cookie.split(";").some((part) => part.trim().startsWith(`${name}=`));
 }

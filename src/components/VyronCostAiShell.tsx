@@ -24,9 +24,8 @@ import {
   getRequiredPermissionForPath,
   sessionHasPermission,
 } from "@/lib/vyron-workspace-permissions";
-import { readWorkspaceSession, writeWorkspaceSession, type WorkspaceSession } from "@/lib/vyron-workspace-session";
-import { isClientWorkspaceMode, isPlatformAdminImpersonating, readActiveClient, signOutClientWorkspace, type ActiveClient } from "@/lib/vyron-developer-client";
-import { syncActiveClientCookie } from "@/lib/vyron-workspace-context";
+import { readWorkspaceSession, type WorkspaceSession } from "@/lib/vyron-workspace-session";
+import { isClientWorkspaceMode, readActiveClient, signOutClientWorkspace, writeActiveClient, type ActiveClient } from "@/lib/vyron-developer-client";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 
@@ -231,12 +230,6 @@ export default function VyronCostAiShell({
   const [activeClient, setActiveClient] = useState<ActiveClient | null>(null);
   const [workspaceSession, setWorkspaceSession] = useState<WorkspaceSession | null>(null);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
-  const [serverWorkspaceReady, setServerWorkspaceReady] = useState(false);
-
-  const hasWorkspaceContext = Boolean(activeClient) || serverWorkspaceReady;
-  const exitWorkspaceLabel = activeClient?.impersonating || isPlatformAdminImpersonating()
-    ? "Exit Client Workspace"
-    : "Logout";
 
   const sections = useMemo(() => {
     if (isDeveloperArea) return developerSections;
@@ -303,11 +296,6 @@ export default function VyronCostAiShell({
   useEffect(() => {
     function refreshClientMode() {
       const client = readActiveClient();
-      if (client) {
-        syncActiveClientCookie(client);
-        const session = readWorkspaceSession();
-        if (session) writeWorkspaceSession(session);
-      }
       setActiveClient(client);
       setClientWorkspaceMode(isClientWorkspaceMode());
       const session = readWorkspaceSession();
@@ -330,7 +318,13 @@ export default function VyronCostAiShell({
       .then((response) => response.json())
       .then((data) => {
         if (!data?.ok) return;
-        setServerWorkspaceReady(Boolean(data.hasActiveClientCookie));
+        if (data.activeClientSummary && !readActiveClient()) {
+          writeActiveClient(data.activeClientSummary, { skipCookieSync: true });
+          window.dispatchEvent(new Event("vyron-active-client-changed"));
+        }
+        if (data.impersonating && typeof sessionStorage !== "undefined") {
+          sessionStorage.setItem("vyron_developer_impersonation", "1");
+        }
       })
       .catch(() => {
         // ignore status probe failure
@@ -440,32 +434,23 @@ export default function VyronCostAiShell({
             ))}
           </nav>
 
-          {clientWorkspaceMode && !isDeveloperArea && activeClient ? (
+          {!isDeveloperArea ? (
             <div className="relative mt-auto shrink-0 border-t border-[#E2E8F0] px-1 pt-4">
-              <div className={M.shellClientCard}>
-                <div className="truncate text-sm font-bold text-[#0F172A]">{activeClient.companyName}</div>
-                <div className="mt-1 truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">
-                  {activeClient.packageName || "Professional"} Package
+              {clientWorkspaceMode && activeClient ? (
+                <div className={`mb-3 ${M.shellClientCard}`}>
+                  <div className="truncate text-sm font-bold text-[#0F172A]">{activeClient.companyName}</div>
+                  <div className="mt-1 truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">
+                    {activeClient.packageName || "Professional"} Package
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void signOutClientWorkspace()}
-                  className={`mt-3 w-full ${M.secondaryBtn} justify-center px-3 py-2 text-xs`}
-                >
-                  <LogOut size={15} />
-                  {exitWorkspaceLabel}
-                </button>
-              </div>
-            </div>
-          ) : hasWorkspaceContext && !isDeveloperArea ? (
-            <div className="relative mt-auto shrink-0 border-t border-[#E2E8F0] px-1 pt-4">
+              ) : null}
               <button
                 type="button"
                 onClick={() => void signOutClientWorkspace()}
                 className={`w-full ${M.secondaryBtn} justify-center px-3 py-2 text-xs`}
               >
                 <LogOut size={15} />
-                {exitWorkspaceLabel}
+                Logout / Exit Workspace
               </button>
             </div>
           ) : null}
@@ -494,10 +479,10 @@ export default function VyronCostAiShell({
               <div className="flex-1" />
             )}
 
-            {hasWorkspaceContext && !isDeveloperArea ? (
+            {!isDeveloperArea ? (
               <div className="flex shrink-0 items-center gap-2.5 md:gap-3">
                 {activeClient ? (
-                  <div className={M.shellWorkspaceBadge}>
+                  <div className={`hidden lg:block ${M.shellWorkspaceBadge}`}>
                     <div className="min-w-0 text-right">
                       <div className="truncate text-sm font-bold text-[#0F172A]">{activeClient.companyName}</div>
                       <div className="truncate text-[11px] font-medium text-[#64748B]">
@@ -507,19 +492,23 @@ export default function VyronCostAiShell({
                     </div>
                   </div>
                 ) : null}
+                <Link href="/dashboard" className={`${M.primaryBtn} h-10 shrink-0 px-4 text-sm`}>
+                  <Home size={17} />
+                  <span className="hidden sm:inline">Command Centre</span>
+                </Link>
                 <button
                   type="button"
                   onClick={() => void signOutClientWorkspace()}
                   className={`${M.shellTopbarBtn} gap-2`}
                 >
                   <LogOut size={17} />
-                  <span className="hidden sm:inline">{exitWorkspaceLabel}</span>
+                  <span className="hidden sm:inline">Logout / Exit Workspace</span>
                 </button>
               </div>
             ) : (
               <Link href="/dashboard" className={`${M.primaryBtn} h-10 shrink-0 px-4 text-sm`}>
                 <Home size={17} />
-                <span className="hidden sm:inline">{isDeveloperArea ? "Back to VYRON COST App" : "Command Centre"}</span>
+                <span className="hidden sm:inline">Back to VYRON COST App</span>
               </Link>
             )}
           </div>

@@ -104,7 +104,8 @@ export function readActiveClient(): ActiveClient | null {
 }
 
 export function writeActiveClient(
-  client: ActiveClient
+  client: ActiveClient,
+  options?: { skipCookieSync?: boolean }
 ) {
   const normalised = normaliseClient(
     client as ActiveClient & { status: string }
@@ -122,7 +123,9 @@ export function writeActiveClient(
     );
   }
 
-  syncActiveClientCookie(normalised);
+  if (!options?.skipCookieSync) {
+    syncActiveClientCookie(normalised);
+  }
 
   if (
     normalised.impersonating &&

@@ -30,8 +30,8 @@ export default function LoginClient() {
         return;
       }
 
-      writeActiveClient(data.client);
-      writeWorkspaceSession(data.session);
+      writeActiveClient(data.client, { skipCookieSync: true });
+      writeWorkspaceSession(data.session, { skipCookieSync: true });
       window.location.href = data.redirect || "/dashboard";
     } catch {
       setError("Unable to sign in. Check your connection and try again.");

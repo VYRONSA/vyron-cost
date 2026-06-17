@@ -988,66 +988,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
     }
 
     setMessage(`Entering ${client.companyName}…`);
-    try {
-      const res = await fetch(`/api/developer/clients/${encodeURIComponent(client.id)}/login-as`, {
-        method: "POST",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        setMessage(data.error || "Login As Client failed. Use Manage Login to create/activate the owner login first.");
-        alert(data.error || "Login As Client failed. Use Manage Login to create/activate the owner login first.");
-        return;
-      }
-
-      const ownerUserId = data.ownerUserId || client.ownerUserId || null;
-      const loginDisplayStatus: ClientLoginDisplayStatus =
-        data.loginStatus === "active" || ownerUserId ? "active_login" : "no_login_created";
-
-      setClients((current) =>
-        current.map((item) =>
-          item.id === client.id
-            ? {
-                ...item,
-                ownerUserId,
-                companyId: data.workspace?.companyId ? String(data.workspace.companyId) : item.companyId,
-                owner: item.owner
-                  ? { ...item.owner, loginStatus: data.loginStatus || "active" }
-                  : item.owner,
-              }
-            : item
-        )
-      );
-
-      const payload: ActiveClient =
-        data.client ||
-        toActiveClientPayload(client, {
-          ownerUserId,
-          ownerEmail: data.ownerEmail || client.owner?.email,
-          impersonating: true,
-          loginDisplayStatus,
-          companyId: data.workspace?.companyId ? String(data.workspace.companyId) : client.companyId,
-        });
-
-      writeActiveClient(payload);
-      if (data.session) {
-        writeWorkspaceSession(data.session);
-      } else {
-        bootstrapWorkspaceSession(payload, "OWNER");
-      }
-      sessionStorage.setItem("vyron_developer_impersonation", "1");
-      setActiveClient(payload);
-      const statusMessage =
-        data.status?.hasActiveClientCookie && data.status?.workspaceName
-          ? `Workspace active: ${data.status.workspaceName}`
-          : data.message || `Entered ${client.companyName} workspace.`;
-      setMessage(statusMessage);
-      window.dispatchEvent(new Event("vyron-active-client-changed"));
-      window.location.href = "/dashboard";
-    } catch {
-      setMessage("Login As Client failed. Check network and Supabase configuration.");
-      alert("Login As Client failed.");
-    }
+    window.location.href = `/api/developer/clients/${encodeURIComponent(client.id)}/login-as`;
   }
 
   const checklist = [

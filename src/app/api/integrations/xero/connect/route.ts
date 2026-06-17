@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { markConnectionConnecting } from "@/lib/vyron-xero-connection-store";
-import { buildXeroOAuthUrl, isXeroOAuthConfigured } from "@/lib/vyron-xero-integration";
+import { buildXeroOAuthUrl, getXeroOAuthDebugInfo, isXeroOAuthConfigured } from "@/lib/vyron-xero-integration";
 import { requireXeroWorkspaceContext, xeroContextFromRequest } from "@/lib/vyron-xero-api-context";
 import {
   requireWorkspacePermission,
@@ -38,6 +38,15 @@ export async function GET(request: NextRequest) {
         message: "Unable to start Xero OAuth.",
       });
     }
+
+    const oauthDebug = getXeroOAuthDebugInfo();
+    console.info("[Xero OAuth] connect route redirect", {
+      clientId: oauthDebug.clientId,
+      redirectUri: oauthDebug.redirectUri,
+      scopes: oauthDebug.scopes,
+      workspaceId,
+      companyId,
+    });
 
     await markConnectionConnecting(workspaceId, "user", companyId);
     return NextResponse.redirect(oauthUrl);

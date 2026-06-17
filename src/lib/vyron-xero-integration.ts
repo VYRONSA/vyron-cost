@@ -165,9 +165,32 @@ export function isXeroOAuthConfigured() {
   );
 }
 
-/** Official Xero OAuth scopes for web server app (offline_access required for refresh). */
-export const XERO_OAUTH_SCOPES =
-  "openid profile email offline_access accounting.settings accounting.contacts accounting.transactions";
+/** Official Xero OAuth scopes for web server apps (offline_access required for refresh). */
+export const XERO_OAUTH_SCOPE_LIST = [
+  "openid",
+  "profile",
+  "email",
+  "offline_access",
+  "accounting.transactions",
+  "accounting.contacts",
+  "accounting.settings",
+] as const;
+
+export const XERO_OAUTH_SCOPES = XERO_OAUTH_SCOPE_LIST.join(" ");
+
+export type XeroOAuthDebugInfo = {
+  clientId: string | null;
+  redirectUri: string | null;
+  scopes: string;
+};
+
+export function getXeroOAuthDebugInfo(): XeroOAuthDebugInfo {
+  return {
+    clientId: process.env.XERO_CLIENT_ID?.trim() || null,
+    redirectUri: getXeroRedirectUri(),
+    scopes: XERO_OAUTH_SCOPES,
+  };
+}
 
 export function getXeroRedirectUri() {
   const redirectUri = process.env.XERO_REDIRECT_URI?.trim();
@@ -228,6 +251,15 @@ export function buildXeroOAuthUrl(workspaceId: string, companyId: string) {
   const clientId = process.env.XERO_CLIENT_ID;
   const redirectUri = getXeroRedirectUri();
   if (!clientId || !redirectUri) return null;
+
+  const debug = getXeroOAuthDebugInfo();
+  console.info("[Xero OAuth] authorize redirect", {
+    clientId: debug.clientId,
+    redirectUri: debug.redirectUri,
+    scopes: debug.scopes,
+    workspaceId,
+    companyId,
+  });
 
   const params = new URLSearchParams({
     response_type: "code",
