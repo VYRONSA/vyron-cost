@@ -6,8 +6,7 @@ export default async function CommercialLaunchPage() {
   const snapshot = await getLaunchReadinessSnapshot();
 
   return (
-    <VyronCostShell
-      title="Commercial Launch Centre"
+    <VyronCostShell hidePageHeader title="Commercial Launch Centre"
       subtitle="READINESS SCORE · CLIENT DEMO CONFIDENCE · LAUNCH BLOCKERS"
     >
       <CommercialLaunchCentreClient snapshot={snapshot} />

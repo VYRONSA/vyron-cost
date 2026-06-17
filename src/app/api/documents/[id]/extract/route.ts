@@ -5,6 +5,11 @@ import {
   persistExtractionToDocument,
   runDocumentExtraction,
 } from "@/lib/vyron-document-extraction";
+import {
+  documentTenantAccessErrorResponse,
+  loadDocumentForTenant,
+  requireDocumentTenantId,
+} from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -27,67 +32,90 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     return NextResponse.json({ ok: false, error: "Supabase admin client unavailable." }, { status: 500 });
   }
 
-  const { data: document, error: docError } = await supabase
-    .from("vyron_documents")
-    .select("id, status, storage_bucket, storage_path, original_filename, file_mime, file_size_bytes, deleted_at")
-    .eq("id", documentId)
-    .maybeSingle();
-
-  if (docError) {
-    return NextResponse.json({ ok: false, error: docError.message }, { status: 500 });
-  }
-
-  if (!document) {
-    return NextResponse.json({ ok: false, error: `Document ${documentId} not found.` }, { status: 404 });
-  }
-  if (document.deleted_at) {
-    return NextResponse.json({ ok: false, error: `Document ${documentId} was deleted.` }, { status: 404 });
-  }
-
   try {
-    await supabase.from("vyron_documents").update({ status: "extracting" }).eq("id", documentId);
-
-    const { bytes, mime, fileName, bucket, path } = await loadDocumentBytes(supabase, document);
-
-    console.log("[documents/extract] loaded from storage", {
+    const tenantId = await requireDocumentTenantId();
+    const document = await loadDocumentForTenant<{
+      id: string;
+      tenant_id: string;
+      status: string;
+      storage_bucket: string;
+      storage_path: string;
+      original_filename: string;
+      file_mime: string | null;
+      file_size_bytes: number | null;
+      deleted_at: string | null;
+    }>(
+      supabase,
       documentId,
-      fileName,
-      mime,
-      byteSize: bytes.length,
-      bucket,
-      path,
-    });
+      tenantId,
+      "id, tenant_id, status, storage_bucket, storage_path, original_filename, file_mime, file_size_bytes, deleted_at"
+    );
 
-    await logExtractionEvent(supabase, documentId, "started", "Downloaded file from storage; calling OpenAI.", {
-      fileName,
-      mime,
-      byteSize: bytes.length,
-      bucket,
-      path,
-    });
+    if (document.deleted_at) {
+      return NextResponse.json({ ok: false, error: `Document ${documentId} was deleted.` }, { status: 404 });
+    }
 
-    const { extraction, modelUsed, log } = await runDocumentExtraction({ fileName, mime, bytes });
+    try {
+      await supabase.from("vyron_documents").update({ status: "extracting" }).eq("id", documentId).eq("tenant_id", tenantId);
 
-    await persistExtractionToDocument(supabase, documentId, extraction, modelUsed);
+      const { bytes, mime, fileName, bucket, path } = await loadDocumentBytes(supabase, document);
 
-    return NextResponse.json({
-      ok: true,
-      documentId,
-      modelUsed,
-      extraction,
-      log,
-    });
+      console.log("[documents/extract] loaded from storage", {
+        documentId,
+        fileName,
+        mime,
+        byteSize: bytes.length,
+        bucket,
+        path,
+      });
+
+      await logExtractionEvent(supabase, documentId, "started", "Downloaded file from storage; calling OpenAI.", {
+        fileName,
+        mime,
+        byteSize: bytes.length,
+        bucket,
+        path,
+      });
+
+      const { extraction, modelUsed, log } = await runDocumentExtraction({ fileName, mime, bytes });
+
+      await persistExtractionToDocument(supabase, documentId, extraction, modelUsed);
+
+      return NextResponse.json({
+        ok: true,
+        documentId,
+        modelUsed,
+        extraction,
+        log,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Extraction failed.";
+
+      await supabase
+        .from("vyron_documents")
+        .update({
+          status: "needs_review",
+          processing_notes: `AI extraction failed — manual review required. ${message}`.slice(0, 500),
+        })
+        .eq("id", documentId)
+        .eq("tenant_id", tenantId);
+
+      await logExtractionEvent(supabase, documentId, "failed", message, {
+        documentId,
+        fallbackStatus: "needs_review",
+      });
+
+      console.error("[documents/extract] failed — graceful fallback to needs_review", { documentId, message });
+
+      return NextResponse.json({
+        ok: true,
+        partial: true,
+        needsReview: true,
+        documentId,
+        error: message,
+      });
+    }
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Extraction failed.";
-
-    await supabase.from("vyron_documents").update({ status: "extraction_failed" }).eq("id", documentId);
-
-    await logExtractionEvent(supabase, documentId, "failed", message, {
-      documentId,
-    });
-
-    console.error("[documents/extract] failed", { documentId, message });
-
-    return NextResponse.json({ ok: false, error: message, documentId }, { status: 500 });
+    return documentTenantAccessErrorResponse(error, "Extraction failed.");
   }
 }

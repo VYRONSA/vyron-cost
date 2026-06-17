@@ -5,7 +5,7 @@ import { getEnterprisePlatformPayload } from "@/lib/vyron-enterprise-platform-ar
 export default async function KnowledgeGraphPage() {
   const { knowledgeGraph } = await getEnterprisePlatformPayload();
   return (
-    <VyronCostShell title="Knowledge Graph" subtitle="SUPPLIER → INVOICE → INGREDIENT → RECIPE → PRODUCT → RECOVERY → FINANCE">
+    <VyronCostShell hidePageHeader title="Knowledge Graph" subtitle="SUPPLIER → INVOICE → INGREDIENT → RECIPE → PRODUCT → RECOVERY → FINANCE">
       <PlatformNav />
       <KnowledgeGraphClient graph={knowledgeGraph} />
     </VyronCostShell>

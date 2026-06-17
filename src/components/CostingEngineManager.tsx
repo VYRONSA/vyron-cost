@@ -85,9 +85,9 @@ export default function CostingEngineManager({
     <section className="grid gap-6 xl:grid-cols-[0.8fr_1.5fr]">
       <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600"><Plus size={20} /></div>
+          <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-3 text-[#84CC16]"><Plus size={20} /></div>
           <div>
-            <h2 className="text-2xl font-black text-[#07110d]">Add Costing Line</h2>
+            <h2 className="text-2xl font-black text-[#F8FAFC]">Add Costing Line</h2>
             <p className="text-sm text-slate-500">Use full edit pages for existing costing lines.</p>
           </div>
         </div>
@@ -95,41 +95,41 @@ export default function CostingEngineManager({
         <div className="grid gap-4">
           <label className="text-sm font-black text-slate-600">
             Recipe
-            <select className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-emerald-400" value={recipeId} onChange={(event) => setRecipeId(event.target.value)}>
+            <select className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400" value={recipeId} onChange={(event) => setRecipeId(event.target.value)}>
               {recipes.map((recipe) => <option key={recipe.id} value={recipe.id}>{recipe.recipe_name}</option>)}
             </select>
           </label>
 
           <label className="text-sm font-black text-slate-600">
             Ingredient
-            <select className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-emerald-400" value={ingredientId} onChange={(event) => setIngredientId(event.target.value)}>
+            <select className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400" value={ingredientId} onChange={(event) => setIngredientId(event.target.value)}>
               {ingredients.map((ingredient) => <option key={ingredient.id} value={ingredient.id}>{ingredient.ingredient_name} — {formatMoney(Number(ingredient.true_unit_cost))}</option>)}
             </select>
           </label>
 
           <label className="text-sm font-black text-slate-600">
             Quantity
-            <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-emerald-400" value={quantity} onChange={(event) => setQuantity(event.target.value)} />
+            <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400" value={quantity} onChange={(event) => setQuantity(event.target.value)} />
           </label>
 
           <div className="rounded-3xl bg-[#07110d] p-5 text-white">
-            <div className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">Line Cost Preview</div>
+            <div className="text-xs font-black uppercase tracking-[0.25em] text-[#A3E635]">Line Cost Preview</div>
             <div className="mt-2 text-3xl font-black">{formatMoney(previewCost)}</div>
           </div>
 
-          <button type="button" onClick={addItem} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-4 text-sm font-black text-[#07110d] transition hover:bg-emerald-400">
+          <button type="button" onClick={addItem} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
             <Plus size={18} />
             Add Costing Line
           </button>
 
-          {message && <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-bold text-[#65A30D]">{message}</div>}
         </div>
       </div>
 
       <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-black text-[#07110d]">{selectedRecipe?.recipe_name || "Recipe"} Costing Lines</h2>
+            <h2 className="text-2xl font-black text-[#F8FAFC]">{selectedRecipe?.recipe_name || "Recipe"} Costing Lines</h2>
             <p className="mt-2 text-sm text-slate-500">Current calculated total: <b>{formatMoney(recipeTotal)}</b></p>
           </div>
           <StatusPill tone="emerald">{selectedRecipeItems.length} Lines</StatusPill>
@@ -139,18 +139,18 @@ export default function CostingEngineManager({
 
         <div className="overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[980px]">
-            <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-emerald-300">
+            <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
               <div>Ingredient</div><div>Qty</div><div>Unit</div><div>True Unit Cost</div><div>Line Cost</div><div>Full Edit</div><div>Delete</div>
             </div>
             {filteredItems.map((item) => (
               <div key={item.id} className="grid grid-cols-7 items-center border-t border-slate-100 px-5 py-5 text-sm">
-                <div className="font-black text-[#07110d]">{item.ingredient_name_snapshot}</div>
+                <div className="font-black text-[#F8FAFC]">{item.ingredient_name_snapshot}</div>
                 <div>{Number(item.quantity).toFixed(3)}</div>
                 <div>{item.unit}</div>
                 <div>{formatMoney(Number(item.true_unit_cost))}</div>
-                <div className="font-black text-emerald-700">{formatMoney(Number(item.line_cost))}</div>
+                <div className="font-black text-[#65A30D]">{formatMoney(Number(item.line_cost))}</div>
                 <div>
-                  <Link href={`/cost-calculator/${item.id}/edit`} className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700">
+                  <Link href={`/cost-calculator/${item.id}/edit`} className="inline-flex items-center gap-2 rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]">
                     <Edit3 size={14} />
                     Open Edit Page
                   </Link>

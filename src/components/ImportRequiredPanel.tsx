@@ -9,7 +9,7 @@ export default function ImportRequiredPanel() {
           <Upload size={28} />
         </div>
         <div>
-          <h2 className="text-2xl font-black text-[#07110d]">Import client spreadsheets</h2>
+          <h2 className="text-2xl font-black text-[#F8FAFC]">Import client spreadsheets</h2>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
             Copy GOURMET COSTINGS, REC211 Recipes for Production and NEW COSTING SHEET into{" "}
             <code className="rounded bg-white px-1">data/handcrafted-import/</code> then run{" "}
@@ -17,7 +17,7 @@ export default function ImportRequiredPanel() {
           </p>
           <Link
             href="/import-costings"
-            className="mt-4 inline-flex rounded-full bg-[#07110d] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-emerald-300"
+            className="mt-4 inline-flex rounded-full bg-[#07110d] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#A3E635]"
           >
             Import instructions
           </Link>

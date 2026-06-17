@@ -17,6 +17,11 @@ import { insertDocumentApprovalAudit } from "@/lib/vyron-document-approval-audit
 import { buildPriceHistoryRecord, changePercent, insertPriceHistoryRows } from "@/lib/vyron-price-history";
 import { persistSupplierLineMappings } from "@/lib/vyron-supplier-line-learning";
 import { queueXeroSupplierBill } from "@/lib/vyron-xero-integration";
+import {
+  documentTenantAccessErrorResponse,
+  requireDocumentTenantId,
+  verifyDocumentTenantAccess,
+} from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -52,6 +57,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
 
+  let tenantId: string;
+  try {
+    tenantId = await requireDocumentTenantId();
+  } catch (error) {
+    return documentTenantAccessErrorResponse(error);
+  }
+
   const { data: document, error: docError } = await supabase
     .from("vyron_documents")
     .select("id, tenant_id, supplier_name, supplier_vat_number, currency, status, field_confidence, invoice_number, invoice_date, purchase_order_number, purchase_order_id, subtotal, vat, total")
@@ -59,9 +71,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
     .maybeSingle();
   if (docError) return NextResponse.json({ ok: false, error: docError.message }, { status: 500 });
   if (!document) return NextResponse.json({ ok: false, error: "Document not found." }, { status: 404 });
+  const denied = verifyDocumentTenantAccess(document, tenantId);
+  if (denied) return denied;
 
-  const rules = await getDocumentApprovalRules(supabase, document.tenant_id as string);
-  const poRules = await getPoApprovalRules(supabase, document.tenant_id as string);
+  const rules = await getDocumentApprovalRules(supabase, tenantId);
+  const poRules = await getPoApprovalRules(supabase, tenantId);
 
   const { data: lines, error: linesError } = await supabase
     .from("vyron_document_line_items")

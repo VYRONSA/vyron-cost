@@ -8,14 +8,13 @@ export default async function ExecutiveBriefingPage() {
   const monthly = opportunities.reduce((sum, item) => sum + Number(item.monthly_value || 0), 0);
 
   return (
-    <VyronCostAiShell
-      title="Executive Briefing"
+    <VyronCostAiShell hidePageHeader title="Executive Briefing"
       subtitle="Boardroom-ready summary of margin leakage, supplier risk and recovery opportunities."
     >
       <section className="grid gap-5 md:grid-cols-4">
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Annual Recovery</div>
-          <div className="mt-3 text-4xl font-black text-emerald-600">{money(annual)}</div>
+          <div className="mt-3 text-4xl font-black text-[#84CC16]">{money(annual)}</div>
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Monthly Recovery</div>
@@ -25,9 +24,9 @@ export default async function ExecutiveBriefingPage() {
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Open Actions</div>
           <div className="mt-3 text-4xl font-black text-slate-900">{opportunities.length}</div>
         </div>
-        <div className="rounded-[2rem] bg-emerald-50 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-          <div className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Priority</div>
-          <div className="mt-3 text-3xl font-black text-emerald-600">Recover</div>
+        <div className="rounded-[2rem] bg-[#A3E635]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+          <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Priority</div>
+          <div className="mt-3 text-3xl font-black text-[#84CC16]">Recover</div>
         </div>
       </section>
 
@@ -45,7 +44,7 @@ export default async function ExecutiveBriefingPage() {
                   <div className="font-black text-slate-900">{item.title}</div>
                   <div className="mt-1 text-sm font-semibold text-slate-500">{item.recommended_action}</div>
                 </div>
-                <div className="text-2xl font-black text-emerald-600">{money(item.annual_value)}</div>
+                <div className="text-2xl font-black text-[#84CC16]">{money(item.annual_value)}</div>
               </div>
             </Link>
           ))}

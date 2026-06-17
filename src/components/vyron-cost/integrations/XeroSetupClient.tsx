@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ExternalLink, Link2, RefreshCcw, Settings, Unplug } from "lucide-react";
-import { readActiveClient } from "@/lib/vyron-developer-client";
+import { readActiveClient, type ActiveClient } from "@/lib/vyron-developer-client";
+import { useXeroPermissions } from "@/hooks/useModulePermissions";
 import {
   DEFAULT_XERO_ACCOUNT_MAPPING,
   type XeroAccountMapping,
   type XeroConnectionState,
+  type XeroConnectionStatus,
   defaultXeroConnection,
 } from "@/lib/vyron-xero-integration";
 
@@ -24,19 +27,25 @@ const MAPPING_FIELDS: Array<{ key: keyof XeroAccountMapping; label: string }> = 
 ];
 
 export default function XeroSetupClient() {
+  const { canConnect, canEditMapping, canView } = useXeroPermissions();
+  const searchParams = useSearchParams();
   const mappingRef = useRef<HTMLElement>(null);
-  const [clientId, setClientId] = useState("default");
   const [connection, setConnection] = useState<XeroConnectionState>(defaultXeroConnection());
   const [mapping, setMapping] = useState<XeroAccountMapping>(DEFAULT_XERO_ACCOUNT_MAPPING);
   const [message, setMessage] = useState<string | null>(null);
   const [oauthReady, setOauthReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [active, setActive] = useState<ActiveClient | null>(null);
 
   const refresh = useCallback(() => {
-    const active = readActiveClient();
-    const workspaceId = active?.id || "default";
-    setClientId(workspaceId);
+    const currentActive = readActiveClient();
+    setActive(currentActive);
+    if (!currentActive?.id) {
+      setConnection(defaultXeroConnection());
+      return;
+    }
 
-    fetch(`/api/integrations/xero/connection?clientId=${encodeURIComponent(workspaceId)}`)
+    fetch("/api/integrations/xero/connection")
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) {
@@ -46,7 +55,7 @@ export default function XeroSetupClient() {
       })
       .catch(() => {});
 
-    fetch(`/api/integrations/xero/mapping?clientId=${encodeURIComponent(workspaceId)}`)
+    fetch("/api/integrations/xero/mapping")
       .then((r) => r.json())
       .then((d) => {
         if (d.ok && d.mapping) setMapping(d.mapping);
@@ -55,35 +64,78 @@ export default function XeroSetupClient() {
   }, []);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    setMounted(true);
+    setActive(readActiveClient());
+  }, []);
 
-  async function connectXero() {
-    const active = readActiveClient();
+  useEffect(() => {
+    if (!mounted) return;
+    refresh();
+  }, [mounted, refresh]);
+
+  useEffect(() => {
+    const xeroStatus = searchParams.get("xero");
+    const callbackMessage = searchParams.get("message");
+    if (!xeroStatus) return;
+
+    if (callbackMessage) {
+      setMessage(callbackMessage);
+    } else if (xeroStatus === "connected") {
+      setMessage("Xero connected successfully.");
+    } else if (xeroStatus === "select-org") {
+      setMessage(callbackMessage || "Select the Xero organisation for this workspace.");
+    }
+
+    refresh();
+  }, [searchParams, refresh]);
+
+  function connectXero() {
+    if (!canConnect) {
+      setMessage("You do not have permission to connect Xero.");
+      return;
+    }
+    if (!active?.id) {
+      setMessage("Select a client workspace before connecting Xero.");
+      return;
+    }
+
+    if (!oauthReady) {
+      setMessage("Xero OAuth is not configured. Set XERO_CLIENT_ID, XERO_CLIENT_SECRET and XERO_REDIRECT_URI.");
+      return;
+    }
+
+    setConnection((current) => ({ ...current, status: "Connecting", connected: false }));
+    window.location.href = "/api/integrations/xero/connect";
+  }
+
+  async function selectOrganisation(tenantId: string) {
+    if (!canConnect) {
+      setMessage("You do not have permission to connect Xero.");
+      return;
+    }
     const res = await fetch("/api/integrations/xero/connection", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "connect",
-        clientId: active?.id || "default",
-        organisationName: active?.companyName || "Handcrafted Food Products (Pty) Ltd",
-      }),
+      body: JSON.stringify({ action: "select-organisation", tenantId }),
     });
     const data = await res.json();
-    if (!data.ok) {
-      setMessage(data.error || "Connection failed.");
-      return;
+    if (data.ok) {
+      setConnection(data.connection);
+      setMessage(`Connected to ${data.connection?.organisationName || "Xero organisation"}.`);
+    } else {
+      setMessage(data.error || "Could not save organisation selection.");
     }
-    setConnection(data.connection);
-    setMessage(oauthReady ? "Xero OAuth flow ready — demo connection established for this workspace." : "Demo Xero connection saved for this workspace.");
-    refresh();
   }
 
   async function disconnectXero() {
+    if (!canConnect) {
+      setMessage("You do not have permission to disconnect Xero.");
+      return;
+    }
     const res = await fetch("/api/integrations/xero/connection", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "disconnect", clientId }),
+      body: JSON.stringify({ action: "disconnect" }),
     });
     const data = await res.json();
     if (data.ok) {
@@ -93,10 +145,14 @@ export default function XeroSetupClient() {
   }
 
   async function saveMapping() {
+    if (!canEditMapping) {
+      setMessage("You do not have permission to edit Xero mapping.");
+      return;
+    }
     const res = await fetch("/api/integrations/xero/mapping", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ clientId, mapping }),
+      body: JSON.stringify({ mapping }),
     });
     const data = await res.json();
     setMessage(data.ok ? "Account mapping saved for active workspace." : data.error || "Save failed.");
@@ -106,17 +162,22 @@ export default function XeroSetupClient() {
     mappingRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const active = readActiveClient();
+  const connectionStatus = connection.status || (connection.connected ? "Connected" : "Not Connected");
+  const isConnecting = connectionStatus === "Connecting";
 
   return (
     <div className="space-y-6">
-      {active ? (
-        <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">
+      {!mounted ? (
+        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-500">
+          Loading workspace...
+        </div>
+      ) : active ? (
+        <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-800">
           Mapping and connection scoped to workspace: <span className="font-black">{active.companyName}</span>
         </div>
       ) : (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-900">
-          No active client workspace — connection and mapping will use the default platform profile until Login As Client is used.
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+          No active client workspace — select a workspace before connecting Xero.
         </div>
       )}
 
@@ -133,16 +194,17 @@ export default function XeroSetupClient() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {!connection.connected ? (
+            {connectionStatus !== "Connected" && canConnect ? (
               <button
                 type="button"
-                onClick={() => void connectXero()}
-                className="inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white"
+                onClick={connectXero}
+                disabled={isConnecting}
+                className="inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Link2 size={16} />
-                Connect Xero
+                {isConnecting ? "Connecting…" : "Connect Xero"}
               </button>
-            ) : (
+            ) : connectionStatus === "Connected" && canConnect ? (
               <button
                 type="button"
                 onClick={() => void disconnectXero()}
@@ -151,7 +213,7 @@ export default function XeroSetupClient() {
                 <Unplug size={16} />
                 Disconnect Xero
               </button>
-            )}
+            ) : null}
             <button
               type="button"
               onClick={scrollToMapping}
@@ -160,32 +222,55 @@ export default function XeroSetupClient() {
               <Settings size={16} />
               Setup Mapping
             </button>
-            <Link
-              href="/integrations/xero/sync-centre"
-              className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-black text-white"
-            >
-              <ExternalLink size={16} />
-              Open Sync Centre
-            </Link>
+            {canView ? (
+              <Link
+                href="/integrations/xero/sync-centre"
+                className="inline-flex items-center gap-2 rounded-2xl bg-[#24183F] border border-[#A3E635]/30 px-5 py-3 text-sm font-black text-white"
+              >
+                <ExternalLink size={16} />
+                Open Sync Centre
+              </Link>
+            ) : null}
           </div>
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <InfoTile label="Connection Status" value={connection.connected ? "Connected" : "Not Connected"} highlight={connection.connected} />
-          <InfoTile label="Organisation Name" value={connection.organisationName} />
-          <InfoTile label="Tenant ID" value={connection.tenantId} />
-          <InfoTile label="Connected User" value={connection.connectedUser} />
+          <InfoTile label="Connection Status" value={connectionStatus} highlight={connectionStatus === "Connected"} status={connectionStatus} />
+          <InfoTile label="Organisation Name" value={connection.connected ? connection.organisationName : "—"} />
+          <InfoTile label="Tenant ID" value={connection.connected ? connection.tenantId : "—"} />
+          <InfoTile label="Connected User" value={connection.connected ? connection.connectedUser : "—"} />
           <InfoTile label="Connected Date" value={formatDate(connection.connectedAt)} />
           <InfoTile label="Last Sync" value={formatDate(connection.lastSyncAt)} />
         </div>
 
+        {connection.pendingOrganisationSelection && connection.availableOrganisations?.length ? (
+          <div className="mt-6 rounded-2xl border border-violet-200 bg-violet-50 p-4">
+            <h3 className="text-sm font-black text-violet-900">Select Xero Organisation</h3>
+            <p className="mt-1 text-xs font-semibold text-violet-700">
+              Multiple organisations were returned. Choose which Xero organisation belongs to this workspace.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {connection.availableOrganisations.map((org) => (
+                <button
+                  key={org.tenantId}
+                  type="button"
+                  onClick={() => void selectOrganisation(org.tenantId)}
+                  className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-white"
+                >
+                  {org.tenantName}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         {oauthReady ? (
-          <p className="mt-4 text-xs font-semibold text-emerald-700">
-            OAuth credentials detected — configure XERO_REDIRECT_URI to your deployed /api/integrations/xero/callback endpoint.
+          <p className="mt-4 text-xs font-semibold text-[#65A30D]">
+            Xero OAuth is configured. Connect Xero redirects to login.xero.com for real authorisation.
           </p>
         ) : (
-          <p className="mt-4 text-xs font-semibold text-slate-500">
-            Demo mode active. Set XERO_CLIENT_ID, XERO_CLIENT_SECRET and XERO_REDIRECT_URI in Vercel for live OAuth.
+          <p className="mt-4 text-xs font-semibold text-amber-700">
+            Set XERO_CLIENT_ID, XERO_CLIENT_SECRET and XERO_REDIRECT_URI to enable live Xero OAuth.
           </p>
         )}
       </section>
@@ -199,13 +284,15 @@ export default function XeroSetupClient() {
             <h2 className="text-2xl font-black text-slate-950">Account Mapping</h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">Saved per active client workspace for Xero posting.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => void saveMapping()}
-            className="inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white"
-          >
-            Save Mapping
-          </button>
+          {canEditMapping ? (
+            <button
+              type="button"
+              onClick={() => void saveMapping()}
+              className="inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white"
+            >
+              Save Mapping
+            </button>
+          ) : null}
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -239,11 +326,30 @@ export default function XeroSetupClient() {
   );
 }
 
-function InfoTile({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function InfoTile({
+  label,
+  value,
+  highlight,
+  status,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+  status?: XeroConnectionStatus;
+}) {
+  const statusClass =
+    status === "Connecting"
+      ? "border-amber-200 bg-amber-50 text-amber-800"
+      : highlight
+        ? "border-[#A3E635]/25 bg-[#A3E635]/10 text-[#4D7C0F]"
+        : "border-slate-100 bg-slate-50 text-slate-900";
+
   return (
-    <div className={`rounded-2xl border p-4 ${highlight ? "border-emerald-200 bg-emerald-50" : "border-slate-100 bg-slate-50"}`}>
+    <div className={`rounded-2xl border p-4 ${statusClass}`}>
       <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">{label}</div>
-      <div className={`mt-2 text-sm font-black ${highlight ? "text-emerald-800" : "text-slate-900"}`}>{value}</div>
+      <div className={`mt-2 text-sm font-black ${status === "Connecting" ? "text-amber-800" : highlight ? "text-[#4D7C0F]" : "text-slate-900"}`}>
+        {value}
+      </div>
     </div>
   );
 }

@@ -256,18 +256,22 @@ async function loadSupplierRows(supabase: SupabaseClient, companyId: string) {
 }
 
 export async function getSupplierIntelligenceCentreStats(
-  companyId = VYRON_DEFAULT_TENANT_ID
+  companyId?: string | null
 ): Promise<SupplierIntelligenceCentreStats> {
+  const emptyStats: SupplierIntelligenceCentreStats = {
+    totalSuppliers: 0,
+    activeSuppliers: 0,
+    highRiskSuppliers: 0,
+    inflationAlerts: 0,
+    openVariances: 0,
+    savingsOpportunities: 0,
+  };
+
+  if (!companyId) return emptyStats;
+
   const supabase = getSupabaseAdmin();
   if (!supabase) {
-    return {
-      totalSuppliers: 0,
-      activeSuppliers: 0,
-      highRiskSuppliers: 0,
-      inflationAlerts: 0,
-      openVariances: 0,
-      savingsOpportunities: 0,
-    };
+    return emptyStats;
   }
 
   const suppliers = await loadSupplierRows(supabase, companyId);
@@ -385,24 +389,7 @@ export async function getSupplierIntelligenceExecutiveSummary(
     value: round2(vals.reduce((s, v) => s + v, 0) / vals.length),
   }));
 
-  if (!scoreTrend.length) {
-    const avg = profiles.length
-      ? profiles.reduce((s, p) => s + p.profile.scorecard.overallScore, 0) / profiles.length
-      : 72;
-    scoreTrend = lastNWeeks(8).map((label) => ({ label, value: round2(avg + (Math.random() * 4 - 2)) }));
-  }
-
   return { topInflationSuppliers, topRiskSuppliers, topSavingsOpportunities, scoreTrend };
-}
-
-function lastNWeeks(n: number) {
-  const out: string[] = [];
-  for (let i = n - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i * 7);
-    out.push(d.toLocaleDateString("en-ZA", { day: "2-digit", month: "short" }));
-  }
-  return out;
 }
 
 export async function getSupplierIntelligenceProfile(

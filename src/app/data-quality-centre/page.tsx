@@ -10,8 +10,7 @@ export default async function DataQualityCentrePage() {
   ]);
 
   return (
-    <VyronCostShell
-      title="Data Quality Centre"
+    <VyronCostShell hidePageHeader title="Data Quality Centre"
       subtitle="MISSING LINKS · GP ISSUES · SUPPLIER QUALITY · DEMO CLEANUP"
     >
       <DataQualityCentreClient products={products} suppliers={suppliers} />

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
 import { persistSupplierLineMappings } from "@/lib/vyron-supplier-line-learning";
+import {
+  documentTenantAccessErrorResponse,
+  loadDocumentForTenant,
+  requireDocumentTenantId,
+} from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -31,18 +35,25 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ ok: false, error: "lineId and name are required." }, { status: 400 });
   }
 
-  const { data: document, error: docError } = await supabase
-    .from("vyron_documents")
-    .select("id, tenant_id, supplier_name, deleted_at")
-    .eq("id", documentId)
-    .maybeSingle();
-  if (docError) return NextResponse.json({ ok: false, error: docError.message }, { status: 500 });
-  if (!document || document.deleted_at) {
-    return NextResponse.json({ ok: false, error: "Document not found." }, { status: 404 });
+  let tenantId: string;
+  try {
+    tenantId = await requireDocumentTenantId();
+  } catch (error) {
+    return documentTenantAccessErrorResponse(error);
   }
 
-  const tenantId = (document.tenant_id as string) || VYRON_DEFAULT_TENANT_ID;
-  const supplierName = body.supplierName?.trim() || (document.supplier_name as string) || "";
+  try {
+    const document = await loadDocumentForTenant(
+      supabase,
+      documentId,
+      tenantId,
+      "id, tenant_id, supplier_name, deleted_at"
+    );
+    if (document.deleted_at) {
+      return NextResponse.json({ ok: false, error: "Document not found." }, { status: 404 });
+    }
+
+    const supplierName = body.supplierName?.trim() || (document.supplier_name as string) || "";
 
   let supplierId: string | null = null;
   if (supplierName) {
@@ -141,4 +152,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       currentPrice: Number(created.purchase_cost || purchaseCost),
     },
   });
+  } catch (error) {
+    return documentTenantAccessErrorResponse(error, "Create entity failed.");
+  }
 }

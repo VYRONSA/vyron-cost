@@ -86,7 +86,7 @@ export default function DocumentSupervisorSettings() {
           href="/document-intelligence"
           className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-violet-700"
         >
-          <ArrowLeft size={14} />
+          ← Back
           Document Intelligence
         </Link>
         <h2 className="text-2xl font-black text-slate-950">Supervisor settings</h2>
@@ -96,7 +96,7 @@ export default function DocumentSupervisorSettings() {
         </p>
       </div>
 
-      {message ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800">{message}</p> : null}
+      {message ? <p className="rounded-xl border border-[#A3E635]/25 bg-[#A3E635]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
       {error ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800">{error}</p> : null}
 
       <section className="rounded-[2rem] border border-violet-100 bg-white p-6 space-y-4">
@@ -141,7 +141,7 @@ export default function DocumentSupervisorSettings() {
         type="button"
         disabled={saving}
         onClick={() => void save()}
-        className="rounded-xl bg-violet-700 px-6 py-3 text-sm font-black text-white disabled:opacity-60"
+        className="rounded-xl bg-violet-700 px-6 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
       >
         {saving ? "Saving…" : "Save supervisor settings"}
       </button>

@@ -14,7 +14,7 @@ export default function VyronSurfaceCard({
   return (
     <div
       className={`${elevated ? "vyron-surface-card-elevated" : "vyron-surface-card"} ${
-        accent ? "ring-1 ring-[#B6D934]/40" : ""
+        accent ? "ring-1 ring-[#7C3AED]/25" : ""
       } ${className}`}
     >
       {children}

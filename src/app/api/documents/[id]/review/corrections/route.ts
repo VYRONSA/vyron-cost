@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { deriveDateFormat, deriveInvoicePattern } from "@/lib/vyron-document-review";
 import { persistSupplierLineMappings } from "@/lib/vyron-supplier-line-learning";
+import {
+  documentTenantAccessErrorResponse,
+  requireDocumentTenantId,
+  verifyDocumentTenantAccess,
+} from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -59,6 +64,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ ok: false, error: "Invalid payload." }, { status: 400 });
   }
 
+  let tenantId: string;
+  try {
+    tenantId = await requireDocumentTenantId();
+  } catch (error) {
+    return documentTenantAccessErrorResponse(error);
+  }
+
   const { data: existing, error: existingError } = await supabase
     .from("vyron_documents")
     .select("id, tenant_id, supplier_name, supplier_vat_number, customer_name, customer_vat_number, invoice_number, invoice_date, purchase_order_number, account_number, customer_reference, sales_representative, subtotal, vat, total, currency, deleted_at")
@@ -66,6 +78,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
     .maybeSingle();
   if (existingError) return NextResponse.json({ ok: false, error: existingError.message }, { status: 500 });
   if (!existing) return NextResponse.json({ ok: false, error: "Document not found." }, { status: 404 });
+  const denied = verifyDocumentTenantAccess(existing, tenantId);
+  if (denied) return denied;
   if (existing.deleted_at) return NextResponse.json({ ok: false, error: "Document was deleted." }, { status: 404 });
 
   await supabase

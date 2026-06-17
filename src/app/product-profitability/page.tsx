@@ -6,8 +6,7 @@ export default async function ProductProfitabilityPage() {
   const rows = await getProductIntelligence();
 
   return (
-    <VyronCostShell
-      title="Product Profitability Centre"
+    <VyronCostShell hidePageHeader title="Product Profitability Centre"
       subtitle="GP GAP · TARGET MARGIN · SUGGESTED PRICE · MONTHLY RISK"
     >
       <ProductProfitabilityCentreClient rows={rows} />

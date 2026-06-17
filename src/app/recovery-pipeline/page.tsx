@@ -9,8 +9,7 @@ export default async function RecoveryPipelinePage() {
   ]);
 
   return (
-    <VyronCostAiShell
-      title="Recovery Pipeline"
+    <VyronCostAiShell hidePageHeader title="Recovery Pipeline"
       subtitle="Track identified, investigating, in-progress, negotiated and recovered opportunities."
     >
       <RecoveryOpportunitiesClient initialOpportunities={opportunities} summary={summary} />

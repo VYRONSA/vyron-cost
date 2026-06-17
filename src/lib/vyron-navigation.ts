@@ -1,137 +1,190 @@
-
 import type { LucideIcon } from "lucide-react";
-import { BookOpen, Boxes, BrainCircuit, Building2, ClipboardList, Factory, FileSearch, Globe, History, Landmark, LayoutDashboard, PackageSearch, Radar, Settings, Sparkles, TrendingUp, Upload, Wallet, ChefHat, GraduationCap } from "lucide-react";
+import {
+  Boxes,
+  Building2,
+  ChefHat,
+  CheckSquare,
+  ClipboardList,
+  Factory,
+  FileSearch,
+  FileText,
+  Gavel,
+  History,
+  LayoutDashboard,
+  Link2,
+  MessageSquare,
+  Package,
+  Play,
+  PackageSearch,
+  ReceiptText,
+  Settings,
+  Target,
+  TrendingUp,
+  Upload,
+  Users,
+  Brain,
+  Shield,
+  BarChart3,
+  Search,
+  Building,
+  BookOpen,
+} from "lucide-react";
 
-export type VyronNavItem = { label: string; href: string; icon: LucideIcon };
-export type VyronNavSection = { id: string; section: string; items: VyronNavItem[] };
+export type VyronNavItem = {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+};
+
+export type VyronNavSection = {
+  id: string;
+  section: string;
+  items: VyronNavItem[];
+};
 
 export const vyronNavSections: VyronNavSection[] = [
-  {
-    id: "autonomous",
-    section: "AUTONOMOUS BI",
-    items: [
-      { label: "VYRON Command Centre", icon: Radar, href: "/vyron-command-centre" },
-      { label: "Business Health", icon: TrendingUp, href: "/vyron-command-centre/business-health" },
-      { label: "Early Warning", icon: Sparkles, href: "/vyron-command-centre/early-warning" },
-      { label: "Decision Engine", icon: BrainCircuit, href: "/vyron-command-centre/decisions" },
-      { label: "Ask VYRON", icon: BrainCircuit, href: "/vyron-command-centre/copilot" },
-      { label: "Strategic Intelligence", icon: ClipboardList, href: "/vyron-command-centre/strategic" }
-    ]
-  },
-  {
-    id: "executive",
-    section: "EXECUTIVE",
-    items: [
-      { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-      { label: "Executive Dashboard", icon: TrendingUp, href: "/executive-dashboard" },
-      { label: "AI CFO Command Centre", icon: Sparkles, href: "/ai-cfo-command-centre" },
-      { label: "Boardroom Insights", icon: ClipboardList, href: "/boardroom-insights" },
-      { label: "Finance Intelligence", icon: Wallet, href: "/finance-intelligence" },
-      { label: "Executive Reporting", icon: FileSearch, href: "/executive-reporting" },
-      { label: "Board Pack Centre", icon: ClipboardList, href: "/board-pack-centre" },
-      { label: "AI Procurement Manager", icon: BrainCircuit, href: "/ai-procurement-manager" },
-      { label: "Recovery Intelligence", icon: Wallet, href: "/financial-leakage" },
-      { label: "Accounting Exports", icon: Upload, href: "/accounting-export-centre" },
-      { label: "Budgeting", icon: Wallet, href: "/budgeting" },
-      { label: "Compliance Centre", icon: FileSearch, href: "/compliance-centre" },
-      { label: "Risk Centre", icon: TrendingUp, href: "/risk-centre" }
-    ]
-  },
-  {
-    id: "vyron-finance",
-    section: "VYRON FINANCE",
-    items: [
-      { label: "Finance Intelligence Hub", icon: Landmark, href: "/vyron-finance" },
-      { label: "Management Accounts", icon: ClipboardList, href: "/vyron-finance/management-accounts" },
-      { label: "Financial Statements", icon: FileSearch, href: "/vyron-finance/statements" },
-      { label: "AI Financial Review", icon: Sparkles, href: "/vyron-finance/financial-review" },
-      { label: "Audit Intelligence", icon: FileSearch, href: "/vyron-finance/audit-intelligence" },
-      { label: "Finance Imports", icon: Upload, href: "/vyron-finance/imports" },
-      { label: "Trial Balance AI", icon: TrendingUp, href: "/vyron-finance/trial-balance" },
-      { label: "Cash Flow Intelligence", icon: Wallet, href: "/vyron-finance/cash-flow" },
-      { label: "Executive Financial", icon: LayoutDashboard, href: "/vyron-finance/executive" },
-      { label: "Board Reporting", icon: ClipboardList, href: "/vyron-finance/board-reporting" },
-      { label: "AI CFO Assistant", icon: BrainCircuit, href: "/vyron-finance/cfo-assistant" }
-    ]
-  },
-  {
-    id: "enterprise-platform",
-    section: "ENTERPRISE PLATFORM",
-    items: [
-      { label: "Platform Hub", icon: Globe, href: "/enterprise-platform" },
-      { label: "Group Reporting", icon: TrendingUp, href: "/enterprise-platform/group-reporting" },
-      { label: "Group Command Centre", icon: LayoutDashboard, href: "/enterprise-platform/command-centre" },
-      { label: "Enterprise Search", icon: FileSearch, href: "/enterprise-platform/search" },
-      { label: "Enterprise AI", icon: BrainCircuit, href: "/enterprise-platform/ai-assistant" },
-      { label: "Benchmarking", icon: TrendingUp, href: "/enterprise-platform/benchmarking" },
-      { label: "Multi-Company", icon: Building2, href: "/enterprise-platform/multi-company" }
-    ]
-  },
-  {
-    id: "enterprise",
-    section: "ENTERPRISE",
-    items: [
-      { label: "Roles & Permissions", icon: Settings, href: "/enterprise/roles" },
-      { label: "Approval Matrix", icon: ClipboardList, href: "/enterprise/approval-matrix" },
-      { label: "Forecasting", icon: TrendingUp, href: "/enterprise/forecasting" },
-      { label: "Contracts", icon: Building2, href: "/contracts" },
-      { label: "Fraud Detection", icon: FileSearch, href: "/enterprise/fraud-detection" },
-      { label: "Auditor Workspace", icon: FileSearch, href: "/enterprise/auditor" },
-      { label: "Scenario Modelling", icon: TrendingUp, href: "/scenario-modelling" },
-      { label: "VYRON Academy", icon: GraduationCap, href: "/vyron-academy" }
-    ]
-  },
-  {
-    id: "costing",
-    section: "COSTING",
-    items: [
-      { label: "Products", icon: PackageSearch, href: "/products" },
-      { label: "Recipes & BOM", icon: ChefHat, href: "/recipes" },
-      { label: "Ingredients", icon: Boxes, href: "/ingredients" }
-    ]
-  },
   {
     id: "suppliers",
     section: "SUPPLIERS",
     items: [
       { label: "Suppliers", icon: Building2, href: "/suppliers" },
-      { label: "Supplier Intelligence", icon: TrendingUp, href: "/supplier-intelligence" }
-    ]
+      { label: "Supplier Intelligence", icon: TrendingUp, href: "/supplier-intelligence" },
+      { label: "Supplier Inflation", icon: TrendingUp, href: "/supplier-inflation" },
+      { label: "Supplier Invoice Import / Document Intelligence", icon: FileSearch, href: "/document-intelligence" },
+      { label: "Email Invoice Inbox", icon: Upload, href: "/email-invoice-inbox" },
+    ],
   },
+
   {
-    id: "operations",
-    section: "OPERATIONS",
+    id: "costing",
+    section: "COSTING",
     items: [
-      { label: "PO Dashboard", icon: ClipboardList, href: "/purchase-orders" },
+      { label: "Ingredients", icon: Boxes, href: "/ingredients" },
+      { label: "Products", icon: PackageSearch, href: "/products" },
+      { label: "Recipes & BOM", icon: ChefHat, href: "/recipes" },
+    ],
+  },
+
+  {
+    id: "procurement",
+    section: "PROCUREMENT",
+    items: [
+      { label: "Purchase Orders", icon: ClipboardList, href: "/purchase-orders" },
       { label: "PO List", icon: ClipboardList, href: "/purchase-orders/list" },
+      { label: "Approvals", icon: ClipboardList, href: "/purchase-orders/approvals" },
+      { label: "Back Orders", icon: Package, href: "/purchase-orders/back-orders" },
       { label: "Goods Receipts", icon: Upload, href: "/goods-receipts" },
       { label: "PO Settings", icon: Settings, href: "/purchase-orders/settings" },
-      { label: "Inventory", icon: PackageSearch, href: "/inventory" },
-      { label: "Production Dashboard", icon: Factory, href: "/manufacturing" },
-      { label: "Production Runs", icon: ClipboardList, href: "/manufacturing/runs" },
-      { label: "Finished Goods", icon: PackageSearch, href: "/manufacturing/finished-goods" },
-      { label: "Stock Master", icon: Boxes, href: "/inventory/stock" },
-      { label: "Stock Ledger", icon: ClipboardList, href: "/inventory/ledger" },
-      { label: "Document Intelligence", icon: FileSearch, href: "/document-intelligence" },
-      { label: "Supplier Learning", icon: GraduationCap, href: "/document-intelligence/supplier-learning" },
-      { label: "Price History", icon: History, href: "/document-intelligence/price-history/supplier" },
-      { label: "DI Supervisor Settings", icon: Settings, href: "/document-intelligence/settings" },
-      { label: "Email Invoice Inbox", icon: Upload, href: "/email-invoice-inbox" }
-    ]
+    ],
   },
+
+  {
+    id: "inventory",
+    section: "INVENTORY",
+    items: [
+      { label: "Inventory", icon: PackageSearch, href: "/inventory" },
+      { label: "Stock Master", icon: Boxes, href: "/inventory/stock" },
+      { label: "Inventory Ledger", icon: ClipboardList, href: "/inventory/ledger" },
+      { label: "Inventory Counts", icon: ClipboardList, href: "/inventory/counts" },
+      { label: "Inventory Intelligence", icon: Target, href: "/inventory-intelligence" },
+    ],
+  },
+
+  {
+    id: "manufacturing",
+    section: "MANUFACTURING",
+    items: [
+      { label: "Manufacturing Dashboard", icon: Factory, href: "/manufacturing" },
+      { label: "Production Runs", icon: ClipboardList, href: "/manufacturing/runs" },
+      { label: "Manufacturing History", icon: History, href: "/manufacturing/history" },
+      { label: "Finished Goods", icon: PackageSearch, href: "/manufacturing/finished-goods" },
+    ],
+  },
+
+  {
+    id: "customers",
+    section: "CUSTOMERS",
+    items: [
+      { label: "Customers", icon: Users, href: "/customers" },
+      { label: "Customer Invoices", icon: ReceiptText, href: "/customer-invoices" },
+    ],
+  },
+
+  {
+    id: "accounting",
+    section: "ACCOUNTING",
+    items: [
+      { label: "Xero Integration", icon: Link2, href: "/integrations/xero" },
+    ],
+  },
+
+  {
+    id: "reports",
+    section: "REPORTS",
+    items: [
+      { label: "Reports", icon: FileText, href: "/reports" },
+    ],
+  },
+
+  {
+    id: "executive",
+    section: "EXECUTIVE",
+    items: [
+      { label: "Executive Boardroom", icon: LayoutDashboard, href: "/executive-boardroom" },
+      { label: "AI Cost Intelligence", icon: Target, href: "/cost-intelligence" },
+      { label: "Business Health Centre", icon: BarChart3, href: "/business-health" },
+      { label: "Early Warning Centre", icon: Shield, href: "/early-warning" },
+      { label: "Predictive Risk Centre", icon: TrendingUp, href: "/predictive-risk" },
+      { label: "Root Cause Centre", icon: Search, href: "/root-cause" },
+      { label: "Decisions Centre", icon: Gavel, href: "/decisions" },
+      { label: "Actions Centre", icon: CheckSquare, href: "/actions" },
+      { label: "Execution Centre", icon: Play, href: "/execution-centre" },
+      { label: "Autonomous Command Centre", icon: Brain, href: "/autonomous-command-centre" },
+      { label: "Ask VYRON", icon: MessageSquare, href: "/ask-vyron" },
+      { label: "Strategic Intelligence", icon: Target, href: "/vyron-command-centre/strategic" },
+    ],
+  },
+
+  {
+    id: "enterprise",
+    section: "ENTERPRISE",
+    items: [
+      { label: "Group Reporting", icon: Building, href: "/enterprise-platform/group-reporting" },
+      { label: "Group Command Centre", icon: LayoutDashboard, href: "/enterprise-platform/command-centre" },
+      { label: "Enterprise Search", icon: Search, href: "/enterprise-platform/search" },
+      { label: "Enterprise AI", icon: Brain, href: "/enterprise-platform/ai-assistant" },
+      { label: "Multi-Company", icon: Building, href: "/enterprise-platform/multi-company" },
+    ],
+  },
+
   {
     id: "system",
     section: "SYSTEM",
     items: [
       { label: "Bulk Imports", icon: Upload, href: "/imports" },
       { label: "Training", icon: BookOpen, href: "/training" },
-      { label: "Settings", icon: Settings, href: "/settings" }
-    ]
-  }
+      { label: "Settings", icon: Settings, href: "/settings" },
+    ],
+  },
+
+  {
+    id: "admin",
+    section: "ADMIN",
+    items: [
+      { label: "Company Setup", icon: Settings, href: "/admin/company-setup" },
+      { label: "User Setup", icon: Users, href: "/admin/users" },
+      { label: "Import Centre", icon: Upload, href: "/admin/imports" },
+      { label: "Deployment Readiness", icon: Shield, href: "/deployment-readiness" },
+    ],
+  },
 ];
 
 export function isNavItemActive(pathname: string, href: string) {
   const base = href.split("#")[0];
-  if (base === "/dashboard") return pathname === "/dashboard";
+
+  if (base === "/dashboard") {
+    return pathname === "/dashboard";
+  }
+
   return pathname === base || pathname.startsWith(`${base}/`);
 }

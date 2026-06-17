@@ -86,8 +86,13 @@ export type WhatIfScenario = {
 export type ActionItem = { id: string; title: string; detail: string; href: string };
 export type ActionGroups = { urgent: ActionItem[]; review: ActionItem[]; healthy: ActionItem[] };
 
-export function shouldUseDemoData() {
-  if (isHandcraftedTenantEnabled()) return isHandcraftedDataReady();
+export async function shouldUseDemoData() {
+  const { shouldUseWorkspaceDemoData, getServerActiveWorkspace } = await import("@/lib/vyron-workspace-server");
+  if (isHandcraftedTenantEnabled()) {
+    return shouldUseWorkspaceDemoData();
+  }
+  const client = await getServerActiveWorkspace();
+  if (client) return false;
   return process.env.NEXT_PUBLIC_VYRON_DEMO !== "false";
 }
 

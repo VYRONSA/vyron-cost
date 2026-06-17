@@ -1,15 +1,18 @@
 export default function StatusPill({
   children,
-  tone = "emerald",
+  tone = "lime",
 }: {
   children: React.ReactNode;
-  tone?: "emerald" | "amber" | "red" | "slate";
+  tone?: "lime" | "warning" | "red" | "slate" | "brand" | "emerald" | "amber";
 }) {
   const styles = {
-    emerald: "bg-emerald-100 text-emerald-700",
-    amber: "bg-amber-100 text-amber-800",
-    red: "bg-red-100 text-red-700",
-    slate: "bg-slate-100 text-slate-700",
+    lime: "border border-[#A3E635]/30 bg-[#A3E635]/12 text-[#65A30D]",
+    emerald: "border border-[#A3E635]/30 bg-[#A3E635]/12 text-[#65A30D]",
+    warning: "border border-orange-400/35 bg-orange-500/15 text-orange-700",
+    amber: "border border-orange-400/35 bg-orange-500/15 text-orange-700",
+    red: "border border-red-400/30 bg-red-500/12 text-red-700",
+    slate: "border border-violet-400/25 bg-violet-500/10 text-slate-700",
+    brand: "border border-violet-400/30 bg-violet-500/15 text-violet-700",
   };
 
   return (

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VYRON_DOCUMENTS_BUCKET } from "@/lib/vyron-documents";
+import { deleteVyronDocument, type VyronDocumentDeleteRow } from "@/lib/vyron-document-delete";
+import {
+  documentTenantAccessErrorResponse,
+  requireDocumentTenantId,
+  requireDocumentsForTenant,
+} from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -22,53 +27,49 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "No documents selected." }, { status: 400 });
   }
 
-  const { data: documents, error: listError } = await supabase
-    .from("vyron_documents")
-    .select("id, storage_bucket, storage_path, deleted_at")
-    .in("id", documentIds);
-  if (listError) return NextResponse.json({ ok: false, error: listError.message }, { status: 500 });
+  try {
+    const tenantId = await requireDocumentTenantId();
+    const documents = await requireDocumentsForTenant<VyronDocumentDeleteRow & { tenant_id: string }>(
+      supabase,
+      documentIds,
+      tenantId,
+      "id, tenant_id, storage_bucket, storage_path, deleted_at"
+    );
 
-  let deletedCount = 0;
-  const warnings: string[] = [];
+    let deletedCount = 0;
+    let softDeletedCount = 0;
+    let permanentlyDeletedCount = 0;
+    const warnings: string[] = [];
 
-  for (const document of documents || []) {
-    if (document.deleted_at) continue;
-
-    if (document.storage_path) {
-      const { error: removeError } = await supabase.storage
-        .from(document.storage_bucket || VYRON_DOCUMENTS_BUCKET)
-        .remove([document.storage_path]);
-      if (removeError) warnings.push(`${document.id}: ${removeError.message}`);
+    for (const document of documents) {
+      const result = await deleteVyronDocument(supabase, document);
+      if (result.error) {
+        warnings.push(`${document.id}: ${result.error}`);
+        continue;
+      }
+      if (result.action === "skipped") continue;
+      deletedCount += 1;
+      if (result.action === "soft_deleted") softDeletedCount += 1;
+      if (result.action === "permanently_deleted") permanentlyDeletedCount += 1;
+      if (result.storageArchiveWarning) warnings.push(`${document.id}: ${result.storageArchiveWarning}`);
     }
 
-    const { error: updateError } = await supabase
-      .from("vyron_documents")
-      .update({
-        deleted_at: new Date().toISOString(),
-        status: "deleted",
-        processing_notes: "Soft deleted from Document Inbox (bulk).",
-      })
-      .eq("id", document.id);
-    if (updateError) {
-      warnings.push(`${document.id}: ${updateError.message}`);
-      continue;
-    }
+    const message =
+      permanentlyDeletedCount > 0 && softDeletedCount === 0
+        ? `Permanently removed ${permanentlyDeletedCount} document(s).`
+        : softDeletedCount > 0 && permanentlyDeletedCount === 0
+          ? `Deleted ${softDeletedCount} document(s) from active queues.`
+          : `Deleted ${deletedCount} document(s).`;
 
-    await supabase.from("vyron_document_extraction_logs").insert({
-      document_id: document.id,
-      stage: "delete",
-      status: "deleted",
-      model: null,
-      message: "Document soft deleted (bulk).",
-      metadata: { bulk: true },
+    return NextResponse.json({
+      ok: true,
+      deletedCount,
+      softDeletedCount,
+      permanentlyDeletedCount,
+      message,
+      warnings: warnings.length ? warnings : undefined,
     });
-    deletedCount += 1;
+  } catch (error) {
+    return documentTenantAccessErrorResponse(error, "Bulk delete failed.");
   }
-
-  return NextResponse.json({
-    ok: true,
-    deletedCount,
-    message: `Deleted ${deletedCount} document(s).`,
-    warnings: warnings.length ? warnings : undefined,
-  });
 }

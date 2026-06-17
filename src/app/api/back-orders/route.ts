@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 
@@ -20,16 +24,25 @@ function normalise(row: Record<string, unknown>) {
 }
 
 export async function GET() {
+  try {
+    await requireWorkspacePermission("purchase_orders.view");
+  } catch (error) {
+    return workspaceAccessErrorResponse(error, "Load failed.");
+  }
+
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
   }
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
 
+  const companyId = await resolveApiCompanyId();
+  if (!companyId) return NextResponse.json({ ok: true, backOrders: [] });
+
   const { data, error } = await supabase
     .from("vyron_cost_back_orders")
     .select("*, vyron_cost_purchase_orders(id, po_number, supplier_name_snapshot), vyron_cost_purchase_order_lines(id, purchase_order_id, item_name, unit, outstanding_qty)")
-    .eq("company_id", VYRON_DEFAULT_TENANT_ID)
+    .eq("company_id", companyId)
     .order("created_at", { ascending: false })
     .limit(500);
 
@@ -38,6 +51,7 @@ export async function GET() {
   const { data: fallback, error: fallbackError } = await supabase
     .from("vyron_cost_purchase_order_lines")
     .select("*, vyron_cost_purchase_orders(id, po_number, supplier_name_snapshot, status, company_id)")
+    .eq("company_id", companyId)
     .gt("outstanding_qty", 0)
     .limit(500);
 

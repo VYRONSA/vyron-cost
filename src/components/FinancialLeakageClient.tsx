@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import PaginatedTableControls from "@/components/PaginatedTableControls";
 import StatusPill from "@/components/StatusPill";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { formatMoney } from "@/lib/vyron-cost-data";
 import { LeakageFinding } from "@/lib/vyron-leakage-intelligence-data";
 
@@ -69,8 +70,23 @@ export default function FinancialLeakageClient({ findings }: { findings: Leakage
   const paged = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   return (
-    <div className="min-w-0 space-y-5">
-      <div className="flex items-center gap-3 rounded-[1.5rem] border border-violet-100 bg-violet-50/50 px-4 py-3">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "recovery",
+        badge: "Leakage Intelligence",
+        title: "Financial Leakage Intelligence Centre",
+        subtitle: "Surface recoverable margin leakage with explainable exposure and action tracking.",
+        outcomes: ["Prioritize highest-value leakage", "Separate duplicates from recurring loss", "Direct teams to recoverable actions"],
+        formulas: ["Potential Recovery = Exposure x Recovery Rate", "Duplicate exposure treated as once-off", "Non-duplicate leakage annualizes via monthly trends"],
+        intelligenceItems: [
+          { label: "Findings in scope", detail: `${filtered.length} records in current filter` },
+          { label: "Duplicate controls", detail: "Duplicate invoice risks isolated for immediate action" },
+          { label: "Recovery focus", detail: "Confidence-based recovery view aligns finance and ops" },
+        ],
+      }}
+    >
+      <div className="min-w-0 space-y-5">
+        <div className="flex items-center gap-3 rounded-[1.5rem] border border-violet-100 bg-violet-50/50 px-4 py-3">
         <Search size={20} className="shrink-0 text-violet-700" />
         <input
           value={search}
@@ -145,7 +161,8 @@ export default function FinancialLeakageClient({ findings }: { findings: Leakage
         </table>
       </div>
 
-      <PaginatedTableControls page={page} pageCount={pageCount} setPage={setPage} total={filtered.length} />
-    </div>
+        <PaginatedTableControls page={page} pageCount={pageCount} setPage={setPage} total={filtered.length} />
+      </div>
+    </VyronPremiumPageShell>
   );
 }

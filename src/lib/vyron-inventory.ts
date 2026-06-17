@@ -7,6 +7,7 @@ export type LedgerMovementType =
   | "Opening Balance"
   | "Purchase"
   | "GRN Receipt"
+  | "GRN Reversal"
   | "Production Consumption"
   | "Production Completion"
   | "Adjustment"
@@ -15,6 +16,7 @@ export type LedgerMovementType =
   | "Manual Correction"
   | "Cost Update"
   | "Customer Sale"
+  | "Customer Sale Reversal"
   | "Production Reversal";
 
 export type StockItemRow = {
@@ -128,6 +130,10 @@ export async function findOrCreateStockItem(
     maxLevel?: number;
   }
 ): Promise<StockItemRow> {
+  if (params.entityType === "finished_goods" && params.entityId) {
+    await assertCanonicalFinishedGoodsEntityId(supabase, companyId, params.entityId);
+  }
+
   let query = supabase
     .from("vyron_cost_stock_items")
     .select("*")
@@ -172,6 +178,59 @@ export async function findOrCreateStockItem(
   return data as StockItemRow;
 }
 
+export async function hasOpeningBalance(
+  supabase: SupabaseClient,
+  companyId: string,
+  stockItemId: string
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("vyron_cost_stock_ledger")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("stock_item_id", stockItemId)
+    .eq("movement_type", "Opening Balance")
+    .limit(1)
+    .maybeSingle();
+  return Boolean(data);
+}
+
+export async function postOpeningStockMovement(
+  supabase: SupabaseClient,
+  params: {
+    companyId: string;
+    stockItemId: string;
+    quantity: number;
+    unitCost: number;
+    movementDate?: string;
+    referenceNote?: string;
+    actor?: string;
+    allowDuplicate?: boolean;
+  }
+) {
+  if (params.quantity <= 0) {
+    throw new Error("Opening quantity must be greater than zero.");
+  }
+  if (!params.allowDuplicate) {
+    const exists = await hasOpeningBalance(supabase, params.companyId, params.stockItemId);
+    if (exists) {
+      throw new Error("Opening balance already posted for this stock item.");
+    }
+  }
+  return postStockMovement(supabase, {
+    companyId: params.companyId,
+    stockItemId: params.stockItemId,
+    movementType: "Opening Balance",
+    quantityIn: params.quantity,
+    unitCost: params.unitCost,
+    referenceType: "opening_stock",
+    referenceLabel: params.referenceNote || "Opening balance",
+    actor: params.actor || "user",
+    movementDate: params.movementDate,
+    updateAverageOnReceipt: true,
+    metadata: params.referenceNote ? { note: params.referenceNote } : {},
+  });
+}
+
 export async function postStockMovement(
   supabase: SupabaseClient,
   params: {
@@ -187,6 +246,8 @@ export async function postStockMovement(
     actor?: string;
     metadata?: Record<string, unknown>;
     updateAverageOnReceipt?: boolean;
+    movementDate?: string;
+    allowNegative?: boolean;
   }
 ) {
   const { data: item, error: loadErr } = await supabase
@@ -195,6 +256,9 @@ export async function postStockMovement(
     .eq("id", params.stockItemId)
     .single();
   if (loadErr || !item) throw new Error(loadErr?.message || "Stock item not found");
+  if (String(item.company_id) !== String(params.companyId)) {
+    throw new Error("Stock item does not belong to the active company.");
+  }
 
   const qtyIn = round4(params.quantityIn || 0);
   const qtyOut = round4(params.quantityOut || 0);
@@ -202,7 +266,11 @@ export async function postStockMovement(
   const oldAvg = Number(item.average_cost || item.current_cost || 0);
   const unitCost = round4(params.unitCost);
 
-  let newQty = round4(oldQty + qtyIn - qtyOut);
+  const projectedQty = round4(oldQty + qtyIn - qtyOut);
+  if (projectedQty < 0 && !params.allowNegative) {
+    throw new Error(`Insufficient stock: available ${oldQty}, required ${qtyOut}.`);
+  }
+  let newQty = projectedQty;
   if (newQty < 0) newQty = 0;
 
   let newAvg = oldAvg;
@@ -221,6 +289,7 @@ export async function postStockMovement(
   const { error: ledgerErr } = await supabase.from("vyron_cost_stock_ledger").insert({
     company_id: params.companyId,
     stock_item_id: params.stockItemId,
+    movement_date: params.movementDate || new Date().toISOString(),
     movement_type: params.movementType,
     quantity_in: qtyIn,
     quantity_out: qtyOut,
@@ -366,6 +435,278 @@ export async function syncStockItemsFromMasters(supabase: SupabaseClient, compan
   return { created, ingredientCount: ingredients?.length || 0, productCount: products?.length || 0 };
 }
 
+export async function hasGrnPostedStock(
+  supabase: SupabaseClient,
+  companyId: string,
+  grnId: string
+): Promise<boolean> {
+  const [{ count: receiptCount, error: receiptError }, { count: reversalCount, error: reversalError }] =
+    await Promise.all([
+      supabase
+        .from("vyron_cost_stock_ledger")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", companyId)
+        .eq("reference_type", "goods_receipt")
+        .eq("reference_id", grnId)
+        .eq("movement_type", "GRN Receipt"),
+      supabase
+        .from("vyron_cost_stock_ledger")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", companyId)
+        .eq("reference_id", grnId)
+        .eq("movement_type", "GRN Reversal"),
+    ]);
+  if (receiptError) throw new Error(receiptError.message);
+  if (reversalError) throw new Error(reversalError.message);
+  return (receiptCount || 0) > 0 && (reversalCount || 0) === 0;
+}
+
+export async function hasGrnReversalPosted(
+  supabase: SupabaseClient,
+  companyId: string,
+  grnId: string
+): Promise<boolean> {
+  const { count, error } = await supabase
+    .from("vyron_cost_stock_ledger")
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId)
+    .eq("reference_id", grnId)
+    .eq("movement_type", "GRN Reversal");
+  if (error) throw new Error(error.message);
+  return (count || 0) > 0;
+}
+
+/** Reject new stock writes keyed by vyron_finished_goods.id instead of product_id. */
+export async function assertCanonicalFinishedGoodsEntityId(
+  supabase: SupabaseClient,
+  companyId: string,
+  entityId: string
+) {
+  const { data: product, error: productError } = await supabase
+    .from("vyron_cost_products")
+    .select("id")
+    .eq("id", entityId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (productError) throw new Error(productError.message);
+  if (product) return;
+
+  const { data: finishedGood, error: fgError } = await supabase
+    .from("vyron_finished_goods")
+    .select("id")
+    .eq("id", entityId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (fgError) throw new Error(fgError.message);
+  if (finishedGood) {
+    throw new Error(
+      "Legacy finished goods stock bucket detected. Use product_id for stock operations and run the legacy FG migration report."
+    );
+  }
+}
+
+export type LegacyFgStockBucketRow = {
+  stockItemId: string;
+  itemCode: string;
+  description: string;
+  legacyEntityId: string;
+  suggestedProductId: string | null;
+  suggestedProductName: string | null;
+  qtyOnHand: number;
+  inventoryValue: number;
+};
+
+export type LegacyFgStockMigrationReport = {
+  companyId: string;
+  legacyBuckets: LegacyFgStockBucketRow[];
+  canonicalProductBuckets: number;
+  legacyQtyTotal: number;
+  legacyValueTotal: number;
+  generatedAt: string;
+};
+
+export async function detectLegacyFinishedGoodsStockBuckets(
+  supabase: SupabaseClient,
+  companyId: string
+): Promise<LegacyFgStockMigrationReport> {
+  const [{ data: stockItems, error: stockError }, { data: products, error: productError }, finishedGoods] =
+    await Promise.all([
+      supabase
+        .from("vyron_cost_stock_items")
+        .select("id, item_code, description, entity_id, qty_on_hand, inventory_value")
+        .eq("company_id", companyId)
+        .eq("entity_type", "finished_goods"),
+      supabase.from("vyron_cost_products").select("id, product_name, sku").eq("company_id", companyId),
+      listVyronFinishedGoods(supabase, companyId),
+    ]);
+  if (stockError) throw new Error(stockError.message);
+  if (productError) throw new Error(productError.message);
+
+  const productIds = new Set((products || []).map((row) => String(row.id)));
+  const finishedGoodById = new Map(finishedGoods.map((row) => [row.id, row]));
+  const productByName = new Map(
+    (products || []).map((row) => [String(row.product_name || "").toLowerCase(), row])
+  );
+  const productBySku = new Map((products || []).map((row) => [String(row.sku || "").toLowerCase(), row]));
+
+  const legacyBuckets: LegacyFgStockBucketRow[] = [];
+  let canonicalProductBuckets = 0;
+
+  for (const item of stockItems || []) {
+    const entityId = String(item.entity_id || "");
+    if (!entityId) continue;
+    if (productIds.has(entityId)) {
+      canonicalProductBuckets += 1;
+      continue;
+    }
+
+    const fg = finishedGoodById.get(entityId);
+    if (!fg) continue;
+
+    const fgName = fg.product_name.toLowerCase();
+    const fgCode = fg.product_code.toLowerCase();
+    const suggested =
+      productByName.get(fgName) ||
+      (fgCode ? productBySku.get(fgCode) : null) ||
+      (products || []).find((row) => String(row.sku || "").toLowerCase() === fgName) ||
+      null;
+
+    legacyBuckets.push({
+      stockItemId: String(item.id),
+      itemCode: String(item.item_code || ""),
+      description: String(item.description || fg.product_name),
+      legacyEntityId: entityId,
+      suggestedProductId: suggested ? String(suggested.id) : null,
+      suggestedProductName: suggested ? String(suggested.product_name) : null,
+      qtyOnHand: Number(item.qty_on_hand || 0),
+      inventoryValue: Number(item.inventory_value || 0),
+    });
+  }
+
+  const legacyQtyTotal = round4(legacyBuckets.reduce((sum, row) => sum + row.qtyOnHand, 0));
+  const legacyValueTotal = round2(legacyBuckets.reduce((sum, row) => sum + row.inventoryValue, 0));
+
+  return {
+    companyId,
+    legacyBuckets,
+    canonicalProductBuckets,
+    legacyQtyTotal,
+    legacyValueTotal,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+/** Remove partial stock postings when GRN creation fails before completion. */
+export async function rollbackGrnStockPostings(
+  supabase: SupabaseClient,
+  companyId: string,
+  grnId: string
+) {
+  const { data: movements, error } = await supabase
+    .from("vyron_cost_stock_ledger")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("reference_type", "goods_receipt")
+    .eq("reference_id", grnId)
+    .eq("movement_type", "GRN Receipt");
+  if (error) throw new Error(error.message);
+
+  for (const movement of movements || []) {
+    const qtyIn = round4(Number(movement.quantity_in || 0));
+    if (qtyIn <= 0) continue;
+
+    const { data: item, error: itemError } = await supabase
+      .from("vyron_cost_stock_items")
+      .select("*")
+      .eq("id", movement.stock_item_id)
+      .maybeSingle();
+    if (itemError) throw new Error(itemError.message);
+    if (item) {
+      const newQty = round4(Math.max(0, Number(item.qty_on_hand || 0) - qtyIn));
+      const avg = Number(item.average_cost || item.current_cost || 0);
+      await supabase
+        .from("vyron_cost_stock_items")
+        .update({
+          qty_on_hand: newQty,
+          inventory_value: round2(newQty * avg),
+          stock_status: computeStockStatus({ ...item, qty_on_hand: newQty }),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", item.id);
+    }
+
+    await supabase.from("vyron_cost_stock_ledger").delete().eq("id", movement.id);
+  }
+}
+
+export async function reverseStockFromGrn(
+  supabase: SupabaseClient,
+  params: {
+    companyId: string;
+    grnId: string;
+    grnNumber: string;
+    reason: string;
+    actor?: string;
+  }
+) {
+  const reason = params.reason.trim();
+  if (!reason) throw new Error("Reversal reason is required.");
+
+  if (await hasGrnReversalPosted(supabase, params.companyId, params.grnId)) {
+    throw new Error("GRN stock has already been reversed.");
+  }
+
+  const { data: receiptMovements, error } = await supabase
+    .from("vyron_cost_stock_ledger")
+    .select("*")
+    .eq("company_id", params.companyId)
+    .eq("reference_type", "goods_receipt")
+    .eq("reference_id", params.grnId)
+    .eq("movement_type", "GRN Receipt");
+  if (error) throw new Error(error.message);
+  if (!receiptMovements?.length) {
+    throw new Error("No stock movements found for this GRN.");
+  }
+
+  const actor = params.actor || "user";
+  const reversedAt = new Date().toISOString();
+
+  for (const movement of receiptMovements) {
+    const qtyIn = round4(Number(movement.quantity_in || 0));
+    if (qtyIn <= 0) continue;
+
+    await postStockMovement(supabase, {
+      companyId: params.companyId,
+      stockItemId: String(movement.stock_item_id),
+      movementType: "GRN Reversal",
+      quantityOut: qtyIn,
+      unitCost: Number(movement.unit_cost || 0),
+      referenceType: "goods_receipt_reversal",
+      referenceId: params.grnId,
+      referenceLabel: params.grnNumber,
+      actor,
+      allowNegative: true,
+      metadata: {
+        reason,
+        originalGrnId: params.grnId,
+        originalGrnNumber: params.grnNumber,
+        originalMovementId: movement.id,
+        reversedAt,
+      },
+    });
+
+    await writeInventoryAudit(supabase, {
+      companyId: params.companyId,
+      stockItemId: String(movement.stock_item_id),
+      eventType: "GRN Reversal",
+      actor,
+      detail: `GRN reversal ${params.grnNumber}: -${qtyIn} — ${reason}`,
+      referenceType: "goods_receipt_reversal",
+      referenceId: params.grnId,
+    });
+  }
+}
+
 export async function receiveStockFromGrn(
   supabase: SupabaseClient,
   params: {
@@ -388,7 +729,8 @@ export async function receiveStockFromGrn(
   const poLines = await supabase
     .from("vyron_cost_purchase_order_lines")
     .select("*")
-    .eq("purchase_order_id", params.purchaseOrderId);
+    .eq("purchase_order_id", params.purchaseOrderId)
+    .eq("company_id", params.companyId);
 
   const poLineMap = new Map((poLines.data || []).map((l) => [l.id as string, l]));
 
@@ -396,6 +738,7 @@ export async function receiveStockFromGrn(
     if (line.received_qty <= 0) continue;
     const poLine = line.purchase_order_line_id ? poLineMap.get(line.purchase_order_line_id) : null;
     const itemType = (line.item_type || poLine?.item_type || "ingredient") as string;
+    if (itemType === "non_stock") continue;
     const entityType: StockEntityType =
       itemType === "product" ? "finished_goods" : itemType === "packaging" ? "packaging" : "ingredient";
     const entityId = (line.item_id || poLine?.item_id) as string | null;
@@ -540,13 +883,88 @@ function finishedGoodStockValue(row: VyronFinishedGoodRow): number {
   return round2(qty * cost);
 }
 
-export async function listVyronFinishedGoods(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {
+export type StockBackedFinishedGoodOption = {
+  productId: string;
+  productName: string;
+  sku: string;
+  stockOnHand: number;
+  unitCost: number;
+  sellingPrice: number;
+  inventoryValue: number;
+  stockStatus?: string | null;
+};
+
+/** Finished goods for invoice picker — canonical qty from vyron_cost_stock_items keyed by product_id. */
+export async function listStockBackedFinishedGoodsForInvoice(
+  supabase: SupabaseClient,
+  companyId: string
+): Promise<StockBackedFinishedGoodOption[]> {
+  const { data: stockItems, error } = await supabase
+    .from("vyron_cost_stock_items")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("entity_type", "finished_goods")
+    .order("description");
+  if (error) throw new Error(error.message);
+
+  const productIds = Array.from(
+    new Set((stockItems || []).map((item) => String(item.entity_id || "")).filter(Boolean))
+  );
+
+  const { data: products, error: productError } = productIds.length
+    ? await supabase
+        .from("vyron_cost_products")
+        .select("id, product_name, sku, selling_price, total_cost, product_status")
+        .eq("company_id", companyId)
+        .in("id", productIds)
+    : { data: [], error: null };
+  if (productError) throw new Error(productError.message);
+
+  const productById = new Map((products || []).map((product) => [String(product.id), product]));
+
+  const results: StockBackedFinishedGoodOption[] = [];
+  for (const item of stockItems || []) {
+    const productId = String(item.entity_id || "");
+    if (!productId) continue;
+    const product = productById.get(productId);
+    if (product && String(product.product_status || "") === "Archived") continue;
+
+    results.push({
+      productId,
+      productName: String(product?.product_name || item.description || "Finished Good"),
+      sku: String(product?.sku || item.item_code || ""),
+      stockOnHand: Number(item.qty_on_hand || 0),
+      unitCost: Number(item.average_cost || product?.total_cost || 0),
+      sellingPrice: Number(product?.selling_price || 0),
+      inventoryValue: Number(item.inventory_value || 0),
+      stockStatus: item.stock_status as string | null | undefined,
+    });
+  }
+
+  return results.sort((a, b) => a.productName.localeCompare(b.productName));
+}
+
+export async function listVyronFinishedGoods(supabase: SupabaseClient, companyId: string) {
+  const scoped = await supabase
+    .from("vyron_finished_goods")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("product_name");
+  if (!scoped.error) {
+    let rows = (scoped.data || []) as VyronFinishedGoodRow[];
+    if (rows.some((row) => "active" in row)) {
+      rows = rows.filter((row) => row.active !== false);
+    }
+    return rows;
+  }
+
   const { data, error } = await supabase.from("vyron_finished_goods").select("*").order("product_name");
   if (error) throw new Error(error.message);
   let rows = (data || []) as VyronFinishedGoodRow[];
-  if (rows.some((row) => row.company_id != null)) {
-    rows = rows.filter((row) => !row.company_id || row.company_id === companyId);
+  if (!rows.some((row) => row.company_id != null && String(row.company_id).trim() !== "")) {
+    return [];
   }
+  rows = rows.filter((row) => row.company_id === companyId);
   if (rows.some((row) => "active" in row)) {
     rows = rows.filter((row) => row.active !== false);
   }
@@ -558,17 +976,24 @@ export async function getVyronFinishedGoodsInventoryValue(supabase: SupabaseClie
   return round2(rows.reduce((sum, row) => sum + finishedGoodStockValue(row), 0));
 }
 
-export async function listVyronStockMovements(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {
+export async function listVyronStockMovements(supabase: SupabaseClient, companyId: string) {
+  const scoped = await supabase
+    .from("vyron_stock_movements")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("movement_date", { ascending: false });
+  if (!scoped.error) return (scoped.data || []) as VyronStockMovementRow[];
+
   const { data, error } = await supabase
     .from("vyron_stock_movements")
     .select("*")
     .order("movement_date", { ascending: false });
   if (error) throw new Error(error.message);
-  let rows = (data || []) as VyronStockMovementRow[];
-  if (rows.some((row) => row.company_id != null)) {
-    rows = rows.filter((row) => !row.company_id || row.company_id === companyId);
+  const rows = (data || []) as VyronStockMovementRow[];
+  if (!rows.some((row) => row.company_id != null && String(row.company_id).trim() !== "")) {
+    return [];
   }
-  return rows;
+  return rows.filter((row) => row.company_id === companyId);
 }
 
 export async function getInventoryDashboardStats(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {
@@ -732,10 +1157,16 @@ export async function createStockCount(
 
 export async function updateStockCountLine(
   supabase: SupabaseClient,
+  companyId: string,
   lineId: string,
   countedQty: number
 ) {
-  const { data: line } = await supabase.from("vyron_cost_stock_count_lines").select("*").eq("id", lineId).single();
+  const { data: line } = await supabase
+    .from("vyron_cost_stock_count_lines")
+    .select("*")
+    .eq("id", lineId)
+    .eq("company_id", companyId)
+    .single();
   if (!line) throw new Error("Line not found");
   const settings = await getInventorySettings(supabase, line.company_id as string);
   const systemQty = Number(line.system_qty || 0);
@@ -757,16 +1188,35 @@ export async function updateStockCountLine(
     .eq("id", lineId);
 }
 
-export async function submitStockCount(supabase: SupabaseClient, countId: string) {
-  const { data: lines } = await supabase.from("vyron_cost_stock_count_lines").select("variance_value").eq("stock_count_id", countId);
+export async function getStockCountForCompany(supabase: SupabaseClient, companyId: string, countId: string) {
+  const { data: header, error } = await supabase
+    .from("vyron_cost_stock_counts")
+    .select("*")
+    .eq("id", countId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!header) throw new Error("Count not found.");
+  return header;
+}
+
+export async function submitStockCount(supabase: SupabaseClient, companyId: string, countId: string) {
+  await getStockCountForCompany(supabase, companyId, countId);
+  const { data: lines } = await supabase
+    .from("vyron_cost_stock_count_lines")
+    .select("variance_value")
+    .eq("stock_count_id", countId)
+    .eq("company_id", companyId);
   const totalVar = round2((lines || []).reduce((s, l) => s + Math.abs(Number(l.variance_value || 0)), 0));
   await supabase
     .from("vyron_cost_stock_counts")
     .update({ status: "Submitted", submitted_at: new Date().toISOString(), variance_value_total: totalVar, updated_at: new Date().toISOString() })
-    .eq("id", countId);
+    .eq("id", countId)
+    .eq("company_id", companyId);
 }
 
-export async function approveStockCount(supabase: SupabaseClient, countId: string, approvedBy: string) {
+export async function approveStockCount(supabase: SupabaseClient, companyId: string, countId: string, approvedBy: string) {
+  await getStockCountForCompany(supabase, companyId, countId);
   await supabase
     .from("vyron_cost_stock_counts")
     .update({
@@ -775,14 +1225,18 @@ export async function approveStockCount(supabase: SupabaseClient, countId: strin
       approved_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq("id", countId);
+    .eq("id", countId)
+    .eq("company_id", companyId);
 }
 
-export async function postStockCount(supabase: SupabaseClient, countId: string, actor = "supervisor") {
-  const { data: header } = await supabase.from("vyron_cost_stock_counts").select("*").eq("id", countId).single();
-  if (!header) throw new Error("Count not found");
+export async function postStockCount(supabase: SupabaseClient, companyId: string, countId: string, actor = "supervisor") {
+  const header = await getStockCountForCompany(supabase, companyId, countId);
 
-  const { data: lines } = await supabase.from("vyron_cost_stock_count_lines").select("*").eq("stock_count_id", countId);
+  const { data: lines } = await supabase
+    .from("vyron_cost_stock_count_lines")
+    .select("*")
+    .eq("stock_count_id", countId)
+    .eq("company_id", companyId);
   for (const line of lines || []) {
     const variance = Number(line.variance_qty || 0);
     if (Math.abs(variance) < 0.0001) continue;
@@ -817,7 +1271,8 @@ export async function postStockCount(supabase: SupabaseClient, countId: string, 
   await supabase
     .from("vyron_cost_stock_counts")
     .update({ status: "Posted", posted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-    .eq("id", countId);
+    .eq("id", countId)
+    .eq("company_id", companyId);
 
   await writeInventoryAudit(supabase, {
     companyId: header.company_id as string,
@@ -884,6 +1339,7 @@ export async function createReplenishmentPoFromAlert(
     .from("vyron_cost_low_stock_alerts")
     .select("*, vyron_cost_stock_items(*)")
     .eq("id", alertId)
+    .eq("company_id", companyId)
     .maybeSingle();
   if (error || !alert) throw new Error("Low stock alert not found.");
 

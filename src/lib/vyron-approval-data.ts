@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
-import { getHandcraftedProductIntelligence, isHandcraftedDataReady } from "@/lib/handcrafted-tenant";
+import { getHandcraftedProductIntelligence } from "@/lib/handcrafted-tenant";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 
 export type VyronApproval = {
   id: string;
@@ -96,15 +97,17 @@ function buildHandcraftedApprovals(): VyronApproval[] {
 }
 
 export async function getApprovals() {
-  if (isHandcraftedDataReady()) return buildHandcraftedApprovals();
-  if (!supabase) return demoApprovals;
+  const { useDemo, companyId } = await workspaceScope();
+  if (useDemo) return buildHandcraftedApprovals();
+  if (!companyId || !supabase) return [];
 
   const { data, error } = await supabase
     .from("vyron_cost_approvals")
     .select("*")
+    .eq("company_id", companyId)
     .order("created_at", { ascending: false });
 
-  if (error || !data || data.length === 0) return demoApprovals;
+  if (error || !data || data.length === 0) return [];
 
   return data as VyronApproval[];
 }

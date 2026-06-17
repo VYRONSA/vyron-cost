@@ -178,12 +178,18 @@ export async function loadBomSource(
   companyId: string,
   bomId: string
 ): Promise<{ bom: BomHeader; lines: BomLine[]; productId: string | null; productName: string | null; fromRecipe: boolean } | null> {
-  const { data: bom } = await supabase.from("vyron_cost_boms").select("*").eq("id", bomId).maybeSingle();
+  const { data: bom } = await supabase
+    .from("vyron_cost_boms")
+    .select("*")
+    .eq("id", bomId)
+    .eq("company_id", companyId)
+    .maybeSingle();
   if (bom) {
     const { data: lines } = await supabase
       .from("vyron_cost_bom_lines")
       .select("*")
       .eq("bom_id", bomId)
+      .eq("company_id", companyId)
       .order("sort_order", { ascending: true });
     let productName: string | null = null;
     if (bom.product_id) {
@@ -191,6 +197,7 @@ export async function loadBomSource(
         .from("vyron_cost_products")
         .select("product_name")
         .eq("id", bom.product_id)
+        .eq("company_id", companyId)
         .maybeSingle();
       productName = prod?.product_name ? String(prod.product_name) : null;
     }
@@ -203,13 +210,19 @@ export async function loadBomSource(
     };
   }
 
-  const { data: recipe } = await supabase.from("vyron_cost_recipes").select("*").eq("id", bomId).maybeSingle();
+  const { data: recipe } = await supabase
+    .from("vyron_cost_recipes")
+    .select("*")
+    .eq("id", bomId)
+    .eq("company_id", companyId)
+    .maybeSingle();
   if (!recipe) return null;
 
   const { data: items } = await supabase
     .from("vyron_cost_recipe_items")
     .select("*")
     .eq("recipe_id", bomId)
+    .eq("company_id", companyId)
     .order("created_at", { ascending: true });
 
   const lines: BomLine[] = (items || []).map((item, idx) => ({
@@ -230,6 +243,7 @@ export async function loadBomSource(
     .from("vyron_cost_product_recipe_links")
     .select("product_id, vyron_cost_products(product_name)")
     .eq("recipe_id", bomId)
+    .eq("company_id", companyId)
     .limit(1)
     .maybeSingle();
 
@@ -305,6 +319,7 @@ export async function resolveStockItemForLine(
       .from("vyron_cost_ingredients")
       .select("id, ingredient_name, category, purchase_unit, purchase_cost")
       .eq("id", line.ingredient_id)
+      .eq("company_id", companyId)
       .maybeSingle();
     if (ing) {
       const created = await findOrCreateStockItem(supabase, companyId, {
@@ -336,10 +351,19 @@ export async function validateProductionStock(
   companyId: string,
   runId: string
 ): Promise<{ ok: boolean; shortages: StockShortage[] }> {
+  const { data: run } = await supabase
+    .from("vyron_cost_production_runs")
+    .select("id")
+    .eq("id", runId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (!run) return { ok: false, shortages: [] };
+
   const { data: lines } = await supabase
     .from("vyron_cost_production_run_lines")
     .select("*")
-    .eq("production_run_id", runId);
+    .eq("production_run_id", runId)
+    .eq("company_id", companyId);
 
   const shortages: StockShortage[] = [];
   for (const line of lines || []) {
@@ -349,6 +373,7 @@ export async function validateProductionStock(
         .from("vyron_cost_stock_items")
         .select("qty_on_hand")
         .eq("id", line.stock_item_id)
+        .eq("company_id", companyId)
         .maybeSingle();
       available = Number(stockRow?.qty_on_hand || 0);
     } else {
@@ -412,8 +437,14 @@ export async function listProductionRuns(
   return rows;
 }
 
-export async function getProductionRun(supabase: SupabaseClient, runId: string): Promise<ProductionRunRow | null> {
-  const { data: run, error } = await supabase.from("vyron_cost_production_runs").select("*").eq("id", runId).maybeSingle();
+export async function getProductionRun(
+  supabase: SupabaseClient,
+  runId: string,
+  companyId?: string
+): Promise<ProductionRunRow | null> {
+  let query = supabase.from("vyron_cost_production_runs").select("*").eq("id", runId);
+  if (companyId) query = query.eq("company_id", companyId);
+  const { data: run, error } = await query.maybeSingle();
   if (error || !run) return null;
 
   const [lines, labour, overhead, wastage, audit] = await Promise.all([
@@ -573,16 +604,17 @@ export async function createProductionRun(
     detail: `Run ${runNumber} planned for ${plannedQty} units from ${source.bom.bom_name}`,
   });
 
-  return (await getProductionRun(supabase, runId)) as ProductionRunRow;
+  return (await getProductionRun(supabase, runId, companyId)) as ProductionRunRow;
 }
 
 export async function transitionProductionRun(
   supabase: SupabaseClient,
+  companyId: string,
   runId: string,
   action: "approve" | "start" | "cancel",
   actor = "user"
 ) {
-  const run = await getProductionRun(supabase, runId);
+  const run = await getProductionRun(supabase, runId, companyId);
   if (!run) throw new Error("Production run not found.");
 
   const transitions: Record<string, { from: ProductionStatus[]; to: ProductionStatus; fields: Record<string, unknown> }> = {
@@ -616,7 +648,8 @@ export async function transitionProductionRun(
   await supabase
     .from("vyron_cost_production_runs")
     .update({ status: t.to, ...t.fields, updated_at: new Date().toISOString() })
-    .eq("id", runId);
+    .eq("id", runId)
+    .eq("company_id", companyId);
 
   await writeProductionAudit(supabase, {
     companyId: run.company_id,
@@ -628,7 +661,7 @@ export async function transitionProductionRun(
     newValue: t.to,
   });
 
-  return getProductionRun(supabase, runId);
+  return getProductionRun(supabase, runId, companyId);
 }
 
 export type CompleteProductionInput = {
@@ -648,10 +681,11 @@ export type CompleteProductionInput = {
 
 export async function completeProductionRun(
   supabase: SupabaseClient,
+  companyId: string,
   runId: string,
   input: CompleteProductionInput
 ) {
-  const run = await getProductionRun(supabase, runId);
+  const run = await getProductionRun(supabase, runId, companyId);
   if (!run) throw new Error("Production run not found.");
   if (run.status !== "In Production" && run.status !== "Approved") {
     throw new Error(`Cannot complete from status ${run.status}. Start production first.`);
@@ -682,7 +716,8 @@ export async function completeProductionRun(
     await supabase
       .from("vyron_cost_production_run_lines")
       .update({ actual_qty: actualLineQty, actual_value: actualValue })
-      .eq("id", line.id);
+      .eq("id", line.id)
+      .eq("company_id", companyId);
 
     if (line.line_type === "Ingredient") ingredientActual += actualValue;
     else if (line.line_type === "Packaging") packagingActual += actualValue;
@@ -728,7 +763,7 @@ export async function completeProductionRun(
   let wasteIng = 0;
   let wastePkg = 0;
   let totalWasteQty = 0;
-  await supabase.from("vyron_cost_production_wastage").delete().eq("production_run_id", runId);
+  await supabase.from("vyron_cost_production_wastage").delete().eq("production_run_id", runId).eq("company_id", companyId);
   for (const w of input.wastage || []) {
     await supabase.from("vyron_cost_production_wastage").insert({
       company_id: run.company_id,
@@ -763,12 +798,16 @@ export async function completeProductionRun(
     Number(run.planned_cost) > 0 ? round2((Number(run.planned_cost) / Math.max(actualCost, 0.01)) * 100) : 100;
 
   if (run.product_id && actualQty > 0) {
-    await supabase.from("vyron_cost_products").update({ total_cost: costPerUnit }).eq("id", run.product_id);
+    await supabase
+      .from("vyron_cost_products")
+      .update({ total_cost: costPerUnit })
+      .eq("id", run.product_id)
+      .eq("company_id", companyId);
 
     const { data: fgStock } = await supabase
       .from("vyron_cost_stock_items")
       .select("id")
-      .eq("company_id", run.company_id)
+      .eq("company_id", companyId)
       .eq("entity_type", "finished_goods")
       .eq("entity_id", run.product_id)
       .maybeSingle();
@@ -779,6 +818,7 @@ export async function completeProductionRun(
         .from("vyron_cost_products")
         .select("product_name, category")
         .eq("id", run.product_id)
+        .eq("company_id", companyId)
         .maybeSingle();
       const created = await findOrCreateStockItem(supabase, run.company_id, {
         entityType: "finished_goods",
@@ -833,7 +873,8 @@ export async function completeProductionRun(
       completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq("id", runId);
+    .eq("id", runId)
+    .eq("company_id", companyId);
 
   await writeProductionAudit(supabase, {
     companyId: run.company_id,
@@ -879,13 +920,48 @@ export async function completeProductionRun(
     runId,
     runNumber: run.run_number,
     runDate: new Date().toISOString().slice(0, 10),
+    productId: run.product_id,
     productName: String(run.product_name_snapshot || "Finished Good"),
     actualQty,
     costPerUnit,
     consumptionLines,
   });
 
-  return getProductionRun(supabase, runId);
+  return getProductionRun(supabase, runId, companyId);
+}
+
+async function findFinishedGoodForCompany(
+  supabase: SupabaseClient,
+  companyId: string,
+  productName: string,
+  productId?: string | null
+) {
+  if (productId) {
+    const byId = await supabase
+      .from("vyron_finished_goods")
+      .select("*")
+      .eq("id", productId)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    if (!byId.error && byId.data) return byId.data;
+  }
+
+  const byName = await supabase
+    .from("vyron_finished_goods")
+    .select("*")
+    .eq("company_id", companyId)
+    .ilike("product_name", productName)
+    .limit(1)
+    .maybeSingle();
+  if (!byName.error && byName.data) return byName.data;
+
+  const loose = await supabase.from("vyron_finished_goods").select("*").ilike("product_name", productName).limit(5);
+  if (loose.error) return null;
+  const rows = loose.data || [];
+  if (!rows.some((row) => row.company_id != null && String(row.company_id).trim() !== "")) {
+    return null;
+  }
+  return rows.find((row) => row.company_id === companyId) || null;
 }
 
 async function syncManufacturingStockLayer(
@@ -895,6 +971,7 @@ async function syncManufacturingStockLayer(
     runId: string;
     runNumber: string;
     runDate: string;
+    productId?: string | null;
     productName: string;
     actualQty: number;
     costPerUnit: number;
@@ -926,8 +1003,7 @@ async function syncManufacturingStockLayer(
 
   if (params.actualQty <= 0) return;
 
-  const { data: fgRows } = await supabase.from("vyron_finished_goods").select("*").ilike("product_name", params.productName);
-  const fg = (fgRows || [])[0];
+  const fg = await findFinishedGoodForCompany(supabase, companyId, params.productName, params.productId);
   if (fg) {
     const nextStock = round4(Number(fg.current_stock || 0) + params.actualQty);
     const nextValue = round2(nextStock * params.costPerUnit);
@@ -960,6 +1036,7 @@ async function syncManufacturingStockLayer(
 
 export async function reverseProductionRun(
   supabase: SupabaseClient,
+  companyId: string,
   runId: string,
   input: { reason: string; actor?: string; supervisor?: boolean }
 ) {
@@ -967,7 +1044,7 @@ export async function reverseProductionRun(
     throw new Error("Supervisor approval required to reverse a completed batch.");
   }
 
-  const run = await getProductionRun(supabase, runId);
+  const run = await getProductionRun(supabase, runId, companyId);
   if (!run) throw new Error("Production run not found.");
   if (run.status !== "Completed") throw new Error(`Cannot reverse from status ${run.status}.`);
 
@@ -1054,8 +1131,7 @@ export async function reverseProductionRun(
     }
 
     const productName = String(run.product_name_snapshot || "Finished Good");
-    const { data: fgRows } = await supabase.from("vyron_finished_goods").select("*").ilike("product_name", productName);
-    const fg = (fgRows || [])[0];
+    const fg = await findFinishedGoodForCompany(supabase, companyId, productName, run.product_id);
     if (fg) {
       const nextStock = round4(Number(fg.current_stock || 0) - actualQty);
       const nextValue = round2(Math.max(0, nextStock) * costPerUnit);
@@ -1087,7 +1163,8 @@ export async function reverseProductionRun(
       status: "Reversed",
       updated_at: new Date().toISOString(),
     })
-    .eq("id", runId);
+    .eq("id", runId)
+    .eq("company_id", companyId);
 
   await writeProductionAudit(supabase, {
     companyId: run.company_id,
@@ -1100,7 +1177,7 @@ export async function reverseProductionRun(
     newValue: "Reversed",
   });
 
-  return getProductionRun(supabase, runId);
+  return getProductionRun(supabase, runId, companyId);
 }
 
 export async function getManufacturingDashboardStats(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {

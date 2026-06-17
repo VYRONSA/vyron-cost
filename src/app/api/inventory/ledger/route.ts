@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStockLedger } from "@/lib/vyron-inventory";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
+import { inventoryCompanyContextFromRequest } from "@/lib/vyron-inventory-api-context";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   if (!isSupabaseServiceRoleConfigured()) {
@@ -13,9 +19,12 @@ export async function GET(request: NextRequest) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   const stockItemId = request.nextUrl.searchParams.get("stockItemId") || undefined;
   try {
-    const entries = await getStockLedger(supabase, VYRON_DEFAULT_TENANT_ID, { stockItemId });
-    return NextResponse.json({ ok: true, entries });
+    await requireWorkspacePermission("inventory.view");
+    const companyId = await resolveApiCompanyIdWithContext(supabase, inventoryCompanyContextFromRequest(request));
+    if (!companyId) return NextResponse.json({ ok: true, entries: [] }, { headers: { "Cache-Control": "no-store" } });
+    const entries = await getStockLedger(supabase, companyId, { stockItemId });
+    return NextResponse.json({ ok: true, entries }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Ledger failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Ledger failed.");
   }
 }

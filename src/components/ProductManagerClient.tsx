@@ -4,14 +4,21 @@ import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import { Link2, Plus, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BomHeader } from "@/lib/vyron-cost-bom-data";
-import { calcGp, calcSuggestedPrice, CostProduct, formatMoney } from "@/lib/vyron-cost-product-data";
-import { supabase } from "@/lib/supabase";
+import { calcGp, calcSuggestedPrice, CostProduct, demoProducts, formatMoney } from "@/lib/vyron-cost-product-data";
+import { readActiveClient } from "@/lib/vyron-developer-client";
+import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
+import { useModulePermissions } from "@/hooks/useModulePermissions";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import {
+  VyronPremiumEmptyState,
+  VyronPremiumSectionHeading,
+} from "@/components/vyron-premium/VyronPremiumSprint";
 
 const emptyForm = {
   product_name: "",
-  product_category: "Handcrafted Pies",
+  product_category: "General",
   linked_bom_id: "",
   selling_price: "0",
   target_gp: "40",
@@ -19,12 +26,46 @@ const emptyForm = {
 };
 
 export default function ProductManagerClient({ initialProducts, boms }: { initialProducts: CostProduct[]; boms: BomHeader[] }) {
-  const [products, setProducts] = useState(initialProducts);
+  const { canCreate, canEdit, canDelete } = useModulePermissions("products");
+  const [products, setProducts] = useState<CostProduct[]>([]);
+  const [demoMode, setDemoMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const deleteConfirm = useConfirmDelete();
+
+  useEffect(() => {
+    const client = readActiveClient();
+    const demo = isDemoWorkspace(client);
+    setDemoMode(demo);
+
+    async function loadProducts() {
+      if (!demo) {
+        try {
+          const response = await fetch("/api/products");
+          const data = await response.json();
+          if (data.ok && Array.isArray(data.products)) {
+            setProducts(
+              (data.products as CostProduct[]).filter(
+                (p) => String(p.product_status || (p as { status?: string }).status || "Active") !== "Archived"
+              )
+            );
+            return;
+          }
+        } catch {
+          // fall through
+        }
+        setProducts([]);
+        return;
+      }
+      setProducts(initialProducts.length ? initialProducts : demoProducts);
+    }
+
+    loadProducts().finally(() => setLoading(false));
+  }, [initialProducts]);
 
   const selectedBom = boms.find((bom) => bom.id === form.linked_bom_id) || null;
   const cost = Number(selectedBom?.cost_per_unit || 0);
@@ -43,9 +84,26 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function edit(product: CostProduct) {
+    setEditingId(product.id);
+    setForm({
+      product_name: product.product_name || "",
+      product_category: product.product_category || product.category || "General",
+      linked_bom_id: product.linked_bom_id || "",
+      selling_price: String(product.selling_price || 0),
+      target_gp: String(product.target_gp || 0),
+      product_status: product.product_status || "Active",
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   async function save() {
     setMessage("");
     setErrorMessage("");
+    if (editingId ? !canEdit : !canCreate) {
+      setErrorMessage("You do not have permission to save products.");
+      return;
+    }
     if (!form.product_name.trim()) {
       setErrorMessage("Product name is required.");
       return;
@@ -64,35 +122,103 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
       product_status: form.product_status,
     };
 
-    if (!supabase) {
-      setProducts((current) => [...current, { id: crypto.randomUUID(), ...payload } as CostProduct]);
-      setMessage("Saved locally in demo mode.");
+    if (demoMode) {
+      const local = { id: editingId || crypto.randomUUID(), ...payload } as CostProduct;
+      setProducts((current) =>
+        editingId ? current.map((p) => (p.id === editingId ? local : p)) : [...current, local]
+      );
+      setMessage("Product saved in demo mode.");
       setForm(emptyForm);
+      setEditingId(null);
       return;
     }
 
-    const { data, error } = await supabase.from("vyron_cost_products").insert(payload).select("*").single();
-    if (error) {
-      setErrorMessage(error.message);
-      return;
+    try {
+      const response = await fetch(editingId ? `/api/products/${editingId}` : "/api/products", {
+        method: editingId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!data.ok) {
+        setErrorMessage(data.error || "Failed to save product.");
+        return;
+      }
+      const saved = data.product as CostProduct;
+      setProducts((current) =>
+        editingId
+          ? current.map((p) => (p.id === editingId ? saved : p))
+          : [...current, saved].sort((a, b) => a.product_name.localeCompare(b.product_name))
+      );
+      setMessage("Product saved and linked to BOM.");
+      setForm(emptyForm);
+      setEditingId(null);
+    } catch {
+      setErrorMessage("Failed to save product.");
     }
-    setProducts((current) => [...current, data as CostProduct].sort((a, b) => a.product_name.localeCompare(b.product_name)));
-    setMessage("Product saved and linked to BOM.");
-    setForm(emptyForm);
   }
 
   async function remove(id: string) {
+    if (!canDelete) {
+      setErrorMessage("You do not have permission to archive products.");
+      return;
+    }
+    if (!demoMode) {
+      try {
+        const response = await fetch(`/api/products/${id}`, { method: "DELETE" });
+        const data = await response.json();
+        if (!data.ok) {
+          setErrorMessage(data.error || "Failed to archive product.");
+          return;
+        }
+      } catch {
+        setErrorMessage("Failed to archive product.");
+        return;
+      }
+    }
     setProducts((current) => current.filter((product) => product.id !== id));
-    if (supabase && !id.startsWith("demo")) await supabase.from("vyron_cost_products").delete().eq("id", id);
+    setMessage("Product archived.");
   }
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[0.75fr_1.35fr]">
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "products",
+        badge: "Premium Product Workspace",
+        title: "Product Costing",
+        subtitle: "Link finished products to BOMs, monitor gross profit, target pricing and margin gaps before they erode wealth.",
+        outcomes: [
+          "See true cost per unit from linked BOMs",
+          "Compare actual GP against target margin",
+          "Spot under-priced products before they ship",
+          "Protect margin with suggested selling prices",
+        ],
+        formulaEyebrow: "Margin",
+        formulaTitle: "Product profitability formulas",
+        formulas: [
+          { label: "Gross Profit %", formula: "(Selling Price − Cost / Unit) ÷ Selling Price × 100" },
+          { label: "Suggested Price", formula: "Cost / Unit ÷ (1 − Target GP%)" },
+          { label: "Monthly Risk", formula: "GP gap × units sold per month" },
+        ],
+        intelligenceEyebrow: "Cost signals",
+        intelligenceTitle: "What to watch",
+        intelligenceItems: [
+          { label: "BOM linkage", detail: "Products without a BOM cannot show true cost or GP discipline." },
+          { label: "GP gap", detail: "When actual GP sits below target, margin is leaking on every sale." },
+          { label: "Repricing signal", detail: "Use suggested price to protect target margin without guesswork." },
+        ],
+      }}
+      showControlPanel={false}
+    >
+      <VyronPremiumSectionHeading eyebrow="Product master" title="Finished products" subtitle="Create, link and monitor product margin performance." />
+
+      <div className={`grid min-w-0 max-w-full grid-cols-1 gap-6 ${canCreate || canEdit ? "xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)]" : ""}`}>
+      {canCreate || canEdit ? (
+      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
         <div className="mb-5 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700"><Plus size={22} /></div>
           <div>
-            <h2 className="text-2xl font-black text-slate-900">Add Finished Product</h2>
+            <h2 className="text-2xl font-black text-slate-900">{editingId ? "Edit Finished Product" : "Add Finished Product"}</h2>
             <p className="text-sm font-semibold text-slate-500">Link product to BOM to calculate cost and GP.</p>
           </div>
         </div>
@@ -115,17 +241,18 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
 
           <div className="grid gap-3 rounded-3xl bg-slate-50 p-5 md:grid-cols-3">
             <div><div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">BOM Cost</div><div className="mt-1 text-2xl font-black text-slate-900">{formatMoney(cost)}</div></div>
-            <div><div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Actual GP</div><div className={`mt-1 text-2xl font-black ${gp < target ? "text-red-600" : "text-emerald-600"}`}>{gp.toFixed(1)}%</div></div>
-            <div><div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Suggested</div><div className="mt-1 text-2xl font-black text-emerald-600">{formatMoney(suggested)}</div></div>
+            <div><div className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Actual GP</div><div className={`mt-1 text-2xl font-black ${gp < target ? "text-orange-400" : "text-[#A3E635]"}`}>{gp.toFixed(1)}%</div></div>
+            <div><div className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Suggested</div><div className="mt-1 text-2xl font-black text-[#A3E635]">{formatMoney(suggested)}</div></div>
           </div>
 
-          <button onClick={save} className="rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-white">Save Finished Product</button>
-          {message && <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{message}</div>}
+          <button onClick={save} className="rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[#F8FAFC]">Save Finished Product</button>
+          {message && <div className="rounded-2xl border border-[#A3E635]/25 bg-[#A3E635]/10 px-4 py-3 text-sm font-bold text-[#A3E635]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div>}
         </div>
       </div>
+      ) : null}
 
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
         <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-2xl font-black text-slate-900">Finished Products</h2>
@@ -142,6 +269,22 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
             <div className="grid grid-cols-[240px_160px_160px_120px_120px_110px_120px] bg-slate-50 px-5 py-4 text-xs font-black uppercase tracking-[0.14em] text-slate-500">
               <div>Product</div><div>Category</div><div>BOM</div><div>Cost</div><div>Price</div><div>GP</div><div>Actions</div>
             </div>
+            {loading ? (
+              <div className="border-t border-slate-100 px-5 py-10 text-center text-sm font-semibold text-slate-500">
+                Loading products…
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="border-t border-slate-100 p-5">
+                <VyronPremiumEmptyState
+                  steps={[
+                    "Create a finished product and link it to a BOM.",
+                    "Set selling price and target GP percentage.",
+                    "Review actual GP against your margin goal.",
+                    "Open product detail to analyse cost lines and repricing.",
+                  ]}
+                />
+              </div>
+            ) : null}
             {filtered.map((product) => {
               const linked = boms.find((bom) => bom.id === product.linked_bom_id);
               const productGp = Number(product.calculated_gp || calcGp(Number(product.selling_price || 0), Number(product.total_cost || 0)));
@@ -152,10 +295,15 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
                   <div className="truncate font-bold text-violet-700">{linked?.bom_name || "Not linked"}</div>
                   <div className="font-black text-slate-900">{formatMoney(product.total_cost)}</div>
                   <div className="font-black text-slate-900">{formatMoney(product.selling_price)}</div>
-                  <div className={`font-black ${productGp < Number(product.target_gp || 0) ? "text-red-600" : "text-emerald-600"}`}>{productGp.toFixed(1)}%</div>
+                  <div className={`font-black ${productGp < Number(product.target_gp || 0) ? "text-orange-400" : "text-[#A3E635]"}`}>{productGp.toFixed(1)}%</div>
                   <div className="flex gap-2">
+                    {canEdit ? (
+                      <button onClick={() => edit(product)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Edit</button>
+                    ) : null}
                     <Link href={`/products/${product.id}`} className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">Open</Link>
-                    <button onClick={() => deleteConfirm.requestDelete(() => remove(product.id))} className="rounded-xl bg-red-50 p-2 text-red-700"><Trash2 size={16} /></button>
+                    {canDelete ? (
+                      <button onClick={() => deleteConfirm.requestDelete(() => remove(product.id))} className="rounded-xl bg-red-50 p-2 text-red-700"><Trash2 size={16} /></button>
+                    ) : null}
                   </div>
                 </div>
               );
@@ -170,6 +318,7 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
           </div>
         </div>
       </div>
+      </div>
       <ConfirmDeleteDialog
         open={deleteConfirm.open}
         message={deleteConfirm.message}
@@ -177,6 +326,6 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
         onCancel={deleteConfirm.cancel}
         onConfirm={() => void deleteConfirm.confirm()}
       />
-    </section>
+    </VyronPremiumPageShell>
   );
 }

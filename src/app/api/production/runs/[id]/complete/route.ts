@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { completeProductionRun } from "@/lib/vyron-manufacturing";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import {
+  manufacturingCompanyContextFromRequest,
+  requireManufacturingCompanyId,
+} from "@/lib/vyron-manufacturing-api-context";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   if (!isSupabaseServiceRoleConfigured()) {
@@ -13,7 +22,9 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   const { id } = await context.params;
   const body = await request.json().catch(() => ({}));
   try {
-    const run = await completeProductionRun(supabase, id, {
+    await requireWorkspacePermission("manufacturing.runs.complete");
+    const companyId = await requireManufacturingCompanyId(supabase, manufacturingCompanyContextFromRequest(request, body));
+    const run = await completeProductionRun(supabase, companyId, id, {
       actual_qty: Number(body.actual_qty || 0),
       line_actuals: body.line_actuals,
       wastage: body.wastage,
@@ -27,6 +38,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       const shortages = (error as Error & { shortages?: unknown }).shortages;
       return NextResponse.json({ ok: false, error: "Stock shortage", shortages }, { status: 409 });
     }
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Complete failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Complete failed.");
   }
 }

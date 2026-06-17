@@ -3,7 +3,7 @@ import CustomerStatementsClient from "@/components/vyron-cost/customers/Customer
 
 export default function Page() {
   return (
-    <VyronCostAiShell title="Customer Statements" subtitle="OUTSTANDING BALANCE, INVOICE HISTORY, PRINT AND EMAIL STATEMENTS.">
+    <VyronCostAiShell hidePageHeader title="Customer Statements" subtitle="OUTSTANDING BALANCE, INVOICE HISTORY, PRINT AND EMAIL STATEMENTS.">
       <CustomerStatementsClient />
     </VyronCostAiShell>
   );

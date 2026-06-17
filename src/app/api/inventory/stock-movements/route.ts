@@ -1,18 +1,29 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { listVyronStockMovements } from "@/lib/vyron-inventory";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
+import { inventoryCompanyContextFromRequest } from "@/lib/vyron-inventory-api-context";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
   }
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   try {
-    const rows = await listVyronStockMovements(supabase, VYRON_DEFAULT_TENANT_ID);
+    await requireWorkspacePermission("inventory.view");
+    const companyId = await resolveApiCompanyIdWithContext(supabase, inventoryCompanyContextFromRequest(request));
+    if (!companyId) {
+      return NextResponse.json({ ok: true, movements: [] }, { headers: { "Cache-Control": "no-store" } });
+    }
+    const rows = await listVyronStockMovements(supabase, companyId);
     const movements = rows.map((row) => ({
       id: row.id,
       movement_date: row.movement_date,
@@ -29,8 +40,8 @@ export async function GET() {
       location_name: null,
       notes: row.notes,
     }));
-    return NextResponse.json({ ok: true, movements });
+    return NextResponse.json({ ok: true, movements }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Stock movements failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Stock movements failed.");
   }
 }

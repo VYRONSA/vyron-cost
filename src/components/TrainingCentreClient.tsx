@@ -1,6 +1,7 @@
 "use client";
 
 import { BookOpen, Download, PlayCircle } from "lucide-react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 const sections = [
   ["1. Add suppliers", "Capture supplier name, category, contact email, invoice email and payment terms."],
@@ -29,32 +30,40 @@ function downloadManual() {
 
 export default function TrainingCentreClient() {
   return (
-    <section className="grid gap-6">
-      <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-        <BookOpen size={34} className="text-emerald-300" />
-        <h2 className="mt-5 text-3xl font-black">Training Centre</h2>
-        <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
-          Client-facing training for every step from setup to costing, recovery and reporting.
-        </p>
-        <button
-          type="button"
-          onClick={downloadManual}
-          className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-emerald-400 px-5 py-3 text-sm font-black text-[#07110d]"
-        >
-          <Download size={17} />
-          Download manual
-        </button>
-      </div>
+    <VyronPremiumPageShell
+      config={{
+        title: "Training Centre",
+        subtitle: "Premium VYRON COST workflow for training centre.",
+        formulas: ["GP % = (Price - Cost) / Price"],
+      }}
+    >
+      <section className="grid gap-6">
+            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+              <BookOpen size={34} className="text-[#A3E635]" />
+              <h2 className="mt-5 text-3xl font-black">Training Centre</h2>
+              <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
+                Client-facing training for every step from setup to costing, recovery and reporting.
+              </p>
+              <button
+                type="button"
+                onClick={downloadManual}
+                className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]"
+              >
+                <Download size={17} />
+                Download manual
+              </button>
+            </div>
 
-      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {sections.map(([title, detail]) => (
-          <div key={title} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-            <PlayCircle size={28} className="text-emerald-700" />
-            <h3 className="mt-5 text-xl font-black text-[#07110d]">{title}</h3>
-            <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">{detail}</p>
-          </div>
-        ))}
-      </section>
-    </section>
+            <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {sections.map(([title, detail]) => (
+                <div key={title} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+                  <PlayCircle size={28} className="text-[#65A30D]" />
+                  <h3 className="mt-5 text-xl font-black text-[#F8FAFC]">{title}</h3>
+                  <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">{detail}</p>
+                </div>
+              ))}
+            </section>
+          </section>
+    </VyronPremiumPageShell>
   );
 }

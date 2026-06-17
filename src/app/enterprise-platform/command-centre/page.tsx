@@ -5,7 +5,7 @@ import { getEnterprisePlatformPayload } from "@/lib/vyron-enterprise-platform-ar
 export default async function GroupCommandCentrePage() {
   const { groupCommandCentre } = await getEnterprisePlatformPayload();
   return (
-    <VyronCostShell title="Group Executive Command Centre" subtitle="PROCUREMENT · INVENTORY · MFG · RECOVERY · FINANCE · RISK · AI">
+    <VyronCostShell hidePageHeader title="Group Executive Command Centre" subtitle="PROCUREMENT · INVENTORY · MFG · RECOVERY · FINANCE · RISK · AI">
       <PlatformNav />
       <GroupCommandCentreClient cc={groupCommandCentre} />
     </VyronCostShell>

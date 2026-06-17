@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { VYRON_DOCUMENTS_BUCKET } from "@/lib/vyron-documents";
+import {
+  documentTenantAccessErrorResponse,
+  loadDocumentForTenant,
+  requireDocumentTenantId,
+} from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -20,23 +25,19 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
   }
 
-  const { data: document, error: docError } = await supabase
-    .from("vyron_documents")
-    .select("id, storage_bucket, storage_path, original_filename, file_mime, deleted_at")
-    .eq("id", documentId)
-    .maybeSingle();
+  try {
+    const tenantId = await requireDocumentTenantId();
+    const document = await loadDocumentForTenant(
+      supabase,
+      documentId,
+      tenantId,
+      "id, tenant_id, storage_bucket, storage_path, original_filename, file_mime, deleted_at"
+    );
+    if (document.deleted_at) {
+      return NextResponse.json({ ok: false, error: "Document was deleted." }, { status: 404 });
+    }
 
-  if (docError) {
-    return NextResponse.json({ ok: false, error: docError.message }, { status: 500 });
-  }
-  if (!document) {
-    return NextResponse.json({ ok: false, error: "Document not found." }, { status: 404 });
-  }
-  if (document.deleted_at) {
-    return NextResponse.json({ ok: false, error: "Document was deleted." }, { status: 404 });
-  }
-
-  const bucket = (document.storage_bucket as string) || VYRON_DOCUMENTS_BUCKET;
+    const bucket = (document.storage_bucket as string) || VYRON_DOCUMENTS_BUCKET;
   const path = document.storage_path as string | null;
   if (!path) {
     return NextResponse.json(
@@ -64,4 +65,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     storageBucket: bucket,
     storagePath: path,
   });
+  } catch (error) {
+    return documentTenantAccessErrorResponse(error, "Preview failed.");
+  }
 }

@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createReplenishmentPoFromAlert } from "@/lib/vyron-inventory";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import {
+  inventoryCompanyContextFromRequest,
+  requireInventoryCompanyId,
+} from "@/lib/vyron-inventory-api-context";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   if (!isSupabaseServiceRoleConfigured()) {
@@ -14,9 +22,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   if (!body.alertId) return NextResponse.json({ ok: false, error: "alertId is required." }, { status: 400 });
   try {
-    const po = await createReplenishmentPoFromAlert(supabase, VYRON_DEFAULT_TENANT_ID, String(body.alertId), String(body.actor || "user"));
+    await requireWorkspacePermission("purchase_orders.create");
+    const companyId = await requireInventoryCompanyId(supabase, inventoryCompanyContextFromRequest(request, body));
+    const po = await createReplenishmentPoFromAlert(supabase, companyId, String(body.alertId), String(body.actor || "user"));
     return NextResponse.json({ ok: true, po });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "PO creation failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "PO creation failed.");
   }
 }

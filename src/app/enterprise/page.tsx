@@ -34,8 +34,7 @@ export default async function EnterprisePage() {
   }
 
   return (
-    <VyronCostShell
-      title="Enterprise Intelligence"
+    <VyronCostShell hidePageHeader title="Enterprise Intelligence"
       subtitle="LIVE PROFIT PROTECTION"
     >
       <ExecutiveTopBar />
@@ -80,11 +79,11 @@ export default async function EnterprisePage() {
 
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_20px_60px_rgba(6,20,14,0.28)]">
-          <div className="rounded-2xl bg-emerald-400/15 p-3 text-emerald-300 w-fit">
+          <div className="rounded-2xl bg-[#A3E635]/12 p-3 text-[#A3E635] w-fit">
             <BrainCircuit size={24} />
           </div>
 
-          <div className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-emerald-300">
+          <div className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#A3E635]">
             INVOICE AI
           </div>
 
@@ -99,11 +98,11 @@ export default async function EnterprisePage() {
         </div>
 
         <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-          <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-700 w-fit">
+          <div className="rounded-2xl bg-[#A3E635]/10 p-3 text-[#65A30D] w-fit">
             <Gauge size={24} />
           </div>
 
-          <div className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-emerald-700">
+          <div className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#65A30D]">
             YIELD ENGINE
           </div>
 

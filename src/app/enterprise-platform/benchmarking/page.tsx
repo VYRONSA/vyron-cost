@@ -5,7 +5,7 @@ import { getEnterprisePlatformPayload } from "@/lib/vyron-enterprise-platform-ar
 export default async function BenchmarkingPage() {
   const { benchmarking } = await getEnterprisePlatformPayload();
   return (
-    <VyronCostShell title="Benchmarking Engine" subtitle="BRANCHES · COMPANIES · BEST · WORST · OPPORTUNITIES">
+    <VyronCostShell hidePageHeader title="Benchmarking Engine" subtitle="BRANCHES · COMPANIES · BEST · WORST · OPPORTUNITIES">
       <PlatformNav />
       <BenchmarkingClient engines={benchmarking} />
     </VyronCostShell>

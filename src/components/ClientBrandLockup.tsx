@@ -1,6 +1,9 @@
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
-import { HANDCRAFTED_COMPANY } from "@/lib/handcrafted-tenant";
+import { Building2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { readActiveClient, type ActiveClient } from "@/lib/vyron-developer-client";
 
 type Props = {
   variant?: "dark" | "light";
@@ -9,52 +12,55 @@ type Props = {
 };
 
 export default function ClientBrandLockup({ variant = "dark", showPoweredBy = true, size = "md" }: Props) {
-  const company = HANDCRAFTED_COMPANY;
+  const [client, setClient] = useState<ActiveClient | null>(null);
+
+  useEffect(() => {
+    function refresh() {
+      setClient(readActiveClient());
+    }
+    refresh();
+    window.addEventListener("storage", refresh);
+    window.addEventListener("vyron-active-client-changed", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("vyron-active-client-changed", refresh);
+    };
+  }, []);
+
   const logoSize = size === "lg" ? 56 : size === "md" ? 48 : 40;
+  const companyName = client?.companyName || "VYRON COST";
+  const tradingName = client?.tradingName || "AI Cost Intelligence Platform";
 
   return (
     <div className="flex items-center gap-4">
       <div
-        className={`relative shrink-0 overflow-hidden rounded-2xl ${
-          variant === "dark" ? "bg-white/10 ring-1 ring-[#b6d934]/25" : "bg-[#b6d934]/15 ring-1 ring-[#123524]/10"
+        className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-2xl ${
+          variant === "dark" ? "bg-white/10 ring-1 ring-violet-300/25" : "bg-gradient-to-br from-rose-50 to-violet-100 ring-1 ring-[#E2E8F0]"
         }`}
         style={{ width: logoSize, height: logoSize }}
       >
-        <Image
-          src={company.logo_url}
-          alt={company.company_name}
-          width={logoSize}
-          height={logoSize}
-          className="object-contain p-1"
-          priority
-        />
+        <Building2 size={Math.round(logoSize * 0.48)} className={variant === "dark" ? "text-white" : "text-[#7C3AED]"} />
       </div>
-      <div>
+      <div className="min-w-0">
         <div
-          className={`font-black leading-tight ${
+          className={`truncate font-black leading-tight ${
             size === "lg" ? "text-2xl" : size === "md" ? "text-lg" : "text-base"
-          } ${variant === "dark" ? "text-white" : "text-[#07110d]"}`}
+          } ${variant === "dark" ? "text-white" : "text-slate-950"}`}
         >
-          {company.company_name}
+          {companyName}
         </div>
         {showPoweredBy && (
-          <div className={`text-[10px] font-black uppercase tracking-[0.22em] ${variant === "dark" ? "text-[#b6d934]" : "text-[#123524]"}`}>
-            powered by <span className={variant === "dark" ? "text-[#b6d934]" : "text-[#07110d]"}>VYRON COST</span>
+          <div className={`text-[10px] font-black uppercase tracking-[0.22em] ${variant === "dark" ? "text-fuchsia-300" : "text-[#E11D48]"}`}>
+            powered by <span className={variant === "dark" ? "text-white" : "text-slate-950"}>VYRON COST</span>
           </div>
         )}
-        <div className={`text-xs ${variant === "dark" ? "text-slate-400" : "text-slate-500"}`}>{company.trading_name}</div>
+        <div className={`truncate text-xs ${variant === "dark" ? "text-slate-300" : "text-slate-500"}`}>{tradingName}</div>
       </div>
     </div>
   );
 }
 
-export function ClientBrandLockupLink({
-  variant = "dark",
-  href = "/dashboard",
-}: {
-  variant?: "dark" | "light";
-  href?: string;
-}) {
+export function ClientBrandLockupLink({ variant = "dark", href = "/dashboard" }: { variant?: "dark" | "light"; href?: string }) {
   return (
     <Link href={href} className="inline-flex">
       <ClientBrandLockup variant={variant} size="md" />

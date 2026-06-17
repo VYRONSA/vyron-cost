@@ -40,17 +40,17 @@ export default function InvoiceAiManager({
   return (
     <section className="grid gap-6">
       {message && (
-        <div className="rounded-3xl bg-emerald-50 px-5 py-4 text-sm font-black text-emerald-700">
+        <div className="rounded-3xl bg-[#A3E635]/10 px-5 py-4 text-sm font-black text-[#65A30D]">
           {message}
         </div>
       )}
 
       <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <h2 className="text-2xl font-black text-[#07110d]">Invoice Queue</h2>
+        <h2 className="text-2xl font-black text-[#F8FAFC]">Invoice Queue</h2>
 
         <div className="mt-6 overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[1050px]">
-            <div className="grid grid-cols-7 bg-[#0b1210] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-emerald-300">
+            <div className="grid grid-cols-7 bg-[#0b1210] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
               <div>Invoice</div>
               <div>Supplier</div>
               <div>Lines</div>
@@ -62,14 +62,14 @@ export default function InvoiceAiManager({
 
             {invoices.map((invoice) => (
               <div key={invoice.id} className="grid grid-cols-7 items-center border-t border-slate-100 px-5 py-5 text-sm">
-                <div className="font-black text-[#07110d]">{invoice.invoice_number || "No number"}</div>
+                <div className="font-black text-[#F8FAFC]">{invoice.invoice_number || "No number"}</div>
                 <div className="font-bold text-slate-600">{invoice.supplier_name_snapshot || "Supplier pending"}</div>
                 <div>{invoice.extracted_lines}</div>
                 <div className="font-black">{Number(invoice.confidence).toFixed(1)}%</div>
-                <div className="font-black text-emerald-700">{formatMoney(Number(invoice.estimated_impact))}</div>
+                <div className="font-black text-[#65A30D]">{formatMoney(Number(invoice.estimated_impact))}</div>
                 <div><StatusPill tone={statusTone(invoice.status)}>{invoice.status}</StatusPill></div>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => updateInvoiceStatus(invoice.id, "Approved")} className="rounded-full bg-emerald-50 p-2 text-emerald-700">
+                  <button type="button" onClick={() => updateInvoiceStatus(invoice.id, "Approved")} className="rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 p-2 text-[#65A30D]">
                     <CheckCircle2 size={16} />
                   </button>
                   <button type="button" onClick={() => updateInvoiceStatus(invoice.id, "Review")} className="rounded-full bg-amber-50 p-2 text-amber-700">
@@ -86,11 +86,11 @@ export default function InvoiceAiManager({
       </div>
 
       <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <h2 className="text-2xl font-black text-[#07110d]">AI Extracted Lines</h2>
+        <h2 className="text-2xl font-black text-[#F8FAFC]">AI Extracted Lines</h2>
 
         <div className="mt-6 overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[1180px]">
-            <div className="grid grid-cols-8 bg-[#0b1210] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-emerald-300">
+            <div className="grid grid-cols-8 bg-[#0b1210] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
               <div>Raw Text</div>
               <div>Suggested Match</div>
               <div>Qty</div>
@@ -103,15 +103,15 @@ export default function InvoiceAiManager({
 
             {lines.map((line) => (
               <div key={line.id} className="grid grid-cols-8 items-center border-t border-slate-100 px-5 py-5 text-sm">
-                <div className="font-black text-[#07110d]">{line.raw_description}</div>
+                <div className="font-black text-[#F8FAFC]">{line.raw_description}</div>
                 <div className="font-bold text-slate-600">{line.suggested_match || "No match"}</div>
                 <div>{Number(line.quantity).toFixed(2)}</div>
                 <div>{line.unit}</div>
                 <div>{formatMoney(Number(line.line_total))}</div>
-                <div className="font-black text-emerald-700">{formatMoney(Number(line.extracted_unit_price))}</div>
+                <div className="font-black text-[#65A30D]">{formatMoney(Number(line.extracted_unit_price))}</div>
                 <div><StatusPill tone={statusTone(line.status)}>{line.status}</StatusPill></div>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => updateLineStatus(line.id, "Approved")} className="rounded-full bg-emerald-50 p-2 text-emerald-700">
+                  <button type="button" onClick={() => updateLineStatus(line.id, "Approved")} className="rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 p-2 text-[#65A30D]">
                     <CheckCircle2 size={16} />
                   </button>
                   <button type="button" onClick={() => updateLineStatus(line.id, "Review")} className="rounded-full bg-amber-50 p-2 text-amber-700">

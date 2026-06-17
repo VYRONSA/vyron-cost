@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import StatusPill from "@/components/StatusPill";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { formatMoney } from "@/lib/vyron-cost-data";
 import { CostPlan, formatPlanImpact, recalculateCostPlan } from "@/lib/vyron-cost-plans-data";
 
@@ -79,11 +80,25 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
   }
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+    <VyronPremiumPageShell
+      config={{
+        badge: "Cost Planning",
+        title: "Cost Planning Intelligence Centre",
+        subtitle: "Model scenario-driven cost and price impacts with guided editing and review controls.",
+        outcomes: ["Build actionable cost scenarios", "Project suggested selling prices", "Compare planned and current margin pressure"],
+        formulas: ["Planned Cost = Current Cost x (1 + Supplier% + Labour% + Packaging%)", "Variance = Planned Cost - Current Cost", "Suggested Price aligns target GP to planned cost"],
+        intelligenceItems: [
+          { label: "Scenario library", detail: `${plans.length} cost plans loaded` },
+          { label: "Filtered set", detail: `${filtered.length} plans in current view` },
+          { label: "Category filter", detail: categoryFilter },
+        ],
+      }}
+    >
+      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <h2 className="text-2xl font-black text-[#07110d]">Cost Plans</h2>
+            <h2 className="text-2xl font-black text-[#F8FAFC]">Cost Plans</h2>
             <p className="mt-2 text-sm text-slate-500">BOM-linked planned vs actual cost, variance and suggested selling price.</p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -96,7 +111,7 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
                 <option key={category}>{category}</option>
               ))}
             </select>
-            <button type="button" onClick={addPlan} className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-black text-[#07110d]">
+            <button type="button" onClick={addPlan} className="inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
               <Plus size={16} />
               Create plan
             </button>
@@ -118,7 +133,7 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
             {filtered.map((plan) => (
               <div key={plan.id} className="grid grid-cols-7 items-center border-t border-slate-100 px-5 py-4 text-sm">
                 <div className="col-span-2">
-                  <div className="font-black text-[#07110d]">{plan.scenario_name}</div>
+                  <div className="font-black text-[#F8FAFC]">{plan.scenario_name}</div>
                   <div className="text-xs text-slate-500">
                     {plan.product_name} · {plan.category}
                   </div>
@@ -128,7 +143,7 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
                 <div className="font-black text-red-600">{formatMoney(plan.variance)}</div>
                 <div>{formatMoney(plan.suggested_selling_price)}</div>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => startEdit(plan)} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700">
+                  <button type="button" onClick={() => startEdit(plan)} className="inline-flex items-center gap-1 rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]">
                     <Edit3 size={14} />
                     Edit
                   </button>
@@ -142,8 +157,8 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <h3 className="text-xl font-black text-[#07110d]">{draft ? "Edit Scenario" : "Scenario Builder"}</h3>
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <h3 className="text-xl font-black text-[#F8FAFC]">{draft ? "Edit Scenario" : "Scenario Builder"}</h3>
         {!draft ? (
           <p className="mt-4 text-sm text-slate-500">Select a cost plan to review BOM cost impact, supplier movement, labour movement and packaging movement.</p>
         ) : (
@@ -180,7 +195,7 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
               <div className="mt-3"><StatusPill tone={draft.status === "Review" ? "amber" : "emerald"}>{draft.status}</StatusPill></div>
             </div>
             {draft.product_id ? (
-              <Link href={`/products/${draft.product_id}`} className="text-sm font-black text-emerald-700">
+              <Link href={`/products/${draft.product_id}`} className="text-sm font-black text-[#65A30D]">
                 Open affected product →
               </Link>
             ) : null}
@@ -189,8 +204,9 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
             </button>
           </div>
         )}
-        {message ? <div className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700">{message}</div> : null}
-      </div>
-    </section>
+        {message ? <div className="mt-4 rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-black text-[#65A30D]">{message}</div> : null}
+        </div>
+      </section>
+    </VyronPremiumPageShell>
   );
 }

@@ -5,7 +5,7 @@ import { getCostPlans } from "@/lib/vyron-cost-plans-data";
 export default async function CostPlansPage() {
   const plans = await getCostPlans();
   return (
-    <VyronCostShell title="Cost Plans" subtitle="Scenario planning for supplier, labour and packaging cost increases.">
+    <VyronCostShell hidePageHeader title="Cost Plans" subtitle="Scenario planning for supplier, labour and packaging cost increases.">
       <CostPlansClient initialPlans={plans} />
     </VyronCostShell>
   );

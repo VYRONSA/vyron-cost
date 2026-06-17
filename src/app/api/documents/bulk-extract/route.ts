@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractStoredDocumentById } from "@/lib/vyron-document-extraction";
+import {
+  documentTenantAccessErrorResponse,
+  requireDocumentTenantId,
+  requireDocumentsForTenant,
+} from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -20,28 +25,39 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "No documents selected." }, { status: 400 });
   }
 
-  const results: Array<{ documentId: string; ok: boolean; error?: string; modelUsed?: string }> = [];
+  try {
+    const tenantId = await requireDocumentTenantId();
+    await requireDocumentsForTenant(supabase, documentIds, tenantId, "id, tenant_id");
 
-  for (const documentId of documentIds) {
-    try {
-      const result = await extractStoredDocumentById(supabase, documentId);
-      results.push({ documentId, ok: true, modelUsed: result.modelUsed });
-    } catch (error) {
-      await supabase.from("vyron_documents").update({ status: "extraction_failed" }).eq("id", documentId);
-      results.push({
-        documentId,
-        ok: false,
-        error: error instanceof Error ? error.message : "Extraction failed.",
-      });
+    const results: Array<{ documentId: string; ok: boolean; error?: string; modelUsed?: string }> = [];
+
+    for (const documentId of documentIds) {
+      try {
+        const result = await extractStoredDocumentById(supabase, documentId);
+        results.push({ documentId, ok: true, modelUsed: result.modelUsed });
+      } catch (error) {
+        await supabase
+          .from("vyron_documents")
+          .update({ status: "extraction_failed" })
+          .eq("id", documentId)
+          .eq("tenant_id", tenantId);
+        results.push({
+          documentId,
+          ok: false,
+          error: error instanceof Error ? error.message : "Extraction failed.",
+        });
+      }
     }
-  }
 
-  const successCount = results.filter((row) => row.ok).length;
-  return NextResponse.json({
-    ok: true,
-    successCount,
-    failedCount: results.length - successCount,
-    results,
-    message: `Extracted ${successCount} of ${results.length} document(s).`,
-  });
+    const successCount = results.filter((row) => row.ok).length;
+    return NextResponse.json({
+      ok: true,
+      successCount,
+      failureCount: results.length - successCount,
+      results,
+      message: `Extracted ${successCount} of ${results.length} document(s).`,
+    });
+  } catch (error) {
+    return documentTenantAccessErrorResponse(error, "Bulk extract failed.");
+  }
 }

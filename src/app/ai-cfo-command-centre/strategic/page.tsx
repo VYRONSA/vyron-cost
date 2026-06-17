@@ -7,7 +7,7 @@ export default async function AiStrategicModellingPage() {
   const { strategicScenarios } = await getAiFinancialIntelligence();
 
   return (
-    <VyronCostShell title="Strategic Decision Modelling" subtitle="WHAT-IF · PROFITABILITY · RECOVERY · INVENTORY · PRODUCTION">
+    <VyronCostShell hidePageHeader title="Strategic Decision Modelling" subtitle="WHAT-IF · PROFITABILITY · RECOVERY · INVENTORY · PRODUCTION">
       <Link href="/ai-cfo-command-centre" className="mb-6 inline-block text-sm font-black text-violet-700">
         ← AI CFO Command Centre
       </Link>

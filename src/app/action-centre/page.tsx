@@ -9,8 +9,7 @@ export default async function ActionCentrePage() {
   ]);
 
   return (
-    <VyronCostAiShell
-      title="Action Centre"
+    <VyronCostAiShell hidePageHeader title="Action Centre"
       subtitle="The highest-value actions VYRON COST recommends right now."
     >
       <RecoveryOpportunitiesClient initialOpportunities={opportunities} summary={summary} />

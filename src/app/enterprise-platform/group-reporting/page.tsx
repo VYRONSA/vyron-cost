@@ -5,7 +5,7 @@ import { getEnterprisePlatformPayload } from "@/lib/vyron-enterprise-platform-ar
 export default async function GroupReportingPage() {
   const { groupReporting } = await getEnterprisePlatformPayload();
   return (
-    <VyronCostShell title="Group Reporting" subtitle="CONSOLIDATED PROCUREMENT · INVENTORY · MFG · RECOVERY · FINANCE">
+    <VyronCostShell hidePageHeader title="Group Reporting" subtitle="CONSOLIDATED PROCUREMENT · INVENTORY · MFG · RECOVERY · FINANCE">
       <PlatformNav />
       <GroupReportingClient data={groupReporting} />
     </VyronCostShell>

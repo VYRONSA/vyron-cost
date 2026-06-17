@@ -6,8 +6,7 @@ export default async function PurchaseOrderIntelligencePage() {
   const risks = await getProcurementRiskFindings();
 
   return (
-    <VyronCostShell
-      title="Purchase Order Intelligence"
+    <VyronCostShell hidePageHeader title="Purchase Order Intelligence"
       subtitle="PROCUREMENT RISK · PO CONTROL · SUPPLIER PRICE MOVEMENT"
     >
       <PurchaseOrderIntelligenceClient risks={risks} />

@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import ReportOptionCard from "@/components/ReportOptionCard";
 import { BarChart3, Boxes, FileSpreadsheet, LineChart, PackageSearch, Percent, ShieldAlert, TrendingUp, Truck, Wallet } from "lucide-react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { VyronPremiumSectionHeading } from "@/components/vyron-premium/VyronPremiumSprint";
 
 const reportCards = [
   { href: "/reports/open-purchase-orders", title: "Open Purchase Orders", description: "POs still open, approved, sent or partially received.", icon: FileSpreadsheet, badge: "Procurement" },
@@ -21,7 +23,7 @@ const reportCards = [
   { href: "/reports/product-costings", title: "Recipe Cost Report", description: "Full product costing breakdowns and BOM-linked cost lines.", icon: FileSpreadsheet, badge: "Costing" },
   { href: "/reports/ingredient-movement", title: "Ingredient Cost Report", description: "Ingredient price movement, yield impact and purchase cost trends.", icon: TrendingUp, badge: "Costing" },
   { href: "/reports/category-usage", title: "Category Usage Report", description: "Master-data category usage across suppliers, products and recipes.", icon: LineChart, badge: "Costing" },
-  { href: "/financial-leakage", title: "Recovery Opportunities", description: "Potential recovery, confidence and financial leakage intelligence.", icon: Wallet, badge: "Recovery" },
+  { href: "/financial-leakage", title: "Recovery Opportunities", description: "Potential recovery, confidence and financial leakage exposure.", icon: Wallet, badge: "Recovery" },
   { href: "/forecasting", title: "Forecast Report", description: "GP, COGS and margin risk forecast for 30/60/90 days.", icon: BarChart3, badge: "Forecast", dark: true },
 ];
 
@@ -34,16 +36,47 @@ export default function ReportsLauncherClient() {
   }, [search]);
 
   return (
-    <section className="grid gap-6">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "reports",
+        badge: "Premium Reporting Workspace",
+        title: "Reporting Centre",
+        subtitle: "Procurement, supplier, inventory, costing, recovery and forecast reports — board-ready evidence for disciplined margin control.",
+        outcomes: [
+          "Open PO and GRN variance reports",
+          "Track supplier price movement and risk",
+          "Review product GP and recipe costing",
+          "Export recovery and forecast summaries",
+        ],
+        formulaEyebrow: "Reporting",
+        formulaTitle: "What good reports reveal",
+        formulas: [
+          { label: "GP Report", formula: "Actual GP vs target GP by product" },
+          { label: "GRN Variance", formula: "Received qty − Ordered qty × unit cost" },
+          { label: "Recovery", formula: "Identified leakage × confidence × action rate" },
+        ],
+        intelligenceEyebrow: "Report signals",
+        intelligenceTitle: "What to watch",
+        intelligenceItems: [
+          { label: "Procurement", detail: "Open POs and partial receipts expose cash still committed to suppliers." },
+          { label: "Supplier", detail: "Price movement reports highlight negotiation and repricing priorities." },
+          { label: "Margin", detail: "Product GP reports show where selling price no longer protects target margin." },
+        ],
+      }}
+      showControlPanel={false}
+      showSpotlight={false}
+    >
+      <VyronPremiumSectionHeading eyebrow="Report library" title="Choose a report" subtitle="Search by procurement, inventory, costing or recovery topic." />
+
       <SearchFilterBar value={search} onChange={setSearch} placeholder="Search procurement, supplier, inventory, costing and recovery reports…" resultCount={filtered.length} />
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {filtered.map((card) => <ReportOptionCard key={`${card.title}-${card.href}`} {...card} />)}
       </section>
-      <section className="mt-5 rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)] print:hidden">
-        <Link href="/dashboard" className="rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white">
+      <section className="rounded-2xl border border-white/12 bg-[#252040] p-6 print:hidden">
+        <Link href="/dashboard" className="rounded-xl border border-violet-400/30 bg-violet-600/25 px-5 py-3 text-sm font-bold text-[#F8FAFC]">
           Return to command centre
         </Link>
       </section>
-    </section>
+    </VyronPremiumPageShell>
   );
 }

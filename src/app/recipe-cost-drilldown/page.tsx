@@ -6,8 +6,7 @@ export default async function RecipeCostDrilldownPage() {
   const products = await getProductIntelligence();
 
   return (
-    <VyronCostShell
-      title="Recipe Cost Drilldown"
+    <VyronCostShell hidePageHeader title="Recipe Cost Drilldown"
       subtitle="INGREDIENTS · PACKAGING · LABOUR · OVERHEADS"
     >
       <RecipeCostDrilldownClient products={products} />

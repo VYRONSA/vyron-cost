@@ -66,7 +66,7 @@ function HeroPanel() {
       <div className="relative z-10">
         <div className="mb-8 flex items-center gap-3">
           <span className="text-sm font-black uppercase tracking-[0.14em]">Today · Handcrafted Food Products</span>
-          <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-black">LIVE</span>
+          <span className="rounded-full border border-[#A3E635]/25 bg-[#A3E635]/100 px-3 py-1 text-xs font-black">LIVE</span>
         </div>
 
         <div className="grid gap-8 xl:grid-cols-[1fr_1fr_1fr_0.9fr] xl:items-center">
@@ -124,7 +124,7 @@ function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
             href={`/products/${p.id}`}
             className={`relative block overflow-hidden rounded-3xl border p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl ${
               p.tone === "green"
-                ? "border-emerald-200 bg-gradient-to-br from-white to-emerald-50"
+                ? "border-[#A3E635]/25 bg-gradient-to-br from-white to-[#A3E635]/10"
                 : p.tone === "blue"
                   ? "border-blue-200 bg-gradient-to-br from-white to-blue-50"
                   : p.tone === "amber"
@@ -139,7 +139,7 @@ function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
               <div
                 className={`rounded-full px-3 py-1 text-xs font-black ${
                   p.tone === "green"
-                    ? "bg-emerald-100 text-emerald-700"
+                    ? "bg-[#A3E635]/12 text-[#65A30D]"
                     : p.tone === "blue"
                       ? "bg-blue-100 text-blue-700"
                       : p.tone === "amber"
@@ -157,7 +157,7 @@ function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
             <div
               className={`mt-5 text-5xl font-black tracking-tight ${
                 p.tone === "green"
-                  ? "text-emerald-700"
+                  ? "text-[#65A30D]"
                   : p.tone === "blue"
                     ? "text-blue-700"
                     : p.tone === "amber"
@@ -189,7 +189,7 @@ function AiAssistant() {
       <div className="mt-5 space-y-4">
         {recommendations.map((item) => {
           const Icon = item.icon;
-          const bg = item.color === "green" ? "bg-emerald-500" : item.color === "orange" ? "bg-orange-500" : "bg-violet-600";
+          const bg = item.color === "green" ? "bg-[#A3E635]/100" : item.color === "orange" ? "bg-orange-500" : "bg-violet-600";
 
           return (
             <Link key={item.title} href={item.href} className="flex items-center gap-4 rounded-3xl bg-slate-50 p-4 transition hover:bg-violet-50">
@@ -199,7 +199,7 @@ function AiAssistant() {
               <div className="flex-1">
                 <div className="font-black text-slate-900">{item.title}</div>
                 <div className="mt-1 text-xs font-semibold text-slate-500">{item.sub}</div>
-                <div className={`mt-1 text-2xl font-black ${item.color === "green" ? "text-emerald-600" : item.color === "orange" ? "text-orange-600" : "text-violet-600"}`}>
+                <div className={`mt-1 text-2xl font-black ${item.color === "green" ? "text-[#84CC16]" : item.color === "orange" ? "text-orange-600" : "text-violet-600"}`}>
                   {item.value}
                 </div>
               </div>
@@ -274,7 +274,7 @@ export default async function VyronCostAiStyleDashboard() {
                     {products.slice(0, 5).map((product) => (
                       <div key={product.id} className="flex items-center justify-between">
                         <span className="font-black">{product.name}</span>
-                        <span className="font-black text-emerald-600">{product.gp}%</span>
+                        <span className="font-black text-[#84CC16]">{product.gp}%</span>
                       </div>
                     ))}
                   </div>

@@ -7,7 +7,7 @@ import { getCategories, getDemoCompanyId } from "@/lib/vyron-cost-data";
 export default async function CategoriesPage() {
   const [categories, companyId] = await Promise.all([getCategories(), getDemoCompanyId()]);
   return (
-    <VyronCostShell title="Categories" subtitle="Create, edit, delete and control categories used across products, ingredients, suppliers, recipes and costing lines.">
+    <VyronCostShell hidePageHeader title="Categories" subtitle="Create, edit, delete and control categories used across products, ingredients, suppliers, recipes and costing lines.">
       <section className="mb-6 grid gap-5 md:grid-cols-4">
         <MetricCard title="Categories" value={String(categories.length)} note="Total category rules" icon={FolderTree} />
         <MetricCard title="Product Categories" value={String(categories.filter((c) => c.category_type === "Product").length)} note="Used by products" icon={PackageSearch} />

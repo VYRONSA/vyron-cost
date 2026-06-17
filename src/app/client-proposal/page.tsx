@@ -2,7 +2,7 @@ import VyronCostAiShell from "@/components/VyronCostAiShell";
 
 export default function Page() {
   return (
-    <VyronCostAiShell title="Client Proposal" subtitle="Simple proposal language for a prospect.">
+    <VyronCostAiShell hidePageHeader title="Client Proposal" subtitle="Simple proposal language for a prospect.">
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">

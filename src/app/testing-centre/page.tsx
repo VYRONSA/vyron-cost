@@ -18,7 +18,7 @@ const checks = [
 
 export default function TestingCentrePage() {
   return (
-    <VyronCostAiShell title="Testing Centre" subtitle="Click every route before the client demo. Fix anything red immediately.">
+    <VyronCostAiShell hidePageHeader title="Testing Centre" subtitle="Click every route before the client demo. Fix anything red immediately.">
       <section className="grid gap-4">
         {checks.map(([href, label], index) => (
           <Link key={href} href={href} className="rounded-2xl bg-white p-5 text-sm font-black text-slate-800 shadow-[0_12px_35px_rgba(81,63,190,0.06)] transition hover:bg-violet-50">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Bot, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 const actions = [
   ["Create Chicken Pie BOM", "/recipes/new", "Open BOM Builder with pie costing flow."],
@@ -19,7 +20,7 @@ export default function AiOperatorActionsClient() {
   return (
     <section className="grid gap-6">
       <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-        <Bot size={34} className="text-emerald-300" />
+        <Bot size={34} className="text-[#A3E635]" />
         <h2 className="mt-5 text-3xl font-black">AI Operator Actions</h2>
         <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
           These are the action routes VYRON AI can guide or execute next. This turns the assistant from answer-only into operator-ready.
@@ -30,21 +31,29 @@ export default function AiOperatorActionsClient() {
         {actions.map(([title, href, detail]) => {
           const done = Boolean(executed[title]);
           return (
-            <div key={title} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <button
-                type="button"
-                onClick={() => setExecuted((current) => ({ ...current, [title]: !done }))}
-                className={`flex h-12 w-12 items-center justify-center rounded-2xl ${done ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400"}`}
-              >
-                <CheckCircle2 size={24} />
-              </button>
-              <h3 className="mt-5 text-xl font-black text-[#07110d]">{title}</h3>
-              <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">{detail}</p>
-              <Link href={href} className="mt-5 inline-flex rounded-2xl bg-emerald-50 px-5 py-3 text-sm font-black text-emerald-800">
-                Open action
-              </Link>
-            </div>
-          );
+    <VyronPremiumPageShell
+      config={{
+        title: "Ai Operator Actions",
+        subtitle: "Premium VYRON COST workflow for ai operator actions.",
+        formulas: ["GP % = (Price - Cost) / Price"],
+      }}
+    >
+      <div key={title} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+                    <button
+                      type="button"
+                      onClick={() => setExecuted((current) => ({ ...current, [title]: !done }))}
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl ${done ? "bg-[#A3E635]/100 text-white" : "bg-slate-100 text-slate-400"}`}
+                    >
+                      <CheckCircle2 size={24} />
+                    </button>
+                    <h3 className="mt-5 text-xl font-black text-[#F8FAFC]">{title}</h3>
+                    <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">{detail}</p>
+                    <Link href={href} className="mt-5 inline-flex rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
+                      Open action
+                    </Link>
+                  </div>
+    </VyronPremiumPageShell>
+  );
         })}
       </section>
     </section>

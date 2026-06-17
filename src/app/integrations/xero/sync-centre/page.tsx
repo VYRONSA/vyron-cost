@@ -1,13 +1,5 @@
-import VyronCostAiShell from "@/components/VyronCostAiShell";
-import XeroSyncCentreClient from "@/components/vyron-cost/integrations/XeroSyncCentreClient";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return (
-    <VyronCostAiShell
-      title="Xero Sync Centre"
-      subtitle="REVIEW, APPROVE AND MONITOR ACCOUNTING SYNC JOBS BETWEEN VYRON COST AND XERO."
-    >
-      <XeroSyncCentreClient />
-    </VyronCostAiShell>
-  );
+  redirect("/integrations/xero");
 }

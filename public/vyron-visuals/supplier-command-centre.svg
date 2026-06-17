@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1100" viewBox="0 0 2000 1100">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#070213"/>
+      <stop offset=".34" stop-color="#3b0d72"/>
+      <stop offset=".68" stop-color="#13051f"/>
+      <stop offset="1" stop-color="#05020b"/>
+    </linearGradient>
+    <linearGradient id="hot" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fb923c"/>
+      <stop offset=".52" stop-color="#ec4899"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+    <radialGradient id="orangeGlow">
+      <stop stop-color="#fb923c" stop-opacity=".95"/>
+      <stop offset=".45" stop-color="#fb923c" stop-opacity=".25"/>
+      <stop offset="1" stop-color="#fb923c" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tealGlow">
+      <stop stop-color="#2dd4bf" stop-opacity=".64"/>
+      <stop offset="1" stop-color="#2dd4bf" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="30" stdDeviation="26" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="2000" height="1100" rx="70" fill="url(#bg)"/>
+  <circle cx="1650" cy="150" r="470" fill="url(#orangeGlow)"/>
+  <circle cx="260" cy="930" r="500" fill="url(#tealGlow)"/>
+  <circle cx="980" cy="130" r="380" fill="#ec4899" opacity=".12"/>
+  <path d="M95 835 C430 570 720 910 1070 610 S1540 430 1910 210" stroke="#2dd4bf" stroke-width="7" opacity=".42" fill="none"/>
+  <path d="M105 300 C480 60 760 360 1160 170 S1620 70 1900 260" stroke="#fb923c" stroke-width="7" opacity=".50" fill="none"/>
+
+  <g filter="url(#shadow)">
+    <rect x="120" y="120" width="610" height="360" rx="50" fill="rgba(255,255,255,.13)" stroke="rgba(255,255,255,.27)"/>
+    <rect x="175" y="172" width="240" height="18" rx="9" fill="#fb923c"/>
+    <text x="175" y="258" fill="#fff" font-size="64" font-weight="900" font-family="Arial">Supplier</text>
+    <text x="178" y="324" fill="#2dd4bf" font-size="28" font-weight="900" font-family="Arial">Intelligence Centre</text>
+    <rect x="175" y="375" width="410" height="16" rx="8" fill="rgba(255,255,255,.24)"/>
+    <rect x="175" y="412" width="300" height="16" rx="8" fill="rgba(255,255,255,.15)"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="900" y="115" width="780" height="385" rx="56" fill="rgba(255,255,255,.115)" stroke="rgba(255,255,255,.25)"/>
+    <text x="990" y="240" fill="#fff" font-size="82" font-weight="900" font-family="Arial">SUPPLIER AI</text>
+    <text x="995" y="300" fill="#2dd4bf" font-size="30" font-weight="900" font-family="Arial">Executive intelligence wall</text>
+    <path d="M1000 400 L1125 325 L1265 360 L1410 238 L1600 325" stroke="#fb923c" stroke-width="16" stroke-linecap="round" fill="none"/>
+    <circle cx="1626" cy="325" r="28" fill="#2dd4bf" filter="url(#glow)"/>
+  </g>
+
+  
+        <g filter="url(#shadow)">
+          <rect x="140" y="650" width="215" height="110" rx="28" fill="rgba(255,255,255,.13)" stroke="rgba(255,255,255,.25)"/>
+          <circle cx="186" cy="688" r="19" fill="#2dd4bf"/>
+          <text x="248" y="725" fill="#fff" font-size="21" font-weight="900" text-anchor="middle" font-family="Arial">Inflation</text>
+        </g>
+        <path d="M366 705 L400 705" stroke="#fb923c" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+        <g filter="url(#shadow)">
+          <rect x="410" y="650" width="215" height="110" rx="28" fill="rgba(255,255,255,.13)" stroke="rgba(255,255,255,.25)"/>
+          <circle cx="456" cy="688" r="19" fill="#fb923c"/>
+          <text x="518" y="725" fill="#fff" font-size="21" font-weight="900" text-anchor="middle" font-family="Arial">POs</text>
+        </g>
+        <path d="M636 705 L670 705" stroke="#fb923c" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+        <g filter="url(#shadow)">
+          <rect x="680" y="650" width="215" height="110" rx="28" fill="rgba(255,255,255,.13)" stroke="rgba(255,255,255,.25)"/>
+          <circle cx="726" cy="688" r="19" fill="#2dd4bf"/>
+          <text x="788" y="725" fill="#fff" font-size="21" font-weight="900" text-anchor="middle" font-family="Arial">GRNs</text>
+        </g>
+        <path d="M906 705 L940 705" stroke="#fb923c" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+        <g filter="url(#shadow)">
+          <rect x="950" y="650" width="215" height="110" rx="28" fill="rgba(255,255,255,.13)" stroke="rgba(255,255,255,.25)"/>
+          <circle cx="996" cy="688" r="19" fill="#fb923c"/>
+          <text x="1058" y="725" fill="#fff" font-size="21" font-weight="900" text-anchor="middle" font-family="Arial">Invoices</text>
+        </g>
+        <path d="M1176 705 L1210 705" stroke="#fb923c" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+        <g filter="url(#shadow)">
+          <rect x="1220" y="650" width="215" height="110" rx="28" fill="rgba(255,255,255,.13)" stroke="rgba(255,255,255,.25)"/>
+          <circle cx="1266" cy="688" r="19" fill="#2dd4bf"/>
+          <text x="1328" y="725" fill="#fff" font-size="21" font-weight="900" text-anchor="middle" font-family="Arial">Risk</text>
+        </g>
+        <path d="M1446 705 L1480 705" stroke="#fb923c" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+        <g filter="url(#shadow)">
+          <rect x="1490" y="650" width="215" height="110" rx="28" fill="url(#hot)" stroke="rgba(255,255,255,.25)"/>
+          <circle cx="1536" cy="688" r="19" fill="#fb923c"/>
+          <text x="1598" y="725" fill="#fff" font-size="21" font-weight="900" text-anchor="middle" font-family="Arial">Margin</text>
+        </g>
+        
+
+  <g filter="url(#shadow)">
+    <rect x="1040" y="850" width="610" height="150" rx="40" fill="rgba(255,255,255,.16)" stroke="rgba(255,255,255,.27)"/>
+    <circle cx="1120" cy="925" r="40" fill="#2dd4bf"/>
+    <text x="1200" y="912" fill="#fff" font-size="38" font-weight="900" font-family="Arial">Profit Intelligence</text>
+    <text x="1200" y="965" fill="rgba(255,255,255,.80)" font-size="25" font-weight="800" font-family="Arial">Cost · Risk · Margin · Action</text>
+  </g>
+</svg>

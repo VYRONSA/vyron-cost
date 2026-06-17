@@ -6,8 +6,7 @@ export default async function MarketReadinessPage() {
   const snapshot = await getLaunchReadinessSnapshot();
 
   return (
-    <VyronCostShell
-      title="Market Readiness"
+    <VyronCostShell hidePageHeader title="Market Readiness"
       subtitle="SELLING POSITION · RECOVERY VALUE · CLIENT CONFIDENCE"
     >
       <MarketReadinessDashboardClient snapshot={snapshot} />

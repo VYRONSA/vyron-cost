@@ -3,7 +3,7 @@ import SalesIntelligenceClient from "@/components/vyron-cost/customers/SalesInte
 
 export default function Page() {
   return (
-    <VyronCostAiShell title="Sales Intelligence" subtitle="SALES BY CUSTOMER, PRODUCT, TOP PERFORMERS, INVOICE TRENDS AND MONTHLY SALES.">
+    <VyronCostAiShell hidePageHeader title="Sales Intelligence" subtitle="SALES BY CUSTOMER, PRODUCT, TOP PERFORMERS, INVOICE TRENDS AND MONTHLY SALES.">
       <SalesIntelligenceClient />
     </VyronCostAiShell>
   );

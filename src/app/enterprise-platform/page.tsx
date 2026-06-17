@@ -5,7 +5,7 @@ import { getEnterprisePlatformPayload } from "@/lib/vyron-enterprise-platform-ar
 export default async function EnterprisePlatformPage() {
   const data = await getEnterprisePlatformPayload();
   return (
-    <VyronCostShell title="Enterprise Platform" subtitle="MULTI-COMPANY · GROUP · BENCHMARKING · AI · VYRON SUITE">
+    <VyronCostShell hidePageHeader title="Enterprise Platform" subtitle="MULTI-COMPANY · GROUP · BENCHMARKING · AI · VYRON SUITE">
       <PlatformNav />
       <EnterpriseHubClient data={data} />
     </VyronCostShell>

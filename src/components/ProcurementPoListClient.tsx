@@ -4,6 +4,9 @@ import Link from "next/link";
 import { Download } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatMoney } from "@/lib/vyron-cost-data";
+import { useModulePermissions } from "@/hooks/useModulePermissions";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
+import { VyronPremiumHeroBanner, VyronPremiumSectionHeading } from "@/components/vyron-premium/VyronPremiumSprint";
 
 type PoRow = {
   id: string;
@@ -18,6 +21,8 @@ type PoRow = {
 };
 
 export default function ProcurementPoListClient({ initialStatus = "" }: { initialStatus?: string }) {
+  const { canCreate } = useModulePermissions("purchase_orders");
+  const { canCreate: canReceiveGoods } = useModulePermissions("goods_receipts");
   const [orders, setOrders] = useState<PoRow[]>([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState(initialStatus || "All");
@@ -25,10 +30,11 @@ export default function ProcurementPoListClient({ initialStatus = "" }: { initia
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams();
+    const { query: workspaceQuery } = poApiWorkspaceContext();
+    const params = new URLSearchParams(workspaceQuery ? workspaceQuery.slice(1) : "");
     if (status !== "All") params.set("status", status);
     if (search.trim()) params.set("search", search.trim());
-    const res = await fetch(`/api/purchase-orders?${params}`);
+    const res = await fetch(`/api/purchase-orders?${params}`, { cache: "no-store" });
     const data = await res.json();
     if (data.ok) setOrders(data.orders || []);
     setLoading(false);
@@ -54,12 +60,40 @@ export default function ProcurementPoListClient({ initialStatus = "" }: { initia
   }
 
   return (
-    <section className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-2xl font-black text-slate-950">Purchase Orders</h2>
-        <div className="flex flex-wrap gap-2"><button type="button" onClick={exportCsv} className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-4 py-2 text-xs font-black text-violet-800"><Download size={14} /> Export CSV</button><Link href="/purchase-orders/new" className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-white">New PO</Link></div>
-      </div>
-      <div className="mb-4 flex flex-wrap gap-2">
+    <section className="grid gap-8">
+      <VyronPremiumHeroBanner
+        visualVariant="procurement"
+        badge="Premium PO Workspace"
+        title="Purchase Orders"
+        subtitle="Search, filter and manage all purchase orders — from draft through receipt and closure."
+        quotes={[
+          {
+            label: "Search discipline",
+            quote: "Find the PO before you receive against it — wrong PO, wrong stock.",
+          },
+        ]}
+      >
+        <button
+          type="button"
+          onClick={exportCsv}
+          className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-black text-white backdrop-blur-sm"
+        >
+          <Download size={16} /> Export CSV
+        </button>
+        {canCreate ? (
+          <Link href="/purchase-orders/new" className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-900 shadow-lg">
+            New PO
+          </Link>
+        ) : null}
+      </VyronPremiumHeroBanner>
+
+      <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <VyronPremiumSectionHeading
+        eyebrow="Filter"
+        title="All purchase orders"
+        subtitle="Search by PO number or supplier, then narrow by status."
+      />
+      <div className="mb-4 mt-5 flex flex-wrap gap-2">
         <input
           className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold"
           placeholder="Search PO or supplier…"
@@ -112,9 +146,13 @@ export default function ProcurementPoListClient({ initialStatus = "" }: { initia
                     {formatMoney(Number(po.variance || 0))}
                   </td>
                   <td>
-                    <Link href={`/goods-receipts/new?po=${po.id}`} className="rounded-full bg-fuchsia-50 px-3 py-2 text-xs font-black text-fuchsia-700">
-                      Receive Goods
-                    </Link>
+                    {canReceiveGoods ? (
+                      <Link href={`/goods-receipts/new?po=${po.id}`} className="rounded-full bg-fuchsia-50 px-3 py-2 text-xs font-black text-fuchsia-700">
+                        Receive Goods
+                      </Link>
+                    ) : (
+                      <span className="text-xs font-semibold text-slate-400">—</span>
+                    )}
                   </td>
                   <td>
                     <Link href={`/purchase-orders/${po.id}`} className="text-xs font-black text-violet-700 hover:underline">
@@ -127,6 +165,7 @@ export default function ProcurementPoListClient({ initialStatus = "" }: { initia
           </table>
         </div>
       )}
+      </div>
     </section>
   );
 }

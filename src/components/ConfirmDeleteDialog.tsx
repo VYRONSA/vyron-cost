@@ -37,7 +37,7 @@ export default function ConfirmDeleteDialog({
             type="button"
             onClick={onConfirm}
             disabled={confirming}
-            className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-black text-white disabled:opacity-60"
+            className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
           >
             {confirming ? "Deleting…" : "Delete"}
           </button>

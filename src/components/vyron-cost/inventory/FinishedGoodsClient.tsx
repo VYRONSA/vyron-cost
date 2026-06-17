@@ -2,17 +2,25 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { demoFinishedGoods, formatCurrency, formatNumber, type FinishedGoodSummary } from "@/lib/vyron-cost/stock-engine";
+import { formatCurrency, formatNumber, type FinishedGoodSummary } from "@/lib/vyron-cost/stock-engine";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
+import {
+  VyronPremiumEmptyState,
+  VyronPremiumFormulaCard,
+  VyronPremiumHeroBanner,
+  VyronPremiumSectionHeading,
+} from "@/components/vyron-premium/VyronPremiumSprint";
 
 export default function FinishedGoodsClient() {
-  const [items, setItems] = useState<FinishedGoodSummary[]>(demoFinishedGoods);
+  const [items, setItems] = useState<FinishedGoodSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(() => {
-    fetch("/api/inventory/finished-goods")
+    const { query } = poApiWorkspaceContext();
+    fetch(`/api/inventory/finished-goods${query}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
-        if (d.ok && Array.isArray(d.items) && d.items.length > 0) {
+        if (d.ok && Array.isArray(d.items)) {
           setItems(d.items as FinishedGoodSummary[]);
         }
       })
@@ -29,7 +37,38 @@ export default function FinishedGoodsClient() {
   const fastest = [...items].sort((a, b) => b.sales_velocity_30_days - a.sales_velocity_30_days)[0];
 
   return (
-    <div className="space-y-6">
+    <div className="grid gap-8">
+      <VyronPremiumHeroBanner
+        visualVariant="inventory"
+        badge="Premium Inventory Workspace"
+        title="Finished Goods Intelligence"
+        subtitle="On-hand finished goods value, velocity and low-stock risk from the inventory intelligence layer."
+        outcomes={[
+          "Monitor total finished goods value",
+          "See units on hand and low-stock count",
+          "Identify fastest-moving products",
+          "Drill into stock detail per SKU",
+        ]}
+        quotes={[
+          { label: "Inventory", quote: "Inventory is cash wearing a disguise." },
+          { label: "Velocity", quote: "What gets measured gets protected." },
+        ]}
+      />
+
+      <VyronPremiumFormulaCard
+        variant="light"
+        eyebrow="Valuation"
+        title="Finished goods formulas"
+        formulas={[
+          { label: "Stock Value", formula: "On-hand qty × weighted average unit cost" },
+          { label: "Velocity", formula: "Units sold (30 days) ÷ average on-hand qty" },
+          { label: "Low Stock", formula: "On-hand qty below reorder threshold" },
+        ]}
+        className="max-w-2xl"
+      />
+
+      <VyronPremiumSectionHeading eyebrow="Live metrics" title="Finished goods snapshot" />
+
       <div className="grid gap-4 md:grid-cols-4">
         <MetricCard title="Finished Goods Value" value={loading ? "…" : formatCurrency(totalValue)} />
         <MetricCard title="Units In Stock" value={loading ? "…" : formatNumber(totalUnits)} />
@@ -45,6 +84,17 @@ export default function FinishedGoodsClient() {
           </div>
           <Link href="/manufacturing-intelligence" className="rounded-full bg-purple-700 px-5 py-2 text-sm font-black text-white shadow-lg shadow-purple-700/20">Open Manufacturing</Link>
         </div>
+
+        {!loading && items.length === 0 ? (
+          <VyronPremiumEmptyState
+            steps={[
+              "Create products and link them to BOMs.",
+              "Run and complete a manufacturing batch.",
+              "Post finished goods output to inventory.",
+              "Return here to monitor value and velocity.",
+            ]}
+          />
+        ) : null}
 
         <div className="grid gap-4 lg:grid-cols-2">
           {items.map((item) => (
@@ -85,7 +135,7 @@ function badgeClass(status: string) {
   if (status === "Low Stock") return "bg-rose-100 text-rose-800";
   if (status === "Overstocked") return "bg-amber-100 text-amber-800";
   if (status === "Watch") return "bg-indigo-100 text-indigo-800";
-  return "bg-emerald-100 text-emerald-800";
+  return "bg-[#A3E635]/12 text-[#4D7C0F]";
 }
 function recommendation(status: string, product: string) {
   if (status === "Low Stock") return `${product} is below safe cover. Recommend manufacturing within 48 hours.`;

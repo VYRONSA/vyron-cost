@@ -3,24 +3,24 @@ import VyronCostShell from "@/components/VyronCostShell";
 import { getSupplierIntelligenceRows, formatSupplierSpend } from "@/lib/vyron-supplier-intelligence-data";
 import { getSupplierIntelligenceCentreStats } from "@/lib/vyron-supplier-intelligence-centre";
 import { getSupplierPriceWidgetSummary } from "@/lib/vyron-supplier-intelligence-engine";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
 
 export default async function SupplierIntelligencePage() {
+  const companyId = await getWorkspaceCompanyId();
   const [rows, widgets, centreStats] = await Promise.all([
     getSupplierIntelligenceRows(),
-    getSupplierPriceWidgetSummary(),
-    getSupplierIntelligenceCentreStats(VYRON_DEFAULT_TENANT_ID),
+    getSupplierPriceWidgetSummary(companyId),
+    getSupplierIntelligenceCentreStats(companyId),
   ]);
 
   return (
-    <VyronCostShell
-      title="Supplier Intelligence Centre"
+    <VyronCostShell hidePageHeader title="Supplier Intelligence Centre"
       subtitle="SPEND · INFLATION · RISK · VARIANCES · PERFORMANCE · OPPORTUNITIES"
     >
       <section className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {[
           ["Total Suppliers", centreStats.totalSuppliers, "bg-white"],
-          ["Active Suppliers", centreStats.activeSuppliers, "bg-emerald-50"],
+          ["Active Suppliers", centreStats.activeSuppliers, "bg-[#A3E635]/10"],
           ["High Risk Suppliers", centreStats.highRiskSuppliers, "bg-red-50"],
           ["Inflation Alerts", centreStats.inflationAlerts, "bg-amber-50"],
           ["Open Variances", centreStats.openVariances, "bg-orange-50"],
@@ -48,7 +48,7 @@ export default async function SupplierIntelligencePage() {
           <div className="mt-2 text-2xl font-black">
             <span className="text-red-600">{widgets.increasesThisMonth}</span>
             <span className="text-slate-400"> / </span>
-            <span className="text-emerald-600">{widgets.decreasesThisMonth}</span>
+            <span className="text-[#84CC16]">{widgets.decreasesThisMonth}</span>
           </div>
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">

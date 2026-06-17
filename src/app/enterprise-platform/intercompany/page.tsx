@@ -5,7 +5,7 @@ import { getEnterprisePlatformPayload } from "@/lib/vyron-enterprise-platform-ar
 export default async function IntercompanyPage() {
   const { intercompany } = await getEnterprisePlatformPayload();
   return (
-    <VyronCostShell title="Intercompany Intelligence" subtitle="PURCHASES · TRANSFERS · INVENTORY · RECOVERIES">
+    <VyronCostShell hidePageHeader title="Intercompany Intelligence" subtitle="PURCHASES · TRANSFERS · INVENTORY · RECOVERIES">
       <PlatformNav />
       <IntercompanyClient rows={intercompany} />
     </VyronCostShell>

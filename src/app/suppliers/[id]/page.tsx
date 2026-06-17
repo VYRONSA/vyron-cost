@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import SupplierAiRecommendations from "@/components/SupplierAiRecommendations";
 import SupplierProcurementStats from "@/components/SupplierProcurementStats";
 import VyronCostAiShell from "@/components/VyronCostAiShell";
@@ -7,10 +8,10 @@ import { formatMoney, getIngredients, getSupplierById } from "@/lib/vyron-cost-c
 export default async function SupplierDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [supplier, ingredients] = await Promise.all([getSupplierById(id), getIngredients()]);
-  const linked = ingredients.filter((i) => i.supplier_id === id || id.startsWith("demo"));
-  if (!supplier) return <VyronCostAiShell title="Supplier Not Found"><div className="rounded-[2rem] bg-white p-8">Supplier not found.</div></VyronCostAiShell>;
+  const linked = ingredients.filter((i) => i.supplier_id === id);
+  if (!supplier) notFound();
   return (
-    <VyronCostAiShell title={supplier.supplier_name} subtitle="Supplier detail, price movement and linked ingredients.">
+    <VyronCostAiShell hidePageHeader title={supplier.supplier_name} subtitle="Supplier detail, price movement and linked ingredients.">
       <Link
         href={`/supplier-intelligence/${id}`}
         className="mb-5 inline-flex rounded-2xl bg-violet-600 px-5 py-3 text-sm font-black text-white hover:bg-violet-700"

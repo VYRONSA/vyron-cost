@@ -3,7 +3,7 @@ import StatusPill from "@/components/StatusPill";
 import VyronCostAiShell from "@/components/VyronCostAiShell";
 import { getRecoveryDrilldown } from "@/lib/vyron-recovery-drilldown-data";
 import { formatMoney } from "@/lib/vyron-cost-data";
-import { ArrowLeft, ShieldAlert, Sparkles, Wallet } from "lucide-react";
+import { ShieldAlert, Sparkles, Wallet } from "lucide-react";
 
 function severityTone(severity: string | null): "red" | "amber" | "emerald" | "slate" {
   const value = String(severity || "").toLowerCase();
@@ -19,15 +19,14 @@ export default async function FinancialLeakageDetailPage({ params }: { params: P
 
   if (!detail) {
     return (
-      <VyronCostAiShell title="Recovery Detail Not Found" subtitle="RECOVERY INTELLIGENCE · DRILLDOWN">
+      <VyronCostAiShell hidePageHeader title="Recovery Detail Not Found" subtitle="RECOVERY INTELLIGENCE · DRILLDOWN">
         <div className="rounded-[2rem] border border-violet-100 bg-white p-8 font-bold text-slate-600 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
           Recovery detail not found.
           <Link
             href="/financial-leakage"
             className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white"
           >
-            <ArrowLeft size={16} />
-            Back to Recovery Intelligence
+            ← Back
           </Link>
         </div>
       </VyronCostAiShell>
@@ -43,7 +42,7 @@ export default async function FinancialLeakageDetailPage({ params }: { params: P
     : "CLIENT-EXPLAINABLE FORMULA · RECOVERY INTELLIGENCE";
 
   return (
-    <VyronCostAiShell title={title} subtitle={subtitle}>
+    <VyronCostAiShell hidePageHeader title={title} subtitle={subtitle}>
       <section className="relative overflow-hidden rounded-[2.4rem] border border-violet-100 bg-white p-7 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-100 to-fuchsia-100 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-violet-700">
           <Sparkles size={15} />
@@ -181,8 +180,7 @@ export default async function FinancialLeakageDetailPage({ params }: { params: P
             href="/financial-leakage"
             className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-lg shadow-violet-500/20"
           >
-            <ArrowLeft size={16} />
-            Back to Recovery Intelligence
+            ← Back
           </Link>
         </div>
       </section>

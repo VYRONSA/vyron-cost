@@ -14,7 +14,7 @@ export default async function BranchIntelligencePage() {
   const avgLeakage = rows.length ? rows.reduce((sum, row) => sum + Number(row.leakage_score || 0), 0) / rows.length : 0;
 
   return (
-    <VyronCostShell title="Branch Overspending Intelligence" subtitle="BRANCH SPEND / WASTAGE / GP EROSION / LEAKAGE SCORE">
+    <VyronCostShell hidePageHeader title="Branch Overspending Intelligence" subtitle="BRANCH SPEND / WASTAGE / GP EROSION / LEAKAGE SCORE">
       <section className="mb-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <EnterpriseMetricCard title="Branches" value={String(rows.length)} note="Under intelligence review" icon={Store} dark />
         <EnterpriseMetricCard title="Critical" value={String(critical.length)} note="Immediate action required" icon={AlertTriangle} />

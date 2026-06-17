@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCustomerStatement } from "@/lib/vyron-customer-invoices";
+import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 
@@ -15,9 +20,17 @@ export async function GET(request: NextRequest) {
   const fromDate = request.nextUrl.searchParams.get("fromDate") || undefined;
   const toDate = request.nextUrl.searchParams.get("toDate") || undefined;
   try {
-    const statement = await getCustomerStatement(supabase, { customerId, customerName, fromDate, toDate });
+    await requireWorkspacePermission("invoices.view");
+    const companyId = await requireApiCompanyId();
+    const statement = await getCustomerStatement(supabase, {
+      customerId,
+      customerName,
+      fromDate,
+      toDate,
+      companyId,
+    });
     return NextResponse.json({ ok: true, statement });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Statement failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Statement failed.");
   }
 }

@@ -7,7 +7,7 @@ export default async function ExecutiveTimelinePage() {
   const { timeline } = await getAiFinancialIntelligence();
 
   return (
-    <VyronCostShell title="Executive Timeline" subtitle="SUPPLIERS · COSTS · APPROVALS · RECOVERY · PRODUCTION · INVENTORY">
+    <VyronCostShell hidePageHeader title="Executive Timeline" subtitle="SUPPLIERS · COSTS · APPROVALS · RECOVERY · PRODUCTION · INVENTORY">
       <Link href="/ai-cfo-command-centre" className="mb-6 inline-block text-sm font-black text-violet-700">
         ← AI CFO Command Centre
       </Link>

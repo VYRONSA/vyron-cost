@@ -5,7 +5,7 @@ import { getEnterprisePlatformPayload } from "@/lib/vyron-enterprise-platform-ar
 export default async function PlatformFoundationPage() {
   const { platformFoundation } = await getEnterprisePlatformPayload();
   return (
-    <VyronCostShell title="Platform Foundation" subtitle="VYRON COST · FINANCE · PAY · CORE · MAINT · FARM">
+    <VyronCostShell hidePageHeader title="Platform Foundation" subtitle="VYRON COST · FINANCE · PAY · CORE · MAINT · FARM">
       <PlatformNav />
       <FoundationClient foundation={platformFoundation} />
     </VyronCostShell>

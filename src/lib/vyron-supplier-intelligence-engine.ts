@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabase-server";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 
 type PriceHistoryRow = {
   id: string;
@@ -94,8 +95,20 @@ function calculateGpPercent(sellingPrice: number, cost: number) {
 }
 
 export async function getSupplierPriceWidgetSummary(
-  tenantId = DEMO_TENANT_ID
+  tenantId?: string | null
 ): Promise<SupplierPriceWidgetSummary> {
+  const scope = await workspaceScope();
+  const scopedTenantId = tenantId ?? scope.companyId ?? scope.tenantId;
+  if (!scopedTenantId) {
+    return {
+      increasesThisMonth: 0,
+      decreasesThisMonth: 0,
+      highestIncrease: null,
+      highestDecrease: null,
+      suppliersWithMostChanges: [],
+    };
+  }
+
   const supabase = getSupabaseAdmin();
   if (!supabase) {
     return {
@@ -113,7 +126,7 @@ export async function getSupplierPriceWidgetSummary(
     .select(
       "id, supplier_id, supplier_name, entity_name, percentage_change, movement_type, created_at"
     )
-    .eq("tenant_id", tenantId)
+    .eq("tenant_id", scopedTenantId)
     .gte("created_at", monthStart)
     .order("created_at", { ascending: false })
     .limit(1000);
@@ -174,8 +187,11 @@ export async function getSupplierPriceWidgetSummary(
 }
 
 export async function getProductImpactFromRecentMovements(
-  tenantId = DEMO_TENANT_ID
+  tenantId?: string | null
 ): Promise<ProductImpactRow[]> {
+  const scopedTenantId = tenantId ?? (await workspaceScope()).tenantId;
+  if (!scopedTenantId) return [];
+
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
@@ -183,7 +199,7 @@ export async function getProductImpactFromRecentMovements(
   const { data: movements } = await supabase
     .from("vyron_supplier_price_history")
     .select("entity_id, entity_type, new_price, previous_price")
-    .eq("tenant_id", tenantId)
+    .eq("tenant_id", scopedTenantId)
     .in("entity_type", ["ingredient", "packaging"])
     .gte("created_at", monthStart)
     .order("created_at", { ascending: false })
@@ -204,16 +220,16 @@ export async function getProductImpactFromRecentMovements(
     supabase
       .from("vyron_cost_recipe_items")
       .select("recipe_id, ingredient_id, quantity, true_unit_cost")
-      .eq("company_id", tenantId)
+      .eq("company_id", scopedTenantId)
       .in("ingredient_id", ingredientIds),
     supabase
       .from("vyron_cost_product_recipe_links")
       .select("product_id, recipe_id")
-      .eq("company_id", tenantId),
+      .eq("company_id", scopedTenantId),
     supabase
       .from("vyron_cost_products")
       .select("id, product_name, total_cost, selling_price, target_gp")
-      .eq("company_id", tenantId),
+      .eq("company_id", scopedTenantId),
   ]);
 
   const linksByRecipe = new Map<string, string[]>();
@@ -279,8 +295,11 @@ export async function getProductImpactFromRecentMovements(
 }
 
 export async function getPhase4RecoveryInsights(
-  tenantId = DEMO_TENANT_ID
+  tenantId?: string | null
 ): Promise<RecoveryOpportunityInsight[]> {
+  const scopedTenantId = tenantId ?? (await workspaceScope()).tenantId;
+  if (!scopedTenantId) return [];
+
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
@@ -289,11 +308,11 @@ export async function getPhase4RecoveryInsights(
     supabase
       .from("vyron_supplier_price_history")
       .select("supplier_name, entity_type, entity_name, percentage_change, price_difference")
-      .eq("tenant_id", tenantId)
+      .eq("tenant_id", scopedTenantId)
       .gte("created_at", monthStart)
       .order("created_at", { ascending: false })
       .limit(1000),
-    getProductImpactFromRecentMovements(tenantId),
+    getProductImpactFromRecentMovements(scopedTenantId),
   ]);
 
   const rows = (movements || []) as Array<{
@@ -386,8 +405,11 @@ export async function getPhase4RecoveryInsights(
 
 export async function getRecoveryInsightDrilldown(
   insightId: string,
-  tenantId = DEMO_TENANT_ID
+  tenantId?: string | null
 ): Promise<RecoveryInsightDrilldown | null> {
+  const scopedTenantId = tenantId ?? (await workspaceScope()).tenantId;
+  if (!scopedTenantId) return null;
+
   const supabase = getSupabaseAdmin();
   if (!supabase) return null;
 
@@ -395,7 +417,7 @@ export async function getRecoveryInsightDrilldown(
   const { data: movements } = await supabase
     .from("vyron_supplier_price_history")
     .select("previous_price, new_price, percentage_change, document_id")
-    .eq("tenant_id", tenantId)
+    .eq("tenant_id", scopedTenantId)
     .gte("created_at", monthStart)
     .order("created_at", { ascending: false })
     .limit(500);
@@ -415,7 +437,7 @@ export async function getRecoveryInsightDrilldown(
     selected = rows.sort((a, b) => safeNum(b.percentage_change) - safeNum(a.percentage_change))[0];
   }
 
-  const productImpacts = await getProductImpactFromRecentMovements(tenantId);
+  const productImpacts = await getProductImpactFromRecentMovements(scopedTenantId);
   return {
     previousPrice: safeNum(selected.previous_price),
     newPrice: safeNum(selected.new_price),
@@ -430,15 +452,18 @@ export async function getRecoveryInsightDrilldown(
 }
 
 export async function getProcurementRiskAlerts(
-  tenantId = DEMO_TENANT_ID
+  tenantId?: string | null
 ): Promise<ProcurementRiskAlert[]> {
+  const scopedTenantId = tenantId ?? (await workspaceScope()).tenantId;
+  if (!scopedTenantId) return [];
+
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
   const { data } = await supabase
     .from("vyron_procurement_risk_alerts")
     .select("id, risk_type, severity, title, description, supplier_name, previous_price, new_price, percentage_change, document_id, created_at")
-    .eq("tenant_id", tenantId)
+    .eq("tenant_id", scopedTenantId)
     .order("created_at", { ascending: false })
     .limit(200);
 

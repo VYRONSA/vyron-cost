@@ -4,10 +4,10 @@ import EnterpriseMetricCard from "@/components/EnterpriseMetricCard";
 import VyronCostShell from "@/components/VyronCostShell";
 import { getApprovals } from "@/lib/vyron-approval-data";
 import { formatMoney } from "@/lib/vyron-cost-data";
-import { isHandcraftedDataReady } from "@/lib/handcrafted-tenant";
+import { shouldUseWorkspaceDemoData } from "@/lib/vyron-workspace-server";
 
 export default async function ApprovalsPage() {
-  const clientDemo = isHandcraftedDataReady();
+  const clientDemo = await shouldUseWorkspaceDemoData();
   const approvals = await getApprovals();
 
   const pending = approvals.filter((item) => item.status === "Pending");
@@ -16,8 +16,7 @@ export default async function ApprovalsPage() {
   const impact = pending.reduce((sum, item) => sum + Number(item.financial_impact || 0), 0);
 
   return (
-    <VyronCostShell
-      title={clientDemo ? "Handcrafted Approvals" : "Approvals"}
+    <VyronCostShell hidePageHeader title={clientDemo ? "Handcrafted Approvals" : "Approvals"}
       subtitle={clientDemo ? "GP OVERRIDES · SUPPLIER INCREASES · IMPORTED PRODUCTS" : "PRICE, GP AND YIELD CONTROL"}
     >
       <section className="mb-6 grid gap-5 md:grid-cols-4">

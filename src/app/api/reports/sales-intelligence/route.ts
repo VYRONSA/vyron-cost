@@ -1,9 +1,22 @@
 import { NextResponse } from "next/server";
 import { getSalesIntelligence } from "@/lib/vyron-customer-invoices";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
+
+const EMPTY_REPORT = {
+  salesByCustomer: [],
+  salesByProduct: [],
+  topCustomers: [],
+  topProducts: [],
+  monthlySales: [],
+  invoiceTrends: [],
+};
 
 export async function GET() {
   if (!isSupabaseServiceRoleConfigured()) {
@@ -12,9 +25,12 @@ export async function GET() {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   try {
-    const report = await getSalesIntelligence(supabase, VYRON_DEFAULT_TENANT_ID);
+    await requireWorkspacePermission("reports.view");
+    const companyId = await resolveApiCompanyId();
+    if (!companyId) return NextResponse.json({ ok: true, report: EMPTY_REPORT });
+    const report = await getSalesIntelligence(supabase, companyId);
     return NextResponse.json({ ok: true, report });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Report failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Report failed.");
   }
 }

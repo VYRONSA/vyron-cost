@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import ReportTableShell from "@/components/ReportTableShell";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { formatMoney } from "@/lib/vyron-cost-data";
 
 type ReportRow = Record<string, unknown>;
@@ -222,11 +223,26 @@ export default function ReportDetailClient({ reportId }: { reportId: string }) {
   }, [rows, search]);
 
   return (
-    <section className="grid gap-6">
-      <div className="print:hidden">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "reports",
+        badge: "Reporting Intelligence",
+        title: "Report Intelligence Detail",
+        subtitle: "Explore operational and financial report outputs with export-ready presentation.",
+        outcomes: ["Speed executive report review", "Drill into exceptions quickly", "Keep print and export workflows ready"],
+        formulas: ["Displayed Value = Numeric formatted money or source value", "Filtered Rows = Search term match over row payload", "Reference Routing = Dynamic link to source record"],
+        intelligenceItems: [
+          { label: "Report context", detail: config.title },
+          { label: "Rows in view", detail: `${filtered.length} records after current filters` },
+          { label: "Export readiness", detail: "CSV and print-compatible table format retained" },
+        ],
+      }}
+    >
+      <section className="grid gap-6">
+        <div className="print:hidden">
         <Link href="/reports" className="inline-flex rounded-2xl border border-violet-100 bg-white px-4 py-2 text-sm font-black text-violet-700">← Back</Link>
-      </div>
-      <ReportTableShell title={config.title} subtitle={config.subtitle} search={search} onSearch={setSearch} resultCount={filtered.length} exportFileName={`vyron-cost-${reportId}.csv`}>
+        </div>
+        <ReportTableShell title={config.title} subtitle={config.subtitle} search={search} onSearch={setSearch} resultCount={filtered.length} exportFileName={`vyron-cost-${reportId}.csv`}>
         {message ? <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-black text-amber-700">{message}</p> : null}
         {loading ? <p className="py-8 text-sm font-bold text-slate-500">Loading report…</p> : (
           <div className="mt-5 overflow-x-auto rounded-2xl border border-violet-100">
@@ -249,7 +265,8 @@ export default function ReportDetailClient({ reportId }: { reportId: string }) {
             </table>
           </div>
         )}
-      </ReportTableShell>
-    </section>
+        </ReportTableShell>
+      </section>
+    </VyronPremiumPageShell>
   );
 }

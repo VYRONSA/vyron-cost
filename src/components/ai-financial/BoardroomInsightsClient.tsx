@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import type { BoardroomInsights } from "@/lib/vyron-ai-financial-intelligence";
 
 function money(n: number) {
@@ -9,11 +10,26 @@ function money(n: number) {
 
 export default function BoardroomInsightsClient({ boardroom }: { boardroom: BoardroomInsights }) {
   return (
-    <section className="grid gap-10">
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-[2rem] bg-emerald-50 p-6">
-          <div className="text-xs font-black uppercase text-emerald-800">Projected annual savings</div>
-          <div className="mt-2 text-4xl font-black text-emerald-950">{money(boardroom.projectedAnnualSavings)}</div>
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "executive",
+        badge: "Boardroom Intelligence",
+        title: "Boardroom Insight Command Centre",
+        subtitle: "Present top financial risks, opportunities, and strategic actions in executive-ready form.",
+        outcomes: ["Rank top value risks and opportunities", "Translate insights into board actions", "Support high-confidence strategic decisions"],
+        formulas: ["Projected Savings from top opportunities", "Projected Cost Increases from top risks", "Net Strategic Pressure = Cost Increases - Savings"],
+        intelligenceItems: [
+          { label: "Risk list", detail: `${boardroom.topRisks.length} ranked risk items` },
+          { label: "Opportunity list", detail: `${boardroom.topOpportunities.length} ranked opportunity items` },
+          { label: "Strategic actions", detail: `${boardroom.strategicActions.length} action directives` },
+        ],
+      }}
+    >
+      <section className="grid gap-10">
+        <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-[2rem] bg-[#A3E635]/10 p-6">
+          <div className="text-xs font-black uppercase text-[#4D7C0F]">Projected annual savings</div>
+          <div className="mt-2 text-4xl font-black text-[#4D7C0F]">{money(boardroom.projectedAnnualSavings)}</div>
         </div>
         <div className="rounded-[2rem] bg-red-50 p-6">
           <div className="text-xs font-black uppercase text-red-800">Projected annual cost increases</div>
@@ -48,7 +64,7 @@ export default function BoardroomInsightsClient({ boardroom }: { boardroom: Boar
           <ol className="mt-4 space-y-3">
             {boardroom.topOpportunities.map((o) => (
               <li key={o.rank} className="flex gap-4 rounded-2xl bg-white p-4 shadow-sm">
-                <span className="text-2xl font-black text-emerald-200">{o.rank}</span>
+                <span className="text-2xl font-black text-[#CBD5E1]">{o.rank}</span>
                 <div className="min-w-0 flex-1">
                   <div className="font-black text-slate-900">{o.title}</div>
                   <p className="text-sm text-slate-600">{o.detail}</p>
@@ -58,14 +74,14 @@ export default function BoardroomInsightsClient({ boardroom }: { boardroom: Boar
                     </Link>
                   ) : null}
                 </div>
-                <div className="text-right font-black text-emerald-700">{money(o.value)}</div>
+                <div className="text-right font-black text-[#65A30D]">{money(o.value)}</div>
               </li>
             ))}
           </ol>
         </div>
       </div>
 
-      <div className="rounded-[2rem] bg-slate-950 p-8 text-white">
+        <div className="rounded-[2rem] bg-slate-950 p-8 text-white">
         <h2 className="text-xl font-black">Strategic actions required</h2>
         <ul className="mt-4 space-y-3">
           {boardroom.strategicActions.map((action) => (
@@ -75,7 +91,8 @@ export default function BoardroomInsightsClient({ boardroom }: { boardroom: Boar
             </li>
           ))}
         </ul>
-      </div>
-    </section>
+        </div>
+      </section>
+    </VyronPremiumPageShell>
   );
 }

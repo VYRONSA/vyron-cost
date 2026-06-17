@@ -1,57 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
+import { recalculateBomsUsingIngredient } from "@/lib/vyron-cost-ingredient-intelligence";
+import { deleteIngredient, updateIngredient } from "@/lib/vyron-cost-master-data";
+import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-export async function PATCH(request: NextRequest, context: RouteContext) {
-  const { id: ingredientId } = await context.params;
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
   }
-
   const supabase = getSupabaseAdmin();
-  if (!supabase) {
-    return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
-  }
+  if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
 
+  const { id } = await params;
   const body = await request.json().catch(() => ({}));
-  const ingredientName = String(body?.ingredientName || "").trim();
-  if (!ingredientName) {
-    return NextResponse.json({ ok: false, error: "Ingredient name is required." }, { status: 400 });
+
+  try {
+    await requireWorkspacePermission("ingredients.edit");
+    const companyId = await requireApiCompanyId();
+    const costFieldsChanged =
+      body.purchase_cost !== undefined ||
+      body.previous_cost !== undefined ||
+      body.yield_percent !== undefined ||
+      body.true_unit_cost !== undefined;
+    const ingredient = await updateIngredient(supabase, companyId, id, body);
+    let cascade = { bomCount: 0, productCount: 0 };
+    if (costFieldsChanged) {
+      cascade = await recalculateBomsUsingIngredient(supabase, companyId, id);
+    }
+    return NextResponse.json({ ok: true, ingredient, cascade });
+  } catch (error) {
+    return workspaceAccessErrorResponse(error, "Update failed.");
   }
+}
 
-  const { data: existing, error: fetchError } = await supabase
-    .from("vyron_cost_ingredients")
-    .select("id, ingredient_name")
-    .eq("id", ingredientId)
-    .maybeSingle();
-  if (fetchError) return NextResponse.json({ ok: false, error: fetchError.message }, { status: 500 });
-  if (!existing) return NextResponse.json({ ok: false, error: "Ingredient not found." }, { status: 404 });
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!isSupabaseServiceRoleConfigured()) {
+    return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
+  }
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
 
-  const { error: updateError } = await supabase
-    .from("vyron_cost_ingredients")
-    .update({ ingredient_name: ingredientName })
-    .eq("id", ingredientId);
-  if (updateError) return NextResponse.json({ ok: false, error: updateError.message }, { status: 500 });
+  const { id } = await params;
 
-  await supabase
-    .from("vyron_document_line_items")
-    .update({ matched_entity_name: ingredientName })
-    .eq("matched_entity_type", "ingredient")
-    .eq("matched_entity_id", ingredientId);
-
-  await supabase
-    .from("vyron_supplier_line_item_mappings")
-    .update({ entity_name: ingredientName })
-    .eq("entity_type", "ingredient")
-    .eq("entity_id", ingredientId);
-
-  return NextResponse.json({
-    ok: true,
-    ingredientId,
-    ingredientName,
-    message: "Ingredient name updated.",
-  });
+  try {
+    await requireWorkspacePermission("ingredients.delete");
+    const companyId = await requireApiCompanyId();
+    await deleteIngredient(supabase, companyId, id);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return workspaceAccessErrorResponse(error, "Delete failed.");
+  }
 }

@@ -1,69 +1,276 @@
 @import "tailwindcss";
 
 :root {
-  --vyron-bg: #f7f8fa;
-  --vyron-card: #ffffff;
-  --vyron-sidebar: #08111a;
-  --vyron-accent: #b6d934;
-  --vyron-text: #0f172a;
-  --vyron-muted: #64748b;
-  --vyron-success: #22c55e;
+  --vyron-bg: #120a1f;
+  --vyron-bg-mid: #160b2e;
+  --vyron-bg-deep: #1a1033;
+  --vyron-card: #1a1230;
+  --vyron-card-mid: #21163a;
+  --vyron-card-elevated: #24183f;
+  --vyron-sidebar: #0b0617;
+  --vyron-accent: #f97316;
+  --vyron-purple: #6d28d9;
+  --vyron-violet: #7c3aed;
+  --vyron-orange: #fb923c;
+  --vyron-lime: #a3e635;
+  --vyron-text: #f8fafc;
+  --vyron-body: #cbd5e1;
+  --vyron-muted: #94a3b8;
+  --vyron-border: rgba(255, 255, 255, 0.10);
+  --vyron-success: #a3e635;
   --vyron-warning: #f59e0b;
   --vyron-danger: #ef4444;
   --background: var(--vyron-bg);
   --foreground: var(--vyron-text);
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html {
   min-height: 100%;
+  background: #120a1f;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  background: var(--vyron-bg);
-  color: var(--foreground);
+  background:
+    radial-gradient(circle at 88% 6%, rgba(109, 40, 217, 0.18), transparent 34%),
+    radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.12), transparent 30%),
+    radial-gradient(circle at 75% 85%, rgba(251, 146, 60, 0.08), transparent 32%),
+    linear-gradient(180deg, #120a1f 0%, #160b2e 48%, #1a1033 100%);
+  color: var(--vyron-body);
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
+.vyron-cost-shell.vyron-premium-workspace,
+.vyron-cost-shell.vyron-master-workspace {
+  height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 92% 4%, rgba(124, 58, 237, 0.04), transparent 34%),
+    radial-gradient(circle at 6% 20%, rgba(244, 63, 94, 0.03), transparent 30%),
+    linear-gradient(180deg, #f8fafc 0%, #f6f7fb 50%, #eef2f7 100%);
+  color: #334155;
 }
 
+.vyron-cost-shell > aside.vyron-cost-shell-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 50;
+  isolation: isolate;
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
+}
+
+.vyron-cost-shell > .vyron-cost-shell-main {
+  position: relative;
+  z-index: 0;
+  margin-left: 330px;
+  min-width: 0;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: transparent;
+  color: #334155;
+}
+
+.vyron-premium-workspace {
+  position: relative;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(124, 58, 237, 0.04), transparent 36%),
+    radial-gradient(circle at 6% 24%, rgba(244, 63, 94, 0.03), transparent 34%),
+    linear-gradient(180deg, #f8fafc 0%, #f6f7fb 52%, #eef2f7 100%);
+}
+
+.vyron-premium-workspace::before,
+.vyron-master-workspace::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(115deg, transparent 0%, rgba(124, 58, 237, 0.03) 36%, transparent 72%),
+    radial-gradient(circle at 82% 8%, rgba(244, 63, 94, 0.04), transparent 24%),
+    radial-gradient(circle at 24% 92%, rgba(124, 58, 237, 0.03), transparent 32%);
+  opacity: 0.85;
+}
+
+@media (min-width: 1280px) {
+  .vyron-cost-shell.vyron-premium-workspace::before,
+  .vyron-cost-shell.vyron-master-workspace::before {
+    left: 330px;
+  }
+}
+
+html:has(.vyron-master-workspace) {
+  background: #f8fafc;
+}
+
+html:has(.vyron-master-workspace) body {
+  background:
+    radial-gradient(circle at 88% 4%, rgba(124, 58, 237, 0.04), transparent 34%),
+    radial-gradient(circle at 8% 18%, rgba(244, 63, 94, 0.03), transparent 30%),
+    linear-gradient(180deg, #f8fafc 0%, #f6f7fb 48%, #eef2f7 100%);
+  color: #334155;
+}
+
+.vyron-dashboard-v5::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: -2rem;
+  z-index: -1;
+  border-radius: 2.5rem;
+  background:
+    radial-gradient(circle at 92% 4%, rgba(251, 146, 60, 0.14), transparent 38%),
+    radial-gradient(circle at 50% 40%, rgba(109, 40, 217, 0.10), transparent 50%);
+}
+
+.vyron-executive-snapshot-card {
+  background: #21163a;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--vyron-border);
+}
+
+button, input, select, textarea { font: inherit; }
+
+.vyron-section-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--vyron-muted);
+}
+
+/* Dashboard-aligned text utilities */
+.vyron-text-heading { color: var(--vyron-text); }
+.vyron-text-body { color: var(--vyron-body); }
+.vyron-text-muted { color: var(--vyron-muted); }
+.vyron-text-lime { color: var(--vyron-lime); }
+.vyron-text-warning { color: var(--vyron-orange); }
+.vyron-text-brand { color: #c4b5fd; }
+
+.vyron-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--vyron-muted);
+}
+
+.vyron-status-lime {
+  border: 1px solid rgba(163, 230, 53, 0.3);
+  background: rgba(163, 230, 53, 0.12);
+  color: var(--vyron-lime);
+}
+
+.vyron-status-warning {
+  border: 1px solid rgba(251, 146, 60, 0.35);
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--vyron-orange);
+}
+
+.vyron-status-brand {
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  background: rgba(124, 58, 237, 0.15);
+  color: #ddd6fe;
+}
+
+/* ── VYRON Master — public pages (landing, login) ── */
+:root {
+  --vyron-master-page: #f8fafc;
+  --vyron-master-page-alt: #f6f7fb;
+  --vyron-master-page-muted: #eef2f7;
+  --vyron-master-navy: #07111f;
+  --vyron-master-navy-mid: #0b1220;
+  --vyron-master-navy-panel: #101827;
+  --vyron-master-red: #f43f5e;
+  --vyron-master-red-dark: #e11d48;
+  --vyron-master-purple: #7c3aed;
+  --vyron-master-purple-bright: #9333ea;
+  --vyron-master-text: #0f172a;
+  --vyron-master-body: #334155;
+  --vyron-master-muted: #64748b;
+  --vyron-master-border: #e2e8f0;
+  --vyron-master-xero: #13b5ea;
+}
+
+html:has(.vyron-public-page) {
+  background: var(--vyron-master-page);
+}
+
+html:has(.vyron-public-page) body {
+  background:
+    radial-gradient(circle at 88% 4%, rgba(124, 58, 237, 0.05), transparent 34%),
+    radial-gradient(circle at 8% 18%, rgba(244, 63, 94, 0.04), transparent 30%),
+    linear-gradient(180deg, #f8fafc 0%, #f6f7fb 48%, #eef2f7 100%);
+  color: var(--vyron-master-body);
+}
+
+.vyron-public-page {
+  color: var(--vyron-master-body);
+}
+
+.vyron-master-gradient-text {
+  background: linear-gradient(90deg, #e11d48, #9333ea, #7c3aed);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.vyron-master-primary-btn {
+  border-radius: 1rem;
+  background: linear-gradient(90deg, #e11d48, #7c3aed);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.22);
+}
+
+.vyron-master-light-card {
+  border-radius: 1.5rem;
+  border: 1px solid var(--vyron-master-border);
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+}
+
+.vyron-master-dark-panel {
+  border-radius: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--vyron-master-navy-mid);
+  color: #f8fafc;
+  box-shadow: 0 20px 60px rgba(7, 17, 31, 0.32);
+}
+
+/* Shared light surface cards (module framework) */
 .vyron-surface-card {
-  border-radius: 1.75rem;
+  border-radius: 1.5rem;
   border: 1px solid #e2e8f0;
   background: #ffffff;
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 12px 32px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
 }
 
 .vyron-surface-card-elevated {
-  border-radius: 1.75rem;
+  border-radius: 1.5rem;
   border: 1px solid #e2e8f0;
   background: #ffffff;
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 20px 48px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
 }
 
-.vyron-workspace-light {
-  background: #f7f8fa;
+/* Shell form readability defaults */
+.vyron-cost-shell-main input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.vyron-cost-shell-main select,
+.vyron-cost-shell-main textarea {
+  color: #0f172a;
 }
 
-.vyron-section-label {
-  font-size: 0.6875rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #64748b;
+.vyron-cost-shell-main input::placeholder,
+.vyron-cost-shell-main textarea::placeholder {
+  color: #94a3b8;
+  opacity: 1;
 }

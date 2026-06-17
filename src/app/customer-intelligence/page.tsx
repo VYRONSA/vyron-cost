@@ -1,14 +1,14 @@
-import VyronCostPageShell from "@/components/vyron-cost/shared/VyronCostPageShell";
 import CustomerIntelligenceClient from "@/components/vyron-cost/customers/CustomerIntelligenceClient";
+import VyronCostAiShell from "@/components/VyronCostAiShell";
 
 export default function Page() {
   return (
-    <VyronCostPageShell
+    <VyronCostAiShell
       title="Customer Intelligence"
-      subtitle="Customer revenue, COGS, gross profit, product mix and AI sales recommendations."
-      backHref="/dashboard"
+      subtitle="CUSTOMER REVENUE, GROSS PROFIT, BUYING PATTERNS AND PRODUCT PERFORMANCE FROM CUSTOMER INVOICES."
+      hidePageHeader
     >
       <CustomerIntelligenceClient />
-    </VyronCostPageShell>
+    </VyronCostAiShell>
   );
 }

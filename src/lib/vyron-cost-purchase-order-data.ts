@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { getIngredients, getSuppliers, CostIngredient, CostSupplier } from "@/lib/vyron-cost-core-data";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 
 export type PurchaseOrder = {
   id: string;
@@ -40,16 +41,40 @@ export function calcLineVat(qty: number, cost: number, vat: number) { return cal
 export function calcLineTotal(qty: number, cost: number, vat: number) { return calcLineExcl(qty, cost) + calcLineVat(qty, cost, vat); }
 
 export async function getPurchaseOrders(): Promise<PurchaseOrder[]> {
-  if (!supabase) return demoPurchaseOrders;
-  const { data, error } = await supabase.from("vyron_cost_purchase_orders").select("*").order("created_at", { ascending: false }).limit(1000);
-  if (error || !data) return demoPurchaseOrders;
+  const { useDemo, companyId } = await workspaceScope();
+  if (!useDemo && !companyId) return [];
+  if (!supabase) return useDemo ? demoPurchaseOrders : [];
+
+  let query = supabase.from("vyron_cost_purchase_orders").select("*").order("created_at", { ascending: false }).limit(1000);
+  if (companyId) query = query.eq("company_id", companyId);
+  const { data, error } = await query;
+  if (error || !data) return useDemo ? demoPurchaseOrders : [];
   return data as PurchaseOrder[];
 }
 export async function getPurchaseOrderById(id: string): Promise<{ po: PurchaseOrder | null; lines: PurchaseOrderLine[] }> {
-  if (!supabase || id.startsWith("demo")) return { po: demoPurchaseOrders[0], lines: demoPurchaseOrderLines };
-  const po = await supabase.from("vyron_cost_purchase_orders").select("*").eq("id", id).maybeSingle();
+  const { useDemo, companyId } = await workspaceScope();
+  if (!useDemo && !companyId) return { po: null, lines: [] };
+  if (!supabase || (useDemo && id.startsWith("demo"))) {
+    const po = useDemo ? demoPurchaseOrders.find((item) => item.id === id) || null : null;
+    const lines = po
+      ? demoPurchaseOrderLines.filter((line) => line.purchase_order_id === po.id)
+      : [];
+    return { po, lines };
+  }
+  if (!companyId) return { po: null, lines: [] };
+  const po = await supabase
+    .from("vyron_cost_purchase_orders")
+    .select("*")
+    .eq("id", id)
+    .eq("company_id", companyId)
+    .maybeSingle();
   if (po.error || !po.data) return { po: null, lines: [] };
-  const lines = await supabase.from("vyron_cost_purchase_order_lines").select("*").eq("purchase_order_id", id).order("sort_order", { ascending: true });
+  const lines = await supabase
+    .from("vyron_cost_purchase_order_lines")
+    .select("*")
+    .eq("purchase_order_id", id)
+    .eq("company_id", companyId)
+    .order("sort_order", { ascending: true });
   return { po: po.data as PurchaseOrder, lines: (lines.data || []) as PurchaseOrderLine[] };
 }
 export async function getPurchaseOrderFormData(): Promise<{ suppliers: CostSupplier[]; ingredients: CostIngredient[] }> {

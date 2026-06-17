@@ -6,8 +6,7 @@ export default async function MarginBridgePage() {
   const products = await getProductIntelligence();
 
   return (
-    <VyronCostShell
-      title="Margin Bridge"
+    <VyronCostShell hidePageHeader title="Margin Bridge"
       subtitle="ACTUAL GP · TARGET GP · MONTHLY BRIDGE VALUE"
     >
       <MarginBridgeClient products={products} />

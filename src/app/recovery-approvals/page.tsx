@@ -6,8 +6,7 @@ export default async function RecoveryApprovalsPage() {
   const findings = await getLeakageFindings();
 
   return (
-    <VyronCostShell
-      title="Recovery Approvals"
+    <VyronCostShell hidePageHeader title="Recovery Approvals"
       subtitle="APPROVE · REJECT · TRACK RECOVERABLE VALUE"
     >
       <RecoveryApprovalsClient findings={findings} />

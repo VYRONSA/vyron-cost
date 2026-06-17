@@ -9,7 +9,7 @@ export default async function ScenarioModellingPage() {
     salesDecreasePct: 0,
   });
   return (
-    <VyronCostShell title="Scenario Modelling" subtitle="WHAT-IF · GP · RECOVERY · INVENTORY · PRODUCTION">
+    <VyronCostShell hidePageHeader title="Scenario Modelling" subtitle="WHAT-IF · GP · RECOVERY · INVENTORY · PRODUCTION">
       <ScenarioModellingClient initial={initial} />
     </VyronCostShell>
   );

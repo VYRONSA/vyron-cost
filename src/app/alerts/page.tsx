@@ -6,7 +6,7 @@ export default async function AlertsPage() {
   const rows = await getAlertRows();
 
   return (
-    <VyronCostAiShell title="Alerts" subtitle="High-risk margin, supplier and invoice alerts.">
+    <VyronCostAiShell hidePageHeader title="Alerts" subtitle="High-risk margin, supplier and invoice alerts.">
       <section className="grid gap-5 md:grid-cols-4">
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Active Alerts</div>

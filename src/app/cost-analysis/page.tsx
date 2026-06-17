@@ -1,10 +1,10 @@
 import Link from "next/link";
 import VyronCostAiShell from "@/components/VyronCostAiShell";
-import { getHandcraftedProductCostLines, isHandcraftedDataReady } from "@/lib/handcrafted-tenant";
+import { getHandcraftedProductCostLines } from "@/lib/handcrafted-tenant";
 import { getLeakageKpis } from "@/lib/vyron-financial-command-data";
 import { formatMoney } from "@/lib/vyron-cost-data";
 import { supabase } from "@/lib/supabase";
-import { HANDCRAFTED_COMPANY_ID } from "@/lib/vyron-handcrafted-intelligence";
+import { getWorkspaceCompanyId, shouldUseWorkspaceDemoData } from "@/lib/vyron-workspace-server";
 
 type CostCategory = {
   name: string;
@@ -13,7 +13,8 @@ type CostCategory = {
 };
 
 async function getCostCategories(): Promise<CostCategory[]> {
-  const lines = isHandcraftedDataReady() ? getHandcraftedProductCostLines() : [];
+  const useDemo = await shouldUseWorkspaceDemoData();
+  const lines = useDemo ? getHandcraftedProductCostLines() : [];
 
   if (lines.length) {
     const buckets: Record<string, number> = {};
@@ -36,10 +37,12 @@ async function getCostCategories(): Promise<CostCategory[]> {
   }
 
   if (supabase) {
+    const companyId = await getWorkspaceCompanyId();
+    if (!companyId) return [];
     const { data } = await supabase
       .from("vyron_cost_product_cost_lines")
       .select("line_type, line_cost, line_cost_imported")
-      .eq("company_id", HANDCRAFTED_COMPANY_ID)
+      .eq("company_id", companyId)
       .limit(5000);
 
     if (data?.length) {
@@ -69,7 +72,7 @@ export default async function CostAnalysisPage() {
   const total = categories.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <VyronCostAiShell title="Cost Analysis" subtitle="Food cost, packaging, labour, wastage and leakage breakdown.">
+    <VyronCostAiShell hidePageHeader title="Cost Analysis" subtitle="Food cost, packaging, labour, wastage and leakage breakdown.">
       <section className="grid gap-5 md:grid-cols-4">
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Categories</div>
@@ -85,7 +88,7 @@ export default async function CostAnalysisPage() {
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Drilldown</div>
-          <div className="mt-3 text-4xl font-black text-emerald-600">Live</div>
+          <div className="mt-3 text-4xl font-black text-[#84CC16]">Live</div>
         </div>
       </section>
 

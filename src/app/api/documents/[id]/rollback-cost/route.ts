@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isSupervisorAuthorized } from "@/lib/vyron-document-approval-audit";
 import { rollbackDocumentCostUpdates } from "@/lib/vyron-document-cost-rollback";
+import {
+  documentTenantAccessErrorResponse,
+  requireDocumentTenantId,
+  verifyDocumentTenantAccess,
+} from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -24,6 +29,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
 
+  let tenantId: string;
+  try {
+    tenantId = await requireDocumentTenantId();
+  } catch (error) {
+    return documentTenantAccessErrorResponse(error);
+  }
+
   const { data: document, error: docError } = await supabase
     .from("vyron_documents")
     .select("id, tenant_id, status")
@@ -31,10 +43,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
     .maybeSingle();
   if (docError) return NextResponse.json({ ok: false, error: docError.message }, { status: 500 });
   if (!document) return NextResponse.json({ ok: false, error: "Document not found." }, { status: 404 });
+  const denied = verifyDocumentTenantAccess(document, tenantId);
+  if (denied) return denied;
 
   try {
     const result = await rollbackDocumentCostUpdates(supabase, {
-      tenantId: document.tenant_id as string,
+      tenantId,
       documentId,
       rolledBackBy,
       notes,

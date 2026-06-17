@@ -27,7 +27,7 @@ export default function VyronCostDataPage({
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Records</div>
           <div className="mt-3 text-4xl font-black text-slate-900">{rows.length}</div>
-          <div className="mt-2 text-sm font-bold text-emerald-600">Live data</div>
+          <div className="mt-2 text-sm font-bold text-[#84CC16]">Live data</div>
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Review Items</div>
@@ -41,7 +41,7 @@ export default function VyronCostDataPage({
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Status</div>
-          <div className="mt-3 text-4xl font-black text-emerald-600">Live</div>
+          <div className="mt-3 text-4xl font-black text-[#84CC16]">Live</div>
           <div className="mt-2 text-sm font-bold text-slate-500">Supabase first</div>
         </div>
       </section>

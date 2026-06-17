@@ -28,7 +28,7 @@ const routes = [
 
 export default function FinalTestingMapPage() {
   return (
-    <VyronCostAiShell title="Final Testing Map" subtitle="Click through every page before the client sees the software.">
+    <VyronCostAiShell hidePageHeader title="Final Testing Map" subtitle="Click through every page before the client sees the software.">
       <section className="grid gap-3">
         {routes.map((route, index) => (
           <Link key={route} href={route} className="rounded-2xl bg-white p-5 text-sm font-black text-slate-800 shadow-[0_12px_35px_rgba(81,63,190,0.06)] transition hover:bg-violet-50">

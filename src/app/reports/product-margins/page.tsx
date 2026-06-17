@@ -14,7 +14,7 @@ export default async function ProductMarginReportPage() {
   }, 0);
 
   return (
-    <VyronCostShell title="Product Margin Report" subtitle="Dedicated product GP, margin and price review report.">
+    <VyronCostShell hidePageHeader title="Product Margin Report" subtitle="Dedicated product GP, margin and price review report.">
       <section className="mb-6 grid gap-5 md:grid-cols-4">
         <MetricCard title="Products" value={String(products.length)} note="Total product records" icon={PackageSearch} />
         <MetricCard title="Average GP" value={`${avgGp.toFixed(1)}%`} note="Current average margin" icon={Percent} />

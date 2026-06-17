@@ -7,8 +7,7 @@ export default async function FinanceIntelligencePage() {
   const [kpis, leakage] = await Promise.all([getFinanceIntelligenceKpis(), getFinanceLeakageCentre()]);
 
   return (
-    <VyronCostShell
-      title="Finance Intelligence Centre"
+    <VyronCostShell hidePageHeader title="Finance Intelligence Centre"
       subtitle="CFO VIEW · SPEND · RECOVERY · INFLATION · PROJECTED IMPACT"
     >
       <div className="mb-6 flex flex-wrap gap-3">

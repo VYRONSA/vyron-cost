@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import PaginatedTableControls from "@/components/PaginatedTableControls";
 import StatusPill from "@/components/StatusPill";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { VyronPremiumEmptyState } from "@/components/vyron-premium/VyronPremiumSprint";
 import { formatMoney } from "@/lib/vyron-cost-data";
 import { SupplierInflationRow } from "@/lib/vyron-demo-data";
 
@@ -34,16 +36,59 @@ export default function SupplierInflationImpactClient({ rows }: { rows: Supplier
   const paged = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
   const totalAnnual = rows.reduce((s, r) => s + r.annual_impact, 0);
 
+  if (!rows.length) {
+    return (
+      <VyronPremiumPageShell
+        config={{
+        visualVariant: "suppliers",
+          badge: "Inflation Intelligence",
+          title: "Supplier Inflation Impact Centre",
+          subtitle: "Assess supplier-led inflation pressure on annual cost exposure and mitigation actions.",
+          outcomes: ["Quantify annual inflation impact", "Prioritize high-risk suppliers", "Trigger corrective supplier actions"],
+          formulas: ["Inflation % = (Current - Previous) / Previous", "Annual Impact from supplier exposure model", "Risk score aligns inflation and spend stress"],
+          intelligenceItems: [
+            { label: "Current dataset", detail: "No rows loaded in this context" },
+            { label: "Action readiness", detail: "Populate supplier inflation feed to activate table analytics" },
+          ],
+        }}
+      >
+        <VyronPremiumEmptyState
+          title="No Inflation Data Yet"
+          steps={[
+            "Sync supplier price history",
+            "Rebuild inflation impact dataset",
+            "Return to review annual impact and actions",
+          ]}
+        />
+      </VyronPremiumPageShell>
+    );
+  }
+
   return (
-    <section className="grid gap-6">
-      <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "suppliers",
+        badge: "Inflation Intelligence",
+        title: "Supplier Inflation Impact Centre",
+        subtitle: "Assess supplier-led inflation pressure on annual cost exposure and mitigation actions.",
+        outcomes: ["Quantify annual inflation impact", "Prioritize high-risk suppliers", "Trigger corrective supplier actions"],
+        formulas: ["Inflation % = (Current - Previous) / Previous", "Annual Impact from supplier exposure model", "Risk score aligns inflation and spend stress"],
+        intelligenceItems: [
+          { label: "Suppliers tracked", detail: `${rows.length} suppliers in inflation model` },
+          { label: "Total annual impact", detail: formatMoney(totalAnnual) },
+          { label: "Filtered rows", detail: `${filtered.length} records after search filter` },
+        ],
+      }}
+    >
+      <section className="grid gap-6">
+        <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
         <div className="text-xs font-black uppercase tracking-[0.2em] text-red-300">Annual Supplier Impact</div>
         <div className="mt-2 text-3xl font-black">{formatMoney(totalAnnual)}</div>
       </div>
 
       <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <div className="flex items-center gap-3 rounded-[1.5rem] border border-emerald-100 bg-emerald-50/40 px-4 py-3">
-          <Search size={20} className="text-emerald-700" />
+        <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3">
+          <Search size={20} className="text-[#65A30D]" />
           <input
             value={search}
             onChange={(e) => {
@@ -56,9 +101,9 @@ export default function SupplierInflationImpactClient({ rows }: { rows: Supplier
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-[2rem] border border-white bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="overflow-x-auto rounded-[2rem] border border-white bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="min-w-[1100px]">
-          <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-emerald-300">
+          <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
             <div>Supplier</div>
             <div>Current</div>
             <div>Previous</div>
@@ -70,7 +115,7 @@ export default function SupplierInflationImpactClient({ rows }: { rows: Supplier
           {paged.map((row) => (
             <div key={row.id} className="grid grid-cols-7 items-center border-t border-slate-100 px-5 py-5 text-sm">
               <div>
-                <div className="font-black text-[#07110d]">{row.supplier_name}</div>
+                <div className="font-black text-[#F8FAFC]">{row.supplier_name}</div>
                 <div className="text-xs text-slate-500">{row.category}</div>
               </div>
               <div>{formatMoney(Number(row.current_cost || 0))}</div>
@@ -83,7 +128,7 @@ export default function SupplierInflationImpactClient({ rows }: { rows: Supplier
                 </StatusPill>
               </div>
               <div>
-                <Link href="/action-centre" className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700">
+                <Link href="/action-centre" className="inline-flex items-center gap-1 rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]">
                   {row.recommended_action}
                   <ArrowUpRight size={14} />
                 </Link>
@@ -94,7 +139,8 @@ export default function SupplierInflationImpactClient({ rows }: { rows: Supplier
         <div className="px-5 pb-5">
           <PaginatedTableControls page={page} pageCount={pageCount} setPage={setPage} total={filtered.length} />
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </VyronPremiumPageShell>
   );
 }

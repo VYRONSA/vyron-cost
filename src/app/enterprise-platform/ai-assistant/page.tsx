@@ -5,7 +5,7 @@ import { getEnterprisePlatformPayload } from "@/lib/vyron-enterprise-platform-ar
 export default async function EnterpriseAiPage() {
   const { enterpriseAi } = await getEnterprisePlatformPayload();
   return (
-    <VyronCostShell title="VYRON Enterprise AI" subtitle="INFLATION · GP · RECOVERY · BRANCHES · EXPLAINABLE">
+    <VyronCostShell hidePageHeader title="VYRON Enterprise AI" subtitle="INFLATION · GP · RECOVERY · BRANCHES · EXPLAINABLE">
       <PlatformNav />
       <EnterpriseAiClient presets={enterpriseAi} />
     </VyronCostShell>

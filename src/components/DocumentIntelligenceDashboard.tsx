@@ -343,7 +343,7 @@ export default function DocumentIntelligenceDashboard() {
             type="button"
             disabled={rulesSaving}
             onClick={() => void saveRules()}
-            className="mt-5 rounded-xl bg-violet-700 px-5 py-2 text-xs font-black text-white disabled:opacity-60"
+            className="mt-5 rounded-xl bg-violet-700 px-5 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
           >
             {rulesSaving ? "Saving…" : "Save approval rules"}
           </button>

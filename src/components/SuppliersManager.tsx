@@ -105,9 +105,9 @@ export default function SuppliersManager({
     <section className="grid gap-6 xl:grid-cols-[0.8fr_1.5fr]">
       <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600"><Plus size={20} /></div>
+          <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-3 text-[#84CC16]"><Plus size={20} /></div>
           <div>
-            <h2 className="text-2xl font-black text-[#07110d]">Add New Supplier</h2>
+            <h2 className="text-2xl font-black text-[#F8FAFC]">Add New Supplier</h2>
             <p className="text-sm text-slate-500">Create suppliers and assign categories.</p>
           </div>
         </div>
@@ -115,31 +115,31 @@ export default function SuppliersManager({
         <div className="grid gap-4">
           <label className="text-sm font-black text-slate-600">
             Supplier Name
-            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-emerald-400" value={form.supplier_name} onChange={(event) => updateForm("supplier_name", event.target.value)} />
+            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400" value={form.supplier_name} onChange={(event) => updateForm("supplier_name", event.target.value)} />
           </label>
 
           <label className="text-sm font-black text-slate-600">
             Category
-            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-emerald-400" value={form.category} onChange={(event) => updateForm("category", event.target.value)} />
+            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400" value={form.category} onChange={(event) => updateForm("category", event.target.value)} />
           </label>
 
           <label className="text-sm font-black text-slate-600">
             Contact Email
-            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-emerald-400" value={form.contact_email} onChange={(event) => updateForm("contact_email", event.target.value)} />
+            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400" value={form.contact_email} onChange={(event) => updateForm("contact_email", event.target.value)} />
           </label>
 
-          <button type="button" onClick={addSupplier} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-4 text-sm font-black text-[#07110d] transition hover:bg-emerald-400">
+          <button type="button" onClick={addSupplier} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
             <Plus size={18} />
             Add Supplier
           </button>
 
-          {message && <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-bold text-[#65A30D]">{message}</div>}
         </div>
       </div>
 
       <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5">
-          <h2 className="text-2xl font-black text-[#07110d]">Supplier Register</h2>
+          <h2 className="text-2xl font-black text-[#F8FAFC]">Supplier Register</h2>
           <p className="mt-2 text-sm text-slate-500">Search suppliers by name, category, email, movement or risk.</p>
         </div>
 
@@ -165,23 +165,23 @@ export default function SuppliersManager({
 
         <div className="overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[1080px]">
-            <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-emerald-300">
+            <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
               <div>Supplier</div><div>Category</div><div>Contact</div><div>Movement</div><div>Risk</div><div>Full Edit</div><div>Delete</div>
             </div>
 
             {filteredSuppliers.map((supplier) => (
               <div key={supplier.id} className="grid grid-cols-7 items-center border-t border-slate-100 px-5 py-5 text-sm">
                 <div>
-                  <Link href={`/suppliers/${supplier.id}`} className="font-black text-[#07110d] hover:text-emerald-700">
+                  <Link href={`/suppliers/${supplier.id}`} className="font-black text-[#F8FAFC] hover:text-[#65A30D]">
                     {supplier.supplier_name}
                   </Link>
                 </div>
                 <div className="font-bold text-slate-600">{supplier.category}</div>
                 <div className="text-slate-500">{supplier.contact_email || "Not captured"}</div>
-                <div className="font-black text-emerald-700">{Number(supplier.last_price_movement).toFixed(1)}%</div>
+                <div className="font-black text-[#65A30D]">{Number(supplier.last_price_movement).toFixed(1)}%</div>
                 <div><StatusPill tone={statusTone(supplier.risk_status)}>{supplier.risk_status}</StatusPill></div>
                 <div>
-                  <Link href={`/suppliers/${supplier.id}/edit`} className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700">
+                  <Link href={`/suppliers/${supplier.id}/edit`} className="inline-flex items-center gap-2 rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]">
                     <Edit3 size={14} />
                     Edit
                   </Link>

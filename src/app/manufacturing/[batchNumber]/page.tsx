@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import BackButton from "@/components/vyron-cost/BackButton";
 import DeleteConfirmModal from "@/components/vyron-cost/DeleteConfirmModal";
 import ModulePageShell from "@/components/vyron-cost/ModulePageShell";
@@ -6,7 +7,8 @@ import { formatCurrency, formatNumber } from "@/lib/vyron-cost/stock-engine";
 import { getBatchCost, manufacturingBatches } from "@/lib/vyron-cost/manufacturing-data";
 
 export default function ManufacturingBatchDetailPage({ params }: { params: { batchNumber: string } }) {
-  const batch = manufacturingBatches.find((item) => item.batchNumber === decodeURIComponent(params.batchNumber)) ?? manufacturingBatches[0];
+  const batch = manufacturingBatches.find((item) => item.batchNumber === decodeURIComponent(params.batchNumber));
+  if (!batch) notFound();
   const cost = getBatchCost(batch);
 
   return (

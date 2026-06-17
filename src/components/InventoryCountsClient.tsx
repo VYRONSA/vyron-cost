@@ -5,6 +5,14 @@ import { RefreshCcw, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { formatMoney } from "@/lib/vyron-cost-data";
+import { useInventoryPermissions } from "@/hooks/useModulePermissions";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
+import {
+  VyronPremiumEmptyState,
+  VyronPremiumFormulaCard,
+  VyronPremiumHeroBanner,
+  VyronPremiumSectionHeading,
+} from "@/components/vyron-premium/VyronPremiumSprint";
 
 type CountType = "ingredients" | "packaging" | "finished_goods";
 
@@ -17,6 +25,7 @@ function labelForType(type: CountType) {
 }
 
 export default function InventoryCountsClient() {
+  const { canCreateCount } = useInventoryPermissions();
   const router = useRouter();
   const [counts, setCounts] = useState<CountRow[]>([]);
   const [creating, setCreating] = useState<CountType | null>(null);
@@ -26,7 +35,8 @@ export default function InventoryCountsClient() {
   async function loadCounts() {
     setMessage("");
     try {
-      const res = await fetch("/api/inventory/counts");
+      const { query } = poApiWorkspaceContext();
+      const res = await fetch(`/api/inventory/counts${query}`, { cache: "no-store" });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "Could not load stock counts.");
       setCounts(data.counts || []);
@@ -40,13 +50,18 @@ export default function InventoryCountsClient() {
   }, []);
 
   async function newCount(countType: CountType) {
+    if (!canCreateCount) {
+      setMessage("You do not have permission to create stock counts.");
+      return;
+    }
     setCreating(countType);
     setMessage(`Creating ${labelForType(countType)} count…`);
     try {
+      const { body: workspaceBody } = poApiWorkspaceContext();
       const res = await fetch("/api/inventory/counts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ countType, createdBy: "supervisor" }),
+        body: JSON.stringify({ ...workspaceBody, countType, createdBy: "supervisor" }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "Could not create stock count.");
@@ -68,30 +83,59 @@ export default function InventoryCountsClient() {
   }, [counts, search]);
 
   return (
-    <section className="grid gap-6">
-      <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div>
-            <h2 className="text-2xl font-black text-slate-950">Stock Counts</h2>
-            <p className="mt-1 text-sm font-semibold text-slate-500">Draft → count → submit → approve → post variance to the stock ledger.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {(["ingredients", "packaging", "finished_goods"] as const).map((type) => (
+    <section className="grid gap-8">
+      <VyronPremiumHeroBanner
+        visualVariant="inventory"
+        badge="Premium Inventory Workspace"
+        title="Stock Count Command Centre"
+        subtitle="Draft → count → submit → approve → post variance to the stock ledger — the disciplined path to inventory truth."
+        outcomes={[
+          "Create counts by stock type",
+          "Capture physical quantities per item",
+          "Approve variances before posting",
+          "Post adjustments to the permanent ledger",
+        ]}
+        quotes={[
+          { label: "Inventory", quote: "Inventory is cash wearing a disguise." },
+          { label: "Truth", quote: "What gets measured gets protected." },
+        ]}
+      >
+        {canCreateCount
+          ? (["ingredients", "packaging", "finished_goods"] as const).map((type) => (
               <button
                 key={type}
                 type="button"
                 disabled={creating !== null}
                 onClick={() => void newCount(type)}
-                className="rounded-xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-4 py-2 text-xs font-black text-white disabled:opacity-60"
+                className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-900 shadow-lg disabled:opacity-60"
               >
                 {creating === type ? "Creating…" : `New ${labelForType(type)} Count`}
               </button>
-            ))}
-            <button type="button" onClick={() => void loadCounts()} className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-4 py-2 text-xs font-black text-violet-800">
-              <RefreshCcw size={14} /> Refresh
-            </button>
-          </div>
-        </div>
+            ))
+          : null}
+        <button
+          type="button"
+          onClick={() => void loadCounts()}
+          className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-black text-white backdrop-blur-sm"
+        >
+          <RefreshCcw size={16} /> Refresh
+        </button>
+      </VyronPremiumHeroBanner>
+
+      <VyronPremiumFormulaCard
+        variant="light"
+        eyebrow="Variance"
+        title="Stock count formulas"
+        formulas={[
+          { label: "Count Variance", formula: "Physical qty − System qty" },
+          { label: "Value Variance", formula: "Variance qty × weighted average unit cost" },
+          { label: "Inventory Value", formula: "On-hand qty × weighted average cost" },
+        ]}
+        className="max-w-2xl"
+      />
+
+      <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+        <VyronPremiumSectionHeading eyebrow="Search" title="Stock count register" subtitle="Filter by count number, type, status or creator." />
 
         <div className="mt-5 flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
           <Search size={18} className="text-violet-700" />
@@ -109,7 +153,16 @@ export default function InventoryCountsClient() {
 
       <div className="overflow-hidden rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         {filtered.length === 0 ? (
-          <div className="p-8 text-center text-sm font-bold text-slate-500">No stock counts found. Create one from the buttons above.</div>
+          <div className="p-6">
+            <VyronPremiumEmptyState
+              steps={[
+                "Confirm stock master items exist for the count type.",
+                "Create a new ingredients, packaging or finished goods count.",
+                "Enter physical quantities and submit for approval.",
+                "Post approved variances to update the ledger.",
+              ]}
+            />
+          </div>
         ) : null}
         {filtered.map((count) => {
           const id = String(count.id);

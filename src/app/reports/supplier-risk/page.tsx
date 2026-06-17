@@ -11,7 +11,7 @@ export default async function SupplierRiskReportPage() {
   const avgMovement = suppliers.length ? suppliers.reduce((sum, supplier) => sum + Number(supplier.last_price_movement || 0), 0) / suppliers.length : 0;
 
   return (
-    <VyronCostShell title="Supplier Risk Report" subtitle="Dedicated supplier risk, movement and invoice-routing report.">
+    <VyronCostShell hidePageHeader title="Supplier Risk Report" subtitle="Dedicated supplier risk, movement and invoice-routing report.">
       <section className="mb-6 grid gap-5 md:grid-cols-4">
         <MetricCard title="Suppliers" value={String(suppliers.length)} note="Total suppliers" icon={Building2} />
         <MetricCard title="High Risk" value={String(highRisk)} note="Needs procurement review" icon={ShieldAlert} />

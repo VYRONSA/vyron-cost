@@ -12,8 +12,7 @@ export default async function AiProcurementManagerPage() {
   ]);
 
   return (
-    <VyronCostAiShell
-      title="AI Procurement Manager"
+    <VyronCostAiShell hidePageHeader title="AI Procurement Manager"
       subtitle="See It. Understand It. Fix It."
     >
       <AiProcurementManagerClient recommendations={recommendations} stats={stats} />

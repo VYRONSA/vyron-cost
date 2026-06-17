@@ -3,8 +3,7 @@ import VyronCostAiShell from "@/components/VyronCostAiShell";
 
 export default function InvoiceProcessingPage() {
   return (
-    <VyronCostAiShell
-      title="Invoice Processing"
+    <VyronCostAiShell hidePageHeader title="Invoice Processing"
       subtitle="UPLOAD, EXTRACT, MATCH AND APPROVE SUPPLIER INVOICES."
     >
       <DocumentHubdocClient mode="processing" />

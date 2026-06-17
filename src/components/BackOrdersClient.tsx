@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Download, Printer, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 function num(value: unknown) {
   const n = Number(value || 0);
@@ -95,21 +96,30 @@ export default function BackOrdersClient() {
               const poId = String(row.purchase_order_id || "");
               const poNumber = String(row.po_number || row.purchase_order_number || poId || "—");
               return (
-                <tr key={String(row.id || index)} className="border-t border-slate-100 hover:bg-violet-50/50">
-                  <td className="px-4 py-3 font-bold text-slate-900">{String(row.supplier_name_snapshot || row.supplier_name || "—")}</td>
-                  <td className="px-4 py-3 font-black text-violet-700">{poNumber}</td>
-                  <td className="px-4 py-3 font-bold">{String(row.item_name || "—")}</td>
-                  <td className="px-4 py-3 font-black text-red-600">{num(row.outstanding_qty).toFixed(2)} {String(row.unit || "")}</td>
-                  <td className="px-4 py-3">{String(row.expected_date || "—")}</td>
-                  <td className="px-4 py-3"><span className="rounded-full bg-amber-100 px-3 py-1 text-[10px] font-black uppercase text-amber-800">{String(row.status || "Open")}</span></td>
-                  <td className="px-4 py-3 print:hidden">
-                    <div className="flex flex-wrap gap-2">
-                      {poId ? <Link href={`/purchase-orders/${poId}`} className="rounded-full bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">Open PO</Link> : null}
-                      {poId ? <Link href={`/goods-receipts/new?po=${poId}`} className="rounded-full bg-fuchsia-50 px-3 py-2 text-xs font-black text-fuchsia-700">Receive Balance</Link> : null}
-                    </div>
-                  </td>
-                </tr>
-              );
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "procurement",
+        title: "Back Orders",
+        subtitle: "Premium VYRON COST workflow for back orders.",
+        formulas: ["GP % = (Price - Cost) / Price"],
+      }}
+    >
+      <tr key={String(row.id || index)} className="border-t border-slate-100 hover:bg-violet-50/50">
+                        <td className="px-4 py-3 font-bold text-slate-900">{String(row.supplier_name_snapshot || row.supplier_name || "—")}</td>
+                        <td className="px-4 py-3 font-black text-violet-700">{poNumber}</td>
+                        <td className="px-4 py-3 font-bold">{String(row.item_name || "—")}</td>
+                        <td className="px-4 py-3 font-black text-red-600">{num(row.outstanding_qty).toFixed(2)} {String(row.unit || "")}</td>
+                        <td className="px-4 py-3">{String(row.expected_date || "—")}</td>
+                        <td className="px-4 py-3"><span className="rounded-full bg-amber-100 px-3 py-1 text-[10px] font-black uppercase text-amber-800">{String(row.status || "Open")}</span></td>
+                        <td className="px-4 py-3 print:hidden">
+                          <div className="flex flex-wrap gap-2">
+                            {poId ? <Link href={`/purchase-orders/${poId}`} className="rounded-full bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">Open PO</Link> : null}
+                            {poId ? <Link href={`/goods-receipts/new?po=${poId}`} className="rounded-full bg-fuchsia-50 px-3 py-2 text-xs font-black text-fuchsia-700">Receive Balance</Link> : null}
+                          </div>
+                        </td>
+                      </tr>
+    </VyronPremiumPageShell>
+  );
             })}
           </tbody>
         </table>

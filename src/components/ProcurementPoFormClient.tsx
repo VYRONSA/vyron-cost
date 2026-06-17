@@ -4,6 +4,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { PoItemType } from "@/lib/vyron-procurement";
 import { calcLineTotals } from "@/lib/vyron-procurement";
+import { useModulePermissions } from "@/hooks/useModulePermissions";
+import { readActiveClient } from "@/lib/vyron-developer-client";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
+import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 
 type LineRow = {
   id: string;
@@ -34,7 +38,10 @@ export default function ProcurementPoFormClient({
   suppliers: Array<{ id: string; supplier_name: string }>;
   poId?: string;
 }) {
+  const { canCreate, canEdit, canApprove } = useModulePermissions("purchase_orders");
+  const canSaveDraft = poId ? canEdit : canCreate;
   const router = useRouter();
+  const [supplierOptions, setSupplierOptions] = useState(suppliers);
   const [poNumber, setPoNumber] = useState(`PO-${Date.now().toString().slice(-6)}`);
   const [supplierId, setSupplierId] = useState(suppliers[0]?.id || "");
   const [orderDate, setOrderDate] = useState(new Date().toISOString().slice(0, 10));
@@ -46,15 +53,40 @@ export default function ProcurementPoFormClient({
   const [message, setMessage] = useState("");
 
   useEffect(() => {
+    const demo = isDemoWorkspace(readActiveClient());
+    if (demo) {
+      setSupplierOptions(suppliers);
+      return;
+    }
+
+    fetch("/api/suppliers", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ok && Array.isArray(data.suppliers)) {
+          const next = data.suppliers.map((s: { id: string; supplier_name: string }) => ({
+            id: String(s.id),
+            supplier_name: String(s.supplier_name || ""),
+          }));
+          setSupplierOptions(next);
+          if (!supplierId && next[0]?.id) setSupplierId(next[0].id);
+        } else {
+          setSupplierOptions([]);
+        }
+      })
+      .catch(() => setSupplierOptions([]));
+  }, [suppliers]);
+
+  useEffect(() => {
     if (!poId) return;
     setLoading(true);
-    fetch(`/api/purchase-orders/${poId}`)
+    const { query } = poApiWorkspaceContext();
+    fetch(`/api/purchase-orders/${poId}${query}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         if (!data.ok) throw new Error(data.error || "Could not load PO.");
         const po = data.purchaseOrder;
         setPoNumber(String(po.po_number || ""));
-        setSupplierId(String(po.supplier_id || suppliers[0]?.id || ""));
+        setSupplierId(String(po.supplier_id || supplierOptions[0]?.id || ""));
         setOrderDate(String(po.order_date || new Date().toISOString().slice(0, 10)).slice(0, 10));
         setNotes(String(po.notes || ""));
         setStatus(String(po.status || "Draft"));
@@ -73,9 +105,9 @@ export default function ProcurementPoFormClient({
       })
       .catch((error) => setMessage(error instanceof Error ? error.message : "Could not load PO."))
       .finally(() => setLoading(false));
-  }, [poId, suppliers]);
+  }, [poId, supplierOptions]);
 
-  const supplierName = suppliers.find((s) => s.id === supplierId)?.supplier_name || "";
+  const supplierName = supplierOptions.find((s) => s.id === supplierId)?.supplier_name || "";
   const total = useMemo(
     () => lines.reduce((s, l) => s + calcLineTotals(l.quantity, l.unit_price, l.vat_rate).lineTotal, 0),
     [lines]
@@ -86,9 +118,14 @@ export default function ProcurementPoFormClient({
   }
 
   async function handleSave(submit = false) {
+    if (submit ? !canApprove && !canEdit : poId ? !canEdit : !canCreate) {
+      setMessage("You do not have permission to save this purchase order.");
+      return;
+    }
     setSaving(true);
     setMessage("");
     try {
+      const { body: workspaceBody } = poApiWorkspaceContext();
       const payload = {
         po_number: poNumber,
         supplier_id: supplierId,
@@ -97,9 +134,11 @@ export default function ProcurementPoFormClient({
         order_date: orderDate,
         notes,
         lines: lines.filter((l) => l.item_name.trim()),
+        ...workspaceBody,
       };
       const res = await fetch(poId ? `/api/purchase-orders/${poId}` : "/api/purchase-orders", {
         method: poId ? "PUT" : "POST",
+        cache: "no-store",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -116,16 +155,45 @@ export default function ProcurementPoFormClient({
   if (loading) return <p className="text-sm font-bold text-slate-500">Loading purchase order…</p>;
 
   return (
-    <section className="grid gap-6 rounded-[2rem] border border-violet-100 bg-white p-6">
+    <>
+      <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-violet-800 via-indigo-950 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(81,63,190,0.28)]">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-fuchsia-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-[#A3E635]/10 blur-3xl" />
+        <div className="relative grid gap-7 xl:grid-cols-[1.2fr_0.8fr] xl:items-center">
+          <div>
+            <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#CBD5E1]">Premium Purchase Order Workspace</div>
+            <h2 className="mt-5 text-4xl font-black tracking-[-0.04em] md:text-5xl">Procurement Command Centre</h2>
+            <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-violet-100">Create supplier purchase orders with approval discipline, line-level cost control and clear purchasing accountability.</p>
+            <div className="mt-6 flex flex-wrap gap-3">
+          <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">Supplier</span>
+          <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">PO Lines</span>
+          <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">VAT</span>
+          <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">Approval</span>
+          <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">Cost Commitment</span>
+            </div>
+          </div>
+          <div className="grid gap-4">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-fuchsia-200">VYRON COST principle</div>
+              <p className="mt-3 text-lg font-black leading-snug text-white">&ldquo;Every purchase order creates future cost. Approve it before it becomes leakage.&rdquo;</p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#CBD5E1]">Business intelligence</div>
+              <p className="mt-3 text-sm font-semibold leading-6 text-slate-100">Every action on this page should improve cost visibility, margin control and financial trust.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section className="grid gap-6 rounded-[2rem] border border-violet-100 bg-white p-6">
       <div className="grid gap-4 md:grid-cols-2">
         <label className="text-xs font-black uppercase text-slate-500">
           PO Number
-          <input className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} />
+          <input disabled={!canSaveDraft} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold disabled:bg-slate-50" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} />
         </label>
         <label className="text-xs font-black uppercase text-slate-500">
           Supplier
-          <select className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
-            {suppliers.map((s) => (
+          <select disabled={!canSaveDraft} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold disabled:bg-slate-50" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+            {supplierOptions.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.supplier_name}
               </option>
@@ -134,43 +202,48 @@ export default function ProcurementPoFormClient({
         </label>
         <label className="text-xs font-black uppercase text-slate-500">
           Order Date
-          <input type="date" className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
+          <input type="date" disabled={!canSaveDraft} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold disabled:bg-slate-50" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
         </label>
         <label className="text-xs font-black uppercase text-slate-500 md:col-span-2">
           Notes
-          <textarea className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <textarea disabled={!canSaveDraft} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold disabled:bg-slate-50" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>
       </div>
       <div className="space-y-3">
         <div className="text-sm font-black text-slate-900">Lines</div>
         {lines.map((line) => (
           <div key={line.id} className="grid gap-2 rounded-xl border border-slate-100 p-3 md:grid-cols-6">
-            <select className="rounded-lg border px-2 py-2 text-xs font-bold" value={line.item_type} onChange={(e) => updateLine(line.id, { item_type: e.target.value as PoItemType })}>
+            <select disabled={!canSaveDraft} className="rounded-lg border px-2 py-2 text-xs font-bold disabled:bg-slate-50" value={line.item_type} onChange={(e) => updateLine(line.id, { item_type: e.target.value as PoItemType })}>
               <option value="ingredient">Ingredient</option>
               <option value="packaging">Packaging</option>
               <option value="product">Finished Product</option>
               <option value="non_stock">Non-Stock</option>
             </select>
-            <input className="rounded-lg border px-2 py-2 text-sm md:col-span-2" placeholder="Item" value={line.item_name} onChange={(e) => updateLine(line.id, { item_name: e.target.value })} />
-            <input type="number" className="rounded-lg border px-2 py-2 text-sm" placeholder="Qty" value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: Number(e.target.value) })} />
-            <input className="rounded-lg border px-2 py-2 text-sm" placeholder="Unit" value={line.unit} onChange={(e) => updateLine(line.id, { unit: e.target.value })} />
-            <input type="number" className="rounded-lg border px-2 py-2 text-sm" placeholder="Unit price" value={line.unit_price} onChange={(e) => updateLine(line.id, { unit_price: Number(e.target.value) })} />
+            <input disabled={!canSaveDraft} className="rounded-lg border px-2 py-2 text-sm md:col-span-2 disabled:bg-slate-50" placeholder="Item" value={line.item_name} onChange={(e) => updateLine(line.id, { item_name: e.target.value })} />
+            <input disabled={!canSaveDraft} type="number" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="Qty" value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: Number(e.target.value) })} />
+            <input disabled={!canSaveDraft} className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="Unit" value={line.unit} onChange={(e) => updateLine(line.id, { unit: e.target.value })} />
+            <input disabled={!canSaveDraft} type="number" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="Unit price" value={line.unit_price} onChange={(e) => updateLine(line.id, { unit_price: Number(e.target.value) })} />
           </div>
         ))}
-        <button type="button" onClick={() => setLines((c) => [...c, emptyLine()])} className="text-xs font-black text-violet-700">
+        <button type="button" disabled={!canSaveDraft} onClick={() => setLines((c) => [...c, emptyLine()])} className="text-xs font-black text-violet-700 disabled:opacity-50">
           + Add line
         </button>
       </div>
       <div className="text-lg font-black">Total: R{total.toFixed(2)}</div>
       {message ? <p className="text-sm font-bold text-red-600">{message}</p> : null}
       <div className="flex gap-2">
-        <button type="button" disabled={saving} onClick={() => void handleSave(false)} className="rounded-xl bg-slate-200 px-4 py-2 text-sm font-black">
-          Save Draft
-        </button>
-        <button type="button" disabled={saving} onClick={() => void handleSave(true)} className="rounded-xl bg-violet-700 px-4 py-2 text-sm font-black text-white">
-          {poId ? "Save Changes" : "Submit for Approval"}
-        </button>
+        {canSaveDraft ? (
+          <button type="button" disabled={saving} onClick={() => void handleSave(false)} className="rounded-xl bg-slate-200 px-4 py-2 text-sm font-black">
+            Save Draft
+          </button>
+        ) : null}
+        {(canSaveDraft || canApprove) ? (
+          <button type="button" disabled={saving} onClick={() => void handleSave(true)} className="rounded-xl bg-violet-700 px-4 py-2 text-sm font-black text-white">
+            {poId ? "Save Changes" : "Submit for Approval"}
+          </button>
+        ) : null}
       </div>
     </section>
+    </>
   );
 }

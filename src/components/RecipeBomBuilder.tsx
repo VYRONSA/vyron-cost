@@ -231,7 +231,7 @@ export default function RecipeBomBuilder({
       <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-black uppercase tracking-[0.14em] text-slate-500">{title}</h3>
-          <button type="button" onClick={() => addLine(type)} className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">
+          <button type="button" onClick={() => addLine(type)} className="rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-1.5 text-xs font-black text-[#65A30D]">
             + Add {title.toLowerCase()}
           </button>
         </div>
@@ -305,10 +305,10 @@ export default function RecipeBomBuilder({
         <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <h2 className="text-3xl font-black text-[#07110d]">BOM Builder</h2>
+              <h2 className="text-3xl font-black text-[#F8FAFC]">BOM Builder</h2>
               <p className="mt-2 text-sm text-slate-500">Add ingredients, packaging, labour and wastage lines with live totals.</p>
             </div>
-            <Link href={`/recipes/${recipe.id}`} className="text-sm font-black text-emerald-700">
+            <Link href={`/recipes/${recipe.id}`} className="text-sm font-black text-[#65A30D]">
               View recipe
             </Link>
           </div>
@@ -359,7 +359,7 @@ export default function RecipeBomBuilder({
         {renderLineGroup("Wastage", "wastage")}
 
         <div className="flex flex-wrap gap-3">
-          <button type="button" onClick={saveRecipe} className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-sm font-black text-[#07110d]">
+          <button type="button" onClick={saveRecipe} className="inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-6 py-4 text-sm font-black text-[#F8FAFC]">
             <Save size={18} />
             Save recipe & BOM
           </button>
@@ -374,7 +374,7 @@ export default function RecipeBomBuilder({
             Delete recipe
           </button>
         </div>
-        {message ? <div className="rounded-2xl bg-emerald-50 px-5 py-4 text-sm font-black text-emerald-700">{message}</div> : null}
+        {message ? <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-4 text-sm font-black text-[#65A30D]">{message}</div> : null}
       </div>
 
       <aside className="space-y-5">

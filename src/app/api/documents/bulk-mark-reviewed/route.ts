@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  documentTenantAccessErrorResponse,
+  requireDocumentTenantId,
+  requireDocumentsForTenant,
+} from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -18,22 +23,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "No documents selected." }, { status: 400 });
   }
 
-  const { error } = await supabase
-    .from("vyron_documents")
-    .update({
-      status: "reviewed",
-      processing_notes: "Marked as reviewed (bulk). Ready for approval.",
-    })
-    .in("id", documentIds)
-    .is("deleted_at", null);
+  try {
+    const tenantId = await requireDocumentTenantId();
+    await requireDocumentsForTenant(supabase, documentIds, tenantId, "id, tenant_id");
 
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    const { error } = await supabase
+      .from("vyron_documents")
+      .update({
+        status: "reviewed",
+        processing_notes: "Marked as reviewed (bulk). Ready for approval.",
+      })
+      .in("id", documentIds)
+      .eq("tenant_id", tenantId)
+      .is("deleted_at", null);
+
+    if (error) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      count: documentIds.length,
+      message: `Marked ${documentIds.length} document(s) as reviewed.`,
+    });
+  } catch (error) {
+    return documentTenantAccessErrorResponse(error, "Bulk mark reviewed failed.");
   }
-
-  return NextResponse.json({
-    ok: true,
-    count: documentIds.length,
-    message: `Marked ${documentIds.length} document(s) as reviewed.`,
-  });
 }

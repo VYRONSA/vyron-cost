@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 const manualSections = [
   { n: 1, title: "Login", body: "Open /login, enter demo credentials and enter the command centre." },
@@ -25,42 +26,50 @@ const manualSections = [
 
 export default function TrainingManualClient() {
   return (
-    <section className="grid gap-6">
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-black text-[#07110d]">VYRON COST Training Manual</h2>
-            <p className="mt-2 text-sm text-slate-500">Step-by-step guide for client demo and month-end workflow.</p>
-          </div>
-          <a
-            href="/api/training-manual"
-            className="rounded-xl bg-[#08111A] px-5 py-3 text-sm font-black text-[#B6D934]"
-          >
-            Download Full Training Manual PDF
-          </a>
-        </div>
-      </div>
+    <VyronPremiumPageShell
+      config={{
+        title: "Training Manual",
+        subtitle: "Premium VYRON COST workflow for training manual.",
+        formulas: ["GP % = (Price - Cost) / Price"],
+      }}
+    >
+      <section className="grid gap-6">
+            <div className="rounded-[2rem] border border-white bg-white p-6 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-black text-[#F8FAFC]">VYRON COST Training Manual</h2>
+                  <p className="mt-2 text-sm text-slate-500">Step-by-step guide for client demo and month-end workflow.</p>
+                </div>
+                <a
+                  href="/api/training-manual"
+                  className="rounded-xl bg-[#08111A] px-5 py-3 text-sm font-black text-[#B6D934]"
+                >
+                  Download Full Training Manual PDF
+                </a>
+              </div>
+            </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {manualSections.map((section) => (
-          <div key={section.n} className="rounded-[2rem] border border-white bg-white p-5 shadow-sm">
-            <div className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">Step {section.n}</div>
-            <h3 className="mt-2 text-lg font-black text-[#07110d]">{section.title}</h3>
-            <p className="mt-2 text-sm leading-7 text-slate-600">{section.body}</p>
-          </div>
-        ))}
-      </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {manualSections.map((section) => (
+                <div key={section.n} className="rounded-[2rem] border border-white bg-white p-5 shadow-sm">
+                  <div className="text-xs font-black uppercase tracking-[0.16em] text-[#65A30D]">Step {section.n}</div>
+                  <h3 className="mt-2 text-lg font-black text-[#F8FAFC]">{section.title}</h3>
+                  <p className="mt-2 text-sm leading-7 text-slate-600">{section.body}</p>
+                </div>
+              ))}
+            </div>
 
-      <div className="rounded-[2rem] bg-[#08111A] p-6 text-white">
-        <h3 className="text-lg font-black text-[#B6D934]">Quick links for training</h3>
-        <div className="mt-4 flex flex-wrap gap-3 text-sm font-black">
-          <Link href="/products" className="rounded-full bg-white/10 px-4 py-2">Products</Link>
-          <Link href="/recipes" className="rounded-full bg-white/10 px-4 py-2">Recipes & BOM</Link>
-          <Link href="/imports" className="rounded-full bg-white/10 px-4 py-2">Bulk Imports</Link>
-          <Link href="/document-intelligence" className="rounded-full bg-white/10 px-4 py-2">Document Intelligence</Link>
-          <Link href="/recovery-opportunities" className="rounded-full bg-white/10 px-4 py-2">Recovery</Link>
-        </div>
-      </div>
-    </section>
+            <div className="rounded-[2rem] bg-[#08111A] p-6 text-white">
+              <h3 className="text-lg font-black text-[#B6D934]">Quick links for training</h3>
+              <div className="mt-4 flex flex-wrap gap-3 text-sm font-black">
+                <Link href="/products" className="rounded-full bg-white/10 px-4 py-2">Products</Link>
+                <Link href="/recipes" className="rounded-full bg-white/10 px-4 py-2">Recipes & BOM</Link>
+                <Link href="/imports" className="rounded-full bg-white/10 px-4 py-2">Bulk Imports</Link>
+                <Link href="/document-intelligence" className="rounded-full bg-white/10 px-4 py-2">Document Intelligence</Link>
+                <Link href="/recovery-opportunities" className="rounded-full bg-white/10 px-4 py-2">Recovery</Link>
+              </div>
+            </div>
+          </section>
+    </VyronPremiumPageShell>
   );
 }

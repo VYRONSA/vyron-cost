@@ -123,11 +123,11 @@ type DemoDoc = {
 const starterDocs: DemoDoc[] = [];
 
 function statusClass(status: DocStatus) {
-  if (status === "Matched" || status === "Archived") return "bg-emerald-50 text-emerald-700";
+  if (status === "Matched" || status === "Archived") return "bg-[#A3E635]/10 text-[#65A30D]";
   if (status === "Error" || status === "Duplicate Risk") return "bg-red-50 text-red-700";
   if (status === "Needs Review") return "bg-amber-50 text-amber-700";
   if (status === "Extracting" || status === "Uploading") return "bg-blue-50 text-blue-700";
-  if (status === "Stored" || status === "Uploaded") return "bg-emerald-50 text-emerald-700";
+  if (status === "Stored" || status === "Uploaded") return "bg-[#A3E635]/10 text-[#65A30D]";
   return "bg-violet-50 text-violet-700";
 }
 
@@ -816,7 +816,7 @@ export default function DocumentHubdocClient({
             </div>
             <a
               href="/email-invoice-inbox"
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-4 py-2 text-xs font-black text-[#07110d]"
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#A3E635]/100 px-4 py-2 text-xs font-black text-[#F8FAFC]"
             >
               Open email intake queue →
             </a>
@@ -862,7 +862,7 @@ export default function DocumentHubdocClient({
                       type="button"
                       disabled={bulkApproving}
                       onClick={() => void handleBulkApprove()}
-                      className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white disabled:opacity-60"
+                      className="inline-flex items-center gap-1 rounded-full border border-[#A3E635]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-white disabled:opacity-60"
                     >
                       {bulkApproving ? "Approving…" : `Approve (${selectedIds.size})`}
                     </button>
@@ -883,7 +883,7 @@ export default function DocumentHubdocClient({
                     type="button"
                     disabled={bulkRestoring}
                     onClick={() => void handleBulkRestore()}
-                    className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white disabled:opacity-60"
+                    className="inline-flex items-center gap-1 rounded-full border border-[#A3E635]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-white disabled:opacity-60"
                   >
                     {bulkRestoring ? "Restoring…" : `Restore (${selectedIds.size})`}
                   </button>
@@ -1003,7 +1003,7 @@ export default function DocumentHubdocClient({
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-3 py-1 text-xs font-black ${statusClass(doc.status)}`}>{doc.status}</span>
                   </td>
-                  <td className={`px-4 py-3 font-black ${doc.risk === "High" ? "text-red-600" : doc.risk === "Medium" ? "text-amber-600" : "text-emerald-600"}`}>
+                  <td className={`px-4 py-3 font-black ${doc.risk === "High" ? "text-red-600" : doc.risk === "Medium" ? "text-amber-600" : "text-[#84CC16]"}`}>
                     {doc.risk}
                   </td>
                   <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>

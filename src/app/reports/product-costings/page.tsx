@@ -11,7 +11,7 @@ export default async function ProductCostingReportPage() {
   const packaging = lines.filter((line) => line.line_type === "Packaging").length;
 
   return (
-    <VyronCostShell title="Product Costing Lines Report" subtitle="Dedicated BOM and costing-line report.">
+    <VyronCostShell hidePageHeader title="Product Costing Lines Report" subtitle="Dedicated BOM and costing-line report.">
       <section className="mb-6 grid gap-5 md:grid-cols-4">
         <MetricCard title="Cost Lines" value={String(lines.length)} note="Total BOM lines" icon={Layers3} />
         <MetricCard title="Ingredient Lines" value={String(ingredients)} note="Ingredient records" icon={Boxes} />

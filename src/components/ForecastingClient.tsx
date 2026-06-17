@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import SearchFilterBar from "@/components/SearchFilterBar";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { formatForecastMoney, ForecastSnapshot } from "@/lib/vyron-forecasting-data";
 import { useMemo, useState } from "react";
 
@@ -17,12 +18,27 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
   }, [snapshot.marginRisks, search]);
 
   return (
-    <section className="grid gap-6">
-      <div className="grid gap-5 md:grid-cols-3">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "finance",
+        badge: "Forecast Intelligence",
+        title: "Forecast Command Centre",
+        subtitle: "Convert supplier inflation and GP movement into forward-looking margin action.",
+        outcomes: ["Protect target GP by horizon", "Expose high-risk products early", "Align cost and pricing decisions"],
+        formulas: ["Forecast GP = (Selling Price - Forecast Cost) / Selling Price", "Forecast Cost = Current Cost x Inflation Signal", "Risk Count = Products below target GP"],
+        intelligenceItems: [
+          { label: "Horizon coverage", detail: "30/60/90 views align tactical and strategic pricing actions" },
+          { label: "Inflation watch", detail: "Supplier trend overlays highlight cost pressure before erosion" },
+          { label: "Action list", detail: `${filteredRisks.length} products currently below target scenarios` },
+        ],
+      }}
+    >
+      <section className="grid gap-6">
+        <div className="grid gap-5 md:grid-cols-3">
         {snapshot.cards.map((card) => (
           <div key={card.horizon} className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
             <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{card.label} forecast</div>
-            <div className="mt-3 text-4xl font-black text-emerald-700">{card.gpForecast}% GP</div>
+            <div className="mt-3 text-4xl font-black text-[#65A30D]">{card.gpForecast}% GP</div>
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-xl bg-slate-50 p-3">
                 <div className="text-xs font-black uppercase text-slate-400">COGS</div>
@@ -40,8 +56,8 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
 
       <div className="grid gap-5 xl:grid-cols-2">
         <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-          <h2 className="text-xl font-black text-[#07110d]">GP Forecast Trend</h2>
-          <div className="mt-5 h-44 rounded-2xl bg-gradient-to-b from-emerald-50 to-white p-4">
+          <h2 className="text-xl font-black text-[#F8FAFC]">GP Forecast Trend</h2>
+          <div className="mt-5 h-44 rounded-2xl bg-gradient-to-b from-[#A3E635]/10 to-white p-4">
             <svg viewBox="0 0 360 150" className="h-full w-full">
               <polyline
                 fill="none"
@@ -55,7 +71,7 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
           </div>
         </div>
         <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-          <h2 className="text-xl font-black text-[#07110d]">Supplier Inflation Forecast</h2>
+          <h2 className="text-xl font-black text-[#F8FAFC]">Supplier Inflation Forecast</h2>
           <div className="mt-5 h-44 rounded-2xl bg-gradient-to-b from-red-50 to-white p-4">
             <svg viewBox="0 0 360 150" className="h-full w-full">
               <polyline
@@ -71,10 +87,10 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <h2 className="text-xl font-black text-[#07110d]">Products likely to fall below target GP</h2>
+            <h2 className="text-xl font-black text-[#F8FAFC]">Products likely to fall below target GP</h2>
             <p className="mt-2 text-sm text-slate-500">Forecast uses current costs plus supplier inflation movement.</p>
           </div>
         </div>
@@ -88,7 +104,7 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
             <div>Risk</div>
           </div>
           {filteredRisks.map((row) => (
-            <Link key={row.id} href={row.href} className="grid grid-cols-6 border-t border-slate-100 px-5 py-4 text-sm transition hover:bg-emerald-50">
+            <Link key={row.id} href={row.href} className="grid grid-cols-6 border-t border-slate-100 px-5 py-4 text-sm transition hover:bg-[#A3E635]/10">
               <div className="col-span-2">
                 <div className="font-black text-slate-900">{row.name}</div>
                 <div className="text-xs text-slate-500">{row.category}</div>
@@ -100,7 +116,8 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
             </Link>
           ))}
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </VyronPremiumPageShell>
   );
 }

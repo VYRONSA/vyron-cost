@@ -11,7 +11,7 @@ export default async function IngredientMovementReportPage() {
   const yieldRules = ingredients.filter((ingredient) => ingredient.yield_type !== "standard").length;
 
   return (
-    <VyronCostShell title="Ingredient Movement Report" subtitle="Dedicated ingredient inflation, yield and true-cost report.">
+    <VyronCostShell hidePageHeader title="Ingredient Movement Report" subtitle="Dedicated ingredient inflation, yield and true-cost report.">
       <section className="mb-6 grid gap-5 md:grid-cols-4">
         <MetricCard title="Ingredients" value={String(ingredients.length)} note="Total ingredients" icon={Boxes} />
         <MetricCard title="Inflation Watch" value={String(highMovement)} note="Above 5% movement" icon={TrendingUp} />

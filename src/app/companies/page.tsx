@@ -8,8 +8,7 @@ export default async function CompaniesPage() {
   const companies = await getEnterpriseCompanies();
 
   return (
-    <VyronCostShell
-      title="Companies"
+    <VyronCostShell hidePageHeader title="Companies"
       subtitle="Company setup and SaaS subscription foundation. Later this becomes onboarding, billing and multi-tenant control."
     >
       <section className="mb-6 grid gap-5 md:grid-cols-4">

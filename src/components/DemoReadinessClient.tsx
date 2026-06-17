@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { useState } from "react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 const checks = [
   ["/executive-dashboard", "Executive dashboard opens"],
@@ -27,24 +28,32 @@ export default function DemoReadinessClient() {
       {checks.map(([href, label], index) => {
         const checked = Boolean(done[href]);
         return (
-          <div key={href} className="grid gap-4 rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] md:grid-cols-[60px_1fr_180px] md:items-center">
-            <button
-              type="button"
-              onClick={() => setDone((current) => ({ ...current, [href]: !checked }))}
-              className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400"}`}
-            >
-              <CheckCircle2 size={24} />
-            </button>
-            <div>
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Test {index + 1}</div>
-              <div className="mt-1 text-lg font-black text-[#07110d]">{label}</div>
-              <div className="mt-1 text-xs font-bold text-slate-500">{href}</div>
-            </div>
-            <Link href={href} className="rounded-2xl bg-emerald-50 px-5 py-3 text-center text-sm font-black text-emerald-800">
-              Open
-            </Link>
-          </div>
-        );
+    <VyronPremiumPageShell
+      config={{
+        title: "Demo Readiness",
+        subtitle: "Premium VYRON COST workflow for demo readiness.",
+        formulas: ["GP % = (Price - Cost) / Price"],
+      }}
+    >
+      <div key={href} className="grid gap-4 rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] md:grid-cols-[60px_1fr_180px] md:items-center">
+                  <button
+                    type="button"
+                    onClick={() => setDone((current) => ({ ...current, [href]: !checked }))}
+                    className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-[#A3E635]/100 text-white" : "bg-slate-100 text-slate-400"}`}
+                  >
+                    <CheckCircle2 size={24} />
+                  </button>
+                  <div>
+                    <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Test {index + 1}</div>
+                    <div className="mt-1 text-lg font-black text-[#F8FAFC]">{label}</div>
+                    <div className="mt-1 text-xs font-bold text-slate-500">{href}</div>
+                  </div>
+                  <Link href={href} className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-3 text-center text-sm font-black text-[#4D7C0F]">
+                    Open
+                  </Link>
+                </div>
+    </VyronPremiumPageShell>
+  );
       })}
     </section>
   );

@@ -9,8 +9,7 @@ export default async function ProcurementIntelligencePage() {
   ]);
 
   return (
-    <VyronCostAiShell
-      title="Procurement Intelligence"
+    <VyronCostAiShell hidePageHeader title="Procurement Intelligence"
       subtitle="SUPPLIER RISK · PRICE VARIANCE · DUPLICATE INVOICES · PO/GRN MATCHING"
     >
       <section className="grid gap-6">

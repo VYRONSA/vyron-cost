@@ -6,8 +6,7 @@ export default async function SupplierScorecardsPage() {
   const rows = await getSupplierIntelligenceRows();
 
   return (
-    <VyronCostShell
-      title="Supplier Scorecards"
+    <VyronCostShell hidePageHeader title="Supplier Scorecards"
       subtitle="SUPPLIER RISK · NEGOTIATION · PRICE MOVEMENT · RELIABILITY"
     >
       <SupplierScorecardsClient rows={rows} />

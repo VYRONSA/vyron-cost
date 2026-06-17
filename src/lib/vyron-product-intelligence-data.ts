@@ -1,4 +1,5 @@
 import { buildHandcraftedIntelligence } from "@/lib/vyron-handcrafted-intelligence";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 
 export type ProductIntelligenceRow = {
   id: string;
@@ -18,6 +19,16 @@ export type ProductIntelligenceRow = {
 };
 
 export async function getProductIntelligence() {
-  const intel = await buildHandcraftedIntelligence();
-  return intel?.productIntel ?? [];
+  const scope = await workspaceScope();
+  if (scope.useDemo) {
+    const intel = await buildHandcraftedIntelligence();
+    return intel?.productIntel ?? [];
+  }
+  if (!scope.companyId) return [];
+  const { getSupabaseAdmin, isSupabaseServiceRoleConfigured } = await import("@/lib/supabase-server");
+  const { computeProductIntelligenceFromTenant } = await import("@/lib/vyron-tenant-intelligence");
+  if (!isSupabaseServiceRoleConfigured()) return [];
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return [];
+  return computeProductIntelligenceFromTenant(supabase, scope.companyId);
 }

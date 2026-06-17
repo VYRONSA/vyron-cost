@@ -2,7 +2,7 @@ import VyronCostAiShell from "@/components/VyronCostAiShell";
 
 export default function Page() {
   return (
-    <VyronCostAiShell title="Demo Issue Log" subtitle="Use this during testing to record anything that breaks.">
+    <VyronCostAiShell hidePageHeader title="Demo Issue Log" subtitle="Use this during testing to record anything that breaks.">
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">

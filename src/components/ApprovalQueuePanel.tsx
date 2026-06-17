@@ -18,8 +18,8 @@ export default async function ApprovalQueuePanel() {
     <section className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-xs font-black uppercase tracking-[0.22em] text-emerald-700">APPROVALS</div>
-          <h2 className="mt-2 text-2xl font-black text-[#07110d]">Pending Queue</h2>
+          <div className="text-xs font-black uppercase tracking-[0.22em] text-[#65A30D]">APPROVALS</div>
+          <h2 className="mt-2 text-2xl font-black text-[#F8FAFC]">Pending Queue</h2>
         </div>
         <div className="rounded-full bg-red-50 px-4 py-2 text-xs font-black text-red-700">ACTION REQUIRED</div>
       </div>
@@ -30,7 +30,7 @@ export default async function ApprovalQueuePanel() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">{approval.type}</div>
-                <div className="mt-2 text-sm font-black text-[#07110d]">{approval.item}</div>
+                <div className="mt-2 text-sm font-black text-[#F8FAFC]">{approval.item}</div>
               </div>
               <div
                 className={`rounded-full px-4 py-2 text-xs font-black ${
@@ -38,7 +38,7 @@ export default async function ApprovalQueuePanel() {
                     ? "bg-red-100 text-red-700"
                     : approval.risk === "HIGH"
                       ? "bg-amber-100 text-amber-700"
-                      : "bg-emerald-100 text-emerald-700"
+                      : "bg-[#A3E635]/12 text-[#65A30D]"
                 }`}
               >
                 {approval.risk}
@@ -50,7 +50,7 @@ export default async function ApprovalQueuePanel() {
 
       <Link
         href="/approvals"
-        className="mt-6 inline-flex rounded-full bg-[#07110d] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-emerald-300"
+        className="mt-6 inline-flex rounded-full bg-[#07110d] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#A3E635]"
       >
         Open Approvals
       </Link>

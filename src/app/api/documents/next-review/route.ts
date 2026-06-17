@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
 import { getNextReviewDocumentId } from "@/lib/vyron-document-approval-validation";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import {
+  documentTenantAccessErrorResponse,
+  requireDocumentTenantId,
+} from "@/lib/vyron-document-tenant-access";
 
 export const runtime = "nodejs";
 
@@ -14,12 +17,10 @@ export async function GET(request: NextRequest) {
 
   const after = request.nextUrl.searchParams.get("after") || undefined;
   try {
-    const documentId = await getNextReviewDocumentId(supabase, VYRON_DEFAULT_TENANT_ID, after);
+    const companyId = await requireDocumentTenantId();
+    const documentId = await getNextReviewDocumentId(supabase, companyId, after);
     return NextResponse.json({ ok: true, documentId });
   } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Could not find next review document." },
-      { status: 500 }
-    );
+    return documentTenantAccessErrorResponse(error, "Could not find next review document.");
   }
 }

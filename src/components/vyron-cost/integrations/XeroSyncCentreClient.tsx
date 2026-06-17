@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCcw, UploadCloud } from "lucide-react";
+import { useXeroPermissions } from "@/hooks/useModulePermissions";
 import { formatCurrency } from "@/lib/vyron-cost/stock-engine";
 import { readXeroQueueLocally } from "@/lib/vyron-cost/customer-invoice-flow";
+import { readActiveClient } from "@/lib/vyron-developer-client";
+import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import type { XeroSyncStatus } from "@/lib/vyron-xero-integration";
 
 type QueueRow = {
@@ -46,31 +49,36 @@ const DEMO_QUEUE: QueueRow[] = [
 ];
 
 export default function XeroSyncCentreClient() {
-  const [rows, setRows] = useState<QueueRow[]>(DEMO_QUEUE);
+  const { canSync } = useXeroPermissions();
+  const [rows, setRows] = useState<QueueRow[]>([]);
+  const [demoMode, setDemoMode] = useState(false);
   const [connected, setConnected] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
+    const demo = isDemoWorkspace(readActiveClient());
+    setDemoMode(demo);
+
     fetch("/api/integrations/xero/sync-queue")
       .then((r) => r.json())
       .then((d) => {
         if (d.ok && Array.isArray(d.items)) {
-          setRows(d.items.length ? d.items : DEMO_QUEUE);
-        } else {
-          const local = readXeroQueueLocally().map((item) => ({
-            id: item.id,
-            type: "Customer Invoice",
-            reference: item.reference,
-            counterparty: item.name,
-            status: item.status,
-            xeroId: undefined,
-            lastAttempt: new Date().toISOString(),
-            destination: item.destination,
-            value: item.value,
-            note: item.note,
-          }));
-          setRows(local.length ? local : DEMO_QUEUE);
+          setRows(d.items);
+          return;
         }
+        const local = readXeroQueueLocally().map((item) => ({
+          id: item.id,
+          type: "Customer Invoice",
+          reference: item.reference,
+          counterparty: item.name,
+          status: item.status,
+          xeroId: undefined,
+          lastAttempt: new Date().toISOString(),
+          destination: item.destination,
+          value: item.value,
+          note: item.note,
+        }));
+        setRows(demo && local.length === 0 ? DEMO_QUEUE : local);
       })
       .catch(() => {
         const local = readXeroQueueLocally();
@@ -88,6 +96,8 @@ export default function XeroSyncCentreClient() {
               note: item.note,
             }))
           );
+        } else {
+          setRows(demo ? DEMO_QUEUE : []);
         }
       });
 
@@ -113,6 +123,10 @@ export default function XeroSyncCentreClient() {
   }, [rows]);
 
   async function syncRow(id: string) {
+    if (!canSync) {
+      setMessage("You do not have permission to sync to Xero.");
+      return;
+    }
     if (!connected) {
       setMessage("Connect Xero on the Setup page before syncing.");
       return;
@@ -189,7 +203,7 @@ export default function XeroSyncCentreClient() {
                 <div className="text-xs font-bold text-slate-500">{row.xeroId || "—"}</div>
                 <div className="text-xs font-semibold text-slate-500">{formatAttempt(row.lastAttempt)}</div>
                 <div className="flex flex-wrap gap-2">
-                  {row.status === "Ready" ? (
+                  {row.status === "Ready" && canSync ? (
                     <button
                       type="button"
                       onClick={() => void syncRow(row.id)}
@@ -219,7 +233,7 @@ export default function XeroSyncCentreClient() {
 
 function Metric({ title, value, tone = "default" }: { title: string; value: string; tone?: "default" | "good" | "warn" | "bad" }) {
   const toneClass =
-    tone === "good" ? "text-emerald-700" : tone === "warn" ? "text-amber-700" : tone === "bad" ? "text-rose-700" : "text-slate-950";
+    tone === "good" ? "text-[#65A30D]" : tone === "warn" ? "text-amber-700" : tone === "bad" ? "text-rose-700" : "text-slate-950";
   return (
     <div className="rounded-[1.75rem] border border-violet-100 bg-white p-5 shadow-sm">
       <div className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-600">{title}</div>
@@ -234,6 +248,8 @@ function StatusBadge({ status }: { status: XeroSyncStatus }) {
     Synced: "bg-emerald-100 text-emerald-800",
     Failed: "bg-rose-100 text-rose-800",
     "Needs Review": "bg-amber-100 text-amber-800",
+    Processing: "bg-blue-100 text-blue-800",
+    Cancelled: "bg-slate-100 text-slate-600",
   };
   return <span className={`rounded-full px-3 py-1 text-xs font-black ${classes[status]}`}>{status}</span>;
 }

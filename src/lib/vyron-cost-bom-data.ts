@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
-import { CostIngredient, demoIngredients } from "@/lib/vyron-cost-core-data";
+import { CostIngredient, demoIngredients, getIngredients } from "@/lib/vyron-cost-core-data";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 
 export type BomHeader = {
   id: string;
@@ -15,6 +16,7 @@ export type BomHeader = {
   suggested_selling_price?: number | null;
   status?: string | null;
   notes?: string | null;
+  product_id?: string | null;
 };
 
 export type BomLine = {
@@ -53,39 +55,41 @@ export function calcSuggestedPrice(cost: number, targetGp: number) {
 }
 
 export async function getBomIngredients(): Promise<CostIngredient[]> {
-  if (!supabase) return demoIngredients;
-  const { data, error } = await supabase
-    .from("vyron_cost_ingredients")
-    .select("*")
-    .order("ingredient_name", { ascending: true })
-    .limit(1000);
-
-  if (error || !data) return demoIngredients;
-  return data as CostIngredient[];
+  return getIngredients();
 }
 
 export async function getBoms(): Promise<BomHeader[]> {
-  if (!supabase) return demoBoms;
-  const { data, error } = await supabase
+  const { useDemo, companyId } = await workspaceScope();
+  if (!useDemo && !companyId) return [];
+  if (!supabase) return useDemo ? demoBoms : [];
+  if (!companyId) return useDemo ? demoBoms : [];
+
+  let query = supabase
     .from("vyron_cost_boms")
     .select("*")
+    .neq("status", "Archived")
     .order("bom_name", { ascending: true })
     .limit(1000);
+  if (companyId) query = query.eq("company_id", companyId);
 
-  if (error || !data) return demoBoms;
+  const { data, error } = await query;
+  if (error || !data) return [];
   return data as BomHeader[];
 }
 
 export async function getBomById(id: string): Promise<{ bom: BomHeader | null; lines: BomLine[] }> {
-  if (!supabase || id.startsWith("demo")) {
-    const bom = demoBoms.find((item) => item.id === id) || demoBoms[0] || null;
+  const { useDemo, companyId } = await workspaceScope();
+  if (useDemo && (id.startsWith("demo") || !companyId)) {
+    const bom = demoBoms.find((item) => item.id === id) || null;
     return { bom, lines: bom ? demoBomLines.filter((line) => line.bom_id === bom.id) : [] };
   }
+  if (!supabase || !companyId) return { bom: null, lines: [] };
 
   const { data: bom, error } = await supabase
     .from("vyron_cost_boms")
     .select("*")
     .eq("id", id)
+    .eq("company_id", companyId)
     .maybeSingle();
 
   if (error || !bom) return { bom: null, lines: [] };
@@ -94,14 +98,21 @@ export async function getBomById(id: string): Promise<{ bom: BomHeader | null; l
     .from("vyron_cost_bom_lines")
     .select("*")
     .eq("bom_id", id)
+    .eq("company_id", companyId)
     .order("sort_order", { ascending: true });
 
   return { bom: bom as BomHeader, lines: (lines || []) as BomLine[] };
 }
 
 export async function deleteBom(id: string) {
-  if (!supabase || id.startsWith("demo")) return;
-  const { error } = await supabase.from("vyron_cost_boms").delete().eq("id", id);
+  if (id.startsWith("demo")) return;
+  const { companyId } = await workspaceScope();
+  if (!supabase || !companyId) return;
+  const { error } = await supabase
+    .from("vyron_cost_boms")
+    .update({ status: "Archived", updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("company_id", companyId);
   if (error) throw error;
 }
 

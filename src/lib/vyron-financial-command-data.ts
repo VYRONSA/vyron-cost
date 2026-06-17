@@ -1,5 +1,10 @@
 import { formatMoney } from "@/lib/vyron-cost-data";
 import {
+  calculateMovementPercent,
+  getIngredients,
+  getSuppliers,
+} from "@/lib/vyron-cost-core-data";
+import {
   buildHandcraftedIntelligence,
   HANDCRAFTED_DEMO_FALLBACK_KPIS,
   isHandcraftedLiveDataReady,
@@ -14,22 +19,41 @@ import type {
   WhatIfScenario,
 } from "@/lib/vyron-demo-data";
 import { getDemoWhatIf } from "@/lib/vyron-demo-data";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 
 export type LeakageKpis = CommandKpis;
 export type AiFinancialFeedItem = AiFeedItem;
 
+const EMPTY_KPIS: LeakageKpis = {
+  moneyAtRisk: 0,
+  estimatedMonthlyLeakage: 0,
+  estimatedAnnualLeakage: 0,
+  supplierInflationExposure: 0,
+  productsBelowGp: 0,
+  duplicateInvoiceRisks: 0,
+  wastageLosses: 0,
+  procurementAnomalies: 0,
+  recoverableMonthly: 0,
+  recoverableAnnual: 0,
+  recoveryRatePercent: 0,
+  pendingActions: 0,
+};
+
 async function getIntel() {
+  if (!(await workspaceScope()).useDemo) return null;
   return buildHandcraftedIntelligence();
 }
 
 export async function getLeakageKpis(): Promise<LeakageKpis> {
   const intel = await getIntel();
-  return intel?.kpis ?? HANDCRAFTED_DEMO_FALLBACK_KPIS;
+  if (!intel) return EMPTY_KPIS;
+  return intel.kpis ?? HANDCRAFTED_DEMO_FALLBACK_KPIS;
 }
 
 export async function getAiFinancialFeed(): Promise<AiFinancialFeedItem[]> {
   const intel = await getIntel();
-  if (intel?.aiFeed?.length) return intel.aiFeed;
+  if (!intel) return [];
+  if (intel.aiFeed?.length) return intel.aiFeed;
   const kpis = intel?.kpis ?? HANDCRAFTED_DEMO_FALLBACK_KPIS;
   return [
     {
@@ -73,9 +97,52 @@ export async function getLeakageFindingsForCommand() {
   return intel?.leakageFindings ?? [];
 }
 
+async function buildLiveSupplierInflationRows(): Promise<SupplierInflationRow[]> {
+  const scope = await workspaceScope();
+  if (scope.useDemo || !scope.companyId) return [];
+
+  const [suppliers, ingredients] = await Promise.all([getSuppliers(), getIngredients()]);
+  const rows: SupplierInflationRow[] = [];
+
+  for (const supplier of suppliers) {
+    const linked = ingredients.filter((i) => i.supplier_id === supplier.id);
+    const currentCost = linked.reduce((sum, i) => sum + Number(i.purchase_cost || 0), 0);
+    const previousCost = linked.reduce(
+      (sum, i) => sum + Number(i.previous_cost ?? i.purchase_cost ?? 0),
+      0
+    );
+    const movement =
+      Number(supplier.last_price_movement || 0) > 0
+        ? Number(supplier.last_price_movement)
+        : calculateMovementPercent(previousCost, currentCost);
+    const monthlyImpact = Math.round(Math.max(0, currentCost - previousCost));
+    const annualImpact = monthlyImpact * 12;
+
+    if (movement <= 0 && monthlyImpact <= 0) continue;
+
+    const riskScore = Math.min(99, Math.round(40 + movement * 2));
+    rows.push({
+      id: `si-${supplier.id}`,
+      supplier_name: supplier.supplier_name,
+      category: supplier.category || "General",
+      current_cost: currentCost,
+      previous_cost: previousCost,
+      price_movement_percent: Number(movement.toFixed(1)),
+      monthly_impact: monthlyImpact,
+      annual_impact: annualImpact,
+      risk_level: riskScore >= 75 ? "Critical" : riskScore >= 55 ? "High" : "Medium",
+      risk_score: riskScore,
+      recommended_action: riskScore >= 75 ? "Negotiate" : "Monitor",
+    });
+  }
+
+  return rows.sort((a, b) => b.price_movement_percent - a.price_movement_percent);
+}
+
 export async function getSupplierInflationImpact(): Promise<SupplierInflationRow[]> {
   const intel = await getIntel();
-  return intel?.supplierInflation ?? [];
+  if (intel?.supplierInflation?.length) return intel.supplierInflation;
+  return buildLiveSupplierInflationRows();
 }
 
 export async function getRecoveryOpportunities(): Promise<RecoveryOpportunity[]> {
@@ -100,7 +167,17 @@ export async function getProductionIntelligence(): Promise<ProductionIntelSectio
 
 export async function getWhatIfScenario(): Promise<WhatIfScenario> {
   const intel = await getIntel();
-  if (!intel) return getDemoWhatIf();
+  if (!intel) {
+    return {
+      ingredient: "—",
+      increasePercent: 0,
+      currentGp: 0,
+      newGp: 0,
+      annualImpact: 0,
+      suggestedPrice: 0,
+      productsAffected: [],
+    };
+  }
   const beef = intel.productIntel.find((p) => /beef|steak|kidney/i.test(String(p.product_name)));
   const selling = Number(beef?.selling_price || 30);
   const cost = Number(beef?.total_cost || 17);

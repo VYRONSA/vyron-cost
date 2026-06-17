@@ -4,9 +4,9 @@ import { lookupTenantById } from "@/lib/vyron-document-tenant";
 import {
   buildDocumentStoragePath,
   isAllowedDocumentMime,
-  VYRON_DEFAULT_TENANT_ID,
   VYRON_DOCUMENTS_BUCKET,
 } from "@/lib/vyron-documents";
+import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
 import {
   getSupabaseAdmin,
   isSupabaseServerConfigured,
@@ -81,8 +81,20 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData();
+    const companyId = await requireApiCompanyId();
+    const requestedTenantId = String(formData.get("tenant_id") || companyId).trim();
+    if (requestedTenantId !== companyId) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "tenant_id must match the active workspace company.",
+          debug: debugLog,
+          failurePoint: "tenant_mismatch",
+        },
+        { status: 403 }
+      );
+    }
     const file = formData.get("file");
-    const requestedTenantId = String(formData.get("tenant_id") || VYRON_DEFAULT_TENANT_ID).trim();
 
     debugLog.requestedTenantId = requestedTenantId;
     debugLog.requestedTenantIdLength = requestedTenantId.length;

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ProductIntelligenceRow } from "@/lib/vyron-product-intelligence-data";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 function money(value: number | null | undefined) {
   return `R${Number(value || 0).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -25,40 +26,49 @@ export default function IngredientPriceWatchClient({ products }: { products: Pro
   const totalExposure = rows.reduce((sum, row) => sum + row.exposure, 0);
 
   return (
-    <section className="grid gap-6">
-      <section className="grid gap-5 md:grid-cols-3">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-          <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Monthly Price Exposure</div>
-          <div className="mt-3 text-4xl font-black text-red-700">{money(totalExposure)}</div>
-        </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-          <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Items Watched</div>
-          <div className="mt-3 text-4xl font-black text-[#07110d]">{rows.length}</div>
-        </div>
-        <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-          <div className="text-xs font-black uppercase tracking-[0.16em] text-emerald-300">Alert Rule</div>
-          <div className="mt-3 text-3xl font-black">Flag movement above 5%</div>
-        </div>
-      </section>
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "ingredients",
+        title: "Ingredient Price Watch",
+        subtitle: "Premium VYRON COST workflow for ingredient price watch.",
+        formulas: ["GP % = (Price - Cost) / Price"],
+      }}
+    >
+      <section className="grid gap-6">
+            <section className="grid gap-5 md:grid-cols-3">
+              <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Monthly Price Exposure</div>
+                <div className="mt-3 text-4xl font-black text-red-700">{money(totalExposure)}</div>
+              </div>
+              <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Items Watched</div>
+                <div className="mt-3 text-4xl font-black text-[#F8FAFC]">{rows.length}</div>
+              </div>
+              <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Alert Rule</div>
+                <div className="mt-3 text-3xl font-black">Flag movement above 5%</div>
+              </div>
+            </section>
 
-      <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <div className="grid grid-cols-6 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-emerald-300">
-          <div className="col-span-2">Item / Product</div>
-          <div>Category</div>
-          <div>Movement</div>
-          <div>Exposure</div>
-          <div>Open</div>
-        </div>
-        {rows.map((row) => (
-          <div key={row.id} className="grid grid-cols-6 items-center border-t border-slate-100 px-5 py-5 text-sm">
-            <div className="col-span-2 font-black text-[#07110d]">{row.item}</div>
-            <div>{row.category}</div>
-            <div className={row.movement > 8 ? "font-black text-red-700" : "font-black text-amber-600"}>{row.movement.toFixed(1)}%</div>
-            <div className="font-black">{money(row.exposure)}</div>
-            <Link href={row.href} className="font-black text-emerald-700">Open →</Link>
-          </div>
-        ))}
-      </div>
-    </section>
+            <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+              <div className="grid grid-cols-6 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+                <div className="col-span-2">Item / Product</div>
+                <div>Category</div>
+                <div>Movement</div>
+                <div>Exposure</div>
+                <div>Open</div>
+              </div>
+              {rows.map((row) => (
+                <div key={row.id} className="grid grid-cols-6 items-center border-t border-slate-100 px-5 py-5 text-sm">
+                  <div className="col-span-2 font-black text-[#F8FAFC]">{row.item}</div>
+                  <div>{row.category}</div>
+                  <div className={row.movement > 8 ? "font-black text-red-700" : "font-black text-amber-600"}>{row.movement.toFixed(1)}%</div>
+                  <div className="font-black">{money(row.exposure)}</div>
+                  <Link href={row.href} className="font-black text-[#65A30D]">Open →</Link>
+                </div>
+              ))}
+            </div>
+          </section>
+    </VyronPremiumPageShell>
   );
 }

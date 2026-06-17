@@ -3,8 +3,7 @@ import VyronCostAiShell from "@/components/VyronCostAiShell";
 
 export default function DocumentIntelligencePage() {
   return (
-    <VyronCostAiShell
-      title="Document Intelligence"
+    <VyronCostAiShell hidePageHeader title="Document Intelligence"
       subtitle="CAPTURE SUPPLIER INVOICES, DUPLICATE RISK AND PRICE VARIANCE."
     >
       <DocumentIntelligenceDashboard />

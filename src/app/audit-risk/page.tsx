@@ -9,8 +9,7 @@ export default async function AuditRiskPage() {
   const highRisk = audit.filter((event) => statusTone(event.risk_level) === "red").length;
 
   return (
-    <VyronCostShell
-      title="Audit & Risk"
+    <VyronCostShell hidePageHeader title="Audit & Risk"
       subtitle="Track changes to recipes, supplier prices, yield rules, approvals and high-risk margin decisions."
     >
       <section className="mb-6 grid gap-5 md:grid-cols-3">

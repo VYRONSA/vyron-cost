@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Download } from "lucide-react";
 import * as XLSX from "xlsx";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 type ExportJob = {
   id: string;
@@ -66,43 +67,52 @@ export default function AccountingExportClient() {
   }
 
   return (
-    <section className="grid gap-8">
-      <div className="rounded-[2rem] border border-indigo-200 bg-indigo-50 p-6">
-        <div className="text-xs font-black uppercase text-indigo-600">Future-ready ERP connectors</div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {ERP_READY.map((erp) => (
-            <span key={erp} className="rounded-xl bg-white px-4 py-2 text-sm font-black text-indigo-900">
-              {erp}
-            </span>
-          ))}
-        </div>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        {JOBS.map((job) => (
-          <article key={job.id} className="rounded-[2rem] bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-black text-slate-900">{job.title}</h3>
-            <p className="mt-2 text-sm font-semibold text-slate-600">{job.description}</p>
-            <div className="mt-4 flex gap-2">
-              <button
-                type="button"
-                disabled={!!busy}
-                onClick={() => runExport(job, "excel")}
-                className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-black text-white disabled:opacity-50"
-              >
-                {busy === `${job.id}-excel` ? "…" : "Excel"}
-              </button>
-              <button
-                type="button"
-                disabled={!!busy}
-                onClick={() => runExport(job, "csv")}
-                className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-4 py-2 text-xs font-black disabled:opacity-50"
-              >
-                <Download size={14} /> {busy === `${job.id}-csv` ? "…" : "CSV"}
-              </button>
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "finance",
+        title: "Accounting Export",
+        subtitle: "Premium VYRON COST workflow for accounting export.",
+        formulas: ["GP % = (Price - Cost) / Price"],
+      }}
+    >
+      <section className="grid gap-8">
+            <div className="rounded-[2rem] border border-indigo-200 bg-indigo-50 p-6">
+              <div className="text-xs font-black uppercase text-indigo-600">Future-ready ERP connectors</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {ERP_READY.map((erp) => (
+                  <span key={erp} className="rounded-xl bg-white px-4 py-2 text-sm font-black text-indigo-900">
+                    {erp}
+                  </span>
+                ))}
+              </div>
             </div>
-          </article>
-        ))}
-      </div>
-    </section>
+            <div className="grid gap-4 md:grid-cols-2">
+              {JOBS.map((job) => (
+                <article key={job.id} className="rounded-[2rem] bg-white p-6 shadow-sm">
+                  <h3 className="text-lg font-black text-slate-900">{job.title}</h3>
+                  <p className="mt-2 text-sm font-semibold text-slate-600">{job.description}</p>
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      type="button"
+                      disabled={!!busy}
+                      onClick={() => runExport(job, "excel")}
+                      className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-50"
+                    >
+                      {busy === `${job.id}-excel` ? "…" : "Excel"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!!busy}
+                      onClick={() => runExport(job, "csv")}
+                      className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-4 py-2 text-xs font-black disabled:opacity-50"
+                    >
+                      <Download size={14} /> {busy === `${job.id}-csv` ? "…" : "CSV"}
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+    </VyronPremiumPageShell>
   );
 }

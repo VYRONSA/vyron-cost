@@ -14,8 +14,7 @@ export default async function BranchesPage() {
   const active = branches.filter((branch) => branch.is_active).length;
 
   return (
-    <VyronCostShell
-      title="Branches"
+    <VyronCostShell hidePageHeader title="Branches"
       subtitle="Branch and location setup for future branch-level GP, wastage, sales mix and profitability intelligence."
     >
       <section className="mb-6 grid gap-5 md:grid-cols-4">

@@ -12,7 +12,7 @@ export default function RecoverableHeroCard({ kpis }: { kpis: LeakageKpis }) {
             <ShieldAlert size={14} />
             Money Being Lost
           </div>
-          <div className="mt-6 text-5xl font-black tracking-tight text-[#07110d] md:text-6xl">
+          <div className="mt-6 text-5xl font-black tracking-tight text-[#F8FAFC] md:text-6xl">
             {formatMoney(kpis.moneyAtRisk)}
             <span className="ml-3 text-lg font-black uppercase tracking-[0.2em] text-[#667085]">/ month</span>
           </div>
@@ -32,7 +32,7 @@ export default function RecoverableHeroCard({ kpis }: { kpis: LeakageKpis }) {
           </div>
           <Link
             href="/recovery-opportunities"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#b6d934] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#07110d]"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#b6d934] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#F8FAFC]"
           >
             View Recovery
             <ArrowUpRight size={16} />

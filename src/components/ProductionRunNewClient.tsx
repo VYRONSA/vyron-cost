@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { useManufacturingPermissions } from "@/hooks/useModulePermissions";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
 
 type BomOption = {
   id: string;
@@ -15,6 +18,7 @@ type BomOption = {
 
 export default function ProductionRunNewClient() {
   const router = useRouter();
+  const { canCreate } = useManufacturingPermissions();
   const [boms, setBoms] = useState<BomOption[]>([]);
   const [bomId, setBomId] = useState("");
   const [batchMultiplier, setBatchMultiplier] = useState("1");
@@ -29,7 +33,8 @@ export default function ProductionRunNewClient() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/production/boms")
+    const { query } = poApiWorkspaceContext();
+    fetch(`/api/production/boms${query}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) setBoms(d.boms);
@@ -39,16 +44,22 @@ export default function ProductionRunNewClient() {
   const selected = boms.find((b) => b.id === bomId);
 
   async function createRun() {
+    if (!canCreate) {
+      setError("You do not have permission to create production runs.");
+      return;
+    }
     if (!bomId) {
       setError("Select a recipe / BOM.");
       return;
     }
     setSaving(true);
     setError("");
+    const { body: workspaceBody } = poApiWorkspaceContext();
     const res = await fetch("/api/production/runs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        ...workspaceBody,
         bom_id: bomId,
         batch_multiplier: Number(batchMultiplier) || 1,
         planned_qty: plannedQty ? Number(plannedQty) : undefined,
@@ -74,8 +85,23 @@ export default function ProductionRunNewClient() {
   }
 
   return (
-    <section className="grid max-w-3xl gap-6">
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "products",
+        badge: "Production Planning",
+        title: "Production Run Planner",
+        subtitle: "Create production runs with BOM, labour, and overhead assumptions in a guided premium workflow.",
+        outcomes: ["Standardize run setup inputs", "Tie labour and overhead to run economics", "Launch traceable production records"],
+        formulas: ["Planned Output = BOM Yield x Batch Multiplier", "Labour Cost = Hours x Rate", "Overhead Allocation based on selected method"],
+        intelligenceItems: [
+          { label: "BOM options", detail: `${boms.length} recipes available for planning` },
+          { label: "Current selection", detail: selected ? selected.bom_name : "No BOM selected yet" },
+          { label: "Execution gate", detail: "Create permission enforced before run creation" },
+        ],
+      }}
+    >
+      <section className="grid max-w-3xl gap-6">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <label className="text-xs font-black uppercase tracking-[0.12em] text-violet-600">Recipe / BOM *</label>
         <select
           value={bomId}
@@ -161,19 +187,22 @@ export default function ProductionRunNewClient() {
         {error ? <p className="mt-4 text-sm font-bold text-red-600">{error}</p> : null}
 
         <div className="mt-6 flex gap-3">
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => void createRun()}
-            className="rounded-2xl bg-violet-700 px-6 py-3 text-sm font-black text-white disabled:opacity-60"
-          >
-            {saving ? "Creating…" : "Create Production Run"}
-          </button>
+          {canCreate ? (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => void createRun()}
+              className="rounded-2xl bg-violet-700 px-6 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+            >
+              {saving ? "Creating…" : "Create Production Run"}
+            </button>
+          ) : null}
           <Link href="/manufacturing/runs" className="rounded-2xl border px-6 py-3 text-sm font-black text-slate-700">
             Cancel
           </Link>
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </VyronPremiumPageShell>
   );
 }

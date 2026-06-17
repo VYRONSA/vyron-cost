@@ -2,6 +2,9 @@
 
 import { Download, Printer, X } from "lucide-react";
 import SearchFilterBar from "@/components/SearchFilterBar";
+import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
+
+const M = VYRON_MASTER;
 
 export default function ReportTableShell({
   title,
@@ -36,23 +39,23 @@ export default function ReportTableShell({
   }
 
   return (
-    <section className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+    <section className={`p-6 ${M.lightCard}`}>
       <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h2 className="text-2xl font-black text-slate-950">{title}</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-500">{subtitle}</p>
+          <h2 className={`text-2xl ${M.heading}`}>{title}</h2>
+          <p className={`mt-2 max-w-3xl text-sm leading-7 ${M.muted}`}>{subtitle}</p>
         </div>
 
         <div className="flex flex-wrap gap-3 print:hidden">
           {search ? (
-            <button type="button" onClick={() => onSearch("")} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-3 text-xs font-black text-slate-700">
+            <button type="button" onClick={() => onSearch("")} className={`${M.secondaryBtn} px-4 py-3 text-xs`}>
               <X size={15} /> Clear Search
             </button>
           ) : null}
-          <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-full bg-violet-50 px-4 py-3 text-xs font-black text-violet-800">
+          <button type="button" onClick={() => window.print()} className={`${M.secondaryBtn} px-4 py-3 text-xs`}>
             <Printer size={15} /> Print
           </button>
-          <button type="button" onClick={exportCsvFromVisibleTable} className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-700 to-fuchsia-600 px-4 py-3 text-xs font-black text-white">
+          <button type="button" onClick={exportCsvFromVisibleTable} className={`${M.primaryBtn} px-4 py-3 text-xs`}>
             <Download size={15} /> Export CSV
           </button>
         </div>
@@ -62,7 +65,9 @@ export default function ReportTableShell({
         <SearchFilterBar value={search} onChange={onSearch} placeholder="Search this report..." resultCount={resultCount} />
       </div>
 
-      {children}
+      <div className="mt-4 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)]">
+        {children}
+      </div>
     </section>
   );
 }

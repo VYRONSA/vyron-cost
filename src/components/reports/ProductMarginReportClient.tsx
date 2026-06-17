@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import ReportTableShell from "@/components/ReportTableShell";
 import StatusPill from "@/components/StatusPill";
 import { calculateGpPercent, formatMoney, Product } from "@/lib/vyron-cost-data";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 export default function ProductMarginReportClient({ products }: { products: Product[] }) {
   const [search, setSearch] = useState("");
@@ -29,7 +30,7 @@ export default function ProductMarginReportClient({ products }: { products: Prod
     >
       <div className="overflow-x-auto rounded-3xl border border-slate-100">
         <div className="min-w-[1020px]">
-          <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-emerald-300">
+          <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
             <div>Product</div><div>Category</div><div>Cost Price</div><div>Selling Price</div><div>Target GP</div><div>Actual GP</div><div>Variance</div><div>Status</div>
           </div>
           {filtered.map((product) => {
@@ -37,17 +38,26 @@ export default function ProductMarginReportClient({ products }: { products: Prod
             const variance = gp - Number(product.target_gp || 0);
             const tone = variance < -5 ? "red" : variance < 0 ? "amber" : "emerald";
             return (
-              <div key={product.id} className="grid grid-cols-8 items-center border-t border-slate-100 px-5 py-4 text-sm">
-                <div className="font-black text-[#07110d]">{product.product_name}</div>
-                <div>{product.category}</div>
-                <div>{formatMoney(Number(product.total_cost))}</div>
-                <div>{formatMoney(Number(product.selling_price))}</div>
-                <div>{Number(product.target_gp || 0).toFixed(1)}%</div>
-                <div className="font-black text-emerald-700">{gp.toFixed(1)}%</div>
-                <div>{variance.toFixed(1)}%</div>
-                <div><StatusPill tone={tone}>{tone === "red" ? "Critical" : tone === "amber" ? "Review" : "Healthy"}</StatusPill></div>
-              </div>
-            );
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "products",
+        title: "Product Margin Report",
+        subtitle: "Premium VYRON COST workflow for product margin report.",
+        formulas: ["GP % = (Price - Cost) / Price"],
+      }}
+    >
+      <div key={product.id} className="grid grid-cols-8 items-center border-t border-slate-100 px-5 py-4 text-sm">
+                      <div className="font-black text-[#F8FAFC]">{product.product_name}</div>
+                      <div>{product.category}</div>
+                      <div>{formatMoney(Number(product.total_cost))}</div>
+                      <div>{formatMoney(Number(product.selling_price))}</div>
+                      <div>{Number(product.target_gp || 0).toFixed(1)}%</div>
+                      <div className="font-black text-[#65A30D]">{gp.toFixed(1)}%</div>
+                      <div>{variance.toFixed(1)}%</div>
+                      <div><StatusPill tone={tone}>{tone === "red" ? "Critical" : tone === "amber" ? "Review" : "Healthy"}</StatusPill></div>
+                    </div>
+    </VyronPremiumPageShell>
+  );
           })}
         </div>
       </div>

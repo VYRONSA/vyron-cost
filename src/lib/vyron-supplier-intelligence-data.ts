@@ -1,71 +1,62 @@
-import { formatMoney, getIngredients, getProducts, getSuppliers } from "@/lib/vyron-cost-data";
+import { getIngredients, getSuppliers } from "@/lib/vyron-cost-core-data";
 import { getInvoiceRiskFindings, getProcurementRiskFindings } from "@/lib/vyron-leakage-intelligence-data";
 import { getPurchaseOrderList } from "@/lib/vyron-purchase-order-data";
 import { getSupplierPriceWidgetSummary } from "@/lib/vyron-supplier-intelligence-engine";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 
-/** Dashboard row for /supplier-intelligence */
-export type SupplierIntelRow = {
-  id: string;
-  supplier_name: string;
-  category: string;
-  current_spend: number;
-  price_movement_percent: number;
-  linked_ingredients: number;
-  invoice_count: number;
-  duplicate_invoice_risk: number;
-  price_variance: number;
-  reliability_score: number;
-  negotiation_opportunity: number;
-  supplier_risk_score: number;
-  recommended_action: string;
-  href: string;
-};
+export type { SupplierIntelRow } from "@/lib/vyron-supplier-intelligence-shared";
+export { formatSupplierSpend } from "@/lib/vyron-supplier-intelligence-shared";
+import type { SupplierIntelRow } from "@/lib/vyron-supplier-intelligence-shared";
 
 export async function getSupplierIntelligenceRows(): Promise<SupplierIntelRow[]> {
-  const [suppliers, ingredients, products, invoices, procurement, pos] = await Promise.all([
-    getSuppliers(200),
-    getIngredients(500),
-    getProducts(200),
+  const [suppliers, ingredients, invoices, procurement, pos] = await Promise.all([
+    getSuppliers(),
+    getIngredients(),
     getInvoiceRiskFindings(),
     getProcurementRiskFindings(),
     getPurchaseOrderList(),
   ]);
 
   if (!suppliers.length) {
-    return [
-      {
-        id: "demo-s1",
-        supplier_name: "Premium Meat Suppliers",
-        category: "Protein",
-        current_spend: 98400,
-        price_movement_percent: 12.4,
-        linked_ingredients: 8,
-        invoice_count: 14,
-        duplicate_invoice_risk: 1,
-        price_variance: 1300,
-        reliability_score: 72,
-        negotiation_opportunity: 22720,
-        supplier_risk_score: 86,
-        recommended_action: "Negotiate protein lines and review alternate sourcing",
-        href: "/suppliers",
-      },
-    ];
+    if ((await workspaceScope()).useDemo) {
+      return [
+        {
+          id: "demo-s1",
+          supplier_name: "Premium Meat Suppliers",
+          category: "Protein",
+          current_spend: 98400,
+          price_movement_percent: 12.4,
+          linked_ingredients: 8,
+          invoice_count: 14,
+          duplicate_invoice_risk: 1,
+          price_variance: 1300,
+          reliability_score: 72,
+          negotiation_opportunity: 22720,
+          supplier_risk_score: 86,
+          recommended_action: "Negotiate protein lines and review alternate sourcing",
+          href: "/suppliers",
+        },
+      ];
+    }
+    return [];
   }
 
-  const widgets = await getSupplierPriceWidgetSummary();
+  const scope = await workspaceScope();
+  const widgets = await getSupplierPriceWidgetSummary(scope.companyId ?? scope.tenantId);
   const rowMap = suppliers.map((supplier) => {
-    const linkedIngredients = ingredients.filter((i) => i.category === supplier.category);
-    const spend = linkedIngredients.reduce((sum, i) => sum + Number(i.purchase_cost || 0) * 120, 0);
+    const linkedIngredients = ingredients.filter((i) => i.supplier_id === supplier.id);
+    const spend = linkedIngredients.reduce((sum, i) => sum + Number(i.purchase_cost || 0), 0);
     const supplierInvoices = invoices.filter((inv) =>
       String(inv.supplier_name || "")
         .toLowerCase()
         .includes(supplier.supplier_name.toLowerCase().slice(0, 6))
     );
-    const supplierPos = pos.filter((po) =>
-      String(po.supplier_name_snapshot || "")
+    const supplierPos = pos.filter((po) => {
+      if ("supplier_id" in po && po.supplier_id) return po.supplier_id === supplier.id;
+      return String(po.supplier_name_snapshot || "")
         .toLowerCase()
-        .includes(supplier.supplier_name.toLowerCase().slice(0, 6))
-    );
+        .includes(supplier.supplier_name.toLowerCase().slice(0, 6));
+    });
     const proc = procurement.find((p) =>
       String(p.supplier_name || "")
         .toLowerCase()
@@ -88,7 +79,7 @@ export async function getSupplierIntelligenceRows(): Promise<SupplierIntelRow[]>
     return {
       id: supplier.id,
       supplier_name: supplier.supplier_name,
-      category: supplier.category,
+      category: supplier.category || "General",
       current_spend: Math.round(spend),
       price_movement_percent: movement,
       linked_ingredients: linkedIngredients.length,
@@ -125,6 +116,3 @@ export async function getSupplierIntelligenceRows(): Promise<SupplierIntelRow[]>
   });
 }
 
-export function formatSupplierSpend(value: number) {
-  return formatMoney(value);
-}

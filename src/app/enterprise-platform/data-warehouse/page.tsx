@@ -5,7 +5,7 @@ import { getEnterprisePlatformPayload } from "@/lib/vyron-enterprise-platform-ar
 export default async function DataWarehousePage() {
   const { dataWarehouse } = await getEnterprisePlatformPayload();
   return (
-    <VyronCostShell title="Data Warehouse Layer" subtitle="OPERATIONAL · HISTORICAL · ANALYTICAL · FORECAST · AUDIT · RECOVERY">
+    <VyronCostShell hidePageHeader title="Data Warehouse Layer" subtitle="OPERATIONAL · HISTORICAL · ANALYTICAL · FORECAST · AUDIT · RECOVERY">
       <PlatformNav />
       <DataWarehouseClient layers={dataWarehouse} />
     </VyronCostShell>

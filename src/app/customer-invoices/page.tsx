@@ -1,13 +1,17 @@
 import VyronCostAiShell from "@/components/VyronCostAiShell";
 import CustomerInvoicesClient from "@/components/vyron-cost/customers/CustomerInvoicesClient";
 
-export default function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ create?: string }>;
+}) {
+  const { create } = await searchParams;
   return (
-    <VyronCostAiShell
-      title="Customer Invoices"
+    <VyronCostAiShell hidePageHeader title="Customer Invoices"
       subtitle="SELL FINISHED GOODS TO CUSTOMERS, REDUCE STOCK, CALCULATE COGS, GP AND EMAIL INVOICES."
     >
-      <CustomerInvoicesClient />
+      <CustomerInvoicesClient initialFormOpen={create === "1"} />
     </VyronCostAiShell>
   );
 }

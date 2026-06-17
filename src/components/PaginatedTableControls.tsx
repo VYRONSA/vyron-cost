@@ -34,7 +34,7 @@ export default function PaginatedTableControls({
           type="button"
           disabled={page >= pageCount - 1}
           onClick={() => setPage(Math.min(page + 1, pageCount - 1))}
-          className="inline-flex items-center gap-2 rounded-full bg-[#07110d] px-4 py-2 text-xs font-black text-emerald-300 disabled:opacity-40"
+          className="inline-flex items-center gap-2 rounded-full bg-[#07110d] px-4 py-2 text-xs font-black text-[#A3E635] disabled:opacity-40"
         >
           Next
           <ChevronRight size={15} />

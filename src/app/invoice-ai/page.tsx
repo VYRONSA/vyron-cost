@@ -22,8 +22,7 @@ export default async function InvoiceAiPage() {
     : 0;
 
   return (
-    <VyronCostShell
-      title="Invoice AI"
+    <VyronCostShell hidePageHeader title="Invoice AI"
       subtitle="Supplier invoice ingestion, PDF extraction, ingredient matching, price movement detection and approval workflow foundation."
     >
       <section className="mb-6 grid gap-5 md:grid-cols-4">

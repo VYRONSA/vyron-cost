@@ -168,7 +168,7 @@ export function matchQualityLabel(quality: MatchQuality) {
 }
 
 export function matchQualityClass(quality: MatchQuality) {
-  if (quality === "remembered") return "bg-emerald-100 text-emerald-800";
+  if (quality === "remembered") return "bg-[#A3E635]/12 text-[#4D7C0F]";
   if (quality === "exact") return "bg-sky-100 text-sky-800";
   if (quality === "similar") return "bg-amber-100 text-amber-800";
   return "bg-slate-100 text-slate-700";

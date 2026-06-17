@@ -6,8 +6,7 @@ export default async function BoardPackCentrePage() {
   const pack = await buildBoardPackData("Current month to date");
 
   return (
-    <VyronCostShell
-      title="Board Pack Centre"
+    <VyronCostShell hidePageHeader title="Board Pack Centre"
       subtitle="EXECUTIVE BOARD PACK · PDF · EXCEL · CSV · INTERNATIONAL CLIENT STANDARD"
     >
       <BoardPackGeneratorClient pack={pack} />

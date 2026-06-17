@@ -3,7 +3,7 @@ import VyronCostAiShell from "@/components/VyronCostAiShell";
 
 export default function DocumentIntelligenceSettingsPage() {
   return (
-    <VyronCostAiShell title="Supervisor Settings" subtitle="DOCUMENT INTELLIGENCE APPROVAL RULES ENGINE.">
+    <VyronCostAiShell hidePageHeader title="Supervisor Settings" subtitle="DOCUMENT INTELLIGENCE APPROVAL RULES ENGINE.">
       <DocumentSupervisorSettings />
     </VyronCostAiShell>
   );

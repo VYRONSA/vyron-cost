@@ -6,8 +6,7 @@ export default async function ContractPriceReviewPage() {
   const suppliers = await getSupplierIntelligenceRows();
 
   return (
-    <VyronCostShell
-      title="Contract Price Review"
+    <VyronCostShell hidePageHeader title="Contract Price Review"
       subtitle="SUPPLIER CONTRACTS · PRICE VARIANCE · RENEWAL RISK"
     >
       <ContractPriceReviewClient suppliers={suppliers} />

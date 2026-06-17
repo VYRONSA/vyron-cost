@@ -14,7 +14,7 @@ export default async function CategoryUsageReportPage() {
   ]);
 
   return (
-    <VyronCostShell title="Category Usage Report" subtitle="Dedicated category-control report across all master-data areas.">
+    <VyronCostShell hidePageHeader title="Category Usage Report" subtitle="Dedicated category-control report across all master-data areas.">
       <section className="mb-6 grid gap-5 md:grid-cols-4">
         <MetricCard title="Categories" value={String(categories.length)} note="Category master" icon={FolderTree} />
         <MetricCard title="Products" value={String(products.length)} note="Product records" icon={PackageSearch} />

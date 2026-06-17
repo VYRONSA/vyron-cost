@@ -2,8 +2,12 @@
 
 import { Search, Users, Mail, Phone, FileText, Percent, Trash2, Plus } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { readCustomerHistoryLocally } from "@/lib/vyron-cost/customer-invoice-flow";
+import { readActiveClient } from "@/lib/vyron-developer-client";
+import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
+import { useInvoicePermissions, useModulePermissions } from "@/hooks/useModulePermissions";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 type Customer = {
   id: string;
@@ -30,8 +34,82 @@ const initialCustomers: Customer[] = [
   { id: "CUST-008", name: "Northern Suburbs Grocers", category: "Retail", contactEmail: "buying@nsgrocers.co.za", invoiceEmail: "accounts@nsgrocers.co.za", phone: "021 555 0160", terms: "21 Days", vatNumber: "4987654321", status: "Active", revenue: 58800, gpMovement: 40.2 },
 ];
 
+function customerStorageKey(workspaceId: string | null) {
+  return workspaceId ? `vyron-cost-customers:${workspaceId}` : "vyron-cost-customers";
+}
+
+function mapApiCustomer(row: Record<string, unknown>): Customer {
+  const sales = Number(row.total_sales || 0);
+  const avg = Number(row.average_invoice_value || 0);
+  const gpMovement = sales > 0 && avg > 0 ? Math.min(99, Math.max(0, (avg / sales) * 100)) : 0;
+  return {
+    id: String(row.id),
+    name: String(row.customer_name || ""),
+    category: String(row.category || row.contact_person || "Customer"),
+    contactEmail: String(row.email || ""),
+    invoiceEmail: String(row.invoice_email || row.email || ""),
+    phone: String(row.phone || ""),
+    terms: String(row.terms || "30 Days"),
+    vatNumber: String(row.vat_number || "N/A"),
+    status: String(row.status || (row.active === false ? "Inactive" : "Active")),
+    revenue: sales,
+    gpMovement,
+  };
+}
+
 export default function CustomersClient() {
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const { canCreate, canEdit, canDelete } = useModulePermissions("customers");
+  const { canCreate: canCreateInvoice } = useInvoicePermissions();
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [demoMode, setDemoMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const client = readActiveClient();
+    const demo = isDemoWorkspace(client);
+    setDemoMode(demo);
+
+    async function loadCustomers() {
+      if (!demo) {
+        try {
+          const response = await fetch("/api/customers");
+          const data = await response.json();
+          if (data.ok && Array.isArray(data.customers)) {
+            setCustomers(data.customers.map((row: Record<string, unknown>) => mapApiCustomer(row)));
+            return;
+          }
+        } catch {
+          // fall through to empty
+        }
+        setCustomers([]);
+        return;
+      }
+
+      const key = customerStorageKey(client?.id ?? null);
+      const raw = window.localStorage.getItem(key);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw) as Customer[];
+          if (Array.isArray(parsed)) {
+            setCustomers(parsed);
+            return;
+          }
+        } catch {
+          // fall through
+        }
+      }
+      setCustomers(initialCustomers);
+    }
+
+    loadCustomers().finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!demoMode) return;
+    const client = readActiveClient();
+    const key = customerStorageKey(client?.id ?? null);
+    window.localStorage.setItem(key, JSON.stringify(customers));
+  }, [customers, demoMode]);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({
     name: "",
@@ -55,43 +133,154 @@ export default function CustomersClient() {
     );
   }, [customers, search]);
 
-  function addCustomer() {
+  async function addCustomer() {
+    if (!canCreate) {
+      alert("You do not have permission to create customers.");
+      return;
+    }
     if (!form.name.trim()) {
       alert("Please enter a customer name.");
       return;
     }
 
-    const next: Customer = {
-      id: `CUST-${String(customers.length + 1).padStart(3, "0")}`,
-      name: form.name.trim(),
-      category: form.category.trim() || "Customer",
-      contactEmail: form.contactEmail.trim(),
-      invoiceEmail: form.invoiceEmail.trim() || form.contactEmail.trim(),
-      phone: form.phone.trim(),
-      terms: form.terms.trim() || "30 Days",
-      vatNumber: form.vatNumber.trim() || "N/A",
-      status: form.status.trim() || "Active",
-      revenue: 0,
-      gpMovement: 0,
-    };
+    if (!demoMode) {
+      try {
+        const response = await fetch("/api/customers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerName: form.name.trim(),
+            category: form.category.trim() || "Customer",
+            contactEmail: form.contactEmail.trim(),
+            invoiceEmail: form.invoiceEmail.trim() || form.contactEmail.trim(),
+            phone: form.phone.trim(),
+            terms: form.terms.trim() || "30 Days",
+            vatNumber: form.vatNumber.trim() || "N/A",
+            status: form.status.trim() || "Active",
+          }),
+        });
+        const data = await response.json();
+        if (!data.ok) {
+          alert(data.error || "Failed to save customer.");
+          return;
+        }
+        setCustomers((current) => [mapApiCustomer(data.customer), ...current]);
+      } catch {
+        alert("Failed to save customer.");
+        return;
+      }
+    } else {
+      const next: Customer = {
+        id: `CUST-${String(customers.length + 1).padStart(3, "0")}`,
+        name: form.name.trim(),
+        category: form.category.trim() || "Customer",
+        contactEmail: form.contactEmail.trim(),
+        invoiceEmail: form.invoiceEmail.trim() || form.contactEmail.trim(),
+        phone: form.phone.trim(),
+        terms: form.terms.trim() || "30 Days",
+        vatNumber: form.vatNumber.trim() || "N/A",
+        status: form.status.trim() || "Active",
+        revenue: 0,
+        gpMovement: 0,
+      };
+      setCustomers((current) => [next, ...current]);
+    }
 
-    setCustomers((current) => [next, ...current]);
     setForm({ name: "", category: "Customer", contactEmail: "", invoiceEmail: "", phone: "", terms: "30 Days", vatNumber: "", status: "Active" });
   }
 
-  function deleteCustomer(id: string) {
-    const confirmed = window.confirm("Delete this customer from the demo customer file?");
+  async function deleteCustomer(id: string) {
+    if (!canDelete) {
+      alert("You do not have permission to delete customers.");
+      return;
+    }
+    const confirmed = window.confirm(
+      "Remove this customer? Customers with invoices will be archived instead of deleted."
+    );
     if (!confirmed) return;
+
+    if (!demoMode) {
+      try {
+        const response = await fetch(`/api/customers/${id}`, { method: "DELETE" });
+        const data = await response.json();
+        if (!data.ok) {
+          alert(data.error || "Failed to delete customer.");
+          return;
+        }
+        if (data.archived && data.customer) {
+          setCustomers((current) =>
+            current.map((customer) =>
+              customer.id === id ? mapApiCustomer(data.customer as Record<string, unknown>) : customer
+            )
+          );
+          return;
+        }
+      } catch {
+        alert("Failed to delete customer.");
+        return;
+      }
+    }
+
     setCustomers((current) => current.filter((customer) => customer.id !== id));
   }
 
-  function updateCustomerStatus(id: string, status: string) {
+  async function updateCustomerStatus(id: string, status: string) {
+    if (!canEdit) return;
+    if (!demoMode) {
+      try {
+        const response = await fetch(`/api/customers/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        });
+        const data = await response.json();
+        if (!data.ok) {
+          alert(data.error || "Failed to update customer.");
+          return;
+        }
+      } catch {
+        alert("Failed to update customer.");
+        return;
+      }
+    }
+
     setCustomers((current) => current.map((customer) => (customer.id === id ? { ...customer, status } : customer)));
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[220px_minmax(0,1fr)_300px]">
-      <aside className="rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "customers",
+        badge: "Premium Sales Workspace",
+        title: "Customer Control",
+        subtitle: "Customer master, invoice routing, payment terms, revenue history and GP movement — the commercial front door of VYRON COST.",
+        outcomes: [
+          "Maintain customer master and invoice emails",
+          "Track revenue and GP movement per customer",
+          "Set payment terms and commercial status",
+          "Launch invoices from the customer record",
+        ],
+        quotes: [
+          { label: "Margin", quote: "Revenue is vanity. Margin is sanity." },
+          { label: "Commercial", quote: "What gets measured gets protected." },
+        ],
+        formulaTitle: "Customer commercial formulas",
+        formulas: [
+          { label: "Invoice GP %", formula: "(Sales − Cost) ÷ Sales × 100" },
+          { label: "Customer Revenue", formula: "Σ posted invoice totals (period)" },
+          { label: "Avg Invoice Value", formula: "Total sales ÷ invoice count" },
+        ],
+        intelligenceTitle: "Commercial signals",
+        intelligenceItems: [
+          { label: "GP movement", detail: "Customers below target GP need repricing or cost review before the next order cycle." },
+          { label: "Terms discipline", detail: "Payment terms affect cash flow alongside margin on every sale." },
+          { label: "Invoice routing", detail: "Correct invoice email reduces delays and improves debtor control." },
+        ],
+      }}
+    >
+    <div className={`grid min-w-0 max-w-full grid-cols-1 gap-6 ${canCreate ? "xl:grid-cols-[minmax(0,240px)_minmax(0,1fr)_minmax(0,300px)]" : "xl:grid-cols-[minmax(0,1fr)_minmax(0,300px)]"}`}>
+      {canCreate ? (
+      <aside className="min-w-0 rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         <div className="mb-4 flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-700">
             <Plus size={18} />
@@ -138,27 +327,39 @@ export default function CustomersClient() {
           </button>
         </div>
       </aside>
+      ) : null}
 
-      <section className="rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
-        <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <h2 className="text-xl font-black text-slate-950">Customers</h2>
-            <p className="text-sm font-medium text-slate-500">Manage customer master file, invoice emails and sales terms.</p>
-          </div>
-
-          <div className="flex flex-col gap-2 md:flex-row md:items-center">
-            <div className="flex min-w-[260px] items-center gap-2 rounded-2xl bg-purple-50 px-4 py-3">
-              <Search size={17} className="text-purple-700" />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search customers..." className="w-full bg-transparent text-sm font-bold outline-none placeholder:text-slate-400" />
+      <section className="min-w-0 rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+        <div className="mb-5 space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="text-xl font-black text-slate-950">Customers</h2>
+              <p className="text-sm font-medium text-slate-500">Manage customer master file, invoice emails and sales terms.</p>
             </div>
 
-            <Link href="/customer-invoices" className="rounded-2xl bg-purple-700 px-4 py-3 text-sm font-black text-white">
-              Create Invoice
-            </Link>
+            {canCreateInvoice ? (
+              <Link
+                href="/customer-invoices"
+                className="inline-flex shrink-0 items-center justify-center self-start rounded-2xl bg-purple-700 px-4 py-3 text-sm font-black text-white sm:self-center"
+              >
+                Create Invoice
+              </Link>
+            ) : null}
+          </div>
+
+          <div className="flex min-w-0 items-center gap-2 rounded-2xl bg-purple-50 px-4 py-3">
+            <Search size={17} className="shrink-0 text-purple-700" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search customers..."
+              className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-slate-400"
+            />
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-3xl border border-slate-100">
+        <div className="overflow-x-auto rounded-3xl border border-slate-100">
+          <div className="min-w-[920px]">
           <div className="grid grid-cols-[1.3fr_1fr_1.4fr_1fr_0.8fr_0.8fr_95px] gap-3 bg-slate-50 px-5 py-4 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
             <div>Customer</div>
             <div>Category</div>
@@ -168,6 +369,16 @@ export default function CustomersClient() {
             <div>Status</div>
             <div>Actions</div>
           </div>
+
+          {loading ? (
+            <div className="rounded-3xl border border-dashed border-violet-200 bg-violet-50/50 p-10 text-center text-sm font-semibold text-slate-600">
+              Loading customers…
+            </div>
+          ) : filteredCustomers.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-violet-200 bg-violet-50/50 p-10 text-center text-sm font-semibold text-slate-600">
+              No customers yet. Add your first customer using the form on the left.
+            </div>
+          ) : null}
 
           {filteredCustomers.map((customer) => (
             <div key={customer.id} className="grid grid-cols-[1.3fr_1fr_1.4fr_1fr_0.8fr_0.8fr_95px] items-center gap-3 border-t border-slate-100 px-5 py-4 text-sm">
@@ -187,9 +398,9 @@ export default function CustomersClient() {
               <div className="font-semibold text-slate-600">{customer.category}</div>
               <div className="truncate font-bold text-slate-700">{customer.invoiceEmail || "No invoice email"}</div>
               <div className="font-bold text-slate-700">{customer.terms}</div>
-              <div className={`font-black ${customer.gpMovement < 38 ? "text-rose-600" : "text-emerald-600"}`}>{customer.gpMovement.toFixed(1)}%</div>
+              <div className={`font-bold ${customer.gpMovement < 38 ? "text-orange-400" : "text-[#A3E635]"}`}>{customer.gpMovement.toFixed(1)}%</div>
               <div>
-                <select value={customer.status} onChange={(event) => updateCustomerStatus(customer.id, event.target.value)} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-black text-purple-700 outline-none">
+                <select value={customer.status} onChange={(event) => updateCustomerStatus(customer.id, event.target.value)} disabled={!canEdit} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-black text-purple-700 outline-none disabled:opacity-60">
                   <option>Active</option>
                   <option>Watch</option>
                   <option>Review</option>
@@ -197,22 +408,24 @@ export default function CustomersClient() {
                 </select>
               </div>
               <div className="flex items-center gap-2">
-                <button className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-600">Edit</button>
-                <button onClick={() => deleteCustomer(customer.id)} className="rounded-xl bg-rose-50 p-2 text-rose-600">
-                  <Trash2 size={15} />
-                </button>
+                {canDelete ? (
+                  <button onClick={() => deleteCustomer(customer.id)} className="rounded-xl bg-rose-50 p-2 text-rose-600">
+                    <Trash2 size={15} />
+                  </button>
+                ) : null}
               </div>
             </div>
           ))}
+          </div>
         </div>
       </section>
 
-      <aside className="rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <aside className="min-w-0 rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-purple-100 text-purple-700">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-purple-100 text-purple-700">
             <Users size={21} />
           </div>
-          <div>
+          <div className="min-w-0">
             <h2 className="text-xl font-black text-slate-950">Customer Field Guide</h2>
             <p className="text-xs font-semibold text-slate-500">What each customer field means.</p>
           </div>
@@ -225,6 +438,7 @@ export default function CustomersClient() {
         <Guide icon={<Percent size={17} />} title="GP %" text="Gross profit percentage from sales invoices and product cost." example="Used for margin and customer intelligence." />
       </aside>
     </div>
+    </VyronPremiumPageShell>
   );
 }
 

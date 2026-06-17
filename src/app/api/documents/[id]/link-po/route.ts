@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { linkDocumentToPurchaseOrder } from "@/lib/vyron-procurement";
+import {
+  documentTenantAccessErrorResponse,
+  loadDocumentForTenant,
+  requireDocumentTenantId,
+} from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -21,6 +26,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   try {
+    const tenantId = await requireDocumentTenantId();
+    await loadDocumentForTenant(supabase, documentId, tenantId, "id, tenant_id");
     const result = await linkDocumentToPurchaseOrder(supabase, {
       documentId,
       purchaseOrderId,
@@ -28,6 +35,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
     });
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Link failed." }, { status: 500 });
+    return documentTenantAccessErrorResponse(error, "Link failed.");
   }
 }

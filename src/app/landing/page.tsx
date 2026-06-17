@@ -1,5 +1,5 @@
-import VyronCostLandingPage from "@/components/VyronCostLandingPage";
+import VyronPublicLandingPage from "@/components/VyronPublicLandingPage";
 
 export default function LandingPage() {
-  return <VyronCostLandingPage />;
+  return <VyronPublicLandingPage />;
 }

@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Mail, Printer } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
+import { useConfirmDelete } from "@/hooks/useConfirmDelete";
+import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { formatMoney } from "@/lib/vyron-cost-data";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
 
 function poFulfillmentStatus(po: Record<string, unknown>, lines: Array<Record<string, unknown>>) {
   const status = String(po.status || "").toLowerCase();
@@ -16,14 +21,19 @@ function poFulfillmentStatus(po: Record<string, unknown>, lines: Array<Record<st
 }
 
 export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
+  const router = useRouter();
+  const { canEdit, canApprove, canDelete } = useModulePermissions("purchase_orders");
+  const { canCreate: canReceiveGoods } = useModulePermissions("goods_receipts");
   const [po, setPo] = useState<Record<string, unknown> | null>(null);
   const [goodsReceipts, setGoodsReceipts] = useState<Array<Record<string, unknown>>>([]);
   const [linkedInvoices, setLinkedInvoices] = useState<Array<Record<string, unknown>>>([]);
   const [message, setMessage] = useState("");
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const deleteConfirm = useConfirmDelete("Delete this purchase order? This cannot be undone.");
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/purchase-orders/${poId}`);
+    const { query } = poApiWorkspaceContext();
+    const res = await fetch(`/api/purchase-orders/${poId}${query}`, { cache: "no-store" });
     const data = await res.json();
     if (data.ok) {
       setPo(data.purchaseOrder);
@@ -36,17 +46,50 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
     void load();
   }, [load]);
 
+  function canSetStatus(status: string) {
+    if (status === "Approved") return canApprove;
+    return canEdit || canApprove;
+  }
+
+  function requestDeletePo() {
+    if (!canDelete) {
+      setMessage("You do not have permission to delete this purchase order.");
+      return;
+    }
+    deleteConfirm.requestDelete(async () => {
+      const { query } = poApiWorkspaceContext();
+      const res = await fetch(`/api/purchase-orders/${poId}${query}`, { method: "DELETE", cache: "no-store" });
+      const data = await res.json();
+      if (data.ok) {
+        router.push("/purchase-orders/list");
+        router.refresh();
+      } else setMessage(data.error || "Delete failed");
+    });
+  }
+
   async function setStatus(status: string) {
+    if (!canSetStatus(status)) {
+      setMessage("You do not have permission to update this purchase order status.");
+      return;
+    }
     setPendingStatus(status);
+    const { body: workspaceBody } = poApiWorkspaceContext();
     const res = await fetch(`/api/purchase-orders/${poId}`, {
       method: "PATCH",
+      cache: "no-store",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, approvedBy: "supervisor", approvalNotes: `Status → ${status}` }),
+      body: JSON.stringify({
+        status,
+        approvedBy: "supervisor",
+        approvalNotes: `Status → ${status}`,
+        ...workspaceBody,
+      }),
     });
     const data = await res.json();
     setPendingStatus(null);
     if (data.ok) {
-      setMessage(`PO updated to ${status}.`);
+      const tier = data.approvalTier ? ` (${data.approvalTier} tier)` : "";
+      setMessage(`PO updated to ${String(data.purchaseOrder?.status || status)}${tier}.`);
       await load();
     } else setMessage(data.error || "Update failed");
   }
@@ -74,7 +117,36 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
   }
 
   return (
-    <section className="grid gap-6">
+    <>
+      <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-violet-800 via-indigo-950 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(81,63,190,0.28)]">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-fuchsia-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-[#A3E635]/10 blur-3xl" />
+        <div className="relative grid gap-7 xl:grid-cols-[1.2fr_0.8fr] xl:items-center">
+          <div>
+            <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#CBD5E1]">Premium Procurement Detail</div>
+            <h2 className="mt-5 text-4xl font-black tracking-[-0.04em] md:text-5xl">Purchase Order Intelligence</h2>
+            <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-violet-100">Track financial exposure, fulfilment status, linked GRNs, supplier invoices and approval history from one board-ready purchase order view.</p>
+            <div className="mt-6 flex flex-wrap gap-3">
+          <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">PO Value</span>
+          <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">Fulfilment</span>
+          <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">GRNs</span>
+          <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">Invoice Match</span>
+          <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">Variance</span>
+            </div>
+          </div>
+          <div className="grid gap-4">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-fuchsia-200">VYRON COST principle</div>
+              <p className="mt-3 text-lg font-black leading-snug text-white">&ldquo;PO, GRN and invoice must agree — variance is either margin or risk.&rdquo;</p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#CBD5E1]">Business intelligence</div>
+              <p className="mt-3 text-sm font-semibold leading-6 text-slate-100">Every action on this page should improve cost visibility, margin control and financial trust.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section className="grid gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
         <div>
           <Link href="/purchase-orders/list" className="text-xs font-black text-violet-700">
@@ -86,9 +158,11 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={`/purchase-orders/${poId}/edit`} className="rounded-xl bg-violet-700 px-3 py-2 text-xs font-black text-white">
-            Edit PO
-          </Link>
+          {canEdit ? (
+            <Link href={`/purchase-orders/${poId}/edit`} className="rounded-xl bg-violet-700 px-3 py-2 text-xs font-black text-white">
+              Edit PO
+            </Link>
+          ) : null}
           <button type="button" onClick={printPo} className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800">
             <Printer size={14} />
             Print
@@ -97,9 +171,16 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
             <Mail size={14} />
             Email PO
           </button>
-          <Link href={`/goods-receipts/new?po=${poId}`} className="rounded-xl bg-fuchsia-600 px-3 py-2 text-xs font-black text-white">
-            Receive Goods
-          </Link>
+          {canReceiveGoods ? (
+            <Link href={`/goods-receipts/new?po=${poId}`} className="rounded-xl bg-fuchsia-600 px-3 py-2 text-xs font-black text-white">
+              Receive Goods
+            </Link>
+          ) : null}
+          {canDelete ? (
+            <button type="button" onClick={requestDeletePo} className="rounded-xl bg-red-100 px-3 py-2 text-xs font-black text-red-800">
+              Delete
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -126,17 +207,19 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
       </div>
 
       <div className="print:hidden flex flex-wrap gap-2">
-        {["Submitted", "Approved", "Sent", "Closed"].map((s) => (
-          <button
-            key={s}
-            type="button"
-            disabled={pendingStatus === s}
-            onClick={() => void setStatus(s)}
-            className="rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800 disabled:opacity-60"
-          >
-            Mark {s}
-          </button>
-        ))}
+        {["Submitted", "Approved", "Sent", "Closed"]
+          .filter((s) => canSetStatus(s))
+          .map((s) => (
+            <button
+              key={s}
+              type="button"
+              disabled={pendingStatus === s}
+              onClick={() => void setStatus(s)}
+              className="rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800 disabled:opacity-60"
+            >
+              Mark {s}
+            </button>
+          ))}
       </div>
 
       <div className="min-w-0 overflow-x-auto rounded-[2rem] border border-violet-100 bg-white">
@@ -221,5 +304,13 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
         </p>
       ) : null}
     </section>
+      <ConfirmDeleteDialog
+        open={deleteConfirm.open}
+        confirming={deleteConfirm.confirming}
+        message={deleteConfirm.message}
+        onCancel={deleteConfirm.cancel}
+        onConfirm={() => void deleteConfirm.confirm()}
+      />
+    </>
   );
 }

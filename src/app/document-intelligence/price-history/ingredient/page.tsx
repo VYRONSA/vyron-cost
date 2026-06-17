@@ -3,7 +3,7 @@ import VyronCostAiShell from "@/components/VyronCostAiShell";
 
 export default function IngredientPriceHistoryPage() {
   return (
-    <VyronCostAiShell title="Ingredient Price History" subtitle="INGREDIENT COST CHANGES FROM APPROVED INVOICES.">
+    <VyronCostAiShell hidePageHeader title="Ingredient Price History" subtitle="INGREDIENT COST CHANGES FROM APPROVED INVOICES.">
       <PriceHistoryScreen scope="ingredient" />
     </VyronCostAiShell>
   );

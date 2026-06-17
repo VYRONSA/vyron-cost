@@ -6,12 +6,14 @@ export type ImportEntityType =
   | "ingredients"
   | "packaging"
   | "suppliers"
+  | "customers"
   | "categories"
   | "purchase-orders"
   | "purchase-order-lines"
   | "supplier-invoices"
   | "invoice-lines"
   | "stock-counts"
+  | "opening-stock"
   | "cost-plans";
 
 export type ImportTemplate = {
@@ -38,28 +40,28 @@ export const importTemplates: ImportTemplate[] = [
     label: "Products",
     description: "Product master with selling price and target GP",
     columns: ["product_name", "category", "selling_price", "total_cost", "target_gp", "status"],
-    sampleRow: ["Chicken Pie", "Pies", "32.00", "16.20", "40", "Active"],
+    sampleRow: ["Sample Product", "General", "32.00", "16.20", "40", "Active"],
   },
   {
     id: "finished-products",
     label: "Finished Products",
     description: "Finished products with linked recipe reference",
     columns: ["product_name", "category", "linked_recipe_name", "selling_price", "target_gp"],
-    sampleRow: ["Chicken Pie", "Pies", "Chicken Pie Recipe", "32.00", "40"],
+    sampleRow: ["Sample Product", "General", "Sample Recipe", "32.00", "40"],
   },
   {
     id: "recipes",
     label: "Recipes / BOMs",
     description: "Recipe header records",
     columns: ["recipe_name", "recipe_type", "category", "yield_qty", "total_cost", "target_gp", "status"],
-    sampleRow: ["Chicken Pie Recipe", "Finished Product", "Pies", "1", "16.20", "40", "Approved"],
+    sampleRow: ["Sample Recipe", "Finished Product", "General", "1", "16.20", "40", "Approved"],
   },
   {
     id: "bom-lines",
     label: "BOM Lines",
     description: "Recipe ingredient/packaging/labour lines",
     columns: ["recipe_name", "line_type", "ingredient_name", "quantity", "unit", "unit_cost"],
-    sampleRow: ["Chicken Pie Recipe", "ingredient", "Chicken Fillet", "0.12", "kg", "95.00"],
+    sampleRow: ["Sample Recipe", "ingredient", "Sample Ingredient", "0.12", "kg", "95.00"],
   },
   {
     id: "ingredients",
@@ -81,6 +83,13 @@ export const importTemplates: ImportTemplate[] = [
     description: "Supplier master",
     columns: ["supplier_name", "category", "contact_email", "risk_status", "last_price_movement"],
     sampleRow: ["Protein Direct", "Protein", "buyer@protein.co.za", "High", "12.4"],
+  },
+  {
+    id: "customers",
+    label: "Customers",
+    description: "Customer master with invoice email and terms",
+    columns: ["customer_name", "category", "contact_email", "invoice_email", "phone", "terms", "vat_number", "status"],
+    sampleRow: ["Acme Trading", "Retail", "buyer@acme.co.za", "accounts@acme.co.za", "021 000 0000", "30 Days", "4123456789", "Active"],
   },
   {
     id: "categories",
@@ -123,6 +132,13 @@ export const importTemplates: ImportTemplate[] = [
     description: "Physical stock count headers",
     columns: ["count_number", "location", "status", "count_date", "notes"],
     sampleRow: ["SC-2026-06", "Main warehouse", "Open", "2026-06-01", "Monthly count"],
+  },
+  {
+    id: "opening-stock",
+    label: "Opening Stock",
+    description: "Opening balances for ingredients, packaging and finished goods",
+    columns: ["item_name", "entity_type", "qty_on_hand", "unit", "unit_cost", "location"],
+    sampleRow: ["Chicken Fillet", "ingredient", "120", "kg", "95.00", "Main warehouse"],
   },
   {
     id: "cost-plans",

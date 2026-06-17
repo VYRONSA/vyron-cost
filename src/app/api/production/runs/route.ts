@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createProductionRun, listProductionRuns } from "@/lib/vyron-manufacturing";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
+import {
+  manufacturingCompanyContextFromRequest,
+  requireManufacturingCompanyId,
+} from "@/lib/vyron-manufacturing-api-context";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   if (!isSupabaseServiceRoleConfigured()) {
@@ -14,10 +23,13 @@ export async function GET(request: NextRequest) {
   const status = request.nextUrl.searchParams.get("status") || undefined;
   const search = request.nextUrl.searchParams.get("search") || undefined;
   try {
-    const runs = await listProductionRuns(supabase, VYRON_DEFAULT_TENANT_ID, { status, search });
-    return NextResponse.json({ ok: true, runs });
+    await requireWorkspacePermission("manufacturing.view");
+    const companyId = await resolveApiCompanyIdWithContext(supabase, manufacturingCompanyContextFromRequest(request));
+    if (!companyId) return NextResponse.json({ ok: true, runs: [] }, { headers: { "Cache-Control": "no-store" } });
+    const runs = await listProductionRuns(supabase, companyId, { status, search });
+    return NextResponse.json({ ok: true, runs }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "List failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "List failed.");
   }
 }
 
@@ -29,7 +41,9 @@ export async function POST(request: NextRequest) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   const body = await request.json().catch(() => ({}));
   try {
-    const run = await createProductionRun(supabase, VYRON_DEFAULT_TENANT_ID, {
+    await requireWorkspacePermission("manufacturing.runs.create");
+    const companyId = await requireManufacturingCompanyId(supabase, manufacturingCompanyContextFromRequest(request, body));
+    const run = await createProductionRun(supabase, companyId, {
       bom_id: String(body.bom_id || ""),
       product_id: body.product_id || null,
       batch_multiplier: body.batch_multiplier != null ? Number(body.batch_multiplier) : undefined,
@@ -41,6 +55,6 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ ok: true, run });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Create failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Create failed.");
   }
 }

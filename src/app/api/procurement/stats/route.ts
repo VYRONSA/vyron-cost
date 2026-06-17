@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getProcurementDashboardStats } from "@/lib/vyron-procurement";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 
@@ -12,9 +16,17 @@ export async function GET() {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
   try {
-    const stats = await getProcurementDashboardStats(supabase, VYRON_DEFAULT_TENANT_ID);
+    await requireWorkspacePermission("purchase_orders.view");
+    const companyId = await resolveApiCompanyId();
+    if (!companyId) {
+      return NextResponse.json({
+        ok: true,
+        stats: { openPos: 0, pendingApproval: 0, partiallyReceived: 0, closedPos: 0, backOrders: 0, poVariances: 0 },
+      });
+    }
+    const stats = await getProcurementDashboardStats(supabase, companyId);
     return NextResponse.json({ ok: true, stats });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Stats failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Stats failed.");
   }
 }

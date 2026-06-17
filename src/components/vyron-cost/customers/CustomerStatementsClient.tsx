@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/vyron-cost/stock-engine";
 import { buildMailtoLink } from "@/lib/vyron-cost/customer-invoice-flow";
+import { VyronPremiumEmptyState, VyronPremiumSectionHeading } from "@/components/vyron-premium/VyronPremiumSprint";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 type CustomerOption = { id: string; name: string; email?: string };
 type StatementInvoice = {
@@ -48,36 +50,60 @@ export default function CustomerStatementsClient() {
     fetch(`/api/customer-statements?${params}`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.ok && d.statement) {
-          setInvoices(d.statement.invoices || []);
-          setOutstanding(d.statement.outstanding || 0);
-          setTotalSales(d.statement.totalSales || 0);
+        if (d.ok) {
+          setInvoices(d.invoices || []);
+          setOutstanding(Number(d.outstanding || 0));
+          setTotalSales(Number(d.totalSales || 0));
         }
       })
-      .catch(() => {
-        setInvoices([]);
-        setOutstanding(0);
-        setTotalSales(0);
-      });
+      .catch(() => undefined);
   }, [selectedCustomer?.name, fromDate, toDate]);
 
   const emailHref = useMemo(() => {
-    if (!selectedCustomer?.email) return "#";
-    const body = `Customer Statement\nCustomer: ${selectedCustomer.name}\nPeriod: ${fromDate} to ${toDate}\nOutstanding: ${formatCurrency(outstanding)}\nTotal Sales: ${formatCurrency(totalSales)}\n\n${invoices
-      .map((inv) => `${inv.invoice_number} | ${inv.invoice_date} | ${inv.status} | ${formatCurrency(inv.sales_value)}`)
-      .join("\n")}`;
+    const body = [
+      `Customer: ${selectedCustomer?.name}`,
+      `Period: ${fromDate} to ${toDate}`,
+      `Outstanding: ${formatCurrency(outstanding)}`,
+      `Total sales: ${formatCurrency(totalSales)}`,
+      "",
+      ...invoices.map((inv) => `${inv.invoice_number} · ${inv.invoice_date} · ${inv.status} · ${formatCurrency(inv.sales_value)}`),
+    ].join("\n");
     return buildMailtoLink({
-      to: [selectedCustomer.email],
-      subject: `Customer Statement - ${selectedCustomer.name}`,
+      to: [selectedCustomer?.email || ""],
+      subject: `Customer Statement - ${selectedCustomer?.name}`,
       body,
     });
   }, [selectedCustomer, fromDate, toDate, outstanding, totalSales, invoices]);
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-        <h2 className="text-2xl font-black text-slate-900">Customer Statements</h2>
-        <p className="mt-1 text-sm font-semibold text-slate-500">Outstanding balance and invoice history by customer and date range.</p>
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "customers",
+        badge: "Premium Sales Workspace",
+        title: "Customer Statements Centre",
+        subtitle: "Outstanding balance and invoice history by customer and date range — print or email board-ready statements.",
+        outcomes: [
+          "Filter statements by customer and period",
+          "See outstanding balance at a glance",
+          "Print or email statements to debtors",
+          "Review invoice history for the period",
+        ],
+        formulaTitle: "Debtor formulas",
+        formulas: [
+          { label: "Outstanding", formula: "Σ unpaid invoice balances" },
+          { label: "Period Sales", formula: "Σ invoice values in date range" },
+          { label: "Days Outstanding", formula: "Today − invoice due date (unpaid)" },
+        ],
+        intelligenceTitle: "Recovery Intelligence",
+        intelligenceItems: [
+          { label: "Outstanding", detail: "Unpaid invoices are cash still owed — chase before terms slip." },
+          { label: "Period view", detail: "Date-range filtering supports month-end debtor reconciliation." },
+          { label: "Email discipline", detail: "Statements from VYRON COST keep a consistent commercial record." },
+        ],
+      }}
+    >
+      <section className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <VyronPremiumSectionHeading eyebrow="Filter" title="Statement parameters" subtitle="Select customer and date range." />
 
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           <label className="text-sm font-black text-slate-600">
@@ -105,18 +131,18 @@ export default function CustomerStatementsClient() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-600">Outstanding Balance</p>
           <p className="mt-2 text-3xl font-black text-slate-950">{formatCurrency(outstanding)}</p>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-600">Total Sales (Period)</p>
           <p className="mt-2 text-3xl font-black text-slate-950">{formatCurrency(totalSales)}</p>
         </div>
       </section>
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-        <h3 className="text-xl font-black text-slate-900">Invoice History</h3>
+      <section className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <VyronPremiumSectionHeading eyebrow="History" title="Invoice history" />
         <div className="mt-4 overflow-x-auto rounded-3xl border border-slate-100">
           <table className="min-w-[720px] w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
@@ -136,12 +162,23 @@ export default function CustomerStatementsClient() {
                   <td className="px-4 py-3 text-right font-black">{formatCurrency(invoice.sales_value)}</td>
                 </tr>
               )) : (
-                <tr><td colSpan={4} className="px-4 py-8 text-center font-semibold text-slate-500">No invoices found for this period.</td></tr>
+                <tr>
+                  <td colSpan={4} className="px-4 py-6">
+                    <VyronPremiumEmptyState
+                      steps={[
+                        "Create customers and raise invoices.",
+                        "Post invoices for the selected period.",
+                        "Return here to print or email statements.",
+                        "Chase outstanding balances from one view.",
+                      ]}
+                    />
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
       </section>
-    </div>
+    </VyronPremiumPageShell>
   );
 }

@@ -6,8 +6,7 @@ export default async function UnitEconomicsPage() {
   const products = await getProductIntelligence();
 
   return (
-    <VyronCostShell
-      title="Unit Economics"
+    <VyronCostShell hidePageHeader title="Unit Economics"
       subtitle="SELLING PRICE · UNIT COST · UNIT PROFIT · GP"
     >
       <UnitEconomicsDashboardClient products={products} />

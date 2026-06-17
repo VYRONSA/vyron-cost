@@ -10,7 +10,8 @@ import {
   ProductRecipeLink,
   Recipe,
 } from "@/lib/vyron-cost-data";
-import { getHandcraftedProducts, getHandcraftedRecipes, isHandcraftedDataReady } from "@/lib/handcrafted-tenant";
+import { getHandcraftedProducts, getHandcraftedRecipes } from "@/lib/handcrafted-tenant";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 import { HANDCRAFTED_COMPANY_ID } from "@/lib/vyron-handcrafted-intelligence";
 
 export type ProductBomSummary = {
@@ -114,8 +115,9 @@ export async function linkProductToRecipe(productId: string, recipeId: string, c
 }
 
 export async function getFinishedProductsWithBom() {
-  const products = isHandcraftedDataReady() ? getHandcraftedProducts() : await getProducts(500);
-  const recipes = isHandcraftedDataReady() ? getHandcraftedRecipes() : await getRecipes(500);
+  const { useDemo } = await workspaceScope();
+  const products = useDemo ? getHandcraftedProducts() : await getProducts(500);
+  const recipes = useDemo ? getHandcraftedRecipes() : await getRecipes(500);
   return products.map((product) => ({
     product,
     link: synthesizeLink(product, recipes),

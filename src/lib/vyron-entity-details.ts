@@ -5,9 +5,8 @@ import {
   getHandcraftedProducts,
   getHandcraftedRecipeItems,
   getHandcraftedRecipes,
-  isHandcraftedDataReady,
 } from "@/lib/handcrafted-tenant";
-import { HANDCRAFTED_COMPANY_ID } from "@/lib/vyron-handcrafted-intelligence";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 import type { Ingredient, Product, ProductCostLine, Recipe, RecipeItem, Supplier } from "@/lib/vyron-cost-data";
 import {
   demoIngredientRows,
@@ -256,7 +255,7 @@ export async function getProductDetail(id: string): Promise<ProductDetail | null
     }
   }
 
-  if (isHandcraftedDataReady()) {
+  if ((await workspaceScope()).useDemo) {
     const product = getHandcraftedProducts().find((p) => p.id === id);
     if (product) {
       const lines = getHandcraftedProductCostLines().filter(
@@ -266,8 +265,10 @@ export async function getProductDetail(id: string): Promise<ProductDetail | null
     }
   }
 
-  const demo = demoProductById(id);
-  if (demo) return { product: demo, lines: [], grouped: {} };
+  if ((await workspaceScope()).useDemo) {
+    const demo = demoProductById(id);
+    if (demo) return { product: demo, lines: [], grouped: {} };
+  }
   return null;
 }
 
@@ -284,23 +285,24 @@ export async function getRecipeDetail(id: string): Promise<RecipeDetail | null> 
         .limit(200);
       let items = (itemsRes.data || []).map((r) => mapRecipeItem(r as Record<string, unknown>));
       if (!items.length) {
-        items = synthesizeRecipeItemsFromCostLines(recipe);
+        items = await synthesizeRecipeItemsFromCostLines(recipe);
       }
       return { recipe, items };
     }
   }
 
-  if (isHandcraftedDataReady()) {
+  if ((await workspaceScope()).useDemo) {
     const recipe = getHandcraftedRecipes().find((r) => r.id === id);
     if (recipe) {
       let items = getHandcraftedRecipeItems().filter((i) => i.recipe_id === id);
-      if (!items.length) items = synthesizeRecipeItemsFromCostLines(recipe);
+      if (!items.length) items = await synthesizeRecipeItemsFromCostLines(recipe);
       return { recipe, items };
     }
   }
 
-  const demo = demoRecipeById(id);
-  if (demo) {
+  if ((await workspaceScope()).useDemo) {
+    const demo = demoRecipeById(id);
+    if (!demo) return null;
     return {
       recipe: demo,
       items: [
@@ -327,9 +329,9 @@ export async function getRecipeDetail(id: string): Promise<RecipeDetail | null> 
   return null;
 }
 
-function synthesizeRecipeItemsFromCostLines(recipe: Recipe): RecipeItem[] {
+async function synthesizeRecipeItemsFromCostLines(recipe: Recipe): Promise<RecipeItem[]> {
   const recipeName = recipe.recipe_name.toLowerCase();
-  const lines = isHandcraftedDataReady() ? getHandcraftedProductCostLines() : [];
+  const lines = (await workspaceScope()).useDemo ? getHandcraftedProductCostLines() : [];
   const matches = lines.filter((line) => {
     const productName = String(line.product_name || "").toLowerCase();
     return productName.includes(recipeName.split(" ")[0]) || recipeName.includes(productName.split(" ")[0]);
@@ -347,25 +349,28 @@ function synthesizeRecipeItemsFromCostLines(recipe: Recipe): RecipeItem[] {
 }
 
 export async function getIngredientDetail(id: string): Promise<IngredientDetail | null> {
+  const { useDemo, companyId } = await workspaceScope();
   let ingredient: Ingredient | null = null;
   let suppliers: Supplier[] = [];
 
   if (supabase) {
     const ingRes = await supabase.from("vyron_cost_ingredients").select("*").eq("id", id).maybeSingle();
     if (ingRes.data) ingredient = mapIngredient(ingRes.data as Record<string, unknown>);
-    const supRes = await supabase
-      .from("vyron_cost_suppliers")
-      .select("*")
-      .eq("company_id", HANDCRAFTED_COMPANY_ID)
-      .limit(200);
-    suppliers = (supRes.data || []).map((r) => mapSupplier(r as Record<string, unknown>));
+    if (companyId) {
+      const supRes = await supabase
+        .from("vyron_cost_suppliers")
+        .select("*")
+        .eq("company_id", companyId)
+        .limit(200);
+      suppliers = (supRes.data || []).map((r) => mapSupplier(r as Record<string, unknown>));
+    }
   }
 
-  if (!ingredient && isHandcraftedDataReady()) {
+  if (!ingredient && useDemo) {
     ingredient = getHandcraftedIngredients().find((i) => i.id === id) || null;
   }
 
-  if (!ingredient) {
+  if (!ingredient && useDemo) {
     ingredient = demoIngredientById(id);
   }
 
@@ -375,8 +380,8 @@ export async function getIngredientDetail(id: string): Promise<IngredientDetail 
     suppliers.find((s) => s.category === ingredient!.category)?.supplier_name ||
     `${ingredient.category} supplier`;
 
-  const costLines = isHandcraftedDataReady() ? getHandcraftedProductCostLines() : [];
-  const products = isHandcraftedDataReady() ? getHandcraftedProducts() : [];
+  const costLines = useDemo ? getHandcraftedProductCostLines() : [];
+  const products = useDemo ? getHandcraftedProducts() : [];
   const needle = ingredient.ingredient_name.toLowerCase();
 
   const linkedProducts = products
@@ -403,6 +408,7 @@ export async function getIngredientDetail(id: string): Promise<IngredientDetail 
 }
 
 export async function getSupplierDetail(id: string): Promise<SupplierDetail | null> {
+  const { useDemo, companyId } = await workspaceScope();
   let supplier: Supplier | null = null;
 
   if (supabase) {
@@ -410,25 +416,25 @@ export async function getSupplierDetail(id: string): Promise<SupplierDetail | nu
     if (supRes.data) supplier = mapSupplier(supRes.data as Record<string, unknown>);
   }
 
-  if (!supplier) supplier = demoSupplierById(id);
+  if (!supplier && useDemo) supplier = demoSupplierById(id);
 
   if (!supplier) return null;
 
   let ingredients: Ingredient[] = [];
-  if (supabase) {
+  if (supabase && companyId) {
     const ingRes = await supabase
       .from("vyron_cost_ingredients")
       .select("*")
-      .eq("company_id", HANDCRAFTED_COMPANY_ID)
+      .eq("company_id", companyId)
       .eq("category", supplier.category)
       .limit(50);
     ingredients = (ingRes.data || []).map((r) => mapIngredient(r as Record<string, unknown>));
   }
-  if (!ingredients.length && isHandcraftedDataReady()) {
+  if (!ingredients.length && useDemo) {
     ingredients = getHandcraftedIngredients().filter((i) => i.category === supplier!.category).slice(0, 50);
   }
 
-  const products = isHandcraftedDataReady() ? getHandcraftedProducts() : [];
+  const products = useDemo ? getHandcraftedProducts() : [];
   const linkedProducts = products
     .filter((p) => p.category === supplier.category || /protein|packaging|meat/i.test(`${p.category} ${p.product_name}`))
     .slice(0, 8)

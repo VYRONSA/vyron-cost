@@ -1,6 +1,11 @@
-import { NextResponse } from "next/server";
-import { listCustomersWithHistory } from "@/lib/vyron-customer-invoices";
+import { NextRequest, NextResponse } from "next/server";
+import { createCustomer, listCustomersWithHistory } from "@/lib/vyron-customer-invoices";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import { requireApiCompanyId, resolveApiCompanyId } from "@/lib/vyron-api-workspace";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 
@@ -11,9 +16,40 @@ export async function GET() {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   try {
-    const customers = await listCustomersWithHistory(supabase);
+    await requireWorkspacePermission("customers.view");
+    const companyId = await resolveApiCompanyId();
+    if (!companyId) return NextResponse.json({ ok: true, customers: [] });
+    const customers = await listCustomersWithHistory(supabase, companyId);
     return NextResponse.json({ ok: true, customers });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "List failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "List failed.");
+  }
+}
+
+export async function POST(request: NextRequest) {
+  if (!isSupabaseServiceRoleConfigured()) {
+    return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
+  }
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
+
+  const body = await request.json().catch(() => ({}));
+
+  try {
+    await requireWorkspacePermission("customers.create");
+    const companyId = await requireApiCompanyId();
+    const customer = await createCustomer(supabase, companyId, {
+      customerName: String(body.customerName || body.name || ""),
+      category: body.category,
+      contactEmail: body.contactEmail,
+      invoiceEmail: body.invoiceEmail,
+      phone: body.phone,
+      terms: body.terms,
+      vatNumber: body.vatNumber,
+      status: body.status,
+    });
+    return NextResponse.json({ ok: true, customer });
+  } catch (error) {
+    return workspaceAccessErrorResponse(error, "Create failed.");
   }
 }

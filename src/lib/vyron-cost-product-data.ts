@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { BomHeader, getBoms } from "@/lib/vyron-cost-bom-data";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 
 export type CostProduct = {
   id: string;
@@ -33,31 +34,33 @@ export function calcSuggestedPrice(cost: number, targetGp: number) {
 }
 
 export async function getProducts(): Promise<CostProduct[]> {
-  if (!supabase) return demoProducts;
-  const { data, error } = await supabase
-    .from("vyron_cost_products")
-    .select("*")
-    .order("product_name", { ascending: true })
-    .limit(1000);
+  const { useDemo, companyId } = await workspaceScope();
+  if (!useDemo && !companyId) return [];
+  if (!supabase) return useDemo ? demoProducts : [];
 
-  if (error || !data) return demoProducts;
+  let query = supabase.from("vyron_cost_products").select("*").order("product_name", { ascending: true }).limit(1000);
+  if (companyId) query = query.eq("company_id", companyId);
+
+  const { data, error } = await query;
+  if (error || !data) return useDemo ? demoProducts : [];
   return data as CostProduct[];
 }
 
 export async function getProductById(id: string): Promise<{ product: CostProduct | null; bom: BomHeader | null; boms: BomHeader[] }> {
   const boms = await getBoms();
 
-  if (!supabase || id.startsWith("demo")) {
-    const product = demoProducts.find((item) => item.id === id) || demoProducts[0] || null;
-    const bom = boms.find((item) => item.id === product?.linked_bom_id) || null;
+  const { useDemo } = await workspaceScope();
+  if (!supabase || (useDemo && id.startsWith("demo"))) {
+    if (!useDemo) return { product: null, bom: null, boms };
+    const product = demoProducts.find((item) => item.id === id) || null;
+    const bom = product ? boms.find((item) => item.id === product.linked_bom_id) || null : null;
     return { product, bom, boms };
   }
 
-  const { data, error } = await supabase
-    .from("vyron_cost_products")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const { companyId } = await workspaceScope();
+  let query = supabase.from("vyron_cost_products").select("*").eq("id", id);
+  if (companyId) query = query.eq("company_id", companyId);
+  const { data, error } = await query.maybeSingle();
 
   if (error || !data) return { product: null, bom: null, boms };
 

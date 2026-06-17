@@ -6,8 +6,7 @@ export default async function SupplierBenchmarksPage() {
   const rows = await getSupplierIntelligenceRows();
 
   return (
-    <VyronCostShell
-      title="Supplier Benchmarks"
+    <VyronCostShell hidePageHeader title="Supplier Benchmarks"
       subtitle="COMPARE · NEGOTIATE · RECOVER PROCUREMENT SAVINGS"
     >
       <SupplierBenchmarkCentreClient rows={rows} />

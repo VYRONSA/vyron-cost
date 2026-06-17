@@ -1,6 +1,7 @@
 "use client";
 
 import { ProductIntelligenceRow } from "@/lib/vyron-product-intelligence-data";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 function money(value: number | null | undefined) {
   return `R${Number(value || 0).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -20,33 +21,41 @@ export default function MarginBridgeClient({ products }: { products: ProductInte
   const bridgeTotal = rows.reduce((sum, row) => sum + Math.max(0, row.bridge), 0);
 
   return (
-    <section className="grid gap-6">
-      <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-        <div className="text-xs font-black uppercase tracking-[0.16em] text-emerald-300">Margin Bridge</div>
-        <div className="mt-3 text-5xl font-black">{money(bridgeTotal)}</div>
-        <p className="mt-3 text-sm font-semibold text-slate-300">Monthly margin required to move products from actual GP to target GP.</p>
-      </div>
+    <VyronPremiumPageShell
+      config={{
+        title: "Margin Bridge",
+        subtitle: "Premium VYRON COST workflow for margin bridge.",
+        formulas: ["GP % = (Price - Cost) / Price"],
+      }}
+    >
+      <section className="grid gap-6">
+            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Margin Bridge</div>
+              <div className="mt-3 text-5xl font-black">{money(bridgeTotal)}</div>
+              <p className="mt-3 text-sm font-semibold text-slate-300">Monthly margin required to move products from actual GP to target GP.</p>
+            </div>
 
-      <div className="overflow-hidden rounded-[2rem] bg-white">
-        <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase text-emerald-300">
-          <div className="col-span-2">Product</div>
-          <div>Actual GP</div>
-          <div>Target GP</div>
-          <div>Gap</div>
-          <div>Bridge</div>
-          <div>Action</div>
-        </div>
-        {rows.map((row) => (
-          <div key={row.product.id} className="grid grid-cols-7 border-t border-slate-100 px-5 py-5 text-sm">
-            <div className="col-span-2 font-black">{row.product.product_name}</div>
-            <div>{row.currentGp.toFixed(1)}%</div>
-            <div>{row.targetGp.toFixed(1)}%</div>
-            <div className="font-black text-red-700">{row.gap.toFixed(1)}%</div>
-            <div className="font-black text-emerald-700">{money(row.bridge)}</div>
-            <div className="text-xs font-bold text-slate-600">Reprice / reduce cost</div>
-          </div>
-        ))}
-      </div>
-    </section>
+            <div className="overflow-hidden rounded-[2rem] bg-white">
+              <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase text-[#A3E635]">
+                <div className="col-span-2">Product</div>
+                <div>Actual GP</div>
+                <div>Target GP</div>
+                <div>Gap</div>
+                <div>Bridge</div>
+                <div>Action</div>
+              </div>
+              {rows.map((row) => (
+                <div key={row.product.id} className="grid grid-cols-7 border-t border-slate-100 px-5 py-5 text-sm">
+                  <div className="col-span-2 font-black">{row.product.product_name}</div>
+                  <div>{row.currentGp.toFixed(1)}%</div>
+                  <div>{row.targetGp.toFixed(1)}%</div>
+                  <div className="font-black text-red-700">{row.gap.toFixed(1)}%</div>
+                  <div className="font-black text-[#65A30D]">{money(row.bridge)}</div>
+                  <div className="text-xs font-bold text-slate-600">Reprice / reduce cost</div>
+                </div>
+              ))}
+            </div>
+          </section>
+    </VyronPremiumPageShell>
   );
 }

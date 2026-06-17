@@ -2,7 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { formatMoney } from "@/lib/vyron-cost-data";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
 
 export default function InventoryAlertsClient() {
   const router = useRouter();
@@ -15,7 +17,8 @@ export default function InventoryAlertsClient() {
   const [message, setMessage] = useState("");
 
   const refresh = useCallback(() => {
-    fetch("/api/inventory/alerts")
+    const { query } = poApiWorkspaceContext();
+    fetch(`/api/inventory/alerts${query}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) setData(d);
@@ -29,10 +32,11 @@ export default function InventoryAlertsClient() {
   async function createPo(alertId: string) {
     setBusyId(alertId);
     setMessage("");
+    const { body: workspaceBody } = poApiWorkspaceContext();
     const res = await fetch("/api/inventory/alerts/create-po", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ alertId, actor: "user" }),
+      body: JSON.stringify({ ...workspaceBody, alertId, actor: "user" }),
     });
     const payload = await res.json();
     setBusyId(null);
@@ -51,9 +55,24 @@ export default function InventoryAlertsClient() {
   if (!data) return <p className="text-sm text-slate-500">Loading alerts…</p>;
 
   return (
-    <section className="grid gap-8">
-      {message ? <p className="rounded-xl bg-violet-50 px-4 py-3 text-sm font-bold text-violet-800">{message}</p> : null}
-      <div className="grid gap-8 lg:grid-cols-3">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "inventory",
+        badge: "Inventory Intelligence",
+        title: "Inventory Alert Command Centre",
+        subtitle: "Resolve low-stock, slow-moving, and overstock signals with direct procurement actions.",
+        outcomes: ["Act quickly on stock shortages", "Reduce capital trapped in overstock", "Link alerts to PO creation workflows"],
+        formulas: ["Estimated Cost = Required Qty x Last/Expected Unit Cost", "Excess Value = Excess Qty x Current Cost", "Idle Risk = Days since movement threshold"],
+        intelligenceItems: [
+          { label: "Low stock alerts", detail: `${data.lowStockAlerts.length} active replenishment triggers` },
+          { label: "Slow movers", detail: `${data.slowMoving30.length} items idle beyond threshold` },
+          { label: "Overstock", detail: `${data.overstock.length} inventory positions flagged` },
+        ],
+      }}
+    >
+      <section className="grid gap-8">
+        {message ? <p className="rounded-xl bg-violet-50 px-4 py-3 text-sm font-bold text-violet-800">{message}</p> : null}
+        <div className="grid gap-8 lg:grid-cols-3">
         <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-5">
           <h2 className="text-lg font-black text-amber-900">Low Stock Alerts</h2>
           <p className="mt-1 text-xs font-semibold text-amber-800">Create a purchase order with supplier, last cost and suggested quantity prefilled.</p>
@@ -71,7 +90,7 @@ export default function InventoryAlertsClient() {
                       type="button"
                       disabled={busyId === alertId}
                       onClick={() => void createPo(alertId)}
-                      className="rounded-lg bg-violet-700 px-3 py-1.5 text-xs font-black text-white disabled:opacity-50"
+                      className="rounded-lg bg-violet-700 px-3 py-1.5 text-xs font-black text-[#F8FAFC] disabled:opacity-50"
                     >
                       {busyId === alertId ? "Creating…" : "Create Purchase Order"}
                     </button>
@@ -108,7 +127,8 @@ export default function InventoryAlertsClient() {
             ))}
           </div>
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </VyronPremiumPageShell>
   );
 }

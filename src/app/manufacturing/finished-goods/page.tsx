@@ -1,14 +1,12 @@
-import VyronCostPageShell from "@/components/vyron-cost/shared/VyronCostPageShell";
+import VyronCostAiShell from "@/components/VyronCostAiShell";
 import FinishedGoodsClient from "@/components/vyron-cost/inventory/FinishedGoodsClient";
 
 export default function Page() {
   return (
-    <VyronCostPageShell
-      title="Finished Goods"
-      subtitle="Manufactured products ready for sale, stock cover, value, cost and movement intelligence."
-      backHref="/manufacturing"
+    <VyronCostAiShell hidePageHeader title="Finished Goods"
+      subtitle="MANUFACTURED PRODUCTS READY FOR SALE, STOCK COVER, VALUE, COST AND MOVEMENT INTELLIGENCE."
     >
       <FinishedGoodsClient />
-    </VyronCostPageShell>
+    </VyronCostAiShell>
   );
 }

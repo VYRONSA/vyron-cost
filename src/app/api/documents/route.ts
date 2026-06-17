@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { type DocumentListView, listDocumentsForView } from "@/lib/vyron-document-intelligence-data";
+import { requireDocumentTenantId, documentTenantAccessErrorResponse } from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -36,12 +37,10 @@ export async function GET(request: NextRequest) {
   };
 
   try {
-    const documents = await listDocumentsForView(supabase, view, undefined, filters);
-    return NextResponse.json({ ok: true, view, documents });
+    const tenantId = await requireDocumentTenantId();
+    const documents = await listDocumentsForView(supabase, view, tenantId, filters);
+    return NextResponse.json({ ok: true, view, tenantId, documents });
   } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Could not load documents." },
-      { status: 500 }
-    );
+    return documentTenantAccessErrorResponse(error, "Could not load documents.");
   }
 }

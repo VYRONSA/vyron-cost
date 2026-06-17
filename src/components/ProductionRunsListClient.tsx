@@ -3,6 +3,14 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { formatMoney } from "@/lib/vyron-cost-data";
+import { useManufacturingPermissions } from "@/hooks/useModulePermissions";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
+import {
+  VyronPremiumEmptyState,
+  VyronPremiumFormulaCard,
+  VyronPremiumHeroBanner,
+  VyronPremiumSectionHeading,
+} from "@/components/vyron-premium/VyronPremiumSprint";
 
 type Run = {
   id: string;
@@ -27,6 +35,7 @@ function formatDate(value: string | null) {
 }
 
 export default function ProductionRunsListClient({ title = "Manufacturing History" }: { title?: string }) {
+  const { canCreate, canReverse } = useManufacturingPermissions();
   const [runs, setRuns] = useState<Run[]>([]);
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
@@ -35,10 +44,11 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
-    const params = new URLSearchParams();
+    const { query: workspaceQuery } = poApiWorkspaceContext();
+    const params = new URLSearchParams(workspaceQuery ? workspaceQuery.slice(1) : "");
     if (status) params.set("status", status);
     if (search.trim()) params.set("search", search.trim());
-    fetch(`/api/production/runs?${params}`)
+    fetch(`/api/production/runs?${params}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) setRuns(d.runs);
@@ -54,10 +64,11 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
     if (!reason?.trim()) return;
     setBusyId(run.id);
     setMessage("");
+    const { body: workspaceBody } = poApiWorkspaceContext();
     const res = await fetch(`/api/production/runs/${run.id}/reverse`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason, actor: "supervisor", supervisor: true }),
+      body: JSON.stringify({ ...workspaceBody, reason, actor: "supervisor", supervisor: true }),
     });
     const data = await res.json();
     setBusyId(null);
@@ -70,7 +81,44 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
   }
 
   return (
-    <section className="grid gap-6">
+    <section className="grid gap-8">
+      <VyronPremiumHeroBanner
+        visualVariant="products"
+        badge="Premium Manufacturing Workspace"
+        title={title}
+        subtitle="Production batch history — yield, cost, status and supervisor reversal controls."
+        outcomes={[
+          "Filter batches by status and search",
+          "Review yield and production cost per run",
+          "Open batch detail for variances",
+          "Supervisor reversal when permitted",
+        ]}
+        quotes={[
+          { label: "Yield", quote: "What gets measured gets protected." },
+          { label: "Cost", quote: "Small cost leaks become large financial problems." },
+        ]}
+      >
+        {canCreate ? (
+          <Link href="/manufacturing/runs/new" className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-900 shadow-lg">
+            New Production Run
+          </Link>
+        ) : null}
+      </VyronPremiumHeroBanner>
+
+      <VyronPremiumFormulaCard
+        variant="light"
+        eyebrow="Production"
+        title="Yield and cost formulas"
+        formulas={[
+          { label: "Yield %", formula: "Actual output ÷ Planned output × 100" },
+          { label: "Batch Cost", formula: "Ingredient + packaging + labour + overhead" },
+          { label: "Unit Cost", formula: "Batch cost ÷ actual yield quantity" },
+        ]}
+        className="max-w-2xl"
+      />
+
+      <VyronPremiumSectionHeading eyebrow="Filter" title="Production batches" subtitle="Search and filter manufacturing history." />
+
       <div className="flex flex-wrap items-center gap-3">
         <select
           value={status}
@@ -90,20 +138,19 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
           onChange={(e) => setSearch(e.target.value)}
           className="min-w-[200px] flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm"
         />
-        <label className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-black text-amber-900">
-          <input type="checkbox" checked={supervisorMode} onChange={(e) => setSupervisorMode(e.target.checked)} />
-          Supervisor mode
-        </label>
-        <Link href="/manufacturing/runs/new" className="rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white">
-          New Production Run
-        </Link>
+        {canReverse ? (
+          <label className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-black text-amber-900">
+            <input type="checkbox" checked={supervisorMode} onChange={(e) => setSupervisorMode(e.target.checked)} />
+            Supervisor mode
+          </label>
+        ) : null}
       </div>
 
       {message ? <p className="rounded-xl bg-violet-50 px-4 py-3 text-sm font-bold text-violet-800">{message}</p> : null}
 
       <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="min-w-[1100px]">
-          <div className="grid grid-cols-9 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-emerald-300">
+          <div className="grid grid-cols-9 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
             <div>Batch #</div>
             <div>Date</div>
             <div className="col-span-2">Product</div>
@@ -114,13 +161,22 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
             <div>Actions</div>
           </div>
           {runs.length === 0 ? (
-            <div className="px-5 py-10 text-center text-sm font-semibold text-slate-500">No manufacturing batches yet.</div>
+            <div className="p-6">
+              <VyronPremiumEmptyState
+                steps={[
+                  "Create a recipe / BOM with accurate yield and costs.",
+                  "Start a new production run from Manufacturing.",
+                  "Complete the batch and post stock movements.",
+                  "Return here to review history and variances.",
+                ]}
+              />
+            </div>
           ) : (
             runs.map((run) => {
               const qty = run.status === "Completed" || run.status === "Reversed" ? run.actual_qty : run.planned_qty;
               const date = run.completed_at || run.created_at;
-              const canReverse = supervisorMode && run.status === "Completed";
-              const canAdjust = supervisorMode && ["Planned", "Approved", "In Production", "Completed"].includes(run.status);
+              const canReverseRun = canReverse && supervisorMode && run.status === "Completed";
+              const canAdjust = canReverse && supervisorMode && ["Planned", "Approved", "In Production", "Completed"].includes(run.status);
               return (
                 <div
                   key={run.id}
@@ -142,7 +198,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
                         run.status === "Reversed"
                           ? "bg-red-100 text-red-800"
                           : run.status === "Completed"
-                            ? "bg-emerald-100 text-emerald-800"
+                            ? "bg-[#A3E635]/12 text-[#4D7C0F]"
                             : "bg-slate-100 text-slate-700"
                       }`}
                     >
@@ -165,7 +221,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
                         Adjust
                       </Link>
                     ) : null}
-                    {canReverse ? (
+                    {canReverseRun ? (
                       <button
                         type="button"
                         disabled={busyId === run.id}

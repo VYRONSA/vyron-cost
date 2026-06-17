@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { demoStockMovements, formatCurrency, formatNumber, type StockMovement } from "@/lib/vyron-cost/stock-engine";
+import { formatCurrency, formatNumber, type StockMovement } from "@/lib/vyron-cost/stock-engine";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
+import {
+  VyronPremiumEmptyState,
+  VyronPremiumFormulaCard,
+  VyronPremiumHeroBanner,
+  VyronPremiumSectionHeading,
+} from "@/components/vyron-premium/VyronPremiumSprint";
 
 const movementLabels: Record<string, string> = {
   GRN_RECEIPT: "GRN Receipt",
@@ -16,14 +23,15 @@ const movementLabels: Record<string, string> = {
 };
 
 export default function StockLedgerClient() {
-  const [movements, setMovements] = useState<StockMovement[]>(demoStockMovements);
+  const [movements, setMovements] = useState<StockMovement[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(() => {
-    fetch("/api/inventory/stock-movements")
+    const { query } = poApiWorkspaceContext();
+    fetch(`/api/inventory/stock-movements${query}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
-        if (d.ok && Array.isArray(d.movements) && d.movements.length > 0) {
+        if (d.ok && Array.isArray(d.movements)) {
           setMovements(d.movements as StockMovement[]);
         }
       })
@@ -39,7 +47,36 @@ export default function StockLedgerClient() {
   const totalValue = movements.reduce((sum, item) => sum + item.total_value, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="grid gap-8">
+      <VyronPremiumHeroBanner
+        visualVariant="inventory"
+        badge="Premium Inventory Workspace"
+        title="Stock Movement Ledger"
+        subtitle="Single source of truth for GRNs, manufacturing, customer invoices, stock counts and adjustments."
+        outcomes={[
+          "Review every stock movement in one ledger",
+          "Export CSV for audit and analysis",
+          "Trace references back to source documents",
+          "Validate quantity in, out and value impact",
+        ]}
+        quotes={[
+          { label: "Audit", quote: "What gets measured gets protected." },
+          { label: "Traceability", quote: "Great businesses are built on disciplined margins." },
+        ]}
+      />
+
+      <VyronPremiumFormulaCard
+        variant="light"
+        eyebrow="Ledger"
+        title="Movement formulas"
+        formulas={[
+          { label: "Movement Value", formula: "Quantity × unit cost at posting" },
+          { label: "Net Movement", formula: "Quantity in − quantity out" },
+          { label: "Inventory Value", formula: "On-hand qty × weighted average cost" },
+        ]}
+        className="max-w-2xl"
+      />
+
       <div className="grid gap-4 md:grid-cols-4">
         <MetricCard title="Movement Records" value={loading ? "…" : formatNumber(movements.length)} />
         <MetricCard title="Quantity In" value={loading ? "…" : formatNumber(totalIn)} />
@@ -49,15 +86,27 @@ export default function StockLedgerClient() {
 
       <div className="rounded-[32px] border border-white/70 bg-white/85 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.10)] backdrop-blur-xl">
         <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-center">
-          <div>
-            <h2 className="text-xl font-black text-slate-950">Complete Stock Movement Ledger</h2>
-            <p className="text-sm font-medium text-slate-600">Single source of truth for GRNs, manufacturing, sales invoices and adjustments.</p>
-          </div>
-          <div className="flex gap-2">
+          <VyronPremiumSectionHeading
+            eyebrow="Movement register"
+            title="Complete stock movement ledger"
+            subtitle="GRNs, manufacturing, sales invoices and adjustments in one auditable view."
+          />
+          <div className="flex flex-wrap gap-2 md:justify-end">
             <button onClick={() => window.print()} className="rounded-full border border-purple-200 bg-white px-4 py-2 text-sm font-bold text-purple-800">Print</button>
             <button onClick={() => exportCsv(movements)} className="rounded-full bg-purple-700 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-purple-700/20">Export CSV</button>
           </div>
         </div>
+
+        {!loading && movements.length === 0 ? (
+          <VyronPremiumEmptyState
+            steps={[
+              "Post a GRN to record goods received into stock.",
+              "Complete a manufacturing run to consume and output inventory.",
+              "Invoice customers or post stock count variances.",
+              "Return here to audit the full movement trail.",
+            ]}
+          />
+        ) : null}
 
         <div className="overflow-x-auto rounded-3xl border border-slate-100">
           <table className="min-w-[1100px] w-full text-left text-sm">
@@ -81,7 +130,7 @@ export default function StockLedgerClient() {
                   <td className="px-4 py-3"><span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-black text-purple-800">{movementLabels[movement.movement_type] ?? movement.movement_type}</span></td>
                   <td className="px-4 py-3 font-bold text-slate-950">{movement.item_name}</td>
                   <td className="px-4 py-3"><Link className="font-bold text-purple-700 hover:underline" href={`/inventory-intelligence/traceability?ref=${movement.reference_number}`}>{movement.reference_number}</Link></td>
-                  <td className="px-4 py-3 text-right font-semibold text-emerald-700">{movement.quantity_in ? formatNumber(movement.quantity_in) : "—"}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-[#65A30D]">{movement.quantity_in ? formatNumber(movement.quantity_in) : "—"}</td>
                   <td className="px-4 py-3 text-right font-semibold text-rose-700">{movement.quantity_out ? formatNumber(movement.quantity_out) : "—"}</td>
                   <td className="px-4 py-3 text-right font-semibold">{formatCurrency(movement.unit_cost)}</td>
                   <td className="px-4 py-3 text-right font-black">{formatCurrency(movement.total_value)}</td>

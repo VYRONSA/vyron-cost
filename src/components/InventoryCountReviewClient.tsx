@@ -4,6 +4,9 @@ import Link from "next/link";
 import { Download, Printer, Save, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatMoney } from "@/lib/vyron-cost-data";
+import { useInventoryPermissions } from "@/hooks/useModulePermissions";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
 
 type LineRow = Record<string, unknown>;
 
@@ -23,6 +26,7 @@ function stockUnit(line: LineRow) {
 }
 
 export default function InventoryCountReviewClient({ countId }: { countId: string }) {
+  const { canCreateCount, canApproveCount, canPostAdjustment } = useInventoryPermissions();
   const [count, setCount] = useState<Record<string, unknown> | null>(null);
   const [lines, setLines] = useState<LineRow[]>([]);
   const [search, setSearch] = useState("");
@@ -31,7 +35,8 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
 
   const load = useCallback(async () => {
     setMessage("");
-    const res = await fetch(`/api/inventory/counts/${countId}`);
+    const { query } = poApiWorkspaceContext();
+    const res = await fetch(`/api/inventory/counts/${countId}${query}`, { cache: "no-store" });
     const data = await res.json();
     if (data.ok) {
       setCount(data.count);
@@ -46,6 +51,10 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
   }, [load]);
 
   async function action(name: string, extra?: Record<string, unknown>) {
+    if ((name === "approve" && !canApproveCount) || (name === "post" && !canPostAdjustment) || ((name === "start" || name === "submit") && !canCreateCount)) {
+      setMessage("You do not have permission for this stock count action.");
+      return;
+    }
     const labels: Record<string, string> = {
       start: "start this stock count",
       submit: "submit this stock count for approval",
@@ -53,10 +62,11 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
       post: "post these variances to the stock ledger",
     };
     if (name !== "start" && !window.confirm(`Are you sure you want to ${labels[name] || name}?`)) return;
+    const { body: workspaceBody } = poApiWorkspaceContext();
     const res = await fetch(`/api/inventory/counts/${countId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: name, ...extra }),
+      body: JSON.stringify({ ...workspaceBody, action: name, ...extra }),
     });
     const data = await res.json();
     setMessage(data.ok ? `${name} completed.` : data.error || "Failed");
@@ -68,16 +78,21 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
   }
 
   async function saveLines() {
+    if (!canCreateCount) {
+      setMessage("You do not have permission to save stock counts.");
+      return;
+    }
     setSaving(true);
     setMessage("");
     try {
       for (const line of lines) {
         const countedQty = num(line.draft_counted_qty);
         if (countedQty === num(line.counted_qty)) continue;
+        const { body: workspaceBody } = poApiWorkspaceContext();
         const res = await fetch(`/api/inventory/counts/${countId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "updateLine", lineId: String(line.id), countedQty }),
+          body: JSON.stringify({ ...workspaceBody, action: "updateLine", lineId: String(line.id), countedQty }),
         });
         const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data.error || "Could not save a count line.");
@@ -137,15 +152,30 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
   const editable = status === "Draft" || status === "In Progress";
 
   return (
-    <section className="grid gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "inventory",
+        badge: "Count Intelligence",
+        title: "Inventory Count Review Centre",
+        subtitle: "Validate count variances, approvals, and ledger posting controls in a premium review workspace.",
+        outcomes: ["Improve variance accuracy before posting", "Enforce approval controls by status", "Export and print count evidence quickly"],
+        formulas: ["Variance Qty = Counted Qty - System Qty", "Variance % = Variance Qty / System Qty", "Variance Value = |Variance Qty x Unit Cost|"],
+        intelligenceItems: [
+          { label: "Count status", detail: status },
+          { label: "Editable lines", detail: `${filtered.length} filtered lines in current review` },
+          { label: "Variance value", detail: formatMoney(totals.varianceValue) },
+        ],
+      }}
+    >
+      <section className="grid gap-6">
+        <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
         <div>
           <Link href="/inventory/counts" className="text-sm font-black text-violet-700">← Back to Stock Counts</Link>
           <h1 className="mt-2 text-3xl font-black text-slate-950">{String(count.count_number || countId)}</h1>
           <p className="text-sm font-semibold text-slate-500">{String(count.count_type)} · {status} · variance {formatMoney(Number(count.variance_value_total || totals.varianceValue || 0))}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {editable ? <button type="button" disabled={saving} onClick={() => void saveLines()} className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-white disabled:opacity-60"><Save size={14} />{saving ? "Saving…" : "Save Count Lines"}</button> : null}
+          {editable && canCreateCount ? <button type="button" disabled={saving} onClick={() => void saveLines()} className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"><Save size={14} />{saving ? "Saving…" : "Save Count Lines"}</button> : null}
           <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-4 py-2 text-xs font-black text-violet-800"><Printer size={14} />Print</button>
           <button type="button" onClick={exportCsv} className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-4 py-2 text-xs font-black text-violet-800"><Download size={14} />Export CSV</button>
         </div>
@@ -161,10 +191,10 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
       </div>
 
       <div className="flex flex-wrap gap-2 print:hidden">
-        {editable ? <button type="button" onClick={() => void action("start")} className="rounded-xl bg-slate-200 px-3 py-2 text-xs font-black">Start Count</button> : null}
-        {editable ? <button type="button" onClick={() => void action("submit")} className="rounded-xl bg-amber-500 px-3 py-2 text-xs font-black text-white">Submit</button> : null}
-        {status === "Submitted" ? <button type="button" onClick={() => void action("approve", { approvedBy: "supervisor" })} className="rounded-xl bg-violet-700 px-3 py-2 text-xs font-black text-white">Approve Variances</button> : null}
-        {status === "Approved" ? <button type="button" onClick={() => void action("post", { actor: "supervisor" })} className="rounded-xl bg-fuchsia-600 px-3 py-2 text-xs font-black text-white">Post to Ledger</button> : null}
+        {editable && canCreateCount ? <button type="button" onClick={() => void action("start")} className="rounded-xl bg-slate-200 px-3 py-2 text-xs font-black">Start Count</button> : null}
+        {editable && canCreateCount ? <button type="button" onClick={() => void action("submit")} className="rounded-xl bg-amber-500 px-3 py-2 text-xs font-black text-white">Submit</button> : null}
+        {status === "Submitted" && canApproveCount ? <button type="button" onClick={() => void action("approve", { approvedBy: "supervisor" })} className="rounded-xl bg-violet-700 px-3 py-2 text-xs font-black text-white">Approve Variances</button> : null}
+        {status === "Approved" && canPostAdjustment ? <button type="button" onClick={() => void action("post", { actor: "supervisor" })} className="rounded-xl bg-fuchsia-600 px-3 py-2 text-xs font-black text-white">Post to Ledger</button> : null}
       </div>
 
       <div className="rounded-[2rem] border border-violet-100 bg-white p-4 print:hidden">
@@ -175,7 +205,7 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+        <div className="overflow-x-auto rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         <table className="min-w-[980px] w-full text-left text-sm">
           <thead className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100">
             <tr><th className="px-4 py-3">Item</th><th className="px-4 py-3">System</th><th className="px-4 py-3">Counted</th><th className="px-4 py-3">Variance</th><th className="px-4 py-3">%</th><th className="px-4 py-3">Value</th><th className="px-4 py-3">Class</th><th className="px-4 py-3">Unit</th></tr>
@@ -204,7 +234,8 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
             })}
           </tbody>
         </table>
-      </div>
-    </section>
+        </div>
+      </section>
+    </VyronPremiumPageShell>
   );
 }

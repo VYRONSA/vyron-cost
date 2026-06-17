@@ -8,7 +8,7 @@ export default async function NewGoodsReceiptPage({
 }) {
   const params = await searchParams;
   return (
-    <VyronCostAiShell title="New GRN" subtitle="Full, partial, damaged or rejected receipts">
+    <VyronCostAiShell hidePageHeader title="New GRN" subtitle="Full, partial, damaged or rejected receipts">
       <GoodsReceiptFormClient initialPoId={params.po} />
     </VyronCostAiShell>
   );

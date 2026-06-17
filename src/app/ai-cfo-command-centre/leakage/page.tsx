@@ -7,7 +7,7 @@ export default async function AiProfitLeakagePage() {
   const { leakage } = await getAiFinancialIntelligence();
 
   return (
-    <VyronCostShell title="Profit Leakage Intelligence" subtitle="MONTHLY · ANNUAL · RECOVERED · POTENTIAL · MISSED">
+    <VyronCostShell hidePageHeader title="Profit Leakage Intelligence" subtitle="MONTHLY · ANNUAL · RECOVERED · POTENTIAL · MISSED">
       <Link href="/ai-cfo-command-centre" className="mb-6 inline-block text-sm font-black text-violet-700">
         ← AI CFO Command Centre
       </Link>

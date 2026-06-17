@@ -3,6 +3,8 @@
 import { RefreshCcw, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { VyronPremiumEmptyState } from "@/components/vyron-premium/VyronPremiumSprint";
 import {
   RecoveryOpportunity,
   money,
@@ -66,23 +68,38 @@ export default function RecoveryOpportunitiesClient({
   }));
 
   return (
-    <section className="grid gap-6">
-      <div className="grid gap-5 md:grid-cols-4">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "recovery",
+        badge: "Recovery Intelligence",
+        title: "Recovery Intelligence Centre",
+        subtitle: "Track verified and estimated opportunities from identification through recovered value.",
+        outcomes: ["Prioritize highest confidence recovery", "Track lifecycle from new to recovered", "Keep every value finance-explainable"],
+        formulas: ["Annual Value = Monthly Value x 12", "Confidence Weight = Opportunity Value x Confidence %", "Recovered Gap = Potential Recovery - Actual Recovery"],
+        intelligenceItems: [
+          { label: "Pipeline visibility", detail: `${opportunities.length} total opportunities across funnel statuses` },
+          { label: "Verified discipline", detail: "Estimated opportunities are clearly separated from verified value" },
+          { label: "Execution flow", detail: "Actioned and recovered states keep accountability visible" },
+        ],
+      }}
+    >
+      <section className="grid gap-6">
+        <div className="grid gap-5 md:grid-cols-4">
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Estimated Recovery</div>
           <div className="mt-3 text-4xl font-black text-amber-600">{money(summary.estimatedRecovery)}</div>
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Verified Recovery</div>
-          <div className="mt-3 text-4xl font-black text-emerald-700">{money(summary.verifiedRecovery)}</div>
+          <div className="mt-3 text-4xl font-black text-[#65A30D]">{money(summary.verifiedRecovery)}</div>
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Potential Recovery</div>
           <div className="mt-3 text-4xl font-black text-violet-700">{money(summary.potentialRecovery)}</div>
         </div>
-        <div className="rounded-[2rem] bg-emerald-50 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-          <div className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Recovered To Date</div>
-          <div className="mt-3 text-4xl font-black text-emerald-600">{money(summary.recoveredToDate)}</div>
+        <div className="rounded-[2rem] bg-[#A3E635]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+          <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Recovered To Date</div>
+          <div className="mt-3 text-4xl font-black text-[#84CC16]">{money(summary.recoveredToDate)}</div>
         </div>
       </div>
 
@@ -123,7 +140,7 @@ export default function RecoveryOpportunitiesClient({
               <button
                 type="button"
                 onClick={() => setVerifiedOnly(true)}
-                className={`rounded-xl px-3 py-2 ${verifiedOnly ? "bg-emerald-600 text-white" : "text-slate-600"}`}
+                className={`rounded-xl px-3 py-2 ${verifiedOnly ? "bg-[#24183F] border border-[#A3E635]/30 text-white" : "text-slate-600"}`}
               >
                 Verified Only
               </button>
@@ -143,7 +160,7 @@ export default function RecoveryOpportunitiesClient({
               type="button"
               onClick={saveGenerated}
               disabled={saving}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
             >
               <RefreshCcw size={18} />
               {saving ? "Saving..." : "Save Calculated"}
@@ -152,7 +169,7 @@ export default function RecoveryOpportunitiesClient({
         </div>
 
         {message && (
-          <div className="mt-4 rounded-2xl bg-emerald-50 px-5 py-4 text-sm font-bold text-emerald-700">
+          <div className="mt-4 rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-4 text-sm font-bold text-[#65A30D]">
             {message}
           </div>
         )}
@@ -164,7 +181,7 @@ export default function RecoveryOpportunitiesClient({
         )}
       </div>
 
-      <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
         <div className="grid grid-cols-10 bg-slate-50 px-5 py-4 text-xs font-black uppercase tracking-[0.14em] text-slate-500">
           <div>Opportunity</div>
           <div>Type</div>
@@ -183,7 +200,7 @@ export default function RecoveryOpportunitiesClient({
             <div>
               <div className="font-black text-slate-900">{item.title}</div>
               <div className="mt-1 flex flex-wrap gap-1">
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${item.is_estimated ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${item.is_estimated ? "bg-amber-100 text-amber-700" : "bg-[#A3E635]/12 text-[#65A30D]"}`}>
                   {item.is_estimated ? "Estimated" : "Verified"}
                 </span>
                 {(item.missing_inputs?.length || 0) > 0 ? (
@@ -195,12 +212,12 @@ export default function RecoveryOpportunitiesClient({
             </div>
             <div className="font-bold text-slate-500">{item.opportunity_type}</div>
             <div className="font-black text-violet-700">{money(item.monthly_value)}</div>
-            <div className="font-black text-emerald-600">{money(item.annual_value)}</div>
+            <div className="font-black text-[#84CC16]">{money(item.annual_value)}</div>
             <div className="font-black text-slate-900">{Number(item.confidence || 0).toFixed(0)}%</div>
-            <div className={`font-black ${item.confidence_level === "High Confidence" ? "text-emerald-700" : item.confidence_level === "Medium Confidence" ? "text-amber-700" : "text-red-700"}`}>
+            <div className={`font-black ${item.confidence_level === "High Confidence" ? "text-[#65A30D]" : item.confidence_level === "Medium Confidence" ? "text-amber-700" : "text-red-700"}`}>
               {item.confidence_level || "Medium Confidence"}
             </div>
-            <div className={`text-xs font-black ${item.is_estimated ? "text-amber-700" : "text-emerald-700"}`}>
+            <div className={`text-xs font-black ${item.is_estimated ? "text-amber-700" : "text-[#65A30D]"}`}>
               {item.is_estimated ? "Estimated Recovery" : "Verified Recovery"}
             </div>
             <div className="font-black text-violet-700">{item.status || "Identified"}</div>
@@ -213,12 +230,20 @@ export default function RecoveryOpportunitiesClient({
           </div>
         ))}
 
-        {filtered.length === 0 && (
-          <div className="px-5 py-8 text-sm font-bold text-slate-500">
-            No recovery opportunities found.
-          </div>
-        )}
-      </div>
-    </section>
+          {filtered.length === 0 && (
+            <div className="p-5">
+              <VyronPremiumEmptyState
+                title="Recovery Queue Empty"
+                steps={[
+                  "Clear search and status filters",
+                  "Generate or import recovery opportunities",
+                  "Save calculated opportunities to populate the register",
+                ]}
+              />
+            </div>
+          )}
+        </div>
+      </section>
+    </VyronPremiumPageShell>
   );
 }

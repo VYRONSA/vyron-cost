@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { lookupTenantById } from "@/lib/vyron-document-tenant";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
 import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
@@ -16,7 +16,7 @@ function maskHost(url: string | undefined) {
 }
 
 export async function GET() {
-  const requestedTenantId = VYRON_DEFAULT_TENANT_ID;
+  const requestedTenantId = await resolveApiCompanyId();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -24,8 +24,14 @@ export async function GET() {
     supabaseHost: maskHost(url),
     serviceRoleConfigured: isSupabaseServiceRoleConfigured(),
     requestedTenantId,
-    requestedTenantIdLength: requestedTenantId.length,
+    requestedTenantIdLength: requestedTenantId?.length ?? 0,
   };
+
+  if (!requestedTenantId) {
+    debug.failurePoint = "no_active_workspace";
+    console.log("[tenant-debug]", JSON.stringify(debug, null, 2));
+    return NextResponse.json({ ok: true, debug });
+  }
 
   if (anonKey && url) {
     const anon = createClient(url, anonKey, { auth: { persistSession: false } });

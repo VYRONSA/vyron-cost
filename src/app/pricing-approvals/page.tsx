@@ -6,8 +6,7 @@ export default async function PricingApprovalsPage() {
   const products = await getProductIntelligence();
 
   return (
-    <VyronCostShell
-      title="Pricing Approvals"
+    <VyronCostShell hidePageHeader title="Pricing Approvals"
       subtitle="SUGGESTED PRICE · GP PROTECTION · MONTHLY IMPACT"
     >
       <PricingApprovalCentreClient products={products} />

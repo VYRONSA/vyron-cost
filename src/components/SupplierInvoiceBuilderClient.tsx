@@ -1,18 +1,292 @@
 "use client";
+
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CostIngredient, CostSupplier } from "@/lib/vyron-cost-core-data";
 import { PurchaseOrder } from "@/lib/vyron-cost-purchase-order-data";
-import { calcLineExcl, calcLineTotal, calcLineVat, calcVariance, checkDuplicateInvoice, formatMoney } from "@/lib/vyron-cost-invoice-data";
+import {
+  calcLineExcl,
+  calcLineTotal,
+  calcLineVat,
+  calcVariance,
+  checkDuplicateInvoice,
+  formatMoney,
+} from "@/lib/vyron-cost-invoice-data";
 import { supabase } from "@/lib/supabase";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
-type Line={temp_id:string;ingredient_id:string;item_name:string;category:string;quantity:number;unit:string;expected_unit_cost:number;unit_cost:number;vat_rate:number};
-function nl():Line{return{temp_id:crypto.randomUUID(),ingredient_id:"",item_name:"",category:"Ingredient",quantity:0,unit:"kg",expected_unit_cost:0,unit_cost:0,vat_rate:15}}
-export default function SupplierInvoiceBuilderClient({suppliers,ingredients,purchaseOrders}:{suppliers:CostSupplier[];ingredients:CostIngredient[];purchaseOrders:PurchaseOrder[]}) {
- const [invoiceNumber,setInvoiceNumber]=useState(`INV-${Date.now().toString().slice(-6)}`); const [supplierId,setSupplierId]=useState(""); const [matchedPoId,setMatchedPoId]=useState(""); const [status,setStatus]=useState("Captured"); const [lines,setLines]=useState<Line[]>([nl()]); const [msg,setMsg]=useState(""); const [err,setErr]=useState(""); const [dup,setDup]=useState(false);
- const supplier=suppliers.find(s=>s.id===supplierId); const totals=useMemo(()=>{const subtotal=lines.reduce((s,l)=>s+calcLineExcl(l.quantity,l.unit_cost),0); const vat=lines.reduce((s,l)=>s+calcLineVat(l.quantity,l.unit_cost,l.vat_rate),0); return{subtotal,vat,total:subtotal+vat}},[lines]);
- function selectIng(id:string,tid:string){const ing=ingredients.find(i=>i.id===id);setLines(c=>c.map(l=>l.temp_id===tid?{...l,ingredient_id:id,item_name:ing?.ingredient_name||"",category:ing?.category||"Ingredient",unit:ing?.purchase_unit||"kg",expected_unit_cost:Number(ing?.purchase_cost||0)}:l))}
- function update(tid:string,field:keyof Line,val:any){setLines(c=>c.map(l=>l.temp_id===tid?{...l,[field]:val}:l))}
- async function save(){setMsg("");setErr(""); if(!supplierId)return setErr("Supplier required."); if(!supabase)return setErr("Supabase not configured."); const duplicate=await checkDuplicateInvoice(supplierId,invoiceNumber); setDup(duplicate); const {data,error}=await supabase.from("vyron_cost_supplier_invoices").insert({invoice_number:invoiceNumber,supplier_id:supplierId,supplier_name:supplier?.supplier_name,status,matched_po_id:matchedPoId||null,duplicate_risk:duplicate,subtotal:totals.subtotal,vat:totals.vat,total:totals.total}).select("id").single(); if(error)return setErr(error.message); const rows=lines.filter(l=>l.item_name&&l.quantity>0).map((l,i)=>({invoice_id:data.id,ingredient_id:l.ingredient_id||null,item_name:l.item_name,category:l.category,quantity:l.quantity,unit:l.unit,unit_cost:l.unit_cost,expected_unit_cost:l.expected_unit_cost,variance_percent:calcVariance(l.expected_unit_cost,l.unit_cost),vat_rate:l.vat_rate,sort_order:i})); const le=await supabase.from("vyron_cost_supplier_invoice_lines").insert(rows); if(le.error)return setErr(le.error.message); setMsg(`Invoice saved. ${duplicate?"Duplicate risk detected.":"No duplicate found."}`)}
- return <section className="grid gap-6"><div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]"><div className="grid gap-4 md:grid-cols-4"><input value={invoiceNumber} onChange={e=>setInvoiceNumber(e.target.value)} className="rounded-2xl border px-4 py-3 font-bold"/><select value={supplierId} onChange={e=>setSupplierId(e.target.value)} className="rounded-2xl border px-4 py-3 font-bold"><option value="">Supplier...</option>{suppliers.map(s=><option key={s.id} value={s.id}>{s.supplier_name}</option>)}</select><select value={matchedPoId} onChange={e=>setMatchedPoId(e.target.value)} className="rounded-2xl border px-4 py-3 font-bold"><option value="">Match PO...</option>{purchaseOrders.map(po=><option key={po.id} value={po.id}>{po.po_number}</option>)}</select><select value={status} onChange={e=>setStatus(e.target.value)} className="rounded-2xl border px-4 py-3 font-bold"><option>Captured</option><option>Review</option><option>Approved</option><option>Rejected</option></select></div></div><div className="grid gap-5 md:grid-cols-3"><div className="rounded-[2rem] bg-white p-5"><b>Subtotal</b><div className="text-3xl font-black">{formatMoney(totals.subtotal)}</div></div><div className="rounded-[2rem] bg-white p-5"><b>VAT</b><div className="text-3xl font-black">{formatMoney(totals.vat)}</div></div><div className="rounded-[2rem] bg-emerald-50 p-5"><b>Total</b><div className="text-3xl font-black text-emerald-600">{formatMoney(totals.total)}</div></div></div>{dup&&<div className="rounded-2xl bg-red-50 p-4 font-bold text-red-700">Duplicate risk detected.</div>}{msg&&<div className="rounded-2xl bg-emerald-50 p-4 font-bold text-emerald-700">{msg}</div>}{err&&<div className="rounded-2xl bg-red-50 p-4 font-bold text-red-700">{err}</div>}<div className="rounded-[2rem] bg-white p-5"><button onClick={()=>setLines(c=>[...c,nl()])} className="mb-4 rounded-xl bg-violet-50 px-4 py-2 font-black text-violet-700 flex gap-2"><Plus size={16}/>Add Line</button><div className="overflow-x-auto"><div className="min-w-[1000px]">{lines.map(l=>{const variance=calcVariance(l.expected_unit_cost,l.unit_cost);return <div key={l.temp_id} className="grid grid-cols-[260px_90px_90px_100px_100px_100px_120px_55px] gap-2 border-t py-2"><select value={l.ingredient_id} onChange={e=>selectIng(e.target.value,l.temp_id)} className="rounded-xl border px-2 py-2"><option value="">Ingredient...</option>{ingredients.map(i=><option key={i.id} value={i.id}>{i.ingredient_name}</option>)}</select><input type="number" value={l.quantity} onChange={e=>update(l.temp_id,"quantity",Number(e.target.value))} className="rounded-xl border px-2"/><input value={l.unit} onChange={e=>update(l.temp_id,"unit",e.target.value)} className="rounded-xl border px-2"/><input type="number" value={l.expected_unit_cost} onChange={e=>update(l.temp_id,"expected_unit_cost",Number(e.target.value))} className="rounded-xl border px-2"/><input type="number" value={l.unit_cost} onChange={e=>update(l.temp_id,"unit_cost",Number(e.target.value))} className="rounded-xl border px-2"/><div className={variance>5?"font-black text-red-600 text-right":"font-black text-emerald-600 text-right"}>{variance.toFixed(1)}%</div><div className="font-black text-right">{formatMoney(calcLineTotal(l.quantity,l.unit_cost,l.vat_rate))}</div><button onClick={()=>setLines(c=>c.filter(x=>x.temp_id!==l.temp_id))} className="rounded-xl bg-red-50 text-red-700 flex items-center justify-center"><Trash2 size={16}/></button></div>})}</div></div><button onClick={save} className="mt-5 rounded-2xl bg-violet-700 px-6 py-4 font-black text-white flex gap-2"><Save size={18}/>Save Invoice</button></div></section>
+type Line = {
+  temp_id: string;
+  ingredient_id: string;
+  item_name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  expected_unit_cost: number;
+  unit_cost: number;
+  vat_rate: number;
+};
+
+function nl(): Line {
+  return {
+    temp_id: crypto.randomUUID(),
+    ingredient_id: "",
+    item_name: "",
+    category: "Ingredient",
+    quantity: 0,
+    unit: "kg",
+    expected_unit_cost: 0,
+    unit_cost: 0,
+    vat_rate: 15,
+  };
+}
+
+export default function SupplierInvoiceBuilderClient({
+  suppliers,
+  ingredients,
+  purchaseOrders,
+}: {
+  suppliers: CostSupplier[];
+  ingredients: CostIngredient[];
+  purchaseOrders: PurchaseOrder[];
+}) {
+  const [invoiceNumber, setInvoiceNumber] = useState(`INV-${Date.now().toString().slice(-6)}`);
+  const [supplierId, setSupplierId] = useState("");
+  const [matchedPoId, setMatchedPoId] = useState("");
+  const [status, setStatus] = useState("Captured");
+  const [lines, setLines] = useState<Line[]>([nl()]);
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+  const [dup, setDup] = useState(false);
+
+  const supplier = suppliers.find((s) => s.id === supplierId);
+  const totals = useMemo(() => {
+    const subtotal = lines.reduce((s, l) => s + calcLineExcl(l.quantity, l.unit_cost), 0);
+    const vat = lines.reduce((s, l) => s + calcLineVat(l.quantity, l.unit_cost, l.vat_rate), 0);
+    return { subtotal, vat, total: subtotal + vat };
+  }, [lines]);
+
+  function selectIng(id: string, tid: string) {
+    const ing = ingredients.find((i) => i.id === id);
+    setLines((c) =>
+      c.map((l) =>
+        l.temp_id === tid
+          ? {
+              ...l,
+              ingredient_id: id,
+              item_name: ing?.ingredient_name || "",
+              category: ing?.category || "Ingredient",
+              unit: ing?.purchase_unit || "kg",
+              expected_unit_cost: Number(ing?.purchase_cost || 0),
+            }
+          : l
+      )
+    );
+  }
+
+  function update(tid: string, field: keyof Line, val: string | number) {
+    setLines((c) => c.map((l) => (l.temp_id === tid ? { ...l, [field]: val } : l)));
+  }
+
+  async function save() {
+    setMsg("");
+    setErr("");
+    if (!supplierId) return setErr("Supplier required.");
+    if (!supabase) return setErr("Supabase not configured.");
+    const duplicate = await checkDuplicateInvoice(supplierId, invoiceNumber);
+    setDup(duplicate);
+    const { data, error } = await supabase
+      .from("vyron_cost_supplier_invoices")
+      .insert({
+        invoice_number: invoiceNumber,
+        supplier_id: supplierId,
+        supplier_name: supplier?.supplier_name,
+        status,
+        matched_po_id: matchedPoId || null,
+        duplicate_risk: duplicate,
+        subtotal: totals.subtotal,
+        vat: totals.vat,
+        total: totals.total,
+      })
+      .select("id")
+      .single();
+    if (error) return setErr(error.message);
+    const rows = lines
+      .filter((l) => l.item_name && l.quantity > 0)
+      .map((l, i) => ({
+        invoice_id: data.id,
+        ingredient_id: l.ingredient_id || null,
+        item_name: l.item_name,
+        category: l.category,
+        quantity: l.quantity,
+        unit: l.unit,
+        unit_cost: l.unit_cost,
+        expected_unit_cost: l.expected_unit_cost,
+        variance_percent: calcVariance(l.expected_unit_cost, l.unit_cost),
+        vat_rate: l.vat_rate,
+        sort_order: i,
+      }));
+    const le = await supabase.from("vyron_cost_supplier_invoice_lines").insert(rows);
+    if (le.error) return setErr(le.error.message);
+    setMsg(`Invoice saved. ${duplicate ? "Duplicate risk detected." : "No duplicate found."}`);
+  }
+
+  return (
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "suppliers",
+        badge: "Premium Supplier Invoice Workspace",
+        title: "Supplier Invoice Builder",
+        subtitle: "Capture supplier invoices with PO matching, variance checks and duplicate risk detection.",
+        formulas: [
+          { label: "Line total", formula: "Qty × Unit cost + VAT" },
+          { label: "Variance %", formula: "(Actual − Expected) ÷ Expected × 100" },
+        ],
+        intelligenceItems: [
+          { label: "PO match", detail: "Link invoices to purchase orders before approval." },
+          { label: "Duplicate risk", detail: "Same supplier + invoice number triggers review." },
+        ],
+      }}
+    >
+      <section className="grid gap-6">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+          <div className="grid gap-4 md:grid-cols-4">
+            <input
+              value={invoiceNumber}
+              onChange={(e) => setInvoiceNumber(e.target.value)}
+              className="rounded-2xl border px-4 py-3 font-bold"
+            />
+            <select
+              value={supplierId}
+              onChange={(e) => setSupplierId(e.target.value)}
+              className="rounded-2xl border px-4 py-3 font-bold"
+            >
+              <option value="">Supplier...</option>
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.supplier_name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={matchedPoId}
+              onChange={(e) => setMatchedPoId(e.target.value)}
+              className="rounded-2xl border px-4 py-3 font-bold"
+            >
+              <option value="">Match PO...</option>
+              {purchaseOrders.map((po) => (
+                <option key={po.id} value={po.id}>
+                  {po.po_number}
+                </option>
+              ))}
+            </select>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-2xl border px-4 py-3 font-bold">
+              <option>Captured</option>
+              <option>Review</option>
+              <option>Approved</option>
+              <option>Rejected</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-3">
+          <div className="rounded-[2rem] bg-white p-5">
+            <b>Subtotal</b>
+            <div className="text-3xl font-black">{formatMoney(totals.subtotal)}</div>
+          </div>
+          <div className="rounded-[2rem] bg-white p-5">
+            <b>VAT</b>
+            <div className="text-3xl font-black">{formatMoney(totals.vat)}</div>
+          </div>
+          <div className="rounded-[2rem] bg-[#A3E635]/10 p-5">
+            <b>Total</b>
+            <div className="text-3xl font-black text-[#84CC16]">{formatMoney(totals.total)}</div>
+          </div>
+        </div>
+
+        {dup ? <div className="rounded-2xl bg-red-50 p-4 font-bold text-red-700">Duplicate risk detected.</div> : null}
+        {msg ? <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-4 font-bold text-[#65A30D]">{msg}</div> : null}
+        {err ? <div className="rounded-2xl bg-red-50 p-4 font-bold text-red-700">{err}</div> : null}
+
+        <div className="rounded-[2rem] bg-white p-5">
+          <button
+            type="button"
+            onClick={() => setLines((c) => [...c, nl()])}
+            className="mb-4 flex gap-2 rounded-xl bg-violet-50 px-4 py-2 font-black text-violet-700"
+          >
+            <Plus size={16} />
+            Add Line
+          </button>
+          <div className="overflow-x-auto">
+            <div className="min-w-[1000px]">
+              {lines.map((l) => {
+                const variance = calcVariance(l.expected_unit_cost, l.unit_cost);
+                return (
+                  <div
+                    key={l.temp_id}
+                    className="grid grid-cols-[260px_90px_90px_100px_100px_100px_120px_55px] gap-2 border-t py-2"
+                  >
+                    <select
+                      value={l.ingredient_id}
+                      onChange={(e) => selectIng(e.target.value, l.temp_id)}
+                      className="rounded-xl border px-2 py-2"
+                    >
+                      <option value="">Ingredient...</option>
+                      {ingredients.map((i) => (
+                        <option key={i.id} value={i.id}>
+                          {i.ingredient_name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      value={l.quantity}
+                      onChange={(e) => update(l.temp_id, "quantity", Number(e.target.value))}
+                      className="rounded-xl border px-2"
+                    />
+                    <input
+                      value={l.unit}
+                      onChange={(e) => update(l.temp_id, "unit", e.target.value)}
+                      className="rounded-xl border px-2"
+                    />
+                    <input
+                      type="number"
+                      value={l.expected_unit_cost}
+                      onChange={(e) => update(l.temp_id, "expected_unit_cost", Number(e.target.value))}
+                      className="rounded-xl border px-2"
+                    />
+                    <input
+                      type="number"
+                      value={l.unit_cost}
+                      onChange={(e) => update(l.temp_id, "unit_cost", Number(e.target.value))}
+                      className="rounded-xl border px-2"
+                    />
+                    <div className={variance > 5 ? "text-right font-black text-red-600" : "text-right font-black text-[#84CC16]"}>
+                      {variance.toFixed(1)}%
+                    </div>
+                    <div className="text-right font-black">{formatMoney(calcLineTotal(l.quantity, l.unit_cost, l.vat_rate))}</div>
+                    <button
+                      type="button"
+                      onClick={() => setLines((c) => c.filter((x) => x.temp_id !== l.temp_id))}
+                      className="flex items-center justify-center rounded-xl bg-red-50 text-red-700"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={save}
+            className="mt-5 flex gap-2 rounded-2xl bg-violet-700 px-6 py-4 font-black text-white"
+          >
+            <Save size={18} />
+            Save Invoice
+          </button>
+        </div>
+      </section>
+    </VyronPremiumPageShell>
+  );
 }

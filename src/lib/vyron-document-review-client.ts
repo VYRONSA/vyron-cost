@@ -491,7 +491,12 @@ export async function bulkDeleteDocuments(documentIds: string[]) {
   if (!response.ok || !data.ok) {
     throw new Error(data.error || "Could not delete selected documents.");
   }
-  return data as { deletedCount: number; message: string };
+  return data as {
+    deletedCount: number;
+    softDeletedCount?: number;
+    permanentlyDeletedCount?: number;
+    message: string;
+  };
 }
 
 export async function bulkRestoreDocuments(documentIds: string[]) {

@@ -8,12 +8,15 @@ import {
   Home,
   Rocket,
   Settings,
+  Shield,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
+import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
 
+const M = VYRON_MASTER;
 const SIDEBAR_WIDTH = "292px";
 
 const sections = [
@@ -23,6 +26,7 @@ const sections = [
       { label: "Developer Centre", href: "/developer", icon: Rocket },
       { label: "Client Directory", href: "/developer/clients", icon: Users },
       { label: "Client Setup", href: "/developer/setup", icon: Settings },
+      { label: "Deployment Readiness", href: "/deployment-readiness", icon: Shield },
       { label: "Back to VYRON COST App", href: "/dashboard", icon: Home },
     ],
   },
@@ -35,13 +39,12 @@ function cn(...classes: Array<string | false | undefined | null>) {
 function Logo() {
   return (
     <Link href="/developer" className="flex items-center gap-3">
-      <div className="relative flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-500 via-purple-700 to-fuchsia-500 text-white shadow-[0_0_30px_rgba(168,85,247,0.45)]">
-        <div className="absolute inset-0 rounded-3xl bg-white/10" />
-        <Building2 className="relative" size={28} />
+      <div className={`relative flex h-14 w-14 items-center justify-center rounded-3xl ${M.iconEmphasis}`}>
+        <Building2 className="relative text-white" size={28} />
       </div>
       <div>
-        <div className="text-2xl font-black tracking-[0.32em] text-white">VYRON</div>
-        <div className="-mt-1 text-sm font-black tracking-[0.46em] text-fuchsia-300">DEV</div>
+        <div className="text-2xl font-black tracking-[0.32em] text-[#0F172A]">VYRON</div>
+        <div className="-mt-1 text-sm font-black tracking-[0.46em] text-[#7C3AED]">DEV</div>
       </div>
     </Link>
   );
@@ -62,16 +65,16 @@ export default function DeveloperShell({
 
   return (
     <div
-      className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fbf5ff_0%,#f8fbff_38%,#ffffff_100%)] text-slate-950 xl:grid xl:grid-cols-[292px_minmax(0,1fr)]"
+      className={`min-h-screen ${M.page} xl:grid xl:grid-cols-[292px_minmax(0,1fr)]`}
       style={{ ["--vyron-sidebar-width" as string]: SIDEBAR_WIDTH }}
     >
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[292px] shrink-0 bg-[#09031f] px-4 py-5 text-white shadow-[18px_0_50px_rgba(76,29,149,0.16)] xl:relative xl:z-30 xl:block xl:h-screen xl:overflow-y-auto">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(217,70,239,0.24),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(124,58,237,0.22),transparent_45%)]" />
-        <div className="relative flex h-full flex-col">
-          <div className="px-2 py-2">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-[292px] shrink-0 flex-col overflow-hidden border-r border-[#E2E8F0] bg-white px-4 py-5 shadow-[4px_0_24px_rgba(15,23,42,0.04)] xl:relative xl:z-30 xl:block">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.04),transparent_42%)]" />
+        <div className="relative flex h-full min-h-0 flex-col">
+          <div className="shrink-0 px-2 py-2">
             <Logo />
           </div>
-          <nav className="mt-7 flex-1 overflow-y-auto pr-2">
+          <nav className="mt-7 min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-8 pr-2">
             {sections.map((section) => (
               <div key={section.title} className="mb-6">
                 <button
@@ -79,13 +82,11 @@ export default function DeveloperShell({
                   onClick={() => setOpen((s) => ({ ...s, [section.title]: !s[section.title] }))}
                   className="mb-2 flex w-full items-center justify-between rounded-2xl px-3 py-2"
                 >
-                  <span className="text-[11px] font-black uppercase tracking-[0.18em] text-fuchsia-300/85">
-                    {section.title}
-                  </span>
+                  <span className={M.navSectionLabel}>{section.title}</span>
                   {open[section.title] ? (
-                    <ChevronDown size={17} className="text-white/50" />
+                    <ChevronDown size={17} className="text-[#94A3B8]" />
                   ) : (
-                    <ChevronRight size={17} className="text-white/50" />
+                    <ChevronRight size={17} className="text-[#94A3B8]" />
                   )}
                 </button>
 
@@ -101,13 +102,11 @@ export default function DeveloperShell({
                           key={item.href}
                           href={item.href}
                           className={cn(
-                            "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-black transition",
-                            active
-                              ? "bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/25"
-                              : "text-white/75 hover:bg-white/10 hover:text-white"
+                            "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition",
+                            active ? M.navActiveDashboard : M.navInactive
                           )}
                         >
-                          <item.icon size={19} />
+                          <item.icon size={19} className={active ? "text-white" : "text-[#7C3AED]"} />
                           <span className="min-w-0 flex-1 truncate">{item.label}</span>
                         </Link>
                       );
@@ -121,20 +120,13 @@ export default function DeveloperShell({
       </aside>
 
       <div className="flex min-h-screen min-w-0 flex-col">
-        <header className="sticky top-0 z-20 border-b border-violet-100/70 bg-white/90 px-4 py-4 backdrop-blur-xl md:px-8">
-          <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-violet-100 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm"
-            >
+        <header className={M.shellTopbar}>
+          <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-4 md:px-8">
+            <button type="button" onClick={() => router.back()} className={`${M.shellTopbarBtn} gap-2`}>
               <ArrowLeft size={18} />
               Back
             </button>
-            <Link
-              href="/dashboard"
-              className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-violet-500/20"
-            >
+            <Link href="/dashboard" className={`${M.primaryBtn} h-10 px-5 text-sm`}>
               <Home size={17} />
               <span className="hidden sm:inline">Back to VYRON COST App</span>
             </Link>

@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listPurchaseOrders, savePurchaseOrder } from "@/lib/vyron-procurement";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function companyContextFromBody(body: Record<string, unknown>) {
+  return {
+    workspaceId: typeof body.workspaceId === "string" ? body.workspaceId : null,
+    companyId: typeof body.companyId === "string" ? body.companyId : null,
+  };
+}
 
 export async function GET(request: NextRequest) {
   if (!isSupabaseServiceRoleConfigured()) {
@@ -15,10 +27,16 @@ export async function GET(request: NextRequest) {
   const status = request.nextUrl.searchParams.get("status") || undefined;
   const search = request.nextUrl.searchParams.get("search") || undefined;
   try {
-    const orders = await listPurchaseOrders(supabase, VYRON_DEFAULT_TENANT_ID, { status, search });
+    await requireWorkspacePermission("purchase_orders.view");
+    const companyId = await resolveApiCompanyIdWithContext(supabase, {
+      workspaceId: request.nextUrl.searchParams.get("workspaceId"),
+      companyId: request.nextUrl.searchParams.get("companyId"),
+    });
+    if (!companyId) return NextResponse.json({ ok: true, orders: [] });
+    const orders = await listPurchaseOrders(supabase, companyId, { status, search });
     return NextResponse.json({ ok: true, orders });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "List failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "List failed.");
   }
 }
 
@@ -31,7 +49,10 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => ({}));
   try {
-    const po = await savePurchaseOrder(supabase, VYRON_DEFAULT_TENANT_ID, {
+    await requireWorkspacePermission("purchase_orders.create");
+    const companyId = await resolveApiCompanyIdWithContext(supabase, companyContextFromBody(body));
+    if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
+    const po = await savePurchaseOrder(supabase, companyId, {
       id: body.id,
       po_number: String(body.po_number || `PO-${Date.now().toString().slice(-6)}`),
       supplier_id: body.supplier_id || null,
@@ -43,6 +64,6 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ ok: true, purchaseOrder: po });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Save failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Save failed.");
   }
 }

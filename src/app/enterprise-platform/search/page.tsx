@@ -3,7 +3,7 @@ import VyronCostShell from "@/components/VyronCostShell";
 
 export default function EnterpriseSearchPage() {
   return (
-    <VyronCostShell title="Enterprise Search" subtitle="INVOICES · PO · GRN · SUPPLIERS · INVENTORY · RECOVERY · FINANCIALS">
+    <VyronCostShell hidePageHeader title="Enterprise Search" subtitle="INVOICES · PO · GRN · SUPPLIERS · INVENTORY · RECOVERY · FINANCIALS">
       <PlatformNav />
       <EnterpriseSearchClient />
     </VyronCostShell>

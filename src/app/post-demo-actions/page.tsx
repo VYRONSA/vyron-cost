@@ -2,7 +2,7 @@ import VyronCostAiShell from "@/components/VyronCostAiShell";
 
 export default function Page() {
   return (
-    <VyronCostAiShell title="Post-Demo Actions" subtitle="What to do immediately after the client demo.">
+    <VyronCostAiShell hidePageHeader title="Post-Demo Actions" subtitle="What to do immediately after the client demo.">
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">

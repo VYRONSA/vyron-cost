@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
 import { listSupplierLineMappings, listSupplierNamesWithMappings } from "@/lib/vyron-supplier-line-learning";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import {
+  documentTenantAccessErrorResponse,
+  requireDocumentTenantId,
+} from "@/lib/vyron-document-tenant-access";
 
 export const runtime = "nodejs";
 
@@ -16,15 +19,13 @@ export async function GET(request: NextRequest) {
   const includeDisabled = request.nextUrl.searchParams.get("includeDisabled") === "1";
 
   try {
+    const companyId = await requireDocumentTenantId();
     const [suppliers, mappings] = await Promise.all([
-      listSupplierNamesWithMappings(supabase, VYRON_DEFAULT_TENANT_ID),
-      listSupplierLineMappings(supabase, VYRON_DEFAULT_TENANT_ID, { supplierName, includeDisabled }),
+      listSupplierNamesWithMappings(supabase, companyId),
+      listSupplierLineMappings(supabase, companyId, { supplierName, includeDisabled }),
     ]);
     return NextResponse.json({ ok: true, suppliers, mappings });
   } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Could not load supplier mappings." },
-      { status: 500 }
-    );
+    return documentTenantAccessErrorResponse(error, "Could not load supplier mappings.");
   }
 }

@@ -13,7 +13,7 @@ export default async function ProcurementRecommendationPage({
   if (!recommendation) notFound();
 
   return (
-    <VyronCostAiShell title="Recommendation detail" subtitle={recommendation.category}>
+    <VyronCostAiShell hidePageHeader title="Recommendation detail" subtitle={recommendation.category}>
       <ProcurementRecommendationDetailClient recommendation={recommendation} />
     </VyronCostAiShell>
   );

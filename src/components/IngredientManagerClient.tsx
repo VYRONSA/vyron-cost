@@ -3,9 +3,13 @@
 import { Plus, Save, Search, Trash2 } from "lucide-react";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { calculateMovementPercent, calculateTrueUnitCost, CostIngredient, CostSupplier, formatMoney } from "@/lib/vyron-cost-core-data";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useMemo, useState } from "react";
+import { calculateMovementPercent, calculateTrueUnitCost, CostIngredient, CostSupplier, demoIngredients, demoSuppliers, formatMoney } from "@/lib/vyron-cost-core-data";
+import { readActiveClient } from "@/lib/vyron-developer-client";
+import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
+import { useModulePermissions } from "@/hooks/useModulePermissions";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { VYRON_DOMAIN_INTELLIGENCE, VYRON_DOMAIN_QUOTES } from "@/components/vyron-premium/VyronPremiumTheme";
 
 const emptyForm = {
   ingredient_name: "",
@@ -20,8 +24,12 @@ const emptyForm = {
   current_alert: "",
 };
 
-export default function IngredientManagerClient({ initialIngredients, suppliers }: { initialIngredients: CostIngredient[]; suppliers: CostSupplier[] }) {
-  const [ingredients, setIngredients] = useState(initialIngredients);
+export default function IngredientManagerClient({ initialIngredients, suppliers: initialSuppliersProp }: { initialIngredients: CostIngredient[]; suppliers: CostSupplier[] }) {
+  const { canCreate, canEdit, canDelete } = useModulePermissions("ingredients");
+  const [ingredients, setIngredients] = useState<CostIngredient[]>([]);
+  const [suppliers, setSuppliers] = useState<CostSupplier[]>([]);
+  const [demoMode, setDemoMode] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -29,6 +37,45 @@ export default function IngredientManagerClient({ initialIngredients, suppliers 
   const [errorMessage, setErrorMessage] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<CostIngredient | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const client = readActiveClient();
+    const demo = isDemoWorkspace(client);
+    setDemoMode(demo);
+
+    async function loadData() {
+      if (!demo) {
+        try {
+          const [ingredientsRes, suppliersRes] = await Promise.all([
+            fetch("/api/ingredients"),
+            fetch("/api/suppliers"),
+          ]);
+          const ingredientsData = await ingredientsRes.json();
+          const suppliersData = await suppliersRes.json();
+          if (ingredientsData.ok && Array.isArray(ingredientsData.ingredients)) {
+            setIngredients(ingredientsData.ingredients as CostIngredient[]);
+          } else {
+            setIngredients([]);
+          }
+          if (suppliersData.ok && Array.isArray(suppliersData.suppliers)) {
+            setSuppliers(suppliersData.suppliers as CostSupplier[]);
+          } else {
+            setSuppliers([]);
+          }
+          return;
+        } catch {
+          setIngredients([]);
+          setSuppliers([]);
+          return;
+        }
+      }
+
+      setIngredients(initialIngredients.length ? initialIngredients : demoIngredients);
+      setSuppliers(initialSuppliersProp.length ? initialSuppliersProp : demoSuppliers);
+    }
+
+    loadData().finally(() => setLoading(false));
+  }, [initialIngredients, initialSuppliersProp]);
 
   const trueCost = calculateTrueUnitCost(Number(form.purchase_cost || 0), Number(form.yield_percent || 100));
   const movement = calculateMovementPercent(Number(form.previous_cost || 0), Number(form.purchase_cost || 0));
@@ -66,6 +113,11 @@ export default function IngredientManagerClient({ initialIngredients, suppliers 
     setMessage("");
     setErrorMessage("");
 
+    if (editingId ? !canEdit : !canCreate) {
+      setErrorMessage("You do not have permission to save ingredients.");
+      return;
+    }
+
     if (!form.ingredient_name.trim()) {
       setErrorMessage("Ingredient name is required.");
       return;
@@ -86,35 +138,65 @@ export default function IngredientManagerClient({ initialIngredients, suppliers 
       updated_at: new Date().toISOString(),
     };
 
-    if (!supabase) {
+    if (demoMode) {
       const local = { id: editingId || crypto.randomUUID(), ...payload } as CostIngredient;
-      setIngredients((current) => editingId ? current.map((i) => i.id === editingId ? local : i) : [...current, local]);
+      setIngredients((current) =>
+        editingId ? current.map((i) => (i.id === editingId ? local : i)) : [...current, local]
+      );
       setForm(emptyForm);
       setEditingId(null);
-      setMessage("Ingredient saved locally.");
+      setMessage("Ingredient saved in demo mode.");
       return;
     }
 
-    if (editingId && !editingId.startsWith("demo")) {
-      const { data, error } = await supabase.from("vyron_cost_ingredients").update(payload).eq("id", editingId).select("*").single();
-      if (error) return setErrorMessage(error.message);
-      setIngredients((current) => current.map((i) => i.id === editingId ? data as CostIngredient : i));
-    } else {
-      const { data, error } = await supabase.from("vyron_cost_ingredients").insert(payload).select("*").single();
-      if (error) return setErrorMessage(error.message);
-      setIngredients((current) => [...current, data as CostIngredient].sort((a, b) => a.ingredient_name.localeCompare(b.ingredient_name)));
+    try {
+      const response = await fetch(editingId ? `/api/ingredients/${editingId}` : "/api/ingredients", {
+        method: editingId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!data.ok) {
+        setErrorMessage(data.error || "Failed to save ingredient.");
+        return;
+      }
+      const saved = data.ingredient as CostIngredient;
+      setIngredients((current) =>
+        editingId
+          ? current.map((i) => (i.id === editingId ? saved : i))
+          : [...current, saved].sort((a, b) => a.ingredient_name.localeCompare(b.ingredient_name))
+      );
+      setForm(emptyForm);
+      setEditingId(null);
+      const cascade = data.cascade as { bomCount?: number; productCount?: number } | undefined;
+      if (cascade?.bomCount) {
+        setMessage(
+          `Ingredient saved. ${cascade.bomCount} BOM(s) and ${cascade.productCount || 0} product(s) recalculated.`
+        );
+      } else {
+        setMessage("Ingredient saved.");
+      }
+    } catch {
+      setErrorMessage("Failed to save ingredient.");
     }
-
-    setForm(emptyForm);
-    setEditingId(null);
-    setMessage("Ingredient saved.");
   }
 
   async function remove(id: string) {
+    if (!canDelete) {
+      setErrorMessage("You do not have permission to delete ingredients.");
+      return;
+    }
     setDeleting(true);
     try {
+      if (!demoMode) {
+        const response = await fetch(`/api/ingredients/${id}`, { method: "DELETE" });
+        const data = await response.json();
+        if (!data.ok) {
+          setErrorMessage(data.error || "Failed to delete ingredient.");
+          return;
+        }
+      }
       setIngredients((current) => current.filter((i) => i.id !== id));
-      if (supabase && !id.startsWith("demo")) await supabase.from("vyron_cost_ingredients").delete().eq("id", id);
       setMessage("Ingredient deleted.");
     } finally {
       setDeleting(false);
@@ -125,10 +207,34 @@ export default function IngredientManagerClient({ initialIngredients, suppliers 
   const inputClass = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-violet-400";
   const labelClass = "text-xs font-black uppercase tracking-[0.08em] text-slate-500";
 
+  const ingredientQuotes = VYRON_DOMAIN_QUOTES.ingredients;
+
   return (
     <>
-    <section className="grid gap-5 xl:grid-cols-[420px_1fr]">
-      <div className="rounded-[1.75rem] bg-white p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <VyronPremiumPageShell
+        config={{
+          visualVariant: "ingredients",
+          badge: "Premium Ingredient Workspace",
+          title: "Ingredient Costing",
+          subtitle: "Monitor supplier inflation, yield efficiency, true unit cost and recipe impact before small increases become major margin leakage.",
+          outcomes: ["True Cost", "Yield %", "Supplier Link", "BOM Impact", "Cost Movement"],
+          quotes: ingredientQuotes,
+          controlTitle: "Ingredient Control",
+          formulaEyebrow: "True Cost Formula",
+          formulaTitle: "Ingredient economics",
+          formulas: [
+            { label: "True Unit Cost", formula: "Purchase Cost ÷ (Yield % ÷ 100)" },
+            { label: "Movement %", formula: "(Current − Previous) ÷ Previous × 100" },
+            { label: "BOM Impact", formula: "Ingredient qty × true unit cost per batch" },
+          ],
+          intelligenceEyebrow: "Cost signals",
+          intelligenceTitle: "What to watch",
+          intelligenceItems: VYRON_DOMAIN_INTELLIGENCE.ingredients,
+        }}
+      >
+      <section className={`grid min-w-0 max-w-full grid-cols-1 gap-5 ${canCreate || canEdit ? "xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)]" : ""}`}>
+      {canCreate || canEdit ? (
+      <div className="min-w-0 rounded-[1.75rem] bg-white p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
             <Plus size={20} />
@@ -140,13 +246,13 @@ export default function IngredientManagerClient({ initialIngredients, suppliers 
         </div>
 
         <div className="mb-4 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-violet-50 p-4">
-            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">True Unit Cost</div>
-            <div className="mt-1 text-3xl font-black text-violet-700">{formatMoney(trueCost)}</div>
+          <div className="rounded-2xl border border-violet-400/20 bg-violet-600/10 p-4">
+            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">True Unit Cost</div>
+            <div className="mt-1 text-3xl font-black text-violet-300">{formatMoney(trueCost)}</div>
           </div>
-          <div className="rounded-2xl bg-emerald-50 p-4">
-            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Movement</div>
-            <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-red-600" : "text-emerald-700"}`}>{movement.toFixed(1)}%</div>
+          <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/8 p-4">
+            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Movement</div>
+            <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-orange-400" : "text-[#A3E635]"}`}>{movement.toFixed(1)}%</div>
           </div>
         </div>
 
@@ -233,17 +339,18 @@ export default function IngredientManagerClient({ initialIngredients, suppliers 
             </div>
           </details>
 
-          <button onClick={save} className="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-white">
+          <button onClick={save} className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[#F8FAFC]">
             <Save size={18} />
             Save Ingredient
           </button>
 
-          {message && <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#A3E635]/25 bg-[#A3E635]/10 px-4 py-3 text-sm font-bold text-[#A3E635]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div>}
         </div>
       </div>
+      ) : null}
 
-      <div className="rounded-[1.75rem] bg-white p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <div className="min-w-0 rounded-[1.75rem] bg-white p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-2xl font-black text-slate-950">Ingredients</h2>
@@ -251,7 +358,7 @@ export default function IngredientManagerClient({ initialIngredients, suppliers 
           </div>
           <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
             <Search size={18} className="text-violet-700" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="w-52 bg-transparent text-sm font-bold outline-none placeholder:text-slate-400" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="min-w-0 w-full bg-transparent text-sm font-bold outline-none placeholder:text-slate-400 md:w-52" />
           </div>
         </div>
 
@@ -260,6 +367,15 @@ export default function IngredientManagerClient({ initialIngredients, suppliers 
             <div className="grid grid-cols-[220px_130px_110px_110px_90px_110px] bg-slate-50 px-5 py-4 text-xs font-black uppercase tracking-[0.14em] text-slate-500">
               <div>Ingredient</div><div>Category</div><div>Cost</div><div>True</div><div>Move</div><div>Actions</div>
             </div>
+            {loading ? (
+              <div className="border-t border-slate-100 px-5 py-10 text-center text-sm font-semibold text-slate-500">
+                Loading ingredients…
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="border-t border-slate-100 px-5 py-10 text-center text-sm font-semibold text-slate-500">
+                No ingredients yet. Start by adding ingredients, linking suppliers, then build BOMs so VYRON can protect your product margins.
+              </div>
+            ) : null}
             {filtered.map((item) => {
               const move = calculateMovementPercent(Number(item.previous_cost || 0), Number(item.purchase_cost || 0));
               return (
@@ -268,10 +384,14 @@ export default function IngredientManagerClient({ initialIngredients, suppliers 
                   <div className="font-bold text-slate-500">{item.category}</div>
                   <div className="font-black text-slate-900">{formatMoney(item.purchase_cost)}</div>
                   <div className="font-black text-violet-700">{formatMoney(item.true_unit_cost)}</div>
-                  <div className={`font-black ${move > 5 ? "text-red-600" : "text-emerald-600"}`}>{move.toFixed(1)}%</div>
+                  <div className={`font-black ${move > 5 ? "text-orange-400" : "text-[#A3E635]"}`}>{move.toFixed(1)}%</div>
                   <div className="flex gap-2">
-                    <button onClick={() => edit(item)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Edit</button>
-                    <button onClick={() => setDeleteTarget(item)} className="rounded-xl bg-red-50 p-2 text-red-700"><Trash2 size={16} /></button>
+                    {canEdit ? (
+                      <button onClick={() => edit(item)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Edit</button>
+                    ) : null}
+                    {canDelete ? (
+                      <button onClick={() => setDeleteTarget(item)} className="rounded-xl bg-red-50 p-2 text-red-700"><Trash2 size={16} /></button>
+                    ) : null}
                   </div>
                 </div>
               );
@@ -280,6 +400,8 @@ export default function IngredientManagerClient({ initialIngredients, suppliers 
         </div>
       </div>
     </section>
+      </VyronPremiumPageShell>
+
     <ConfirmDeleteDialog
       open={!!deleteTarget}
       confirming={deleting}

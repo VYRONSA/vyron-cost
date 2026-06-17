@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  documentTenantAccessErrorResponse,
+  requireDocumentTenantId,
+  requireDocumentsForTenant,
+} from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -7,6 +12,11 @@ export const maxDuration = 300;
 export async function POST(request: NextRequest) {
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
+  }
+
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
   }
 
   const body = await request.json().catch(() => ({}));
@@ -19,14 +29,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "No documents selected." }, { status: 400 });
   }
 
+  try {
+    const tenantId = await requireDocumentTenantId();
+    await requireDocumentsForTenant(supabase, documentIds, tenantId);
+  } catch (error) {
+    return documentTenantAccessErrorResponse(error, "Bulk approval denied.");
+  }
+
   const origin = request.nextUrl.origin;
+  const cookie = request.headers.get("cookie");
   const results: Array<{ documentId: string; ok: boolean; error?: string }> = [];
 
   for (const documentId of documentIds) {
     try {
       const response = await fetch(`${origin}/api/documents/${documentId}/review/approve`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(cookie ? { cookie } : {}),
+        },
         body: JSON.stringify({ force, forceTotalsMismatch: force }),
       });
       const data = await response.json();

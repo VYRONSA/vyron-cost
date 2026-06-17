@@ -8,7 +8,7 @@ export default async function InventoryStockPage({
 }) {
   const params = await searchParams;
   return (
-    <VyronCostAiShell title="Stock Master" subtitle="Ingredients · packaging · finished goods">
+    <VyronCostAiShell hidePageHeader title="Stock Master" subtitle="Add inventory items · opening stock · raw materials · packaging · finished goods">
       <InventoryStockListClient initialEntityType={params.entityType || ""} initialStatus={params.status || ""} />
     </VyronCostAiShell>
   );

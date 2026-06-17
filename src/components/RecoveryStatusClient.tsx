@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import {
   addRecoveryEvidence,
   getRecoveryAuditTrail,
@@ -127,11 +128,26 @@ export default function RecoveryStatusClient({
   const difference = Number(potentialRecovery || 0) - Number(actualRecovery || 0);
 
   return (
-    <div className="mt-5 rounded-3xl bg-violet-50 p-5">
-      <div className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-violet-700">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "recovery",
+        badge: "Recovery Operations",
+        title: "Recovery Status Control Room",
+        subtitle: "Manage ownership, evidence, and auditability from opportunity to realized recovery.",
+        outcomes: ["Maintain accountable owners", "Capture audit-grade evidence", "Track recovered value against potential"],
+        formulas: ["Recovery Difference = Potential - Actual", "Status Flow = New > Review > Accepted > Recovered", "Evidence Count = Documents + Notes + Audit entries"],
+        intelligenceItems: [
+          { label: "Tracking model", detail: "Status transitions and owner assignments are recorded" },
+          { label: "Evidence discipline", detail: "Supporting files and notes are attached per opportunity" },
+          { label: "Audit trail", detail: "Field-level changes are time-stamped for governance" },
+        ],
+      }}
+    >
+      <div className="mt-5 rounded-3xl bg-violet-50 p-5">
+        <div className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-violet-700">
         Recovery Tracker
-      </div>
-      <div className="flex flex-wrap gap-2">
+        </div>
+        <div className="flex flex-wrap gap-2">
         {["New", "Under Review", "Accepted", "Actioned", "Recovered", "Rejected", "Ignored"].map((item) => (
           <button
             key={item}
@@ -212,7 +228,7 @@ export default function RecoveryStatusClient({
           <input className="rounded-lg border border-slate-200 px-2 py-1 text-sm md:col-span-2" placeholder="Document URL (optional)" value={newEvidenceUrl} onChange={(e) => setNewEvidenceUrl(e.target.value)} />
           <textarea className="rounded-lg border border-slate-200 px-2 py-1 text-sm md:col-span-2" rows={2} placeholder="Evidence details" value={newEvidenceContent} onChange={(e) => setNewEvidenceContent(e.target.value)} />
         </div>
-        <button type="button" onClick={addEvidenceItem} className="mt-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black text-white">
+        <button type="button" onClick={addEvidenceItem} className="mt-2 rounded-xl bg-[#24183F] border border-[#A3E635]/30 px-4 py-2 text-xs font-black text-white">
           Add Evidence
         </button>
 
@@ -243,16 +259,17 @@ export default function RecoveryStatusClient({
       </div>
 
       {message && (
-        <div className="mt-4 rounded-2xl bg-emerald-100 px-4 py-3 text-sm font-bold text-emerald-700">
+        <div className="mt-4 rounded-2xl border border-[#A3E635]/25 bg-[#A3E635]/12 px-4 py-3 text-sm font-bold text-[#65A30D]">
           {message}
         </div>
       )}
 
-      {errorMessage && (
-        <div className="mt-4 rounded-2xl bg-red-100 px-4 py-3 text-sm font-bold text-red-700">
-          {errorMessage}
-        </div>
-      )}
-    </div>
+        {errorMessage && (
+          <div className="mt-4 rounded-2xl bg-red-100 px-4 py-3 text-sm font-bold text-red-700">
+            {errorMessage}
+          </div>
+        )}
+      </div>
+    </VyronPremiumPageShell>
   );
 }

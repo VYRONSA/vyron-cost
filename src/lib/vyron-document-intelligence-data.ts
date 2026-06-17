@@ -11,8 +11,8 @@ export type DocumentListFilters = {
   status?: string;
 };
 
-const NEEDS_REVIEW_STATUSES = ["reviewed", "extracted", "extraction_failed", "upload_failed"] as const;
-const INBOX_STATUSES = ["uploaded", "uploading", "extracting", "matched"] as const;
+const NEEDS_REVIEW_STATUSES = ["needs_review", "reviewed", "extracted", "extraction_failed", "upload_failed"] as const;
+const INBOX_STATUSES = ["uploaded", "uploading", "extracting", "matched", "needs_review", "extraction_failed"] as const;
 const ARCHIVED_STATUSES = ["approved", "archived"] as const;
 
 export function mapUiStatus(dbStatus: string, confidence: number | null, hasDuplicateRisk = false) {
@@ -23,7 +23,8 @@ export function mapUiStatus(dbStatus: string, confidence: number | null, hasDupl
   if (dbStatus === "uploading") return "Uploading";
   if (dbStatus === "extracting") return "Extracting";
   if (dbStatus === "uploaded") return "Uploaded";
-  if (dbStatus === "extraction_failed" || dbStatus === "upload_failed") return "Error";
+  if (dbStatus === "needs_review") return "Needs Review";
+  if (dbStatus === "extraction_failed" || dbStatus === "upload_failed") return "Needs Review";
   if (dbStatus === "archived" || dbStatus === "approved") return "Archived";
   if (dbStatus === "reviewed") return "Needs Review";
   if (dbStatus === "extracted") return score >= 75 ? "Captured" : "Needs Review";
@@ -173,6 +174,44 @@ export type DocumentQueueStats = {
   failed: number;
 };
 
+export type DocumentIntelligenceStats = {
+  inboxCount: number;
+  needsReviewCount: number;
+  approvedTodayCount: number;
+  archiveCount: number;
+  deletedCount: number;
+  mappingCount: number;
+  priceHistoryCount: number;
+  costAuditCount: number;
+  openRiskCount: number;
+  approvedValue: number;
+  uploadedToday: number;
+  awaitingReview: number;
+  failedExtractions: number;
+  supplierPriceIncreases: number;
+  potentialRecoveryIdentified: number;
+};
+
+export function emptyDocumentIntelligenceStats(): DocumentIntelligenceStats {
+  return {
+    inboxCount: 0,
+    needsReviewCount: 0,
+    approvedTodayCount: 0,
+    archiveCount: 0,
+    deletedCount: 0,
+    mappingCount: 0,
+    priceHistoryCount: 0,
+    costAuditCount: 0,
+    openRiskCount: 0,
+    approvedValue: 0,
+    uploadedToday: 0,
+    awaitingReview: 0,
+    failedExtractions: 0,
+    supplierPriceIncreases: 0,
+    potentialRecoveryIdentified: 0,
+  };
+}
+
 export async function getDocumentQueueStats(supabase: SupabaseClient, tenantId = VYRON_DEFAULT_TENANT_ID): Promise<DocumentQueueStats> {
   const { data, error } = await supabase
     .from("vyron_documents")
@@ -220,7 +259,12 @@ export async function getDocumentQueueStats(supabase: SupabaseClient, tenantId =
   return stats;
 }
 
-export async function getDocumentIntelligenceStats(supabase: SupabaseClient, tenantId = VYRON_DEFAULT_TENANT_ID) {
+export async function getDocumentIntelligenceStats(
+  supabase: SupabaseClient,
+  tenantId?: string | null
+): Promise<DocumentIntelligenceStats> {
+  if (!tenantId) return emptyDocumentIntelligenceStats();
+
   const todayStart = startOfTodayIso();
   const [inboxRes, needsReviewRes, approvedTodayRes, archiveRes, deletedRes, learningRes, historyRes, auditRes, riskRes, uploadedTodayRes, failedRes, priceIncreaseRes] =
     await Promise.all([

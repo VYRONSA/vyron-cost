@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { HANDCRAFTED_COMPANY_ID } from "@/lib/vyron-handcrafted-intelligence";
 import type { PurchaseOrder } from "@/lib/vyron-cost-data";
 import { getPurchaseOrders, getSuppliers } from "@/lib/vyron-cost-data";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 
 export type PurchaseOrderLine = {
   id: string;
@@ -96,10 +97,13 @@ function synthesizeLines(po: PurchaseOrder): PurchaseOrderLine[] {
 }
 
 export async function getPurchaseOrderList(): Promise<PurchaseOrderDetail[]> {
+  const { useDemo } = await workspaceScope();
   const orders = await getPurchaseOrders(200);
   if (orders.length) {
     return orders.map((po) => {
-      const demo = demoPurchaseOrderDetails.find((d) => d.po_number === po.po_number || d.id === po.id);
+      const demo = useDemo
+        ? demoPurchaseOrderDetails.find((d) => d.po_number === po.po_number || d.id === po.id)
+        : undefined;
       return {
         ...po,
         order_date: demo?.order_date || new Date().toISOString().slice(0, 10),
@@ -108,21 +112,24 @@ export async function getPurchaseOrderList(): Promise<PurchaseOrderDetail[]> {
       };
     });
   }
-  return demoPurchaseOrderDetails;
+  return useDemo ? demoPurchaseOrderDetails : [];
 }
 
 export async function getPurchaseOrderById(id: string): Promise<PurchaseOrderDetail | null> {
   const list = await getPurchaseOrderList();
-  return list.find((po) => po.id === id || po.po_number === id) || null;
+  return list.find((po) => po.id === id) || null;
 }
 
 export async function getPurchaseOrderSuppliers() {
+  const { useDemo } = await workspaceScope();
   const suppliers = await getSuppliers(200);
   if (suppliers.length) return suppliers;
-  return [
-    { id: "s1", supplier_name: "Protein Direct", category: "Protein", contact_email: null, invoice_email: null, risk_status: "High", last_price_movement: 12.4 },
-    { id: "s2", supplier_name: "Cape Dry Goods", category: "Dry Goods", contact_email: null, invoice_email: null, risk_status: "Stable", last_price_movement: 2.1 },
-  ];
+  return useDemo
+    ? [
+        { id: "s1", supplier_name: "Protein Direct", category: "Protein", contact_email: null, invoice_email: null, risk_status: "High", last_price_movement: 12.4 },
+        { id: "s2", supplier_name: "Cape Dry Goods", category: "Dry Goods", contact_email: null, invoice_email: null, risk_status: "Stable", last_price_movement: 2.1 },
+      ]
+    : [];
 }
 
 export async function savePurchaseOrderHeader(
@@ -146,6 +153,7 @@ export async function savePurchaseOrderHeader(
       .from("vyron_cost_purchase_orders")
       .update(payload)
       .eq("id", po.id)
+      .eq("company_id", companyId)
       .select("*")
       .single();
     if (error) throw new Error(error.message);
@@ -157,9 +165,11 @@ export async function savePurchaseOrderHeader(
   return { ...data, lines: po.lines || [], order_date: po.order_date, notes: po.notes } as PurchaseOrderDetail;
 }
 
-export async function deletePurchaseOrder(id: string) {
+export async function deletePurchaseOrder(id: string, companyId?: string) {
   if (!supabase || id.startsWith("demo-")) return;
-  await supabase.from("vyron_cost_purchase_orders").delete().eq("id", id);
+  let query = supabase.from("vyron_cost_purchase_orders").delete().eq("id", id);
+  if (companyId) query = query.eq("company_id", companyId);
+  await query;
 }
 
 export function calculatePoLineTotal(quantity: number, unitCost: number) {

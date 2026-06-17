@@ -1,15 +1,5 @@
-import { AutonomousNav, CopilotClient } from "@/components/autonomous/AutonomousIntelligenceClients";
-import VyronCostShell from "@/components/VyronCostShell";
-import { getAutonomousBusinessIntelligence } from "@/lib/vyron-autonomous-business-intelligence";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
-export default async function CopilotPage() {
-  const { copilotPresets } = await getAutonomousBusinessIntelligence();
-  return (
-    <VyronCostShell title="Ask VYRON" subtitle="EXECUTIVE COPILOT · EXPLAINABLE · DATA-DRIVEN">
-      <AutonomousNav />
-      <CopilotClient presets={copilotPresets} />
-    </VyronCostShell>
-  );
+export default function LegacyAskVyronPage() {
+  redirect("/ask-vyron");
 }

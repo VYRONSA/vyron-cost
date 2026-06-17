@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { useManufacturingPermissions } from "@/hooks/useModulePermissions";
 import { formatMoney } from "@/lib/vyron-cost-data";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
 import { WASTE_REASONS } from "@/lib/vyron-manufacturing";
 
 type Run = {
@@ -46,6 +49,7 @@ type Run = {
 type Shortage = { ingredient: string; required: number; available: number; shortfall: number; unit: string };
 
 export default function ProductionRunDetailClient({ runId }: { runId: string }) {
+  const { canCreate, canStart, canComplete } = useManufacturingPermissions();
   const [run, setRun] = useState<Run | null>(null);
   const [shortages, setShortages] = useState<Shortage[]>([]);
   const [actualQty, setActualQty] = useState("");
@@ -59,15 +63,20 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
   const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(() => {
-    fetch(`/api/production/runs/${runId}`)
+    const { query } = poApiWorkspaceContext();
+    fetch(`/api/production/runs/${runId}${query}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) {
           setRun(d.run);
           setActualQty(String(d.run.actual_qty || d.run.planned_qty || ""));
+          setMessage("");
+        } else {
+          setRun(null);
+          setMessage(d.error || "Production run not found.");
         }
       });
-    fetch(`/api/production/runs/${runId}/validate-stock`)
+    fetch(`/api/production/runs/${runId}/validate-stock${query}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) setShortages(d.shortages || []);
@@ -81,10 +90,11 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
   async function action(path: string, body?: Record<string, unknown>) {
     setLoading(true);
     setMessage("");
+    const { body: workspaceBody } = poApiWorkspaceContext();
     const res = await fetch(path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body || {}),
+      body: JSON.stringify({ ...workspaceBody, ...(body || {}) }),
     });
     const data = await res.json();
     setLoading(false);
@@ -98,6 +108,10 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
   }
 
   async function complete(withOverride = false) {
+    if (!canComplete) {
+      setMessage("You do not have permission to complete production runs.");
+      return;
+    }
     const wastage =
       wasteLine && Number(wasteQty) > 0
         ? [
@@ -112,10 +126,12 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
         : [];
 
     setLoading(true);
+    const { body: workspaceBody } = poApiWorkspaceContext();
     const res = await fetch(`/api/production/runs/${runId}/complete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        ...workspaceBody,
         actual_qty: Number(actualQty),
         wastage,
         stock_override: withOverride,
@@ -133,14 +149,29 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
     refresh();
   }
 
-  if (!run) return <p className="text-sm font-semibold text-slate-500">Loading production run…</p>;
+  if (!run) return <p className="text-sm font-semibold text-slate-500">{message || "Loading production run…"}</p>;
 
   const ingredients = (run.lines || []).filter((l) => l.line_type === "Ingredient");
   const packaging = (run.lines || []).filter((l) => l.line_type === "Packaging");
 
   return (
-    <section className="grid gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "products",
+        badge: "Run Intelligence",
+        title: "Production Run Control Centre",
+        subtitle: "Review ingredient usage, costing, and completion controls for each manufacturing run.",
+        outcomes: ["Manage run completion safely", "Resolve shortages with governance", "Audit variance and wastage with evidence"],
+        formulas: ["Yield % = Actual Qty / Planned Qty", "Total Cost = Ingredient + Packaging + Labour + Overhead", "Cost Variance % = (Actual - Planned) / Planned"],
+        intelligenceItems: [
+          { label: "Run context", detail: run.run_number },
+          { label: "Stock validation", detail: `${shortages.length} current shortage lines` },
+          { label: "Action readiness", detail: `Status: ${run.status}` },
+        ],
+      }}
+    >
+      <section className="grid gap-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-950">{run.run_number}</h2>
           <p className="text-sm font-semibold text-slate-600">
@@ -201,7 +232,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-black uppercase text-emerald-800">Required Ingredients</h3>
+          <h3 className="text-sm font-black uppercase text-[#4D7C0F]">Required Ingredients</h3>
           <ul className="mt-3 space-y-2 text-sm font-semibold">
             {ingredients.map((l) => (
               <li key={l.id} className="flex justify-between border-b border-slate-50 py-2">
@@ -212,7 +243,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
               </li>
             ))}
           </ul>
-          <h3 className="mt-6 text-sm font-black uppercase text-emerald-800">Required Packaging</h3>
+          <h3 className="mt-6 text-sm font-black uppercase text-[#4D7C0F]">Required Packaging</h3>
           <ul className="mt-3 space-y-2 text-sm font-semibold">
             {packaging.map((l) => (
               <li key={l.id} className="flex justify-between border-b border-slate-50 py-2">
@@ -258,8 +289,8 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
       </div>
 
       {run.status === "Completed" ? (
-        <div className="rounded-[2rem] border border-emerald-100 bg-emerald-50/40 p-6">
-          <h3 className="text-sm font-black uppercase text-emerald-800">Variance Analysis</h3>
+        <div className="rounded-[2rem] border border-[#A3E635]/20 bg-[#A3E635]/10 p-6">
+          <h3 className="text-sm font-black uppercase text-[#4D7C0F]">Variance Analysis</h3>
           <div className="mt-4 grid gap-3 sm:grid-cols-3 text-sm font-bold">
             <div>Cost variance: {run.cost_variance_pct}%</div>
             <div>Usage variance: {run.usage_variance_pct}%</div>
@@ -310,36 +341,38 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
               <input value={overrideReason} onChange={(e) => setOverrideReason(e.target.value)} className="mt-1 w-full rounded-xl border px-4 py-2 text-sm" />
             </div>
           ) : null}
-          <div className="mt-4 flex flex-wrap gap-3">
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => void complete(shortages.length > 0)}
-              className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-black text-white disabled:opacity-60"
-            >
-              Complete & post to stock
-            </button>
-          </div>
+          {canComplete ? (
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => void complete(shortages.length > 0)}
+                className="rounded-2xl bg-[#24183F] border border-[#A3E635]/30 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+              >
+                Complete & post to stock
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
 
       <div className="flex flex-wrap gap-3">
-        {run.status === "Planned" ? (
+        {run.status === "Planned" && canComplete ? (
           <button type="button" disabled={loading} onClick={() => void action(`/api/production/runs/${runId}/approve`)} className="rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white">
             Approve
           </button>
         ) : null}
-        {run.status === "Approved" ? (
+        {run.status === "Approved" && canStart ? (
           <button type="button" disabled={loading} onClick={() => void action(`/api/production/runs/${runId}/start`)} className="rounded-2xl bg-amber-600 px-5 py-3 text-sm font-black text-white">
             Start production
           </button>
         ) : null}
-        {run.status === "Approved" || run.status === "In Production" ? (
-          <button type="button" disabled={loading} onClick={() => void complete(false)} className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-black text-white">
+        {(run.status === "Approved" || run.status === "In Production") && canComplete ? (
+          <button type="button" disabled={loading} onClick={() => void complete(false)} className="rounded-2xl bg-[#24183F] border border-[#A3E635]/30 px-5 py-3 text-sm font-black text-white">
             Quick complete
           </button>
         ) : null}
-        {run.status !== "Completed" && run.status !== "Cancelled" ? (
+        {run.status !== "Completed" && run.status !== "Cancelled" && canCreate ? (
           <button type="button" disabled={loading} onClick={() => void action(`/api/production/runs/${runId}/cancel`)} className="rounded-2xl border border-red-200 px-5 py-3 text-sm font-black text-red-700">
             Cancel
           </button>
@@ -349,7 +382,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
         </Link>
       </div>
 
-      {(run.audit || []).length > 0 ? (
+        {(run.audit || []).length > 0 ? (
         <div className="rounded-[2rem] bg-slate-50 p-6">
           <h3 className="text-sm font-black uppercase text-slate-600">Audit trail</h3>
           <ul className="mt-3 space-y-2 text-sm">
@@ -361,7 +394,8 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
             ))}
           </ul>
         </div>
-      ) : null}
-    </section>
+        ) : null}
+      </section>
+    </VyronPremiumPageShell>
   );
 }

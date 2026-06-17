@@ -1,14 +1,12 @@
-import VyronCostPageShell from "@/components/vyron-cost/shared/VyronCostPageShell";
+import VyronCostAiShell from "@/components/VyronCostAiShell";
 import ProductIntelligenceLiveClient from "@/components/ProductIntelligenceLiveClient";
 
 export default function ProductIntelligencePage() {
   return (
-    <VyronCostPageShell
-      title="Product Intelligence"
-      subtitle="Current cost, selling price, GP%, manufacturing cost, monthly sales and margin erosion across the manufacturing to sales chain."
-      backHref="/dashboard"
+    <VyronCostAiShell hidePageHeader title="Product Intelligence"
+      subtitle="CURRENT COST, SELLING PRICE, GP%, MANUFACTURING COST, MONTHLY SALES AND MARGIN EROSION ACROSS THE MANUFACTURING TO SALES CHAIN."
     >
       <ProductIntelligenceLiveClient />
-    </VyronCostPageShell>
+    </VyronCostAiShell>
   );
 }

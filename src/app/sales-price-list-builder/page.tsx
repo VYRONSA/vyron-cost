@@ -6,8 +6,7 @@ export default async function SalesPriceListBuilderPage() {
   const products = await getProductIntelligence();
 
   return (
-    <VyronCostShell
-      title="Sales Price List Builder"
+    <VyronCostShell hidePageHeader title="Sales Price List Builder"
       subtitle="CUSTOMER PRICE LISTS · SUGGESTED PRICES · GP PROTECTION"
     >
       <SalesPriceListBuilderClient products={products} />

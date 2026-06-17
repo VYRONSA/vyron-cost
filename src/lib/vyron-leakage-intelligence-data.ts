@@ -3,6 +3,7 @@ import {
   buildHandcraftedIntelligence,
   HANDCRAFTED_COMPANY_ID,
 } from "@/lib/vyron-handcrafted-intelligence";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 
 export type LeakageFinding = {
   id: string;
@@ -219,63 +220,84 @@ async function fetchTable<T>(
 }
 
 export async function getLeakageFindings() {
-  const seeded = await fetchTable<LeakageFinding>(
-    "vyron_cost_leakage_findings",
-    "estimated_monthly_loss",
-    HANDCRAFTED_COMPANY_ID
-  );
-  if (seeded?.length) return seeded;
+  const { useDemo, companyId } = await workspaceScope();
+  if (!useDemo && !companyId) return [];
 
-  const intel = await buildHandcraftedIntelligence();
-  if (intel?.leakageFindings.length) return intel.leakageFindings;
+  if (useDemo) {
+    const seeded = await fetchTable<LeakageFinding>(
+      "vyron_cost_leakage_findings",
+      "estimated_monthly_loss",
+      HANDCRAFTED_COMPANY_ID
+    );
+    if (seeded?.length) return seeded;
 
-  const data = await fetchTable<LeakageFinding>("vyron_cost_leakage_findings", "estimated_monthly_loss");
-  return data ?? demoLeakageFindings;
+    const intel = await buildHandcraftedIntelligence();
+    if (intel?.leakageFindings.length) return intel.leakageFindings;
+  }
+
+  const data = await fetchTable<LeakageFinding>("vyron_cost_leakage_findings", "estimated_monthly_loss", companyId ?? undefined);
+  if (data?.length) return data;
+  return useDemo ? demoLeakageFindings : [];
 }
 
 export async function getInvoiceRiskFindings() {
-  const seeded = await fetchTable<InvoiceRiskFinding>(
-    "vyron_cost_invoice_risk_findings",
-    "risk_score",
-    HANDCRAFTED_COMPANY_ID
-  );
-  if (seeded?.length) return seeded;
+  const { useDemo, companyId } = await workspaceScope();
+  if (!useDemo && !companyId) return [];
 
-  const handcrafted = await buildHandcraftedInvoiceFindings();
-  if (handcrafted.length) return handcrafted;
+  if (useDemo) {
+    const seeded = await fetchTable<InvoiceRiskFinding>(
+      "vyron_cost_invoice_risk_findings",
+      "risk_score",
+      HANDCRAFTED_COMPANY_ID
+    );
+    if (seeded?.length) return seeded;
 
-  const data = await fetchTable<InvoiceRiskFinding>("vyron_cost_invoice_risk_findings", "risk_score");
-  return data ?? demoInvoiceRiskFindings;
+    const handcrafted = await buildHandcraftedInvoiceFindings();
+    if (handcrafted.length) return handcrafted;
+  }
+
+  const data = await fetchTable<InvoiceRiskFinding>("vyron_cost_invoice_risk_findings", "risk_score", companyId ?? undefined);
+  return data?.length ? data : useDemo ? demoInvoiceRiskFindings : [];
 }
 
 export async function getProcurementRiskFindings() {
-  const seeded = await fetchTable<ProcurementRiskFinding>(
-    "vyron_cost_procurement_risk_findings",
-    "risk_score",
-    HANDCRAFTED_COMPANY_ID
-  );
-  if (seeded?.length) return seeded;
+  const { useDemo, companyId } = await workspaceScope();
+  if (!useDemo && !companyId) return [];
 
-  const handcrafted = await buildHandcraftedProcurementFindings();
-  if (handcrafted.length) return handcrafted;
+  if (useDemo) {
+    const seeded = await fetchTable<ProcurementRiskFinding>(
+      "vyron_cost_procurement_risk_findings",
+      "risk_score",
+      HANDCRAFTED_COMPANY_ID
+    );
+    if (seeded?.length) return seeded;
 
-  const data = await fetchTable<ProcurementRiskFinding>("vyron_cost_procurement_risk_findings", "risk_score");
-  return data ?? demoProcurementRiskFindings;
+    const handcrafted = await buildHandcraftedProcurementFindings();
+    if (handcrafted.length) return handcrafted;
+  }
+
+  const data = await fetchTable<ProcurementRiskFinding>("vyron_cost_procurement_risk_findings", "risk_score", companyId ?? undefined);
+  return data?.length ? data : useDemo ? demoProcurementRiskFindings : [];
 }
 
 export async function getBranchRiskFindings() {
-  const seeded = await fetchTable<BranchRiskFinding>(
-    "vyron_cost_branch_risk_findings",
-    "leakage_score",
-    HANDCRAFTED_COMPANY_ID
-  );
-  if (seeded?.length) return seeded;
+  const { useDemo, companyId } = await workspaceScope();
+  if (!useDemo && !companyId) return [];
 
-  const handcrafted = await buildHandcraftedBranchFindings();
-  if (handcrafted.length) return handcrafted;
+  if (useDemo) {
+    const seeded = await fetchTable<BranchRiskFinding>(
+      "vyron_cost_branch_risk_findings",
+      "leakage_score",
+      HANDCRAFTED_COMPANY_ID
+    );
+    if (seeded?.length) return seeded;
 
-  const data = await fetchTable<BranchRiskFinding>("vyron_cost_branch_risk_findings", "leakage_score");
-  return data ?? demoBranchRiskFindings;
+    const handcrafted = await buildHandcraftedBranchFindings();
+    if (handcrafted.length) return handcrafted;
+  }
+
+  const data = await fetchTable<BranchRiskFinding>("vyron_cost_branch_risk_findings", "leakage_score", companyId ?? undefined);
+  return data?.length ? data : useDemo ? demoBranchRiskFindings : [];
 }
 
 export async function getFinancialLeakageDashboard() {

@@ -4,7 +4,7 @@ import { VYRON_ACADEMY_GUIDES } from "@/lib/vyron-academy-content";
 
 export default function VyronAcademyPage() {
   return (
-    <VyronCostShell title="VYRON COST Academy" subtitle="SETUP · COSTING · PROCUREMENT · INVENTORY · MANUFACTURING · RECOVERY">
+    <VyronCostShell hidePageHeader title="VYRON COST Academy" subtitle="SETUP · COSTING · PROCUREMENT · INVENTORY · MANUFACTURING · RECOVERY">
       <VyronAcademyClient guides={VYRON_ACADEMY_GUIDES} />
     </VyronCostShell>
   );

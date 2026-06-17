@@ -3,6 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useModulePermissions } from "@/hooks/useModulePermissions";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
+import {
+  VyronPremiumFormulaCard,
+  VyronPremiumHeroBanner,
+  VyronPremiumSectionHeading,
+} from "@/components/vyron-premium/VyronPremiumSprint";
 
 type OpenPo = {
   id: string;
@@ -36,6 +43,7 @@ function poLabel(order: OpenPo) {
 
 export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: string }) {
   const router = useRouter();
+  const { canCreate } = useModulePermissions("goods_receipts");
   const [openPos, setOpenPos] = useState<OpenPo[]>([]);
   const [poSearch, setPoSearch] = useState("");
   const [poId, setPoId] = useState(initialPoId || "");
@@ -50,9 +58,10 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
   const [errorMessage, setErrorMessage] = useState("");
 
   const refreshOpenPos = useCallback(async (searchTerm = poSearch) => {
-    const params = new URLSearchParams();
+    const { query: workspaceQuery } = poApiWorkspaceContext();
+    const params = new URLSearchParams(workspaceQuery ? workspaceQuery.slice(1) : "");
     if (searchTerm.trim()) params.set("search", searchTerm.trim());
-    const res = await fetch(`/api/purchase-orders/open?${params.toString()}`);
+    const res = await fetch(`/api/purchase-orders/open?${params.toString()}`, { cache: "no-store" });
     const data = await res.json();
     if (data.ok) setOpenPos(data.purchaseOrders || data.orders || []);
   }, [poSearch]);
@@ -77,7 +86,8 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
 
     setLoadingPo(true);
     setMessage("Loading purchase order…");
-    const res = await fetch(`/api/purchase-orders/${id}`);
+    const { query } = poApiWorkspaceContext();
+    const res = await fetch(`/api/purchase-orders/${id}${query}`, { cache: "no-store" });
     const data = await res.json();
     setLoadingPo(false);
 
@@ -118,7 +128,7 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
     if (poLines.length === 0) {
       setMessage("");
       setErrorMessage(
-        `${String(loadedPo.po_number || "This PO")} loaded, but it has no PO lines. Run the demo stabilisation SQL patch or edit the PO and add lines before creating a GRN.`
+        `${String(loadedPo.po_number || "This PO")} loaded, but it has no PO lines. Edit the PO and add lines before creating a GRN.`
       );
       return;
     }
@@ -145,13 +155,17 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
   }
 
   async function handlePost() {
+    if (!canCreate) {
+      setErrorMessage("You do not have permission to post goods receipts.");
+      return;
+    }
     setErrorMessage("");
     if (!poId || !po) {
       setMessage("Choose a purchase order before posting the GRN.");
       return;
     }
     if (lines.length === 0) {
-      setErrorMessage("This PO has no lines to receive. Run the stabilisation SQL patch or add PO lines first.");
+      setErrorMessage("This PO has no lines to receive. Add PO lines first.");
       return;
     }
 
@@ -164,10 +178,18 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
     if (!window.confirm("Post this goods received note and update outstanding PO quantities?")) return;
     setSaving(true);
     try {
+      const { body: workspaceBody } = poApiWorkspaceContext();
       const res = await fetch("/api/goods-receipts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ purchase_order_id: poId, receipt_type: receiptType, received_by: receivedBy, notes, lines }),
+        body: JSON.stringify({
+          ...workspaceBody,
+          purchase_order_id: poId,
+          receipt_type: receiptType,
+          received_by: receivedBy,
+          notes,
+          lines,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "GRN failed");
@@ -191,7 +213,58 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
   }, [lines]);
 
   return (
-    <section className="grid gap-6">
+    <section className="grid gap-8">
+      <VyronPremiumHeroBanner
+        visualVariant="goods-receipt"
+        badge="Premium Receiving Workspace"
+        title="Goods Receiving Command Centre"
+        subtitle="Link each GRN to the correct purchase order, capture accepted, damaged and rejected quantities, and protect stock accuracy before invoices arrive."
+        quotes={[
+          {
+            label: "Receiving discipline",
+            quote: "What gets received incorrectly gets costed incorrectly.",
+          },
+          {
+            label: "Back-order control",
+            quote: "Partial deliveries are not problems when the outstanding balance is visible.",
+          },
+        ]}
+      >
+        <Link href="/goods-receipts" className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-black text-white backdrop-blur-sm">
+          GRN Dashboard
+        </Link>
+        <Link href="/purchase-orders/list" className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-900 shadow-lg">
+          Purchase Orders
+        </Link>
+      </VyronPremiumHeroBanner>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <VyronPremiumFormulaCard
+          variant="light"
+          eyebrow="Receipt formula"
+          title="How back orders are calculated"
+          formulas={[
+            { label: "Outstanding Qty", formula: "Ordered qty − already received − damaged − rejected" },
+            { label: "Receive Now", formula: "Quantity accepted into stock from this GRN" },
+            { label: "Back Order", formula: "Outstanding qty − receive now − damaged − rejected" },
+          ]}
+        />
+        <VyronPremiumFormulaCard
+          eyebrow="Stock impact"
+          title="How the GRN affects inventory"
+          formulas={[
+            { label: "Accepted Qty", formula: "Posted to stock ledger" },
+            { label: "Damaged / Rejected", formula: "Recorded but not accepted into stock" },
+            { label: "Audit Trail", formula: "GRN → PO → Stock ledger" },
+          ]}
+        />
+      </div>
+
+      <VyronPremiumSectionHeading
+        eyebrow="Step 1"
+        title="Choose the source purchase order"
+        subtitle="Search the PO, select it, then confirm the quantities that arrived."
+      />
       <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         <div className="grid gap-4 lg:grid-cols-[1.2fr_1.2fr_220px]">
           <label className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">
@@ -313,9 +386,11 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
       {message ? <p className="rounded-2xl bg-violet-50 px-4 py-3 text-sm font-black text-violet-700">{message}</p> : null}
       {errorMessage ? <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-black text-red-700">{errorMessage}</p> : null}
       <div className="flex flex-wrap gap-3">
-        <button type="button" disabled={saving || !poId || lines.length === 0} onClick={() => void handlePost()} className="rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black text-white disabled:opacity-60">
-          {saving ? "Posting…" : "Post Goods Receipt"}
-        </button>
+        {canCreate ? (
+          <button type="button" disabled={saving || !poId || lines.length === 0} onClick={() => void handlePost()} className="rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black text-[#F8FAFC] disabled:opacity-60">
+            {saving ? "Posting…" : "Post Goods Receipt"}
+          </button>
+        ) : null}
         <Link href="/goods-receipts" className="rounded-2xl border border-violet-100 bg-white px-6 py-4 text-sm font-black text-violet-700">GRN Dashboard</Link>
       </div>
     </section>

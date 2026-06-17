@@ -6,8 +6,7 @@ export default async function InvoiceExceptionCentrePage() {
   const invoices = await getInvoiceRiskFindings();
 
   return (
-    <VyronCostShell
-      title="Invoice Exception Centre"
+    <VyronCostShell hidePageHeader title="Invoice Exception Centre"
       subtitle="DUPLICATES · SPLITTING · UNUSUAL VALUES · PAYMENT HOLDS"
     >
       <InvoiceExceptionCentreClient invoices={invoices} />

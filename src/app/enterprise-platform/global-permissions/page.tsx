@@ -5,7 +5,7 @@ import { getEnterprisePlatformPayload } from "@/lib/vyron-enterprise-platform-ar
 export default async function GlobalPermissionsPage() {
   const { globalPermissions } = await getEnterprisePlatformPayload();
   return (
-    <VyronCostShell title="Global Permissions" subtitle="GROUP CEO · CFO · REGIONAL · DIRECTOR · BRANCH · AUDITOR">
+    <VyronCostShell hidePageHeader title="Global Permissions" subtitle="GROUP CEO · CFO · REGIONAL · DIRECTOR · BRANCH · AUDITOR">
       <PlatformNav />
       <GlobalPermissionsClient matrix={globalPermissions} />
     </VyronCostShell>

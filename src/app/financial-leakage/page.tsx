@@ -63,11 +63,11 @@ function FunConfetti() {
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       <span className="absolute left-10 top-9 text-2xl text-pink-500">✦</span>
       <span className="absolute left-28 top-4 text-xl text-amber-400">✧</span>
-      <span className="absolute left-60 top-16 text-lg text-emerald-400">◆</span>
+      <span className="absolute left-60 top-16 text-lg text-[#A3E635]">◆</span>
       <span className="absolute right-28 top-8 text-2xl text-blue-500">✦</span>
       <span className="absolute right-52 top-20 text-xl text-fuchsia-500">⌁</span>
       <span className="absolute bottom-8 left-32 text-lg text-orange-400">✺</span>
-      <span className="absolute bottom-16 right-24 text-lg text-emerald-400">✦</span>
+      <span className="absolute bottom-16 right-24 text-lg text-[#A3E635]">✦</span>
     </div>
   );
 }
@@ -128,8 +128,8 @@ export default async function FinancialLeakagePage() {
       title: "Price Optimisation",
       detail: "Increase prices on underperforming items",
       value: kpis.recoverableMonthly * 2.1,
-      tone: "text-emerald-600",
-      bg: "bg-emerald-50",
+      tone: "text-[#84CC16]",
+      bg: "bg-[#A3E635]/10",
     },
     {
       icon: Wallet,
@@ -142,8 +142,7 @@ export default async function FinancialLeakagePage() {
   ];
 
   return (
-    <VyronCostAiShell
-      title="Recovery Intelligence Centre"
+    <VyronCostAiShell hidePageHeader title="Recovery Intelligence Centre"
       subtitle="AI RECOVERY • MARGIN PROTECTION • PROFIT RECOVERY"
     >
       <FinanceLeakageCentreClient centre={leakageCentre} />
@@ -185,7 +184,7 @@ export default async function FinancialLeakagePage() {
                   <div className="mt-3 text-4xl font-black">{recoveryScore}<span className="text-xl">/100</span></div>
                   <div className="mt-2 text-sm font-bold text-fuchsia-100">● Very Strong</div>
                 </div>
-                <div className="relative flex h-16 w-16 items-center justify-center rounded-full border-[8px] border-emerald-300 bg-white/10 text-sm font-black">
+                <div className="relative flex h-16 w-16 items-center justify-center rounded-full border-[8px] border-[#A3E635]/30 bg-white/10 text-sm font-black">
                   {recoveryScore}%
                 </div>
               </div>
@@ -231,7 +230,7 @@ export default async function FinancialLeakagePage() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 2xl:grid-cols-4">
             {[
               [CircleDollarSign, "Detected", detected, "Total leakage identified", "bg-violet-100 text-violet-700"],
-              [ShieldAlert, "Recoverable", recoverable, "High confidence recovery", "bg-emerald-100 text-emerald-700"],
+              [ShieldAlert, "Recoverable", recoverable, "High confidence recovery", "bg-[#A3E635]/12 text-[#65A30D]"],
               [ClipboardCheck, "Approved", approved, "Approved recovery actions", "bg-orange-100 text-orange-700"],
               [Banknote, "Recovered", recovered, "Value already recovered", "bg-fuchsia-100 text-fuchsia-700"],
             ].map(([Icon, label, value, detail, tone]: any) => (
@@ -249,7 +248,7 @@ export default async function FinancialLeakagePage() {
           <div className="mt-8 flex items-center gap-4">
             <div className="h-4 flex-1 overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-emerald-400"
+                className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-[#A3E635]"
                 style={{ width: `${Math.max(12, recoveryProgress)}%` }}
               />
             </div>
@@ -305,7 +304,7 @@ export default async function FinancialLeakagePage() {
               ["bg-red-50 text-red-600", "HIGH IMPACT"],
               ["bg-orange-50 text-orange-600", "HIGH IMPACT"],
               ["bg-blue-50 text-blue-600", "MEDIUM IMPACT"],
-              ["bg-emerald-50 text-emerald-600", "MEDIUM IMPACT"],
+              ["bg-[#A3E635]/10 text-[#84CC16]", "MEDIUM IMPACT"],
             ];
             const [tone, badge] = tones[index] || tones[0];
 

@@ -18,7 +18,7 @@ export default async function PriceOptimizerPage() {
     .slice(0, 20);
 
   return (
-    <VyronCostShell title="Price Optimizer" subtitle="Recommended selling price actions and GP recovery.">
+    <VyronCostShell hidePageHeader title="Price Optimizer" subtitle="Recommended selling price actions and GP recovery.">
       <section className="rounded-[2rem] border border-white bg-white p-6 shadow-sm">
         <h2 className="text-xl font-black text-[#07110d]">Pricing recommendations</h2>
         <div className="mt-5 space-y-3">
@@ -26,14 +26,14 @@ export default async function PriceOptimizerPage() {
             <Link
               key={product.id}
               href={`/products/${product.id}`}
-              className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 transition hover:bg-emerald-50"
+              className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 transition hover:bg-[#A3E635]/10"
             >
               <div>
                 <div className="font-black text-[#07110d]">{product.product_name}</div>
                 <div className="text-xs text-slate-500">{product.category} · {gp.toFixed(1)}% GP</div>
               </div>
               <div className="text-right">
-                <div className="font-black text-emerald-700">{formatMoney(suggested)}</div>
+                <div className="font-black text-[#65A30D]">{formatMoney(suggested)}</div>
                 <div className="text-xs font-bold text-slate-500">+{formatMoney(gap)} opportunity</div>
               </div>
             </Link>

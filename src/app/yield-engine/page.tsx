@@ -13,8 +13,7 @@ export default async function YieldEnginePage() {
     : 100;
 
   return (
-    <VyronCostShell
-      title="Advanced Yield Engine"
+    <VyronCostShell hidePageHeader title="Advanced Yield Engine"
       subtitle="True usable cost engine for cooked yield, prep loss, shrinkage, evaporation and batch conversion."
     >
       <section className="mb-6 grid gap-5 md:grid-cols-4">

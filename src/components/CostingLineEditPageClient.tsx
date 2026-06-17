@@ -11,6 +11,7 @@ import {
   RecipeItem,
 } from "@/lib/vyron-cost-data";
 import { supabase } from "@/lib/supabase";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 export default function CostingLineEditPageClient({
   line,
@@ -82,84 +83,92 @@ export default function CostingLineEditPageClient({
   }
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[1.1fr_0.75fr]">
-      <div className="rounded-[2rem] border border-white bg-white p-7 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h2 className="text-3xl font-black text-[#07110d]">Edit Costing Line</h2>
-            <p className="mt-2 text-sm leading-7 text-slate-500">
-              Full edit page for recipe ingredient quantity, costing source and line cost.
-            </p>
-          </div>
+    <VyronPremiumPageShell
+      config={{
+        title: "Costing Line Edit Page",
+        subtitle: "Premium VYRON COST workflow for costing line edit page.",
+        formulas: ["GP % = (Price - Cost) / Price"],
+      }}
+    >
+      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.75fr]">
+            <div className="rounded-[2rem] border border-white bg-white p-7 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+              <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-3xl font-black text-[#F8FAFC]">Edit Costing Line</h2>
+                  <p className="mt-2 text-sm leading-7 text-slate-500">
+                    Full edit page for recipe ingredient quantity, costing source and line cost.
+                  </p>
+                </div>
 
-          <Link href="/cost-calculator" className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-5 py-3 text-sm font-black text-slate-700">
-            <ArrowLeft size={16} />
-            Back to Cost Calculator
-          </Link>
-        </div>
+                <Link href="/cost-calculator" className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-5 py-3 text-sm font-black text-slate-700">
+                  <ArrowLeft size={16} />
+                  Back to Cost Calculator
+                </Link>
+              </div>
 
-        <div className="grid gap-5">
-          <label className="text-sm font-black text-slate-600">
-            Recipe
-            <select className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-emerald-400" value={recipeId} onChange={(event) => setRecipeId(event.target.value)}>
-              {recipes.map((recipe) => (
-                <option key={recipe.id} value={recipe.id}>
-                  {recipe.recipe_name}
-                </option>
-              ))}
-            </select>
-          </label>
+              <div className="grid gap-5">
+                <label className="text-sm font-black text-slate-600">
+                  Recipe
+                  <select className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-violet-400" value={recipeId} onChange={(event) => setRecipeId(event.target.value)}>
+                    {recipes.map((recipe) => (
+                      <option key={recipe.id} value={recipe.id}>
+                        {recipe.recipe_name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-          <label className="text-sm font-black text-slate-600">
-            Ingredient
-            <select className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-emerald-400" value={ingredientId} onChange={(event) => setIngredientId(event.target.value)}>
-              {ingredients.map((ingredient) => (
-                <option key={ingredient.id} value={ingredient.id}>
-                  {ingredient.ingredient_name} — {formatMoney(Number(ingredient.true_unit_cost))}
-                </option>
-              ))}
-            </select>
-          </label>
+                <label className="text-sm font-black text-slate-600">
+                  Ingredient
+                  <select className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-violet-400" value={ingredientId} onChange={(event) => setIngredientId(event.target.value)}>
+                    {ingredients.map((ingredient) => (
+                      <option key={ingredient.id} value={ingredient.id}>
+                        {ingredient.ingredient_name} — {formatMoney(Number(ingredient.true_unit_cost))}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-          <label className="text-sm font-black text-slate-600">
-            Quantity
-            <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-emerald-400" value={quantity} onChange={(event) => setQuantity(event.target.value)} />
-          </label>
+                <label className="text-sm font-black text-slate-600">
+                  Quantity
+                  <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-violet-400" value={quantity} onChange={(event) => setQuantity(event.target.value)} />
+                </label>
 
-          <div className="flex flex-wrap gap-3">
-            <button type="button" onClick={saveLine} className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-sm font-black text-[#07110d] transition hover:bg-emerald-400">
-              <Save size={18} />
-              Save Costing Line
-            </button>
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" onClick={saveLine} className="inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-6 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
+                    <Save size={18} />
+                    Save Costing Line
+                  </button>
 
-            <button type="button" onClick={deleteLine} className="inline-flex items-center gap-2 rounded-2xl bg-red-50 px-6 py-4 text-sm font-black text-red-700 transition hover:bg-red-100">
-              <Trash2 size={18} />
-              Delete Line
-            </button>
-          </div>
+                  <button type="button" onClick={deleteLine} className="inline-flex items-center gap-2 rounded-2xl bg-red-50 px-6 py-4 text-sm font-black text-red-700 transition hover:bg-red-100">
+                    <Trash2 size={18} />
+                    Delete Line
+                  </button>
+                </div>
 
-          {message && <div className="rounded-2xl bg-emerald-50 px-5 py-4 text-sm font-black text-emerald-700">{message}</div>}
-        </div>
-      </div>
+                {message && <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-4 text-sm font-black text-[#65A30D]">{message}</div>}
+              </div>
+            </div>
 
-      <aside className="rounded-[2rem] bg-[#07110d] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-        <div className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">
-          LINE COST PREVIEW
-        </div>
+            <aside className="rounded-[2rem] bg-[#07110d] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+              <div className="text-xs font-black uppercase tracking-[0.25em] text-[#A3E635]">
+                LINE COST PREVIEW
+              </div>
 
-        <div className="mt-4 text-5xl font-black">{formatMoney(previewCost)}</div>
+              <div className="mt-4 text-5xl font-black">{formatMoney(previewCost)}</div>
 
-        <div className="mt-3 text-sm leading-7 text-slate-300">
-          Quantity multiplied by the selected ingredient true usable unit cost.
-        </div>
+              <div className="mt-3 text-sm leading-7 text-slate-300">
+                Quantity multiplied by the selected ingredient true usable unit cost.
+              </div>
 
-        <div className="mt-6 rounded-3xl border border-emerald-400/15 bg-white/5 p-5">
-          <div className="text-sm font-black text-emerald-300">Selected Ingredient</div>
-          <div className="mt-2 text-sm leading-7 text-slate-300">
-            {selectedIngredient?.ingredient_name || "None selected"}
-          </div>
-        </div>
-      </aside>
-    </section>
+              <div className="mt-6 rounded-3xl border border-[#A3E635]/20 bg-white/5 p-5">
+                <div className="text-sm font-black text-[#A3E635]">Selected Ingredient</div>
+                <div className="mt-2 text-sm leading-7 text-slate-300">
+                  {selectedIngredient?.ingredient_name || "None selected"}
+                </div>
+              </div>
+            </aside>
+          </section>
+    </VyronPremiumPageShell>
   );
 }

@@ -8,7 +8,7 @@ export default async function PurchaseOrdersListPage({
 }) {
   const params = await searchParams;
   return (
-    <VyronCostAiShell title="Purchase Orders List" subtitle="Search and manage all purchase orders">
+    <VyronCostAiShell hidePageHeader title="Purchase Orders List" subtitle="Search and manage all purchase orders">
       <ProcurementPoListClient initialStatus={params.status || ""} />
     </VyronCostAiShell>
   );

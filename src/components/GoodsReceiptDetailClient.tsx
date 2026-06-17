@@ -1,8 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Download, Mail, Pencil, Printer, Save } from "lucide-react";
+import { Download, Mail, Pencil, Printer, Save, ShieldCheck, Truck } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useModulePermissions } from "@/hooks/useModulePermissions";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
+import {
+  VyronPremiumFormulaCard,
+  VyronPremiumHeroBanner,
+  VyronPremiumSectionHeading,
+} from "@/components/vyron-premium/VyronPremiumSprint";
 
 type GrnLine = Record<string, unknown> & {
   id?: string;
@@ -25,7 +32,10 @@ function csvEscape(value: unknown) {
 }
 
 export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
+  const { canCreate } = useModulePermissions("goods_receipts");
+  const canEdit = canCreate;
   const [receipt, setReceipt] = useState<Record<string, unknown> | null>(null);
+  const [stockPosted, setStockPosted] = useState(false);
   const [lines, setLines] = useState<GrnLine[]>([]);
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("Posted");
@@ -34,13 +44,16 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/goods-receipts/${grnId}`);
+    const { query } = poApiWorkspaceContext();
+    const res = await fetch(`/api/goods-receipts/${grnId}${query}`, { cache: "no-store" });
     const data = await res.json();
     if (!data.ok) {
       setMessage(data.error || "Could not load GRN.");
+      setReceipt(null);
       return;
     }
     setReceipt(data.receipt);
+    setStockPosted(Boolean(data.receipt.stock_posted));
     setLines(((data.receipt.lines || []) as GrnLine[]).map((line) => ({ ...line })));
     setNotes(String(data.receipt.notes || ""));
     setStatus(String(data.receipt.status || "Posted"));
@@ -73,18 +86,30 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
   }
 
   async function saveGrn() {
-    const validation = validateLines();
-    if (validation) {
-      setMessage(validation);
+    if (!canEdit) {
+      setMessage("You do not have permission to edit goods receipts.");
       return;
     }
-    if (!window.confirm("Save GRN changes and recalculate linked PO outstanding quantities?")) return;
+    if (!stockPosted) {
+      const validation = validateLines();
+      if (validation) {
+        setMessage(validation);
+        return;
+      }
+    }
+    if (!window.confirm(stockPosted ? "Save GRN notes?" : "Save GRN changes and recalculate linked PO outstanding quantities?")) return;
     setSaving(true);
     try {
+      const { body: workspaceBody } = poApiWorkspaceContext();
       const res = await fetch(`/api/goods-receipts/${grnId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes, status, lines }),
+        body: JSON.stringify({
+          ...workspaceBody,
+          notes,
+          status: stockPosted ? undefined : status,
+          lines: stockPosted ? undefined : lines,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "Save failed.");
@@ -123,18 +148,47 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
   if (!receipt) return <p className="text-sm font-bold text-slate-500">{message || "Loading GRN…"}</p>;
 
   return (
-    <section className="grid gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
-        <div>
-          <Link href="/goods-receipts/history" className="text-xs font-black text-violet-700">← Back</Link>
-          <h1 className="mt-2 text-3xl font-black text-slate-950">{String(receipt.grn_number || grnId)}</h1>
-          <p className="text-sm font-semibold text-slate-500">{String(receipt.supplier_name_snapshot || "Supplier")} · {String(receipt.receipt_type || "receipt")} · {String(receipt.received_at || "").slice(0, 16)}</p>
+    <section className="grid gap-8">
+      <div className="print:hidden">
+        <VyronPremiumHeroBanner
+        visualVariant="goods-receipt"
+          badge="Premium Receipt Detail"
+          title={String(receipt.grn_number || grnId)}
+          subtitle={`${String(receipt.supplier_name_snapshot || "Supplier")} · ${String(receipt.receipt_type || "receipt")} · ${String(receipt.received_at || "").slice(0, 16)}`}
+          quotes={[
+            {
+              label: "Receiving control",
+              quote: "A GRN is the operational truth between what was ordered and what entered stock.",
+            },
+            {
+              label: stockPosted ? "Stock posted" : "Draft control",
+              quote: stockPosted ? "Posted receipts protect stock accuracy by locking quantity changes." : "Review quantities carefully before stock is posted.",
+            },
+          ]}
+        >
+          <Link href="/goods-receipts/history" className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-black text-white backdrop-blur-sm">
+            ← Back
+          </Link>
+        </VyronPremiumHeroBanner>
+      </div>
+
+      <div className="rounded-[2rem] border border-violet-100 bg-white p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)] print:hidden">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-violet-700">
+              <Truck size={13} /> Receipt Actions
+            </div>
+            <h2 className="mt-2 text-2xl font-black text-slate-950">GRN control panel</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-500">Print, export, email, edit notes or receive any remaining balance.</p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {po?.id ? <Link href={`/purchase-orders/${po.id}`} className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-800">Open PO</Link> : null}
-          {po?.id ? <Link href={`/goods-receipts/new?po=${po.id}`} className="rounded-xl bg-fuchsia-50 px-3 py-2 text-xs font-black text-fuchsia-700">Receive Balance</Link> : null}
-          <button type="button" onClick={() => setEditing((value) => !value)} className="inline-flex items-center gap-1 rounded-xl bg-violet-700 px-3 py-2 text-xs font-black text-white"><Pencil size={14} />{editing ? "Cancel Edit" : "Edit GRN"}</button>
-          {editing ? <button type="button" disabled={saving} onClick={() => void saveGrn()} className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-black text-white disabled:opacity-60"><Save size={14} />{saving ? "Saving…" : "Save GRN"}</button> : null}
+          {po?.id && canCreate ? <Link href={`/goods-receipts/new?po=${po.id}`} className="rounded-xl bg-fuchsia-50 px-3 py-2 text-xs font-black text-fuchsia-700">Receive Balance</Link> : null}
+          {canEdit ? (
+            <button type="button" onClick={() => setEditing((value) => !value)} className="inline-flex items-center gap-1 rounded-xl bg-violet-700 px-3 py-2 text-xs font-black text-white"><Pencil size={14} />{editing ? "Cancel Edit" : stockPosted ? "Edit Notes" : "Edit GRN"}</button>
+          ) : null}
+          {editing && canEdit ? <button type="button" disabled={saving} onClick={() => void saveGrn()} className="inline-flex items-center gap-1 rounded-xl bg-[#24183F] border border-[#A3E635]/30 px-3 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"><Save size={14} />{saving ? "Saving…" : "Save GRN"}</button> : null}
           <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800"><Printer size={14} />Print</button>
           <button type="button" onClick={exportCsv} className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800"><Download size={14} />Export CSV</button>
           <button type="button" onClick={emailGrn} className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800"><Mail size={14} />Email</button>
@@ -143,11 +197,37 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
 
       {message ? <p className="rounded-xl bg-amber-50 px-4 py-2 text-sm font-bold text-amber-800 print:hidden">{message}</p> : null}
 
+      <div className="grid gap-4 lg:grid-cols-2 print:hidden">
+        <VyronPremiumFormulaCard
+          variant="light"
+          eyebrow="Receipt integrity"
+          title="How this GRN is reconciled"
+          formulas={[
+            { label: "Outstanding", formula: "Ordered − received − damaged − rejected" },
+            { label: "Accepted Stock", formula: "Received qty posts to stock ledger" },
+          ]}
+        />
+        <VyronPremiumFormulaCard
+          eyebrow="Audit trail"
+          title="Why this receipt matters"
+          formulas={[
+            { label: "PO Link", formula: "GRN must trace back to the source PO" },
+            { label: "Invoice Match", formula: "PO + GRN + supplier invoice must agree" },
+          ]}
+        />
+      </div>
+
+      <VyronPremiumSectionHeading
+        eyebrow="Receipt summary"
+        title="Quantities and status"
+        subtitle="Review what was accepted, rejected, damaged and still outstanding."
+      />
+
       <div className="grid gap-4 sm:grid-cols-4">
         <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Linked PO</div>{po?.id ? <Link href={`/purchase-orders/${po.id}`} className="mt-2 block text-lg font-black text-violet-700">{po.po_number}</Link> : <div className="mt-2 text-lg font-black">—</div>}</div>
         <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Received</div><div className="mt-2 text-lg font-black">{totals.received.toFixed(2)}</div></div>
         <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Damaged/Rejected</div><div className="mt-2 text-lg font-black">{(totals.damaged + totals.rejected).toFixed(2)}</div></div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Status</div>{editing ? <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-2 w-full rounded-xl border px-3 py-2 font-bold"><option>Posted</option><option>Draft</option><option>Corrected</option><option>Cancelled</option></select> : <div className="mt-2 text-lg font-black">{String(receipt.status || "Posted")}</div>}</div>
+        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Status</div>{editing && !stockPosted ? <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-2 w-full rounded-xl border px-3 py-2 font-bold"><option>Posted</option><option>Draft</option><option>Corrected</option><option>Cancelled</option></select> : <div className="mt-2 text-lg font-black">{String(receipt.status || "Posted")}{stockPosted ? <span className="mt-1 block text-xs font-bold text-[#65A30D]">Stock posted</span> : null}</div>}</div>
       </div>
 
       <div className="min-w-0 overflow-x-auto rounded-[2rem] border border-violet-100 bg-white">
@@ -156,7 +236,8 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
           <tbody>
             {lines.map((line, index) => {
               const outstanding = Math.max(0, num(line.ordered_qty) - num(line.received_qty) - num(line.damaged_qty) - num(line.rejected_qty));
-              return <tr key={String(line.id || index)} className="border-t border-slate-100"><td className="px-4 py-3 font-bold">{String(line.item_name)}</td><td className="px-4 py-3">{num(line.ordered_qty)}</td><td className="px-4 py-3">{editing ? <input type="number" min="0" className="w-24 rounded-xl border px-2 py-1 font-bold" value={num(line.received_qty)} onChange={(e) => updateLine(index, { received_qty: num(e.target.value) })} /> : num(line.received_qty)}</td><td className="px-4 py-3">{editing ? <input type="number" min="0" className="w-24 rounded-xl border px-2 py-1 font-bold" value={num(line.damaged_qty)} onChange={(e) => updateLine(index, { damaged_qty: num(e.target.value) })} /> : num(line.damaged_qty)}</td><td className="px-4 py-3">{editing ? <input type="number" min="0" className="w-24 rounded-xl border px-2 py-1 font-bold" value={num(line.rejected_qty)} onChange={(e) => updateLine(index, { rejected_qty: num(e.target.value) })} /> : num(line.rejected_qty)}</td><td className="px-4 py-3 font-black text-violet-700">{outstanding.toFixed(2)}</td><td className="px-4 py-3">{String(line.unit || "—")}</td></tr>;
+              const lineEditing = editing && !stockPosted;
+              return <tr key={String(line.id || index)} className="border-t border-slate-100"><td className="px-4 py-3 font-bold">{String(line.item_name)}</td><td className="px-4 py-3">{num(line.ordered_qty)}</td><td className="px-4 py-3">{lineEditing ? <input type="number" min="0" className="w-24 rounded-xl border px-2 py-1 font-bold" value={num(line.received_qty)} onChange={(e) => updateLine(index, { received_qty: num(e.target.value) })} /> : num(line.received_qty)}</td><td className="px-4 py-3">{lineEditing ? <input type="number" min="0" className="w-24 rounded-xl border px-2 py-1 font-bold" value={num(line.damaged_qty)} onChange={(e) => updateLine(index, { damaged_qty: num(e.target.value) })} /> : num(line.damaged_qty)}</td><td className="px-4 py-3">{lineEditing ? <input type="number" min="0" className="w-24 rounded-xl border px-2 py-1 font-bold" value={num(line.rejected_qty)} onChange={(e) => updateLine(index, { rejected_qty: num(e.target.value) })} /> : num(line.rejected_qty)}</td><td className="px-4 py-3 font-black text-violet-700">{outstanding.toFixed(2)}</td><td className="px-4 py-3">{String(line.unit || "—")}</td></tr>;
             })}
           </tbody>
         </table>

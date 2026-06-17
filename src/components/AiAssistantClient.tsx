@@ -3,6 +3,7 @@
 import { Sparkles, WandSparkles } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { AiAnswer, answerVyronQuestion, suggestedQuestions } from "@/lib/vyron-ai-assistant";
 
 export default function AiAssistantClient() {
@@ -21,14 +22,28 @@ export default function AiAssistantClient() {
   }
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+    <VyronPremiumPageShell
+      config={{
+        badge: "AI Intelligence",
+        title: "AI Assistant Command Centre",
+        subtitle: "Query live margin, supplier, and cost intelligence through a guided executive assistant interface.",
+        outcomes: ["Accelerate financial insight discovery", "Generate actionable recommendation cards", "Route users directly to corrective workflows"],
+        formulas: ["Answer Summary synthesized from live domain context", "Recommendation Tone reflects risk/opportunity priority", "Impact values tied to module-specific insight outputs"],
+        intelligenceItems: [
+          { label: "Prompt library", detail: `${suggestedQuestions.length} suggested intelligence prompts` },
+          { label: "Response state", detail: answer ? "Answer generated" : "Awaiting question" },
+          { label: "Action routing", detail: "Recommendation cards link to relevant modules" },
+        ],
+      }}
+    >
+      <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#08111A] text-[#B6D934]">
             <Sparkles size={22} />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-[#07110d]">VYRON AI Workspace</h2>
+            <h2 className="text-2xl font-black text-[#F8FAFC]">VYRON AI Workspace</h2>
             <p className="text-sm text-slate-500">Ask profit, margin, supplier and recipe questions using live costing data.</p>
           </div>
         </div>
@@ -62,7 +77,7 @@ export default function AiAssistantClient() {
                 key={item}
                 type="button"
                 onClick={() => ask(item)}
-                className="rounded-full bg-emerald-50 px-4 py-2 text-xs font-black text-emerald-700 transition hover:bg-emerald-100"
+                className="rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-4 py-2 text-xs font-black text-[#65A30D] transition hover:bg-[#A3E635]/15"
               >
                 {item}
               </button>
@@ -71,8 +86,8 @@ export default function AiAssistantClient() {
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <h3 className="text-xl font-black text-[#07110d]">Answer Panel</h3>
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <h3 className="text-xl font-black text-[#F8FAFC]">Answer Panel</h3>
         {!answer ? (
           <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-8 text-sm font-bold text-slate-500">
             Select a suggested question or type your own to generate recommendations from live Supabase data.
@@ -97,9 +112,9 @@ export default function AiAssistantClient() {
         )}
       </div>
 
-      {answer ? (
+        {answer ? (
         <div className="xl:col-span-2 rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-          <h3 className="text-xl font-black text-[#07110d]">Recommendation Cards</h3>
+          <h3 className="text-xl font-black text-[#F8FAFC]">Recommendation Cards</h3>
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {answer.recommendations.map((item) => (
               <Link
@@ -110,17 +125,18 @@ export default function AiAssistantClient() {
                     ? "border-red-200 bg-red-50"
                     : item.tone === "amber"
                       ? "border-amber-200 bg-amber-50"
-                      : "border-emerald-200 bg-emerald-50"
+                      : "border-[#A3E635]/25 bg-[#A3E635]/10"
                 }`}
               >
-                <div className="font-black text-[#07110d]">{item.title}</div>
+                <div className="font-black text-[#F8FAFC]">{item.title}</div>
                 <div className="mt-2 text-sm text-slate-600">{item.detail}</div>
                 <div className="mt-3 text-lg font-black text-violet-700">{item.impact}</div>
               </Link>
             ))}
           </div>
         </div>
-      ) : null}
-    </section>
+        ) : null}
+      </section>
+    </VyronPremiumPageShell>
   );
 }

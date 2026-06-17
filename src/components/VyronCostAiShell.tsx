@@ -2,108 +2,180 @@
 
 import {
   ArrowLeft,
-  Boxes,
+  Building2,
   ChevronDown,
   ChevronRight,
-  ClipboardList,
-  Factory,
-  FileText,
   Home,
   LayoutDashboard,
-  Mail,
-  Package,
-  PackageCheck,
-  Search,
-  Target,
-  Users,
-  GraduationCap,
+  LogOut,
   Rocket,
+  Search,
   Settings,
-  ReceiptText,
-  Link2,
-  RefreshCcw,
+  Shield,
+  Users,
 } from "lucide-react";
+import ModuleUpgradeNotice from "@/components/admin/ModuleUpgradeNotice";
 import Link from "next/link";
+import { isModuleIncluded, type PackageModuleKey } from "@/lib/vyron-package-modules";
+import { isNavItemActive, vyronNavSections } from "@/lib/vyron-navigation";
+import WorkspaceAccessDenied from "@/components/WorkspaceAccessDenied";
+import {
+  canAccessPath,
+  getRequiredPermissionForPath,
+  sessionHasPermission,
+} from "@/lib/vyron-workspace-permissions";
+import { readWorkspaceSession, writeWorkspaceSession, type WorkspaceSession } from "@/lib/vyron-workspace-session";
+import { isClientWorkspaceMode, readActiveClient, signOutClientWorkspace, type ActiveClient } from "@/lib/vyron-developer-client";
+import { syncActiveClientCookie } from "@/lib/vyron-workspace-context";
 import { usePathname, useRouter } from "next/navigation";
-import { ReactNode, useState } from "react";
-import ActiveWorkspaceGuard from "@/components/ActiveWorkspaceGuard";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 
-const SIDEBAR_WIDTH = "292px";
+import { VYRON_MAX_WIDTH, VYRON_PAGE_PADDING } from "@/components/vyron-ui/constants";
+import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
 
-const sections = [
+const M = VYRON_MASTER;
+
+const SIDEBAR_WIDTH = "330px";
+
+type NavItem = {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+};
+
+type NavSection = {
+  id: string;
+  title: string;
+  items: NavItem[];
+};
+
+const dashboardNavItem: NavItem = { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard };
+
+/** Maps vyron-navigation section ids to package module keys (unchanged gating rules). */
+const NAV_SECTION_PACKAGE_MAP: Record<string, PackageModuleKey> = {
+  suppliers: "suppliers",
+  costing: "costing",
+  procurement: "procurement",
+  inventory: "inventory",
+  manufacturing: "manufacturing",
+  customers: "customers",
+  accounting: "accounting",
+  reports: "reports",
+  executive: "intelligence",
+  admin: "dashboard",
+};
+
+/** Per-route package keys for V1 modules inside mixed sections (e.g. OPERATIONS). */
+const NAV_ITEM_PACKAGE_MAP: Record<string, PackageModuleKey> = {
+  "/dashboard": "dashboard",
+  "/suppliers": "suppliers",
+  "/supplier-intelligence": "suppliers",
+  "/supplier-inflation": "suppliers",
+  "/document-intelligence": "suppliers",
+  "/document-intelligence/supplier-learning": "suppliers",
+  "/document-intelligence/price-history/supplier": "suppliers",
+  "/document-intelligence/settings": "suppliers",
+  "/email-invoice-inbox": "suppliers",
+  "/ingredients": "costing",
+  "/products": "costing",
+  "/recipes": "costing",
+  "/purchase-orders": "procurement",
+  "/purchase-orders/list": "procurement",
+  "/purchase-orders/approvals": "procurement",
+  "/purchase-orders/back-orders": "procurement",
+  "/purchase-orders/settings": "procurement",
+  "/goods-receipts": "procurement",
+  "/inventory": "inventory",
+  "/inventory/stock": "inventory",
+  "/inventory/ledger": "inventory",
+  "/inventory/counts": "inventory",
+  "/inventory/alerts": "inventory",
+  "/inventory-intelligence": "inventory",
+  "/manufacturing": "manufacturing",
+  "/manufacturing/runs": "manufacturing",
+  "/manufacturing/history": "manufacturing",
+  "/manufacturing/finished-goods": "manufacturing",
+  "/customers": "customers",
+  "/customer-invoices": "customers",
+  "/integrations/xero": "accounting",
+  "/reports": "reports",
+  "/executive-boardroom": "intelligence",
+  "/cost-intelligence": "intelligence",
+  "/business-health": "intelligence",
+  "/early-warning": "intelligence",
+  "/predictive-risk": "intelligence",
+  "/root-cause": "intelligence",
+  "/decisions": "intelligence",
+  "/actions": "intelligence",
+  "/autonomous-command-centre": "intelligence",
+  "/ask-vyron": "intelligence",
+  "/execution-centre": "intelligence",
+  "/ai-cost-intelligence": "intelligence",
+  "/admin/company-setup": "dashboard",
+  "/admin/users": "dashboard",
+  "/admin/imports": "dashboard",
+  "/deployment-readiness": "dashboard",
+};
+
+function navSectionsFromConfig(): NavSection[] {
+  return vyronNavSections.map((section) => ({
+    id: section.id,
+    title: section.section,
+    items: section.items.map((item) => ({
+      label: item.label,
+      href: item.href,
+      icon: item.icon,
+    })),
+  }));
+}
+
+function resolveNavItemPackageModule(href: string, sectionId: string): PackageModuleKey | null {
+  if (NAV_ITEM_PACKAGE_MAP[href]) return NAV_ITEM_PACKAGE_MAP[href];
+
+  const prefixes = Object.entries(NAV_ITEM_PACKAGE_MAP).sort((a, b) => b[0].length - a[0].length);
+  for (const [prefix, moduleKey] of prefixes) {
+    if (href === prefix || href.startsWith(`${prefix}/`)) return moduleKey;
+  }
+
+  return NAV_SECTION_PACKAGE_MAP[sectionId] || null;
+}
+
+function isNavItemPackageIncluded(packageName: string, href: string, sectionId: string): boolean {
+  const moduleKey = resolveNavItemPackageModule(href, sectionId);
+  if (!moduleKey) return true;
+  return isModuleIncluded(packageName, moduleKey);
+}
+
+function blockedModuleKeyForHref(href: string, sectionId: string): PackageModuleKey | null {
+  return resolveNavItemPackageModule(href, sectionId);
+}
+
+function filterNavItems(items: NavItem[], session: WorkspaceSession | null) {
+  if (!session) return items;
+  return items.filter((item) => canAccessPath(item.href, session));
+}
+
+function filterNavSections(sections: NavSection[], session: WorkspaceSession | null) {
+  if (!session) return sections;
+  return sections
+    .map((section) => ({
+      ...section,
+      items: filterNavItems(section.items, session),
+    }))
+    .filter((section) => section.items.length > 0);
+}
+
+const developerSections: NavSection[] = [
   {
-    title: "Demo",
+    id: "platform-control",
+    title: "Platform Control",
     items: [
-      { label: "Command Centre", href: "/dashboard", icon: LayoutDashboard },
-      { label: "Recovery Intelligence", href: "/financial-leakage", icon: Target },
+      { label: "Developer Centre", href: "/developer", icon: Rocket },
+      { label: "Client Directory", href: "/developer/clients", icon: Users },
+      { label: "Client Setup", href: "/developer/setup", icon: Settings },
+      { label: "Deployment Readiness", href: "/deployment-readiness", icon: Shield },
+      { label: "Back to VYRON COST App", href: "/dashboard", icon: Home },
     ],
-  },
-  {
-    title: "Costing",
-    items: [
-      { label: "Suppliers", href: "/suppliers", icon: Users },
-      { label: "Ingredients", href: "/ingredients", icon: PackageCheck },
-      { label: "Recipes & BOM", href: "/recipes", icon: Boxes },
-      { label: "Products", href: "/products", icon: Package },
-    ],
-  },
-  {
-    title: "Manufacturing",
-    items: [
-      { label: "Manufacturing Dashboard", href: "/manufacturing", icon: Factory },
-      { label: "Manufacturing History", href: "/manufacturing/history", icon: ClipboardList },
-      { label: "Production Runs", href: "/manufacturing/runs", icon: ClipboardList },
-      { label: "Finished Goods", href: "/manufacturing/finished-goods", icon: Package },
-    ],
-  },
-  {
-    title: "Intelligence",
-    items: [
-      { label: "Inventory Intelligence", href: "/inventory-intelligence", icon: Package },
-      { label: "Product Intelligence", href: "/reports/product-intelligence", icon: Target },
-    ],
-  },
-  {
-    title: "Customers",
-    items: [
-      { label: "Customers", href: "/customers", icon: Users },
-      { label: "Customer Invoices", href: "/customer-invoices", icon: ReceiptText },
-      { label: "Customer Statements", href: "/customer-statements", icon: FileText },
-      { label: "Customer Intelligence", href: "/customer-intelligence", icon: Target },
-    ],
-  },
-  {
-    title: "Accounting",
-    items: [
-      { label: "Xero Integration", href: "/integrations/xero", icon: Link2 },
-      { label: "Xero Setup", href: "/integrations/xero/setup", icon: Settings },
-      { label: "Sync Centre", href: "/integrations/xero/sync-centre", icon: RefreshCcw },
-    ],
-  },
-  {
-    title: "Procurement",
-    items: [
-      { label: "PO Dashboard", href: "/purchase-orders", icon: ClipboardList },
-      { label: "PO List", href: "/purchase-orders/list", icon: ClipboardList },
-      { label: "PO Approvals", href: "/purchase-orders/approvals", icon: ClipboardList },
-      { label: "Back Orders", href: "/purchase-orders/back-orders", icon: Package },
-      { label: "PO Settings", href: "/purchase-orders/settings", icon: Settings },
-      { label: "Goods Receipts", href: "/goods-receipts", icon: Package },
-      { label: "Document Intelligence", href: "/document-intelligence", icon: FileText },
-      { label: "Supplier Learning", href: "/document-intelligence/supplier-learning", icon: GraduationCap },
-      { label: "Price History", href: "/document-intelligence/price-history/supplier", icon: Search },
-      { label: "DI Settings", href: "/document-intelligence/settings", icon: Settings },
-      { label: "Email Inbox", href: "/email-invoice-inbox", icon: Mail },
-      { label: "Procurement Intelligence", href: "/invoice-forensics", icon: Target },
-      { label: "Inventory", href: "/inventory", icon: Package },
-      { label: "Stock Counts", href: "/inventory/counts", icon: ClipboardList },
-      { label: "Reports", href: "/reports", icon: FileText },
-      { label: "Stock Ledger", href: "/inventory/ledger", icon: Boxes },
-    ],
-  },
-  {
-    title: "System",
-    items: [{ label: "Training", href: "/training", icon: GraduationCap }],
   },
 ];
 
@@ -111,19 +183,29 @@ function cn(...classes: Array<string | false | undefined | null>) {
   return classes.filter(Boolean).join(" ");
 }
 
-function Logo() {
+const activeNavClass = M.navActive;
+const dashboardActiveClass = M.navActiveDashboard;
+const inactiveNavClass = M.navInactive;
+
+function isActivePath(pathname: string, href: string) {
+  if (href === "/developer") return pathname === "/developer";
+  return isNavItemActive(pathname, href);
+}
+
+function Logo({ developer }: { developer: boolean }) {
   return (
-    <Link href="/dashboard" className="flex items-center gap-3">
-      <div className="relative flex h-14 w-14 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-500 via-purple-700 to-fuchsia-500 text-white shadow-[0_0_30px_rgba(168,85,247,0.45)]">
-        <div className="absolute inset-0 rounded-3xl bg-white/10" />
-        <div className="relative flex gap-0.5">
-          <span className="block h-8 w-3 rotate-[-24deg] rounded-full bg-white/95" />
-          <span className="block h-8 w-3 rotate-[24deg] rounded-full bg-slate-950/65" />
-        </div>
+    <Link href={developer ? "/developer" : "/dashboard"} className="flex items-center gap-3">
+      <div className={`relative flex h-14 w-14 items-center justify-center rounded-3xl ${M.iconEmphasis}`}>
+        {developer ? <Building2 size={30} className="relative text-white" /> : (
+          <div className="relative flex gap-0.5">
+            <span className="block h-8 w-3 rotate-[-24deg] rounded-full bg-white/95" />
+            <span className="block h-8 w-3 rotate-[24deg] rounded-full bg-[#07111F]/80" />
+          </div>
+        )}
       </div>
       <div>
-        <div className="text-2xl font-black tracking-[0.32em] text-white">VYRON</div>
-        <div className="-mt-1 text-sm font-black tracking-[0.46em] text-fuchsia-300">COST</div>
+        <div className="text-2xl font-black tracking-[0.32em] text-[#0F172A]">VYRON</div>
+        <div className="-mt-1 text-sm font-black tracking-[0.46em] text-[#7C3AED]">{developer ? "DEV" : "COST"}</div>
       </div>
     </Link>
   );
@@ -144,128 +226,285 @@ export default function VyronCostAiShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [open, setOpen] = useState<Record<string, boolean>>({
-    Demo: true,
-    Costing: true,
-    Manufacturing: true,
-    Intelligence: true,
-    Customers: true,
-    Accounting: true,
-    Procurement: true,
-    System: true,
-  });
+  const isDeveloperArea = pathname.startsWith("/developer");
+  const [clientWorkspaceMode, setClientWorkspaceMode] = useState(false);
+  const [activeClient, setActiveClient] = useState<ActiveClient | null>(null);
+  const [workspaceSession, setWorkspaceSession] = useState<WorkspaceSession | null>(null);
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+
+  const sections = useMemo(() => {
+    if (isDeveloperArea) return developerSections;
+
+    let visible = navSectionsFromConfig().filter((section) => {
+      if (section.id === "developer" && clientWorkspaceMode) return false;
+      return true;
+    });
+
+    if (activeClient?.packageName) {
+      visible = visible
+        .map((section) => ({
+          ...section,
+          items: section.items.filter((item) =>
+            isNavItemPackageIncluded(activeClient.packageName, item.href, section.id)
+          ),
+        }))
+        .filter((section) => section.items.length > 0);
+    }
+
+    if (clientWorkspaceMode && workspaceSession) {
+      visible = filterNavSections(visible, workspaceSession);
+    }
+
+    return visible;
+  }, [isDeveloperArea, activeClient, clientWorkspaceMode, workspaceSession]);
+
+  const showDashboardNav = useMemo(() => {
+    if (isDeveloperArea) return false;
+    if (!clientWorkspaceMode || !workspaceSession) return true;
+    return sessionHasPermission(workspaceSession, "dashboard.view");
+  }, [isDeveloperArea, clientWorkspaceMode, workspaceSession]);
+
+  const accessDenied = useMemo(() => {
+    if (isDeveloperArea || !clientWorkspaceMode || pathname === "/login") return null;
+    if (!workspaceSession) {
+      return { pathname, permission: "workspace.session" };
+    }
+    const required = getRequiredPermissionForPath(pathname);
+    if (required && !sessionHasPermission(workspaceSession, required)) {
+      return { pathname, permission: required };
+    }
+    return null;
+  }, [isDeveloperArea, clientWorkspaceMode, pathname, workspaceSession]);
+
+  const blockedModule = useMemo(() => {
+    if (!activeClient?.packageName || isDeveloperArea || pathname.startsWith("/admin")) return null;
+    for (const section of navSectionsFromConfig()) {
+      for (const item of section.items) {
+        const moduleKey = blockedModuleKeyForHref(item.href, section.id);
+        if (!moduleKey) continue;
+        if (isActivePath(pathname, item.href)) {
+          if (!isNavItemPackageIncluded(activeClient.packageName, item.href, section.id)) {
+            return moduleKey;
+          }
+        }
+      }
+    }
+    return null;
+  }, [pathname, activeClient, isDeveloperArea]);
+
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    function refreshClientMode() {
+      const client = readActiveClient();
+      if (client) {
+        syncActiveClientCookie(client);
+        const session = readWorkspaceSession();
+        if (session) writeWorkspaceSession(session);
+      }
+      setActiveClient(client);
+      setClientWorkspaceMode(isClientWorkspaceMode());
+      const session = readWorkspaceSession();
+      setWorkspaceSession(session);
+      setSessionEmail(session?.email || client?.ownerEmail || null);
+    }
+    refreshClientMode();
+    window.addEventListener("vyron-active-client-changed", refreshClientMode);
+    window.addEventListener("storage", refreshClientMode);
+    return () => {
+      window.removeEventListener("vyron-active-client-changed", refreshClientMode);
+      window.removeEventListener("storage", refreshClientMode);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isDeveloperArea) return;
+
+    for (const section of sections) {
+      const hasActiveChild = section.items.some((item) => isActivePath(pathname, item.href));
+      if (hasActiveChild) {
+        setOpen({ [section.title]: true });
+        return;
+      }
+    }
+  }, [pathname, sections, isDeveloperArea]);
+
+  function toggleSection(title: string) {
+    setOpen((current) => {
+      const isCurrentlyOpen = current[title] === true;
+
+      if (isCurrentlyOpen) {
+        return {};
+      }
+
+      return { [title]: true };
+    });
+  }
 
   return (
-    <div
-      className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fbf5ff_0%,#f8fbff_38%,#ffffff_100%)] text-slate-950 xl:grid xl:grid-cols-[292px_minmax(0,1fr)]"
-      style={{ ["--vyron-sidebar-width" as string]: SIDEBAR_WIDTH }}
-    >
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[292px] shrink-0 bg-[#09031f] px-4 py-5 text-white shadow-[18px_0_50px_rgba(76,29,149,0.16)] xl:relative xl:z-30 xl:block xl:h-screen xl:overflow-y-auto">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(217,70,239,0.24),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(124,58,237,0.22),transparent_45%)]" />
-        <style jsx>{`
-          .vyron-sidebar-scroll::-webkit-scrollbar { width: 6px; }
-          .vyron-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
-          .vyron-sidebar-scroll::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, rgba(168,85,247,0.75), rgba(217,70,239,0.75));
-            border-radius: 999px;
-          }
-          .vyron-sidebar-scroll::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, rgba(168,85,247,1), rgba(217,70,239,1));
-          }
-          .vyron-sidebar-scroll {
-            scrollbar-width: thin;
-            scrollbar-color: rgba(168,85,247,0.75) transparent;
-          }
-        `}</style>
+    <div className={M.shellRoot} style={{ ["--vyron-sidebar-width" as string]: SIDEBAR_WIDTH }}>
+      <style jsx global>{`
+        nav.vyron-sidebar-nav::-webkit-scrollbar { width: 6px; }
+        nav.vyron-sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+        nav.vyron-sidebar-nav::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, rgba(124,58,237,0.45), rgba(225,29,72,0.35));
+          border-radius: 999px;
+        }
+        nav.vyron-sidebar-nav::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, rgba(124,58,237,0.65), rgba(225,29,72,0.5));
+        }
+      `}</style>
+      <aside className={M.shellSidebar}>
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.04),transparent_42%)]" />
 
-        <div className="relative flex h-full flex-col">
-          <div className="px-2 py-2"><Logo /></div>
-          <nav className="vyron-sidebar-scroll mt-7 flex-1 overflow-y-auto pr-2">
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <div className="shrink-0 px-2 py-2">
+            <Logo developer={isDeveloperArea} />
+          </div>
+
+          <nav className="vyron-sidebar-nav min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-3">
+            {!isDeveloperArea && showDashboardNav ? (
+              <div className="mb-7">
+                <Link
+                  href={dashboardNavItem.href}
+                  className={cn(
+                    "flex min-w-0 items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold transition",
+                    isActivePath(pathname, dashboardNavItem.href) ? dashboardActiveClass : inactiveNavClass
+                  )}
+                >
+                  <dashboardNavItem.icon
+                    size={20}
+                    className={isActivePath(pathname, dashboardNavItem.href) ? "text-white" : "text-[#7C3AED]"}
+                  />
+                  <span className="min-w-0 flex-1 truncate">{dashboardNavItem.label}</span>
+                </Link>
+              </div>
+            ) : null}
+
             {sections.map((section) => (
-              <div key={section.title} className="mb-6">
+              <div key={section.id} className="mb-7">
                 <button
                   type="button"
-                  onClick={() => setOpen((s) => ({ ...s, [section.title]: !s[section.title] }))}
-                  className="mb-2 flex w-full items-center justify-between rounded-2xl px-3 py-2"
+                  onClick={() => toggleSection(section.title)}
+                  className="mb-2.5 flex w-full min-w-0 items-center justify-between rounded-xl px-3 py-2"
                 >
-                  <span className="text-[11px] font-black uppercase tracking-[0.18em] text-fuchsia-300/85">{section.title}</span>
-                  {open[section.title] ? <ChevronDown size={17} className="text-white/50" /> : <ChevronRight size={17} className="text-white/50" />}
+                  <span className={`min-w-0 flex-1 truncate text-left ${M.navSectionLabel}`}>{section.title}</span>
+                  {open[section.title] === true ? (
+                    <ChevronDown size={16} className="shrink-0 text-[#94A3B8]" />
+                  ) : (
+                    <ChevronRight size={16} className="shrink-0 text-[#94A3B8]" />
+                  )}
                 </button>
 
-                {open[section.title] && (
+                {open[section.title] === true ? (
                   <div className="space-y-1">
                     {section.items.map((item) => {
-                      const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                      const active = isActivePath(pathname, item.href);
                       return (
                         <Link
                           key={item.href}
                           href={item.href}
                           className={cn(
-                            "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-black transition",
-                            active
-                              ? "bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/25"
-                              : "text-white/75 hover:bg-white/10 hover:text-white"
+                            "flex min-w-0 items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-semibold transition",
+                            active ? activeNavClass : inactiveNavClass
                           )}
                         >
-                          <item.icon size={19} />
+                          <item.icon size={20} className={active ? "text-[#7C3AED]" : "text-[#64748B]"} />
                           <span className="min-w-0 flex-1 truncate">{item.label}</span>
                         </Link>
                       );
                     })}
                   </div>
-                )}
+                ) : null}
               </div>
             ))}
           </nav>
 
-          <div className="mt-4 rounded-3xl bg-gradient-to-br from-violet-700/75 to-fuchsia-600/75 p-4 shadow-[0_18px_45px_rgba(168,85,247,0.22)]">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15">
-                <Rocket className="text-fuchsia-100" size={26} />
-              </div>
-              <div>
-                <div className="font-black">Demo Status</div>
-                <div className="text-xs font-semibold text-fuchsia-100">Client-ready navigation</div>
+          {clientWorkspaceMode && !isDeveloperArea && activeClient ? (
+            <div className="relative mt-auto shrink-0 border-t border-[#E2E8F0] px-1 pt-4">
+              <div className={M.shellClientCard}>
+                <div className="truncate text-sm font-bold text-[#0F172A]">{activeClient.companyName}</div>
+                <div className="mt-1 truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">
+                  {activeClient.packageName || "Professional"} Package
+                </div>
               </div>
             </div>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/15">
-              <div className="h-full w-full rounded-full bg-gradient-to-r from-emerald-300 to-fuchsia-200" />
-            </div>
-          </div>
+          ) : null}
         </div>
       </aside>
 
-      <div className="flex min-h-screen min-w-0 flex-col">
-        <header className="sticky top-0 z-20 border-b border-violet-100/70 bg-white/90 px-4 py-4 backdrop-blur-xl md:px-8">
-          <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4">
-            <button type="button" onClick={() => router.back()} className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-violet-100 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm">
-              <ArrowLeft size={18} />
-              Back
+      <div className="vyron-cost-shell-main relative z-0 ml-[330px] min-w-0 h-screen overflow-y-auto overflow-x-hidden">
+        <header className={M.shellTopbar}>
+          <div className={`mx-auto flex h-14 w-full ${VYRON_MAX_WIDTH} items-center gap-3 ${VYRON_PAGE_PADDING} md:gap-4`}>
+            <button type="button" onClick={() => router.back()} className={M.shellTopbarBtn}>
+              ← Back
             </button>
-            <div className="hidden min-w-0 max-w-xl flex-1 items-center gap-3 rounded-2xl border border-violet-100 bg-white px-4 py-3 shadow-sm md:flex">
-              <Search size={18} className="shrink-0 text-violet-700" />
-              <input className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-slate-400" placeholder="Search anything..." />
-              <span className="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-xs font-black text-slate-400">⌘K</span>
-            </div>
-            <Link href="/dashboard" className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-violet-500/20">
-              <Home size={17} />
-              <span className="hidden sm:inline">Command Centre</span>
-            </Link>
+
+            {!isDeveloperArea ? (
+              <div className={M.shellSearch}>
+                <Search size={17} className="shrink-0 text-[#64748B]" />
+                <input
+                  className="min-w-0 flex-1 bg-transparent text-sm font-medium text-[#0F172A] outline-none placeholder:text-[#64748B]"
+                  placeholder="Search anything..."
+                />
+                <span className="shrink-0 rounded-md border border-[#E2E8F0] bg-white px-2 py-0.5 text-xs font-semibold text-[#64748B]">
+                  ⌘K
+                </span>
+              </div>
+            ) : (
+              <div className="flex-1" />
+            )}
+
+            {clientWorkspaceMode && !isDeveloperArea && activeClient ? (
+              <div className="flex shrink-0 items-center gap-2.5 md:gap-3">
+                <div className={M.shellWorkspaceBadge}>
+                  <div className="min-w-0 text-right">
+                    <div className="truncate text-sm font-bold text-[#0F172A]">{activeClient.companyName}</div>
+                    <div className="truncate text-[11px] font-medium text-[#64748B]">
+                      {activeClient.packageName || "Professional"} Package
+                      {sessionEmail ? ` · ${sessionEmail}` : activeClient.ownerEmail ? ` · ${activeClient.ownerEmail}` : ""}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => signOutClientWorkspace()}
+                  className={`${M.shellTopbarBtn} gap-2`}
+                >
+                  <LogOut size={17} />
+                  <span className="hidden sm:inline">Logout</span>
+                </button>
+              </div>
+            ) : (
+              <Link href="/dashboard" className={`${M.primaryBtn} h-10 shrink-0 px-4 text-sm`}>
+                <Home size={17} />
+                <span className="hidden sm:inline">{isDeveloperArea ? "Back to VYRON COST App" : "Command Centre"}</span>
+              </Link>
+            )}
           </div>
         </header>
 
-        <main className={`min-w-0 flex-1 ${fullWidthMain ? "px-0 py-0" : "px-4 py-7 md:px-8"}`}>
-          <div className={`mx-auto w-full ${fullWidthMain ? "" : "max-w-[1600px]"}`}>
+        <main className={`min-w-0 w-full max-w-full flex-1 overflow-x-hidden ${fullWidthMain ? "px-0 py-0" : "py-5"}`}>
+          <div className={`mx-auto min-w-0 w-full max-w-full ${fullWidthMain ? "" : `${VYRON_MAX_WIDTH} ${VYRON_PAGE_PADDING}`}`}>
             {!hidePageHeader ? (
-              <section className="relative mb-7 overflow-hidden rounded-[2rem] border border-violet-100 bg-white p-7 shadow-[0_18px_60px_rgba(76,29,149,0.07)]">
-                <div className="pointer-events-none absolute right-12 top-8 text-2xl text-fuchsia-500">✦</div>
-                <div className="pointer-events-none absolute left-32 top-5 text-lg text-amber-400">✧</div>
-                <h1 className="relative text-4xl font-black tracking-[-0.04em] text-slate-950 md:text-6xl">{title}</h1>
-                {subtitle && <p className="relative mt-3 max-w-4xl text-base font-black uppercase tracking-[0.12em] text-violet-700">{subtitle}</p>}
+              <section className={M.shellPageHeader}>
+                <h1 className={`relative break-words text-3xl text-balance md:text-4xl ${M.heading}`}>{title}</h1>
+                {subtitle && (
+                  <p className={`relative mt-2 max-w-4xl break-words text-sm font-semibold uppercase tracking-[0.1em] ${M.muted}`}>
+                    {subtitle}
+                  </p>
+                )}
               </section>
             ) : null}
-            <ActiveWorkspaceGuard />
-            <div className={`flex min-w-0 flex-col ${fullWidthMain ? "" : "gap-6"}`}>{children}</div>
+            <div className={`flex min-w-0 w-full max-w-full flex-col ${fullWidthMain ? "" : "gap-4"}`}>
+              {accessDenied ? (
+                <WorkspaceAccessDenied pathname={accessDenied.pathname} permission={accessDenied.permission} />
+              ) : blockedModule && activeClient ? (
+                <ModuleUpgradeNotice packageName={activeClient.packageName} moduleKey={blockedModule} />
+              ) : (
+                children
+              )}
+            </div>
           </div>
         </main>
       </div>

@@ -5,7 +5,7 @@ import { getApprovalMatrix } from "@/lib/vyron-enterprise-approval-matrix";
 export default async function ApprovalMatrixPage() {
   const data = await getApprovalMatrix();
   return (
-    <VyronCostShell title="Approval Matrix" subtitle="PO · INVOICES · INVENTORY · PRODUCTION · RECOVERY">
+    <VyronCostShell hidePageHeader title="Approval Matrix" subtitle="PO · INVOICES · INVENTORY · PRODUCTION · RECOVERY">
       <ApprovalMatrixClient data={data} />
     </VyronCostShell>
   );

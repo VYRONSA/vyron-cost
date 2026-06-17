@@ -7,8 +7,7 @@ export default async function AiCfoCommandCentrePage() {
   const data = await getAiFinancialIntelligence();
 
   return (
-    <VyronCostShell
-      title="AI CFO Command Centre"
+    <VyronCostShell hidePageHeader title="AI CFO Command Centre"
       subtitle="VYRON INTELLIGENCE · FINANCIAL HEALTH · LEAKAGE · NARRATIVES · ALERTS"
     >
       <div className="mb-6 flex flex-wrap gap-2">

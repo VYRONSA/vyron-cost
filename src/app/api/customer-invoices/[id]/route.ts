@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCustomerInvoice, updateCustomerInvoiceStatus } from "@/lib/vyron-customer-invoices";
+import {
+  deleteCustomerInvoice,
+  getCustomerInvoice,
+  updateCustomerInvoiceStatus,
+} from "@/lib/vyron-customer-invoices";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 
@@ -14,11 +23,14 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   try {
-    const loaded = await getCustomerInvoice(supabase, id);
+    await requireWorkspacePermission("invoices.view");
+    const companyId = await resolveApiCompanyId();
+    if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
+    const loaded = await getCustomerInvoice(supabase, id, companyId);
     if (!loaded) return NextResponse.json({ ok: false, error: "Not found." }, { status: 404 });
     return NextResponse.json({ ok: true, ...loaded });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Load failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Load failed.");
   }
 }
 
@@ -31,28 +43,54 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   const body = await request.json().catch(() => ({}));
   try {
+    const companyId = await resolveApiCompanyId();
+    if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
+
     if (body.action === "approve") {
-      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Approved");
+      await requireWorkspacePermission("invoices.reverse");
+      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Approved", companyId);
       return NextResponse.json({ ok: true, invoice });
     }
     if (body.action === "send") {
-      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Sent");
+      await requireWorkspacePermission("invoices.email");
+      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Sent", companyId);
       return NextResponse.json({ ok: true, invoice });
     }
     if (body.action === "paid") {
-      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Paid");
+      await requireWorkspacePermission("invoices.create");
+      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Paid", companyId);
       return NextResponse.json({ ok: true, invoice });
     }
     if (body.action === "cancel") {
-      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Cancelled");
+      await requireWorkspacePermission("invoices.create");
+      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Cancelled", companyId);
       return NextResponse.json({ ok: true, invoice });
     }
     if (body.status) {
-      const invoice = await updateCustomerInvoiceStatus(supabase, id, body.status);
+      await requireWorkspacePermission("invoices.create");
+      const invoice = await updateCustomerInvoiceStatus(supabase, id, body.status, companyId);
       return NextResponse.json({ ok: true, invoice });
     }
     return NextResponse.json({ ok: false, error: "Unknown action." }, { status: 400 });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Update failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Update failed.");
+  }
+}
+
+export async function DELETE(_request: NextRequest, context: RouteContext) {
+  const { id } = await context.params;
+  if (!isSupabaseServiceRoleConfigured()) {
+    return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
+  }
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
+  try {
+    await requireWorkspacePermission("invoices.reverse");
+    const companyId = await resolveApiCompanyId();
+    if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
+    await deleteCustomerInvoice(supabase, companyId, id);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return workspaceAccessErrorResponse(error, "Delete failed.");
   }
 }

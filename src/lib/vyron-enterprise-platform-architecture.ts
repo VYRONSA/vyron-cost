@@ -779,7 +779,7 @@ export async function getEnterprisePlatformPayload(companyId = VYRON_DEFAULT_TEN
     { productKey: "vyron_cost", productName: "VYRON COST", status: "active", sharedEntities: ["suppliers", "inventory", "purchasing", "costing", "recoveries", "audit"], description: "Operational costing platform" },
     { productKey: "vyron_finance", productName: "VYRON FINANCE", status: "active", sharedEntities: ["companies", "permissions", "audit", "financials"], description: "Finance intelligence layer" },
     { productKey: "vyron_pay", productName: "VYRON PAY", status: "planned", sharedEntities: ["users", "companies", "audit", "notifications"], description: "Payments" },
-    { productKey: "vyron_core", productName: "VYRON CORE", status: "planned", sharedEntities: ["users", "permissions", "companies", "ai"], description: "Identity and platform" },
+    { productKey: "vyron_core", productName: "VYRON CORE", status: "active", sharedEntities: ["users", "permissions", "companies", "ai", "workforce"], description: "Workforce digital twin and executive command centre" },
     { productKey: "vyron_maint", productName: "VYRON MAINT", status: "planned", sharedEntities: ["users", "companies", "notifications"], description: "Maintenance" },
     { productKey: "vyron_farm", productName: "VYRON FARM", status: "planned", sharedEntities: ["users", "companies", "inventory"], description: "Farm operations" },
   ];

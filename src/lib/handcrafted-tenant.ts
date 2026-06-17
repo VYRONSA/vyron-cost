@@ -84,6 +84,11 @@ export function shouldUseHandcraftedData() {
   return isHandcraftedTenantEnabled() && isHandcraftedDataReady();
 }
 
+/** @deprecated Use shouldUseWorkspaceDemoData() from vyron-workspace-context for scoped data. */
+export function shouldUseHandcraftedDataSync() {
+  return shouldUseHandcraftedData();
+}
+
 export function getHandcraftedCompany() {
   const tenant = loadHandcraftedTenant();
   return tenant.company ?? HANDCRAFTED_COMPANY;

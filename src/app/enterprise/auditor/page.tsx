@@ -3,7 +3,7 @@ import VyronCostShell from "@/components/VyronCostShell";
 
 export default function AuditorWorkspacePage() {
   return (
-    <VyronCostShell title="Auditor Workspace" subtitle="READ-ONLY · SEARCH · AUDIT TRAIL ACCESS">
+    <VyronCostShell hidePageHeader title="Auditor Workspace" subtitle="READ-ONLY · SEARCH · AUDIT TRAIL ACCESS">
       <AuditorWorkspaceClient />
     </VyronCostShell>
   );

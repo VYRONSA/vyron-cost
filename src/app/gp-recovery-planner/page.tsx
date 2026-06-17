@@ -6,8 +6,7 @@ export default async function GPRecoveryPlannerPage() {
   const products = await getProductIntelligence();
 
   return (
-    <VyronCostShell
-      title="GP Recovery Planner"
+    <VyronCostShell hidePageHeader title="GP Recovery Planner"
       subtitle="PRICE RECOVERY · COST RECOVERY · MONTHLY GP PLAN"
     >
       <GPRecoveryPlannerClient products={products} />

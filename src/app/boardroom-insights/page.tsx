@@ -7,7 +7,7 @@ export default async function BoardroomInsightsPage() {
   const { boardroom } = await getAiFinancialIntelligence();
 
   return (
-    <VyronCostShell title="Boardroom Insights" subtitle="TOP RISKS · OPPORTUNITIES · SAVINGS · STRATEGIC ACTIONS">
+    <VyronCostShell hidePageHeader title="Boardroom Insights" subtitle="TOP RISKS · OPPORTUNITIES · SAVINGS · STRATEGIC ACTIONS">
       <Link href="/ai-cfo-command-centre" className="mb-6 inline-block text-sm font-black text-violet-700">
         ← AI CFO Command Centre
       </Link>

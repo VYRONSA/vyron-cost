@@ -2,7 +2,7 @@ import VyronCostAiShell from "@/components/VyronCostAiShell";
 
 export default function DemoDataPage() {
   return (
-    <VyronCostAiShell title="Demo Data" subtitle="Use the supplied SQL seed file to populate a realistic pie company demo.">
+    <VyronCostAiShell hidePageHeader title="Demo Data" subtitle="Use the supplied SQL seed file to populate a realistic pie company demo.">
       <section className="grid gap-5 md:grid-cols-3">
         {[
           ["Suppliers", "Cape Premium Meats, Golden Flour Mills, PackRight Cape"],

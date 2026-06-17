@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
 import {
   findOrCreateStockItem,
   listVyronFinishedGoods,
@@ -7,6 +6,7 @@ import {
   writeInventoryAudit,
   type VyronFinishedGoodRow,
 } from "@/lib/vyron-inventory";
+import { getInvoiceStockPostingStatus } from "@/lib/vyron-invoice-stock-status";
 
 export type CustomerInvoiceStatus = "Draft" | "Approved" | "Posted" | "Sent" | "Paid" | "Cancelled";
 
@@ -34,8 +34,13 @@ export type CustomerInvoiceRow = {
   gp_percentage: number;
   stock_posted: boolean;
   posted_at: string | null;
+  stock_reversed: boolean;
+  stock_reversed_at: string | null;
   notes: string | null;
 };
+
+export type { InvoiceStockPostingStatus } from "@/lib/vyron-invoice-stock-status";
+export { getInvoiceStockPostingStatus } from "@/lib/vyron-invoice-stock-status";
 
 export type CustomerInvoiceLineRow = {
   id: string;
@@ -67,17 +72,50 @@ function computeTotals(lines: CustomerInvoiceLineInput[]) {
   };
 }
 
-export async function listCustomerInvoices(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {
+async function enrichInvoiceLinesFromProductMaster(
+  supabase: SupabaseClient,
+  companyId: string,
+  lines: CustomerInvoiceLineInput[]
+): Promise<CustomerInvoiceLineInput[]> {
+  const productIds = lines.map((line) => line.productId).filter(Boolean) as string[];
+  if (!productIds.length) return lines;
+
+  const { data: products, error } = await supabase
+    .from("vyron_cost_products")
+    .select("id, product_name, selling_price, total_cost")
+    .eq("company_id", companyId)
+    .in("id", productIds);
+  if (error) throw new Error(error.message);
+
+  const byId = new Map((products || []).map((product) => [String(product.id), product]));
+
+  return lines.map((line) => {
+    if (!line.productId) return line;
+    const product = byId.get(line.productId);
+    if (!product) return line;
+    return {
+      ...line,
+      productName: line.productName || String(product.product_name || ""),
+      sellingPrice:
+        Number(line.sellingPrice) > 0 ? Number(line.sellingPrice) : Number(product.selling_price || 0),
+      costPerUnit:
+        Number(line.costPerUnit) > 0 ? Number(line.costPerUnit) : Number(product.total_cost || 0),
+    };
+  });
+}
+
+export async function listCustomerInvoices(supabase: SupabaseClient, companyId: string) {
   const { data, error } = await supabase
     .from("vyron_customer_invoices")
     .select("*")
+    .eq("company_id", companyId)
     .order("invoice_date", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data || []) as CustomerInvoiceRow[];
 }
 
-export async function getCustomerInvoice(supabase: SupabaseClient, id: string) {
+export async function getCustomerInvoice(supabase: SupabaseClient, id: string, companyId?: string) {
   const [{ data: invoice, error }, { data: lines, error: lineError }] = await Promise.all([
     supabase.from("vyron_customer_invoices").select("*").eq("id", id).maybeSingle(),
     supabase.from("vyron_customer_invoice_lines").select("*").eq("invoice_id", id).order("created_at"),
@@ -85,6 +123,7 @@ export async function getCustomerInvoice(supabase: SupabaseClient, id: string) {
   if (error) throw new Error(error.message);
   if (lineError) throw new Error(lineError.message);
   if (!invoice) return null;
+  if (companyId && invoice.company_id && invoice.company_id !== companyId) return null;
   return { invoice: invoice as CustomerInvoiceRow, lines: (lines || []) as CustomerInvoiceLineRow[] };
 }
 
@@ -96,11 +135,41 @@ export async function createCustomerInvoice(
     customerName: string;
     invoiceNumber?: string;
     invoiceDate?: string;
+    dueDate?: string | null;
     notes?: string;
     lines: CustomerInvoiceLineInput[];
   }
 ) {
-  const totals = computeTotals(params.lines);
+  let customerName = params.customerName.trim();
+  if (params.customerId) {
+    const { data: customer, error: customerError } = await supabase
+      .from("vyron_customers")
+      .select("id, customer_name")
+      .eq("id", params.customerId)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    if (customerError) throw new Error(customerError.message);
+    if (!customer) throw new Error("Customer not found for the active company.");
+    if (!customerName) customerName = String(customer.customer_name || "").trim();
+  }
+
+  const enrichedLines = await enrichInvoiceLinesFromProductMaster(supabase, companyId, params.lines);
+
+  for (const line of enrichedLines) {
+    if (!line.productId) continue;
+    const { data: product, error: productError } = await supabase
+      .from("vyron_cost_products")
+      .select("id")
+      .eq("id", line.productId)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    if (productError) throw new Error(productError.message);
+    if (!product) {
+      throw new Error(`Product "${line.productName}" not found for the active company.`);
+    }
+  }
+
+  const totals = computeTotals(enrichedLines);
   const invoiceNumber =
     params.invoiceNumber ||
     `SI-${String(Date.now()).slice(-8)}`;
@@ -110,9 +179,10 @@ export async function createCustomerInvoice(
     .insert({
       company_id: companyId,
       customer_id: params.customerId || null,
-      customer_name: params.customerName,
+      customer_name: customerName || params.customerName,
       invoice_number: invoiceNumber,
       invoice_date: params.invoiceDate || new Date().toISOString().slice(0, 10),
+      due_date: params.dueDate || null,
       status: "Draft",
       notes: params.notes || null,
       ...totals,
@@ -121,7 +191,7 @@ export async function createCustomerInvoice(
     .single();
   if (error) throw new Error(error.message);
 
-  const lineRows = params.lines.map((line) => ({
+  const lineRows = enrichedLines.map((line) => ({
     invoice_id: invoice.id,
     product_id: line.productId || null,
     product_name: line.productName,
@@ -138,29 +208,217 @@ export async function createCustomerInvoice(
 export async function updateCustomerInvoiceStatus(
   supabase: SupabaseClient,
   id: string,
-  status: CustomerInvoiceStatus
+  status: CustomerInvoiceStatus,
+  companyId?: string
 ) {
-  const { data, error } = await supabase
+  let query = supabase
     .from("vyron_customer_invoices")
     .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select("*")
-    .single();
+    .eq("id", id);
+  if (companyId) query = query.eq("company_id", companyId);
+
+  const { data, error } = await query.select("*").single();
   if (error) throw new Error(error.message);
   return data as CustomerInvoiceRow;
 }
 
-function resolveFinishedGood(
+export async function deleteCustomerInvoice(supabase: SupabaseClient, companyId: string, id: string) {
+  const loaded = await getCustomerInvoice(supabase, id, companyId);
+  if (!loaded) throw new Error("Invoice not found.");
+  if (loaded.invoice.stock_posted && !loaded.invoice.stock_reversed) {
+    throw new Error("Posted invoice stock must be reversed before delete.");
+  }
+
+  const { error: linesError } = await supabase
+    .from("vyron_customer_invoice_lines")
+    .delete()
+    .eq("invoice_id", id);
+  if (linesError) throw new Error(linesError.message);
+
+  const { error } = await supabase
+    .from("vyron_customer_invoices")
+    .delete()
+    .eq("id", id)
+    .eq("company_id", companyId);
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
+
+async function resolveProductMasterFromFinishedGood(
+  supabase: SupabaseClient,
+  companyId: string,
+  fg: VyronFinishedGoodRow
+) {
+  const fgName = fg.product_name.toLowerCase();
+  const fgCode = fg.product_code.toLowerCase();
+  const { data: products, error } = await supabase
+    .from("vyron_cost_products")
+    .select("id, product_name, sku, total_cost")
+    .eq("company_id", companyId);
+  if (error) throw new Error(error.message);
+  return (
+    (products || []).find((product) => {
+      const name = String(product.product_name || "").toLowerCase();
+      const sku = String(product.sku || "").toLowerCase();
+      return name === fgName || (fgCode && (sku === fgCode || name === fgCode));
+    }) || null
+  );
+}
+
+type ResolvedInvoiceProduct = {
+  productId: string;
+  productName: string;
+  productCode: string;
+  unitCost: number;
+  legacyFinishedGoodId?: string;
+};
+
+async function resolveProductIdForInvoiceLine(
+  supabase: SupabaseClient,
+  companyId: string,
   finishedGoods: VyronFinishedGoodRow[],
   line: CustomerInvoiceLineRow
-): VyronFinishedGoodRow | undefined {
+): Promise<ResolvedInvoiceProduct | null> {
   if (line.product_id) {
-    return finishedGoods.find((item) => item.id === line.product_id);
+    const { data: product } = await supabase
+      .from("vyron_cost_products")
+      .select("id, product_name, sku, total_cost")
+      .eq("id", line.product_id)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    if (product) {
+      return {
+        productId: String(product.id),
+        productName: String(product.product_name || line.product_name),
+        productCode: String(product.sku || `PRD-${String(product.id).slice(0, 8).toUpperCase()}`),
+        unitCost: Number(line.cost_per_unit || product.total_cost || 0),
+      };
+    }
+
+    const byFinishedGoodId = finishedGoods.find((item) => item.id === line.product_id);
+    if (byFinishedGoodId) {
+      const matchedProduct = await resolveProductMasterFromFinishedGood(supabase, companyId, byFinishedGoodId);
+      if (matchedProduct) {
+        return {
+          productId: String(matchedProduct.id),
+          productName: String(matchedProduct.product_name || line.product_name),
+          productCode: String(
+            matchedProduct.sku || `PRD-${String(matchedProduct.id).slice(0, 8).toUpperCase()}`
+          ),
+          unitCost: Number(line.cost_per_unit || matchedProduct.total_cost || byFinishedGoodId.latest_actual_cost || 0),
+          legacyFinishedGoodId: byFinishedGoodId.id,
+        };
+      }
+    }
   }
+
+  const lineName = line.product_name.toLowerCase();
+  const { data: products, error } = await supabase
+    .from("vyron_cost_products")
+    .select("id, product_name, sku, total_cost")
+    .eq("company_id", companyId);
+  if (error) throw new Error(error.message);
+  const byName = (products || []).find((product) => {
+    const name = String(product.product_name || "").toLowerCase();
+    const sku = String(product.sku || "").toLowerCase();
+    return name === lineName || (sku && sku === lineName);
+  });
+  if (byName) {
+    return {
+      productId: String(byName.id),
+      productName: String(byName.product_name || line.product_name),
+      productCode: String(byName.sku || `PRD-${String(byName.id).slice(0, 8).toUpperCase()}`),
+      unitCost: Number(line.cost_per_unit || byName.total_cost || 0),
+    };
+  }
+
+  const byFinishedGoodName = finishedGoods.find(
+    (item) =>
+      item.product_name.toLowerCase() === lineName || item.product_code.toLowerCase() === lineName
+  );
+  if (!byFinishedGoodName) return null;
+
+  const matchedProduct = await resolveProductMasterFromFinishedGood(supabase, companyId, byFinishedGoodName);
+  if (!matchedProduct) return null;
+
+  return {
+    productId: String(matchedProduct.id),
+    productName: String(matchedProduct.product_name || line.product_name),
+    productCode: String(matchedProduct.sku || `PRD-${String(matchedProduct.id).slice(0, 8).toUpperCase()}`),
+    unitCost: Number(line.cost_per_unit || matchedProduct.total_cost || byFinishedGoodName.latest_actual_cost || 0),
+    legacyFinishedGoodId: byFinishedGoodName.id,
+  };
+}
+
+async function getFinishedGoodsStockQty(
+  supabase: SupabaseClient,
+  companyId: string,
+  productId: string,
+  legacyFinishedGoodId?: string | null
+): Promise<{ qty: number; missingStockItem: boolean }> {
+  const { data: primary } = await supabase
+    .from("vyron_cost_stock_items")
+    .select("qty_on_hand")
+    .eq("company_id", companyId)
+    .eq("entity_type", "finished_goods")
+    .eq("entity_id", productId)
+    .maybeSingle();
+
+  let qty = Number(primary?.qty_on_hand ?? 0);
+  let missingStockItem = !primary;
+
+  if (legacyFinishedGoodId && legacyFinishedGoodId !== productId) {
+    const { data: legacy } = await supabase
+      .from("vyron_cost_stock_items")
+      .select("qty_on_hand")
+      .eq("company_id", companyId)
+      .eq("entity_type", "finished_goods")
+      .eq("entity_id", legacyFinishedGoodId)
+      .maybeSingle();
+    if (legacy) {
+      qty += Number(legacy.qty_on_hand ?? 0);
+      missingStockItem = false;
+    }
+  }
+
+  return { qty, missingStockItem: missingStockItem && qty <= 0 };
+}
+
+/** @deprecated Use resolveProductIdForInvoiceLine for stock operations. */
+async function resolveFinishedGood(
+  supabase: SupabaseClient,
+  companyId: string,
+  finishedGoods: VyronFinishedGoodRow[],
+  line: CustomerInvoiceLineRow
+): Promise<VyronFinishedGoodRow | undefined> {
+  if (line.product_id) {
+    const byFinishedGoodId = finishedGoods.find((item) => item.id === line.product_id);
+    if (byFinishedGoodId) return byFinishedGoodId;
+
+    const { data: product } = await supabase
+      .from("vyron_cost_products")
+      .select("product_name, sku")
+      .eq("id", line.product_id)
+      .eq("company_id", companyId)
+      .maybeSingle();
+
+    if (product) {
+      const productName = String(product.product_name || "").toLowerCase();
+      const sku = String(product.sku || "").toLowerCase();
+      const byProductMaster = finishedGoods.find((item) => {
+        const fgName = item.product_name.toLowerCase();
+        const fgCode = item.product_code.toLowerCase();
+        return fgName === productName || (sku && (fgCode === sku || fgName === sku));
+      });
+      if (byProductMaster) return byProductMaster;
+    }
+  }
+
+  const lineName = line.product_name.toLowerCase();
   return finishedGoods.find(
     (item) =>
-      item.product_name.toLowerCase() === line.product_name.toLowerCase() ||
-      item.product_code.toLowerCase() === line.product_name.toLowerCase()
+      item.product_name.toLowerCase() === lineName ||
+      item.product_code.toLowerCase() === lineName
   );
 }
 
@@ -168,9 +426,13 @@ async function reduceFinishedGoodStock(
   supabase: SupabaseClient,
   fg: VyronFinishedGoodRow,
   qtyOut: number,
-  unitCost: number
+  unitCost: number,
+  allowNegative = false
 ) {
   const currentStock = Number(fg.current_stock || 0);
+  if (!allowNegative && qtyOut > currentStock) {
+    throw new Error(`Insufficient finished goods stock for ${fg.product_name}: available ${currentStock}, required ${qtyOut}.`);
+  }
   const nextStock = round2(currentStock - qtyOut);
   const nextValue = round2(Math.max(0, nextStock) * unitCost);
   const { error } = await supabase
@@ -183,6 +445,27 @@ async function reduceFinishedGoodStock(
     .eq("id", fg.id);
   if (error) throw new Error(error.message);
   return { previousStock: currentStock, nextStock, negative: nextStock < 0 };
+}
+
+async function restoreFinishedGoodStock(
+  supabase: SupabaseClient,
+  fg: VyronFinishedGoodRow,
+  qtyIn: number,
+  unitCost: number
+) {
+  const currentStock = Number(fg.current_stock || 0);
+  const nextStock = round2(currentStock + qtyIn);
+  const nextValue = round2(nextStock * unitCost);
+  const { error } = await supabase
+    .from("vyron_finished_goods")
+    .update({
+      current_stock: nextStock,
+      stock_value: nextValue,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", fg.id);
+  if (error) throw new Error(error.message);
+  return { previousStock: currentStock, nextStock };
 }
 
 async function insertSaleStockMovement(
@@ -213,6 +496,84 @@ async function insertSaleStockMovement(
     notes: "Customer Invoice",
   });
   if (error) throw new Error(error.message);
+}
+
+async function insertSaleReversalStockMovement(
+  supabase: SupabaseClient,
+  companyId: string,
+  params: {
+    invoiceId: string;
+    invoiceNumber: string;
+    invoiceDate: string;
+    productId: string;
+    productName: string;
+    quantityIn: number;
+    unitCost: number;
+  }
+) {
+  const { error } = await supabase.from("vyron_stock_movements").insert({
+    company_id: companyId,
+    movement_date: new Date().toISOString().slice(0, 10),
+    item_type: "finished_good",
+    item_id: params.productId,
+    item_name: params.productName,
+    movement_type: "SALE_REVERSAL",
+    reference_number: params.invoiceNumber,
+    quantity_in: params.quantityIn,
+    quantity_out: 0,
+    unit_cost: params.unitCost,
+    related_document_id: params.invoiceId,
+    notes: "Customer Invoice Reversal",
+  });
+  if (error) throw new Error(error.message);
+}
+
+export type InvoiceStockShortage = {
+  productName: string;
+  available: number;
+  required: number;
+  missingStockItem: boolean;
+};
+
+export async function checkInvoiceStockAvailability(
+  supabase: SupabaseClient,
+  companyId: string,
+  lines: CustomerInvoiceLineRow[]
+): Promise<InvoiceStockShortage[]> {
+  const finishedGoods = await listVyronFinishedGoods(supabase, companyId);
+  const shortages: InvoiceStockShortage[] = [];
+
+  for (const line of lines) {
+    const qty = Number(line.quantity || 0);
+    if (qty <= 0) continue;
+    const resolved = await resolveProductIdForInvoiceLine(supabase, companyId, finishedGoods, line);
+    if (!resolved) {
+      shortages.push({
+        productName: line.product_name,
+        available: 0,
+        required: qty,
+        missingStockItem: true,
+      });
+      continue;
+    }
+
+    const { qty: available, missingStockItem } = await getFinishedGoodsStockQty(
+      supabase,
+      companyId,
+      resolved.productId,
+      resolved.legacyFinishedGoodId
+    );
+    if (qty > available) {
+      shortages.push({
+        productName: line.product_name,
+        available,
+        required: qty,
+        missingStockItem,
+      });
+    }
+  }
+
+  return shortages;
 }
 
 async function updateCustomerSalesHistory(
@@ -252,6 +613,7 @@ async function queueXeroCustomerInvoice(
   const { data: existing } = await supabase
     .from("vyron_xero_sync_queue")
     .select("id")
+    .eq("company_id", companyId)
     .eq("reference_number", invoice.invoice_number)
     .eq("entity_type", "Customer Invoice")
     .maybeSingle();
@@ -279,47 +641,71 @@ async function queueXeroCustomerInvoice(
   return data;
 }
 
-export async function postCustomerInvoice(
+export async function postCustomerInvoiceStock(
   supabase: SupabaseClient,
   companyId: string,
   invoiceId: string,
-  actor = "system"
+  options: { actor?: string; allowOverride?: boolean; updateInvoiceStatus?: boolean } = {}
 ) {
-  const loaded = await getCustomerInvoice(supabase, invoiceId);
+  const actor = options.actor || "system";
+  const loaded = await getCustomerInvoice(supabase, invoiceId, companyId);
   if (!loaded) throw new Error("Invoice not found.");
   const { invoice, lines } = loaded;
 
-  if (invoice.stock_posted) {
-    return { invoice, warnings: ["Invoice already posted. Stock was not deducted again."], alreadyPosted: true };
+  if (invoice.stock_posted && !invoice.stock_reversed) {
+    return {
+      invoice,
+      warnings: ["Invoice stock already posted."],
+      alreadyPosted: true,
+      stockPostingStatus: getInvoiceStockPostingStatus(invoice),
+    };
+  }
+
+  if (invoice.stock_reversed) {
+    throw new Error("Reversed invoice stock cannot be posted again without creating a new invoice.");
   }
 
   if (["Cancelled"].includes(invoice.status)) {
     throw new Error("Cancelled invoices cannot be posted.");
   }
 
+  const shortages = await checkInvoiceStockAvailability(supabase, companyId, lines);
+  if (shortages.length && !options.allowOverride) {
+    const detail = shortages
+      .map((item) =>
+        item.missingStockItem
+          ? `${item.productName}: no stock item linked`
+          : `${item.productName}: available ${item.available}, required ${item.required}`
+      )
+      .join("; ");
+    throw new Error(`Insufficient stock. ${detail}`);
+  }
+
   const finishedGoods = await listVyronFinishedGoods(supabase, companyId);
-  const warnings: string[] = [];
+  const warnings: string[] = shortages.map((item) =>
+    item.missingStockItem
+      ? `${item.productName}: no finished good / stock item linked.`
+      : `${item.productName}: insufficient stock (available ${item.available}, required ${item.required}).`
+  );
 
   for (const line of lines) {
     const qty = Number(line.quantity || 0);
     if (qty <= 0) continue;
-    const fg = resolveFinishedGood(finishedGoods, line);
-    if (!fg) {
-      warnings.push(`No finished good found for ${line.product_name}. Stock movement skipped.`);
+    const resolved = await resolveProductIdForInvoiceLine(supabase, companyId, finishedGoods, line);
+    if (!resolved) {
+      if (options.allowOverride) {
+        warnings.push(`No product / finished good found for ${line.product_name}. Stock movement skipped.`);
+      }
       continue;
     }
 
-    const unitCost = Number(line.cost_per_unit || fg.latest_actual_cost || fg.standard_cost || 0);
-    const stockResult = await reduceFinishedGoodStock(supabase, fg, qty, unitCost);
-    if (stockResult.negative) {
-      warnings.push(`${line.product_name}: stock went negative (${stockResult.nextStock}).`);
-    }
+    const unitCost = Number(line.cost_per_unit || resolved.unitCost || 0);
 
     await insertSaleStockMovement(supabase, companyId, {
       invoiceId: invoice.id,
       invoiceNumber: invoice.invoice_number,
       invoiceDate: invoice.invoice_date,
-      productId: fg.id,
+      productId: resolved.productId,
       productName: line.product_name,
       quantityOut: qty,
       unitCost,
@@ -327,10 +713,10 @@ export async function postCustomerInvoice(
 
     const stockItem = await findOrCreateStockItem(supabase, companyId, {
       entityType: "finished_goods",
-      entityId: fg.id,
-      itemCode: fg.product_code,
-      description: fg.product_name,
-      category: fg.category || "Finished Goods",
+      entityId: resolved.productId,
+      itemCode: resolved.productCode,
+      description: resolved.productName,
+      category: "Finished Goods",
       unit: "units",
       currentCost: unitCost,
     });
@@ -345,6 +731,8 @@ export async function postCustomerInvoice(
       referenceId: invoice.id,
       referenceLabel: invoice.invoice_number,
       actor,
+      movementDate: invoice.invoice_date,
+      allowNegative: Boolean(options.allowOverride),
       metadata: { reason: "Customer Invoice", productName: line.product_name },
     });
 
@@ -359,32 +747,317 @@ export async function postCustomerInvoice(
     });
   }
 
-  await updateCustomerSalesHistory(supabase, invoice.customer_id, invoice);
-  await queueXeroCustomerInvoice(supabase, companyId, invoice);
+  if (options.updateInvoiceStatus !== false) {
+    await updateCustomerSalesHistory(supabase, invoice.customer_id, invoice);
+    await queueXeroCustomerInvoice(supabase, companyId, invoice);
+  }
+
+  const patch: Record<string, unknown> = {
+    stock_posted: true,
+    stock_reversed: false,
+    stock_reversed_at: null,
+    posted_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  if (options.updateInvoiceStatus !== false && invoice.status !== "Posted") {
+    patch.status = "Posted";
+  }
 
   const { data: posted, error } = await supabase
     .from("vyron_customer_invoices")
-    .update({
-      status: "Posted",
-      stock_posted: true,
-      posted_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+    .update(patch)
     .eq("id", invoice.id)
+    .eq("company_id", companyId)
     .select("*")
     .single();
   if (error) throw new Error(error.message);
 
-  return { invoice: posted as CustomerInvoiceRow, warnings, alreadyPosted: false };
+  return {
+    invoice: posted as CustomerInvoiceRow,
+    warnings,
+    alreadyPosted: false,
+    stockPostingStatus: getInvoiceStockPostingStatus(posted as CustomerInvoiceRow),
+  };
 }
 
-export async function listCustomersWithHistory(supabase: SupabaseClient) {
-  const { data, error } = await supabase.from("vyron_customers").select("*").order("customer_name");
+export async function reverseCustomerInvoiceStock(
+  supabase: SupabaseClient,
+  companyId: string,
+  invoiceId: string,
+  actor = "system"
+) {
+  const loaded = await getCustomerInvoice(supabase, invoiceId, companyId);
+  if (!loaded) throw new Error("Invoice not found.");
+  const { invoice, lines } = loaded;
+
+  if (invoice.stock_reversed) {
+    return {
+      invoice,
+      warnings: ["Invoice stock already reversed."],
+      alreadyReversed: true,
+      stockPostingStatus: getInvoiceStockPostingStatus(invoice),
+    };
+  }
+
+  if (!invoice.stock_posted) {
+    throw new Error("Invoice stock has not been posted.");
+  }
+
+  const finishedGoods = await listVyronFinishedGoods(supabase, companyId);
+  const { data: saleMovements, error: movementError } = await supabase
+    .from("vyron_cost_stock_ledger")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("reference_type", "customer_invoice")
+    .eq("reference_id", invoice.id)
+    .eq("movement_type", "Customer Sale");
+  if (movementError) throw new Error(movementError.message);
+
+  const movementByStockItem = new Map((saleMovements || []).map((row) => [row.stock_item_id as string, row]));
+
+  for (const line of lines) {
+    const qty = Number(line.quantity || 0);
+    if (qty <= 0) continue;
+    const resolved = await resolveProductIdForInvoiceLine(supabase, companyId, finishedGoods, line);
+    if (!resolved) continue;
+
+    const unitCost = Number(line.cost_per_unit || resolved.unitCost || 0);
+
+    await insertSaleReversalStockMovement(supabase, companyId, {
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoice_number,
+      invoiceDate: invoice.invoice_date,
+      productId: resolved.productId,
+      productName: line.product_name,
+      quantityIn: qty,
+      unitCost,
+    });
+
+    const stockItem = await findOrCreateStockItem(supabase, companyId, {
+      entityType: "finished_goods",
+      entityId: resolved.productId,
+      itemCode: resolved.productCode,
+      description: resolved.productName,
+      category: "Finished Goods",
+      unit: "units",
+      currentCost: unitCost,
+    });
+
+    let sourceMovement = movementByStockItem.get(stockItem.id);
+    if (!sourceMovement && resolved.legacyFinishedGoodId) {
+      const legacyStockItem = await findOrCreateStockItem(supabase, companyId, {
+        entityType: "finished_goods",
+        entityId: resolved.legacyFinishedGoodId,
+        itemCode: resolved.productCode,
+        description: resolved.productName,
+        category: "Finished Goods",
+        unit: "units",
+        currentCost: unitCost,
+      });
+      sourceMovement = movementByStockItem.get(legacyStockItem.id);
+    }
+    const reversalQty = Number(sourceMovement?.quantity_out || qty);
+
+    await postStockMovement(supabase, {
+      companyId,
+      stockItemId: stockItem.id,
+      movementType: "Customer Sale Reversal",
+      quantityIn: reversalQty,
+      unitCost,
+      referenceType: "customer_invoice_reversal",
+      referenceId: invoice.id,
+      referenceLabel: invoice.invoice_number,
+      actor,
+      movementDate: new Date().toISOString(),
+      metadata: { reason: "Customer Invoice Reversal", productName: line.product_name },
+    });
+
+    await writeInventoryAudit(supabase, {
+      companyId,
+      stockItemId: stockItem.id,
+      eventType: "Customer Invoice Reversal",
+      actor,
+      detail: `REVERSAL ${invoice.invoice_number}: ${line.product_name} +${reversalQty}`,
+      referenceType: "customer_invoice_reversal",
+      referenceId: invoice.id,
+    });
+  }
+
+  const { data: reversed, error } = await supabase
+    .from("vyron_customer_invoices")
+    .update({
+      stock_reversed: true,
+      stock_reversed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", invoice.id)
+    .eq("company_id", companyId)
+    .select("*")
+    .single();
   if (error) throw new Error(error.message);
-  return data || [];
+
+  return {
+    invoice: reversed as CustomerInvoiceRow,
+    warnings: [],
+    alreadyReversed: false,
+    stockPostingStatus: getInvoiceStockPostingStatus(reversed as CustomerInvoiceRow),
+  };
 }
 
-export async function listXeroSyncQueue(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {
+export async function postCustomerInvoice(
+  supabase: SupabaseClient,
+  companyId: string,
+  invoiceId: string,
+  actor = "system"
+) {
+  return postCustomerInvoiceStock(supabase, companyId, invoiceId, { actor, updateInvoiceStatus: true });
+}
+
+export type CustomerRow = {
+  id: string;
+  company_id: string | null;
+  customer_name: string;
+  contact_person: string | null;
+  email: string | null;
+  phone: string | null;
+  active: boolean;
+  total_sales: number;
+  last_invoice_date: string | null;
+  invoice_count: number;
+  average_invoice_value: number;
+  category?: string | null;
+  invoice_email?: string | null;
+  terms?: string | null;
+  vat_number?: string | null;
+  status?: string | null;
+};
+
+export async function listCustomersWithHistory(supabase: SupabaseClient, companyId: string) {
+  const { data, error } = await supabase
+    .from("vyron_customers")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("customer_name");
+  if (error) throw new Error(error.message);
+  return (data || []) as CustomerRow[];
+}
+
+export async function createCustomer(
+  supabase: SupabaseClient,
+  companyId: string,
+  input: {
+    customerName: string;
+    category?: string;
+    contactEmail?: string;
+    invoiceEmail?: string;
+    phone?: string;
+    terms?: string;
+    vatNumber?: string;
+    status?: string;
+  }
+) {
+  const { data, error } = await supabase
+    .from("vyron_customers")
+    .insert({
+      company_id: companyId,
+      customer_name: input.customerName.trim(),
+      contact_person: input.category || null,
+      email: input.contactEmail || input.invoiceEmail || null,
+      phone: input.phone || null,
+      active: input.status !== "Inactive",
+      category: input.category || "Customer",
+      invoice_email: input.invoiceEmail || input.contactEmail || null,
+      terms: input.terms || "30 Days",
+      vat_number: input.vatNumber || null,
+      status: input.status || "Active",
+    })
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return data as CustomerRow;
+}
+
+export async function updateCustomer(
+  supabase: SupabaseClient,
+  companyId: string,
+  customerId: string,
+  input: Partial<{
+    customerName: string;
+    category: string;
+    contactEmail: string;
+    invoiceEmail: string;
+    phone: string;
+    terms: string;
+    vatNumber: string;
+    status: string;
+  }>
+) {
+  const patch: Record<string, unknown> = {};
+  if (input.customerName !== undefined) patch.customer_name = input.customerName.trim();
+  if (input.category !== undefined) {
+    patch.category = input.category;
+    patch.contact_person = input.category;
+  }
+  if (input.contactEmail !== undefined) patch.email = input.contactEmail;
+  if (input.invoiceEmail !== undefined) patch.invoice_email = input.invoiceEmail;
+  if (input.phone !== undefined) patch.phone = input.phone;
+  if (input.terms !== undefined) patch.terms = input.terms;
+  if (input.vatNumber !== undefined) patch.vat_number = input.vatNumber;
+  if (input.status !== undefined) {
+    patch.status = input.status;
+    patch.active = input.status !== "Inactive";
+  }
+
+  const { data, error } = await supabase
+    .from("vyron_customers")
+    .update(patch)
+    .eq("id", customerId)
+    .eq("company_id", companyId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return data as CustomerRow;
+}
+
+export async function deleteCustomer(supabase: SupabaseClient, companyId: string, customerId: string) {
+  const { data: customer, error: fetchError } = await supabase
+    .from("vyron_customers")
+    .select("id, invoice_count")
+    .eq("id", customerId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (fetchError) throw new Error(fetchError.message);
+  if (!customer) throw new Error("Customer not found.");
+
+  let invoiceCount = Number(customer.invoice_count || 0);
+  if (invoiceCount === 0) {
+    const { count, error: countError } = await supabase
+      .from("vyron_customer_invoices")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("customer_id", customerId);
+    if (countError) throw new Error(countError.message);
+    invoiceCount = count || 0;
+  }
+
+  if (invoiceCount > 0) {
+    const { data, error } = await supabase
+      .from("vyron_customers")
+      .update({ status: "Inactive", active: false })
+      .eq("id", customerId)
+      .eq("company_id", companyId)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return { ok: true as const, archived: true as const, customer: data as CustomerRow };
+  }
+
+  const { error } = await supabase.from("vyron_customers").delete().eq("id", customerId).eq("company_id", companyId);
+  if (error) throw new Error(error.message);
+  return { ok: true as const, archived: false as const };
+}
+
+export async function listXeroSyncQueue(supabase: SupabaseClient, companyId: string) {
   const { data, error } = await supabase
     .from("vyron_xero_sync_queue")
     .select("*")
@@ -397,7 +1070,7 @@ export async function listXeroSyncQueue(supabase: SupabaseClient, companyId = VY
   return rows;
 }
 
-export async function getSalesIntelligence(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {
+export async function getSalesIntelligence(supabase: SupabaseClient, companyId: string) {
   const invoices = await listCustomerInvoices(supabase, companyId);
   const posted = invoices.filter((inv) => inv.stock_posted || ["Posted", "Sent", "Paid"].includes(inv.status));
 
@@ -416,7 +1089,10 @@ export async function getSalesIntelligence(supabase: SupabaseClient, companyId =
     byMonth.set(month, (byMonth.get(month) || 0) + Number(invoice.sales_value || 0));
   }
 
-  const { data: lineRows } = await supabase.from("vyron_customer_invoice_lines").select("*");
+  const invoiceIds = posted.map((inv) => inv.id);
+  const { data: lineRows } = invoiceIds.length
+    ? await supabase.from("vyron_customer_invoice_lines").select("*").in("invoice_id", invoiceIds)
+    : { data: [] };
   for (const line of lineRows || []) {
     const parent = posted.find((inv) => inv.id === line.invoice_id);
     if (!parent) continue;
@@ -448,9 +1124,14 @@ export async function getSalesIntelligence(supabase: SupabaseClient, companyId =
 
 export async function getCustomerStatement(
   supabase: SupabaseClient,
-  params: { customerId?: string; customerName?: string; fromDate?: string; toDate?: string }
+  params: { customerId?: string; customerName?: string; fromDate?: string; toDate?: string; companyId: string }
 ) {
-  let query = supabase.from("vyron_customer_invoices").select("*").order("invoice_date", { ascending: false });
+  if (!params.companyId) throw new Error("No active workspace company.");
+  let query = supabase
+    .from("vyron_customer_invoices")
+    .select("*")
+    .eq("company_id", params.companyId)
+    .order("invoice_date", { ascending: false });
   if (params.customerId) query = query.eq("customer_id", params.customerId);
   if (params.customerName) query = query.eq("customer_name", params.customerName);
   if (params.fromDate) query = query.gte("invoice_date", params.fromDate);

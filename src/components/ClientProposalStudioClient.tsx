@@ -2,6 +2,7 @@
 
 import { Download } from "lucide-react";
 import { LaunchReadinessSnapshot, formatLaunchMoney } from "@/lib/vyron-launch-readiness-data";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 export default function ClientProposalStudioClient({ snapshot }: { snapshot: LaunchReadinessSnapshot }) {
   function downloadProposal() {
@@ -27,30 +28,38 @@ export default function ClientProposalStudioClient({ snapshot }: { snapshot: Lau
   }
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[1fr_0.75fr]">
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <h2 className="text-3xl font-black text-[#07110d]">Client Proposal</h2>
-        <div className="mt-5 space-y-4 text-sm font-semibold leading-7 text-slate-600">
-          <p>VYRON COST will help Handcrafted Foods identify product margin leakage, supplier price movement, invoice risk and recoverable profit.</p>
-          <p>Current demo analysis shows a realistic monthly recovery opportunity of <b>{formatLaunchMoney(snapshot.realisticMonthlyRecovery)}</b>.</p>
-          <p>Annualised, this equals <b>{formatLaunchMoney(snapshot.realisticMonthlyRecovery * 12)}</b> in potential recoverable value.</p>
-        </div>
-      </div>
+    <VyronPremiumPageShell
+      config={{
+        title: "Client Proposal Studio",
+        subtitle: "Premium VYRON COST workflow for client proposal studio.",
+        formulas: ["GP % = (Price - Cost) / Price"],
+      }}
+    >
+      <section className="grid gap-6 xl:grid-cols-[1fr_0.75fr]">
+            <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+              <h2 className="text-3xl font-black text-[#F8FAFC]">Client Proposal</h2>
+              <div className="mt-5 space-y-4 text-sm font-semibold leading-7 text-slate-600">
+                <p>VYRON COST will help Handcrafted Foods identify product margin leakage, supplier price movement, invoice risk and recoverable profit.</p>
+                <p>Current demo analysis shows a realistic monthly recovery opportunity of <b>{formatLaunchMoney(snapshot.realisticMonthlyRecovery)}</b>.</p>
+                <p>Annualised, this equals <b>{formatLaunchMoney(snapshot.realisticMonthlyRecovery * 12)}</b> in potential recoverable value.</p>
+              </div>
+            </div>
 
-      <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-        <h2 className="text-2xl font-black">Proposal Export</h2>
-        <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
-          Download a simple proposal summary you can send after the demo.
-        </p>
-        <button
-          type="button"
-          onClick={downloadProposal}
-          className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-emerald-400 px-5 py-3 text-sm font-black text-[#07110d]"
-        >
-          <Download size={17} />
-          Download proposal
-        </button>
-      </div>
-    </section>
+            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+              <h2 className="text-2xl font-black">Proposal Export</h2>
+              <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
+                Download a simple proposal summary you can send after the demo.
+              </p>
+              <button
+                type="button"
+                onClick={downloadProposal}
+                className="mt-6 inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]"
+              >
+                <Download size={17} />
+                Download proposal
+              </button>
+            </div>
+          </section>
+    </VyronPremiumPageShell>
   );
 }

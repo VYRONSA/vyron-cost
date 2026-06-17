@@ -9,7 +9,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   if (!product) {
     return (
-      <VyronCostAiShell title="Product Not Found" subtitle="This product could not be loaded.">
+      <VyronCostAiShell hidePageHeader title="Product Not Found" subtitle="This product could not be loaded.">
         <div className="rounded-[2rem] bg-white p-8 font-bold text-slate-600">Product not found.</div>
       </VyronCostAiShell>
     );
@@ -22,14 +22,14 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const suggestedPrice = Number(product.suggested_selling_price || calcSuggestedPrice(cost, targetGp));
 
   return (
-    <VyronCostAiShell title={product.product_name} subtitle="Product detail, linked BOM, cost, selling price and margin status.">
+    <VyronCostAiShell hidePageHeader title={product.product_name} subtitle="Product detail, linked BOM, cost, selling price and margin status.">
       <section className="grid gap-5 md:grid-cols-5">
         {[
           ["BOM Cost", formatMoney(cost), "text-slate-900"],
           ["Selling Price", formatMoney(price), "text-slate-900"],
-          ["Actual GP", `${actualGp.toFixed(1)}%`, actualGp < targetGp ? "text-red-600" : "text-emerald-600"],
+          ["Actual GP", `${actualGp.toFixed(1)}%`, actualGp < targetGp ? "text-red-600" : "text-[#84CC16]"],
           ["Target GP", `${targetGp.toFixed(1)}%`, "text-violet-700"],
-          ["Suggested", formatMoney(suggestedPrice), "text-emerald-600"],
+          ["Suggested", formatMoney(suggestedPrice), "text-[#84CC16]"],
         ].map(([label, value, cls]) => (
           <div key={label} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">{label}</div>

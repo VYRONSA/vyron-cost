@@ -6,8 +6,7 @@ export default async function CustomerPricingImpactPage() {
   const products = await getProductIntelligence();
 
   return (
-    <VyronCostShell
-      title="Customer Pricing Impact"
+    <VyronCostShell hidePageHeader title="Customer Pricing Impact"
       subtitle="SELLING PRICE · CUSTOMER IMPACT · REVENUE RECOVERY"
     >
       <CustomerPricingImpactClient products={products} />

@@ -3,8 +3,7 @@ import VyronCostShell from "@/components/VyronCostShell";
 
 export default function SavingsTrackerPage() {
   return (
-    <VyronCostShell
-      title="Savings Tracker"
+    <VyronCostShell hidePageHeader title="Savings Tracker"
       subtitle="APPROVED SAVINGS · IMPLEMENTED RECOVERY · MONTHLY VALUE"
     >
       <SavingsTrackerClient />

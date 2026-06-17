@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createCustomerInvoice, listCustomerInvoices } from "@/lib/vyron-customer-invoices";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 
@@ -12,10 +16,13 @@ export async function GET() {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   try {
-    const invoices = await listCustomerInvoices(supabase, VYRON_DEFAULT_TENANT_ID);
+    await requireWorkspacePermission("invoices.view");
+    const companyId = await resolveApiCompanyId();
+    if (!companyId) return NextResponse.json({ ok: true, invoices: [] });
+    const invoices = await listCustomerInvoices(supabase, companyId);
     return NextResponse.json({ ok: true, invoices });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "List failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "List failed.");
   }
 }
 
@@ -27,16 +34,20 @@ export async function POST(request: NextRequest) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   const body = await request.json().catch(() => ({}));
   try {
-    const invoice = await createCustomerInvoice(supabase, VYRON_DEFAULT_TENANT_ID, {
+    await requireWorkspacePermission("invoices.create");
+    const companyId = await resolveApiCompanyId();
+    if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
+    const invoice = await createCustomerInvoice(supabase, companyId, {
       customerId: body.customerId || null,
       customerName: String(body.customerName || "Customer"),
       invoiceNumber: body.invoiceNumber || undefined,
       invoiceDate: body.invoiceDate || undefined,
+      dueDate: body.dueDate || body.due_date || undefined,
       notes: body.notes || undefined,
       lines: Array.isArray(body.lines) ? body.lines : [],
     });
     return NextResponse.json({ ok: true, invoice });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Create failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Create failed.");
   }
 }

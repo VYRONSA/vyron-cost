@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { formatCurrency } from "@/lib/vyron-cost/stock-engine";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { VyronPremiumSectionHeading } from "@/components/vyron-premium/VyronPremiumSprint";
 
 type Report = {
   salesByCustomer: Array<{ customer: string; sales: number; invoices: number }>;
@@ -25,11 +27,33 @@ export default function SalesIntelligenceClient() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-        <h2 className="text-2xl font-black text-slate-900">Sales Intelligence</h2>
-        <p className="mt-1 text-sm font-semibold text-slate-500">Sales by customer and product, top performers, invoice trends and monthly sales.</p>
-      </section>
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "customers",
+        badge: "Premium Sales Intelligence",
+        title: "Sales Intelligence Centre",
+        subtitle: "Sales by customer and product, top performers, invoice trends and monthly sales velocity.",
+        outcomes: [
+          "Rank customers and products by sales",
+          "Track monthly sales momentum",
+          "Review invoice trends and status",
+          "Support repricing and account planning",
+        ],
+        formulaTitle: "Sales formulas",
+        formulas: [
+          { label: "Sales Value", formula: "Σ invoice line qty × unit price" },
+          { label: "GP %", formula: "(Sales − Cost) ÷ Sales × 100" },
+          { label: "Monthly Sales", formula: "Σ posted invoices in calendar month" },
+        ],
+        intelligenceTitle: "Sales Intelligence",
+        intelligenceItems: [
+          { label: "Top customers", detail: "Concentration risk — a few customers can dominate margin exposure." },
+          { label: "Product mix", detail: "Top products reveal where production and pricing focus should land." },
+          { label: "Trends", detail: "Invoice trend lines show whether commercial momentum is improving." },
+        ],
+      }}
+    >
+      <VyronPremiumSectionHeading eyebrow="Breakdown" title="Sales by dimension" />
 
       <section className="grid gap-4 md:grid-cols-2">
         <ReportCard title="Sales by Customer" rows={(report?.salesByCustomer || []).map((row) => [row.customer, formatCurrency(row.sales), `${row.invoices} invoices`])} />
@@ -70,7 +94,7 @@ export default function SalesIntelligenceClient() {
           </table>
         </div>
       </section>
-    </div>
+    </VyronPremiumPageShell>
   );
 }
 

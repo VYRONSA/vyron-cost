@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, RotateCcw } from "lucide-react";
 import InvoiceDocumentViewer from "@/components/InvoiceDocumentViewer";
 import { fetchDocumentPreview } from "@/lib/vyron-document-review-client";
 import { priceMovementClass, priceMovementLabel, type PriceMovement } from "@/lib/vyron-price-history";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 type ArchiveDetail = {
   document: Record<string, unknown>;
@@ -124,8 +125,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
             href="/document-intelligence"
             className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-violet-700"
           >
-            <ArrowLeft size={14} />
-            Invoice Archive
+            ← Back
           </Link>
           <h2 className="text-2xl font-black text-slate-950">
             {String(doc.invoice_number || "Invoice")} · {String(doc.supplier_name || "Supplier")}
@@ -145,7 +145,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
         </button>
       </div>
 
-      {message ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800">{message}</p> : null}
+      {message ? <p className="rounded-xl border border-[#A3E635]/25 bg-[#A3E635]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
       {error ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800">{error}</p> : null}
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -255,17 +255,25 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
               {detail.priceHistory.map((row) => {
                 const movement = (row.price_movement as PriceMovement) || "no_change";
                 return (
-                  <tr key={String(row.id)} className="border-t">
-                    <td className="py-2 font-bold">{String(row.entity_name)}</td>
-                    <td className="py-2">R{Number(row.previous_price || 0).toFixed(2)}</td>
-                    <td className="py-2">R{Number(row.new_price || 0).toFixed(2)}</td>
-                    <td className="py-2">
-                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${priceMovementClass(movement)}`}>
-                        {priceMovementLabel(movement)}
-                      </span>
-                    </td>
-                  </tr>
-                );
+    <VyronPremiumPageShell
+      config={{
+        title: "Archive Invoice Detail",
+        subtitle: "Premium VYRON COST workflow for archive invoice detail.",
+        formulas: ["GP % = (Price - Cost) / Price"],
+      }}
+    >
+      <tr key={String(row.id)} className="border-t">
+                          <td className="py-2 font-bold">{String(row.entity_name)}</td>
+                          <td className="py-2">R{Number(row.previous_price || 0).toFixed(2)}</td>
+                          <td className="py-2">R{Number(row.new_price || 0).toFixed(2)}</td>
+                          <td className="py-2">
+                            <span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${priceMovementClass(movement)}`}>
+                              {priceMovementLabel(movement)}
+                            </span>
+                          </td>
+                        </tr>
+    </VyronPremiumPageShell>
+  );
               })}
             </tbody>
           </table>
@@ -371,7 +379,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
                 type="button"
                 disabled={rollingBack}
                 onClick={() => void handleRollback()}
-                className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-black text-white disabled:opacity-60"
+                className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
               >
                 {rollingBack ? "Rolling back…" : "Confirm rollback"}
               </button>

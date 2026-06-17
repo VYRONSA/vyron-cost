@@ -7,6 +7,14 @@ import type {
   CopilotAnswer,
   Explainable,
 } from "@/lib/vyron-autonomous-business-intelligence";
+import { AutonomousPremiumShell } from "@/components/autonomous/AutonomousPremiumShell";
+import { VYRON_BTN, VYRON_STATUS, VYRON_SURFACE, VYRON_TABLE } from "@/components/vyron-ui";
+
+const BI_CARD = `${VYRON_SURFACE.dark} p-5 shadow-[0_2px_16px_rgba(0,0,0,0.14)]`;
+const BI_CARD_LG = `${VYRON_SURFACE.dark} p-6 shadow-[0_2px_16px_rgba(0,0,0,0.14)]`;
+const BI_NAV = `${VYRON_BTN.secondary} px-3 py-2 text-xs font-black`;
+const BI_HERO = `${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#1e1635] via-[#252040] to-[#1a1033] p-8`;
+const BI_SECTION = "text-xl font-black text-[#F8FAFC]";
 
 export function money(n: number) {
   return `R${Number(n || 0).toLocaleString("en-ZA", { minimumFractionDigits: 0 })}`;
@@ -14,7 +22,7 @@ export function money(n: number) {
 
 export function ExplainBlock({ e }: { e: Explainable }) {
   return (
-    <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs font-bold text-slate-600">
+    <div className="mt-3 rounded-xl border border-white/10 bg-[#1e1635] p-3 text-xs font-bold text-[#94A3B8]">
       <div>Formula: {e.formula}</div>
       <div className="mt-1">Confidence: {e.confidence}%</div>
     </div>
@@ -39,7 +47,7 @@ export function AutonomousNav() {
   return (
     <nav className="mb-8 flex flex-wrap gap-2">
       {links.map(([href, label]) => (
-        <Link key={href} href={href} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black hover:bg-violet-50">
+        <Link key={href} href={href} className={BI_NAV}>
           {label}
         </Link>
       ))}
@@ -48,37 +56,50 @@ export function AutonomousNav() {
 }
 
 export function CommandCentreClient({ data }: { data: AutonomousBusinessIntelligencePayload }) {
-  const statusColor = { healthy: "border-emerald-200 bg-emerald-50", watch: "border-amber-200 bg-amber-50", critical: "border-red-200 bg-red-50" };
+  const statusColor = {
+    healthy: `border-2 ${VYRON_STATUS.lime}`,
+    watch: `border-2 ${VYRON_STATUS.warning}`,
+    critical: "border-2 border-red-400/30 bg-red-500/10",
+  };
   return (
-    <section className="grid gap-6">
-      <div className="rounded-[2rem] bg-slate-950 p-8 text-white">
-        <div className="text-xs font-black uppercase text-violet-300">Business Health</div>
-        <div className="mt-2 text-6xl font-black">{data.businessHealth.overallScore}</div>
-        <p className="mt-2 text-sm text-slate-400">Autonomous decision-support · all domains on one screen</p>
+    <AutonomousPremiumShell
+      title="VYRON Autonomous Command Centre"
+      subtitle="Autonomous decision-support across finance, inventory, procurement, production and recovery — all domains on one executive screen."
+      outcomes={[
+        "See overall business health score instantly",
+        "Drill into each intelligence domain",
+        "Act on watch and critical signals",
+        "Navigate to root cause and decisions",
+      ]}
+    >
+      <div className={BI_HERO}>
+        <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A3E635]">Business Health</div>
+        <div className="mt-2 text-6xl font-black text-[#F8FAFC]">{data.businessHealth.overallScore}</div>
+        <p className="mt-2 text-sm font-semibold text-[#CBD5E1]">Live autonomous score across all VYRON COST domains</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {data.commandCentre.map((d) => (
           <Link
             key={d.key}
             href={d.href}
-            className={`rounded-[2rem] border-2 p-6 shadow-sm transition hover:shadow-md ${statusColor[d.status]}`}
+            className={`rounded-[2rem] p-6 shadow-sm transition hover:border-violet-400/30 ${statusColor[d.status]}`}
           >
             <div className="flex justify-between">
-              <h3 className="font-black text-slate-900">{d.label}</h3>
-              <span className="text-xs font-black uppercase">{d.status}</span>
+              <h3 className="font-black text-[#F8FAFC]">{d.label}</h3>
+              <span className={`text-xs font-black uppercase ${d.status === "healthy" ? "text-[#A3E635]" : d.status === "watch" ? "text-orange-300" : "text-red-300"}`}>{d.status}</span>
             </div>
             <dl className="mt-4 space-y-2 text-sm">
               {d.metrics.map((m) => (
                 <div key={m.label} className="flex justify-between gap-2">
-                  <dt className="font-bold text-slate-600">{m.label}</dt>
-                  <dd className="font-black text-slate-900">{m.value}</dd>
+                  <dt className="font-bold text-[#94A3B8]">{m.label}</dt>
+                  <dd className="font-black text-[#F8FAFC]">{m.value}</dd>
                 </div>
               ))}
             </dl>
           </Link>
         ))}
       </div>
-    </section>
+    </AutonomousPremiumShell>
   );
 }
 
@@ -93,45 +114,64 @@ export function BusinessHealthClient({ health }: { health: AutonomousBusinessInt
     ["Compliance", health.complianceHealth],
   ];
   return (
-    <section className="grid gap-6">
-      <div className="rounded-[2rem] bg-violet-600 p-8 text-white text-center">
-        <div className="text-xs font-black uppercase opacity-80">Overall Business Health</div>
-        <div className="text-7xl font-black">{health.overallScore}</div>
+    <AutonomousPremiumShell
+      title="Business Health Intelligence"
+      subtitle="Financial, inventory, procurement, supplier, production, recovery and compliance health — scored and ranked for action."
+      outcomes={[
+        "Monitor overall business health score",
+        "Compare domain health side by side",
+        "Spot weak domains before they compound",
+        "Drill into early warnings and root causes",
+      ]}
+    >
+      <div className={`${BI_HERO} text-center`}>
+        <div className="text-xs font-black uppercase tracking-[0.18em] text-[#94A3B8]">Overall Business Health</div>
+        <div className="text-7xl font-black text-[#F8FAFC]">{health.overallScore}</div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {items.map(([l, v]) => (
-          <div key={String(l)} className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="text-xs font-black uppercase text-slate-400">{l}</div>
-            <div className="mt-2 text-3xl font-black">{v}</div>
-            <div className="mt-2 h-2 rounded-full bg-slate-100">
-              <div className="h-full rounded-full bg-violet-600" style={{ width: `${v}%` }} />
+          <div key={String(l)} className={BI_CARD}>
+            <div className="text-xs font-black uppercase tracking-[0.12em] text-violet-300">{l}</div>
+            <div className="mt-2 text-3xl font-black text-[#F8FAFC]">{v}</div>
+            <div className="mt-2 h-2 rounded-full bg-[#1e1635]">
+              <div className="h-full rounded-full bg-violet-500" style={{ width: `${v}%` }} />
             </div>
           </div>
         ))}
       </div>
-    </section>
+    </AutonomousPremiumShell>
   );
 }
 
 export function EarlyWarningClient({ warnings }: { warnings: AutonomousBusinessIntelligencePayload["earlyWarnings"] }) {
   const horizons = [30, 90, 365] as const;
   return (
-    <div className="space-y-8">
+    <AutonomousPremiumShell
+      title="Early Warning Intelligence"
+      subtitle="30, 90 and 365-day predictive warnings across margin, stock, procurement and supplier risk."
+      outcomes={[
+        "See projected impact by time horizon",
+        "Prioritise critical warnings first",
+        "Follow explainable confidence scores",
+        "Jump to source pages to act",
+      ]}
+    >
+    <div className="grid gap-8">
       {horizons.map((h) => (
         <section key={h}>
-          <h2 className="text-xl font-black">{h === 30 ? "30 Days" : h === 90 ? "90 Days" : "12 Months"}</h2>
+          <h2 className={BI_SECTION}>{h === 30 ? "30 Days" : h === 90 ? "90 Days" : "12 Months"}</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {warnings
               .filter((w) => w.horizonDays === h)
               .map((w) => (
-                <article key={w.id} className="rounded-2xl bg-white p-5 shadow-sm">
-                  <span className="text-xs font-black uppercase text-red-600">{w.category} · {w.severity}</span>
-                  <h3 className="mt-1 font-black">{w.title}</h3>
-                  <p className="mt-2 text-sm text-slate-600">{w.message}</p>
-                  <p className="mt-2 font-black text-red-700">{money(w.projectedImpact)} impact</p>
+                <article key={w.id} className={BI_CARD}>
+                  <span className="text-xs font-black uppercase text-red-300">{w.category} · {w.severity}</span>
+                  <h3 className="mt-1 font-black text-[#F8FAFC]">{w.title}</h3>
+                  <p className="mt-2 text-sm text-[#CBD5E1]">{w.message}</p>
+                  <p className="mt-2 font-black text-red-300">{money(w.projectedImpact)} impact</p>
                   <ExplainBlock e={w} />
                   {w.href ? (
-                    <Link href={w.href} className="mt-2 inline-block text-xs font-black text-violet-700">
+                    <Link href={w.href} className="mt-2 inline-block text-xs font-black text-violet-300">
                       View →
                     </Link>
                   ) : null}
@@ -141,67 +181,85 @@ export function EarlyWarningClient({ warnings }: { warnings: AutonomousBusinessI
         </section>
       ))}
     </div>
+    </AutonomousPremiumShell>
   );
 }
 
 export function RootCauseClient({ causes }: { causes: AutonomousBusinessIntelligencePayload["rootCauses"] }) {
   return (
-    <div className="space-y-4">
+    <AutonomousPremiumShell
+      title="Root Cause Intelligence"
+      subtitle="What changed, why it changed, where it happened and the financial impact — with recommended actions."
+      outcomes={["Understand KPI movement drivers", "See financial impact per root cause", "Get recommended corrective actions", "Review explainable confidence"]}
+    >
+    <div className="grid gap-4">
       {causes.map((c) => (
-        <article key={c.id} className="rounded-[2rem] bg-white p-6 shadow-sm">
-          <h3 className="font-black text-violet-700">{c.kpiLabel}</h3>
+        <article key={c.id} className={BI_CARD_LG}>
+          <h3 className="font-black text-violet-300">{c.kpiLabel}</h3>
           <dl className="mt-4 grid gap-3 text-sm md:grid-cols-2">
             <div>
-              <dt className="font-black text-slate-500">What changed</dt>
-              <dd className="mt-1">{c.whatChanged}</dd>
+              <dt className="font-black text-[#94A3B8]">What changed</dt>
+              <dd className="mt-1 text-[#CBD5E1]">{c.whatChanged}</dd>
             </div>
             <div>
-              <dt className="font-black text-slate-500">Why</dt>
-              <dd className="mt-1">{c.whyChanged}</dd>
+              <dt className="font-black text-[#94A3B8]">Why</dt>
+              <dd className="mt-1 text-[#CBD5E1]">{c.whyChanged}</dd>
             </div>
             <div>
-              <dt className="font-black text-slate-500">Where</dt>
-              <dd className="mt-1">{c.whereChanged}</dd>
+              <dt className="font-black text-[#94A3B8]">Where</dt>
+              <dd className="mt-1 text-[#CBD5E1]">{c.whereChanged}</dd>
             </div>
             <div>
-              <dt className="font-black text-slate-500">Financial impact</dt>
-              <dd className="mt-1 font-black text-red-700">{money(c.financialImpact)}</dd>
+              <dt className="font-black text-[#94A3B8]">Financial impact</dt>
+              <dd className="mt-1 font-black text-red-300">{money(c.financialImpact)}</dd>
             </div>
           </dl>
-          <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm font-bold text-emerald-900">Action: {c.recommendedAction}</p>
+          <p className={`mt-4 rounded-xl p-3 text-sm font-bold ${VYRON_STATUS.lime}`}>Action: {c.recommendedAction}</p>
           <ExplainBlock e={c} />
         </article>
       ))}
     </div>
+    </AutonomousPremiumShell>
   );
 }
 
 export function DecisionsClient({ decisions }: { decisions: AutonomousBusinessIntelligencePayload["decisions"] }) {
   return (
+    <AutonomousPremiumShell
+      title="Decision Intelligence"
+      subtitle="Ranked autonomous decisions with rationale, expected annual benefit and execution links."
+      outcomes={["Review AI-recommended decisions", "See expected annual benefit", "Understand decision rationale", "Execute linked workflows"]}
+    >
     <div className="grid gap-4 md:grid-cols-2">
       {decisions.map((d) => (
-        <article key={d.id} className="rounded-2xl bg-white p-5 shadow-sm">
-          <span className="text-xs font-black uppercase text-slate-400">{d.decisionType.replace(/_/g, " ")}</span>
-          <h3 className="mt-1 font-black">{d.title}</h3>
-          <p className="mt-2 text-sm text-slate-600">{d.rationale}</p>
-          <p className="mt-2 font-black text-emerald-700">{money(d.expectedBenefitAnnual)}/yr</p>
+        <article key={d.id} className={BI_CARD}>
+          <span className="text-xs font-black uppercase text-[#94A3B8]">{d.decisionType.replace(/_/g, " ")}</span>
+          <h3 className="mt-1 font-black text-[#F8FAFC]">{d.title}</h3>
+          <p className="mt-2 text-sm text-[#CBD5E1]">{d.rationale}</p>
+          <p className="mt-2 font-black text-[#A3E635]">{money(d.expectedBenefitAnnual)}/yr</p>
           <ExplainBlock e={d} />
           {d.href ? (
-            <Link href={d.href} className="mt-2 inline-block text-xs font-black text-violet-700">
+            <Link href={d.href} className="mt-2 inline-block text-xs font-black text-violet-300">
               Execute →
             </Link>
           ) : null}
         </article>
       ))}
     </div>
+    </AutonomousPremiumShell>
   );
 }
 
 export function ActionsClient({ actions }: { actions: AutonomousBusinessIntelligencePayload["actions"] }) {
   return (
-    <div className="overflow-hidden rounded-[2rem] bg-white shadow-sm">
-      <table className="w-full text-sm">
-        <thead className="bg-slate-50 text-xs font-black uppercase">
+    <AutonomousPremiumShell
+      title="Action Tracking Centre"
+      subtitle="Recommendation ownership, due dates, expected vs actual benefit and completion progress."
+      outcomes={["Track recommendation owners", "Monitor due dates and status", "Compare expected vs actual benefit", "Measure completion percentage"]}
+    >
+    <div className={`overflow-hidden ${VYRON_SURFACE.dark}`}>
+      <table className="w-full text-sm text-[#CBD5E1]">
+        <thead className={VYRON_TABLE.head}>
           <tr>
             <th className="px-4 py-3 text-left">Recommendation</th>
             <th className="px-4 py-3">Owner</th>
@@ -214,30 +272,36 @@ export function ActionsClient({ actions }: { actions: AutonomousBusinessIntellig
         </thead>
         <tbody>
           {actions.map((a) => (
-            <tr key={a.id} className="border-t">
-              <td className="px-4 py-3 font-bold">{a.recommendation}</td>
+            <tr key={a.id} className={`border-t border-white/10 ${VYRON_TABLE.rowHover}`}>
+              <td className="px-4 py-3 font-bold text-[#F8FAFC]">{a.recommendation}</td>
               <td className="px-4 py-3">{a.owner}</td>
               <td className="px-4 py-3">{a.dueDate}</td>
               <td className="px-4 py-3 capitalize">{a.status}</td>
               <td className="px-4 py-3">{money(a.expectedBenefit)}</td>
               <td className="px-4 py-3">{money(a.actualBenefit)}</td>
-              <td className="px-4 py-3 font-black">{a.completionPct}%</td>
+              <td className="px-4 py-3 font-black text-[#F8FAFC]">{a.completionPct}%</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+    </AutonomousPremiumShell>
   );
 }
 
 export function OrgPerformanceClient({ rows }: { rows: AutonomousBusinessIntelligencePayload["orgPerformance"] }) {
   return (
+    <AutonomousPremiumShell
+      title="Organisation Performance Intelligence"
+      subtitle="Role-area performance scores with highlights and drill-down links."
+      outcomes={["Score each functional area", "See role-specific highlights", "Drill into domain pages", "Compare performance across teams"]}
+    >
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {rows.map((r) => (
-        <Link key={r.roleArea} href={r.href} className="rounded-2xl bg-white p-6 shadow-sm hover:ring-2 hover:ring-violet-300">
-          <h3 className="font-black">{r.roleArea}</h3>
-          <div className="mt-2 text-4xl font-black text-violet-700">{r.score}</div>
-          <ul className="mt-3 space-y-1 text-sm text-slate-600">
+        <Link key={r.roleArea} href={r.href} className={`${BI_CARD_LG} transition hover:border-violet-400/30`}>
+          <h3 className="font-black text-[#F8FAFC]">{r.roleArea}</h3>
+          <div className="mt-2 text-4xl font-black text-violet-300">{r.score}</div>
+          <ul className="mt-3 space-y-1 text-sm text-[#CBD5E1]">
             {r.highlights.map((h) => (
               <li key={h}>• {h}</li>
             ))}
@@ -245,17 +309,23 @@ export function OrgPerformanceClient({ rows }: { rows: AutonomousBusinessIntelli
         </Link>
       ))}
     </div>
+    </AutonomousPremiumShell>
   );
 }
 
 export function KnowledgeClient({ entries }: { entries: AutonomousBusinessIntelligencePayload["knowledge"] }) {
   return (
+    <AutonomousPremiumShell
+      title="Knowledge Intelligence Graph"
+      subtitle="Domain summaries, live signals and explainable business knowledge across VYRON COST."
+      outcomes={["Browse domain knowledge summaries", "Review live business signals", "Understand cross-domain links", "Use explainable confidence"]}
+    >
     <div className="grid gap-4 md:grid-cols-2">
       {entries.map((k) => (
-        <article key={k.id} className="rounded-2xl bg-white p-5 shadow-sm">
-          <h3 className="font-black text-violet-800">{k.domain}</h3>
-          <p className="mt-2 text-sm leading-7">{k.summary}</p>
-          <ul className="mt-3 space-y-1 text-xs font-bold text-slate-600">
+        <article key={k.id} className={BI_CARD}>
+          <h3 className="font-black text-violet-300">{k.domain}</h3>
+          <p className="mt-2 text-sm leading-7 text-[#CBD5E1]">{k.summary}</p>
+          <ul className="mt-3 space-y-1 text-xs font-bold text-[#94A3B8]">
             {k.signals.map((s) => (
               <li key={s}>→ {s}</li>
             ))}
@@ -264,47 +334,59 @@ export function KnowledgeClient({ entries }: { entries: AutonomousBusinessIntell
         </article>
       ))}
     </div>
+    </AutonomousPremiumShell>
   );
 }
 
 export function PredictiveRiskClient({ risks }: { risks: AutonomousBusinessIntelligencePayload["predictiveRisks"] }) {
   return (
+    <AutonomousPremiumShell
+      title="Predictive Risk Intelligence"
+      subtitle="Probability-weighted risks with horizon, projected impact and mitigation links."
+      outcomes={["See risk probability percentages", "Review projected financial impact", "Understand time horizons", "Open mitigation workflows"]}
+    >
     <div className="grid gap-4 md:grid-cols-2">
       {risks.map((r) => (
-        <article key={r.id} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <h3 className="font-black">{r.title}</h3>
-          <p className="mt-2 text-3xl font-black text-red-700">{r.probabilityPct}%</p>
-          <p className="text-sm text-slate-500">{r.horizonDays}d horizon · {money(r.projectedImpact)}</p>
+        <article key={r.id} className={BI_CARD}>
+          <h3 className="font-black text-[#F8FAFC]">{r.title}</h3>
+          <p className="mt-2 text-3xl font-black text-red-300">{r.probabilityPct}%</p>
+          <p className="text-sm text-[#94A3B8]">{r.horizonDays}d horizon · {money(r.projectedImpact)}</p>
           <ExplainBlock e={r} />
           {r.href ? (
-            <Link href={r.href} className="mt-2 inline-block text-xs font-black text-violet-700">
+            <Link href={r.href} className="mt-2 inline-block text-xs font-black text-violet-300">
               Mitigate →
             </Link>
           ) : null}
         </article>
       ))}
     </div>
+    </AutonomousPremiumShell>
   );
 }
 
 export function ScorecardsClient({ cards }: { cards: AutonomousBusinessIntelligencePayload["scorecards"] }) {
   const types = [...new Set(cards.map((c) => c.type))];
   return (
-    <div className="space-y-8">
+    <AutonomousPremiumShell
+      title="Performance Scorecards"
+      subtitle="Entity scorecards by type with overall scores and metric breakdowns."
+      outcomes={["Compare entities by scorecard type", "See overall performance scores", "Review metric-level detail", "Open entity drill-downs"]}
+    >
+    <div className="grid gap-8">
       {types.map((t) => (
         <section key={t}>
-          <h2 className="text-xl font-black">{t}</h2>
+          <h2 className={BI_SECTION}>{t}</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {cards
               .filter((c) => c.type === t)
               .map((c) => (
-                <Link key={c.entityLabel} href={c.href || "#"} className="rounded-2xl bg-white p-5 shadow-sm hover:bg-violet-50">
-                  <div className="font-black">{c.entityLabel}</div>
-                  <div className="mt-2 text-3xl font-black">{c.overallScore}</div>
+                <Link key={c.entityLabel} href={c.href || "#"} className={`${BI_CARD} transition hover:border-violet-400/30`}>
+                  <div className="font-black text-[#F8FAFC]">{c.entityLabel}</div>
+                  <div className="mt-2 text-3xl font-black text-[#F8FAFC]">{c.overallScore}</div>
                   {c.metrics.map((m) => (
-                    <div key={m.label} className="mt-1 flex justify-between text-xs font-bold text-slate-600">
+                    <div key={m.label} className="mt-1 flex justify-between text-xs font-bold text-[#94A3B8]">
                       <span>{m.label}</span>
-                      <span>{m.value}</span>
+                      <span className="text-[#CBD5E1]">{m.value}</span>
                     </div>
                   ))}
                 </Link>
@@ -313,12 +395,23 @@ export function ScorecardsClient({ cards }: { cards: AutonomousBusinessIntellige
         </section>
       ))}
     </div>
+    </AutonomousPremiumShell>
   );
 }
 
 export function StrategicClient({ s }: { s: AutonomousBusinessIntelligencePayload["strategic"] }) {
   return (
-    <section className="grid gap-8">
+    <AutonomousPremiumShell
+      title="Strategic Intelligence"
+      subtitle="Projected savings, leakage, recovery and profit impact with ranked risks and opportunities."
+      outcomes={[
+        "See projected savings and leakage",
+        "Quantify recovery and profit impact",
+        "Rank top strategic risks",
+        "Prioritise top opportunities",
+      ]}
+    >
+    <div className="grid gap-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           ["Projected savings", s.projectedSavings],
@@ -326,39 +419,40 @@ export function StrategicClient({ s }: { s: AutonomousBusinessIntelligencePayloa
           ["Projected recovery", s.projectedRecovery],
           ["Profit impact", s.projectedProfitImpact],
         ].map(([l, v]) => (
-          <div key={String(l)} className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="text-xs font-black uppercase text-slate-400">{l}</div>
-            <div className="mt-2 text-2xl font-black">{money(Number(v))}</div>
+          <div key={String(l)} className={BI_CARD}>
+            <div className="text-xs font-black uppercase text-[#94A3B8]">{l}</div>
+            <div className="mt-2 text-2xl font-black text-[#F8FAFC]">{money(Number(v))}</div>
           </div>
         ))}
       </div>
       <div className="grid gap-8 lg:grid-cols-2">
         <div>
-          <h2 className="text-xl font-black">Top risks</h2>
+          <h2 className={BI_SECTION}>Top risks</h2>
           <ol className="mt-4 space-y-2">
             {s.topRisks.map((r, i) => (
-              <li key={r.title} className="rounded-xl bg-red-50 p-4">
-                <span className="font-black text-red-800">{i + 1}. {r.title}</span>
-                <p className="text-sm text-red-900">{r.detail}</p>
-                <p className="font-black text-red-700">{money(r.value)}</p>
+              <li key={r.title} className="rounded-xl border border-red-400/30 bg-red-500/10 p-4">
+                <span className="font-black text-red-300">{i + 1}. {r.title}</span>
+                <p className="text-sm text-red-200">{r.detail}</p>
+                <p className="font-black text-red-300">{money(r.value)}</p>
               </li>
             ))}
           </ol>
         </div>
         <div>
-          <h2 className="text-xl font-black">Top opportunities</h2>
+          <h2 className={BI_SECTION}>Top opportunities</h2>
           <ol className="mt-4 space-y-2">
             {s.topOpportunities.map((o, i) => (
-              <li key={o.title} className="rounded-xl bg-emerald-50 p-4">
-                <span className="font-black text-emerald-900">{i + 1}. {o.title}</span>
-                <p className="text-sm text-emerald-800">{o.detail}</p>
-                <p className="font-black text-emerald-700">{money(o.value)}</p>
+              <li key={o.title} className={`rounded-xl p-4 ${VYRON_STATUS.lime}`}>
+                <span className="font-black">{i + 1}. {o.title}</span>
+                <p className="text-sm opacity-90">{o.detail}</p>
+                <p className="font-black text-[#A3E635]">{money(o.value)}</p>
               </li>
             ))}
           </ol>
         </div>
       </div>
-    </section>
+    </div>
+    </AutonomousPremiumShell>
   );
 }
 
@@ -382,7 +476,17 @@ export function CopilotClient({ presets }: { presets: CopilotAnswer[] }) {
   }
 
   return (
-    <section className="grid gap-6 lg:grid-cols-2">
+    <AutonomousPremiumShell
+      title="Ask VYRON — Autonomous Copilot"
+      subtitle="Natural-language business intelligence with explainable formulas and confidence scores."
+      outcomes={[
+        "Ask questions in plain language",
+        "Get explainable answers with formulas",
+        "Use preset executive questions",
+        "Review confidence on every response",
+      ]}
+    >
+    <div className="grid gap-6 lg:grid-cols-2">
       <div className="space-y-2">
         {presets.map((p) => (
           <button
@@ -390,24 +494,25 @@ export function CopilotClient({ presets }: { presets: CopilotAnswer[] }) {
             type="button"
             disabled={busy}
             onClick={() => ask(p.question)}
-            className="block w-full rounded-xl bg-white p-4 text-left text-sm font-bold shadow-sm hover:bg-violet-50 disabled:opacity-50"
+            className={`block w-full ${BI_CARD} text-left text-sm font-bold text-[#CBD5E1] transition hover:border-violet-400/30 disabled:opacity-50`}
           >
             {p.question}
           </button>
         ))}
       </div>
-      <div className="rounded-[2rem] bg-gradient-to-br from-violet-700 to-indigo-950 p-8 text-white">
-        <h2 className="text-2xl font-black">Ask VYRON</h2>
+      <div className={BI_HERO}>
+        <h2 className="text-2xl font-black text-[#F8FAFC]">Ask VYRON</h2>
         {answer ? (
           <>
-            <p className="mt-4 text-sm leading-8 text-violet-100">{answer.answer}</p>
-            <div className="mt-6 rounded-xl bg-white/10 p-4 text-xs">
+            <p className="mt-4 text-sm leading-8 text-[#CBD5E1]">{answer.answer}</p>
+            <div className="mt-6 rounded-xl border border-white/10 bg-[#252040]/80 p-4 text-xs text-[#94A3B8]">
               <div>Formula: {answer.formula}</div>
               <div className="mt-1">Confidence: {answer.confidence}%</div>
             </div>
           </>
         ) : null}
       </div>
-    </section>
+    </div>
+    </AutonomousPremiumShell>
   );
 }

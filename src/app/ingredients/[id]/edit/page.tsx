@@ -1,6 +1,8 @@
+import EditRouteGuard from "@/components/EditRouteGuard";
 import IngredientEditPageClient from "@/components/IngredientEditPageClient";
 import VyronCostShell from "@/components/VyronCostShell";
-import { getDemoCompanyId, getIngredients } from "@/lib/vyron-cost-data";
+import { getIngredientById } from "@/lib/vyron-cost-core-data";
+import { notFound } from "next/navigation";
 
 export default async function EditIngredientPage({
   params,
@@ -8,19 +10,17 @@ export default async function EditIngredientPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [ingredients, companyId] = await Promise.all([
-    getIngredients(),
-    getDemoCompanyId(),
-  ]);
+  const ingredient = await getIngredientById(id);
 
-  const ingredient = ingredients.find((item) => item.id === id) || ingredients[0];
+  if (!ingredient) notFound();
 
   return (
-    <VyronCostShell
-      title={`Edit ${ingredient?.ingredient_name || "Ingredient"}`}
+    <VyronCostShell hidePageHeader title={`Edit ${ingredient.ingredient_name}`}
       subtitle="Full-page ingredient editing workspace with larger fields, true yield preview and save/delete actions."
     >
-      <IngredientEditPageClient ingredient={ingredient} companyId={companyId} />
+      <EditRouteGuard permission="edit_ingredients">
+        <IngredientEditPageClient ingredient={ingredient} />
+      </EditRouteGuard>
     </VyronCostShell>
   );
 }

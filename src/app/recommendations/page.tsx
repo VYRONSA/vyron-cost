@@ -9,8 +9,7 @@ export default async function RecommendationsPage() {
   ]);
 
   return (
-    <VyronCostAiShell
-      title="AI Recommendations"
+    <VyronCostAiShell hidePageHeader title="AI Recommendations"
       subtitle="Actionable recovery and margin protection recommendations based on current costing data."
     >
       <RecoveryOpportunitiesClient initialOpportunities={opportunities} summary={summary} />

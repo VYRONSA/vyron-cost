@@ -3,8 +3,7 @@ import VyronCostShell from "@/components/VyronCostShell";
 
 export default function ClientOnboardingPage() {
   return (
-    <VyronCostShell
-      title="Client Onboarding"
+    <VyronCostShell hidePageHeader title="Client Onboarding"
       subtitle="FIRST CLIENT SETUP · DATA COLLECTION · DEMO CHECKLIST"
     >
       <ClientOnboardingWizardClient />

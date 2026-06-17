@@ -1,13 +1,6 @@
-import VyronCostAiShell from "@/components/VyronCostAiShell";
-import XeroSetupClient from "@/components/vyron-cost/integrations/XeroSetupClient";
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return (
-    <VyronCostAiShell
-      title="Xero Setup"
-      subtitle="CONNECTION STATUS · ACCOUNT MAPPING · OAUTH-READY STRUCTURE FOR LIVE XERO POSTING."
-    >
-      <XeroSetupClient />
-    </VyronCostAiShell>
-  );
+  redirect("/integrations/xero");
 }

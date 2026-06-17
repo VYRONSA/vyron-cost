@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
 import { updateSupplierLineMapping } from "@/lib/vyron-supplier-line-learning";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
 
 export const runtime = "nodejs";
 
@@ -25,7 +25,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   };
 
   try {
-    const mapping = await updateSupplierLineMapping(supabase, VYRON_DEFAULT_TENANT_ID, id, {
+    const companyId = await requireApiCompanyId();
+    const mapping = await updateSupplierLineMapping(supabase, companyId, id, {
       entityType: body.entityType,
       entityId: body.entityId,
       entityName: body.entityName,

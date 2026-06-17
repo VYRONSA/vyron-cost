@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ForecastSnapshot, formatForecastMoney } from "@/lib/vyron-forecasting-data";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 export default function ForecastScenarioSimulatorClient({ snapshot }: { snapshot: ForecastSnapshot }) {
   const [supplierIncrease, setSupplierIncrease] = useState(8);
@@ -32,48 +33,57 @@ export default function ForecastScenarioSimulatorClient({ snapshot }: { snapshot
   ];
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <h2 className="text-2xl font-black text-[#07110d]">Scenario Controls</h2>
-        <div className="mt-6 grid gap-5">
-          {controls.map(({ label, value, setter }) => (
-            <label key={label} className="text-sm font-black text-slate-600">
-              {label}
-              <input
-                type="number"
-                value={Number(value)}
-                onChange={(event) => setter(Number(event.target.value))}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none"
-              />
-            </label>
-          ))}
-        </div>
-      </div>
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "finance",
+        title: "Forecast Scenario Simulator",
+        subtitle: "Premium VYRON COST workflow for forecast scenario simulator.",
+        formulas: ["GP % = (Price - Cost) / Price"],
+      }}
+    >
+      <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
+            <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+              <h2 className="text-2xl font-black text-[#F8FAFC]">Scenario Controls</h2>
+              <div className="mt-6 grid gap-5">
+                {controls.map(({ label, value, setter }) => (
+                  <label key={label} className="text-sm font-black text-slate-600">
+                    {label}
+                    <input
+                      type="number"
+                      value={Number(value)}
+                      onChange={(event) => setter(Number(event.target.value))}
+                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
 
-      <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-        <div className="text-xs font-black uppercase tracking-[0.16em] text-emerald-300">Forecast Result</div>
-        <div className="mt-6 grid gap-5 md:grid-cols-2">
-          <div className="rounded-3xl bg-white/10 p-5">
-            <div className="text-xs font-black uppercase text-slate-400">Cost pressure</div>
-            <div className="mt-2 text-4xl font-black text-emerald-300">{scenario.costPressure.toFixed(1)}%</div>
-          </div>
-          <div className="rounded-3xl bg-white/10 p-5">
-            <div className="text-xs font-black uppercase text-slate-400">Forecast GP</div>
-            <div className="mt-2 text-4xl font-black text-white">{scenario.gpAfterPressure.toFixed(1)}%</div>
-          </div>
-          <div className="rounded-3xl bg-white/10 p-5">
-            <div className="text-xs font-black uppercase text-slate-400">Forecast COGS</div>
-            <div className="mt-2 text-4xl font-black text-white">{formatForecastMoney(scenario.cogs)}</div>
-          </div>
-          <div className="rounded-3xl bg-white/10 p-5">
-            <div className="text-xs font-black uppercase text-slate-400">Risk</div>
-            <div className="mt-2 text-4xl font-black text-red-300">{scenario.risk}</div>
-          </div>
-        </div>
-        <p className="mt-6 text-sm font-semibold leading-7 text-slate-300">
-          Use this in a client meeting to show how supplier, labour and packaging increases affect GP before the cost is actually paid.
-        </p>
-      </div>
-    </section>
+            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Forecast Result</div>
+              <div className="mt-6 grid gap-5 md:grid-cols-2">
+                <div className="rounded-3xl bg-white/10 p-5">
+                  <div className="text-xs font-black uppercase text-slate-400">Cost pressure</div>
+                  <div className="mt-2 text-4xl font-black text-[#A3E635]">{scenario.costPressure.toFixed(1)}%</div>
+                </div>
+                <div className="rounded-3xl bg-white/10 p-5">
+                  <div className="text-xs font-black uppercase text-slate-400">Forecast GP</div>
+                  <div className="mt-2 text-4xl font-black text-white">{scenario.gpAfterPressure.toFixed(1)}%</div>
+                </div>
+                <div className="rounded-3xl bg-white/10 p-5">
+                  <div className="text-xs font-black uppercase text-slate-400">Forecast COGS</div>
+                  <div className="mt-2 text-4xl font-black text-white">{formatForecastMoney(scenario.cogs)}</div>
+                </div>
+                <div className="rounded-3xl bg-white/10 p-5">
+                  <div className="text-xs font-black uppercase text-slate-400">Risk</div>
+                  <div className="mt-2 text-4xl font-black text-red-300">{scenario.risk}</div>
+                </div>
+              </div>
+              <p className="mt-6 text-sm font-semibold leading-7 text-slate-300">
+                Use this in a client meeting to show how supplier, labour and packaging increases affect GP before the cost is actually paid.
+              </p>
+            </div>
+          </section>
+    </VyronPremiumPageShell>
   );
 }

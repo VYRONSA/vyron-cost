@@ -3,8 +3,7 @@ import VyronCostShell from "@/components/VyronCostShell";
 
 export default function AuditLogsPage() {
   return (
-    <VyronCostShell
-      title="Audit Logs"
+    <VyronCostShell hidePageHeader title="Audit Logs"
       subtitle="BOM CHANGES · PRODUCT CHANGES · SUPPLIER FLAGS · INVOICE PROCESSING"
     >
       <AuditLogsClient />

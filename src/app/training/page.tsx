@@ -1,5 +1,6 @@
 import Link from "next/link";
 import VyronCostAiShell from "@/components/VyronCostAiShell";
+import { VYRON_BTN, VYRON_SURFACE } from "@/components/vyron-ui";
 
 const sections = [
   ["1. Suppliers", "Add suppliers first so ingredient costs can be linked to supplier risk."],
@@ -12,15 +13,15 @@ const sections = [
 
 export default function TrainingPage() {
   return (
-    <VyronCostAiShell title="Training Centre" subtitle="Simple training guide for using VYRON COST from start to finish.">
-      <Link href="/vyron-academy" className="mb-6 inline-flex rounded-2xl bg-violet-600 px-5 py-3 text-sm font-black text-white">
+    <VyronCostAiShell hidePageHeader title="Training Centre" subtitle="Simple training guide for using VYRON COST from start to finish.">
+      <Link href="/vyron-academy" className={`mb-6 inline-flex ${VYRON_BTN.primary}`}>
         Open VYRON COST Academy →
       </Link>
       <section className="grid gap-5">
         {sections.map(([title, text]) => (
-          <div key={title} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-            <h2 className="text-2xl font-black text-slate-950">{title}</h2>
-            <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">{text}</p>
+          <div key={title} className={`${VYRON_SURFACE.dark} p-6`}>
+            <h2 className="text-2xl font-black text-[#F8FAFC]">{title}</h2>
+            <p className="mt-3 text-sm font-semibold leading-7 text-[#CBD5E1]">{text}</p>
           </div>
         ))}
       </section>

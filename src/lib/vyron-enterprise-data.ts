@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { getHandcraftedCompany, getHandcraftedProductIntelligence, isHandcraftedDataReady } from "@/lib/handcrafted-tenant";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 
 export type VyronCompany = {
   id: string;
@@ -268,9 +269,14 @@ export const demoActivity: VyronActivityLog[] = [
 ];
 
 async function fetchRows<T>(table: string, fallback: T[], orderColumn = "created_at"): Promise<T[]> {
-  if (!supabase) return fallback;
-  const { data, error } = await supabase.from(table).select("*").order(orderColumn, { ascending: false });
-  if (error || !data || data.length === 0) return fallback;
+  const { useDemo, companyId } = await workspaceScope();
+  if (!useDemo && !companyId) return [];
+  if (!supabase) return useDemo ? fallback : [];
+
+  let query = supabase.from(table).select("*").order(orderColumn, { ascending: false });
+  if (companyId) query = query.eq("company_id", companyId);
+  const { data, error } = await query;
+  if (error || !data || data.length === 0) return useDemo ? fallback : [];
   return data as T[];
 }
 
@@ -291,7 +297,7 @@ function buildHandcraftedAlerts(): VyronCostAlert[] {
 }
 
 export async function getEnterpriseCompanies() {
-  if (isHandcraftedDataReady()) {
+  if ((await workspaceScope()).useDemo) {
     const c = getHandcraftedCompany();
     return [{
       id: c.id,
@@ -309,12 +315,12 @@ export async function getEnterpriseCompanies() {
 }
 
 export async function getEnterpriseBranches() {
-  if (isHandcraftedDataReady()) return demoBranches;
+  if ((await workspaceScope()).useDemo) return demoBranches;
   return fetchRows<VyronBranch>("vyron_branches", demoBranches, "branch_name");
 }
 
 export async function getEnterpriseAlerts() {
-  if (isHandcraftedDataReady()) return buildHandcraftedAlerts();
+  if ((await workspaceScope()).useDemo) return buildHandcraftedAlerts();
   return fetchRows<VyronCostAlert>("vyron_cost_alerts", demoAlerts, "created_at");
 }
 

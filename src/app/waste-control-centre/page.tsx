@@ -6,8 +6,7 @@ export default async function WasteControlCentrePage() {
   const branches = await getBranchRiskFindings();
 
   return (
-    <VyronCostShell
-      title="Waste Control Centre"
+    <VyronCostShell hidePageHeader title="Waste Control Centre"
       subtitle="WASTAGE VALUE · RECOVERABLE LOSS · BRANCH CONTROL"
     >
       <WasteControlCentreClient branches={branches} />

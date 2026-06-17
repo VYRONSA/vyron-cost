@@ -13,8 +13,13 @@ import {
   type RecoveryOpportunity,
 } from "@/lib/vyron-cost-recovery-data";
 import { type SupplierPriceWidgetSummary } from "@/lib/vyron-supplier-intelligence-engine";
-import { type SupplierIntelRow } from "@/lib/vyron-supplier-intelligence-data";
+import type { SupplierIntelRow } from "@/lib/vyron-supplier-intelligence-shared";
 import { type ProcurementExecutiveStats, procurementMoney } from "@/lib/vyron-procurement-ai-data";
+import {
+  VyronPremiumHeroBanner,
+  VyronPremiumFormulaCard,
+  VyronPremiumSectionHeading,
+} from "@/components/vyron-premium/VyronPremiumSprint";
 
 type RecoveryTrackingStats = {
   potentialRecovery: number;
@@ -78,7 +83,7 @@ export default function ExecutiveDashboardClient({
 
   const cards: Array<{ label: string; value: string; note: string; Icon: LucideIcon; colour: string }> = [
     { label: "Monthly Leakage", value: money(leakage.estimatedMonthlyLeakage), note: "Detected leakage exposure", Icon: ShieldAlert, colour: "text-red-700" },
-    { label: "Potential Recovery", value: money(recovery), note: "Identify. Action. Recover.", Icon: Banknote, colour: "text-emerald-700" },
+    { label: "Potential Recovery", value: money(recovery), note: "Identify. Action. Recover.", Icon: Banknote, colour: "text-[#65A30D]" },
     { label: "Recovered This Year", value: money(annualRecovery), note: "Tracked recovered value", Icon: TrendingUp, colour: "text-violet-700" },
     { label: "Open Opportunities", value: String(recoveryStats.openOpportunities), note: "Recovery tracking lifecycle", Icon: Factory, colour: "text-amber-600" },
   ];
@@ -363,12 +368,74 @@ export default function ExecutiveDashboardClient({
   }
 
   return (
-    <section className="grid gap-6">
+    <section className="grid gap-8">
+      <VyronPremiumHeroBanner
+        visualVariant="executive"
+        badge="Premium Executive Workspace"
+        title="Executive Boardroom"
+        subtitle="A board-level command centre for leakage, recovery, product profitability, supplier movement, procurement health, inventory exposure and manufacturing performance."
+        quotes={[
+          {
+            label: "Owner intelligence",
+            quote: "The best software does not just report numbers — it shows where profit is leaking and what to do next.",
+          },
+          {
+            label: "Recovery discipline",
+            quote: "Identify. Verify. Action. Recover. Then prove it in the board pack.",
+          },
+        ]}
+      >
+        <button
+          type="button"
+          onClick={exportBoardPackPdf}
+          className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-900 shadow-lg"
+        >
+          Export Executive Board Pack
+        </button>
+        <button
+          type="button"
+          onClick={exportRecoveryCsv}
+          className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-black text-white backdrop-blur-sm"
+        >
+          Export Recovery CSV
+        </button>
+        <Link href="/ai-cost-intelligence" className="rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/20">
+          AI Cost Intelligence
+        </Link>
+      </VyronPremiumHeroBanner>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <VyronPremiumFormulaCard
+          variant="light"
+          eyebrow="Executive formula"
+          title="How leadership value is created"
+          formulas={[
+            { label: "Profit Leakage", formula: "Cost movement + margin erosion + procurement variance" },
+            { label: "Recovery Value", formula: "Validated opportunity − rejected / unrecoverable amounts" },
+            { label: "Board Pack", formula: "Evidence + owner + status + recovered value" },
+          ]}
+        />
+        <VyronPremiumFormulaCard
+          eyebrow="Management rhythm"
+          title="What the boardroom should drive"
+          formulas={[
+            { label: "Review", formula: "Identify the highest-value leakage first" },
+            { label: "Action", formula: "Assign owner, due date and evidence requirement" },
+            { label: "Recover", formula: "Track confirmed recovered value" },
+          ]}
+        />
+      </div>
+
+      <VyronPremiumSectionHeading
+        eyebrow="Executive KPIs"
+        title="Recovery and leakage command centre"
+        subtitle="Board-ready metrics from live product, supplier, procurement, inventory and manufacturing intelligence."
+      />
       <section className="rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Executive Reporting</div>
-            <div className="mt-1 text-lg font-black text-[#07110d]">Board-ready exports from live recovery data</div>
+            <div className="mt-1 text-lg font-black text-[#F8FAFC]">Board-ready exports from live recovery data</div>
           </div>
           <div className="flex gap-2">
             <button
@@ -402,7 +469,7 @@ export default function ExecutiveDashboardClient({
 
       <section className="grid gap-6 xl:grid-cols-[1fr_0.75fr]">
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-          <h2 className="text-2xl font-black text-[#07110d]">Owner Summary</h2>
+          <h2 className="text-2xl font-black text-[#F8FAFC]">Owner Summary</h2>
           <div className="mt-5 grid gap-4">
             <div className="rounded-3xl bg-red-50 p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-red-700">Problem</div>
@@ -410,9 +477,9 @@ export default function ExecutiveDashboardClient({
                 VYRON has detected {money(leakage.estimatedMonthlyLeakage)} monthly leakage exposure and {belowTarget} products below target GP.
               </p>
             </div>
-            <div className="rounded-3xl bg-emerald-50 p-5">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">Opportunity</div>
-              <p className="mt-2 text-sm font-bold leading-7 text-emerald-950">
+            <div className="rounded-3xl bg-[#A3E635]/10 p-5">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#65A30D]">Opportunity</div>
+              <p className="mt-2 text-sm font-bold leading-7 text-[#4D7C0F]">
                 Potential recovery is {money(recoveryStats.potentialRecovery)} with {money(recoveryStats.recoveredRecovery)} already recovered.
               </p>
             </div>
@@ -426,16 +493,16 @@ export default function ExecutiveDashboardClient({
         </div>
 
         <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-          <BrainCircuit size={34} className="text-emerald-300" />
+          <BrainCircuit size={34} className="text-[#A3E635]" />
           <h2 className="mt-6 text-3xl font-black">Demo Close Path</h2>
           <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
             Show the prospect the Executive Dashboard, then click into Recovery and Product Profitability.
           </p>
           <div className="mt-7 grid gap-3">
-            <Link href="/financial-leakage" className="inline-flex items-center justify-between rounded-2xl bg-white px-5 py-4 text-sm font-black text-[#07110d]">
+            <Link href="/financial-leakage" className="inline-flex items-center justify-between rounded-2xl bg-white px-5 py-4 text-sm font-black text-[#F8FAFC]">
               Explain recovery <ArrowRight size={17} />
             </Link>
-            <Link href="/product-profitability" className="inline-flex items-center justify-between rounded-2xl bg-emerald-400 px-5 py-4 text-sm font-black text-[#07110d]">
+            <Link href="/product-profitability" className="inline-flex items-center justify-between rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC]">
               Open profitability <ArrowRight size={17} />
             </Link>
           </div>
@@ -444,7 +511,7 @@ export default function ExecutiveDashboardClient({
 
       <section className="grid gap-6 xl:grid-cols-3">
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)] xl:col-span-2">
-          <h3 className="text-xl font-black text-[#07110d]">Recovery Funnel</h3>
+          <h3 className="text-xl font-black text-[#F8FAFC]">Recovery Funnel</h3>
           <p className="mt-1 text-xs font-bold text-slate-500">New → Under Review → Accepted → Actioned → Recovered</p>
           <div className="mt-4 grid grid-cols-5 gap-3">
             {recoveryStats.funnel.map((step) => (
@@ -456,7 +523,7 @@ export default function ExecutiveDashboardClient({
           </div>
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-          <h3 className="text-xl font-black text-[#07110d]">Recovery Performance</h3>
+          <h3 className="text-xl font-black text-[#F8FAFC]">Recovery Performance</h3>
           <div className="mt-4 space-y-2 text-sm font-bold text-slate-600">
             <div className="rounded-xl bg-slate-50 px-3 py-2">Recovery Success: {recoveryStats.recoverySuccessPct.toFixed(1)}%</div>
             <div className="rounded-xl bg-slate-50 px-3 py-2">Recovered This Month: {money(recoveryStats.recoveredThisMonth)}</div>
@@ -547,32 +614,32 @@ export default function ExecutiveDashboardClient({
         <section className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-emerald-300">Inventory Intelligence</div>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Inventory Intelligence</div>
               <h3 className="mt-2 text-2xl font-black">Weighted average valuation · live ledger</h3>
             </div>
-            <Link href="/inventory" className="rounded-2xl bg-emerald-400 px-5 py-3 text-sm font-black text-[#07110d]">
+            <Link href="/inventory" className="rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
               Open inventory →
             </Link>
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div className="rounded-2xl bg-white/10 p-4">
-              <div className="text-[10px] font-black uppercase text-emerald-200">Inventory value</div>
+              <div className="text-[10px] font-black uppercase text-[#CBD5E1]">Inventory value</div>
               <div className="mt-2 text-2xl font-black">{money(inventoryStats.inventoryValue)}</div>
             </div>
             <div className="rounded-2xl bg-white/10 p-4">
-              <div className="text-[10px] font-black uppercase text-emerald-200">Low stock</div>
+              <div className="text-[10px] font-black uppercase text-[#CBD5E1]">Low stock</div>
               <div className="mt-2 text-3xl font-black">{inventoryStats.lowStock}</div>
             </div>
             <div className="rounded-2xl bg-white/10 p-4">
-              <div className="text-[10px] font-black uppercase text-emerald-200">Slow moving</div>
+              <div className="text-[10px] font-black uppercase text-[#CBD5E1]">Slow moving</div>
               <div className="mt-2 text-3xl font-black">{inventoryStats.slowMoving}</div>
             </div>
             <div className="rounded-2xl bg-white/10 p-4">
-              <div className="text-[10px] font-black uppercase text-emerald-200">Count variance</div>
+              <div className="text-[10px] font-black uppercase text-[#CBD5E1]">Count variance</div>
               <div className="mt-2 text-2xl font-black">{money(inventoryStats.inventoryVariance)}</div>
             </div>
             <div className="rounded-2xl bg-white/10 p-4">
-              <div className="text-[10px] font-black uppercase text-emerald-200">Turnover (90d)</div>
+              <div className="text-[10px] font-black uppercase text-[#CBD5E1]">Turnover (90d)</div>
               <div className="mt-2 text-3xl font-black">{inventoryStats.stockTurnover}x</div>
             </div>
           </div>
@@ -581,7 +648,7 @@ export default function ExecutiveDashboardClient({
 
       <section className="grid gap-6 xl:grid-cols-2">
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-          <h3 className="text-xl font-black text-[#07110d]">Top Recovery Categories</h3>
+          <h3 className="text-xl font-black text-[#F8FAFC]">Top Recovery Categories</h3>
           <div className="mt-3 space-y-2">
             {recoveryStats.topRecoveryCategories.map((row) => (
               <div key={row.category} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">
@@ -592,7 +659,7 @@ export default function ExecutiveDashboardClient({
           </div>
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-          <h3 className="text-xl font-black text-[#07110d]">Top Recovery Owners</h3>
+          <h3 className="text-xl font-black text-[#F8FAFC]">Top Recovery Owners</h3>
           <div className="mt-3 space-y-2">
             {recoveryStats.topRecoveryOwners.map((row) => (
               <div key={row.owner} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">

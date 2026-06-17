@@ -69,7 +69,16 @@ export default function EmailInvoiceInboxClient() {
       setMessage(`Uploaded ${file.name}. Opening review…`);
       const documentId = String(data.documentId || data.id || "");
       if (documentId) {
-        await fetch(`/api/documents/${documentId}/extract`, { method: "POST" }).catch(() => null);
+        const extractRes = await fetch(`/api/documents/${documentId}/extract`, { method: "POST" });
+        const extractData = await extractRes.json().catch(() => ({}));
+        if (!extractData.ok && !extractData.partial) {
+          console.warn("[EmailInvoiceInbox] extraction failed — opening manual review", extractData);
+          setMessage(
+            extractData.error
+              ? `Uploaded. AI extraction failed — open review to capture manually. (${extractData.error})`
+              : "Uploaded. Open review to capture fields manually."
+          );
+        }
         router.push(`/document-intelligence/${documentId}`);
         return;
       }

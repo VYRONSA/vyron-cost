@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { formatMoney } from "@/lib/vyron-cost-data";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
 
 type Variance = {
   id: string;
@@ -25,7 +27,8 @@ export default function ProductionVariancesClient() {
   const [rows, setRows] = useState<Variance[]>([]);
 
   useEffect(() => {
-    fetch("/api/production/variances")
+    const { query } = poApiWorkspaceContext();
+    fetch(`/api/production/variances${query}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) setRows(d.variances);
@@ -33,10 +36,25 @@ export default function ProductionVariancesClient() {
   }, []);
 
   return (
-    <section className="grid gap-6">
-      <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "products",
+        badge: "Production Variance",
+        title: "Production Variance Command Centre",
+        subtitle: "Track run-level manufacturing variance, yield performance, and efficiency exceptions.",
+        outcomes: ["Spot adverse cost variance fast", "Compare planned versus actual yield", "Prioritize corrective production action"],
+        formulas: ["Cost Variance % = (Actual - Planned) / Planned", "Yield % = Actual Qty / Planned Qty", "Efficiency % = Production output efficiency index"],
+        intelligenceItems: [
+          { label: "Variance runs", detail: `${rows.length} manufacturing runs in current variance view` },
+          { label: "Drilldown", detail: "Each row links directly to detailed production run review" },
+          { label: "Coverage", detail: "Cost, usage, yield, and efficiency metrics shown together" },
+        ],
+      }}
+    >
+      <section className="grid gap-6">
+        <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="min-w-[1100px]">
-          <div className="grid grid-cols-10 bg-[#07110d] px-4 py-3 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-300">
+          <div className="grid grid-cols-10 bg-[#07110d] px-4 py-3 text-[10px] font-black uppercase tracking-[0.14em] text-[#A3E635]">
             <div>Run</div>
             <div className="col-span-2">Recipe</div>
             <div>Planned cost</div>
@@ -67,7 +85,8 @@ export default function ProductionVariancesClient() {
             </Link>
           ))}
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </VyronPremiumPageShell>
   );
 }

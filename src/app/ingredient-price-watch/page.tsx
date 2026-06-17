@@ -6,8 +6,7 @@ export default async function IngredientPriceWatchPage() {
   const products = await getProductIntelligence();
 
   return (
-    <VyronCostShell
-      title="Ingredient Price Watch"
+    <VyronCostShell hidePageHeader title="Ingredient Price Watch"
       subtitle="PRICE MOVEMENT · EXPOSURE · GP RISK"
     >
       <IngredientPriceWatchClient products={products} />

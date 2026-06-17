@@ -5,7 +5,7 @@ import { getEnterprisePlatformPayload } from "@/lib/vyron-enterprise-platform-ar
 export default async function MultiCompanyPage() {
   const { multiCompany } = await getEnterprisePlatformPayload();
   return (
-    <VyronCostShell title="Multi-Company Platform" subtitle="HOLDING · SUBSIDIARIES · DIVISIONS · BRANCHES">
+    <VyronCostShell hidePageHeader title="Multi-Company Platform" subtitle="HOLDING · SUBSIDIARIES · DIVISIONS · BRANCHES">
       <PlatformNav />
       <MultiCompanyClient data={multiCompany} />
     </VyronCostShell>

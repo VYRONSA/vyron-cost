@@ -135,9 +135,9 @@ export default function RecipesManager({
     <section className="grid gap-6 xl:grid-cols-[0.8fr_1.5fr]">
       <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600"><Plus size={20} /></div>
+          <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-3 text-[#84CC16]"><Plus size={20} /></div>
           <div>
-            <h2 className="text-2xl font-black text-[#07110d]">Add New Recipe</h2>
+            <h2 className="text-2xl font-black text-[#F8FAFC]">Add New Recipe</h2>
             <p className="text-sm text-slate-500">Create recipes and assign categories.</p>
           </div>
         </div>
@@ -145,26 +145,26 @@ export default function RecipesManager({
         <div className="grid gap-4">
           <label className="text-sm font-black text-slate-600">
             Recipe Name
-            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-emerald-400" value={form.recipe_name} onChange={(event) => updateForm("recipe_name", event.target.value)} />
+            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400" value={form.recipe_name} onChange={(event) => updateForm("recipe_name", event.target.value)} />
           </label>
 
           <label className="text-sm font-black text-slate-600">
             Category
-            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-emerald-400" value={form.category} onChange={(event) => updateForm("category", event.target.value)} />
+            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400" value={form.category} onChange={(event) => updateForm("category", event.target.value)} />
           </label>
 
-          <button type="button" onClick={addRecipe} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-4 text-sm font-black text-[#07110d] transition hover:bg-emerald-400">
+          <button type="button" onClick={addRecipe} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
             <Plus size={18} />
             Add Recipe
           </button>
 
-          {message && <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-bold text-[#65A30D]">{message}</div>}
         </div>
       </div>
 
       <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5">
-          <h2 className="text-2xl font-black text-[#07110d]">Recipe Register</h2>
+          <h2 className="text-2xl font-black text-[#F8FAFC]">Recipe Register</h2>
           <p className="mt-2 text-sm text-slate-500">Search recipes by name, type, category, status, cost or notes.</p>
         </div>
 
@@ -190,7 +190,7 @@ export default function RecipesManager({
 
         <div className="overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[1080px]">
-            <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-emerald-300">
+            <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
               <div className="col-span-2">Recipe</div><div>Type</div><div>Category</div><div>Cost</div><div>Price</div><div>Status</div><div>Full Edit</div><div>Delete</div>
             </div>
 
@@ -201,7 +201,7 @@ export default function RecipesManager({
               return (
                 <div key={recipe.id} className="grid grid-cols-8 items-center border-t border-slate-100 px-5 py-5 text-sm">
                   <div className="col-span-2">
-                    <Link href={`/recipes/${recipe.id}`} className="font-black text-[#07110d] hover:text-emerald-700">
+                    <Link href={`/recipes/${recipe.id}`} className="font-black text-[#F8FAFC] hover:text-[#65A30D]">
                       {recipe.recipe_name}
                     </Link>
                     <div className="mt-1 text-xs text-slate-500">{recipe.version_note || "No version note"}</div>
@@ -212,7 +212,7 @@ export default function RecipesManager({
                   <div>{Number(recipe.selling_price || 0) > 0 ? formatMoney(Number(recipe.selling_price)) : "N/A"}</div>
                   <div><StatusPill tone={statusTone(status)}>{status}</StatusPill></div>
                   <div>
-                    <Link href={`/recipes/${recipe.id}/edit`} className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700">
+                    <Link href={`/recipes/${recipe.id}/edit`} className="inline-flex items-center gap-2 rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]">
                       <Edit3 size={14} />
                       Edit
                     </Link>

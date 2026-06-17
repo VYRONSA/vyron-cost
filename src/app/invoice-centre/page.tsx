@@ -5,7 +5,7 @@ import VyronCostShell from "@/components/VyronCostShell";
 
 export default function Page() {
   return (
-    <VyronCostShell title="Invoice Centre" subtitle="Open invoice queue and invoice AI workflow.">
+    <VyronCostShell hidePageHeader title="Invoice Centre" subtitle="Open invoice queue and invoice AI workflow.">
       <section className="mb-6 rounded-[2rem] border border-white bg-white p-7 shadow-[0_10px_40px_rgba(15,23,42,0.07)]">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>

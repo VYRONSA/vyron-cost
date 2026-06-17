@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import InvoiceDocumentViewer from "@/components/InvoiceDocumentViewer";
+import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import PoLinkPanel from "@/components/PoLinkPanel";
 import InvoiceReviewTotalsFooter, { InvoiceTotalsWarningBanner } from "@/components/InvoiceReviewTotalsFooter";
 import LineItemMatchCombobox from "@/components/LineItemMatchCombobox";
@@ -41,7 +43,7 @@ import {
 
 function confidenceTone(score: number | null) {
   if (score === null) return "bg-slate-200 text-slate-600";
-  if (score >= 85) return "bg-emerald-100 text-emerald-700";
+  if (score >= 85) return "bg-[#A3E635]/12 text-[#65A30D]";
   if (score >= 70) return "bg-amber-100 text-amber-700";
   return "bg-red-100 text-red-700";
 }
@@ -96,6 +98,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
   const [costAuditRows, setCostAuditRows] = useState<Array<Record<string, unknown>>>([]);
   const [riskAlerts, setRiskAlerts] = useState<Array<Record<string, unknown>>>([]);
   const [overrideAudit, setOverrideAudit] = useState<Array<Record<string, unknown>>>([]);
+  const deleteConfirm = useConfirmDelete("Delete this invoice from Document Intelligence? This cannot be undone.");
   const [overrideModal, setOverrideModal] = useState<{
     open: boolean;
     violations: ApprovalViolation[];
@@ -456,15 +459,15 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     });
   }
 
-  async function handleDelete() {
-    const confirmed = window.confirm("Delete this invoice from Document Intelligence?");
-    if (!confirmed) return;
-    try {
-      await deleteDocument(documentId);
-      router.push("/document-intelligence");
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not delete document.");
-    }
+  function requestDelete() {
+    deleteConfirm.requestDelete(async () => {
+      try {
+        await deleteDocument(documentId);
+        router.push("/document-intelligence");
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Could not delete document.");
+      }
+    });
   }
 
   function openCreateModal(line: ReviewDraftLine, entityType: "ingredient" | "packaging") {
@@ -785,10 +788,9 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           <div className="flex min-w-0 items-center gap-2">
             <Link
               href="/document-intelligence"
-              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-[10px] font-black text-slate-700"
+              className="inline-flex items-center rounded-lg border border-slate-200 px-2.5 py-1 text-[10px] font-black text-slate-700"
             >
-              <ArrowLeft size={12} />
-              Back
+              ← Back
             </Link>
             <div className="min-w-0 truncate text-sm font-black text-slate-950">
               {draft.fields.invoiceNumber || documentId.slice(0, 8).toUpperCase()}
@@ -817,7 +819,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
             </button>
             <button
               type="button"
-              onClick={() => void handleDelete()}
+              onClick={requestDelete}
               className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1 text-[10px] font-black text-red-700"
             >
               <Trash2 size={11} />
@@ -827,13 +829,13 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
               type="button"
               onClick={() => void handleApprove()}
               disabled={approving}
-              className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[10px] font-black text-white disabled:opacity-60"
+              className="rounded-lg bg-[#24183F] border border-[#A3E635]/30 px-2.5 py-1 text-[10px] font-black text-[#F8FAFC] disabled:opacity-60"
             >
               {approving ? "Approving…" : "Approve & Update Costs"}
             </button>
           </div>
         </div>
-        {message ? <div className="mt-1 rounded bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-800">{message}</div> : null}
+        {message ? <div className="mt-1 rounded bg-[#A3E635]/10 px-2 py-1 text-[10px] font-bold text-[#4D7C0F]">{message}</div> : null}
         {errorMessage ? <div className="mt-1 rounded bg-red-50 px-2 py-1 text-[10px] font-bold text-red-700">{errorMessage}</div> : null}
         {costAuditRows.length > 0 ? (
           <div className="mt-1 rounded bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">
@@ -927,7 +929,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
                 type="button"
                 disabled={savingIngredient}
                 onClick={() => void submitEditIngredient()}
-                className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-white disabled:opacity-60"
+                className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
               >
                 {savingIngredient ? "Saving…" : "Save"}
               </button>
@@ -969,7 +971,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
                 type="button"
                 disabled={creatingEntity}
                 onClick={() => void submitCreateEntity()}
-                className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-white disabled:opacity-60"
+                className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
               >
                 {creatingEntity ? "Saving…" : "Save & Link"}
               </button>
@@ -1019,7 +1021,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
                 type="button"
                 disabled={approving}
                 onClick={() => void submitSupervisorOverride()}
-                className="rounded-xl bg-amber-600 px-4 py-2 text-xs font-black text-white disabled:opacity-60"
+                className="rounded-xl bg-amber-600 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
               >
                 {approving ? "Approving…" : "Supervisor override & approve"}
               </button>
@@ -1027,6 +1029,13 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           </div>
         </div>
       ) : null}
+      <ConfirmDeleteDialog
+        open={deleteConfirm.open}
+        confirming={deleteConfirm.confirming}
+        message={deleteConfirm.message}
+        onCancel={deleteConfirm.cancel}
+        onConfirm={() => void deleteConfirm.confirm()}
+      />
     </>
   );
 }

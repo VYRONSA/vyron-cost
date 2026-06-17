@@ -4,7 +4,7 @@ import VyronCostAiShell from "@/components/VyronCostAiShell";
 export default async function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return (
-    <VyronCostAiShell title="Report Detail" subtitle="VIEW · PRINT · EXPORT CSV">
+    <VyronCostAiShell hidePageHeader title="Report Detail" subtitle="VIEW · PRINT · EXPORT CSV">
       <ReportDetailClient reportId={id} />
     </VyronCostAiShell>
   );

@@ -7,7 +7,7 @@ export default async function AiBudgetIntelligencePage() {
   const { budgetActual } = await getAiFinancialIntelligence();
 
   return (
-    <VyronCostShell title="Budget vs Actual Intelligence" subtitle="VARIANCE · TREND · ROOT CAUSE · AI RECOMMENDATIONS">
+    <VyronCostShell hidePageHeader title="Budget vs Actual Intelligence" subtitle="VARIANCE · TREND · ROOT CAUSE · AI RECOMMENDATIONS">
       <Link href="/ai-cfo-command-centre" className="mb-6 inline-block text-sm font-black text-violet-700">
         ← AI CFO Command Centre
       </Link>

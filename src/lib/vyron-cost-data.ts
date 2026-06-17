@@ -2,17 +2,11 @@ import { supabase } from "@/lib/supabase";
 import {
   getHandcraftedBatchRuns,
   getHandcraftedCategories,
-  getHandcraftedIngredients,
-  getHandcraftedProductCostLines,
-  getHandcraftedProducts,
   getHandcraftedRecipeItems,
   getHandcraftedRecipes,
-  isHandcraftedTenantEnabled,
 } from "@/lib/handcrafted-tenant";
-import {
-  HANDCRAFTED_COMPANY_ID,
-  loadHandcraftedBundle,
-} from "@/lib/vyron-handcrafted-intelligence";
+import { loadHandcraftedBundle } from "@/lib/vyron-handcrafted-intelligence";
+import { workspaceScope } from "@/lib/vyron-workspace-scope";
 
 export type Ingredient = {
   id: string;
@@ -231,6 +225,33 @@ export function calculateLineCost(quantity: number, unitCost: number, wastagePer
   return Number(quantity || 0) * Number(unitCost || 0) * (1 + Number(wastagePercent || 0) / 100);
 }
 
+export function isCostLineForProduct(line: ProductCostLine, product: Product) {
+  return (
+    line.product_id === product.id ||
+    String(line.product_name || "").trim().toLowerCase() ===
+      String(product.product_name || "").trim().toLowerCase()
+  );
+}
+
+export function sumProductCostLineTotal(lines: ProductCostLine[], product: Product) {
+  return lines
+    .filter((line) => isCostLineForProduct(line, product))
+    .reduce((sum, line) => sum + Number(line.line_cost || line.line_cost_imported || 0), 0);
+}
+
+export function buildProductCostFields(
+  sellingPrice: number,
+  targetGp: number,
+  totalCost: number
+) {
+  return {
+    total_cost: totalCost,
+    calculated_gp: calculateGpPercent(sellingPrice, totalCost),
+    actual_gp: calculateGpPercent(sellingPrice, totalCost),
+    suggested_selling_price: calculateSuggestedPrice(totalCost, targetGp),
+  };
+}
+
 export function formatMoney(value: number) {
   return `R${Number(value || 0).toLocaleString("en-ZA", {
     minimumFractionDigits: 2,
@@ -296,25 +317,32 @@ async function fetchRows<T>(
   orderColumn: string,
   limit = 250
 ): Promise<T[]> {
-  if (!supabase) return fallback;
+  const { useDemo, companyId } = await workspaceScope();
 
-  let query = supabase.from(table).select("*").order(orderColumn, { ascending: true }).limit(limit);
-  if (isHandcraftedTenantEnabled()) {
-    query = query.eq("company_id", HANDCRAFTED_COMPANY_ID);
-  }
+  if (!useDemo && !companyId) return [];
+  if (!supabase) return useDemo ? fallback : [];
 
-  const { data, error } = await query;
-  if (error || !data || data.length === 0) return fallback;
+  if (!companyId) return useDemo ? fallback : [];
+
+  const { data, error } = await supabase
+    .from(table)
+    .select("*")
+    .eq("company_id", companyId)
+    .order(orderColumn, { ascending: true })
+    .limit(limit);
+
+  if (error || !data || data.length === 0) return useDemo ? fallback : [];
   return data as T[];
 }
 
 async function getHandcraftedBundleSlice() {
-  if (!isHandcraftedTenantEnabled()) return null;
+  if (!(await workspaceScope()).useDemo) return null;
   return loadHandcraftedBundle();
 }
 
 export async function getDemoCompanyId() {
-  if (isHandcraftedTenantEnabled()) return HANDCRAFTED_COMPANY_ID;
+  const { companyId } = await workspaceScope();
+  if (companyId) return companyId;
   if (!supabase) return demoCompanyId;
   const { data, error } = await supabase.from("vyron_cost_companies").select("id").eq("name", "Demo Company").maybeSingle();
   if (error || !data?.id) return demoCompanyId;
@@ -339,6 +367,37 @@ export async function getProducts(limit = 250) {
   return fetchRows<Product>("vyron_cost_products", demoProducts, "product_name", limit);
 }
 
+export async function getProductById(id: string): Promise<Product | null> {
+  const { useDemo, companyId } = await workspaceScope();
+  if (!useDemo && !companyId) return null;
+
+  const bundle = await getHandcraftedBundleSlice();
+  if (bundle?.products.length) {
+    return bundle.products.find((item) => item.id === id) || null;
+  }
+
+  if (!supabase) {
+    return useDemo ? demoProducts.find((item) => item.id === id) || null : null;
+  }
+
+  if (!companyId) {
+    return useDemo ? demoProducts.find((item) => item.id === id) || null : null;
+  }
+
+  const { data, error } = await supabase
+    .from("vyron_cost_products")
+    .select("*")
+    .eq("id", id)
+    .eq("company_id", companyId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return useDemo ? demoProducts.find((item) => item.id === id) || null : null;
+  }
+
+  return data as Product;
+}
+
 export async function getProductCostLines(limit = 1000) {
   const bundle = await getHandcraftedBundleSlice();
   if (bundle?.costLines.length) return bundle.costLines.slice(0, limit);
@@ -346,7 +405,7 @@ export async function getProductCostLines(limit = 1000) {
 }
 
 export async function getRecipes(limit = 250) {
-  if (isHandcraftedTenantEnabled()) {
+  if ((await workspaceScope()).useDemo) {
     const fromJson = getHandcraftedRecipes();
     if (fromJson.length) return fromJson.slice(0, limit);
   }
@@ -354,7 +413,7 @@ export async function getRecipes(limit = 250) {
 }
 
 export async function getRecipeItems(limit = 500) {
-  if (isHandcraftedTenantEnabled()) {
+  if ((await workspaceScope()).useDemo) {
     const fromJson = getHandcraftedRecipeItems();
     if (fromJson.length) return fromJson.slice(0, limit);
   }
@@ -366,12 +425,12 @@ export async function getProductRecipeLinks(limit = 500) {
 }
 
 export async function getBatchRuns(limit = 100) {
-  if (isHandcraftedTenantEnabled()) return getHandcraftedBatchRuns().slice(0, limit);
+  if ((await workspaceScope()).useDemo) return getHandcraftedBatchRuns().slice(0, limit);
   return fetchRows<BatchRun>("vyron_cost_batch_runs", demoBatchRuns, "batch_number", limit);
 }
 
 export async function getCategories(limit = 250) {
-  if (isHandcraftedTenantEnabled()) return getHandcraftedCategories().slice(0, limit);
+  if ((await workspaceScope()).useDemo) return getHandcraftedCategories().slice(0, limit);
   return fetchRows<Category>("vyron_cost_categories", demoCategories, "category_name", limit);
 }
 

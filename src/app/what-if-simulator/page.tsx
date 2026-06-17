@@ -6,7 +6,7 @@ export default async function WhatIfSimulatorPage() {
   const scenario = await getWhatIfScenario();
 
   return (
-    <VyronCostShell title="What-If Simulator" subtitle="COST INCREASE IMPACT · GP · PRICE ACTION">
+    <VyronCostShell hidePageHeader title="What-If Simulator" subtitle="COST INCREASE IMPACT · GP · PRICE ACTION">
       <WhatIfSimulatorClient scenario={scenario} />
     </VyronCostShell>
   );

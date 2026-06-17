@@ -3,8 +3,7 @@ import VyronCostShell from "@/components/VyronCostShell";
 
 export default function DemoScriptCentrePage() {
   return (
-    <VyronCostShell
-      title="Demo Script Centre"
+    <VyronCostShell hidePageHeader title="Demo Script Centre"
       subtitle="CLIENT MEETING FLOW · SALES STORY · RECOVERY CLOSE"
     >
       <DemoScriptCentreClient />

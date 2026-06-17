@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import VyronCostAiShell from "@/components/VyronCostAiShell";
+import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
 
 export default function GoodsReceiptHistoryPage() {
   const [receipts, setReceipts] = useState<Array<Record<string, unknown>>>([]);
 
   useEffect(() => {
-    fetch("/api/goods-receipts")
+    const { query } = poApiWorkspaceContext();
+    fetch(`/api/goods-receipts${query}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) setReceipts(d.receipts || []);
@@ -16,7 +18,7 @@ export default function GoodsReceiptHistoryPage() {
   }, []);
 
   return (
-    <VyronCostAiShell title="GRN History" subtitle="All posted goods received notes">
+    <VyronCostAiShell hidePageHeader title="GRN History" subtitle="All posted goods received notes">
       <section className="rounded-[2rem] border border-violet-100 bg-white p-6">
         <Link href="/goods-receipts" className="text-xs font-black text-violet-700">
           ← GRN Dashboard

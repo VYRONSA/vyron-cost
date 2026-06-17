@@ -6,8 +6,7 @@ export default async function ClientProposalStudioPage() {
   const snapshot = await getLaunchReadinessSnapshot();
 
   return (
-    <VyronCostShell
-      title="Client Proposal Studio"
+    <VyronCostShell hidePageHeader title="Client Proposal Studio"
       subtitle="RECOVERY VALUE · PROPOSAL SUMMARY · CLIENT FOLLOW-UP"
     >
       <ClientProposalStudioClient snapshot={snapshot} />

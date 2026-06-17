@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { useAdminPermissions, useManufacturingPermissions } from "@/hooks/useModulePermissions";
 import { formatCurrency, formatNumber } from "@/lib/vyron-cost/stock-engine";
+import { readActiveClient } from "@/lib/vyron-developer-client";
+import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 
 type BatchStatus = "Draft" | "In Production" | "Completed" | "Reversed" | "Cancelled";
 
@@ -119,31 +123,55 @@ function createDefaultLine(product = "Beef Pie"): BatchLine {
   };
 }
 
+function batchStorageKey(workspaceId: string | null) {
+  return workspaceId ? `${STORAGE_KEY}:${workspaceId}` : STORAGE_KEY;
+}
+
 export default function ManufacturingIntelligenceClient() {
-  const [batches, setBatches] = useState<ManufacturingBatch[]>(defaultBatches);
-  const [formOpen, setFormOpen] = useState(true);
-  const [batchLines, setBatchLines] = useState<BatchLine[]>([
-    createDefaultLine("Beef Pie"),
-    createDefaultLine("Chicken Pie"),
-  ]);
+  const { canCreate, canStart, canComplete, canReverse } = useManufacturingPermissions();
+  const { canCompany, canUsers } = useAdminPermissions();
+  const canManageWorkspace = canCompany || canUsers;
+  const canUseSupervisorTools =
+    canCreate || canStart || canComplete || canReverse || canManageWorkspace;
+  const [demoMode, setDemoMode] = useState(false);
+  const [batches, setBatches] = useState<ManufacturingBatch[]>([]);
+  const [formOpen, setFormOpen] = useState(false);
+  const [batchLines, setBatchLines] = useState<BatchLine[]>([]);
   const [form, setForm] = useState<BatchFormState>(emptyForm);
   const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
   const [supervisorReason, setSupervisorReason] = useState("Supervisor correction before final reporting");
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const client = readActiveClient();
+    const demo = isDemoWorkspace(client);
+    setDemoMode(demo);
+    const key = batchStorageKey(client?.id ?? null);
+    const raw = window.localStorage.getItem(key);
     if (raw) {
       try {
         const parsed = JSON.parse(raw) as ManufacturingBatch[];
-        if (Array.isArray(parsed)) setBatches(parsed);
+        if (Array.isArray(parsed)) {
+          setBatches(parsed);
+          return;
+        }
       } catch {
-        setBatches(defaultBatches);
+        // fall through
       }
+    }
+    if (demo) {
+      setBatches(defaultBatches);
+      setFormOpen(true);
+      setBatchLines([createDefaultLine("Beef Pie"), createDefaultLine("Chicken Pie")]);
+    } else {
+      setBatches([]);
+      setFormOpen(false);
+      setBatchLines([]);
     }
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(batches));
+    const client = readActiveClient();
+    window.localStorage.setItem(batchStorageKey(client?.id ?? null), JSON.stringify(batches));
   }, [batches]);
 
   const summary = useMemo(() => {
@@ -213,6 +241,7 @@ export default function ManufacturingIntelligenceClient() {
   }
 
   function saveBatchQueue() {
+    if (!canCreate) return;
     const validLines = batchLines.filter((line) => line.product && line.plannedQty > 0 && line.actualQty >= 0);
     if (!validLines.length) {
       alert("Add at least one valid manufacturing line.");
@@ -239,6 +268,7 @@ export default function ManufacturingIntelligenceClient() {
   }
 
   function saveEdit() {
+    if (!canComplete) return;
     if (!editingBatchId) return;
 
     setBatches((current) =>
@@ -270,6 +300,9 @@ export default function ManufacturingIntelligenceClient() {
   }
 
   function updateStatus(id: string, status: BatchStatus) {
+    if (status === "In Production" && !canStart) return;
+    if (status === "Completed" && !canComplete) return;
+    if (status === "Cancelled" && !canCreate) return;
     setBatches((current) =>
       current.map((batch) =>
         batch.id === id
@@ -291,6 +324,7 @@ export default function ManufacturingIntelligenceClient() {
   }
 
   function reverseBatch(id: string) {
+    if (!canReverse) return;
     if (!supervisorReason.trim()) {
       alert("Please enter a supervisor reversal reason first.");
       return;
@@ -316,6 +350,7 @@ export default function ManufacturingIntelligenceClient() {
   }
 
   function completeAllOpen() {
+    if (!canComplete) return;
     const confirmed = window.confirm("Complete all open Draft / In Production batches?");
     if (!confirmed) return;
 
@@ -341,7 +376,30 @@ export default function ManufacturingIntelligenceClient() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] space-y-6">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "manufacturing",
+        badge: "Manufacturing Intelligence",
+        title: "Manufacturing Intelligence Centre",
+        subtitle: "Supervise production batches, variance controls, and reversal governance in one premium workspace.",
+        outcomes: ["Control batch execution lifecycle", "Capture supervisor-grade correction notes", "Track cost and yield variance transparently"],
+        formulas: ["Variance = Actual Cost - Expected Cost", "Yield % = Actual Qty / Planned Qty", "Expected Cost = Planned Qty x Product Unit Cost"],
+        intelligenceItems: [
+          { label: "Batch register", detail: `${batches.length} batches tracked in current workspace` },
+          { label: "Open workload", detail: `${summary.openCount} draft or in-production batches` },
+          { label: "Governance", detail: `${summary.reversed} batches currently marked reversed` },
+        ],
+      }}
+    >
+      <div className="mx-auto w-full max-w-[1400px] space-y-6">
+      {!demoMode && batches.length === 0 ? (
+        <section className="rounded-[32px] border border-dashed border-violet-200 bg-violet-50/50 p-10 text-center">
+          <h2 className="text-2xl font-black text-slate-950">No manufacturing batches yet</h2>
+          <p className="mt-3 text-sm font-semibold text-slate-600">
+            Create recipes and BOMs first, then record production batches to build finished goods stock.
+          </p>
+        </section>
+      ) : null}
       <div className="grid gap-4 md:grid-cols-5">
         <Metric title="Units Produced" value={formatNumber(summary.produced)} />
         <Metric title="Manufacturing Cost" value={formatCurrency(summary.cost)} />
@@ -360,38 +418,46 @@ export default function ManufacturingIntelligenceClient() {
           </div>
 
           <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
-            <button
-              type="button"
-              onClick={() => {
-                setEditingBatchId(null);
-                setForm(emptyForm);
-                setFormOpen((value) => !value);
-              }}
-              className="rounded-full bg-purple-700 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-purple-700/20"
-            >
-              {formOpen && !editingBatchId ? "Close Batch Queue" : "New Batch Queue"}
-            </button>
-            <button
-              type="button"
-              onClick={completeAllOpen}
-              className="rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-emerald-600/20"
-            >
-              Complete All Open
-            </button>
-            <button
-              type="button"
-              onClick={resetDemo}
-              className="rounded-full border border-purple-200 bg-white px-5 py-2.5 text-sm font-black text-purple-800"
-            >
-              Reset Demo
-            </button>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-black text-slate-800"
-            >
-              Print
-            </button>
+            {canCreate ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingBatchId(null);
+                  setForm(emptyForm);
+                  setFormOpen((value) => !value);
+                }}
+                className="rounded-full bg-purple-700 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-purple-700/20"
+              >
+                {formOpen && !editingBatchId ? "Close Batch Queue" : "New Batch Queue"}
+              </button>
+            ) : null}
+            {canComplete ? (
+              <button
+                type="button"
+                onClick={completeAllOpen}
+                className="rounded-full bg-[#24183F] border border-[#A3E635]/30 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-black/20"
+              >
+                Complete All Open
+              </button>
+            ) : null}
+            {demoMode && canUseSupervisorTools ? (
+              <button
+                type="button"
+                onClick={resetDemo}
+                className="rounded-full border border-purple-200 bg-white px-5 py-2.5 text-sm font-black text-purple-800"
+              >
+                Reset Demo
+              </button>
+            ) : null}
+            {canUseSupervisorTools ? (
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-black text-slate-800"
+              >
+                Print
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -421,7 +487,7 @@ export default function ManufacturingIntelligenceClient() {
                 </p>
               </div>
 
-              {!editingBatchId ? (
+              {!editingBatchId && canCreate ? (
                 <button
                   type="button"
                   onClick={addLine}
@@ -440,15 +506,17 @@ export default function ManufacturingIntelligenceClient() {
                 <NumberField label="Actual Cost" value={form.actualCost} onChange={(value) => setForm((current) => ({ ...current, actualCost: value }))} />
                 <NumberField label="Wastage %" value={form.wastagePct} onChange={(value) => setForm((current) => ({ ...current, wastagePct: value }))} />
 
-                <div className="lg:col-span-5">
-                  <button
-                    type="button"
-                    onClick={saveEdit}
-                    className="rounded-full bg-slate-950 px-6 py-3 text-sm font-black text-white"
-                  >
-                    Save Supervisor Correction
-                  </button>
-                </div>
+                {canComplete ? (
+                  <div className="lg:col-span-5">
+                    <button
+                      type="button"
+                      onClick={saveEdit}
+                      className="rounded-full bg-slate-950 px-6 py-3 text-sm font-black text-white"
+                    >
+                      Save Supervisor Correction
+                    </button>
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div className="mt-4 space-y-3">
@@ -464,42 +532,46 @@ export default function ManufacturingIntelligenceClient() {
                       <NumberField label="Actual Cost" value={line.actualCost} onChange={(value) => updateLine(line.id, { actualCost: value })} />
                       <NumberField label="Wastage %" value={line.wastagePct} onChange={(value) => updateLine(line.id, { wastagePct: value })} />
 
-                      <div className="flex flex-wrap gap-2 xl:justify-end">
-                        <button
-                          type="button"
-                          onClick={() => duplicateLine(line)}
-                          className="rounded-full bg-purple-100 px-3 py-2 text-xs font-black text-purple-800"
-                        >
-                          Duplicate
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeLine(line.id)}
-                          className="rounded-full bg-rose-100 px-3 py-2 text-xs font-black text-rose-800"
-                        >
-                          Remove
-                        </button>
-                      </div>
+                      {canCreate ? (
+                        <div className="flex flex-wrap gap-2 xl:justify-end">
+                          <button
+                            type="button"
+                            onClick={() => duplicateLine(line)}
+                            className="rounded-full bg-purple-100 px-3 py-2 text-xs font-black text-purple-800"
+                          >
+                            Duplicate
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeLine(line.id)}
+                            className="rounded-full bg-rose-100 px-3 py-2 text-xs font-black text-rose-800"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 ))}
 
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={addLine}
-                    className="rounded-full border border-purple-200 bg-white px-5 py-2.5 text-sm font-black text-purple-800"
-                  >
-                    Add Another Line
-                  </button>
-                  <button
-                    type="button"
-                    onClick={saveBatchQueue}
-                    className="rounded-full bg-slate-950 px-6 py-3 text-sm font-black text-white"
-                  >
-                    Save All Lines as Draft Batches
-                  </button>
-                </div>
+                {canCreate ? (
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={addLine}
+                      className="rounded-full border border-purple-200 bg-white px-5 py-2.5 text-sm font-black text-purple-800"
+                    >
+                      Add Another Line
+                    </button>
+                    <button
+                      type="button"
+                      onClick={saveBatchQueue}
+                      className="rounded-full bg-slate-950 px-6 py-3 text-sm font-black text-white"
+                    >
+                      Save All Lines as Draft Batches
+                    </button>
+                  </div>
+                ) : null}
               </div>
             )}
           </div>
@@ -533,30 +605,30 @@ export default function ManufacturingIntelligenceClient() {
                 <div className="text-right font-bold">{formatNumber(batch.actualQty)}</div>
                 <div className="text-right font-bold">{formatCurrency(batch.expectedCost)}</div>
                 <div className="text-right font-black">{formatCurrency(batch.actualCost)}</div>
-                <div className={`text-right font-black ${variance > 0 ? "text-rose-700" : "text-emerald-700"}`}>{formatCurrency(variance)}</div>
+                <div className={`text-right font-black ${variance > 0 ? "text-rose-700" : "text-[#65A30D]"}`}>{formatCurrency(variance)}</div>
                 <div>
                   <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${statusClass(batch.status)}`}>
                     {batch.status}
                   </span>
                 </div>
                 <div className="flex flex-wrap justify-start gap-2">
-                  {batch.status === "Draft" ? (
+                  {batch.status === "Draft" && canStart ? (
                     <ActionButton tone="indigo" onClick={() => updateStatus(batch.id, "In Production")}>Start</ActionButton>
                   ) : null}
 
-                  {batch.status === "In Production" || batch.status === "Draft" ? (
+                  {(batch.status === "In Production" || batch.status === "Draft") && canComplete ? (
                     <ActionButton tone="emerald" onClick={() => updateStatus(batch.id, "Completed")}>Complete</ActionButton>
                   ) : null}
 
-                  {batch.status !== "Reversed" && batch.status !== "Cancelled" ? (
+                  {batch.status !== "Reversed" && batch.status !== "Cancelled" && canComplete ? (
                     <ActionButton tone="purple" onClick={() => startEdit(batch)}>Edit</ActionButton>
                   ) : null}
 
-                  {batch.status === "Completed" ? (
+                  {batch.status === "Completed" && canReverse ? (
                     <ActionButton tone="rose" onClick={() => reverseBatch(batch.id)}>Reverse</ActionButton>
                   ) : null}
 
-                  {batch.status !== "Completed" && batch.status !== "Reversed" && batch.status !== "Cancelled" ? (
+                  {batch.status !== "Completed" && batch.status !== "Reversed" && batch.status !== "Cancelled" && canCreate ? (
                     <ActionButton tone="slate" onClick={() => updateStatus(batch.id, "Cancelled")}>Cancel</ActionButton>
                   ) : null}
                 </div>
@@ -595,7 +667,8 @@ export default function ManufacturingIntelligenceClient() {
           </Link>
         </div>
       </div>
-    </div>
+      </div>
+    </VyronPremiumPageShell>
   );
 }
 
@@ -661,7 +734,7 @@ function ActionButton({
 }) {
   const tones = {
     indigo: "bg-indigo-100 text-indigo-800",
-    emerald: "bg-emerald-100 text-emerald-800",
+    emerald: "bg-[#A3E635]/12 text-[#4D7C0F]",
     purple: "bg-purple-100 text-purple-800",
     rose: "bg-rose-100 text-rose-800",
     slate: "bg-slate-100 text-slate-700",
@@ -675,7 +748,7 @@ function ActionButton({
 }
 
 function statusClass(status: BatchStatus) {
-  if (status === "Completed") return "bg-emerald-100 text-emerald-800";
+  if (status === "Completed") return "bg-[#A3E635]/12 text-[#4D7C0F]";
   if (status === "In Production") return "bg-indigo-100 text-indigo-800";
   if (status === "Reversed") return "bg-rose-100 text-rose-800";
   if (status === "Cancelled") return "bg-slate-200 text-slate-700";

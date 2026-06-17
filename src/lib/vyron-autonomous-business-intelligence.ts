@@ -1,5 +1,5 @@
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
+import { getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
 import { calculateGpPercent, getProducts, getIngredients } from "@/lib/vyron-cost-data";
 import { getExecutiveCommandCentreData } from "@/lib/vyron-executive-command-centre";
 import { getFinanceIntelligenceKpis, getFinanceLeakageCentre } from "@/lib/vyron-finance-intelligence";
@@ -825,9 +825,46 @@ function forecastLine(forecast: Awaited<ReturnType<typeof getEnterpriseForecast>
   return forecast.lines.find((l) => l.key === key)?.horizon90 || 0;
 }
 
+function emptyAutonomousBusinessIntelligencePayload(): AutonomousBusinessIntelligencePayload {
+  return {
+    commandCentre: [],
+    businessHealth: {
+      financialHealth: 0,
+      inventoryHealth: 0,
+      procurementHealth: 0,
+      supplierHealth: 0,
+      productionHealth: 0,
+      recoveryHealth: 0,
+      complianceHealth: 0,
+      overallScore: 0,
+    },
+    earlyWarnings: [],
+    rootCauses: [],
+    decisions: [],
+    actions: [],
+    orgPerformance: [],
+    knowledge: [],
+    predictiveRisks: [],
+    scorecards: [],
+    copilotPresets: [],
+    strategic: {
+      topRisks: [],
+      topOpportunities: [],
+      projectedSavings: 0,
+      projectedLeakage: 0,
+      projectedRecovery: 0,
+      projectedProfitImpact: 0,
+    },
+  };
+}
+
 export async function getAutonomousBusinessIntelligence(
-  companyId = VYRON_DEFAULT_TENANT_ID
+  companyId?: string | null
 ): Promise<AutonomousBusinessIntelligencePayload> {
+  const resolvedCompanyId = companyId ?? (await getWorkspaceCompanyId());
+  if (!resolvedCompanyId) return emptyAutonomousBusinessIntelligencePayload();
+  companyId = resolvedCompanyId;
+
   const supabase = getSupabaseAdmin();
 
   const [
@@ -1036,7 +1073,7 @@ export async function getAutonomousBusinessIntelligence(
   };
 }
 
-export async function answerVyronCopilot(question: string, companyId = VYRON_DEFAULT_TENANT_ID): Promise<CopilotAnswer> {
+export async function answerVyronCopilot(question: string, companyId?: string | null): Promise<CopilotAnswer> {
   const data = await getAutonomousBusinessIntelligence(companyId);
   const match = data.copilotPresets.find((p) => p.question.toLowerCase() === question.toLowerCase());
   if (match) return match;

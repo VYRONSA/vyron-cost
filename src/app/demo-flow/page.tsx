@@ -16,7 +16,7 @@ const steps: Array<{ title: string; href: string; Icon: LucideIcon; text: string
 
 export default function DemoFlowPage() {
   return (
-    <VyronCostAiShell title="Client Demo Flow" subtitle="Use this page as the exact demo script for the prospect.">
+    <VyronCostAiShell hidePageHeader title="Client Demo Flow" subtitle="Use this page as the exact demo script for the prospect.">
       <section className="grid gap-5 md:grid-cols-4">
         {["15 min demo", "Show BOM", "Show GP", "Close Recovery"].map((item) => (
           <div key={item} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">

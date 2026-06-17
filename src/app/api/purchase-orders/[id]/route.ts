@@ -1,13 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPurchaseOrderDetail, savePurchaseOrder, transitionPurchaseOrder } from "@/lib/vyron-procurement";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import {
+  deletePurchaseOrder,
+  getPurchaseOrderDetail,
+  savePurchaseOrder,
+  transitionPurchaseOrder,
+} from "@/lib/vyron-procurement";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(_request: NextRequest, context: RouteContext) {
+function companyContextFromRequest(request: NextRequest, body?: Record<string, unknown>) {
+  return {
+    workspaceId:
+      request.nextUrl.searchParams.get("workspaceId") ||
+      (typeof body?.workspaceId === "string" ? body.workspaceId : null),
+    companyId:
+      request.nextUrl.searchParams.get("companyId") ||
+      (typeof body?.companyId === "string" ? body.companyId : null),
+  };
+}
+
+async function requirePoCompanyId(supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>, ctx: {
+  workspaceId?: string | null;
+  companyId?: string | null;
+}) {
+  const companyId = await resolveApiCompanyIdWithContext(supabase, ctx);
+  if (!companyId) throw new Error("No active workspace company. Select a client workspace first.");
+  return companyId;
+}
+
+export async function GET(request: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
@@ -15,7 +45,9 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
   try {
-    const po = await getPurchaseOrderDetail(supabase, id);
+    await requireWorkspacePermission("purchase_orders.view");
+    const companyId = await requirePoCompanyId(supabase, companyContextFromRequest(request));
+    const po = await getPurchaseOrderDetail(supabase, id, companyId);
     if (!po) return NextResponse.json({ ok: false, error: "Not found." }, { status: 404 });
 
     const [{ data: goodsReceipts }, { data: linkedInvoices }] = await Promise.all([
@@ -23,11 +55,13 @@ export async function GET(_request: NextRequest, context: RouteContext) {
         .from("vyron_cost_goods_receipts")
         .select("id, grn_number, receipt_type, received_at, status")
         .eq("purchase_order_id", id)
+        .eq("company_id", companyId)
         .order("received_at", { ascending: false }),
       supabase
         .from("vyron_documents")
         .select("id, invoice_number, status, total, archived_at")
         .eq("purchase_order_id", id)
+        .eq("tenant_id", companyId)
         .is("deleted_at", null)
         .order("created_at", { ascending: false }),
     ]);
@@ -39,7 +73,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       linkedInvoices: linkedInvoices || [],
     });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Load failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Load failed.");
   }
 }
 
@@ -52,9 +86,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
   const body = await request.json().catch(() => ({}));
   try {
+    await requireWorkspacePermission("purchase_orders.edit");
+    const companyId = await requirePoCompanyId(supabase, companyContextFromRequest(request, body));
     const po = await savePurchaseOrder(
       supabase,
-      VYRON_DEFAULT_TENANT_ID,
+      companyId,
       {
         id,
         po_number: String(body.po_number || ""),
@@ -69,7 +105,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     );
     return NextResponse.json({ ok: true, purchaseOrder: po });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Update failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Update failed.");
   }
 }
 
@@ -84,13 +120,35 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const status = String(body.status || "");
   if (!status) return NextResponse.json({ ok: false, error: "status required." }, { status: 400 });
   try {
-    const po = await transitionPurchaseOrder(supabase, id, status, {
+    const approvalStatuses = new Set(["Approved", "Sent", "Closed", "Cancelled"]);
+    await requireWorkspacePermission(
+      approvalStatuses.has(status) ? "purchase_orders.approve" : "purchase_orders.edit"
+    );
+    const companyId = await requirePoCompanyId(supabase, companyContextFromRequest(request, body));
+    const { purchaseOrder, approvalTier } = await transitionPurchaseOrder(supabase, id, status, companyId, {
       approvedBy: body.approvedBy,
       approvalNotes: body.approvalNotes,
       actor: body.actor,
     });
-    return NextResponse.json({ ok: true, purchaseOrder: po });
+    return NextResponse.json({ ok: true, purchaseOrder, approvalTier });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Update failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Update failed.");
+  }
+}
+
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  const { id } = await context.params;
+  if (!isSupabaseServiceRoleConfigured()) {
+    return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
+  }
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
+  try {
+    await requireWorkspacePermission("purchase_orders.delete");
+    const companyId = await requirePoCompanyId(supabase, companyContextFromRequest(request));
+    await deletePurchaseOrder(supabase, companyId, id);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return workspaceAccessErrorResponse(error, "Delete failed.");
   }
 }

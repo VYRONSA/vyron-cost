@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
-import { receiveStockFromGrn } from "@/lib/vyron-inventory";
+import { receiveStockFromGrn, reverseStockFromGrn, rollbackGrnStockPostings, hasGrnPostedStock } from "@/lib/vyron-inventory";
 import { computeThreeWayMatch, upsertThreeWayMatch } from "@/lib/vyron-three-way-match";
 
 export const PO_STATUSES = [
@@ -70,6 +70,23 @@ export type PoApprovalRules = {
   requirePoBeforeInvoiceApproval: boolean;
 };
 
+export const DEFAULT_PO_APPROVAL_RULES: PoApprovalRules = {
+  autoApproveBelow: 5000,
+  supervisorApproveBelow: 25000,
+  requirePoBeforeInvoiceApproval: true,
+};
+
+function mapPoApprovalRulesRow(row: Record<string, unknown>): PoApprovalRules {
+  return {
+    autoApproveBelow: Number(row.auto_approve_below ?? DEFAULT_PO_APPROVAL_RULES.autoApproveBelow),
+    supervisorApproveBelow: Number(row.supervisor_approve_below ?? DEFAULT_PO_APPROVAL_RULES.supervisorApproveBelow),
+    requirePoBeforeInvoiceApproval:
+      row.require_po_before_invoice_approval === null || row.require_po_before_invoice_approval === undefined
+        ? DEFAULT_PO_APPROVAL_RULES.requirePoBeforeInvoiceApproval
+        : Boolean(row.require_po_before_invoice_approval),
+  };
+}
+
 export type GrnLineInput = {
   purchase_order_line_id?: string | null;
   item_name: string;
@@ -79,6 +96,89 @@ export type GrnLineInput = {
   rejected_qty?: number;
   unit: string;
 };
+
+export const GRN_ALLOWED_PO_STATUSES = ["Approved", "Sent", "Partially Received"] as const;
+
+/** Outstanding = ordered − cumulative received − cumulative damaged − cumulative rejected (never below zero). */
+export function calcPoLineOutstanding(poLine: {
+  ordered_qty?: number;
+  quantity?: number;
+  received_qty?: number;
+  damaged_qty?: number;
+  rejected_qty?: number;
+}): number {
+  const ordered = Number(poLine.ordered_qty ?? poLine.quantity ?? 0);
+  const received = Number(poLine.received_qty || 0);
+  const damaged = Number(poLine.damaged_qty || 0);
+  const rejected = Number(poLine.rejected_qty || 0);
+  return Math.max(0, Math.round((ordered - received - damaged - rejected) * 10000) / 10000);
+}
+
+export function validateGoodsReceiptInput(
+  po: PurchaseOrderRow,
+  input: { lines: GrnLineInput[] }
+): void {
+  const status = String(po.status || "");
+  if (status === "Draft") {
+    throw new Error("Cannot receive goods against a Draft purchase order. Submit and approve the PO first.");
+  }
+  if (status === "Submitted") {
+    throw new Error("Cannot receive goods against a Submitted purchase order. Approve the PO before receiving.");
+  }
+  if (status === "Closed") {
+    throw new Error("Cannot receive goods against a Closed purchase order.");
+  }
+  if (status === "Fully Received") {
+    throw new Error("Cannot receive goods against a Fully Received purchase order.");
+  }
+  if (status === "Cancelled") {
+    throw new Error("Cannot receive goods against a Cancelled purchase order.");
+  }
+  if (!GRN_ALLOWED_PO_STATUSES.includes(status as (typeof GRN_ALLOWED_PO_STATUSES)[number])) {
+    throw new Error(`Cannot receive goods against purchase order in status "${status}".`);
+  }
+
+  if (!input.lines?.length) {
+    throw new Error("At least one GRN line is required.");
+  }
+
+  let totalMovementQty = 0;
+  for (const line of input.lines) {
+    const received = Number(line.received_qty || 0);
+    const damaged = Number(line.damaged_qty || 0);
+    const rejected = Number(line.rejected_qty || 0);
+
+    if (received < 0 || damaged < 0 || rejected < 0) {
+      throw new Error(`Negative quantities are not allowed for ${line.item_name}.`);
+    }
+
+    const lineTotal = received + damaged + rejected;
+    totalMovementQty += lineTotal;
+
+    if (!line.purchase_order_line_id) {
+      if (lineTotal > 0) {
+        throw new Error(`GRN line ${line.item_name} must be linked to a purchase order line.`);
+      }
+      continue;
+    }
+
+    const poLine = po.lines?.find((l) => l.id === line.purchase_order_line_id);
+    if (!poLine) {
+      throw new Error(`Purchase order line not found for ${line.item_name}.`);
+    }
+
+    const outstandingBefore = calcPoLineOutstanding(poLine);
+    if (lineTotal > outstandingBefore + 0.001) {
+      throw new Error(
+        `Cannot receive ${lineTotal} for ${line.item_name}: only ${outstandingBefore} outstanding on the purchase order.`
+      );
+    }
+  }
+
+  if (totalMovementQty <= 0.001) {
+    throw new Error("GRN must include a positive received, damaged, or rejected quantity.");
+  }
+}
 
 export function calcLineTotals(quantity: number, unitPrice: number, vatRate = 15) {
   const subtotal = Math.round(quantity * unitPrice * 100) / 100;
@@ -123,27 +223,54 @@ export async function writeProcurementAudit(
   });
 }
 
-export async function getPoApprovalRules(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID): Promise<PoApprovalRules> {
-  const { data } = await supabase.from("vyron_po_approval_rules").select("*").eq("company_id", companyId).maybeSingle();
-  return {
-    autoApproveBelow: Number(data?.auto_approve_below ?? 5000),
-    supervisorApproveBelow: Number(data?.supervisor_approve_below ?? 25000),
-    requirePoBeforeInvoiceApproval: Boolean(data?.require_po_before_invoice_approval ?? true),
-  };
+export async function getPoApprovalRules(
+  supabase: SupabaseClient,
+  companyId = VYRON_DEFAULT_TENANT_ID
+): Promise<PoApprovalRules> {
+  const { data, error } = await supabase
+    .from("vyron_po_approval_rules")
+    .select("*")
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return { ...DEFAULT_PO_APPROVAL_RULES };
+  return mapPoApprovalRulesRow(data as Record<string, unknown>);
 }
 
-export async function savePoApprovalRules(supabase: SupabaseClient, companyId: string, rules: PoApprovalRules) {
-  const { error } = await supabase.from("vyron_po_approval_rules").upsert(
-    {
-      company_id: companyId,
-      auto_approve_below: rules.autoApproveBelow,
-      supervisor_approve_below: rules.supervisorApproveBelow,
-      require_po_before_invoice_approval: rules.requirePoBeforeInvoiceApproval,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "company_id" }
-  );
-  if (error) throw new Error(error.message);
+export async function savePoApprovalRules(
+  supabase: SupabaseClient,
+  companyId: string,
+  rules: PoApprovalRules
+): Promise<PoApprovalRules> {
+  const payload = {
+    auto_approve_below: rules.autoApproveBelow,
+    supervisor_approve_below: rules.supervisorApproveBelow,
+    require_po_before_invoice_approval: rules.requirePoBeforeInvoiceApproval,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data: existing, error: loadError } = await supabase
+    .from("vyron_po_approval_rules")
+    .select("id")
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (loadError) throw new Error(loadError.message);
+
+  if (existing?.id) {
+    const { error } = await supabase.from("vyron_po_approval_rules").update(payload).eq("company_id", companyId);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase.from("vyron_po_approval_rules").insert({ company_id: companyId, ...payload });
+    if (error) throw new Error(error.message);
+  }
+
+  const { data: saved, error: readError } = await supabase
+    .from("vyron_po_approval_rules")
+    .select("*")
+    .eq("company_id", companyId)
+    .single();
+  if (readError) throw new Error(readError.message);
+  return mapPoApprovalRulesRow(saved as Record<string, unknown>);
 }
 
 export function approvalTierForTotal(total: number, rules: PoApprovalRules): "auto" | "supervisor" | "manager" {
@@ -231,16 +358,24 @@ export async function listPurchaseOrders(
   return rows.map((r) => ({ ...r, id: String(r.id) })) as PurchaseOrderRow[];
 }
 
-export async function getPurchaseOrderDetail(supabase: SupabaseClient, poId: string) {
-  const { data: po, error } = await supabase.from("vyron_cost_purchase_orders").select("*").eq("id", poId).maybeSingle();
+export async function getPurchaseOrderDetail(
+  supabase: SupabaseClient,
+  poId: string,
+  companyId?: string
+) {
+  let poQuery = supabase.from("vyron_cost_purchase_orders").select("*").eq("id", poId);
+  if (companyId) poQuery = poQuery.eq("company_id", companyId);
+  const { data: po, error } = await poQuery.maybeSingle();
   if (error) throw new Error(error.message);
   if (!po) return null;
 
-  const { data: lines } = await supabase
+  let linesQuery = supabase
     .from("vyron_cost_purchase_order_lines")
     .select("*")
     .eq("purchase_order_id", poId)
     .order("sort_order", { ascending: true });
+  if (companyId) linesQuery = linesQuery.eq("company_id", companyId);
+  const { data: lines } = await linesQuery;
 
   return {
     ...(po as PurchaseOrderRow),
@@ -278,12 +413,25 @@ export async function savePurchaseOrder(
     builtLines.map((l) => ({ line_total: l.line_total, vat_amount: l.vat_amount, subtotal: l.line_total - l.vat_amount }))
   );
 
-  const headerPayload = {
+  const approvalRules = await getPoApprovalRules(supabase, companyId);
+  const approvalTier = approvalTierForTotal(headerTotals.total, approvalRules);
+  let orderStatus = input.status || "Draft";
+  let approvalNotes: string | null = null;
+  let approvedAt: string | null = null;
+  let approvedBy: string | null = null;
+  if (orderStatus === "Submitted" && approvalTier === "auto") {
+    orderStatus = "Approved";
+    approvalNotes = "Auto-approved below threshold.";
+    approvedAt = new Date().toISOString();
+    approvedBy = actor;
+  }
+
+  let headerPayload: Record<string, unknown> = {
     company_id: companyId,
     supplier_id: input.supplier_id || null,
     po_number: input.po_number,
     supplier_name_snapshot: input.supplier_name_snapshot,
-    status: input.status || "Draft",
+    status: orderStatus,
     order_date: input.order_date || new Date().toISOString().slice(0, 10),
     notes: input.notes || null,
     subtotal: headerTotals.subtotal,
@@ -293,12 +441,35 @@ export async function savePurchaseOrder(
     outstanding_amount: headerTotals.total,
     updated_at: new Date().toISOString(),
   };
+  if (orderStatus === "Submitted") {
+    headerPayload.submitted_at = new Date().toISOString();
+  }
+  if (orderStatus === "Approved" && approvedAt) {
+    headerPayload.approved_at = approvedAt;
+    headerPayload.approved_by = approvedBy;
+    headerPayload.approval_notes = approvalNotes;
+  }
 
   let poId = input.id;
+  const existingLinesById = new Map<string, Record<string, unknown>>();
   if (poId) {
-    const { error } = await supabase.from("vyron_cost_purchase_orders").update(headerPayload).eq("id", poId);
-    if (error) throw new Error(error.message);
-    await supabase.from("vyron_cost_purchase_order_lines").delete().eq("purchase_order_id", poId);
+    const { data: existing, error: loadError } = await supabase
+      .from("vyron_cost_purchase_orders")
+      .select("id")
+      .eq("id", poId)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    if (loadError) throw new Error(loadError.message);
+    if (!existing) throw new Error("Purchase order not found.");
+
+    const { data: priorLines } = await supabase
+      .from("vyron_cost_purchase_order_lines")
+      .select("id, received_qty, damaged_qty, rejected_qty, ordered_qty")
+      .eq("purchase_order_id", poId)
+      .eq("company_id", companyId);
+    for (const row of priorLines || []) {
+      existingLinesById.set(String(row.id), row as Record<string, unknown>);
+    }
   } else {
     const { data, error } = await supabase.from("vyron_cost_purchase_orders").insert(headerPayload).select("id").single();
     if (error) throw new Error(error.message);
@@ -314,53 +485,145 @@ export async function savePurchaseOrder(
     });
   }
 
-  const lineRows = builtLines.map((line, index) => ({
-    company_id: companyId,
-    purchase_order_id: poId,
-    item_type: line.item_type,
-    item_id: line.item_id || null,
-    item_name: line.item_name,
-    quantity: line.quantity,
-    unit: line.unit,
-    unit_price: line.unit_price,
-    vat_rate: line.vat_rate ?? 15,
-    vat_amount: line.vat_amount,
-    line_total: line.line_total,
-    expected_delivery_date: line.expected_delivery_date || null,
-    ordered_qty: line.quantity,
-    received_qty: 0,
-    damaged_qty: 0,
-    rejected_qty: 0,
-    outstanding_qty: line.quantity,
-    sort_order: index,
-  }));
+  const lineRows = builtLines.map((line, index) => {
+    const prior = line.id ? existingLinesById.get(line.id) : undefined;
+    const receivedQty = prior ? Number(prior.received_qty || 0) : 0;
+    const damagedQty = prior ? Number(prior.damaged_qty || 0) : 0;
+    const rejectedQty = prior ? Number(prior.rejected_qty || 0) : 0;
+    const outstandingQty = calcPoLineOutstanding({
+      ordered_qty: line.quantity,
+      received_qty: receivedQty,
+      damaged_qty: damagedQty,
+      rejected_qty: rejectedQty,
+    });
+    const outstandingValue =
+      line.quantity > 0 ? Math.round((outstandingQty / line.quantity) * line.line_total * 100) / 100 : 0;
+    return {
+      ...(line.id && prior ? { id: line.id } : {}),
+      company_id: companyId,
+      purchase_order_id: poId,
+      item_type: line.item_type,
+      item_id: line.item_id || null,
+      item_name: line.item_name,
+      quantity: line.quantity,
+      unit: line.unit,
+      unit_price: line.unit_price,
+      vat_rate: line.vat_rate ?? 15,
+      vat_amount: line.vat_amount,
+      line_total: line.line_total,
+      expected_delivery_date: line.expected_delivery_date || null,
+      ordered_qty: line.quantity,
+      received_qty: receivedQty,
+      damaged_qty: damagedQty,
+      rejected_qty: rejectedQty,
+      outstanding_qty: outstandingQty,
+      sort_order: index,
+      _outstandingValue: outstandingValue,
+    };
+  });
 
-  const { error: lineError } = await supabase.from("vyron_cost_purchase_order_lines").insert(lineRows);
+  if (input.id && poId) {
+    headerPayload = {
+      ...headerPayload,
+      outstanding_amount:
+        Math.round(lineRows.reduce((sum, row) => sum + Number(row._outstandingValue || 0), 0) * 100) / 100,
+    };
+    const { error } = await supabase
+      .from("vyron_cost_purchase_orders")
+      .update(headerPayload)
+      .eq("id", poId)
+      .eq("company_id", companyId);
+    if (error) throw new Error(error.message);
+    await supabase
+      .from("vyron_cost_purchase_order_lines")
+      .delete()
+      .eq("purchase_order_id", poId)
+      .eq("company_id", companyId);
+  }
+
+  const insertRows = lineRows.map(({ _outstandingValue, ...row }) => row);
+
+  const { error: lineError } = await supabase.from("vyron_cost_purchase_order_lines").insert(insertRows);
   if (lineError) throw new Error(lineError.message);
 
-  return getPurchaseOrderDetail(supabase, poId!);
+  return getPurchaseOrderDetail(supabase, poId!, companyId);
+}
+
+export async function deletePurchaseOrder(supabase: SupabaseClient, companyId: string, poId: string) {
+  const { data: existing, error: loadError } = await supabase
+    .from("vyron_cost_purchase_orders")
+    .select("id")
+    .eq("id", poId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (loadError) throw new Error(loadError.message);
+  if (!existing) throw new Error("Purchase order not found.");
+
+  const { count: grnCount, error: grnCountError } = await supabase
+    .from("vyron_cost_goods_receipts")
+    .select("id", { count: "exact", head: true })
+    .eq("purchase_order_id", poId)
+    .eq("company_id", companyId);
+  if (grnCountError) throw new Error(grnCountError.message);
+  if ((grnCount || 0) > 0) {
+    throw new Error("Cannot delete purchase order with linked goods receipts. Remove or reverse receipts first.");
+  }
+
+  await supabase
+    .from("vyron_cost_purchase_order_lines")
+    .delete()
+    .eq("purchase_order_id", poId)
+    .eq("company_id", companyId);
+
+  const { error } = await supabase
+    .from("vyron_cost_purchase_orders")
+    .delete()
+    .eq("id", poId)
+    .eq("company_id", companyId);
+  if (error) throw new Error(error.message);
 }
 
 export async function transitionPurchaseOrder(
   supabase: SupabaseClient,
   poId: string,
   status: string,
+  companyId: string,
   opts?: { approvedBy?: string; approvalNotes?: string; actor?: string }
 ) {
+  const existing = await getPurchaseOrderDetail(supabase, poId, companyId);
+  if (!existing) throw new Error("Purchase order not found.");
+
+  const rules = await getPoApprovalRules(supabase, companyId);
+  const approvalTier = approvalTierForTotal(Number(existing.total || 0), rules);
+  let nextStatus = status;
+  if (status === "Submitted" && approvalTier === "auto") {
+    nextStatus = "Approved";
+  }
+
   const patch: Record<string, unknown> = {
-    status,
+    status: nextStatus,
     updated_at: new Date().toISOString(),
   };
-  if (status === "Submitted") patch.submitted_at = new Date().toISOString();
-  if (status === "Approved") {
-    patch.approved_at = new Date().toISOString();
-    patch.approved_by = opts?.approvedBy || "supervisor";
-    patch.approval_notes = opts?.approvalNotes || null;
+  if (nextStatus === "Submitted" || status === "Submitted") {
+    patch.submitted_at = new Date().toISOString();
   }
-  if (status === "Sent") patch.sent_at = new Date().toISOString();
-  if (status === "Closed") patch.closed_at = new Date().toISOString();
+  if (nextStatus === "Approved") {
+    patch.approved_at = new Date().toISOString();
+    patch.approved_by = opts?.approvedBy || opts?.actor || "supervisor";
+    const tierNote =
+      approvalTier === "auto" ? "Auto-approved below threshold." : `${approvalTier} approval tier`;
+    patch.approval_notes = opts?.approvalNotes ? `${opts.approvalNotes} · ${tierNote}` : tierNote;
+  }
+  if (nextStatus === "Sent") patch.sent_at = new Date().toISOString();
+  if (nextStatus === "Closed") patch.closed_at = new Date().toISOString();
 
-  const { data: po, error } = await supabase.from("vyron_cost_purchase_orders").update(patch).eq("id", poId).select("company_id, po_number").single();
+  const { data: po, error } = await supabase
+    .from("vyron_cost_purchase_orders")
+    .update(patch)
+    .eq("id", poId)
+    .eq("company_id", companyId)
+    .select("company_id, po_number")
+    .single();
   if (error) throw new Error(error.message);
 
   const eventMap: Record<string, string> = {
@@ -370,18 +633,280 @@ export async function transitionPurchaseOrder(
     Closed: "PO Closed",
     Cancelled: "PO Cancelled",
   };
-  if (eventMap[status]) {
+  const auditStatus = nextStatus;
+  if (eventMap[auditStatus]) {
     await writeProcurementAudit(supabase, {
       companyId: po.company_id as string,
-      eventType: eventMap[status],
+      eventType: eventMap[auditStatus],
       entityType: "purchase_order",
       entityId: poId,
       entityLabel: po.po_number as string,
-      detail: `${po.po_number} moved to ${status}.`,
+      detail: `${po.po_number} moved to ${auditStatus} (${approvalTier} tier).`,
       actor: opts?.actor || opts?.approvedBy || "system",
     });
   }
-  return getPurchaseOrderDetail(supabase, poId);
+  const purchaseOrder = await getPurchaseOrderDetail(supabase, poId, companyId);
+  return { purchaseOrder, approvalTier };
+}
+
+type PoLineSnapshot = {
+  id: string;
+  received_qty: number;
+  damaged_qty: number;
+  rejected_qty: number;
+  outstanding_qty: number;
+};
+
+export async function recalculatePoLinesFromActiveGrns(
+  supabase: SupabaseClient,
+  companyId: string,
+  purchaseOrderId: string
+) {
+  const { data: poLines, error: poLineError } = await supabase
+    .from("vyron_cost_purchase_order_lines")
+    .select("*")
+    .eq("purchase_order_id", purchaseOrderId)
+    .eq("company_id", companyId);
+  if (poLineError) throw new Error(poLineError.message);
+
+  const { data: activeGrns, error: grnError } = await supabase
+    .from("vyron_cost_goods_receipts")
+    .select("id")
+    .eq("purchase_order_id", purchaseOrderId)
+    .eq("company_id", companyId)
+    .eq("status", "Posted");
+  if (grnError) throw new Error(grnError.message);
+
+  const activeGrnIds = (activeGrns || []).map((row) => String(row.id));
+  const { data: receiptLines, error: receiptLineError } = activeGrnIds.length
+    ? await supabase
+        .from("vyron_cost_goods_receipt_lines")
+        .select("purchase_order_line_id, received_qty, damaged_qty, rejected_qty")
+        .eq("company_id", companyId)
+        .in("goods_receipt_id", activeGrnIds)
+    : { data: [], error: null };
+  if (receiptLineError) throw new Error(receiptLineError.message);
+
+  const sumsByPoLine = new Map<string, { received: number; damaged: number; rejected: number }>();
+  for (const row of receiptLines || []) {
+    const poLineId = String(row.purchase_order_line_id || "");
+    if (!poLineId) continue;
+    const existing = sumsByPoLine.get(poLineId) || { received: 0, damaged: 0, rejected: 0 };
+    existing.received += Number(row.received_qty || 0);
+    existing.damaged += Number(row.damaged_qty || 0);
+    existing.rejected += Number(row.rejected_qty || 0);
+    sumsByPoLine.set(poLineId, existing);
+  }
+
+  for (const poLine of poLines || []) {
+    const sums = sumsByPoLine.get(String(poLine.id)) || { received: 0, damaged: 0, rejected: 0 };
+    const outstanding = calcPoLineOutstanding({
+      ordered_qty: poLine.ordered_qty,
+      received_qty: sums.received,
+      damaged_qty: sums.damaged,
+      rejected_qty: sums.rejected,
+    });
+    const { error } = await supabase
+      .from("vyron_cost_purchase_order_lines")
+      .update({
+        received_qty: sums.received,
+        damaged_qty: sums.damaged,
+        rejected_qty: sums.rejected,
+        outstanding_qty: outstanding,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", poLine.id)
+      .eq("company_id", companyId);
+    if (error) throw new Error(error.message);
+  }
+}
+
+export async function refreshPurchaseOrderReceiptState(
+  supabase: SupabaseClient,
+  companyId: string,
+  purchaseOrderId: string,
+  supplierId?: string | null,
+  supplierNameSnapshot?: string | null
+) {
+  await recalculatePoLinesFromActiveGrns(supabase, companyId, purchaseOrderId);
+
+  const { data: poLines, error: poLineError } = await supabase
+    .from("vyron_cost_purchase_order_lines")
+    .select("id, item_name, ordered_qty, received_qty, outstanding_qty")
+    .eq("purchase_order_id", purchaseOrderId)
+    .eq("company_id", companyId);
+  if (poLineError) throw new Error(poLineError.message);
+
+  const lines = poLines || [];
+  const allReceived = lines.every((line) => Number(line.received_qty || 0) >= Number(line.ordered_qty || 0) - 0.001);
+  const anyReceived = lines.some((line) => Number(line.received_qty || 0) > 0);
+  const { data: po, error: poError } = await supabase
+    .from("vyron_cost_purchase_orders")
+    .select("status")
+    .eq("id", purchaseOrderId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (poError) throw new Error(poError.message);
+
+  const fallbackStatus = String(po?.status || "Approved");
+  const newStatus = allReceived
+    ? "Fully Received"
+    : anyReceived
+      ? "Partially Received"
+      : ["Partially Received", "Fully Received"].includes(fallbackStatus)
+        ? "Approved"
+        : fallbackStatus;
+
+  const { error: statusError } = await supabase
+    .from("vyron_cost_purchase_orders")
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .eq("id", purchaseOrderId)
+    .eq("company_id", companyId);
+  if (statusError) throw new Error(statusError.message);
+
+  const { error: backOrderDeleteError } = await supabase
+    .from("vyron_cost_back_orders")
+    .delete()
+    .eq("purchase_order_id", purchaseOrderId)
+    .eq("company_id", companyId)
+    .eq("status", "Open");
+  if (backOrderDeleteError) throw new Error(backOrderDeleteError.message);
+
+  for (const poLine of lines) {
+    if (Number(poLine.outstanding_qty || 0) <= 0.001) continue;
+    const { error } = await supabase.from("vyron_cost_back_orders").insert({
+      company_id: companyId,
+      purchase_order_id: purchaseOrderId,
+      purchase_order_line_id: poLine.id,
+      supplier_id: supplierId || null,
+      supplier_name_snapshot: supplierNameSnapshot || null,
+      item_name: poLine.item_name,
+      outstanding_qty: Number(poLine.outstanding_qty || 0),
+      expected_date: null,
+      status: "Open",
+    });
+    if (error) throw new Error(error.message);
+  }
+}
+
+async function rollbackFailedGrnCreation(
+  supabase: SupabaseClient,
+  companyId: string,
+  ctx: {
+    grnId: string;
+    purchaseOrderId: string;
+    poLineSnapshots: PoLineSnapshot[];
+    poStatusBefore: string;
+    supplierId?: string | null;
+    supplierNameSnapshot?: string | null;
+  }
+) {
+  await rollbackGrnStockPostings(supabase, companyId, ctx.grnId);
+  await supabase.from("vyron_cost_goods_receipt_lines").delete().eq("goods_receipt_id", ctx.grnId).eq("company_id", companyId);
+  await supabase.from("vyron_cost_goods_receipts").delete().eq("id", ctx.grnId).eq("company_id", companyId);
+
+  for (const snap of ctx.poLineSnapshots) {
+    await supabase
+      .from("vyron_cost_purchase_order_lines")
+      .update({
+        received_qty: snap.received_qty,
+        damaged_qty: snap.damaged_qty,
+        rejected_qty: snap.rejected_qty,
+        outstanding_qty: snap.outstanding_qty,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", snap.id)
+      .eq("company_id", companyId);
+  }
+
+  await supabase
+    .from("vyron_cost_purchase_orders")
+    .update({ status: ctx.poStatusBefore, updated_at: new Date().toISOString() })
+    .eq("id", ctx.purchaseOrderId)
+    .eq("company_id", companyId);
+
+  await refreshPurchaseOrderReceiptState(
+    supabase,
+    companyId,
+    ctx.purchaseOrderId,
+    ctx.supplierId,
+    ctx.supplierNameSnapshot
+  );
+}
+
+export async function reverseGoodsReceipt(
+  supabase: SupabaseClient,
+  companyId: string,
+  grnId: string,
+  input: { reason: string; actor?: string }
+) {
+  const reason = String(input.reason || "").trim();
+  if (!reason) throw new Error("Reversal reason is required.");
+
+  const { data: grn, error: grnError } = await supabase
+    .from("vyron_cost_goods_receipts")
+    .select("*")
+    .eq("id", grnId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (grnError) throw new Error(grnError.message);
+  if (!grn) throw new Error("GRN not found.");
+
+  const status = String(grn.status || "Posted");
+  if (status === "Reversed") throw new Error("GRN has already been reversed.");
+  if (status === "Cancelled") throw new Error("Cannot reverse a cancelled GRN.");
+
+  const actor = input.actor || "user";
+  const grnNumber = String(grn.grn_number || grnId);
+
+  const stockPosted = await hasGrnPostedStock(supabase, companyId, grnId);
+  if (stockPosted) {
+    await reverseStockFromGrn(supabase, {
+      companyId,
+      grnId,
+      grnNumber,
+      reason,
+      actor,
+    });
+  }
+
+  const reversalNote = `Reversed: ${reason}`;
+  const nextNotes = grn.notes ? `${grn.notes}\n${reversalNote}` : reversalNote;
+  const { data: reversedGrn, error: updateError } = await supabase
+    .from("vyron_cost_goods_receipts")
+    .update({
+      status: "Reversed",
+      notes: nextNotes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", grnId)
+    .eq("company_id", companyId)
+    .select("*")
+    .single();
+  if (updateError) throw new Error(updateError.message);
+
+  if (grn.purchase_order_id) {
+    await refreshPurchaseOrderReceiptState(
+      supabase,
+      companyId,
+      String(grn.purchase_order_id),
+      grn.supplier_id as string | null,
+      grn.supplier_name_snapshot as string | null
+    );
+  }
+
+  await writeProcurementAudit(supabase, {
+    companyId,
+    eventType: "GRN Reversed",
+    entityType: "goods_receipt",
+    entityId: grnId,
+    entityLabel: grnNumber,
+    detail: `${grnNumber} reversed — ${reason}`,
+    actor,
+    metadata: { reason, originalStatus: status },
+  });
+
+  return { grn: reversedGrn, grnNumber };
 }
 
 export async function createGoodsReceipt(
@@ -396,99 +921,112 @@ export async function createGoodsReceipt(
   },
   actor = "user"
 ) {
-  const po = await getPurchaseOrderDetail(supabase, input.purchase_order_id);
+  const po = await getPurchaseOrderDetail(supabase, input.purchase_order_id, companyId);
   if (!po) throw new Error("Purchase order not found.");
 
+  validateGoodsReceiptInput(po, input);
+
+  const poLineSnapshots: PoLineSnapshot[] = (po.lines || []).map((line) => ({
+    id: String(line.id),
+    received_qty: Number(line.received_qty || 0),
+    damaged_qty: Number(line.damaged_qty || 0),
+    rejected_qty: Number(line.rejected_qty || 0),
+    outstanding_qty: Number(line.outstanding_qty || 0),
+  }));
+  const poStatusBefore = String(po.status);
+
   const grnNumber = `GRN-${Date.now().toString().slice(-8)}`;
-  const { data: grn, error: grnError } = await supabase
-    .from("vyron_cost_goods_receipts")
-    .insert({
-      company_id: companyId,
-      purchase_order_id: input.purchase_order_id,
-      grn_number: grnNumber,
-      supplier_id: po.supplier_id,
-      supplier_name_snapshot: po.supplier_name_snapshot,
-      receipt_type: input.receipt_type,
-      status: "Posted",
-      received_by: input.received_by || actor,
-      notes: input.notes || null,
-    })
-    .select("*")
-    .single();
-  if (grnError) throw new Error(grnError.message);
-
-  const grnLines = input.lines.map((line) => {
-    const outstanding = Math.max(0, line.ordered_qty - line.received_qty - (line.damaged_qty || 0) - (line.rejected_qty || 0));
-    return {
-      company_id: companyId,
-      goods_receipt_id: grn.id,
-      purchase_order_line_id: line.purchase_order_line_id || null,
-      item_name: line.item_name,
-      ordered_qty: line.ordered_qty,
-      received_qty: line.received_qty,
-      damaged_qty: line.damaged_qty || 0,
-      rejected_qty: line.rejected_qty || 0,
-      outstanding_qty: outstanding,
-      unit: line.unit,
-    };
-  });
-
-  const { error: lineErr } = await supabase.from("vyron_cost_goods_receipt_lines").insert(grnLines);
-  if (lineErr) throw new Error(lineErr.message);
-
-  for (const line of input.lines) {
-    if (!line.purchase_order_line_id) continue;
-    const poLine = po.lines?.find((l) => l.id === line.purchase_order_line_id);
-    if (!poLine) continue;
-    const newReceived = Number(poLine.received_qty) + line.received_qty;
-    const outstanding = Math.max(0, Number(poLine.ordered_qty) - newReceived - (line.damaged_qty || 0) - (line.rejected_qty || 0));
-    await supabase
-      .from("vyron_cost_purchase_order_lines")
-      .update({
-        received_qty: newReceived,
-        damaged_qty: Number(poLine.damaged_qty) + (line.damaged_qty || 0),
-        rejected_qty: Number(poLine.rejected_qty) + (line.rejected_qty || 0),
-        outstanding_qty: outstanding,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", line.purchase_order_line_id);
-
-    if (outstanding > 0.001) {
-      await supabase.from("vyron_cost_back_orders").insert({
-        company_id: companyId,
-        purchase_order_id: input.purchase_order_id,
-        purchase_order_line_id: line.purchase_order_line_id,
-        supplier_id: po.supplier_id,
-        supplier_name_snapshot: po.supplier_name_snapshot,
-        item_name: line.item_name,
-        outstanding_qty: outstanding,
-        expected_date: null,
-        status: "Open",
-      });
-    }
-  }
-
-  const allReceived = (po.lines || []).every((l) => {
-    const inputLine = input.lines.find((x) => x.purchase_order_line_id === l.id);
-    const received = inputLine ? Number(l.received_qty) + inputLine.received_qty : Number(l.received_qty);
-    return received >= Number(l.ordered_qty) - 0.001;
-  });
-  const anyReceived = input.lines.some((l) => l.received_qty > 0);
-  const newStatus = allReceived ? "Fully Received" : anyReceived ? "Partially Received" : po.status;
-  await supabase.from("vyron_cost_purchase_orders").update({ status: newStatus, updated_at: new Date().toISOString() }).eq("id", po.id);
-
-  await writeProcurementAudit(supabase, {
-    companyId,
-    eventType: "Goods Received",
-    entityType: "goods_receipt",
-    entityId: grn.id as string,
-    entityLabel: grnNumber,
-    detail: `${grnNumber} posted for ${po.po_number}.`,
-    actor,
-    metadata: { receipt_type: input.receipt_type },
-  });
+  let grnId: string | null = null;
 
   try {
+    const { data: grn, error: grnError } = await supabase
+      .from("vyron_cost_goods_receipts")
+      .insert({
+        company_id: companyId,
+        purchase_order_id: input.purchase_order_id,
+        grn_number: grnNumber,
+        supplier_id: po.supplier_id,
+        supplier_name_snapshot: po.supplier_name_snapshot,
+        receipt_type: input.receipt_type,
+        status: "Posted",
+        received_by: input.received_by || actor,
+        notes: input.notes || null,
+      })
+      .select("*")
+      .single();
+    if (grnError) throw new Error(grnError.message);
+    grnId = String(grn.id);
+
+    const grnLines = input.lines.map((line) => {
+      const poLine = line.purchase_order_line_id ? po.lines?.find((l) => l.id === line.purchase_order_line_id) : null;
+      const outstandingBefore = poLine
+        ? calcPoLineOutstanding(poLine)
+        : calcPoLineOutstanding({ ordered_qty: line.ordered_qty });
+      const lineTotal = line.received_qty + (line.damaged_qty || 0) + (line.rejected_qty || 0);
+      const outstanding = Math.max(0, outstandingBefore - lineTotal);
+      return {
+        company_id: companyId,
+        goods_receipt_id: grn.id,
+        purchase_order_line_id: line.purchase_order_line_id || null,
+        item_name: line.item_name,
+        ordered_qty: line.ordered_qty,
+        received_qty: line.received_qty,
+        damaged_qty: line.damaged_qty || 0,
+        rejected_qty: line.rejected_qty || 0,
+        outstanding_qty: outstanding,
+        unit: line.unit,
+      };
+    });
+
+    const { error: lineErr } = await supabase.from("vyron_cost_goods_receipt_lines").insert(grnLines);
+    if (lineErr) throw new Error(lineErr.message);
+
+    for (const line of input.lines) {
+      if (!line.purchase_order_line_id) continue;
+      const poLine = po.lines?.find((l) => l.id === line.purchase_order_line_id);
+      if (!poLine) continue;
+      const newReceived = Number(poLine.received_qty) + line.received_qty;
+      const newDamaged = Number(poLine.damaged_qty) + (line.damaged_qty || 0);
+      const newRejected = Number(poLine.rejected_qty) + (line.rejected_qty || 0);
+      const outstanding = calcPoLineOutstanding({
+        ordered_qty: poLine.ordered_qty,
+        received_qty: newReceived,
+        damaged_qty: newDamaged,
+        rejected_qty: newRejected,
+      });
+      const { error: poLineError } = await supabase
+        .from("vyron_cost_purchase_order_lines")
+        .update({
+          received_qty: newReceived,
+          damaged_qty: newDamaged,
+          rejected_qty: newRejected,
+          outstanding_qty: outstanding,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", line.purchase_order_line_id)
+        .eq("company_id", companyId);
+      if (poLineError) throw new Error(poLineError.message);
+    }
+
+    await refreshPurchaseOrderReceiptState(
+      supabase,
+      companyId,
+      input.purchase_order_id,
+      po.supplier_id,
+      po.supplier_name_snapshot
+    );
+
+    await writeProcurementAudit(supabase, {
+      companyId,
+      eventType: "Goods Received",
+      entityType: "goods_receipt",
+      entityId: grn.id as string,
+      entityLabel: grnNumber,
+      detail: `${grnNumber} posted for ${po.po_number}.`,
+      actor,
+      metadata: { receipt_type: input.receipt_type },
+    });
+
     await receiveStockFromGrn(supabase, {
       companyId,
       grnId: grn.id as string,
@@ -508,11 +1046,21 @@ export async function createGoodsReceipt(
       }),
       actor,
     });
-  } catch (invErr) {
-    console.warn("[GRN] inventory receipt failed", invErr);
-  }
 
-  return { grn, grnNumber };
+    return { grn, grnNumber };
+  } catch (error) {
+    if (grnId) {
+      await rollbackFailedGrnCreation(supabase, companyId, {
+        grnId,
+        purchaseOrderId: input.purchase_order_id,
+        poLineSnapshots,
+        poStatusBefore,
+        supplierId: po.supplier_id,
+        supplierNameSnapshot: po.supplier_name_snapshot,
+      });
+    }
+    throw error;
+  }
 }
 
 export async function listGoodsReceipts(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {
@@ -586,8 +1134,21 @@ export async function getSupplierProcurementStats(supabase: SupabaseClient, supp
     .from("vyron_cost_suppliers")
     .select("supplier_name")
     .eq("id", supplierId)
+    .eq("company_id", companyId)
     .maybeSingle();
-  const supplierName = String(supplierRow?.supplier_name || "").toLowerCase();
+
+  if (!supplierRow) {
+    return {
+      poCount: 0,
+      grnCount: 0,
+      invoiceCount: 0,
+      spendThisMonth: 0,
+      spendThisYear: 0,
+      averageVariancePercent: 0,
+    };
+  }
+
+  const supplierName = String(supplierRow.supplier_name || "").toLowerCase();
 
   const [{ count: poCount }, { count: grnCount }, { data: invoices }, { data: pos }] = await Promise.all([
     supabase

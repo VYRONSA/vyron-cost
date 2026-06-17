@@ -17,7 +17,7 @@ export default async function RecoveryOpportunityDetailPage({
 
   if (!opportunity) {
     return (
-      <VyronCostAiShell title="Recovery Opportunity Not Found" subtitle="This opportunity could not be loaded.">
+      <VyronCostAiShell hidePageHeader title="Recovery Opportunity Not Found" subtitle="This opportunity could not be loaded.">
         <div className="rounded-[2rem] bg-white p-8 font-bold text-slate-600 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           Recovery opportunity not found.
         </div>
@@ -26,8 +26,7 @@ export default async function RecoveryOpportunityDetailPage({
   }
 
   return (
-    <VyronCostAiShell
-      title={opportunity.title}
+    <VyronCostAiShell hidePageHeader title={opportunity.title}
       subtitle="Client-explainable recovery calculation, formula, source and recommended action."
     >
       <section className="grid gap-5 md:grid-cols-6">
@@ -39,9 +38,9 @@ export default async function RecoveryOpportunityDetailPage({
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Monthly</div>
           <div className="mt-3 text-4xl font-black text-violet-700">{money(opportunity.monthly_value)}</div>
         </div>
-        <div className="rounded-[2rem] bg-emerald-50 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-          <div className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Annual</div>
-          <div className="mt-3 text-4xl font-black text-emerald-600">{money(opportunity.annual_value)}</div>
+        <div className="rounded-[2rem] bg-[#A3E635]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+          <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Annual</div>
+          <div className="mt-3 text-4xl font-black text-[#84CC16]">{money(opportunity.annual_value)}</div>
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Recovery Confidence</div>
@@ -104,9 +103,9 @@ export default async function RecoveryOpportunityDetailPage({
             </div>
           </div>
 
-          <div className="mt-5 rounded-3xl bg-emerald-50 p-5">
-            <div className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Recommended Action</div>
-            <div className="mt-2 text-lg font-black text-emerald-900">
+          <div className="mt-5 rounded-3xl bg-[#A3E635]/10 p-5">
+            <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Recommended Action</div>
+            <div className="mt-2 text-lg font-black text-[#4D7C0F]">
               {opportunity.recommended_action || "Review and investigate this opportunity."}
             </div>
           </div>
@@ -203,11 +202,11 @@ export default async function RecoveryOpportunityDetailPage({
             </div>
 
             {drilldown?.affectedProducts?.length ? (
-              <div className="mt-5 rounded-3xl bg-emerald-50 p-5">
-                <div className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">Affected Products</div>
+              <div className="mt-5 rounded-3xl bg-[#A3E635]/10 p-5">
+                <div className="text-xs font-black uppercase tracking-[0.14em] text-[#65A30D]">Affected Products</div>
                 <div className="mt-3 space-y-2">
                   {drilldown.affectedProducts.slice(0, 6).map((product) => (
-                    <div key={product.productId} className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-emerald-900">
+                    <div key={product.productId} className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-[#4D7C0F]">
                       {product.productName} · Cost diff {money(product.costDifference)} · GP impact {product.gpImpact.toFixed(2)}%
                     </div>
                   ))}

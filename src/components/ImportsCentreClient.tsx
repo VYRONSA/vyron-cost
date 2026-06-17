@@ -3,6 +3,8 @@
 import { Download, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import SearchFilterBar from "@/components/SearchFilterBar";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { useAdminPermissions } from "@/hooks/useModulePermissions";
 import {
   defaultImportHistory,
   importTemplates,
@@ -13,6 +15,7 @@ import {
 } from "@/lib/vyron-import-centre";
 
 export default function ImportsCentreClient() {
+  const { canImports } = useAdminPermissions();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<ImportEntityType>("ingredients");
   const [fileName, setFileName] = useState("");
@@ -59,6 +62,10 @@ export default function ImportsCentreClient() {
   }
 
   function importValidRows() {
+    if (!canImports) {
+      setValidationMessage("You do not have permission to run imports.");
+      return;
+    }
     if (!validCount) {
       setValidationMessage("Upload and validate a file first.");
       return;
@@ -79,9 +86,23 @@ export default function ImportsCentreClient() {
   }
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-sm">
-        <h2 className="text-2xl font-black text-[#07110d]">Bulk Import Centre</h2>
+    <VyronPremiumPageShell
+      config={{
+        badge: "Import Intelligence",
+        title: "Imports Command Centre",
+        subtitle: "Validate and import structured CSV data with quality controls and traceable import history.",
+        outcomes: ["Standardize bulk data onboarding", "Reject invalid rows before import", "Maintain auditable import history"],
+        formulas: ["Validated Rows = Parsed rows - Invalid rows", "Import Status = Completed or Partial by rejects", "Template Match enforces required columns"],
+        intelligenceItems: [
+          { label: "Template types", detail: `${importTemplates.length} import entities available` },
+          { label: "Current template", detail: template.label },
+          { label: "Import history", detail: `${history.length} historical import entries` },
+        ],
+      }}
+    >
+      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-sm">
+        <h2 className="text-2xl font-black text-slate-950">Bulk Import Centre</h2>
         <p className="mt-2 text-sm text-slate-500">
           Download CSV templates, upload data, validate rows and import valid records.
         </p>
@@ -101,21 +122,21 @@ export default function ImportsCentreClient() {
                 setErrors([]);
               }}
               className={`block w-full rounded-2xl border px-4 py-3 text-left transition ${
-                selected === item.id ? "border-[#B6D934] bg-emerald-50" : "border-slate-100 bg-slate-50 hover:bg-white"
+                selected === item.id ? "border-[#B6D934] bg-[#A3E635]/10" : "border-slate-100 bg-slate-50 hover:bg-white"
               }`}
             >
-              <div className="font-black text-[#07110d]">{item.label}</div>
+              <div className="font-black text-slate-950">{item.label}</div>
               <div className="mt-1 text-xs text-slate-500">{item.description}</div>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="space-y-6">
+        <div className="space-y-6">
         <div className="rounded-[2rem] border border-white bg-white p-6 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-xl font-black text-[#07110d]">{template.label}</h3>
+              <h3 className="text-xl font-black text-slate-950">{template.label}</h3>
               <p className="mt-1 text-sm text-slate-500">Columns: {template.columns.join(", ")}</p>
             </div>
             <button
@@ -128,20 +149,22 @@ export default function ImportsCentreClient() {
             </button>
           </div>
 
-          <label className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-6 py-10 transition hover:border-[#B6D934]">
-            <Upload size={28} className="text-emerald-700" />
-            <div className="mt-3 text-sm font-black text-[#07110d]">Upload CSV</div>
-            <div className="mt-1 text-xs text-slate-500">{fileName || "Choose file to validate"}</div>
-            <input
-              type="file"
-              accept=".csv,text/csv"
-              className="hidden"
-              onChange={(event) => handleUpload(event.target.files?.[0] || null)}
-            />
-          </label>
+          {canImports ? (
+            <label className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-6 py-10 transition hover:border-[#B6D934]">
+              <Upload size={28} className="text-[#65A30D]" />
+              <div className="mt-3 text-sm font-black text-slate-950">Upload CSV</div>
+              <div className="mt-1 text-xs text-slate-500">{fileName || "Choose file to validate"}</div>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={(event) => handleUpload(event.target.files?.[0] || null)}
+              />
+            </label>
+          ) : null}
 
           {validationMessage ? (
-            <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-800">{validationMessage}</div>
+            <div className="mt-4 rounded-xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-black text-[#4D7C0F]">{validationMessage}</div>
           ) : null}
 
           {errors.length ? (
@@ -152,34 +175,36 @@ export default function ImportsCentreClient() {
             </div>
           ) : null}
 
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={importValidRows}
-              className="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-black text-[#07110d]"
-            >
-              Import Valid Rows
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setInvalidCount(0);
-                setErrors([]);
-                setValidationMessage("Invalid rows rejected. Ready to re-upload.");
-              }}
-              className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700"
-            >
-              Reject Invalid Rows
-            </button>
-          </div>
+          {canImports ? (
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={importValidRows}
+                className="rounded-xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]"
+              >
+                Import Valid Rows
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setInvalidCount(0);
+                  setErrors([]);
+                  setValidationMessage("Invalid rows rejected. Ready to re-upload.");
+                }}
+                className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700"
+              >
+                Reject Invalid Rows
+              </button>
+            </div>
+          ) : null}
         </div>
 
         <div className="rounded-[2rem] border border-white bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-black text-[#07110d]">Import history</h3>
+          <h3 className="text-lg font-black text-slate-950">Import history</h3>
           <div className="mt-4 space-y-2">
             {history.map((entry) => (
               <div key={entry.id} className="rounded-xl bg-slate-50 px-4 py-3 text-sm">
-                <div className="font-black text-[#07110d]">
+                <div className="font-black text-slate-950">
                   {entry.entity} · {entry.fileName}
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
@@ -189,7 +214,8 @@ export default function ImportsCentreClient() {
             ))}
           </div>
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+    </VyronPremiumPageShell>
   );
 }

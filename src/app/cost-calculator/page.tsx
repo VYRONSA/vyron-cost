@@ -16,8 +16,7 @@ export default async function CostCalculatorPage() {
   const totalValue = recipeItems.reduce((sum, item) => sum + Number(item.line_cost || 0), 0);
 
   return (
-    <VyronCostShell
-      title="Cost Calculator"
+    <VyronCostShell hidePageHeader title="Cost Calculator"
       subtitle="Add, edit and delete recipe costing lines using true yield ingredient costs."
     >
       <section className="mb-6 grid gap-5 md:grid-cols-4">

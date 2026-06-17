@@ -3,8 +3,7 @@ import VyronCostShell from "@/components/VyronCostShell";
 
 export default function TrainingCentrePage() {
   return (
-    <VyronCostShell
-      title="Training Centre"
+    <VyronCostShell hidePageHeader title="Training Centre"
       subtitle="SETUP GUIDE · DEMO GUIDE · CLIENT MANUAL"
     >
       <TrainingCentreClient />

@@ -6,8 +6,7 @@ export default async function StockImpactSimulatorPage() {
   const products = await getProductIntelligence();
 
   return (
-    <VyronCostShell
-      title="Stock Impact Simulator"
+    <VyronCostShell hidePageHeader title="Stock Impact Simulator"
       subtitle="WASTAGE · STOCK VARIANCE · ANNUAL PROFIT IMPACT"
     >
       <StockImpactSimulatorClient products={products} />

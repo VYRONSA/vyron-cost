@@ -1,6 +1,8 @@
+import EditRouteGuard from "@/components/EditRouteGuard";
 import SupplierEditPageClient from "@/components/SupplierEditPageClient";
 import VyronCostShell from "@/components/VyronCostShell";
-import { getDemoCompanyId, getSuppliers } from "@/lib/vyron-cost-data";
+import { getSupplierById } from "@/lib/vyron-cost-core-data";
+import { notFound } from "next/navigation";
 
 export default async function EditSupplierPage({
   params,
@@ -8,19 +10,17 @@ export default async function EditSupplierPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [suppliers, companyId] = await Promise.all([
-    getSuppliers(),
-    getDemoCompanyId(),
-  ]);
+  const supplier = await getSupplierById(id);
 
-  const supplier = suppliers.find((item) => item.id === id) || suppliers[0];
+  if (!supplier) notFound();
 
   return (
-    <VyronCostShell
-      title={`Edit ${supplier?.supplier_name || "Supplier"}`}
+    <VyronCostShell hidePageHeader title={`Edit ${supplier.supplier_name}`}
       subtitle="Full-page supplier editing workspace with invoice routing, risk and procurement details."
     >
-      <SupplierEditPageClient supplier={supplier} companyId={companyId} />
+      <EditRouteGuard permission="edit_suppliers">
+        <SupplierEditPageClient supplier={supplier} />
+      </EditRouteGuard>
     </VyronCostShell>
   );
 }

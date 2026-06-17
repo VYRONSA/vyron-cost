@@ -1,7 +1,15 @@
+import { createHmac, randomBytes } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
 
-export type XeroSyncStatus = "Ready" | "Synced" | "Failed" | "Needs Review";
+export type XeroSyncStatus = "Ready" | "Synced" | "Failed" | "Needs Review" | "Processing" | "Cancelled";
+
+export type XeroConnectionStatus =
+  | "Not Connected"
+  | "Connecting"
+  | "Connected"
+  | "Pending Organisation"
+  | "Token Expired"
+  | "Sync Error";
 
 export type XeroQueueEntityType =
   | "Customer"
@@ -11,13 +19,60 @@ export type XeroQueueEntityType =
   | "Item"
   | "Purchase Order";
 
+export type XeroOrganisationOption = {
+  tenantId: string;
+  tenantName: string;
+};
+
+export type XeroAuditEvent = {
+  at: string;
+  event: string;
+  workspaceId: string;
+  companyId?: string | null;
+  actor?: string;
+  detail?: string;
+  metadata?: Record<string, unknown>;
+};
+
 export type XeroConnectionState = {
   connected: boolean;
+  status: XeroConnectionStatus;
   organisationName: string;
   tenantId: string;
   connectedUser: string;
   connectedAt: string | null;
   lastSyncAt: string | null;
+  lastTokenRefreshAt?: string | null;
+  tokenExpiresAt?: string | null;
+  connectionHealth?: "healthy" | "token_expired" | "sync_error" | "disconnected" | "pending_organisation";
+  pendingOrganisationSelection?: boolean;
+  availableOrganisations?: XeroOrganisationOption[];
+  selectedOrganisationId?: string | null;
+  auditEvents?: XeroAuditEvent[];
+};
+
+export type XeroStoredConnection = XeroConnectionState & {
+  accessToken: string;
+  refreshToken: string;
+  tokenExpiresAt: string | null;
+  lastTokenRefreshAt?: string | null;
+};
+
+export type XeroOAuthTokenResponse = {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  token_type: string;
+  id_token?: string;
+};
+
+export type XeroTenantConnection = {
+  id: string;
+  tenantId: string;
+  tenantType: string;
+  tenantName: string;
+  createdDateUtc: string;
+  updatedDateUtc: string;
 };
 
 export type XeroAccountMapping = {
@@ -54,6 +109,7 @@ export function xeroStorageKey(prefix: string, clientId = "default") {
 export function defaultXeroConnection(): XeroConnectionState {
   return {
     connected: false,
+    status: "Not Connected",
     organisationName: "—",
     tenantId: "—",
     connectedUser: "—",
@@ -62,16 +118,192 @@ export function defaultXeroConnection(): XeroConnectionState {
   };
 }
 
-export function demoXeroConnection(orgName = "Handcrafted Food Products (Pty) Ltd"): XeroConnectionState {
-  const now = new Date().toISOString();
+export function sanitizeConnectionForClient(stored: XeroStoredConnection): XeroConnectionState {
+  if (stored.tenantId?.startsWith("demo-tenant")) {
+    return defaultXeroConnection();
+  }
+
+  const status = stored.status || (stored.connected ? "Connected" : "Not Connected");
+  const tokenExpired =
+    stored.tokenExpiresAt && new Date(stored.tokenExpiresAt).getTime() <= Date.now();
+  let connectionHealth: XeroConnectionState["connectionHealth"] = "disconnected";
+  if (stored.pendingOrganisationSelection) connectionHealth = "pending_organisation";
+  else if (status === "Token Expired" || tokenExpired) connectionHealth = "token_expired";
+  else if (status === "Sync Error") connectionHealth = "sync_error";
+  else if (stored.connected) connectionHealth = "healthy";
+
   return {
-    connected: true,
-    organisationName: orgName,
-    tenantId: "demo-tenant-8f3a2c1b",
-    connectedUser: "finance@handcraftedfood.co.za",
-    connectedAt: now,
-    lastSyncAt: now,
+    connected: stored.connected,
+    status,
+    organisationName: stored.organisationName,
+    tenantId: stored.tenantId,
+    connectedUser: stored.connectedUser,
+    connectedAt: stored.connectedAt,
+    lastSyncAt: stored.lastSyncAt,
+    lastTokenRefreshAt: stored.lastTokenRefreshAt || null,
+    tokenExpiresAt: stored.tokenExpiresAt,
+    connectionHealth,
+    pendingOrganisationSelection: stored.pendingOrganisationSelection,
+    availableOrganisations: stored.availableOrganisations,
+    selectedOrganisationId: stored.selectedOrganisationId,
+    auditEvents: (stored.auditEvents || []).slice(-25),
   };
+}
+
+export function mapXeroTenantsToOrganisationOptions(tenants: XeroTenantConnection[]): XeroOrganisationOption[] {
+  return tenants.map((tenant) => ({
+    tenantId: tenant.tenantId || tenant.id,
+    tenantName: tenant.tenantName,
+  }));
+}
+
+export function isXeroOAuthConfigured() {
+  return Boolean(
+    process.env.XERO_CLIENT_ID &&
+      process.env.XERO_CLIENT_SECRET &&
+      process.env.XERO_REDIRECT_URI
+  );
+}
+
+/** Official Xero OAuth scopes for web server app (offline_access required for refresh). */
+export const XERO_OAUTH_SCOPES =
+  "openid profile email offline_access accounting.settings accounting.contacts accounting.transactions";
+
+export function getXeroRedirectUri() {
+  const redirectUri = process.env.XERO_REDIRECT_URI?.trim();
+  if (!redirectUri) return null;
+  return redirectUri.replace(/\/$/, "");
+}
+
+function oauthStateSecret() {
+  return process.env.XERO_CLIENT_SECRET || process.env.XERO_STATE_SECRET || "";
+}
+
+type OAuthStatePayload = {
+  workspaceId: string;
+  companyId: string;
+  nonce: string;
+  ts: number;
+  sig?: string;
+};
+
+export function encodeXeroOAuthState(workspaceId: string, companyId: string) {
+  const payload: OAuthStatePayload = {
+    workspaceId,
+    companyId,
+    nonce: randomBytes(16).toString("hex"),
+    ts: Date.now(),
+  };
+  const secret = oauthStateSecret();
+  if (secret) {
+    payload.sig = createHmac("sha256", secret).update(JSON.stringify(payload)).digest("base64url");
+  }
+  return Buffer.from(JSON.stringify(payload)).toString("base64url");
+}
+
+export function decodeXeroOAuthState(state: string): { workspaceId: string; companyId: string } | null {
+  try {
+    const parsed = JSON.parse(Buffer.from(state, "base64url").toString("utf8")) as OAuthStatePayload & {
+      clientId?: string;
+    };
+    const workspaceId = parsed.workspaceId?.trim() || parsed.clientId?.trim() || "";
+    const companyId = parsed.companyId?.trim() || "";
+    if (!workspaceId) return null;
+
+    const secret = oauthStateSecret();
+    if (secret && parsed.sig) {
+      const { sig, ...unsigned } = parsed;
+      const expected = createHmac("sha256", secret).update(JSON.stringify(unsigned)).digest("base64url");
+      if (sig !== expected) return null;
+    }
+
+    if (Date.now() - Number(parsed.ts || 0) > 30 * 60 * 1000) return null;
+    return { workspaceId, companyId };
+  } catch {
+    return null;
+  }
+}
+
+export function buildXeroOAuthUrl(workspaceId: string, companyId: string) {
+  const clientId = process.env.XERO_CLIENT_ID;
+  const redirectUri = getXeroRedirectUri();
+  if (!clientId || !redirectUri) return null;
+
+  const params = new URLSearchParams({
+    response_type: "code",
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    scope: XERO_OAUTH_SCOPES,
+    state: encodeXeroOAuthState(workspaceId, companyId),
+  });
+
+  return `https://login.xero.com/identity/connect/authorize?${params.toString()}`;
+}
+
+export async function exchangeXeroAuthorizationCode(code: string): Promise<XeroOAuthTokenResponse> {
+  const clientId = process.env.XERO_CLIENT_ID;
+  const clientSecret = process.env.XERO_CLIENT_SECRET;
+  const redirectUri = getXeroRedirectUri();
+
+  if (!clientId || !clientSecret || !redirectUri) {
+    throw new Error("Xero OAuth is not configured.");
+  }
+
+  const body = new URLSearchParams({
+    grant_type: "authorization_code",
+    code,
+    redirect_uri: redirectUri,
+  });
+
+  const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  const response = await fetch("https://identity.xero.com/connect/token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Xero token exchange failed (${response.status}): ${detail}`);
+  }
+
+  return (await response.json()) as XeroOAuthTokenResponse;
+}
+
+export async function listXeroTenantConnections(accessToken: string): Promise<XeroTenantConnection[]> {
+  const response = await fetch("https://api.xero.com/connections", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Xero connections lookup failed (${response.status}): ${detail}`);
+  }
+
+  return (await response.json()) as XeroTenantConnection[];
+}
+
+export function extractXeroConnectedUser(idToken?: string) {
+  if (!idToken) return "Xero user";
+
+  try {
+    const payload = idToken.split(".")[1];
+    if (!payload) return "Xero user";
+    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
+      email?: string;
+      name?: string;
+      preferred_username?: string;
+    };
+    return decoded.email || decoded.preferred_username || decoded.name || "Xero user";
+  } catch {
+    return "Xero user";
+  }
 }
 
 export async function queueXeroSupplierBill(
@@ -91,6 +323,7 @@ export async function queueXeroSupplierBill(
   const { data: existing } = await supabase
     .from("vyron_xero_sync_queue")
     .select("id")
+    .eq("company_id", companyId)
     .eq("reference_number", reference)
     .eq("entity_type", "Supplier Bill")
     .maybeSingle();
@@ -119,21 +352,39 @@ export async function queueXeroSupplierBill(
     .select("*")
     .single();
   if (error) throw new Error(error.message);
+  await appendXeroAuditForCompanyQueue(companyId, {
+    event: "sync_queued",
+    detail: `Queued supplier bill ${reference} for Xero sync.`,
+    metadata: { queueItemId: data.id, entityType: "Supplier Bill" },
+  });
   return data;
 }
 
-export async function listXeroSyncQueueRows(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {
+async function appendXeroAuditForCompanyQueue(
+  companyId: string,
+  event: { event: string; detail?: string; metadata?: Record<string, unknown> }
+) {
+  try {
+    const { getServerActiveWorkspace, getWorkspaceCompanyId } = await import("@/lib/vyron-workspace-server");
+    const { appendXeroAuditEvent } = await import("@/lib/vyron-xero-connection-store");
+    const workspace = await getServerActiveWorkspace();
+    const activeCompanyId = await getWorkspaceCompanyId();
+    if (!workspace?.id || activeCompanyId !== companyId) return;
+    await appendXeroAuditEvent(workspace.id, { ...event, companyId }, companyId);
+  } catch {
+    // best-effort audit when queueing from background flows
+  }
+}
+
+export async function listXeroSyncQueueRows(supabase: SupabaseClient, companyId: string) {
   const { data, error } = await supabase
     .from("vyron_xero_sync_queue")
     .select("*")
+    .eq("company_id", companyId)
     .order("updated_at", { ascending: false })
     .limit(200);
   if (error) throw new Error(error.message);
-  let rows = data || [];
-  if (rows.some((row) => row.company_id != null)) {
-    rows = rows.filter((row) => !row.company_id || row.company_id === companyId);
-  }
-  return rows;
+  return data || [];
 }
 
 export function mapQueueRowToDisplay(row: Record<string, unknown>) {
@@ -144,12 +395,17 @@ export function mapQueueRowToDisplay(row: Record<string, unknown>) {
 
   return {
     id: String(row.id),
+    entityId: row.entity_id ? String(row.entity_id) : undefined,
     type: entityType,
     reference: String(row.reference_number || "—"),
     counterparty,
     status: String(row.status || "Ready") as XeroSyncStatus,
     xeroId: row.xero_id ? String(row.xero_id) : undefined,
-    lastAttempt: String(row.updated_at || row.created_at || ""),
+    xeroLink: payload.xeroLink ? String(payload.xeroLink) : undefined,
+    lastAttempt: String(row.last_attempt_at || row.updated_at || row.created_at || ""),
+    createdAt: String(row.created_at || ""),
+    syncedAt: row.synced_at ? String(row.synced_at) : undefined,
+    retryCount: Number(payload.attemptCount || 0),
     destination: String(row.destination || "Xero"),
     value: Number(payload.salesValue || payload.total || 0),
     note: row.error_message
@@ -160,16 +416,3 @@ export function mapQueueRowToDisplay(row: Record<string, unknown>) {
   };
 }
 
-export function buildXeroOAuthUrl(appUrl: string) {
-  const clientId = process.env.XERO_CLIENT_ID;
-  const redirectUri = process.env.XERO_REDIRECT_URI || `${appUrl}/api/integrations/xero/callback`;
-  if (!clientId) return null;
-  const params = new URLSearchParams({
-    response_type: "code",
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    scope: "openid profile email accounting.transactions accounting.contacts offline_access",
-    state: "vyron-cost-xero",
-  });
-  return `https://login.xero.com/identity/connect/authorize?${params.toString()}`;
-}

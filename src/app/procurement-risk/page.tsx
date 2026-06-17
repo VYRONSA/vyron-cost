@@ -5,7 +5,7 @@ import { getProcurementRiskFindings } from "@/lib/vyron-leakage-intelligence-dat
 export default async function ProcurementRiskPage() {
   const rows = await getProcurementRiskFindings();
   return (
-    <VyronCostShell title="Procurement Intelligence" subtitle="Supplier inflation, duplicate invoices and suspicious purchasing patterns.">
+    <VyronCostShell hidePageHeader title="Procurement Intelligence" subtitle="Supplier inflation, duplicate invoices and suspicious purchasing patterns.">
       <ProcurementRiskClient rows={rows} />
     </VyronCostShell>
   );

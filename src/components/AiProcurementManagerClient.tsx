@@ -4,6 +4,7 @@ import { BrainCircuit, RefreshCw, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import {
   PROCUREMENT_RECOMMENDATION_CATEGORIES,
 } from "@/lib/vyron-procurement-ai-engine";
@@ -17,7 +18,7 @@ const STATUS_COLOURS: Record<string, string> = {
   New: "bg-slate-100 text-slate-700",
   Assigned: "bg-amber-100 text-amber-800",
   "Under Review": "bg-sky-100 text-sky-800",
-  Accepted: "bg-emerald-100 text-emerald-800",
+  Accepted: "bg-[#A3E635]/12 text-[#4D7C0F]",
   Rejected: "bg-red-100 text-red-800",
   Implemented: "bg-indigo-100 text-indigo-800",
   Closed: "bg-slate-200 text-slate-600",
@@ -58,8 +59,23 @@ export default function AiProcurementManagerClient({
   }
 
   return (
-    <section className="grid gap-6">
-      <div className="rounded-[2rem] bg-gradient-to-r from-violet-700 to-indigo-800 p-6 text-white shadow-[0_18px_50px_rgba(81,63,190,0.2)]">
+    <VyronPremiumPageShell
+      config={{
+        visualVariant: "procurement",
+        badge: "Procurement Intelligence",
+        title: "AI Procurement Command Centre",
+        subtitle: "Coordinate procurement recommendations, risk, and savings with an executive-ready control layer.",
+        outcomes: ["Prioritize high-value procurement actions", "Track recommendation lifecycle clearly", "Quantify potential and realized savings"],
+        formulas: ["Potential Savings = Open Action Annual Benefit", "Realized Savings = Implemented Benefit Annualized", "Health Score = Composite module signal index"],
+        intelligenceItems: [
+          { label: "Recommendation pool", detail: `${recommendations.length} total recommendations generated` },
+          { label: "Filtered actions", detail: `${filtered.length} items in current search and category` },
+          { label: "Savings split", detail: "Potential and realized outcomes visible together for decisions" },
+        ],
+      }}
+    >
+      <section className="grid gap-6">
+        <div className="rounded-[2rem] bg-gradient-to-r from-violet-700 to-indigo-800 p-6 text-white shadow-[0_18px_50px_rgba(81,63,190,0.2)]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-violet-200">
@@ -105,7 +121,7 @@ export default function AiProcurementManagerClient({
           type="button"
           disabled={recomputing}
           onClick={() => void recompute()}
-          className="inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
         >
           <RefreshCw size={16} className={recomputing ? "animate-spin" : ""} />
           {recomputing ? "Regenerating…" : "Regenerate from live data"}
@@ -123,7 +139,7 @@ export default function AiProcurementManagerClient({
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Implemented</div>
-          <div className="mt-3 text-4xl font-black text-emerald-700">{stats.implementedRecommendations}</div>
+          <div className="mt-3 text-4xl font-black text-[#65A30D]">{stats.implementedRecommendations}</div>
         </div>
         <div className="rounded-[2rem] bg-red-50 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-red-600">High risk items</div>
@@ -134,10 +150,10 @@ export default function AiProcurementManagerClient({
           <div className="mt-3 text-4xl font-black text-violet-700">{procurementMoney(stats.potentialSavingsAnnual)}</div>
           <p className="mt-1 text-xs font-bold text-slate-500">Annualized open actions</p>
         </div>
-        <div className="rounded-[2rem] bg-emerald-50 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-          <div className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Realized Savings</div>
-          <div className="mt-3 text-4xl font-black text-emerald-600">{procurementMoney(stats.realizedSavingsAnnual)}</div>
-          <p className="mt-1 text-xs font-bold text-emerald-700">From implemented actions</p>
+        <div className="rounded-[2rem] bg-[#A3E635]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+          <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Realized Savings</div>
+          <div className="mt-3 text-4xl font-black text-[#84CC16]">{procurementMoney(stats.realizedSavingsAnnual)}</div>
+          <p className="mt-1 text-xs font-bold text-[#65A30D]">From implemented actions</p>
         </div>
       </div>
 
@@ -169,7 +185,7 @@ export default function AiProcurementManagerClient({
         </select>
       </div>
 
-      <div className="grid gap-4">
+        <div className="grid gap-4">
         {filtered.map((row) => (
           <Link
             key={row.recommendation_key}
@@ -198,15 +214,15 @@ export default function AiProcurementManagerClient({
               </div>
               <div className="text-right">
                 <div className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">Potential / year</div>
-                <div className="mt-1 text-2xl font-black text-emerald-700">
+                <div className="mt-1 text-2xl font-black text-[#65A30D]">
                   {procurementMoney(row.potential_benefit_annual)}
                 </div>
                 <div className="mt-1 text-xs font-bold text-slate-500">{row.confidence_level}</div>
               </div>
             </div>
-            <div className="mt-4 rounded-2xl bg-emerald-50 p-4">
-              <div className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">Recommendation</div>
-              <p className="mt-1 text-sm font-bold text-emerald-950">{row.recommended_action}</p>
+            <div className="mt-4 rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-4">
+              <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#65A30D]">Recommendation</div>
+              <p className="mt-1 text-sm font-bold text-[#4D7C0F]">{row.recommended_action}</p>
             </div>
             <p className="mt-3 text-xs font-bold text-slate-500">{row.expected_result}</p>
           </Link>
@@ -216,7 +232,8 @@ export default function AiProcurementManagerClient({
             No recommendations match your filters.
           </div>
         )}
-      </div>
-    </section>
+        </div>
+      </section>
+    </VyronPremiumPageShell>
   );
 }

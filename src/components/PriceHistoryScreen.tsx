@@ -89,7 +89,7 @@ export default function PriceHistoryScreen({ scope }: { scope: PriceHistoryScope
           href="/document-intelligence"
           className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-violet-700 hover:text-violet-900"
         >
-          <ArrowLeft size={14} />
+          ← Back
           Document Intelligence
         </Link>
         <h2 className="text-2xl font-black text-slate-950">{title}</h2>

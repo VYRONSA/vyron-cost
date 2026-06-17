@@ -1,10 +1,13 @@
+import EditRouteGuard from "@/components/EditRouteGuard";
 import ProductEditPageClient from "@/components/ProductEditPageClient";
 import VyronCostShell from "@/components/VyronCostShell";
 import {
   getDemoCompanyId,
+  getProductById,
   getProductCostLines,
-  getProducts,
+  isCostLineForProduct,
 } from "@/lib/vyron-cost-data";
+import { notFound } from "next/navigation";
 
 export default async function EditProductPage({
   params,
@@ -12,24 +15,27 @@ export default async function EditProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [products, costLines, companyId] = await Promise.all([
-    getProducts(),
+  const [product, allCostLines, companyId] = await Promise.all([
+    getProductById(id),
     getProductCostLines(),
     getDemoCompanyId(),
   ]);
 
-  const product = products.find((item) => item.id === id) || products[0];
+  if (!product) notFound();
+
+  const costLines = allCostLines.filter((line) => isCostLineForProduct(line, product));
 
   return (
-    <VyronCostShell
-      title={`Edit ${product?.product_name || "Product"}`}
+    <VyronCostShell hidePageHeader title={`Edit ${product.product_name}`}
       subtitle="Full product costing with ingredients, packaging, salaries, wastage, overheads, cost price, selling price and margin."
     >
-      <ProductEditPageClient
-        product={product}
-        costLines={costLines}
-        companyId={companyId}
-      />
+      <EditRouteGuard permission="edit_products">
+        <ProductEditPageClient
+          product={product}
+          costLines={costLines}
+          companyId={companyId}
+        />
+      </EditRouteGuard>
     </VyronCostShell>
   );
 }

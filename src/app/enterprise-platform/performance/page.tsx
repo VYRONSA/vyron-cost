@@ -5,7 +5,7 @@ import { getEnterprisePlatformPayload } from "@/lib/vyron-enterprise-platform-ar
 export default async function PerformancePage() {
   const { performance } = await getEnterprisePlatformPayload();
   return (
-    <VyronCostShell title="Performance Engine" subtitle="100K+ INVOICES · MILLIONS OF TRANSACTIONS · MULTI-YEAR HISTORY">
+    <VyronCostShell hidePageHeader title="Performance Engine" subtitle="100K+ INVOICES · MILLIONS OF TRANSACTIONS · MULTI-YEAR HISTORY">
       <PlatformNav />
       <PerformanceClient perf={performance} />
     </VyronCostShell>

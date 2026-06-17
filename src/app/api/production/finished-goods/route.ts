@@ -1,20 +1,29 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getFinishedGoodsDashboard } from "@/lib/vyron-manufacturing";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
+import { manufacturingCompanyContextFromRequest } from "@/lib/vyron-manufacturing-api-context";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
   }
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   try {
-    const items = await getFinishedGoodsDashboard(supabase, VYRON_DEFAULT_TENANT_ID);
-    return NextResponse.json({ ok: true, items });
+    await requireWorkspacePermission("manufacturing.view");
+    const companyId = await resolveApiCompanyIdWithContext(supabase, manufacturingCompanyContextFromRequest(request));
+    if (!companyId) return NextResponse.json({ ok: true, items: [] }, { headers: { "Cache-Control": "no-store" } });
+    const items = await getFinishedGoodsDashboard(supabase, companyId);
+    return NextResponse.json({ ok: true, items }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Load failed." }, { status: 500 });
+    return workspaceAccessErrorResponse(error, "Load failed.");
   }
 }

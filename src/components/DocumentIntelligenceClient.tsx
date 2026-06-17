@@ -3,6 +3,8 @@
 import { CheckCircle2, FileUp, Mail, Upload } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { VyronPremiumEmptyState } from "@/components/vyron-premium/VyronPremiumSprint";
 import { formatMoney } from "@/lib/vyron-cost-data";
 
 type ExtractedDoc = {
@@ -59,9 +61,23 @@ export default function DocumentIntelligenceClient() {
   }
 
   return (
-    <section className="grid gap-6">
-      <div className="rounded-[2rem] border border-violet-200 bg-violet-50 p-6">
-        <h2 className="text-xl font-black text-[#07110d]">VYRON COST Document Intelligence</h2>
+    <VyronPremiumPageShell
+      config={{
+        badge: "Document Intelligence",
+        title: "Document Intelligence Centre",
+        subtitle: "Extract supplier invoices and purchase orders with explainable risk signals before import.",
+        outcomes: ["Accelerate document extraction", "Flag duplicate-risk records early", "Route approved documents into workflow confidently"],
+        formulas: ["Extracted Total = Sum(Line Qty x Unit Cost)", "Duplicate Risk = Name and pattern risk detection", "Approval Status = Extracted > Approved for import"],
+        intelligenceItems: [
+          { label: "Documents processed", detail: `${docs.length} records currently staged` },
+          { label: "Risk control", detail: "Duplicate invoice signal displayed before posting" },
+          { label: "Workflow readiness", detail: "Supplier, ingredient, and product match links remain in-context" },
+        ],
+      }}
+    >
+      <section className="grid gap-6">
+        <div className="rounded-[2rem] border border-violet-200 bg-violet-50 p-6">
+        <h2 className="text-xl font-black text-[#F8FAFC]">VYRON COST Document Intelligence</h2>
         <p className="mt-3 text-sm leading-7 text-violet-950">
           Email invoices and purchase orders directly to VYRON COST and let AI extract, match and flag risks. Upload PDF or
           image files now; email inbox intake is configured for production rollout.
@@ -74,16 +90,16 @@ export default function DocumentIntelligenceClient() {
       <div className="grid gap-5 md:grid-cols-3">
         <label className="cursor-pointer rounded-[2rem] border border-white bg-white p-6 shadow-sm">
           <div className="flex items-center gap-3">
-            <FileUp className="text-emerald-700" />
-            <div className="font-black text-[#07110d]">Upload invoice PDF/image</div>
+            <FileUp className="text-[#65A30D]" />
+            <div className="font-black text-[#F8FAFC]">Upload invoice PDF/image</div>
           </div>
           <input type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" onChange={(e) => handleUpload(e.target.files, "invoice")} />
           <div className="mt-3 text-xs text-slate-500">Extract supplier, invoice number, date and lines</div>
         </label>
         <label className="cursor-pointer rounded-[2rem] border border-white bg-white p-6 shadow-sm">
           <div className="flex items-center gap-3">
-            <Upload className="text-emerald-700" />
-            <div className="font-black text-[#07110d]">Upload purchase order PDF/image</div>
+            <Upload className="text-[#65A30D]" />
+            <div className="font-black text-[#F8FAFC]">Upload purchase order PDF/image</div>
           </div>
           <input type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" onChange={(e) => handleUpload(e.target.files, "purchase-order")} />
           <div className="mt-3 text-xs text-slate-500">Extract PO header, supplier and line items</div>
@@ -91,7 +107,7 @@ export default function DocumentIntelligenceClient() {
         <div className="rounded-[2rem] border border-dashed border-slate-200 bg-slate-50 p-6">
           <div className="flex items-center gap-3">
             <Mail className="text-slate-500" />
-            <div className="font-black text-[#07110d]">Email-in inbox</div>
+            <div className="font-black text-[#F8FAFC]">Email-in inbox</div>
           </div>
           <div className="mt-3 text-xs text-slate-500">Forward supplier documents to the intake address above</div>
           <Link href="/invoice-forensics" className="mt-4 inline-flex text-xs font-black text-violet-700">
@@ -100,20 +116,25 @@ export default function DocumentIntelligenceClient() {
         </div>
       </div>
 
-      {message ? <div className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-800">{message}</div> : null}
+      {message ? <div className="rounded-xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-black text-[#4D7C0F]">{message}</div> : null}
 
-      <div className="space-y-4">
+        <div className="space-y-4">
         {docs.length === 0 ? (
-          <div className="rounded-[2rem] border border-white bg-white p-8 text-center text-sm font-bold text-slate-500">
-            Upload a document to see extraction status, matched supplier and duplicate invoice flags.
-          </div>
+          <VyronPremiumEmptyState
+            title="Document Intake Empty"
+            steps={[
+              "Upload an invoice or purchase order file",
+              "Review extraction and risk indicators",
+              "Approve records for downstream import",
+            ]}
+          />
         ) : (
           docs.map((doc) => (
             <div key={doc.id} className="rounded-[2rem] border border-white bg-white p-6 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <div className="text-xs font-black uppercase text-slate-400">{doc.docType === "invoice" ? "Invoice" : "Purchase Order"}</div>
-                  <div className="mt-1 text-xl font-black text-[#07110d]">{doc.fileName}</div>
+                  <div className="mt-1 text-xl font-black text-[#F8FAFC]">{doc.fileName}</div>
                   <div className="mt-2 text-sm text-slate-600">
                     Status: {doc.status} · Supplier: {doc.supplier} · {doc.documentNumber} · {doc.documentDate}
                   </div>
@@ -129,7 +150,7 @@ export default function DocumentIntelligenceClient() {
                   <button
                     type="button"
                     onClick={() => approveImport(doc.id)}
-                    className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-black text-[#07110d]"
+                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[#A3E635]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-[#F8FAFC]"
                   >
                     <CheckCircle2 size={14} />
                     Approve import
@@ -155,20 +176,21 @@ export default function DocumentIntelligenceClient() {
                 ))}
               </div>
               <div className="mt-4 flex flex-wrap gap-3 text-xs font-black">
-                <Link href="/suppliers" className="text-emerald-700">
+                <Link href="/suppliers" className="text-[#65A30D]">
                   Match supplier →
                 </Link>
-                <Link href="/ingredients" className="text-emerald-700">
+                <Link href="/ingredients" className="text-[#65A30D]">
                   Match ingredient →
                 </Link>
-                <Link href="/products" className="text-emerald-700">
+                <Link href="/products" className="text-[#65A30D]">
                   Match product →
                 </Link>
               </div>
             </div>
           ))
         )}
-      </div>
-    </section>
+        </div>
+      </section>
+    </VyronPremiumPageShell>
   );
 }

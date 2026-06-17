@@ -13,7 +13,7 @@ const exports = [
 
 export default function ExportCentrePage() {
   return (
-    <VyronCostAiShell title="Export Centre" subtitle="PDF · EXCEL · CSV · BOARD PACKS · ACCOUNTING">
+    <VyronCostAiShell hidePageHeader title="Export Centre" subtitle="PDF · EXCEL · CSV · BOARD PACKS · ACCOUNTING">
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {exports.map((item) => (
           <Link

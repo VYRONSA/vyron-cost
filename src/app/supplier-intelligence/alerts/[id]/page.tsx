@@ -18,7 +18,7 @@ export default async function SupplierRiskAlertPage({
 
   if (!supabase) {
     return (
-      <VyronCostShell title="Risk Alert Drilldown" subtitle="Supabase service role required.">
+      <VyronCostShell hidePageHeader title="Risk Alert Drilldown" subtitle="Supabase service role required.">
         <div className="rounded-[2rem] bg-white p-6 text-sm font-bold text-slate-600">Could not load risk alert.</div>
       </VyronCostShell>
     );
@@ -32,7 +32,7 @@ export default async function SupplierRiskAlertPage({
 
   if (!risk) {
     return (
-      <VyronCostShell title="Risk Alert Not Found" subtitle="The alert could not be loaded.">
+      <VyronCostShell hidePageHeader title="Risk Alert Not Found" subtitle="The alert could not be loaded.">
         <div className="rounded-[2rem] bg-white p-6 text-sm font-bold text-slate-600">Risk alert not found.</div>
       </VyronCostShell>
     );
@@ -44,8 +44,7 @@ export default async function SupplierRiskAlertPage({
     : [];
 
   return (
-    <VyronCostShell
-      title={risk.title}
+    <VyronCostShell hidePageHeader title={risk.title}
       subtitle="PROCUREMENT RISK DRILLDOWN · PREVIOUS VS NEW · INVOICE CONTEXT · ACTION"
     >
       <section className="grid gap-5 md:grid-cols-4">
@@ -78,7 +77,7 @@ export default async function SupplierRiskAlertPage({
 
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">
           <h2 className="text-xl font-black text-slate-900">Recommended Action</h2>
-          <div className="mt-3 rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-900">
+          <div className="mt-3 rounded-2xl bg-[#A3E635]/10 p-4 text-sm font-bold text-[#4D7C0F]">
             Investigate supplier pricing, confirm PO compliance, and trigger negotiation if variance is outside threshold.
           </div>
           <div className="mt-4 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Affected Products</div>

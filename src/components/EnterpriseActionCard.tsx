@@ -20,15 +20,15 @@ export default function EnterpriseActionCard({
     <Link
       href={href}
       className={`group block rounded-[2rem] p-6 shadow-[0_14px_45px_rgba(15,23,42,0.08)] transition hover:-translate-y-1 hover:shadow-[0_24px_65px_rgba(15,23,42,0.16)] ${
-        dark ? "bg-[#07110d] text-white" : "border border-white bg-white/95 text-[#07110d]"
+        dark ? "bg-[#07110d] text-white" : "border border-white bg-white/95 text-[#F8FAFC]"
       }`}
     >
       <div className="flex items-start justify-between gap-4">
         <div
           className={
             dark
-              ? "rounded-2xl bg-emerald-400/15 p-3 text-emerald-300"
-              : "rounded-2xl bg-emerald-50 p-3 text-emerald-700"
+              ? "rounded-2xl bg-[#A3E635]/12 p-3 text-[#A3E635]"
+              : "rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-3 text-[#65A30D]"
           }
         >
           <Icon size={24} />
@@ -40,7 +40,7 @@ export default function EnterpriseActionCard({
               ? "rounded-full bg-red-500/20 px-3 py-1 text-xs font-black text-red-300"
               : priority === "High"
                 ? "rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-700"
-                : "rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700"
+                : "rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-1 text-xs font-black text-[#65A30D]"
           }
         >
           {priority}
@@ -53,7 +53,7 @@ export default function EnterpriseActionCard({
         {text}
       </p>
 
-      <div className={dark ? "mt-6 inline-flex items-center gap-2 text-sm font-black text-emerald-300" : "mt-6 inline-flex items-center gap-2 text-sm font-black text-emerald-700"}>
+      <div className={dark ? "mt-6 inline-flex items-center gap-2 text-sm font-black text-[#A3E635]" : "mt-6 inline-flex items-center gap-2 text-sm font-black text-[#65A30D]"}>
         Open module
         <ArrowRight size={16} className="transition group-hover:translate-x-1" />
       </div>
