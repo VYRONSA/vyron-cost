@@ -5,6 +5,7 @@ import {
   buildImpersonationWorkspaceSession,
 } from "@/lib/vyron-workspace-impersonation";
 import { setWorkspaceAuthCookiesOnResponse } from "@/lib/vyron-workspace-cookies";
+import { clearAuthUserCookie } from "@/lib/vyron-workspace-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ wor
     );
 
     const response = NextResponse.redirect(new URL("/dashboard", request.url));
+    clearAuthUserCookie(response);
     setWorkspaceAuthCookiesOnResponse(response, client, session);
     return response;
   } catch (error) {

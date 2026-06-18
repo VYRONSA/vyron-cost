@@ -9,6 +9,7 @@ import {
 export type WorkspaceLoginResult = {
   workspace: WorkspaceRecord;
   member: WorkspaceMember;
+  authUserId: string;
 };
 
 function normalizeSupabaseUrl(url: string | undefined) {
@@ -131,7 +132,65 @@ export async function authenticateWorkspaceLogin(email: string, password: string
     throw new Error("Workspace membership is not active.");
   }
 
-  return { workspace, member };
+  return { workspace, member, authUserId: profileId };
+}
+
+export async function resolveWorkspaceSessionForAuthUser(authUserId: string): Promise<WorkspaceLoginResult> {
+  const profileId = String(authUserId || "").trim();
+  if (!profileId) {
+    throw new Error("Authenticated user is required.");
+  }
+
+  const supabase = isSupabaseServiceRoleConfigured() ? getSupabaseAdmin() : null;
+  if (!supabase) {
+    throw new Error("Workspace session restore requires database configuration.");
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("vyron_user_profiles")
+    .select("id, email, first_name, surname, mobile, status")
+    .eq("id", profileId)
+    .maybeSingle();
+  if (profileError) throw new Error(profileError.message);
+
+  if (!profile?.id) {
+    throw new Error("No workspace is linked to this login. Contact your VYRON administrator.");
+  }
+  if (String(profile.status) === "Disabled") {
+    throw new Error("This account is disabled. Contact your workspace administrator.");
+  }
+
+  const { data: memberships, error: membershipError } = await supabase
+    .from("vyron_workspace_memberships")
+    .select("*, vyron_workspaces(*)")
+    .eq("user_id", profileId)
+    .eq("status", "Active");
+  if (membershipError) throw new Error(membershipError.message);
+
+  const activeMemberships = (memberships || []).filter((row) => {
+    const ws = row.vyron_workspaces as Record<string, unknown> | null;
+    return ws && String(ws.status) !== "Suspended" && String(ws.status) !== "Archived";
+  });
+
+  if (!activeMemberships.length) {
+    throw new Error("No workspace is linked to this login. Contact your VYRON administrator.");
+  }
+
+  const membership = activeMemberships[0] as Record<string, unknown>;
+  const workspaceRow = membership.vyron_workspaces as Record<string, unknown>;
+  const workspaceId = String(workspaceRow.id);
+  const workspace = await getWorkspace(workspaceId);
+  if (!workspace) {
+    throw new Error("No workspace is linked to this login. Contact your VYRON administrator.");
+  }
+
+  const members = await listWorkspaceMembers(workspaceId);
+  const member = members.find((m) => m.userId === profileId);
+  if (!member || member.status !== "Active") {
+    throw new Error("Workspace membership is not active.");
+  }
+
+  return { workspace, member, authUserId: profileId };
 }
 
 export function workspaceLoginToActiveClient(

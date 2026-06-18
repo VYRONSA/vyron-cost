@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import ClientBrandLockup from "@/components/ClientBrandLockup";
-import { writeActiveClient } from "@/lib/vyron-developer-client";
-import { writeWorkspaceSession } from "@/lib/vyron-workspace-session";
 
 export default function LoginClient() {
+  const searchParams = useSearchParams();
+  const queryError = searchParams.get("error");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(queryError || "");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
@@ -21,21 +22,19 @@ export default function LoginClient() {
       const response = await fetch("/api/workspace/login", {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
       if (!response.ok || !data.ok) {
         setError(data.error || "Login failed.");
+        setLoading(false);
         return;
       }
 
-      writeActiveClient(data.client, { skipCookieSync: true });
-      writeWorkspaceSession(data.session, { skipCookieSync: true });
-      window.location.href = data.redirect || "/dashboard";
+      window.location.href = "/api/workspace/restore-session";
     } catch {
       setError("Unable to sign in. Check your connection and try again.");
-    } finally {
       setLoading(false);
     }
   }

@@ -27,7 +27,7 @@ import {
 import { readWorkspaceSession, writeWorkspaceSession, type WorkspaceSession } from "@/lib/vyron-workspace-session";
 import { isClientWorkspaceMode, readActiveClient, signOutClientWorkspace, writeActiveClient, type ActiveClient } from "@/lib/vyron-developer-client";
 import { usePathname, useRouter } from "next/navigation";
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import { VYRON_MAX_WIDTH, VYRON_PAGE_PADDING } from "@/components/vyron-ui/constants";
 import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
@@ -232,6 +232,7 @@ export default function VyronCostAiShell({
   const [activeClient, setActiveClient] = useState<ActiveClient | null>(null);
   const [workspaceSession, setWorkspaceSession] = useState<WorkspaceSession | null>(null);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const restoreAttemptedRef = useRef(false);
 
   const effectiveClient = serverWorkspaceReady
     ? serverHasWorkspace
@@ -358,6 +359,24 @@ export default function VyronCostAiShell({
         }
 
         if (!hasServerWorkspace) {
+          if (!restoreAttemptedRef.current) {
+            restoreAttemptedRef.current = true;
+            fetch("/api/workspace/restore-session", {
+              method: "POST",
+              credentials: "include",
+              headers: { Accept: "application/json" },
+            })
+              .then((restoreResponse) => restoreResponse.json())
+              .then((restored) => {
+                if (restored?.ok) {
+                  window.location.reload();
+                }
+              })
+              .catch(() => {
+                // ignore restore failure
+              });
+          }
+
           setActiveClient(null);
           setClientWorkspaceMode(false);
           setWorkspaceSession(null);
