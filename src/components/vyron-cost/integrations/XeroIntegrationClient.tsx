@@ -28,6 +28,11 @@ import {
 } from "@/lib/vyron-xero-integration";
 import type { XeroSyncConfig } from "@/lib/vyron-xero-mapping";
 import { DEFAULT_XERO_SYNC_CONFIG } from "@/lib/vyron-xero-mapping";
+import {
+  isXeroWorkspaceActive,
+  parseWorkspaceStatusPayload,
+  type WorkspaceStatusReport,
+} from "@/lib/vyron-workspace-status";
 
 const M = VYRON_MASTER;
 
@@ -55,6 +60,9 @@ type WorkspaceContext = {
   hasWorkspace: boolean;
   workspaceName: string;
   companyLinked: boolean;
+  workspaceId: string | null;
+  companyId: string | null;
+  xeroWorkspaceReady: boolean;
 };
 
 type XeroIntegrationClientProps = {
@@ -66,10 +74,11 @@ type WorkspaceDebugState = {
   localCompanyId: string | null;
   hasActiveClientCookieDoc: boolean;
   hasSessionCookieDoc: boolean;
-  serverWorkspaceId: string | null;
-  serverCompanyId: string | null;
+  workspaceId: string | null;
+  companyId: string | null;
   hasWorkspaceCookie: boolean;
   hasSessionCookie: boolean;
+  xeroWorkspaceReady: boolean;
   loaded: boolean;
 };
 
@@ -110,7 +119,10 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
   const searchParams = useSearchParams();
   const { canConnect, canSync, canEditMapping } = useXeroPermissions();
   const [workspaceCtx, setWorkspaceCtx] = useState<WorkspaceContext>(initialWorkspace);
-  const [serverHasWorkspace, setServerHasWorkspace] = useState(initialWorkspace.hasWorkspace);
+  const [workspaceStatus, setWorkspaceStatus] = useState<{
+    loaded: boolean;
+    report: WorkspaceStatusReport | null;
+  }>({ loaded: false, report: null });
   const [connection, setConnection] = useState<XeroConnectionState>(defaultXeroConnection());
   const [oauthReady, setOauthReady] = useState(false);
   const [missingEnv, setMissingEnv] = useState<string[]>([]);
@@ -132,49 +144,71 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
     localCompanyId: null,
     hasActiveClientCookieDoc: false,
     hasSessionCookieDoc: false,
-    serverWorkspaceId: null,
-    serverCompanyId: null,
-    hasWorkspaceCookie: false,
+    workspaceId: initialWorkspace.workspaceId,
+    companyId: initialWorkspace.companyId,
+    hasWorkspaceCookie: initialWorkspace.hasWorkspace,
     hasSessionCookie: false,
+    xeroWorkspaceReady: initialWorkspace.xeroWorkspaceReady,
     loaded: false,
   });
+
+  function applyWorkspaceStatus(report: WorkspaceStatusReport) {
+    const active = isXeroWorkspaceActive(report);
+
+    setWorkspaceStatus({ loaded: true, report });
+    setWorkspaceCtx({
+      hasWorkspace: active,
+      workspaceName: report.workspaceName || initialWorkspace.workspaceName || "",
+      companyLinked: report.companyLinked,
+      workspaceId: report.workspaceId,
+      companyId: report.companyId,
+      xeroWorkspaceReady: report.xeroWorkspaceReady,
+    });
+  }
 
   useEffect(() => {
     fetch("/api/workspace/status", { credentials: "include" })
       .then((response) => response.json())
       .then((data) => {
-        const hasServerWorkspace = Boolean(data?.hasWorkspaceCookie ?? data?.hasActiveClientCookie);
-        setServerHasWorkspace(hasServerWorkspace);
+        const report = parseWorkspaceStatusPayload(data);
+        const client = readActiveClient();
 
-        if (hasServerWorkspace) {
-          setWorkspaceCtx({
-            hasWorkspace: true,
-            workspaceName: data?.workspaceName || initialWorkspace.workspaceName || "",
-            companyLinked: Boolean(data?.companyLinked ?? initialWorkspace.companyLinked),
+        if (report) {
+          applyWorkspaceStatus(report);
+          setWorkspaceDebug({
+            localWorkspaceId: client?.id || null,
+            localCompanyId: client?.companyId || null,
+            hasActiveClientCookieDoc: documentHasCookie(ACTIVE_CLIENT_KEY),
+            hasSessionCookieDoc: documentHasCookie(WORKSPACE_SESSION_KEY),
+            workspaceId: report.workspaceId,
+            companyId: report.companyId,
+            hasWorkspaceCookie: report.hasWorkspaceCookie,
+            hasSessionCookie: report.hasSessionCookie,
+            xeroWorkspaceReady: report.xeroWorkspaceReady,
+            loaded: true,
           });
+          return;
         }
 
-        const client = readActiveClient();
-        setLocalWorkspaceId(client?.id || null);
-        setWorkspaceDebug({
+        setWorkspaceStatus({ loaded: true, report: null });
+        setWorkspaceDebug((current) => ({
+          ...current,
           localWorkspaceId: client?.id || null,
           localCompanyId: client?.companyId || null,
-          hasActiveClientCookieDoc: documentHasCookie(ACTIVE_CLIENT_KEY),
-          hasSessionCookieDoc: documentHasCookie(WORKSPACE_SESSION_KEY),
-          serverWorkspaceId: data?.serverWorkspaceId || data?.workspaceId || null,
-          serverCompanyId: data?.serverCompanyId || data?.companyId || null,
-          hasWorkspaceCookie: hasServerWorkspace,
-          hasSessionCookie: Boolean(data?.hasSessionCookie ?? data?.hasWorkspaceSession),
           loaded: true,
-        });
+        }));
       })
       .catch(() => {
+        setWorkspaceStatus({ loaded: true, report: null });
         setWorkspaceDebug((current) => ({ ...current, loaded: true }));
       });
   }, [initialWorkspace.companyLinked, initialWorkspace.workspaceName]);
 
-  const hasActiveWorkspace =
-    serverHasWorkspace || workspaceCtx.hasWorkspace || initialWorkspace.hasWorkspace;
+  const hasActiveWorkspace = workspaceStatus.loaded
+    ? workspaceStatus.report
+      ? isXeroWorkspaceActive(workspaceStatus.report)
+      : false
+    : initialWorkspace.hasWorkspace;
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -187,28 +221,16 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       fetch("/api/integrations/xero/mapping", fetchOpts).then((r) => r.json()),
     ])
       .then(([connectionData, queueData, mappingData]) => {
-        if (connectionData.hasWorkspace === false && !serverHasWorkspace && !initialWorkspace.hasWorkspace) {
-          setWorkspaceCtx({
-            hasWorkspace: false,
-            workspaceName: "",
-            companyLinked: false,
-          });
-        } else if (connectionData.ok || serverHasWorkspace || initialWorkspace.hasWorkspace) {
-          setWorkspaceCtx({
-            hasWorkspace: true,
-            workspaceName: String(
-              connectionData.workspaceName || initialWorkspace.workspaceName || workspaceCtx.workspaceName || ""
-            ),
-            companyLinked: Boolean(
-              connectionData.companyLinked ?? initialWorkspace.companyLinked ?? workspaceCtx.companyLinked
-            ),
-          });
-          if (connectionData.ok) {
-            setConnection(connectionData.connection || defaultXeroConnection());
-            setOauthReady(Boolean(connectionData.oauthReady));
-            setMissingEnv(Array.isArray(connectionData.missingEnv) ? connectionData.missingEnv : []);
-          }
-        } else if (connectionData.error) {
+        if (connectionData.ok) {
+          setWorkspaceCtx((current) => ({
+            ...current,
+            workspaceName: String(connectionData.workspaceName || current.workspaceName || ""),
+            companyLinked: Boolean(connectionData.companyLinked ?? current.companyLinked),
+          }));
+          setConnection(connectionData.connection || defaultXeroConnection());
+          setOauthReady(Boolean(connectionData.oauthReady));
+          setMissingEnv(Array.isArray(connectionData.missingEnv) ? connectionData.missingEnv : []);
+        } else if (connectionData.error && !hasActiveWorkspace) {
           setError(String(connectionData.error));
         }
 
@@ -227,14 +249,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       })
       .catch(() => setError("Could not load Xero integration data."))
       .finally(() => setLoading(false));
-  }, [
-    initialWorkspace.companyLinked,
-    initialWorkspace.hasWorkspace,
-    initialWorkspace.workspaceName,
-    serverHasWorkspace,
-    workspaceCtx.companyLinked,
-    workspaceCtx.workspaceName,
-  ]);
+  }, [hasActiveWorkspace, workspaceCtx.workspaceName]);
 
   useEffect(() => {
     refresh();
@@ -520,7 +535,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
   }, [missingEnv, workspaceCtx, connection.pendingOrganisationSelection, invoiceSyncReady]);
 
   if (!hasActiveWorkspace) {
-    if (!workspaceDebug.loaded && !initialWorkspace.hasWorkspace) {
+    if (!workspaceStatus.loaded) {
       return (
         <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 text-sm font-semibold text-[#64748B]">
           Checking workspace session…
@@ -611,12 +626,16 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
           <h3 className="mt-5 text-sm font-black uppercase tracking-[0.12em] text-slate-700">Server debug</h3>
           <dl className="mt-3 space-y-2 text-sm font-semibold text-slate-800">
             <div className="flex justify-between gap-4">
-              <dt className="text-slate-500">serverWorkspaceId</dt>
-              <dd className="font-black">{workspaceDebug.serverWorkspaceId || "—"}</dd>
+              <dt className="text-slate-500">workspaceId</dt>
+              <dd className="font-black">{workspaceDebug.workspaceId || "—"}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-slate-500">serverCompanyId</dt>
-              <dd className="font-black">{workspaceDebug.serverCompanyId || "—"}</dd>
+              <dt className="text-slate-500">companyId</dt>
+              <dd className="font-black">{workspaceDebug.companyId || "—"}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">xeroWorkspaceReady</dt>
+              <dd className="font-black">{workspaceDebug.xeroWorkspaceReady ? "yes" : "no"}</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-slate-500">hasWorkspaceCookie</dt>
@@ -628,7 +647,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-slate-500">status loaded</dt>
-              <dd className="font-black">{workspaceDebug.loaded ? "yes" : "no"}</dd>
+              <dd className="font-black">{workspaceStatus.loaded ? "yes" : "no"}</dd>
             </div>
           </dl>
         </section>

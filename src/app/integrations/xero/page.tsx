@@ -1,15 +1,17 @@
 import { Suspense } from "react";
 import VyronCostAiShell from "@/components/VyronCostAiShell";
 import XeroIntegrationClient from "@/components/vyron-cost/integrations/XeroIntegrationClient";
-import { getServerActiveWorkspace, getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
+import { buildWorkspaceStatusReport, isXeroWorkspaceActive } from "@/lib/vyron-workspace-status";
 
 export default async function Page() {
-  const [workspace, companyId] = await Promise.all([getServerActiveWorkspace(), getWorkspaceCompanyId()]);
-  const workspaceName = workspace?.companyName || workspace?.tradingName || "";
+  const status = await buildWorkspaceStatusReport();
   const initialWorkspace = {
-    hasWorkspace: Boolean(workspace?.id),
-    workspaceName,
-    companyLinked: Boolean(companyId),
+    hasWorkspace: isXeroWorkspaceActive(status),
+    workspaceName: status.workspaceName || "",
+    companyLinked: status.companyLinked,
+    workspaceId: status.workspaceId,
+    companyId: status.companyId,
+    xeroWorkspaceReady: status.xeroWorkspaceReady,
   };
 
   return (

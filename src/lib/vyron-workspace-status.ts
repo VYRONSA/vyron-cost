@@ -26,6 +26,37 @@ export type WorkspaceStatusReport = {
   > | null;
 };
 
+export function isXeroWorkspaceActive(
+  status: Pick<WorkspaceStatusReport, "xeroWorkspaceReady" | "hasWorkspaceCookie" | "companyLinked">
+): boolean {
+  if (status.xeroWorkspaceReady) return true;
+  return status.hasWorkspaceCookie && status.companyLinked;
+}
+
+export function parseWorkspaceStatusPayload(data: unknown): WorkspaceStatusReport | null {
+  if (!data || typeof data !== "object" || !(data as WorkspaceStatusReport).ok) {
+    return null;
+  }
+
+  const payload = data as WorkspaceStatusReport;
+  const workspaceId = payload.workspaceId || payload.serverWorkspaceId || null;
+  const companyId = payload.companyId || payload.serverCompanyId || null;
+
+  return {
+    ...payload,
+    workspaceId,
+    companyId,
+    serverWorkspaceId: payload.serverWorkspaceId || workspaceId,
+    serverCompanyId: payload.serverCompanyId || companyId,
+    hasWorkspaceCookie: Boolean(payload.hasWorkspaceCookie ?? payload.hasActiveClientCookie),
+    hasSessionCookie: Boolean(payload.hasSessionCookie ?? payload.hasWorkspaceSession),
+    companyLinked: Boolean(payload.companyLinked ?? companyId),
+    xeroWorkspaceReady: Boolean(
+      payload.xeroWorkspaceReady ?? (Boolean(workspaceId) && Boolean(companyId))
+    ),
+  };
+}
+
 export async function buildWorkspaceStatusReport(): Promise<WorkspaceStatusReport> {
   const client = await getServerActiveWorkspace();
   const session = await getServerWorkspaceSession();
