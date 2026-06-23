@@ -205,9 +205,43 @@ export async function testXeroConnection(
   };
 }
 
-export type XeroContactResponse = {
-  Contacts?: Array<{ ContactID?: string; Name?: string }>;
+export type XeroContactRecord = {
+  ContactID?: string;
+  Name?: string;
+  EmailAddress?: string;
+  ContactStatus?: string;
+  IsCustomer?: boolean;
+  IsSupplier?: boolean;
+  Phones?: Array<{ PhoneType?: string; PhoneNumber?: string }>;
 };
+
+export type XeroContactResponse = {
+  Contacts?: XeroContactRecord[];
+};
+
+export type XeroContactsListResponse = {
+  Contacts?: XeroContactRecord[];
+};
+
+export async function fetchAllXeroCustomerContacts(
+  workspaceId: string,
+  options: { companyId?: string | null; actor?: string } = {}
+): Promise<XeroContactRecord[]> {
+  const all: XeroContactRecord[] = [];
+  const pageSize = 100;
+  let page = 1;
+
+  while (page <= 200) {
+    const path = `/Contacts?where=${encodeURIComponent("IsCustomer==true")}&page=${page}`;
+    const response = await xeroApiRequest<XeroContactsListResponse>(workspaceId, path, options);
+    const batch = response.Contacts || [];
+    all.push(...batch);
+    if (batch.length < pageSize) break;
+    page += 1;
+  }
+
+  return all;
+}
 
 export type XeroInvoiceResponse = {
   Invoices?: Array<{ InvoiceID?: string; InvoiceNumber?: string; Status?: string }>;

@@ -475,6 +475,42 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
     }
   }
 
+  async function importCustomersFromXero() {
+    if (!canSync) {
+      setError("You do not have permission to import from Xero.");
+      return;
+    }
+    if (!syncActionsEnabled) {
+      setError("Connect Xero and select an organisation before importing customers.");
+      return;
+    }
+
+    setBulkBusy("import-customers");
+    setError(null);
+    setSyncErrors([]);
+
+    try {
+      const res = await fetch("/api/integrations/xero/import-customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setError(data.error || "Customer import failed.");
+        setMessage(null);
+        return;
+      }
+
+      const importedCount = Number(data.imported ?? 0) + Number(data.updated ?? 0);
+      setMessage(`Imported ${importedCount} customers from Xero`);
+    } finally {
+      setBulkBusy(null);
+      refresh();
+    }
+  }
+
   async function bulkQueueAction(action: string) {
     if (!canSync) {
       setError("You do not have permission to sync to Xero.");
@@ -908,6 +944,14 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
             ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={!syncActionsEnabled || Boolean(bulkBusy)}
+              onClick={() => void importCustomersFromXero()}
+              className={`${M.secondaryBtn} px-4 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              {bulkBusy === "import-customers" ? "Importing…" : "Import Customers From Xero"}
+            </button>
             <button
               type="button"
               disabled={!syncActionsEnabled || Boolean(bulkBusy)}
