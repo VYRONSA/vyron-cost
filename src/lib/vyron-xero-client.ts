@@ -232,7 +232,7 @@ export async function fetchAllXeroCustomerContacts(
   let page = 1;
 
   while (page <= 200) {
-    const path = `/Contacts?where=${encodeURIComponent("IsCustomer==true")}&page=${page}`;
+    const path = `/Contacts?page=${page}`;
     const response = await xeroApiRequest<XeroContactsListResponse>(workspaceId, path, options);
     const batch = response.Contacts || [];
     all.push(...batch);

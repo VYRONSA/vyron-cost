@@ -77,7 +77,8 @@ export async function importCustomersFromXero(
   companyId: string,
   actor = "user"
 ): Promise<XeroImportCustomersResult> {
-  const contacts = await fetchAllXeroCustomerContacts(workspaceId, { companyId, actor });
+  const fetchedContacts = await fetchAllXeroCustomerContacts(workspaceId, { companyId, actor });
+  const contacts = fetchedContacts.filter((contact) => contact.ContactStatus?.trim() === "ACTIVE");
 
   const { data: existingRows, error: existingError } = await supabase
     .from("vyron_customers")
@@ -102,7 +103,7 @@ export async function importCustomersFromXero(
     const xeroContactId = contact.ContactID?.trim();
     const name = contact.Name?.trim();
 
-    if (!xeroContactId || !name || contact.IsCustomer === false) {
+    if (!xeroContactId || !name) {
       skipped += 1;
       continue;
     }
