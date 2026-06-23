@@ -223,7 +223,7 @@ export type XeroContactsListResponse = {
   Contacts?: XeroContactRecord[];
 };
 
-export async function fetchAllXeroCustomerContacts(
+export async function fetchAllXeroContacts(
   workspaceId: string,
   options: { companyId?: string | null; actor?: string } = {}
 ): Promise<XeroContactRecord[]> {
@@ -241,6 +241,20 @@ export async function fetchAllXeroCustomerContacts(
   }
 
   return all;
+}
+
+export async function fetchAllXeroCustomerContacts(
+  workspaceId: string,
+  options: { companyId?: string | null; actor?: string } = {}
+): Promise<XeroContactRecord[]> {
+  return fetchAllXeroContacts(workspaceId, options);
+}
+
+export async function fetchAllXeroSupplierContacts(
+  workspaceId: string,
+  options: { companyId?: string | null; actor?: string } = {}
+): Promise<XeroContactRecord[]> {
+  return fetchAllXeroContacts(workspaceId, options);
 }
 
 export type XeroInvoiceResponse = {

@@ -511,6 +511,42 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
     }
   }
 
+  async function importSuppliersFromXero() {
+    if (!canSync) {
+      setError("You do not have permission to import from Xero.");
+      return;
+    }
+    if (!syncActionsEnabled) {
+      setError("Connect Xero and select an organisation before importing suppliers.");
+      return;
+    }
+
+    setBulkBusy("import-suppliers");
+    setError(null);
+    setSyncErrors([]);
+
+    try {
+      const res = await fetch("/api/integrations/xero/import-suppliers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setError(data.error || "Supplier import failed.");
+        setMessage(null);
+        return;
+      }
+
+      const importedCount = Number(data.imported ?? 0) + Number(data.updated ?? 0);
+      setMessage(`Imported ${importedCount} suppliers from Xero`);
+    } finally {
+      setBulkBusy(null);
+      refresh();
+    }
+  }
+
   async function bulkQueueAction(action: string) {
     if (!canSync) {
       setError("You do not have permission to sync to Xero.");
@@ -951,6 +987,14 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
               className={`${M.secondaryBtn} px-4 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50`}
             >
               {bulkBusy === "import-customers" ? "Importing…" : "Import Customers From Xero"}
+            </button>
+            <button
+              type="button"
+              disabled={!syncActionsEnabled || Boolean(bulkBusy)}
+              onClick={() => void importSuppliersFromXero()}
+              className={`${M.secondaryBtn} px-4 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              {bulkBusy === "import-suppliers" ? "Importing…" : "Import Suppliers From Xero"}
             </button>
             <button
               type="button"
