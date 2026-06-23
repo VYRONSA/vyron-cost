@@ -95,6 +95,7 @@ const NAV_ITEM_PACKAGE_MAP: Record<string, PackageModuleKey> = {
   "/manufacturing/history": "manufacturing",
   "/manufacturing/finished-goods": "manufacturing",
   "/customers": "customers",
+  "/contacts": "customers",
   "/customer-invoices": "customers",
   "/integrations/xero": "accounting",
   "/reports": "reports",

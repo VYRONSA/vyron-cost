@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { upsertVyronContact } from "@/lib/vyron-contact-master";
 import { fetchAllXeroCustomerContacts, type XeroContactRecord } from "@/lib/vyron-xero-client";
 import { upsertContactMapping } from "@/lib/vyron-xero-mapping";
 
@@ -53,6 +54,21 @@ function rowUnchanged(existing: ExistingCustomerRow, next: ReturnType<typeof map
     (existing.phone || null) === (next.phone || null) &&
     (existing.xero_contact_status || null) === (next.xero_contact_status || null)
   );
+}
+
+async function syncContactMaster(
+  supabase: SupabaseClient,
+  companyId: string,
+  contact: XeroContactRecord,
+  payload: ReturnType<typeof mapContactToCustomerRow>
+) {
+  await upsertVyronContact(supabase, companyId, {
+    contact_name: payload.customer_name,
+    email: payload.email,
+    phone: payload.phone,
+    xero_contact_id: payload.xero_contact_id,
+    is_customer: true,
+  });
 }
 
 async function storeContactMapping(
@@ -113,6 +129,7 @@ export async function importCustomersFromXero(
 
     if (existing) {
       if (rowUnchanged(existing, payload)) {
+        await syncContactMaster(supabase, companyId, contact, payload);
         skipped += 1;
         continue;
       }
@@ -120,6 +137,7 @@ export async function importCustomersFromXero(
       const { error } = await supabase.from("vyron_customers").update(payload).eq("id", existing.id);
       if (error) throw new Error(error.message);
 
+      await syncContactMaster(supabase, companyId, contact, payload);
       await storeContactMapping(workspaceId, existing.id, contact);
       updated += 1;
       continue;
@@ -134,6 +152,7 @@ export async function importCustomersFromXero(
     if (insertError) throw new Error(insertError.message);
     if (!inserted?.id) throw new Error("Customer insert did not return an id.");
 
+    await syncContactMaster(supabase, companyId, contact, payload);
     await storeContactMapping(workspaceId, String(inserted.id), contact);
     byXeroId.set(xeroContactId, {
       id: String(inserted.id),

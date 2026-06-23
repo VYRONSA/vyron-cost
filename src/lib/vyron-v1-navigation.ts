@@ -29,6 +29,7 @@ import {
   TrendingUp,
   Upload,
   Users,
+  Contact,
 } from "lucide-react";
 
 export type VyronV1NavItem = { label: string; href: string; icon: LucideIcon };
@@ -94,6 +95,7 @@ export const vyronV1NavSections: VyronV1NavSection[] = [
     section: "CUSTOMERS",
     items: [
       { label: "Customers", icon: Users, href: "/customers" },
+      { label: "Contact Centre", icon: Contact, href: "/contacts" },
       { label: "Customer Invoices", icon: ReceiptText, href: "/customer-invoices" },
     ],
   },

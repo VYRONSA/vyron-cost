@@ -28,6 +28,7 @@ import {
   Search,
   Building,
   BookOpen,
+  Contact,
 } from "lucide-react";
 
 export type VyronNavItem = {
@@ -106,6 +107,7 @@ export const vyronNavSections: VyronNavSection[] = [
     section: "CUSTOMERS",
     items: [
       { label: "Customers", icon: Users, href: "/customers" },
+      { label: "Contact Centre", icon: Contact, href: "/contacts" },
       { label: "Customer Invoices", icon: ReceiptText, href: "/customer-invoices" },
     ],
   },

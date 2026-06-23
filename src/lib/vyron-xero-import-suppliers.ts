@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { upsertVyronContact } from "@/lib/vyron-contact-master";
 import { fetchAllXeroSupplierContacts, type XeroContactRecord } from "@/lib/vyron-xero-client";
 import { upsertContactMapping } from "@/lib/vyron-xero-mapping";
 
@@ -52,6 +53,21 @@ function rowUnchanged(existing: ExistingSupplierRow, next: ReturnType<typeof map
     (existing.phone || null) === (next.phone || null) &&
     (existing.xero_contact_status || null) === (next.xero_contact_status || null)
   );
+}
+
+async function syncContactMaster(
+  supabase: SupabaseClient,
+  companyId: string,
+  contact: XeroContactRecord,
+  payload: ReturnType<typeof mapContactToSupplierRow>
+) {
+  await upsertVyronContact(supabase, companyId, {
+    contact_name: payload.supplier_name,
+    email: payload.contact_email,
+    phone: payload.phone,
+    xero_contact_id: payload.xero_contact_id,
+    is_supplier: true,
+  });
 }
 
 async function storeContactMapping(workspaceId: string, localId: string, contact: XeroContactRecord) {
@@ -108,6 +124,7 @@ export async function importSuppliersFromXero(
 
     if (existing) {
       if (rowUnchanged(existing, payload)) {
+        await syncContactMaster(supabase, companyId, contact, payload);
         skipped += 1;
         continue;
       }
@@ -115,6 +132,7 @@ export async function importSuppliersFromXero(
       const { error } = await supabase.from("vyron_cost_suppliers").update(payload).eq("id", existing.id);
       if (error) throw new Error(error.message);
 
+      await syncContactMaster(supabase, companyId, contact, payload);
       await storeContactMapping(workspaceId, existing.id, contact);
       updated += 1;
       continue;
@@ -129,6 +147,7 @@ export async function importSuppliersFromXero(
     if (insertError) throw new Error(insertError.message);
     if (!inserted?.id) throw new Error("Supplier insert did not return an id.");
 
+    await syncContactMaster(supabase, companyId, contact, payload);
     await storeContactMapping(workspaceId, String(inserted.id), contact);
     byXeroId.set(xeroContactId, {
       id: String(inserted.id),

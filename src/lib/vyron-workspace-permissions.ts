@@ -434,6 +434,7 @@ export const NAV_PATH_PERMISSIONS: Record<string, string> = {
   "/manufacturing/finished-goods": "manufacturing.view",
 
   "/customers": "customers.view",
+  "/contacts": "customers.view",
 
   "/customer-invoices": "invoices.view",
 
