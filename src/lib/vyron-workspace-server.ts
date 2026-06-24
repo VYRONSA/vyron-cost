@@ -4,6 +4,7 @@ import { ACTIVE_CLIENT_KEY, readActiveClient, type ActiveClient } from "@/lib/vy
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { parseCookieJsonValue } from "@/lib/vyron-workspace-cookie-parse";
 import { expandActiveClientFromCookie } from "@/lib/vyron-workspace-cookies";
+import { resolveActiveWorkspaceCompanyId } from "@/lib/vyron-workspace-company-resolution";
 
 export function parseActiveClient(raw: string | null | undefined): ActiveClient | null {
   const parsed = parseCookieJsonValue<ActiveClient>(raw);
@@ -29,35 +30,23 @@ export async function shouldUseWorkspaceDemoData(): Promise<boolean> {
   return isHandcraftedTenantEnabled() && isHandcraftedDataReady() && isDemoWorkspace(client);
 }
 
+/**
+ * Single source of truth for operational company_id:
+ * 1) Handcrafted demo sandbox tenant
+ * 2) vyron_workspaces.company_id for the active workspace
+ * 3) Active client cookie companyId (legacy / local clients without DB workspace row)
+ *
+ * Never uses workspace.id as company_id.
+ */
 export async function getWorkspaceCompanyId(): Promise<string | null> {
   const client = await getServerActiveWorkspace();
-  if (!client) return null;
+  const resolution = await resolveActiveWorkspaceCompanyId(client);
+  return resolution.companyId;
+}
 
-  if (isDemoWorkspace(client)) {
-    return HANDCRAFTED_COMPANY_ID;
-  }
-
-  if (client.companyId) {
-    return client.companyId;
-  }
-
-  if (client.id) {
-    const { getSupabaseAdmin, isSupabaseServiceRoleConfigured } = await import("@/lib/supabase-server");
-    const supabase = isSupabaseServiceRoleConfigured() ? getSupabaseAdmin() : null;
-    if (supabase) {
-      const { data } = await supabase
-        .from("vyron_workspaces")
-        .select("company_id")
-        .eq("id", client.id)
-        .maybeSingle();
-      if (data?.company_id) return String(data.company_id);
-    }
-    if (!client.id.startsWith("client-")) {
-      return client.id;
-    }
-  }
-
-  return null;
+export async function getWorkspaceCompanyResolution() {
+  const client = await getServerActiveWorkspace();
+  return resolveActiveWorkspaceCompanyId(client);
 }
 
 export async function getWorkspaceTenantId(): Promise<string | null> {

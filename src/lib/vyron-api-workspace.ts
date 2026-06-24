@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getServerActiveWorkspace, getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
+import {
+  getServerActiveWorkspace,
+  getWorkspaceCompanyId,
+} from "@/lib/vyron-workspace-server";
+import { ensureWorkspaceCompanyDataAligned } from "@/lib/vyron-workspace-company-resolution";
+import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export type ApiCompanyContext = {
   workspaceId?: string | null;
@@ -29,10 +34,30 @@ export async function resolveApiCompanyIdWithContext(
 
   return resolved;
 }
+
+async function alignWorkspaceCompanyData(companyId: string) {
+  if (!isSupabaseServiceRoleConfigured()) return;
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return;
+
+  const client = await getServerActiveWorkspace();
+  await ensureWorkspaceCompanyDataAligned(supabase, client, companyId);
+}
+
+/** Resolve company id and realign legacy rows written under workspace.id when safe. */
+export async function resolveAndAlignApiCompanyId(): Promise<string | null> {
+  const companyId = await resolveApiCompanyId();
+  if (!companyId) return null;
+  await alignWorkspaceCompanyData(companyId);
+  return companyId;
+}
+
 /** Require an active workspace company for mutating API routes. */
 export async function requireApiCompanyId(): Promise<string> {
   const companyId = await resolveApiCompanyId();
   if (!companyId) throw new Error("No active workspace company. Select a client workspace first.");
+
+  await alignWorkspaceCompanyData(companyId);
   return companyId;
 }
 

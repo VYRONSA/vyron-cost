@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { getContactStatistics, migrateExistingContactsToMaster } from "@/lib/vyron-contact-master";
+import { getContactStatistics, repairContactMasterFlags } from "@/lib/vyron-contact-master";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
-import { ensureWorkspaceCompanyDataAligned } from "@/lib/vyron-workspace-company-resolution";
-import { getServerActiveWorkspace } from "@/lib/vyron-workspace-server";
+import { requireApiCompanyId, resolveAndAlignApiCompanyId } from "@/lib/vyron-api-workspace";
 import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
@@ -21,12 +19,23 @@ export async function POST() {
   try {
     await requireWorkspacePermission("customers.edit");
     const companyId = await requireApiCompanyId();
-    const client = await getServerActiveWorkspace();
-    const alignment = await ensureWorkspaceCompanyDataAligned(supabase, client, companyId);
-    const result = await migrateExistingContactsToMaster(supabase, companyId);
+    await resolveAndAlignApiCompanyId();
+
+    const result = await repairContactMasterFlags(supabase, companyId);
     const stats = await getContactStatistics(supabase, companyId);
-    return NextResponse.json({ ok: true, ...result, stats, alignment });
+
+    const aligned =
+      result.after.contactsIsCustomer === result.after.vyronCustomers &&
+      result.after.contactsIsSupplier === result.after.vyronSuppliers;
+
+    return NextResponse.json({
+      ok: true,
+      companyId,
+      aligned,
+      ...result,
+      stats,
+    });
   } catch (error) {
-    return workspaceAccessErrorResponse(error, "Contact migration failed.");
+    return workspaceAccessErrorResponse(error, "Contact master repair failed.");
   }
 }

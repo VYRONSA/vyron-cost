@@ -91,9 +91,9 @@ export async function listVyronContacts(
     .order("contact_name", { ascending: true });
 
   if (filter === "customer") {
-    query = query.eq("is_customer", true).eq("is_supplier", false);
+    query = query.eq("is_customer", true);
   } else if (filter === "supplier") {
-    query = query.eq("is_supplier", true).eq("is_customer", false);
+    query = query.eq("is_supplier", true);
   } else if (filter === "both") {
     query = query.eq("is_customer", true).eq("is_supplier", true);
   }
@@ -281,9 +281,9 @@ export async function getContactStatistics(
   let both = 0;
 
   for (const row of data || []) {
+    if (row.is_customer) customers += 1;
+    if (row.is_supplier) suppliers += 1;
     if (row.is_customer && row.is_supplier) both += 1;
-    else if (row.is_customer) customers += 1;
-    else if (row.is_supplier) suppliers += 1;
   }
 
   return {
@@ -550,49 +550,328 @@ export type BulkContactRoleAction =
   | "remove-customer"
   | "remove-supplier";
 
+const BULK_SYNC_CHUNK_SIZE = 25;
+
+async function syncRoleProjectionsForBulk(
+  supabase: SupabaseClient,
+  companyId: string,
+  contacts: VyronContact[],
+  action: BulkContactRoleAction
+) {
+  const syncCustomer = action === "mark-customer" || action === "mark-both";
+  const syncSupplier = action === "mark-supplier" || action === "mark-both";
+  if (!syncCustomer && !syncSupplier) return;
+
+  const candidates = contacts.filter(
+    (contact) =>
+      (syncCustomer && contact.is_customer) || (syncSupplier && contact.is_supplier)
+  );
+  if (!candidates.length) return;
+
+  for (let index = 0; index < candidates.length; index += BULK_SYNC_CHUNK_SIZE) {
+    const chunk = candidates.slice(index, index + BULK_SYNC_CHUNK_SIZE);
+    await Promise.all(
+      chunk.map(async (contact) => {
+        if (syncCustomer && contact.is_customer) {
+          await ensureCustomerFromContact(supabase, companyId, contact);
+        }
+        if (syncSupplier && contact.is_supplier) {
+          await ensureSupplierFromContact(supabase, companyId, contact);
+        }
+      })
+    );
+  }
+}
+
+function queueBulkProjectionSync(
+  supabase: SupabaseClient,
+  companyId: string,
+  contacts: VyronContact[],
+  action: BulkContactRoleAction
+) {
+  if (!contacts.length) return;
+  setTimeout(() => {
+    void syncRoleProjectionsForBulk(supabase, companyId, contacts, action).catch(() => {
+      // Non-blocking best-effort sync.
+    });
+  }, 0);
+}
+
 export async function bulkUpdateContactRoles(
   supabase: SupabaseClient,
   companyId: string,
   contactIds: string[],
   action: BulkContactRoleAction
-): Promise<{ updated: number; contacts: VyronContact[]; errors: string[] }> {
+): Promise<{
+  processed: number;
+  updated: number;
+  failed: number;
+  contacts: VyronContact[];
+  errors: string[];
+}> {
   const uniqueIds = [...new Set(contactIds.map((id) => id.trim()).filter(Boolean))];
-  const contacts: VyronContact[] = [];
+  let contacts: VyronContact[] = [];
   const errors: string[] = [];
 
+  if (!uniqueIds.length) {
+    return { processed: 0, updated: 0, failed: 0, contacts, errors };
+  }
+
+  const { data: existingRows, error: loadError } = await supabase
+    .from("vyron_contacts")
+    .select("*")
+    .eq("company_id", companyId)
+    .in("id", uniqueIds);
+
+  if (loadError) throw new Error(loadError.message);
+
+  const byId = new Map((existingRows || []).map((row) => [String(row.id), row as VyronContact]));
   for (const contactId of uniqueIds) {
-    try {
-      const existing = await getVyronContactById(supabase, companyId, contactId);
-      if (!existing) {
-        errors.push(`${contactId}: Contact not found.`);
-        continue;
-      }
+    if (!byId.has(contactId)) {
+      errors.push(`${contactId}: Contact not found.`);
+    }
+  }
+  const updateIds = uniqueIds.filter((contactId) => byId.has(contactId));
+  if (!updateIds.length) {
+    return {
+      processed: uniqueIds.length,
+      updated: 0,
+      failed: errors.length,
+      contacts,
+      errors,
+    };
+  }
 
-      let is_customer = existing.is_customer;
-      let is_supplier = existing.is_supplier;
+  const now = new Date().toISOString();
+  let patch: Partial<VyronContact> & { updated_at: string };
+  if (action === "mark-customer") {
+    patch = { is_customer: true, updated_at: now };
+  } else if (action === "mark-supplier") {
+    patch = { is_supplier: true, updated_at: now };
+  } else if (action === "mark-both") {
+    patch = { is_customer: true, is_supplier: true, updated_at: now };
+  } else if (action === "remove-customer") {
+    patch = { is_customer: false, updated_at: now };
+  } else {
+    patch = { is_supplier: false, updated_at: now };
+  }
 
-      if (action === "mark-customer") is_customer = true;
-      if (action === "mark-supplier") is_supplier = true;
-      if (action === "mark-both") {
-        is_customer = true;
-        is_supplier = true;
-      }
-      if (action === "remove-customer") is_customer = false;
-      if (action === "remove-supplier") is_supplier = false;
+  const { data: updatedRows, error: batchError } = await supabase
+    .from("vyron_contacts")
+    .update(patch)
+    .eq("company_id", companyId)
+    .in("id", updateIds)
+    .select("*");
 
-      const updated = await updateContactRoles(supabase, companyId, contactId, {
-        is_customer,
-        is_supplier,
-      });
-      contacts.push(updated);
-    } catch (error) {
-      errors.push(
-        `${contactId}: ${error instanceof Error ? error.message : "Role update failed."}`
-      );
+  if (batchError) {
+    for (const contactId of updateIds) {
+      errors.push(`${contactId}: ${batchError.message}`);
+    }
+  } else {
+    contacts = ((updatedRows || []) as VyronContact[]).filter((contact) => updateIds.includes(contact.id));
+    queueBulkProjectionSync(supabase, companyId, contacts, action);
+  }
+
+  return {
+    processed: uniqueIds.length,
+    updated: contacts.length,
+    failed: errors.length,
+    contacts,
+    errors,
+  };
+}
+
+export type ContactMasterRepairCounts = {
+  contactsTotal: number;
+  contactsIsCustomer: number;
+  contactsIsSupplier: number;
+  vyronCustomers: number;
+  vyronSuppliers: number;
+};
+
+export type ContactMasterRepairResult = {
+  before: ContactMasterRepairCounts;
+  after: ContactMasterRepairCounts;
+  customerFlagsRepaired: number;
+  supplierFlagsRepaired: number;
+  unmatchedCustomers: number;
+  unmatchedSuppliers: number;
+};
+
+function normalizeContactEmail(value: string | null | undefined) {
+  return value?.trim().toLowerCase() || "";
+}
+
+function normalizeContactName(value: string | null | undefined) {
+  return value?.trim().toLowerCase() || "";
+}
+
+async function getContactMasterRepairCounts(
+  supabase: SupabaseClient,
+  companyId: string
+): Promise<ContactMasterRepairCounts> {
+  const [
+    { count: contactsTotal },
+    { count: contactsIsCustomer },
+    { count: contactsIsSupplier },
+    { count: vyronCustomers },
+    { count: vyronSuppliers },
+  ] = await Promise.all([
+    supabase.from("vyron_contacts").select("id", { count: "exact", head: true }).eq("company_id", companyId),
+    supabase
+      .from("vyron_contacts")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("is_customer", true),
+    supabase
+      .from("vyron_contacts")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("is_supplier", true),
+    supabase.from("vyron_customers").select("id", { count: "exact", head: true }).eq("company_id", companyId),
+    supabase
+      .from("vyron_cost_suppliers")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId),
+  ]);
+
+  return {
+    contactsTotal: contactsTotal || 0,
+    contactsIsCustomer: contactsIsCustomer || 0,
+    contactsIsSupplier: contactsIsSupplier || 0,
+    vyronCustomers: vyronCustomers || 0,
+    vyronSuppliers: vyronSuppliers || 0,
+  };
+}
+
+function findContactForMasterRecord(
+  contacts: VyronContact[],
+  record: {
+    xero_contact_id?: string | null;
+    name: string;
+    email?: string | null;
+  }
+): VyronContact | null {
+  const xeroId = record.xero_contact_id?.trim();
+  if (xeroId) {
+    const byXero = contacts.find((contact) => contact.xero_contact_id?.trim() === xeroId);
+    if (byXero) return byXero;
+  }
+
+  const nameKey = normalizeContactName(record.name);
+  if (nameKey) {
+    const byName = contacts.find((contact) => normalizeContactName(contact.contact_name) === nameKey);
+    if (byName) return byName;
+  }
+
+  const emailKey = normalizeContactEmail(record.email);
+  if (emailKey) {
+    const byEmail = contacts.find((contact) => normalizeContactEmail(contact.email) === emailKey);
+    if (byEmail) return byEmail;
+  }
+
+  return null;
+}
+
+export async function repairContactMasterFlags(
+  supabase: SupabaseClient,
+  companyId: string
+): Promise<ContactMasterRepairResult> {
+  const before = await getContactMasterRepairCounts(supabase, companyId);
+
+  const [{ data: contacts, error: contactError }, { data: customers, error: customerError }, { data: suppliers, error: supplierError }] =
+    await Promise.all([
+      supabase.from("vyron_contacts").select("*").eq("company_id", companyId),
+      supabase.from("vyron_customers").select("id, customer_name, email, invoice_email, xero_contact_id").eq("company_id", companyId),
+      supabase
+        .from("vyron_cost_suppliers")
+        .select("id, supplier_name, contact_email, invoice_email, xero_contact_id")
+        .eq("company_id", companyId),
+    ]);
+
+  if (contactError) throw new Error(contactError.message);
+  if (customerError) throw new Error(customerError.message);
+  if (supplierError) throw new Error(supplierError.message);
+
+  const contactRows = (contacts || []) as VyronContact[];
+  const flagUpdates = new Map<string, { is_customer?: boolean; is_supplier?: boolean }>();
+  let unmatchedCustomers = 0;
+  let unmatchedSuppliers = 0;
+
+  function queueFlag(contactId: string, patch: { is_customer?: boolean; is_supplier?: boolean }) {
+    const current = flagUpdates.get(contactId) || {};
+    flagUpdates.set(contactId, { ...current, ...patch });
+  }
+
+  for (const customer of customers || []) {
+    const contact = findContactForMasterRecord(contactRows, {
+      xero_contact_id: customer.xero_contact_id,
+      name: String(customer.customer_name || ""),
+      email: customer.email || customer.invoice_email,
+    });
+    if (!contact) {
+      unmatchedCustomers += 1;
+      continue;
+    }
+    if (!contact.is_customer) {
+      queueFlag(contact.id, { is_customer: true });
     }
   }
 
-  return { updated: contacts.length, contacts, errors };
+  for (const supplier of suppliers || []) {
+    const contact = findContactForMasterRecord(contactRows, {
+      xero_contact_id: supplier.xero_contact_id,
+      name: String(supplier.supplier_name || ""),
+      email: supplier.contact_email || supplier.invoice_email,
+    });
+    if (!contact) {
+      unmatchedSuppliers += 1;
+      continue;
+    }
+    if (!contact.is_supplier) {
+      queueFlag(contact.id, { is_supplier: true });
+    }
+  }
+
+  let customerFlagsRepaired = 0;
+  let supplierFlagsRepaired = 0;
+  const now = new Date().toISOString();
+
+  for (const [contactId, patch] of flagUpdates.entries()) {
+    const existing = contactRows.find((row) => row.id === contactId);
+    if (!existing) continue;
+
+    const nextCustomer = patch.is_customer !== undefined ? patch.is_customer : existing.is_customer;
+    const nextSupplier = patch.is_supplier !== undefined ? patch.is_supplier : existing.is_supplier;
+
+    if (nextCustomer === existing.is_customer && nextSupplier === existing.is_supplier) continue;
+
+    const { error } = await supabase
+      .from("vyron_contacts")
+      .update({
+        is_customer: nextCustomer,
+        is_supplier: nextSupplier,
+        updated_at: now,
+      })
+      .eq("id", contactId)
+      .eq("company_id", companyId);
+
+    if (error) throw new Error(error.message);
+
+    if (patch.is_customer && !existing.is_customer) customerFlagsRepaired += 1;
+    if (patch.is_supplier && !existing.is_supplier) supplierFlagsRepaired += 1;
+  }
+
+  const after = await getContactMasterRepairCounts(supabase, companyId);
+
+  return {
+    before,
+    after,
+    customerFlagsRepaired,
+    supplierFlagsRepaired,
+    unmatchedCustomers,
+    unmatchedSuppliers,
+  };
 }
 
 export async function listCustomerContactsAsCustomers(

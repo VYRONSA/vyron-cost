@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createCustomer, listCustomersWithHistory } from "@/lib/vyron-customer-invoices";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { requireApiCompanyId, resolveApiCompanyId } from "@/lib/vyron-api-workspace";
+import { requireApiCompanyId, resolveAndAlignApiCompanyId } from "@/lib/vyron-api-workspace";
 import {
   requireWorkspacePermission,
   workspaceAccessErrorResponse,
@@ -17,7 +17,7 @@ export async function GET() {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   try {
     await requireWorkspacePermission("customers.view");
-    const companyId = await resolveApiCompanyId();
+    const companyId = await resolveAndAlignApiCompanyId();
     if (!companyId) return NextResponse.json({ ok: true, customers: [] });
     const customers = await listCustomersWithHistory(supabase, companyId);
     return NextResponse.json({ ok: true, customers });

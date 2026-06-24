@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BookUser, Mail, Phone, RefreshCcw, Search, X } from "lucide-react";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { VYRON_MASTER, VYRON_TABLE } from "@/components/vyron-ui";
@@ -125,6 +125,17 @@ export default function ContactCentreClient() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const contactsRef = useRef(contacts);
+  const selectedIdsRef = useRef(selectedIds);
+  const loadSeqRef = useRef(0);
+
+  contactsRef.current = contacts;
+  selectedIdsRef.current = selectedIds;
+
+  function replaceSelectedIds(next: Set<string>) {
+    selectedIdsRef.current = next;
+    setSelectedIds(next);
+  }
 
   const loadStats = useCallback(async () => {
     try {
@@ -138,23 +149,34 @@ export default function ContactCentreClient() {
     }
   }, []);
 
-  const loadContacts = useCallback(async (nextFilter: ContactFilter) => {
-    setLoading(true);
+  const loadContacts = useCallback(async (nextFilter: ContactFilter, options?: { silent?: boolean }) => {
+    const seq = ++loadSeqRef.current;
+    if (!options?.silent) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const response = await fetch(`/api/contacts?filter=${nextFilter}`);
       const data = await response.json();
+      if (seq !== loadSeqRef.current) return;
       if (!data.ok) {
         setError(data.error || "Could not load contacts.");
-        setContacts([]);
+        if (!options?.silent) {
+          setContacts([]);
+        }
         return;
       }
       setContacts(Array.isArray(data.contacts) ? data.contacts : []);
     } catch {
+      if (seq !== loadSeqRef.current) return;
       setError("Could not load contacts.");
-      setContacts([]);
+      if (!options?.silent) {
+        setContacts([]);
+      }
     } finally {
-      setLoading(false);
+      if (!options?.silent && seq === loadSeqRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -168,7 +190,7 @@ export default function ContactCentreClient() {
   }, [filter, loadContacts, loadStats]);
 
   useEffect(() => {
-    setSelectedIds(new Set());
+    replaceSelectedIds(new Set());
   }, [filter, search]);
 
   const filteredContacts = useMemo(() => {
@@ -200,9 +222,12 @@ export default function ContactCentreClient() {
   }
 
   async function updateInlineRole(
-    contact: VyronContact,
+    contactId: string,
     patch: { is_customer?: boolean; is_supplier?: boolean }
   ) {
+    const contact = contactsRef.current.find((row) => row.id === contactId);
+    if (!contact) return;
+
     const previous = { ...contact };
     const optimistic: VyronContact = {
       ...contact,
@@ -210,12 +235,12 @@ export default function ContactCentreClient() {
       is_supplier: patch.is_supplier !== undefined ? patch.is_supplier : contact.is_supplier,
     };
 
-    setUpdatingId(contact.id);
+    setUpdatingId(contactId);
     setError(null);
     applyContactUpdate(optimistic);
 
     try {
-      const response = await fetch(`/api/contacts/${contact.id}`, {
+      const response = await fetch(`/api/contacts/${contactId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patch),
@@ -227,7 +252,10 @@ export default function ContactCentreClient() {
         return;
       }
       applyContactUpdate(data.contact as VyronContact);
-      await refreshAll();
+      void loadStats();
+      if (filter !== "all") {
+        void loadContacts(filter, { silent: true });
+      }
     } catch {
       applyContactUpdate(previous);
       setError("Could not update contact role.");
@@ -238,10 +266,10 @@ export default function ContactCentreClient() {
 
   function toggleSelectAll() {
     if (allVisibleSelected) {
-      setSelectedIds(new Set());
+      replaceSelectedIds(new Set());
       return;
     }
-    setSelectedIds(new Set(filteredContacts.map((contact) => contact.id)));
+    replaceSelectedIds(new Set(filteredContacts.map((contact) => contact.id)));
   }
 
   function toggleRowSelected(contactId: string) {
@@ -249,17 +277,31 @@ export default function ContactCentreClient() {
       const next = new Set(current);
       if (next.has(contactId)) next.delete(contactId);
       else next.add(contactId);
+      selectedIdsRef.current = next;
       return next;
     });
   }
 
-  async function runBulkAction(action: BulkAction) {
-    const contactIds = [...selectedIds];
-    if (!contactIds.length) return;
+  async function runBulkAction(action: BulkAction, contactIdsFromUi: string[]) {
+    const contactIds = contactIdsFromUi.length ? contactIdsFromUi : [...selectedIdsRef.current];
+
+    if (process.env.NODE_ENV === "development") {
+      console.info("[ContactCentre] bulk:before", {
+        action,
+        selectedIdsSize: selectedIds.size,
+        refSelectedSize: selectedIdsRef.current.size,
+        contactIdsLength: contactIds.length,
+      });
+    }
+
+    if (!contactIds.length) {
+      setError("No contacts selected for bulk update.");
+      return;
+    }
 
     setBulkBusy(true);
     setError(null);
-    setMessage(null);
+    setMessage(`Updating ${contactIds.length} contact(s)…`);
 
     try {
       const response = await fetch("/api/contacts/bulk", {
@@ -268,8 +310,36 @@ export default function ContactCentreClient() {
         body: JSON.stringify({ action, contactIds }),
       });
       const data = await response.json();
+      const errorCount = Number(data.errorCount ?? data.failed ?? 0);
+      const updatedCount = Number(data.updated ?? 0);
+      const processedCount = Number(data.processed ?? contactIds.length);
+      const requestedCount = Number(data.requested ?? contactIds.length);
+
+      if (process.env.NODE_ENV === "development") {
+        console.info("[ContactCentre] bulk:after", {
+          action,
+          responseOk: response.ok,
+          dataOk: data.ok,
+          requested: requestedCount,
+          processed: processedCount,
+          updated: updatedCount,
+          failed: errorCount,
+        });
+      }
+
       if (!data.ok) {
-        setError(data.error || "Bulk update failed.");
+        const detail = Array.isArray(data.errors) ? data.errors.slice(0, 8).join(" · ") : "";
+        setError(
+          `Bulk update: ${updatedCount} succeeded, ${errorCount} failed out of ${processedCount}.` +
+            (detail ? ` ${detail}` : data.error ? ` ${data.error}` : "")
+        );
+        if (updatedCount > 0) {
+          const updatedContacts = Array.isArray(data.contacts) ? (data.contacts as VyronContact[]) : [];
+          for (const updated of updatedContacts) {
+            applyContactUpdate(updated);
+          }
+          void refreshAll();
+        }
         return;
       }
 
@@ -278,12 +348,9 @@ export default function ContactCentreClient() {
         applyContactUpdate(updated);
       }
 
-      setMessage(`Updated ${data.updated ?? updatedContacts.length} contact(s).`);
-      if (data.errors?.length) {
-        setError(data.errors.slice(0, 5).join(" · "));
-      }
-      setSelectedIds(new Set());
-      await refreshAll();
+      setMessage(`Updated ${updatedCount} of ${requestedCount} contact(s).`);
+      replaceSelectedIds(new Set());
+      void refreshAll();
     } catch {
       setError("Bulk update failed.");
     } finally {
@@ -424,7 +491,7 @@ export default function ContactCentreClient() {
                   key={item.key}
                   type="button"
                   disabled={bulkBusy}
-                  onClick={() => void runBulkAction(item.key)}
+                  onClick={() => void runBulkAction(item.key, [...selectedIds])}
                   className="rounded-lg border border-[#E2E8F0] bg-white px-3 py-1.5 text-xs font-bold text-[#334155] hover:bg-[#F1F5F9] disabled:opacity-60"
                 >
                   {item.label}
@@ -432,7 +499,7 @@ export default function ContactCentreClient() {
               ))}
               <button
                 type="button"
-                onClick={() => setSelectedIds(new Set())}
+                onClick={() => replaceSelectedIds(new Set())}
                 className="ml-auto text-xs font-bold text-[#64748B] hover:text-[#334155]"
               >
                 Clear selection
@@ -503,20 +570,20 @@ export default function ContactCentreClient() {
                       <td className="px-4 py-3">
                         <ContactBadge contact={contact} />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
                         <RoleCheckbox
                           checked={contact.is_customer}
-                          disabled={updatingId === contact.id || bulkBusy}
+                          disabled={updatingId === contact.id}
                           label="Customer"
-                          onChange={(next) => void updateInlineRole(contact, { is_customer: next })}
+                          onChange={(next) => void updateInlineRole(contact.id, { is_customer: next })}
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
                         <RoleCheckbox
                           checked={contact.is_supplier}
-                          disabled={updatingId === contact.id || bulkBusy}
+                          disabled={updatingId === contact.id}
                           label="Supplier"
-                          onChange={(next) => void updateInlineRole(contact, { is_supplier: next })}
+                          onChange={(next) => void updateInlineRole(contact.id, { is_supplier: next })}
                         />
                       </td>
                       <td className="px-4 py-3 text-sm text-[#64748B]">
@@ -542,8 +609,14 @@ export default function ContactCentreClient() {
       </div>
 
       {selectedContact ? (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40">
-          <div className="h-full w-full max-w-md overflow-y-auto bg-white shadow-2xl">
+        <div className="fixed inset-0 z-50 flex justify-end pointer-events-none">
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-900/40 pointer-events-auto"
+            aria-label="Close contact detail"
+            onClick={() => setSelectedContact(null)}
+          />
+          <div className="relative h-full w-full max-w-md overflow-y-auto bg-white shadow-2xl pointer-events-auto">
             <div className="sticky top-0 flex items-center justify-between border-b border-[#E2E8F0] bg-white px-6 py-4">
               <h2 className="text-lg font-black text-[#0F172A]">Contact Detail</h2>
               <button

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getImportCentreStats } from "@/lib/vyron-import-centre-v1";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
+import { resolveAndAlignApiCompanyId } from "@/lib/vyron-api-workspace";
 import {
   requireWorkspacePermission,
   workspaceAccessErrorResponse,
@@ -21,7 +21,7 @@ export async function GET() {
 
   try {
     await requireWorkspacePermission("ingredients.view");
-    const companyId = await resolveApiCompanyId();
+    const companyId = await resolveAndAlignApiCompanyId();
     if (!companyId) {
       return NextResponse.json({
         ok: true,

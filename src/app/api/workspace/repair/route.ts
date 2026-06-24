@@ -7,6 +7,8 @@ import {
   buildImpersonationWorkspaceSession,
 } from "@/lib/vyron-workspace-impersonation";
 import { applyWorkspaceAuthCookies } from "@/lib/vyron-workspace-cookies";
+import { ensureWorkspaceCompanyDataAligned } from "@/lib/vyron-workspace-company-resolution";
+import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import {
   resolvePermissionKey,
   sessionHasPermission,
@@ -55,12 +57,24 @@ export async function POST(request: NextRequest) {
       "OWNER"
     );
 
+    let alignment: { realigned: boolean; movedTables: string[]; reason?: string } = {
+      realigned: false,
+      movedTables: [],
+    };
+    if (client.companyId && isSupabaseServiceRoleConfigured()) {
+      const supabase = getSupabaseAdmin();
+      if (supabase) {
+        alignment = await ensureWorkspaceCompanyDataAligned(supabase, client, client.companyId);
+      }
+    }
+
     const response = NextResponse.json({
       ok: true,
       client,
       session,
       workspace: result.workspace,
       message: `Workspace session repaired for ${client.companyName}.`,
+      alignment,
       status: {
         hasActiveClientCookie: true,
         workspaceId: client.id,

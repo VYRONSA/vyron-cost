@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupplier, listSuppliers } from "@/lib/vyron-cost-master-data";
-import { requireApiCompanyId, resolveApiCompanyId } from "@/lib/vyron-api-workspace";
+import { requireApiCompanyId, resolveAndAlignApiCompanyId } from "@/lib/vyron-api-workspace";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import {
   requireWorkspacePermission,
@@ -18,7 +18,7 @@ export async function GET() {
 
   try {
     await requireWorkspacePermission("suppliers.view");
-    const companyId = await resolveApiCompanyId();
+    const companyId = await resolveAndAlignApiCompanyId();
     if (!companyId) return NextResponse.json({ ok: true, suppliers: [] });
     const suppliers = await listSuppliers(supabase, companyId);
     return NextResponse.json({ ok: true, suppliers });

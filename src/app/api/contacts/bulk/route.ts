@@ -4,7 +4,8 @@ import {
   type BulkContactRoleAction,
 } from "@/lib/vyron-contact-master";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
+import { requireWorkspaceContext } from "@/lib/vyron-api-workspace";
+import { resolveContactMasterCompanyId } from "@/lib/vyron-workspace-company-resolution";
 import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
@@ -38,7 +39,13 @@ export async function POST(request: NextRequest) {
 
   try {
     await requireWorkspacePermission("customers.edit");
-    const companyId = await requireApiCompanyId();
+    const { workspace, companyId: resolvedCompanyId } = await requireWorkspaceContext();
+    const companyId = await resolveContactMasterCompanyId(
+      supabase,
+      resolvedCompanyId,
+      workspace?.id ?? null
+    );
+
     const action = parseAction(body.action);
     const contactIds = Array.isArray(body.contactIds)
       ? (body.contactIds as string[]).filter((id) => typeof id === "string" && id.trim())
@@ -52,7 +59,27 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await bulkUpdateContactRoles(supabase, companyId, contactIds, action);
-    return NextResponse.json({ ok: true, ...result });
+    const errorCount = result.failed;
+    const ok = errorCount === 0;
+
+    return NextResponse.json(
+      {
+        ok,
+        companyId,
+        requested: contactIds.length,
+        errorCount,
+        processed: result.processed,
+        updated: result.updated,
+        failed: result.failed,
+        contacts: result.contacts,
+        errors: result.errors,
+        error:
+          errorCount > 0
+            ? `Bulk update completed with ${errorCount} failure(s) out of ${result.processed} contact(s).`
+            : undefined,
+      },
+      { status: ok ? 200 : 207 }
+    );
   } catch (error) {
     return workspaceAccessErrorResponse(error, "Bulk contact update failed.");
   }
