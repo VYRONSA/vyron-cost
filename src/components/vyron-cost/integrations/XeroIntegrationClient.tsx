@@ -94,7 +94,7 @@ const OUTBOUND_SYNC = [
 ] as const;
 
 const INBOUND_SYNC = [
-  { key: "inboundContacts", label: "Contacts", supported: false },
+  { key: "inboundContacts", label: "Contacts", supported: true },
   { key: "inboundAccounts", label: "Chart of Accounts", supported: false },
   { key: "inboundTaxRates", label: "Tax Rates", supported: false },
   { key: "inboundItems", label: "Items", supported: false },
@@ -475,22 +475,22 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
     }
   }
 
-  async function importCustomersFromXero() {
+  async function importContactsFromXero() {
     if (!canSync) {
       setError("You do not have permission to import from Xero.");
       return;
     }
     if (!syncActionsEnabled) {
-      setError("Connect Xero and select an organisation before importing customers.");
+      setError("Connect Xero and select an organisation before importing contacts.");
       return;
     }
 
-    setBulkBusy("import-customers");
+    setBulkBusy("import-contacts");
     setError(null);
     setSyncErrors([]);
 
     try {
-      const res = await fetch("/api/integrations/xero/import-customers", {
+      const res = await fetch("/api/integrations/xero/import-contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -498,49 +498,13 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       });
       const data = await res.json();
       if (!data.ok) {
-        setError(data.error || "Customer import failed.");
+        setError(data.error || "Contact import failed.");
         setMessage(null);
         return;
       }
 
       const importedCount = Number(data.imported ?? 0) + Number(data.updated ?? 0);
-      setMessage(`Imported ${importedCount} customers from Xero`);
-    } finally {
-      setBulkBusy(null);
-      refresh();
-    }
-  }
-
-  async function importSuppliersFromXero() {
-    if (!canSync) {
-      setError("You do not have permission to import from Xero.");
-      return;
-    }
-    if (!syncActionsEnabled) {
-      setError("Connect Xero and select an organisation before importing suppliers.");
-      return;
-    }
-
-    setBulkBusy("import-suppliers");
-    setError(null);
-    setSyncErrors([]);
-
-    try {
-      const res = await fetch("/api/integrations/xero/import-suppliers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        setError(data.error || "Supplier import failed.");
-        setMessage(null);
-        return;
-      }
-
-      const importedCount = Number(data.imported ?? 0) + Number(data.updated ?? 0);
-      setMessage(`Imported ${importedCount} suppliers from Xero`);
+      setMessage(`Imported ${importedCount} contacts from Xero into Contact Centre`);
     } finally {
       setBulkBusy(null);
       refresh();
@@ -983,18 +947,10 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
             <button
               type="button"
               disabled={!syncActionsEnabled || Boolean(bulkBusy)}
-              onClick={() => void importCustomersFromXero()}
+              onClick={() => void importContactsFromXero()}
               className={`${M.secondaryBtn} px-4 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50`}
             >
-              {bulkBusy === "import-customers" ? "Importing…" : "Import Customers From Xero"}
-            </button>
-            <button
-              type="button"
-              disabled={!syncActionsEnabled || Boolean(bulkBusy)}
-              onClick={() => void importSuppliersFromXero()}
-              className={`${M.secondaryBtn} px-4 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50`}
-            >
-              {bulkBusy === "import-suppliers" ? "Importing…" : "Import Suppliers From Xero"}
+              {bulkBusy === "import-contacts" ? "Importing…" : "Import Contacts From Xero"}
             </button>
             <button
               type="button"

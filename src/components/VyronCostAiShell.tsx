@@ -54,6 +54,7 @@ const dashboardNavItem: NavItem = { label: "Dashboard", href: "/dashboard", icon
 const NAV_SECTION_PACKAGE_MAP: Record<string, PackageModuleKey> = {
   suppliers: "suppliers",
   costing: "costing",
+  "master-data": "costing",
   procurement: "procurement",
   inventory: "inventory",
   manufacturing: "manufacturing",
@@ -78,6 +79,7 @@ const NAV_ITEM_PACKAGE_MAP: Record<string, PackageModuleKey> = {
   "/ingredients": "costing",
   "/products": "costing",
   "/recipes": "costing",
+  "/import-centre": "costing",
   "/purchase-orders": "procurement",
   "/purchase-orders/list": "procurement",
   "/purchase-orders/approvals": "procurement",

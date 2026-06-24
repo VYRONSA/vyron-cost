@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  listCustomerContactsAsCustomers,
+  updateContactRoles,
+  upsertVyronContact,
+} from "@/lib/vyron-contact-master";
+import {
   findOrCreateStockItem,
   listVyronFinishedGoods,
   postStockMovement,
@@ -933,12 +938,7 @@ export type CustomerRow = {
 };
 
 export async function listCustomersWithHistory(supabase: SupabaseClient, companyId: string) {
-  const { data, error } = await supabase
-    .from("vyron_customers")
-    .select("*")
-    .eq("company_id", companyId)
-    .order("customer_name");
-  if (error) throw new Error(error.message);
+  const data = await listCustomerContactsAsCustomers(supabase, companyId);
   return (data || []) as CustomerRow[];
 }
 
@@ -974,7 +974,15 @@ export async function createCustomer(
     .select("*")
     .single();
   if (error) throw new Error(error.message);
-  return data as CustomerRow;
+  const customer = data as CustomerRow & { xero_contact_id?: string | null };
+  await upsertVyronContact(supabase, companyId, {
+    contact_name: customer.customer_name,
+    email: customer.email,
+    phone: customer.phone,
+    xero_contact_id: customer.xero_contact_id ?? null,
+    is_customer: true,
+  });
+  return customer;
 }
 
 export async function updateCustomer(
@@ -1019,10 +1027,43 @@ export async function updateCustomer(
   return data as CustomerRow;
 }
 
+async function clearCustomerRoleOnContact(
+  supabase: SupabaseClient,
+  companyId: string,
+  customer: { customer_name: string; xero_contact_id?: string | null }
+) {
+  const customerName = String(customer.customer_name || "").trim();
+  const xeroContactId = customer.xero_contact_id?.trim() || null;
+  if (!customerName && !xeroContactId) return;
+
+  let contactId: string | null = null;
+  if (xeroContactId) {
+    const { data } = await supabase
+      .from("vyron_contacts")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("xero_contact_id", xeroContactId)
+      .maybeSingle();
+    contactId = data?.id ? String(data.id) : null;
+  }
+  if (!contactId && customerName) {
+    const { data } = await supabase
+      .from("vyron_contacts")
+      .select("id")
+      .eq("company_id", companyId)
+      .ilike("contact_name", customerName)
+      .maybeSingle();
+    contactId = data?.id ? String(data.id) : null;
+  }
+  if (!contactId) return;
+
+  await updateContactRoles(supabase, companyId, contactId, { is_customer: false });
+}
+
 export async function deleteCustomer(supabase: SupabaseClient, companyId: string, customerId: string) {
   const { data: customer, error: fetchError } = await supabase
     .from("vyron_customers")
-    .select("id, invoice_count")
+    .select("id, invoice_count, customer_name, xero_contact_id")
     .eq("id", customerId)
     .eq("company_id", companyId)
     .maybeSingle();
@@ -1049,11 +1090,13 @@ export async function deleteCustomer(supabase: SupabaseClient, companyId: string
       .select("*")
       .single();
     if (error) throw new Error(error.message);
+    await clearCustomerRoleOnContact(supabase, companyId, customer);
     return { ok: true as const, archived: true as const, customer: data as CustomerRow };
   }
 
   const { error } = await supabase.from("vyron_customers").delete().eq("id", customerId).eq("company_id", companyId);
   if (error) throw new Error(error.message);
+  await clearCustomerRoleOnContact(supabase, companyId, customer);
   return { ok: true as const, archived: false as const };
 }
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { appendXeroAuditEvent } from "@/lib/vyron-xero-connection-store";
 import { requireXeroWorkspaceContext, xeroContextFromRequest } from "@/lib/vyron-xero-api-context";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { importCustomersFromXero } from "@/lib/vyron-xero-import-customers";
+import { importContactsFromXero } from "@/lib/vyron-xero-import-contacts";
 import { isXeroOAuthConfigured } from "@/lib/vyron-xero-integration";
 import {
   requireWorkspacePermission,
@@ -38,15 +38,15 @@ export async function POST(request: NextRequest) {
     await requireWorkspacePermission("xero.sync");
     const { workspaceId, companyId } = await requireXeroWorkspaceContext(xeroContextFromRequest(request, body));
 
-    const result = await importCustomersFromXero(supabase, workspaceId, companyId, actor);
+    const result = await importContactsFromXero(supabase, workspaceId, companyId, actor);
 
     await appendXeroAuditEvent(
       workspaceId,
       {
-        event: "customers_imported",
+        event: "contacts_imported",
         actor,
         companyId,
-        detail: `Imported ${result.imported + result.updated} customers from Xero (${result.imported} new, ${result.updated} updated, ${result.skipped} skipped).`,
+        detail: `Imported ${result.imported + result.updated} contacts from Xero (${result.imported} new, ${result.updated} updated, ${result.skipped} skipped).`,
         metadata: result,
       },
       companyId
@@ -57,6 +57,6 @@ export async function POST(request: NextRequest) {
       ...result,
     });
   } catch (error) {
-    return workspaceAccessErrorResponse(error, "Xero customer import failed.");
+    return workspaceAccessErrorResponse(error, "Xero contact import failed.");
   }
 }

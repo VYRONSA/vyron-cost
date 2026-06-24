@@ -48,7 +48,6 @@ export const vyronNavSections: VyronNavSection[] = [
     id: "suppliers",
     section: "SUPPLIERS",
     items: [
-      { label: "Suppliers", icon: Building2, href: "/suppliers" },
       { label: "Supplier Intelligence", icon: TrendingUp, href: "/supplier-intelligence" },
       { label: "Supplier Inflation", icon: TrendingUp, href: "/supplier-inflation" },
       { label: "Supplier Invoice Import / Document Intelligence", icon: FileSearch, href: "/document-intelligence" },
@@ -57,12 +56,16 @@ export const vyronNavSections: VyronNavSection[] = [
   },
 
   {
-    id: "costing",
-    section: "COSTING",
+    id: "master-data",
+    section: "MASTER DATA",
     items: [
-      { label: "Ingredients", icon: Boxes, href: "/ingredients" },
-      { label: "Products", icon: PackageSearch, href: "/products" },
-      { label: "Recipes & BOM", icon: ChefHat, href: "/recipes" },
+      { label: "Contacts", icon: Contact, href: "/contacts" },
+      { label: "Customers", icon: Users, href: "/customers" },
+      { label: "Suppliers", icon: Building2, href: "/suppliers" },
+      { label: "Raw Materials", icon: Boxes, href: "/ingredients" },
+      { label: "Finished Goods", icon: PackageSearch, href: "/products" },
+      { label: "Recipes & BOMs", icon: ChefHat, href: "/recipes" },
+      { label: "Import Centre", icon: Upload, href: "/import-centre" },
     ],
   },
 
@@ -106,8 +109,6 @@ export const vyronNavSections: VyronNavSection[] = [
     id: "customers",
     section: "CUSTOMERS",
     items: [
-      { label: "Customers", icon: Users, href: "/customers" },
-      { label: "Contact Centre", icon: Contact, href: "/contacts" },
       { label: "Customer Invoices", icon: ReceiptText, href: "/customer-invoices" },
     ],
   },

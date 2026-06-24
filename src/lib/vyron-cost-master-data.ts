@@ -4,14 +4,14 @@ import type { CostIngredient, CostSupplier } from "@/lib/vyron-cost-core-data";
 import type { CostProduct } from "@/lib/vyron-cost-product-data";
 import { calcGp, calcSuggestedPrice } from "@/lib/vyron-cost-product-data";
 import { calculateTrueUnitCost } from "@/lib/vyron-cost-core-data";
+import {
+  listSupplierContactsAsSuppliers,
+  updateContactRoles,
+  upsertVyronContact,
+} from "@/lib/vyron-contact-master";
 
 export async function listSuppliers(supabase: SupabaseClient, companyId: string) {
-  const { data, error } = await supabase
-    .from("vyron_cost_suppliers")
-    .select("*")
-    .eq("company_id", companyId)
-    .order("supplier_name");
-  if (error) throw new Error(error.message);
+  const data = await listSupplierContactsAsSuppliers(supabase, companyId);
   return (data || []) as CostSupplier[];
 }
 
@@ -39,7 +39,15 @@ export async function createSupplier(
     .select("*")
     .single();
   if (error) throw new Error(error.message);
-  return data as CostSupplier;
+  const supplier = data as CostSupplier & { xero_contact_id?: string | null };
+  await upsertVyronContact(supabase, companyId, {
+    contact_name: supplier.supplier_name,
+    email: supplier.contact_email,
+    phone: supplier.phone,
+    xero_contact_id: supplier.xero_contact_id ?? null,
+    is_supplier: true,
+  });
+  return supplier;
 }
 
 export async function updateSupplier(
@@ -71,13 +79,57 @@ export async function updateSupplier(
   return data as CostSupplier;
 }
 
+async function clearSupplierRoleOnContact(
+  supabase: SupabaseClient,
+  companyId: string,
+  supplier: { supplier_name: string; xero_contact_id?: string | null }
+) {
+  const supplierName = String(supplier.supplier_name || "").trim();
+  const xeroContactId = supplier.xero_contact_id?.trim() || null;
+  if (!supplierName && !xeroContactId) return;
+
+  let contactId: string | null = null;
+  if (xeroContactId) {
+    const { data } = await supabase
+      .from("vyron_contacts")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("xero_contact_id", xeroContactId)
+      .maybeSingle();
+    contactId = data?.id ? String(data.id) : null;
+  }
+  if (!contactId && supplierName) {
+    const { data } = await supabase
+      .from("vyron_contacts")
+      .select("id")
+      .eq("company_id", companyId)
+      .ilike("contact_name", supplierName)
+      .maybeSingle();
+    contactId = data?.id ? String(data.id) : null;
+  }
+  if (!contactId) return;
+
+  await updateContactRoles(supabase, companyId, contactId, { is_supplier: false });
+}
+
 export async function deleteSupplier(supabase: SupabaseClient, companyId: string, supplierId: string) {
+  const { data: supplier, error: fetchError } = await supabase
+    .from("vyron_cost_suppliers")
+    .select("supplier_name, xero_contact_id")
+    .eq("id", supplierId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (fetchError) throw new Error(fetchError.message);
+  if (!supplier) throw new Error("Supplier not found.");
+
   const { error } = await supabase
     .from("vyron_cost_suppliers")
     .delete()
     .eq("id", supplierId)
     .eq("company_id", companyId);
   if (error) throw new Error(error.message);
+
+  await clearSupplierRoleOnContact(supabase, companyId, supplier);
   return { ok: true };
 }
 

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getContactStatistics, migrateExistingContactsToMaster } from "@/lib/vyron-contact-master";
+import { getContactStatistics } from "@/lib/vyron-contact-master";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
+import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
 import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 
-export async function POST() {
+export async function GET() {
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
   }
@@ -17,12 +17,18 @@ export async function POST() {
   }
 
   try {
-    await requireWorkspacePermission("customers.edit");
-    const companyId = await requireApiCompanyId();
-    const result = await migrateExistingContactsToMaster(supabase, companyId);
+    await requireWorkspacePermission("customers.view");
+    const companyId = await resolveApiCompanyId();
+    if (!companyId) {
+      return NextResponse.json({
+        ok: true,
+        stats: { total: 0, customers: 0, suppliers: 0, both: 0 },
+      });
+    }
+
     const stats = await getContactStatistics(supabase, companyId);
-    return NextResponse.json({ ok: true, ...result, stats });
+    return NextResponse.json({ ok: true, stats });
   } catch (error) {
-    return workspaceAccessErrorResponse(error, "Contact migration failed.");
+    return workspaceAccessErrorResponse(error, "Contact statistics failed.");
   }
 }

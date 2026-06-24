@@ -458,6 +458,7 @@ export const NAV_PATH_PERMISSIONS: Record<string, string> = {
   "/admin/company-setup": "admin.company",
   "/admin/users": "admin.users",
   "/admin/imports": "admin.imports",
+  "/import-centre": "ingredients.view",
   "/deployment-readiness": "admin.company",
 };
 
