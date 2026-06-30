@@ -2,7 +2,7 @@ import { parseCookieJsonValue } from "@/lib/vyron-workspace-cookie-parse";
 import { expandWorkspaceSessionFromCookie } from "@/lib/vyron-workspace-cookies";
 import { WORKSPACE_SESSION_KEY, type WorkspaceSession } from "@/lib/vyron-workspace-session";
 import { getServerActiveWorkspace } from "@/lib/vyron-workspace-server";
-import { getPackageModules } from "@/lib/vyron-package-modules";
+import { getPackageModules } from "@/lib/vyron-package-manager";
 import {
   getWorkspace,
   getWorkspaceCompanyProfile,

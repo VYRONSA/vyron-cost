@@ -310,6 +310,20 @@ export async function getVyronContactById(
   return (data as VyronContact) || null;
 }
 
+export async function deleteVyronContact(
+  supabase: SupabaseClient,
+  companyId: string,
+  contactId: string
+) {
+  const { error } = await supabase
+    .from("vyron_contacts")
+    .delete()
+    .eq("company_id", companyId)
+    .eq("id", contactId);
+
+  if (error) throw new Error(error.message);
+}
+
 async function ensureCustomerFromContact(
   supabase: SupabaseClient,
   companyId: string,

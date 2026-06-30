@@ -6,10 +6,7 @@ import {
 } from "@/lib/vyron-procurement";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
-import {
-  requireWorkspacePermission,
-  workspaceAccessErrorResponse,
-} from "@/lib/vyron-workspace-access";
+import { requirePackageFeature, requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,6 +24,7 @@ export async function GET(request: NextRequest) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return jsonNoStore({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
   try {
+    await requirePackageFeature("purchase_orders");
     await requireWorkspacePermission("purchase_orders.view");
     const companyId = await resolveApiCompanyIdWithContext(supabase, {
       workspaceId: request.nextUrl.searchParams.get("workspaceId"),
@@ -50,6 +48,7 @@ export async function PUT(request: NextRequest) {
   if (!supabase) return jsonNoStore({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
   const body = await request.json().catch(() => ({}));
   try {
+    await requirePackageFeature("purchase_orders");
     await requireWorkspacePermission("purchase_orders.edit");
     const companyId = await resolveApiCompanyIdWithContext(supabase, {
       workspaceId: typeof body.workspaceId === "string" ? body.workspaceId : null,

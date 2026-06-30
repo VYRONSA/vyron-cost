@@ -383,7 +383,7 @@ export default function CustomersClient() {
           {filteredCustomers.map((customer) => (
             <div key={customer.id} className="grid grid-cols-[1.3fr_1fr_1.4fr_1fr_0.8fr_0.8fr_95px] items-center gap-3 border-t border-slate-100 px-5 py-4 text-sm">
               <div>
-                <div className="font-black text-purple-700">{customer.name}</div>
+                <Link href={`/customers/${customer.id}`} className="font-black text-purple-700 hover:underline">{customer.name}</Link>
                 <div className="text-xs font-bold text-slate-500">{customer.id} · {customer.phone || "No phone"}</div>
                 {(() => {
                   const stats = readCustomerHistoryLocally(customer.id.toLowerCase());

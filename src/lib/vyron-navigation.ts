@@ -29,6 +29,11 @@ import {
   Building,
   BookOpen,
   Contact,
+  Store,
+  ShoppingCart,
+  ClipboardCheck,
+  PackageCheck,
+  Truck,
 } from "lucide-react";
 
 export type VyronNavItem = {
@@ -73,6 +78,7 @@ export const vyronNavSections: VyronNavSection[] = [
     id: "procurement",
     section: "PROCUREMENT",
     items: [
+      { label: "Procurement Requisitions", icon: ShoppingCart, href: "/procurement" },
       { label: "Purchase Orders", icon: ClipboardList, href: "/purchase-orders" },
       { label: "PO List", icon: ClipboardList, href: "/purchase-orders/list" },
       { label: "Approvals", icon: ClipboardList, href: "/purchase-orders/approvals" },
@@ -88,7 +94,8 @@ export const vyronNavSections: VyronNavSection[] = [
     items: [
       { label: "Inventory", icon: PackageSearch, href: "/inventory" },
       { label: "Stock Master", icon: Boxes, href: "/inventory/stock" },
-      { label: "Inventory Ledger", icon: ClipboardList, href: "/inventory/ledger" },
+      { label: "Stock Movements", icon: PackageCheck, href: "/stock-movements" },
+      { label: "Inventory Ledger", icon: ClipboardList, href: "/inventory-ledger" },
       { label: "Inventory Counts", icon: ClipboardList, href: "/inventory/counts" },
       { label: "Inventory Intelligence", icon: Target, href: "/inventory-intelligence" },
     ],
@@ -99,9 +106,29 @@ export const vyronNavSections: VyronNavSection[] = [
     section: "MANUFACTURING",
     items: [
       { label: "Manufacturing Dashboard", icon: Factory, href: "/manufacturing" },
-      { label: "Production Runs", icon: ClipboardList, href: "/manufacturing/runs" },
+      { label: "Production Planning", icon: ClipboardList, href: "/production-planning" },
+      { label: "Production Runs", icon: PackageSearch, href: "/production-runs" },
+      { label: "Production Runs (MFG)", icon: ClipboardList, href: "/manufacturing/runs" },
       { label: "Manufacturing History", icon: History, href: "/manufacturing/history" },
       { label: "Finished Goods", icon: PackageSearch, href: "/manufacturing/finished-goods" },
+    ],
+  },
+
+  {
+    id: "store-ordering",
+    section: "STORE ORDERING",
+    items: [
+      { label: "Order Dashboard", icon: BarChart3, href: "/store-orders/dashboard" },
+      { label: "Stores", icon: Store, href: "/stores" },
+      { label: "Store Orders", icon: ShoppingCart, href: "/store-orders" },
+      { label: "Approval Queue", icon: ClipboardCheck, href: "/store-orders/approvals" },
+      { label: "Picking Queue", icon: PackageCheck, href: "/store-orders/picking" },
+      { label: "Dispatch Board", icon: Truck, href: "/store-orders/dispatch" },
+      { label: "Store Performance", icon: TrendingUp, href: "/store-performance" },
+      { label: "Product Demand", icon: BarChart3, href: "/store-orders/product-demand" },
+      { label: "Demand Forecast", icon: TrendingUp, href: "/demand-forecast" },
+      { label: "Store Forecast", icon: BarChart3, href: "/store-forecast" },
+      { label: "Warning Rules", icon: Settings, href: "/store-orders/settings" },
     ],
   },
 

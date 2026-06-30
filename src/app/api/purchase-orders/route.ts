@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { listPurchaseOrders, savePurchaseOrder } from "@/lib/vyron-procurement";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
-import {
-  requireWorkspacePermission,
-  workspaceAccessErrorResponse,
-} from "@/lib/vyron-workspace-access";
+import { requirePackageFeature, requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,6 +24,7 @@ export async function GET(request: NextRequest) {
   const status = request.nextUrl.searchParams.get("status") || undefined;
   const search = request.nextUrl.searchParams.get("search") || undefined;
   try {
+    await requirePackageFeature("purchase_orders");
     await requireWorkspacePermission("purchase_orders.view");
     const companyId = await resolveApiCompanyIdWithContext(supabase, {
       workspaceId: request.nextUrl.searchParams.get("workspaceId"),
@@ -49,6 +47,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => ({}));
   try {
+    await requirePackageFeature("purchase_orders");
     await requireWorkspacePermission("purchase_orders.create");
     const companyId = await resolveApiCompanyIdWithContext(supabase, companyContextFromBody(body));
     if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });

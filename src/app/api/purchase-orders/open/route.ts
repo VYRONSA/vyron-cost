@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
-import {
-  requireWorkspacePermission,
-  workspaceAccessErrorResponse,
-} from "@/lib/vyron-workspace-access";
+import { requirePackageFeature, requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 
@@ -12,6 +9,7 @@ const CLOSED = new Set(["Closed", "Cancelled", "Fully Received"]);
 
 export async function GET() {
   try {
+    await requirePackageFeature("purchase_orders");
     await requireWorkspacePermission("purchase_orders.view");
   } catch (error) {
     return workspaceAccessErrorResponse(error, "Load failed.");

@@ -1,5 +1,10 @@
 import { checkExecutionPersistence, type ExecutionPersistenceInfo } from "@/lib/vyron-execution-actions-data";
 import {
+  checkOperationsSchemaTables,
+  OPERATIONS_CATCHUP_SQL,
+  type SchemaTableCheck,
+} from "@/lib/vyron-schema-readiness";
+import {
   isSupabaseServerConfigured,
   isSupabaseServiceRoleConfigured,
   getSupabaseAdmin,
@@ -41,6 +46,7 @@ export type DeploymentReadinessReport = {
   };
   executionPersistence: ExecutionPersistenceInfo;
   migrations: MigrationCheck[];
+  schemaTables: SchemaTableCheck[];
   xero: {
     oauthReady: boolean;
     connected: boolean;
@@ -152,6 +158,7 @@ function collectBuildWarnings(input: {
   environment: DeploymentReadinessReport["environment"];
   executionPersistence: ExecutionPersistenceInfo;
   migrations: MigrationCheck[];
+  schemaTables: SchemaTableCheck[];
   xero: DeploymentReadinessReport["xero"];
   workspace: DeploymentReadinessReport["workspace"];
   company: DeploymentReadinessReport["company"];
@@ -182,6 +189,11 @@ function collectBuildWarnings(input: {
         warnings.push(`Required migration missing: ${migration.file}`);
       }
     }
+    for (const table of input.schemaTables) {
+      if (table.status === "missing") {
+        warnings.push(`Required table missing: public.${table.table} — apply ${table.migrationFile} or ${OPERATIONS_CATCHUP_SQL}.`);
+      }
+    }
     if (!input.workspace.hasActiveWorkspace) {
       warnings.push("No active workspace detected — select a client workspace before go-live.");
     }
@@ -198,6 +210,11 @@ function collectBuildWarnings(input: {
     for (const migration of input.migrations) {
       if (migration.status === "missing") {
         warnings.push(`Migration not applied (dev): ${migration.file}`);
+      }
+    }
+    for (const table of input.schemaTables) {
+      if (table.status === "missing") {
+        warnings.push(`Table missing (dev): public.${table.table}`);
       }
     }
   }
@@ -222,6 +239,7 @@ export async function buildDeploymentReadinessReport(): Promise<DeploymentReadin
 
   const executionPersistence = await checkExecutionPersistence();
   const migrations = await checkExecutionMigrations();
+  const schemaTables = await checkOperationsSchemaTables();
 
   const missingXeroEnv = (["XERO_CLIENT_ID", "XERO_CLIENT_SECRET", "XERO_REDIRECT_URI"] as const).filter(
     (key) => envConfigured(key) === "missing"
@@ -269,6 +287,7 @@ export async function buildDeploymentReadinessReport(): Promise<DeploymentReadin
     environment,
     executionPersistence,
     migrations,
+    schemaTables,
     xero,
     workspace: workspaceInfo,
     company: companyInfo,
@@ -286,9 +305,10 @@ export async function buildDeploymentReadinessReport(): Promise<DeploymentReadin
     environment.supabaseServiceRole === "configured";
 
   const migrationsReady = migrations.every((row) => row.status === "configured");
+  const schemaReady = schemaTables.every((row) => row.status === "configured");
   const executionReady = isProduction ? executionPersistence.mode === "database" : true;
 
-  const ok = envReady && migrationsReady && executionReady && (!isProduction || xero.oauthReady);
+  const ok = envReady && migrationsReady && schemaReady && executionReady && (!isProduction || xero.oauthReady);
 
   return {
     ok,
@@ -297,6 +317,7 @@ export async function buildDeploymentReadinessReport(): Promise<DeploymentReadin
     company: companyInfo,
     executionPersistence,
     migrations,
+    schemaTables,
     xero,
     build: {
       isProduction,

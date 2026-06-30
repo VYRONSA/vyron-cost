@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
+  BarChart3,
   BrainCircuit,
   CheckCircle2,
   ClipboardList,
@@ -12,7 +13,9 @@ import {
   Package,
   PackageOpen,
   ShieldCheck,
+  ShoppingCart,
   Sparkles,
+  Store,
   Target,
   TrendingUp,
   Truck,
@@ -20,8 +23,58 @@ import {
   Wallet,
 } from "lucide-react";
 import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
+import { getProductLandingContent } from "@/platform/landing/framework";
+import {
+  getUpgradePackageLabel,
+  type FeatureKey,
+  type PackageId,
+} from "@/platform";
 
 const M = VYRON_MASTER;
+
+const PACKAGE_ICONS: Record<PackageId, typeof PackageOpen> = {
+  starter: PackageOpen,
+  professional: TrendingUp,
+  enterprise: Crown,
+  multi_store_operations: Store,
+};
+
+const CAPABILITY_ICONS: Record<FeatureKey, typeof PackageOpen> = {
+  multi_store: Store,
+  store_ordering: ShoppingCart,
+  production_planning: Factory,
+  inventory: Target,
+  procurement: ClipboardList,
+  purchase_orders: Truck,
+  forecasting: TrendingUp,
+  store_forecasting: TrendingUp,
+  cost_intelligence: BrainCircuit,
+  dashboard: Package,
+  contacts: Users,
+  customers: Users,
+  suppliers: Truck,
+  supplier_intelligence: ShieldCheck,
+  document_intelligence: FileText,
+  ingredients: Package,
+  finished_goods: PackageOpen,
+  recipes: ClipboardList,
+  import_centre: PackageOpen,
+  manufacturing: Factory,
+  stores: Store,
+  store_performance: BarChart3,
+  dispatch_board: Truck,
+  advanced_dashboards: Crown,
+  developer_tools: Sparkles,
+  xero_sync: Link2,
+  reports: FileText,
+  integrations: Link2,
+  multi_company: Crown,
+  customer_invoices: FileText,
+};
+
+const vyronCostLanding = getProductLandingContent("vyron_cost");
+const pricingPlans = vyronCostLanding.pricingPlans;
+const premiumCapabilities = vyronCostLanding.premiumCapabilities;
 
 function Logo() {
   return (
@@ -131,57 +184,6 @@ const clientOutcomes = [
   "Prepare accurate sales, margin and board-ready reports",
 ];
 
-const pricingPlans = [
-  {
-    name: "Starter",
-    price: "R1,499",
-    tag: "Costing Foundation",
-    icon: PackageOpen,
-    description: "For single-site manufacturers and operators building proper costing discipline.",
-    features: [
-      "Products, recipes and BOM costing",
-      "Ingredients and packaging library",
-      "Supplier list and purchase tracking",
-      "Suggested selling price and GP targets",
-      "Basic costing reports",
-      "Up to 3 users",
-    ],
-  },
-  {
-    name: "Professional",
-    price: "R3,499",
-    tag: "Recommended",
-    icon: TrendingUp,
-    description: "For growing teams that need procurement, inventory and manufacturing control in one platform.",
-    features: [
-      "Everything in Starter",
-      "Purchase orders and GRNs",
-      "Document Intelligence",
-      "Inventory and manufacturing runs",
-      "Supplier Intelligence",
-      "Customer invoices and Xero sync centre",
-      "Up to 10 users",
-    ],
-    popular: true,
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    tag: "Multi-Company",
-    icon: Crown,
-    description: "For groups, franchises and multi-branch operations with advanced integration needs.",
-    features: [
-      "Multiple companies and branches",
-      "Advanced permissions and audit",
-      "ERP, Xero and Sage integrations",
-      "Custom reports and onboarding",
-      "Dedicated implementation support",
-      "Executive board packs",
-      "High-volume AI document processing",
-    ],
-  },
-];
-
 export default function VyronPublicLandingPage() {
   return (
     <main className={M.page}>
@@ -204,6 +206,9 @@ export default function VyronPublicLandingPage() {
           <nav className="hidden items-center gap-8 md:flex">
             <a href="#modules" className={M.navLink}>
               Platform
+            </a>
+            <a href="#premium" className={M.navLink}>
+              Premium
             </a>
             <a href="#workflow" className={M.navLink}>
               Workflow
@@ -390,6 +395,38 @@ export default function VyronPublicLandingPage() {
         </div>
       </section>
 
+      {/* Premium scale capabilities */}
+      <section id="premium" className="relative z-10 mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
+        <div className="mb-8 max-w-3xl sm:mb-10">
+          <div className={M.sectionLabel}>Premium Capabilities</div>
+          <h2 className={`mt-3 text-3xl sm:text-4xl ${M.heading}`}>
+            Scale from one site to multi-store, multi-branch operations
+          </h2>
+          <p className={`mt-4 text-sm leading-7 sm:text-base ${M.muted}`}>
+            Higher packages unlock store ordering, production planning from demand, inventory intelligence, procurement
+            automation, forecasting and AI cost intelligence — without bolting on separate systems.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {premiumCapabilities.map(({ feature, title, body }) => {
+            const Icon = CAPABILITY_ICONS[feature] || Sparkles;
+            return (
+            <LightCard key={feature} className="relative overflow-hidden">
+              <div className="absolute right-3 top-3 rounded-full border border-[#7C3AED]/20 bg-[#7C3AED]/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#7C3AED]">
+                {getUpgradePackageLabel(feature)}
+              </div>
+              <div className={`h-11 w-11 ${M.iconEmphasis}`}>
+                <Icon size={22} />
+              </div>
+              <h3 className={`mt-4 text-lg ${M.heading}`}>{title}</h3>
+              <p className={`mt-2 text-sm leading-6 ${M.muted}`}>{body}</p>
+            </LightCard>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Workflow */}
       <section id="workflow" className="relative z-10 mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
         <div className="mb-8 sm:mb-10">
@@ -459,22 +496,22 @@ export default function VyronPublicLandingPage() {
           </p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
           {pricingPlans.map((plan) => {
-            const Icon = plan.icon;
+            const Icon = PACKAGE_ICONS[plan.packageId];
             return (
               <LightCard
-                key={plan.name}
-                className={`relative flex flex-col p-6 ${plan.popular ? M.pricingPopular : ""}`}
+                key={plan.packageId}
+                className={`relative flex flex-col p-6 ${plan.recommended ? M.pricingPopular : ""}`}
               >
-                {plan.popular ? <div className={`absolute right-5 top-5 ${M.statusRecommended}`}>Recommended</div> : null}
+                {plan.recommended ? <div className={`absolute right-5 top-5 ${M.statusRecommended}`}>Recommended</div> : null}
 
                 <div className={`h-12 w-12 ${M.iconEmphasis}`}>
                   <Icon size={24} />
                 </div>
 
                 <div className={`mt-5 text-xs font-bold uppercase tracking-[0.14em] ${M.sectionLabel}`}>{plan.tag}</div>
-                <h3 className={`mt-1 text-2xl sm:text-3xl ${M.heading}`}>{plan.name}</h3>
+                <h3 className={`mt-1 text-2xl sm:text-3xl ${M.heading}`}>{plan.label}</h3>
 
                 <div className="mt-4 flex items-end gap-1">
                   <div className={`text-4xl tracking-[-0.04em] sm:text-5xl ${M.accentKpiGradient}`}>{plan.price}</div>
@@ -486,10 +523,10 @@ export default function VyronPublicLandingPage() {
                 <p className={`mt-4 min-h-[4.5rem] text-sm leading-6 ${M.muted}`}>{plan.description}</p>
 
                 <div className="mt-5 flex-1 space-y-2.5">
-                  {plan.features.map((feature) => (
-                    <div key={feature} className={`flex items-start gap-2.5 text-sm ${M.body}`}>
+                  {plan.highlights.map((highlight) => (
+                    <div key={highlight} className={`flex items-start gap-2.5 text-sm ${M.body}`}>
                       <CheckCircle2 className="mt-0.5 shrink-0 text-[#7C3AED]/70" size={16} />
-                      <span>{feature}</span>
+                      <span>{highlight}</span>
                     </div>
                   ))}
                 </div>
@@ -497,7 +534,7 @@ export default function VyronPublicLandingPage() {
                 <Link
                   href="/login"
                   className={`mt-6 w-full px-5 py-3.5 text-xs uppercase tracking-[0.1em] sm:text-sm ${
-                    plan.popular ? M.primaryBtn : M.secondaryBtn
+                    plan.recommended ? M.primaryBtn : M.secondaryBtn
                   }`}
                 >
                   Get Started <ArrowRight size={16} />

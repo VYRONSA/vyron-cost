@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck:web": "tsc --noEmit",
+    "typecheck:mobile": "npm --prefix apps/vyron-ops-mobile run typecheck",
+    "typecheck": "npm run typecheck:web && npm run typecheck:mobile",
     "import:handcrafted": "node scripts/import-handcrafted.mjs",
     "generate:pwa-icons": "node scripts/generate-pwa-icons.mjs"
   },

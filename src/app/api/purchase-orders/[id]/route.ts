@@ -7,10 +7,7 @@ import {
 } from "@/lib/vyron-procurement";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
-import {
-  requireWorkspacePermission,
-  workspaceAccessErrorResponse,
-} from "@/lib/vyron-workspace-access";
+import { requirePackageFeature, requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,6 +42,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
   try {
+    await requirePackageFeature("purchase_orders");
     await requireWorkspacePermission("purchase_orders.view");
     const companyId = await requirePoCompanyId(supabase, companyContextFromRequest(request));
     const po = await getPurchaseOrderDetail(supabase, id, companyId);
@@ -86,6 +84,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
   const body = await request.json().catch(() => ({}));
   try {
+    await requirePackageFeature("purchase_orders");
     await requireWorkspacePermission("purchase_orders.edit");
     const companyId = await requirePoCompanyId(supabase, companyContextFromRequest(request, body));
     const po = await savePurchaseOrder(
@@ -120,6 +119,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const status = String(body.status || "");
   if (!status) return NextResponse.json({ ok: false, error: "status required." }, { status: 400 });
   try {
+    await requirePackageFeature("purchase_orders");
     const approvalStatuses = new Set(["Approved", "Sent", "Closed", "Cancelled"]);
     await requireWorkspacePermission(
       approvalStatuses.has(status) ? "purchase_orders.approve" : "purchase_orders.edit"
@@ -144,6 +144,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
   try {
+    await requirePackageFeature("purchase_orders");
     await requireWorkspacePermission("purchase_orders.delete");
     const companyId = await requirePoCompanyId(supabase, companyContextFromRequest(request));
     await deletePurchaseOrder(supabase, companyId, id);

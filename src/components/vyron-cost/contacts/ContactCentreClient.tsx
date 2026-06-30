@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { BookUser, Mail, Phone, RefreshCcw, Search, X } from "lucide-react";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { VYRON_MASTER, VYRON_TABLE } from "@/components/vyron-ui";
@@ -636,6 +637,9 @@ export default function ContactCentreClient() {
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wide text-[#64748B]">Contact Name</div>
                     <div className="mt-1 text-xl font-black text-[#0F172A]">{selectedContact.contact_name}</div>
+                    <Link href={`/contacts/${selectedContact.id}`} className="mt-2 inline-block text-xs font-black text-violet-700 hover:underline">
+                      Open Full Detail Page
+                    </Link>
                     <div className="mt-3">
                       <ContactBadge contact={selectedContact} />
                     </div>

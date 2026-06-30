@@ -7,6 +7,7 @@ import {
   writeInventoryAudit,
   type StockEntityType,
 } from "@/lib/vyron-inventory";
+import { postInventoryTransaction } from "@/lib/vyron-inventory-transactions";
 
 export const PRODUCTION_STATUSES = ["Planned", "Approved", "In Production", "Completed", "Cancelled", "Reversed"] as const;
 export type ProductionStatus = (typeof PRODUCTION_STATUSES)[number];
@@ -736,17 +737,22 @@ export async function completeProductionRun(
     }
     if (stockItemId && actualLineQty > 0) {
       const avgCost = unitCost;
-      await postStockMovement(supabase, {
+      const entityType: StockEntityType =
+        line.line_type === "Packaging" ? "packaging" : "ingredient";
+      await postInventoryTransaction(supabase, {
         companyId: run.company_id,
+        transactionType: "Consumption",
+        entityType,
+        entityId: line.ingredient_id || null,
         stockItemId,
-        movementType: "Production Consumption",
-        quantityOut: actualLineQty,
+        quantity: actualLineQty,
         unitCost: avgCost,
         referenceType: "production_run",
         referenceId: runId,
         referenceLabel: run.run_number,
-        actor,
-        metadata: { line_name: line.line_name, line_type: line.line_type },
+        createdBy: actor,
+        notes: `Consumed ${actualLineQty} ${line.unit} for ${run.run_number}`,
+        allowNegative: Boolean(input.stock_override),
       });
       await writeInventoryAudit(supabase, {
         companyId: run.company_id,
@@ -832,16 +838,19 @@ export async function completeProductionRun(
       fgId = created.id;
     }
 
-    await postStockMovement(supabase, {
+    await postInventoryTransaction(supabase, {
       companyId: run.company_id,
+      transactionType: "Receipt",
+      entityType: "finished_goods",
+      entityId: run.product_id,
       stockItemId: fgId,
-      movementType: "Production Completion",
-      quantityIn: actualQty,
+      quantity: actualQty,
       unitCost: costPerUnit,
       referenceType: "production_run",
       referenceId: runId,
       referenceLabel: run.run_number,
-      actor,
+      createdBy: actor,
+      notes: `Production completion ${run.run_number}`,
     });
   }
 

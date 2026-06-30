@@ -3,11 +3,17 @@
 import {
   BarChart3,
   BrainCircuit,
+  CheckCircle2,
+  ClipboardCheck,
+  Factory,
   Package,
+  PackageCheck,
   ShieldCheck,
+  ShoppingCart,
   Sparkles,
   TrendingUp,
   TriangleAlert,
+  Truck,
   Users,
   Warehouse,
 } from "lucide-react";
@@ -25,6 +31,14 @@ import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
 import { VYRON_DOMAIN_QUOTES } from "@/components/vyron-premium/VyronPremiumTheme";
 import type { ActiveClient } from "@/lib/vyron-developer-client";
 import type { WorkspaceDashboardStats } from "@/lib/vyron-workspace-stats";
+import type { StoreOrderOperationsStats } from "@/lib/vyron-store-orders";
+import type { ProductionPlanningStats } from "@/lib/vyron-store-production-planning";
+import type { InventoryTransactionDashboardStats } from "@/lib/vyron-inventory-transactions";
+import type { ProcurementDashboardStats } from "@/lib/vyron-procurement-requisitions";
+import type { PurchaseOrderEngineDashboardStats } from "@/lib/vyron-purchase-order-engine";
+import type { DemandForecastDashboardStats } from "@/lib/vyron-demand-forecasting";
+import type { CostAiInsightDashboardStats } from "@/lib/vyron-cost-ai-insights";
+import PackageGatedSection from "@/components/admin/PackageGatedSection";
 
 function formatCurrency(value: number) {
   return value.toLocaleString("en-ZA", {
@@ -104,6 +118,13 @@ export default function DashboardPremiumClient({
   tradingName,
   client,
   stats,
+  storeOrderStats,
+  productionPlanningStats,
+  inventoryStats,
+  procurementStats,
+  purchaseOrderStats,
+  demandForecastStats,
+  costAiInsightStats,
   widgets,
   risks,
   topRecovery,
@@ -112,10 +133,18 @@ export default function DashboardPremiumClient({
   tradingName: string;
   client?: ActiveClient | null;
   stats?: WorkspaceDashboardStats;
+  storeOrderStats?: StoreOrderOperationsStats;
+  productionPlanningStats?: ProductionPlanningStats;
+  inventoryStats?: InventoryTransactionDashboardStats;
+  procurementStats?: ProcurementDashboardStats;
+  purchaseOrderStats?: PurchaseOrderEngineDashboardStats;
+  demandForecastStats?: DemandForecastDashboardStats;
+  costAiInsightStats?: CostAiInsightDashboardStats;
   widgets?: DemoWidgets;
   risks?: unknown[];
   topRecovery?: DemoRecovery;
 }) {
+  const packageName = client?.packageName || "Professional";
   const quotes = VYRON_DOMAIN_QUOTES.executive;
   const counts = stats || {
     suppliers: 0,
@@ -124,6 +153,51 @@ export default function DashboardPremiumClient({
     inventoryValue: 0,
     customerInvoices: 0,
     xeroStatus: "Not Connected",
+  };
+  const orderOps = storeOrderStats || {
+    ordersToday: 0,
+    revenueToday: 0,
+    awaitingApproval: 0,
+    picking: 0,
+    readyForDispatch: 0,
+    delivered: 0,
+  };
+  const productionOps = productionPlanningStats || {
+    productionRequiredToday: 0,
+    productionRunsOpen: 0,
+    rawMaterialShortages: 0,
+  };
+  const inventoryOps = inventoryStats || {
+    inventoryValue: 0,
+    stockMovementsToday: 0,
+    negativeStockWarnings: 0,
+    stockAdjustments: 0,
+  };
+  const procurementOps = procurementStats || {
+    openRequisitions: 0,
+    procurementValue: 0,
+    shortageValue: 0,
+    ingredientsAtRisk: 0,
+  };
+  const purchaseOrderOps = purchaseOrderStats || {
+    openPurchaseOrders: 0,
+    outstandingReceipts: 0,
+    purchaseValueThisMonth: 0,
+    lateDeliveries: 0,
+  };
+  const demandForecastOps = demandForecastStats || {
+    forecastRevenue: 0,
+    forecastProduction: 0,
+    forecastProcurementValue: 0,
+    productsGrowingFastest: 0,
+    warnings: [],
+  };
+  const costAiOps = costAiInsightStats || {
+    criticalInsights: 0,
+    highInsights: 0,
+    totalInsights: 0,
+    topRiskTitle: null,
+    topOpportunityTitle: null,
   };
 
   return (
@@ -141,6 +215,306 @@ export default function DashboardPremiumClient({
           <VyronMetricCard label="Revenue" value={counts.customerInvoices > 0 ? String(counts.customerInvoices) : "Awaiting Txns"} note="Invoice feed" href="/customer-invoices" tone={counts.customerInvoices > 0 ? "healthy" : "default"} icon={<BarChart3 size={18} />} />
         </VyronMetricGrid>
       </section>
+
+      {mode === "onboarding" ? (
+        <PackageGatedSection packageName={packageName} feature="store_ordering" title="Store Ordering Operations">
+          <VyronSectionHeader title="Store Ordering Operations" />
+          <VyronMetricGrid>
+            <VyronMetricCard
+              label="Orders Today"
+              value={String(orderOps.ordersToday)}
+              note="Orders dated today"
+              href="/store-orders/dashboard"
+              tone={orderOps.ordersToday > 0 ? "healthy" : "default"}
+              icon={<ShoppingCart size={18} />}
+            />
+            <VyronMetricCard
+              label="Revenue Today"
+              value={formatCurrency(orderOps.revenueToday)}
+              note="Net order value today"
+              href="/store-orders/dashboard"
+              tone={orderOps.revenueToday > 0 ? "healthy" : "default"}
+              icon={<BarChart3 size={18} />}
+            />
+            <VyronMetricCard
+              label="Pending Approval"
+              value={String(orderOps.awaitingApproval)}
+              note="Submitted queue"
+              href="/store-orders/approvals"
+              tone={orderOps.awaitingApproval > 0 ? "warning" : "default"}
+              icon={<ClipboardCheck size={18} />}
+            />
+            <VyronMetricCard
+              label="Picking"
+              value={String(orderOps.picking)}
+              note="Approved + in pick"
+              href="/store-orders/picking"
+              tone={orderOps.picking > 0 ? "healthy" : "default"}
+              icon={<PackageCheck size={18} />}
+            />
+            <VyronMetricCard
+              label="Ready for Dispatch"
+              value={String(orderOps.readyForDispatch)}
+              note="Pick complete"
+              href="/store-orders/dispatch"
+              tone={orderOps.readyForDispatch > 0 ? "healthy" : "default"}
+              icon={<Truck size={18} />}
+            />
+            <VyronMetricCard
+              label="Delivered"
+              value={String(orderOps.delivered)}
+              note="Completed deliveries"
+              href="/store-orders/dispatch"
+              tone={orderOps.delivered > 0 ? "healthy" : "default"}
+              icon={<CheckCircle2 size={18} />}
+            />
+          </VyronMetricGrid>
+        </PackageGatedSection>
+      ) : null}
+
+      {mode === "onboarding" ? (
+        <PackageGatedSection packageName={packageName} feature="inventory" title="Inventory Intelligence">
+          <VyronSectionHeader title="Inventory Intelligence" />
+          <VyronMetricGrid>
+            <VyronMetricCard
+              label="Inventory Value"
+              value={inventoryOps.inventoryValue > 0 ? formatCurrency(inventoryOps.inventoryValue) : "Monitoring"}
+              note="Total stock value"
+              href="/inventory-ledger"
+              tone={inventoryOps.inventoryValue > 0 ? "healthy" : "default"}
+              icon={<Warehouse size={18} />}
+            />
+            <VyronMetricCard
+              label="Stock Movements Today"
+              value={String(inventoryOps.stockMovementsToday)}
+              note="Transactions posted today"
+              href="/stock-movements"
+              tone={inventoryOps.stockMovementsToday > 0 ? "healthy" : "default"}
+              icon={<Package size={18} />}
+            />
+            <VyronMetricCard
+              label="Negative Stock Warnings"
+              value={String(inventoryOps.negativeStockWarnings)}
+              note="Items below zero"
+              href="/inventory/stock"
+              tone={inventoryOps.negativeStockWarnings > 0 ? "danger" : "healthy"}
+              icon={<TriangleAlert size={18} />}
+            />
+            <VyronMetricCard
+              label="Stock Adjustments"
+              value={String(inventoryOps.stockAdjustments)}
+              note="Adjustments today"
+              href="/stock-movements"
+              tone={inventoryOps.stockAdjustments > 0 ? "warning" : "default"}
+              icon={<ClipboardCheck size={18} />}
+            />
+          </VyronMetricGrid>
+        </PackageGatedSection>
+      ) : null}
+
+      {mode === "onboarding" ? (
+        <PackageGatedSection packageName={packageName} feature="procurement" title="Procurement Intelligence">
+          <VyronSectionHeader title="Procurement Intelligence" />
+          <VyronMetricGrid>
+            <VyronMetricCard
+              label="Open Requisitions"
+              value={String(procurementOps.openRequisitions)}
+              note="Draft through ordered"
+              href="/procurement"
+              tone={procurementOps.openRequisitions > 0 ? "healthy" : "default"}
+              icon={<ShoppingCart size={18} />}
+            />
+            <VyronMetricCard
+              label="Procurement Value"
+              value={procurementOps.procurementValue > 0 ? formatCurrency(procurementOps.procurementValue) : "Monitoring"}
+              note="Open requisition value"
+              href="/procurement"
+              tone={procurementOps.procurementValue > 0 ? "healthy" : "default"}
+              icon={<BarChart3 size={18} />}
+            />
+            <VyronMetricCard
+              label="Shortage Value"
+              value={procurementOps.shortageValue > 0 ? formatCurrency(procurementOps.shortageValue) : "Monitoring"}
+              note="Current shortage exposure"
+              href="/procurement"
+              tone={procurementOps.shortageValue > 0 ? "warning" : "default"}
+              icon={<TriangleAlert size={18} />}
+            />
+            <VyronMetricCard
+              label="Ingredients At Risk"
+              value={String(procurementOps.ingredientsAtRisk)}
+              note="Planning + inventory risk"
+              href="/procurement"
+              tone={procurementOps.ingredientsAtRisk > 0 ? "warning" : "healthy"}
+              icon={<Package size={18} />}
+            />
+          </VyronMetricGrid>
+        </PackageGatedSection>
+      ) : null}
+
+      {mode === "onboarding" ? (
+        <PackageGatedSection packageName={packageName} feature="purchase_orders" title="Purchase Order Operations">
+          <VyronSectionHeader title="Purchase Order Operations" />
+          <VyronMetricGrid>
+            <VyronMetricCard
+              label="Open Purchase Orders"
+              value={String(purchaseOrderOps.openPurchaseOrders)}
+              note="Draft through partial receipt"
+              href="/purchase-orders"
+              tone={purchaseOrderOps.openPurchaseOrders > 0 ? "healthy" : "default"}
+              icon={<ShoppingCart size={18} />}
+            />
+            <VyronMetricCard
+              label="Outstanding Receipts"
+              value={String(purchaseOrderOps.outstandingReceipts)}
+              note="Lines awaiting receipt"
+              href="/purchase-orders"
+              tone={purchaseOrderOps.outstandingReceipts > 0 ? "warning" : "default"}
+              icon={<PackageCheck size={18} />}
+            />
+            <VyronMetricCard
+              label="Purchase Value This Month"
+              value={purchaseOrderOps.purchaseValueThisMonth > 0 ? formatCurrency(purchaseOrderOps.purchaseValueThisMonth) : "Monitoring"}
+              note="PO value created this month"
+              href="/purchase-orders"
+              tone={purchaseOrderOps.purchaseValueThisMonth > 0 ? "healthy" : "default"}
+              icon={<BarChart3 size={18} />}
+            />
+            <VyronMetricCard
+              label="Late Deliveries"
+              value={String(purchaseOrderOps.lateDeliveries)}
+              note="Past expected date"
+              href="/purchase-orders"
+              tone={purchaseOrderOps.lateDeliveries > 0 ? "danger" : "healthy"}
+              icon={<TriangleAlert size={18} />}
+            />
+          </VyronMetricGrid>
+        </PackageGatedSection>
+      ) : null}
+
+      {mode === "onboarding" ? (
+        <PackageGatedSection packageName={packageName} feature="forecasting" title="Demand Forecasting">
+          <VyronSectionHeader title="Demand Forecasting" />
+          <VyronMetricGrid>
+            <VyronMetricCard
+              label="Forecast Revenue"
+              value={demandForecastOps.forecastRevenue > 0 ? formatCurrency(demandForecastOps.forecastRevenue) : "Monitoring"}
+              note="Next month from product demand"
+              href="/demand-forecast"
+              tone={demandForecastOps.forecastRevenue > 0 ? "healthy" : "default"}
+              icon={<BarChart3 size={18} />}
+            />
+            <VyronMetricCard
+              label="Forecast Production"
+              value={demandForecastOps.forecastProduction > 0 ? String(Math.round(demandForecastOps.forecastProduction)) : "Monitoring"}
+              note="Units forecast next month"
+              href="/demand-forecast"
+              tone={demandForecastOps.forecastProduction > 0 ? "healthy" : "default"}
+              icon={<Factory size={18} />}
+            />
+            <VyronMetricCard
+              label="Forecast Procurement Value"
+              value={demandForecastOps.forecastProcurementValue > 0 ? formatCurrency(demandForecastOps.forecastProcurementValue) : "Monitoring"}
+              note="BOM ingredient requirements"
+              href="/demand-forecast"
+              tone={demandForecastOps.forecastProcurementValue > 0 ? "healthy" : "default"}
+              icon={<ShoppingCart size={18} />}
+            />
+            <VyronMetricCard
+              label="Products Growing Fastest"
+              value={String(demandForecastOps.productsGrowingFastest)}
+              note="Growing demand trend"
+              href="/demand-forecast"
+              tone={demandForecastOps.productsGrowingFastest > 0 ? "healthy" : "default"}
+              icon={<TrendingUp size={18} />}
+            />
+          </VyronMetricGrid>
+          {demandForecastOps.warnings.length > 0 ? (
+            <div className="mt-4 space-y-2">
+              {demandForecastOps.warnings.slice(0, 4).map((warning) => (
+                <div
+                  key={`${warning.code}-${warning.product_id}`}
+                  className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-900"
+                >
+                  {warning.message}
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </PackageGatedSection>
+      ) : null}
+
+      {mode === "onboarding" ? (
+        <PackageGatedSection packageName={packageName} feature="cost_intelligence" title="AI Cost Intelligence">
+          <VyronSectionHeader title="AI Cost Intelligence" />
+          <VyronMetricGrid>
+            <VyronMetricCard
+              label="Active Insights"
+              value={String(costAiOps.totalInsights)}
+              note="Rules-based signals"
+              href="/cost-intelligence"
+              tone={costAiOps.totalInsights > 0 ? "healthy" : "default"}
+              icon={<BrainCircuit size={18} />}
+            />
+            <VyronMetricCard
+              label="Critical Risks"
+              value={String(costAiOps.criticalInsights)}
+              note="Requires immediate attention"
+              href="/cost-intelligence"
+              tone={costAiOps.criticalInsights > 0 ? "danger" : "healthy"}
+              icon={<TriangleAlert size={18} />}
+            />
+            <VyronMetricCard
+              label="High Priority"
+              value={String(costAiOps.highInsights)}
+              note="Elevated business impact"
+              href="/cost-intelligence"
+              tone={costAiOps.highInsights > 0 ? "warning" : "default"}
+              icon={<TriangleAlert size={18} />}
+            />
+            <VyronMetricCard
+              label="Top Opportunity"
+              value={costAiOps.topOpportunityTitle ? "Available" : "Monitoring"}
+              note={costAiOps.topOpportunityTitle || "Scanning procurement and demand"}
+              href="/cost-intelligence"
+              tone={costAiOps.topOpportunityTitle ? "healthy" : "default"}
+              icon={<TrendingUp size={18} />}
+            />
+          </VyronMetricGrid>
+        </PackageGatedSection>
+      ) : null}
+
+      {mode === "onboarding" ? (
+        <PackageGatedSection packageName={packageName} feature="production_planning" title="Production Planning">
+          <VyronSectionHeader title="Production Planning" />
+          <VyronMetricGrid>
+            <VyronMetricCard
+              label="Production Required Today"
+              value={String(productionOps.productionRequiredToday)}
+              note="Units from store demand"
+              href="/production-planning"
+              tone={productionOps.productionRequiredToday > 0 ? "warning" : "default"}
+              icon={<Factory size={18} />}
+            />
+            <VyronMetricCard
+              label="Production Runs Open"
+              value={String(productionOps.productionRunsOpen)}
+              note="Draft, planned, released"
+              href="/production-runs"
+              tone={productionOps.productionRunsOpen > 0 ? "healthy" : "default"}
+              icon={<Package size={18} />}
+            />
+            <VyronMetricCard
+              label="Raw Material Shortages"
+              value={String(productionOps.rawMaterialShortages)}
+              note="BOM vs stock warnings"
+              href="/production-planning"
+              tone={productionOps.rawMaterialShortages > 0 ? "warning" : "healthy"}
+              icon={<TriangleAlert size={18} />}
+            />
+          </VyronMetricGrid>
+        </PackageGatedSection>
+      ) : null}
 
       <VyronInsightCard
         eyebrow="Leakage & Recovery"

@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Home,
   LayoutDashboard,
+  Lock,
   LogOut,
   Rocket,
   Search,
@@ -16,7 +17,13 @@ import {
 } from "lucide-react";
 import ModuleUpgradeNotice from "@/components/admin/ModuleUpgradeNotice";
 import Link from "next/link";
-import { isModuleIncluded, type PackageModuleKey } from "@/lib/vyron-package-modules";
+import {
+  canAccessRoute,
+  getFeatureForRoute,
+  getFeatureTooltip,
+  isPremiumLocked,
+  type FeatureKey,
+} from "@/lib/vyron-package-manager";
 import { isNavItemActive, vyronNavSections } from "@/lib/vyron-navigation";
 import WorkspaceAccessDenied from "@/components/WorkspaceAccessDenied";
 import {
@@ -50,75 +57,6 @@ type NavSection = {
 
 const dashboardNavItem: NavItem = { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard };
 
-/** Maps vyron-navigation section ids to package module keys (unchanged gating rules). */
-const NAV_SECTION_PACKAGE_MAP: Record<string, PackageModuleKey> = {
-  suppliers: "suppliers",
-  costing: "costing",
-  "master-data": "costing",
-  procurement: "procurement",
-  inventory: "inventory",
-  manufacturing: "manufacturing",
-  customers: "customers",
-  accounting: "accounting",
-  reports: "reports",
-  executive: "intelligence",
-  admin: "dashboard",
-};
-
-/** Per-route package keys for V1 modules inside mixed sections (e.g. OPERATIONS). */
-const NAV_ITEM_PACKAGE_MAP: Record<string, PackageModuleKey> = {
-  "/dashboard": "dashboard",
-  "/suppliers": "suppliers",
-  "/supplier-intelligence": "suppliers",
-  "/supplier-inflation": "suppliers",
-  "/document-intelligence": "suppliers",
-  "/document-intelligence/supplier-learning": "suppliers",
-  "/document-intelligence/price-history/supplier": "suppliers",
-  "/document-intelligence/settings": "suppliers",
-  "/email-invoice-inbox": "suppliers",
-  "/ingredients": "costing",
-  "/products": "costing",
-  "/recipes": "costing",
-  "/import-centre": "costing",
-  "/purchase-orders": "procurement",
-  "/purchase-orders/list": "procurement",
-  "/purchase-orders/approvals": "procurement",
-  "/purchase-orders/back-orders": "procurement",
-  "/purchase-orders/settings": "procurement",
-  "/goods-receipts": "procurement",
-  "/inventory": "inventory",
-  "/inventory/stock": "inventory",
-  "/inventory/ledger": "inventory",
-  "/inventory/counts": "inventory",
-  "/inventory/alerts": "inventory",
-  "/inventory-intelligence": "inventory",
-  "/manufacturing": "manufacturing",
-  "/manufacturing/runs": "manufacturing",
-  "/manufacturing/history": "manufacturing",
-  "/manufacturing/finished-goods": "manufacturing",
-  "/customers": "customers",
-  "/contacts": "customers",
-  "/customer-invoices": "customers",
-  "/integrations/xero": "accounting",
-  "/reports": "reports",
-  "/executive-boardroom": "intelligence",
-  "/cost-intelligence": "intelligence",
-  "/business-health": "intelligence",
-  "/early-warning": "intelligence",
-  "/predictive-risk": "intelligence",
-  "/root-cause": "intelligence",
-  "/decisions": "intelligence",
-  "/actions": "intelligence",
-  "/autonomous-command-centre": "intelligence",
-  "/ask-vyron": "intelligence",
-  "/execution-centre": "intelligence",
-  "/ai-cost-intelligence": "intelligence",
-  "/admin/company-setup": "dashboard",
-  "/admin/users": "dashboard",
-  "/admin/imports": "dashboard",
-  "/deployment-readiness": "dashboard",
-};
-
 function navSectionsFromConfig(): NavSection[] {
   return vyronNavSections.map((section) => ({
     id: section.id,
@@ -131,25 +69,19 @@ function navSectionsFromConfig(): NavSection[] {
   }));
 }
 
-function resolveNavItemPackageModule(href: string, sectionId: string): PackageModuleKey | null {
-  if (NAV_ITEM_PACKAGE_MAP[href]) return NAV_ITEM_PACKAGE_MAP[href];
-
-  const prefixes = Object.entries(NAV_ITEM_PACKAGE_MAP).sort((a, b) => b[0].length - a[0].length);
-  for (const [prefix, moduleKey] of prefixes) {
-    if (href === prefix || href.startsWith(`${prefix}/`)) return moduleKey;
-  }
-
-  return NAV_SECTION_PACKAGE_MAP[sectionId] || null;
-}
-
 function isNavItemPackageIncluded(packageName: string, href: string, sectionId: string): boolean {
-  const moduleKey = resolveNavItemPackageModule(href, sectionId);
-  if (!moduleKey) return true;
-  return isModuleIncluded(packageName, moduleKey);
+  return canAccessRoute(packageName, href, sectionId);
 }
 
-function blockedModuleKeyForHref(href: string, sectionId: string): PackageModuleKey | null {
-  return resolveNavItemPackageModule(href, sectionId);
+function blockedFeatureForPath(pathname: string): FeatureKey | null {
+  for (const section of navSectionsFromConfig()) {
+    for (const item of section.items) {
+      if (!isActivePath(pathname, item.href)) continue;
+      return getFeatureForRoute(item.href, section.id);
+    }
+  }
+  const direct = getFeatureForRoute(pathname);
+  return direct;
 }
 
 function filterNavItems(items: NavItem[], session: WorkspaceSession | null) {
@@ -252,17 +184,6 @@ export default function VyronCostAiShell({
       return true;
     });
 
-    if (effectiveClient?.packageName) {
-      visible = visible
-        .map((section) => ({
-          ...section,
-          items: section.items.filter((item) =>
-            isNavItemPackageIncluded(effectiveClient.packageName, item.href, section.id)
-          ),
-        }))
-        .filter((section) => section.items.length > 0);
-    }
-
     if (effectiveWorkspaceMode && workspaceSession) {
       visible = filterNavSections(visible, workspaceSession);
     }
@@ -288,19 +209,11 @@ export default function VyronCostAiShell({
     return null;
   }, [isDeveloperArea, effectiveWorkspaceMode, pathname, workspaceSession]);
 
-  const blockedModule = useMemo(() => {
+  const blockedFeature = useMemo(() => {
     if (!effectiveClient?.packageName || isDeveloperArea || pathname.startsWith("/admin")) return null;
-    for (const section of navSectionsFromConfig()) {
-      for (const item of section.items) {
-        const moduleKey = blockedModuleKeyForHref(item.href, section.id);
-        if (!moduleKey) continue;
-        if (isActivePath(pathname, item.href)) {
-          if (!isNavItemPackageIncluded(effectiveClient.packageName, item.href, section.id)) {
-            return moduleKey;
-          }
-        }
-      }
-    }
+    const feature = blockedFeatureForPath(pathname);
+    if (!feature) return null;
+    if (isPremiumLocked(effectiveClient.packageName, feature)) return feature;
     return null;
   }, [pathname, effectiveClient, isDeveloperArea]);
 
@@ -474,6 +387,28 @@ export default function VyronCostAiShell({
                   <div className="space-y-1">
                     {section.items.map((item) => {
                       const active = isActivePath(pathname, item.href);
+                      const feature = getFeatureForRoute(item.href, section.id);
+                      const locked = feature && effectiveClient?.packageName
+                        ? isPremiumLocked(effectiveClient.packageName, feature)
+                        : false;
+
+                      if (locked) {
+                        return (
+                          <div
+                            key={item.href}
+                            title={feature ? getFeatureTooltip(feature) : undefined}
+                            className="flex min-w-0 cursor-not-allowed items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-semibold text-[#94A3B8]/80 opacity-60"
+                          >
+                            <item.icon size={20} className="shrink-0 text-[#94A3B8]" />
+                            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                            <Lock size={14} className="shrink-0 text-[#94A3B8]" />
+                            <span className="shrink-0 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#64748B]">
+                              Premium
+                            </span>
+                          </div>
+                        );
+                      }
+
                       return (
                         <Link
                           key={item.href}
@@ -589,8 +524,8 @@ export default function VyronCostAiShell({
             <div className={`flex min-w-0 w-full max-w-full flex-col ${fullWidthMain ? "" : "gap-4"}`}>
               {accessDenied ? (
                 <WorkspaceAccessDenied pathname={accessDenied.pathname} permission={accessDenied.permission} />
-              ) : blockedModule && effectiveClient ? (
-                <ModuleUpgradeNotice packageName={effectiveClient.packageName} moduleKey={blockedModule} />
+              ) : blockedFeature && effectiveClient ? (
+                <ModuleUpgradeNotice packageName={effectiveClient.packageName} feature={blockedFeature} />
               ) : (
                 children
               )}

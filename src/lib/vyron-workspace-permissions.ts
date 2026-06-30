@@ -69,6 +69,13 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    label: "Procurement Requisitions",
+    permissions: [
+      { key: "procurement.requisitions.view", label: "View requisitions" },
+      { key: "procurement.requisitions.create", label: "Create requisitions" },
+    ],
+  },
+  {
     label: "Goods Receipts",
     permissions: [
       { key: "goods_receipts.view", label: "View GRNs" },
@@ -102,6 +109,25 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { key: "customers.create", label: "Create customers" },
       { key: "customers.edit", label: "Edit customers" },
       { key: "customers.delete", label: "Delete customers" },
+    ],
+  },
+  {
+    label: "Stores",
+    permissions: [
+      { key: "stores.view", label: "View stores" },
+      { key: "stores.create", label: "Create stores" },
+      { key: "stores.edit", label: "Edit stores" },
+      { key: "stores.delete", label: "Delete stores" },
+    ],
+  },
+  {
+    label: "Store Orders",
+    permissions: [
+      { key: "store_orders.view", label: "View store orders" },
+      { key: "store_orders.create", label: "Create store orders" },
+      { key: "store_orders.edit", label: "Edit store orders" },
+      { key: "store_orders.approve", label: "Approve store orders" },
+      { key: "store_orders.delete", label: "Delete store orders" },
     ],
   },
   {
@@ -163,6 +189,7 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "admin.users": true,
     "admin.imports": true,
     "purchase_orders.approve": true,
+    "store_orders.approve": true,
     "goods_receipts.approve": true,
     "inventory.counts.approve": true,
     "manufacturing.runs.complete": true,
@@ -174,6 +201,7 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "admin.users": true,
     "admin.imports": true,
     "purchase_orders.approve": true,
+    "store_orders.approve": true,
     "goods_receipts.approve": true,
     "inventory.counts.approve": true,
     "reports.export": true,
@@ -184,6 +212,9 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "suppliers.edit": true,
     "purchase_orders.create": true,
     "purchase_orders.edit": true,
+    "procurement.requisitions.create": true,
+    "store_orders.create": true,
+    "store_orders.edit": true,
     "goods_receipts.create": true,
   },
   PRODUCTION: {
@@ -205,6 +236,10 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     ...VIEW_ONLY_ACCESS,
     "customers.create": true,
     "customers.edit": true,
+    "stores.create": true,
+    "stores.edit": true,
+    "store_orders.create": true,
+    "store_orders.edit": true,
     "invoices.create": true,
     "invoices.email": true,
   },
@@ -419,6 +454,8 @@ export const NAV_PATH_PERMISSIONS: Record<string, string> = {
   "/purchase-orders/back-orders": "purchase_orders.view",
   "/purchase-orders/settings": "purchase_orders.view",
 
+  "/procurement": "procurement.requisitions.view",
+
   "/goods-receipts": "goods_receipts.view",
 
   "/inventory": "inventory.view",
@@ -427,14 +464,31 @@ export const NAV_PATH_PERMISSIONS: Record<string, string> = {
   "/inventory/counts": "inventory.view",
   "/inventory/alerts": "inventory.view",
   "/inventory-intelligence": "inventory.view",
+  "/inventory-ledger": "inventory.view",
+  "/stock-movements": "inventory.view",
 
   "/manufacturing": "manufacturing.view",
   "/manufacturing/runs": "manufacturing.view",
   "/manufacturing/history": "manufacturing.view",
   "/manufacturing/finished-goods": "manufacturing.view",
+  "/production-planning": "manufacturing.view",
+  "/production-runs": "manufacturing.view",
 
   "/customers": "customers.view",
   "/contacts": "customers.view",
+
+  "/stores": "stores.view",
+  "/store-orders": "store_orders.view",
+  "/store-orders/new": "store_orders.create",
+  "/store-orders/approvals": "store_orders.view",
+  "/store-orders/picking": "store_orders.view",
+  "/store-orders/dispatch": "store_orders.view",
+  "/store-orders/dashboard": "store_orders.view",
+  "/store-orders/product-demand": "store_orders.view",
+  "/store-orders/settings": "store_orders.view",
+  "/store-performance": "store_orders.view",
+  "/demand-forecast": "store_orders.view",
+  "/store-forecast": "store_orders.view",
 
   "/customer-invoices": "invoices.view",
 

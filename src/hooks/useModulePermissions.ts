@@ -10,7 +10,9 @@ type CrudModule =
   | "customers"
   | "boms"
   | "purchase_orders"
-  | "goods_receipts";
+  | "goods_receipts"
+  | "stores"
+  | "store_orders";
 
 export function useModulePermissions(module: CrudModule) {
   const { can, session } = useWorkspacePermissions();

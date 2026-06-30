@@ -942,6 +942,22 @@ export async function listCustomersWithHistory(supabase: SupabaseClient, company
   return (data || []) as CustomerRow[];
 }
 
+export async function getCustomerById(
+  supabase: SupabaseClient,
+  companyId: string,
+  customerId: string
+) {
+  const { data, error } = await supabase
+    .from("vyron_customers")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("id", customerId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return (data as CustomerRow | null) || null;
+}
+
 export async function createCustomer(
   supabase: SupabaseClient,
   companyId: string,

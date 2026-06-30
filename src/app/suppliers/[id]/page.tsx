@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SupplierEditPageClient from "@/components/SupplierEditPageClient";
 import { notFound } from "next/navigation";
 import SupplierAiRecommendations from "@/components/SupplierAiRecommendations";
 import SupplierProcurementStats from "@/components/SupplierProcurementStats";
@@ -32,6 +33,8 @@ export default async function SupplierDetailPage({ params }: { params: Promise<{
           {linked.map((i) => <div key={i.id} className="rounded-2xl bg-slate-50 p-4 font-bold">{i.ingredient_name} — {formatMoney(i.purchase_cost)}</div>)}
         </div>
       </section>
+
+      <SupplierEditPageClient supplier={supplier} />
     </VyronCostAiShell>
   );
 }

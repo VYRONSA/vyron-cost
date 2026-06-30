@@ -11,6 +11,18 @@ const COMPANY_SCOPED_TABLES = [
   "vyron_cost_products",
   "vyron_cost_boms",
   "vyron_cost_categories",
+  "vyron_cost_stores",
+  "vyron_cost_store_orders",
+  "vyron_cost_store_order_lines",
+  "vyron_cost_store_order_events",
+  "vyron_store_order_approval_rules",
+  "vyron_cost_store_production_runs",
+  "vyron_cost_store_production_run_lines",
+  "vyron_cost_inventory_transactions",
+  "vyron_cost_procurement_requisitions",
+  "vyron_cost_procurement_requisition_lines",
+  "vyron_cost_demand_forecasts",
+  "vyron_cost_ai_insights",
 ] as const;
 
 export type WorkspaceCompanyResolution = {

@@ -104,14 +104,17 @@ export async function getIngredients(): Promise<CostIngredient[]> {
 }
 
 export async function getIngredientById(id: string): Promise<CostIngredient | null> {
-  const { useDemo } = await workspaceScope();
+  const { useDemo, companyId } = await workspaceScope();
   if (!supabase || (useDemo && id.startsWith("demo"))) {
     return useDemo ? demoIngredients.find((i) => i.id === id) || null : null;
   }
-  const { companyId } = await workspaceScope();
-  let query = supabase.from("vyron_cost_ingredients").select("*").eq("id", id);
-  if (companyId) query = query.eq("company_id", companyId);
-  const { data, error } = await query.maybeSingle();
+  if (!companyId) return null;
+  const { data, error } = await supabase
+    .from("vyron_cost_ingredients")
+    .select("*")
+    .eq("id", id)
+    .eq("company_id", companyId)
+    .maybeSingle();
   if (error || !data) return null;
   return data as CostIngredient;
 }

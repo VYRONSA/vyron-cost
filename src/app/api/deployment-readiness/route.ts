@@ -52,6 +52,13 @@ export async function GET() {
         applied: row.status === "configured",
         detail: row.detail,
       })),
+      schemaTables: report.schemaTables.map((row) => ({
+        table: row.table,
+        label: row.label,
+        migrationFile: row.migrationFile,
+        present: row.status === "configured",
+        detail: row.detail,
+      })),
       xero: {
         oauthReady: report.xero.oauthReady,
         connected: report.xero.connected,

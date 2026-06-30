@@ -1,10 +1,10 @@
-import PurchaseOrderDashboardClient from "@/components/PurchaseOrderDashboardClient";
 import VyronCostAiShell from "@/components/VyronCostAiShell";
+import PurchaseOrdersEngineClient from "@/components/vyron-cost/procurement/PurchaseOrdersEngineClient";
 
-export default function PurchaseOrdersDashboardPage() {
+export default function PurchaseOrdersPage() {
   return (
-    <VyronCostAiShell hidePageHeader title="Purchase Orders" subtitle="Procurement control — PO, GRN and 3-way matching">
-      <PurchaseOrderDashboardClient />
+    <VyronCostAiShell hidePageHeader title="Purchase Orders" subtitle="Requisition-driven POs with inventory receiving">
+      <PurchaseOrdersEngineClient />
     </VyronCostAiShell>
   );
 }
