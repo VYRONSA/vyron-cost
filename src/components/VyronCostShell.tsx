@@ -1,5 +1,3 @@
-"use client";
-
 import VyronCostAiShell from "@/components/VyronCostAiShell";
 
 export default function VyronCostShell({
