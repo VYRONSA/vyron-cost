@@ -6,6 +6,7 @@ import {
   type ProcurementHealthScore,
 } from "@/lib/vyron-procurement-ai-engine";
 import { formatMoney } from "@/lib/vyron-cost-product-data";
+import { unstable_noStore as noStore } from "next/cache";
 
 export type { ProcurementHealthScore } from "@/lib/vyron-procurement-ai-engine";
 
@@ -278,6 +279,7 @@ export async function getProcurementHealthScore(): Promise<ProcurementHealthScor
 }
 
 export async function getProcurementExecutiveStats(): Promise<ProcurementExecutiveStats> {
+  noStore();
   const [healthScore, recommendations] = await Promise.all([
     getProcurementHealthScore(),
     getProcurementRecommendations(),

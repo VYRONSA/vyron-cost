@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
 import type { ProductIntelligenceRow } from "@/lib/vyron-product-intelligence-data";
+import { unstable_noStore as noStore } from "next/cache";
 
 export type TenantCostIntelligence = {
   companyId: string;
@@ -87,6 +88,7 @@ export async function computeProductIntelligenceFromTenant(
 }
 
 export async function getTenantCostIntelligence(companyId?: string | null): Promise<TenantCostIntelligence | null> {
+  noStore();
   const resolvedCompanyId = companyId || (await resolveApiCompanyId());
   if (!resolvedCompanyId || !isSupabaseServiceRoleConfigured()) return null;
 

@@ -16,6 +16,7 @@ import { getSupplierPriceWidgetSummary } from "@/lib/vyron-supplier-intelligence
 import { getProcurementDashboardStats } from "@/lib/vyron-procurement";
 import { getInventoryDashboardStats } from "@/lib/vyron-inventory";
 import { getManufacturingDashboardStats } from "@/lib/vyron-manufacturing";
+import { unstable_noStore as noStore } from "next/cache";
 
 export type FinanceRiskLevel = "Low" | "Medium" | "High" | "Critical";
 
@@ -333,6 +334,7 @@ export async function getFinanceLeakageCentre(companyId = VYRON_DEFAULT_TENANT_I
 }
 
 export async function getFinanceIntelligenceKpis(companyId = VYRON_DEFAULT_TENANT_ID): Promise<FinanceIntelligenceKpis> {
+  noStore();
   const supabase = getSupabaseAdmin();
   const [leakage, recoveryStats, recoverySummary, spend, commandCentre, supplierWidgets] = await Promise.all([
     getFinanceLeakageCentre(companyId),

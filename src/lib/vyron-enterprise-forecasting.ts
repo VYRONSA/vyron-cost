@@ -5,6 +5,7 @@ import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
 import { getRecoveryOpportunities } from "@/lib/vyron-cost-recovery-data";
 import { getInventoryDashboardStats } from "@/lib/vyron-inventory";
 import { getManufacturingDashboardStats } from "@/lib/vyron-manufacturing";
+import { unstable_noStore as noStore } from "next/cache";
 
 export type ForecastHorizonKey = "30" | "90" | "365";
 
@@ -31,6 +32,7 @@ function project(base: number, days: number, monthlyGrowth = 0.02, inflationDrag
 }
 
 export async function getEnterpriseForecast(companyId = VYRON_DEFAULT_TENANT_ID): Promise<EnterpriseForecastPayload> {
+  noStore();
   const supabase = getSupabaseAdmin();
   const [products, ingredients, suppliers, opportunities] = await Promise.all([
     getProducts(120),

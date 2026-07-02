@@ -12,6 +12,7 @@ import { getLeakageFindings, getInvoiceRiskFindings } from "@/lib/vyron-leakage-
 import { getFraudAlerts, getRiskCentre } from "@/lib/vyron-enterprise-platform";
 import { runEnterpriseScenario, type ScenarioImpact } from "@/lib/vyron-enterprise-scenarios";
 import { getIngredients } from "@/lib/vyron-cost-data";
+import { unstable_noStore as noStore } from "next/cache";
 
 export type IntelligenceScores = {
   financialHealth: number;
@@ -397,6 +398,7 @@ function buildIndustryBenchmarks(
 export async function getAiFinancialIntelligence(
   companyId = VYRON_DEFAULT_TENANT_ID
 ): Promise<AiFinancialIntelligencePayload> {
+  noStore();
   const supabase = getSupabaseAdmin();
 
   const [

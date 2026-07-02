@@ -9,6 +9,7 @@ import { getSupplierPriceWidgetSummary } from "@/lib/vyron-supplier-intelligence
 import { getComplianceDashboard, getRiskCentre, auditorGlobalSearch } from "@/lib/vyron-enterprise-platform";
 import { getProcurementExecutiveStats } from "@/lib/vyron-procurement-ai-data";
 import { getGlobalPermissionMatrix } from "@/lib/vyron-enterprise-global-permissions";
+import { unstable_noStore as noStore } from "next/cache";
 
 export type ExplainableInsight = {
   id: string;
@@ -556,6 +557,7 @@ function buildEnterpriseAi(input: {
 }
 
 export async function getEnterprisePlatformPayload(companyId = VYRON_DEFAULT_TENANT_ID): Promise<EnterprisePlatformPayload> {
+  noStore();
   const supabase = getSupabaseAdmin();
   const units = await loadOrgUnits(companyId);
   const unitCount = units.filter((u) => ["subsidiary", "company", "branch"].includes(u.unitType)).length;
