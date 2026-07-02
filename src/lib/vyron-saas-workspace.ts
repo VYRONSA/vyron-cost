@@ -284,7 +284,10 @@ async function findAuthUserIdByEmail(supabase: SupabaseClient, email: string) {
   const perPage = 200;
   while (page <= 10) {
     const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
-    if (error) throw new Error(error.message);
+    if (error) {
+      throw error;
+    }
+
     const match = data.users.find((user) => user.email?.toLowerCase() === normalized);
     if (match?.id) return match.id;
     if (data.users.length < perPage) break;
@@ -299,6 +302,7 @@ async function createAuthUser(
 ) {
   const email = input.email.trim().toLowerCase();
   if (input.method === "invite") {
+    console.log("Creating auth user...");
     const { data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
       redirectTo: `${appUrl()}/login`,
       data: {
@@ -307,8 +311,12 @@ async function createAuthUser(
         mobile: input.mobile,
       },
     });
-    if (error) throw new Error(error.message);
-    if (!data.user?.id) throw new Error("Invite failed — no user returned.");
+    if (error) {
+      throw error;
+    }
+    if (!data.user?.id) {
+      throw new Error("Invite failed — no user returned.");
+    }
     return { userId: data.user.id, status: "Invited" as MemberStatus };
   }
 
@@ -316,6 +324,7 @@ async function createAuthUser(
     throw new Error("Password must be at least 8 characters.");
   }
 
+  console.log("Creating auth user...");
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password: input.password,
@@ -333,8 +342,9 @@ async function createAuthUser(
   const message = error?.message || "User creation failed.";
   if (message.toLowerCase().includes("already") || message.toLowerCase().includes("registered")) {
     const existingId = await findAuthUserIdByEmail(supabase, email);
-    if (!existingId) throw new Error(message);
-    const { error: updateError } = await supabase.auth.admin.updateUserById(existingId, {
+    if (!existingId) throw error ?? new Error(message);
+
+    const updated = await supabase.auth.admin.updateUserById(existingId, {
       password: input.password,
       email_confirm: true,
       user_metadata: {
@@ -343,11 +353,14 @@ async function createAuthUser(
         mobile: input.mobile,
       },
     });
-    if (updateError) throw new Error(updateError.message);
+
+    if (updated.error) {
+      throw updated.error;
+    }
     return { userId: existingId, status: "Active" as MemberStatus };
   }
 
-  throw new Error(message);
+  throw error ?? new Error(message);
 }
 
 async function upsertOwnerProfile(
@@ -534,6 +547,7 @@ async function provisionWorkspaceOwner(
   ownerMember: WorkspaceMember | null;
 }> {
   const adminEmail = input.admin.email.trim().toLowerCase();
+  console.log("Creating auth user...");
   const auth = await createAuthUser(supabase, {
     email: adminEmail,
     firstName: input.admin.firstName.trim(),
@@ -552,6 +566,7 @@ async function provisionWorkspaceOwner(
     status: auth.status,
   });
 
+  console.log("Creating workspace membership...");
   const ownerMember = await upsertOwnerMembership(supabase, {
     workspaceId: input.workspaceId,
     userId: auth.userId,
@@ -628,6 +643,7 @@ export async function createClientWorkspace(input: CreateClientInput): Promise<{
   const ownerBase = buildOwnerDetails(input, "pending_activation");
 
   if (supabase) {
+    console.log("Creating company...");
     const { data: company, error: companyError } = await supabase
       .from("vyron_cost_companies")
       .insert({
@@ -661,6 +677,7 @@ export async function createClientWorkspace(input: CreateClientInput): Promise<{
       owner_login_status: ownerDetailsPending.loginStatus,
     };
 
+    console.log("Creating workspace...");
     let workspaceResult = await supabase.from("vyron_workspaces").insert(workspacePayload).select("*").single();
     if (workspaceResult.error?.message?.includes("owner_")) {
       const { owner_first_name, owner_surname, owner_email, owner_mobile, owner_login_method, owner_login_status, ...minimal } =
@@ -680,7 +697,6 @@ export async function createClientWorkspace(input: CreateClientInput): Promise<{
     let ownerLoginStatus: OwnerLoginStatus = "pending_activation";
     let authProvisioned = false;
     let ownerMember: WorkspaceMember | null = null;
-    let authError: string | null = null;
 
     try {
       const provisioned = await provisionWorkspaceOwner(supabase, {
@@ -730,10 +746,9 @@ export async function createClientWorkspace(input: CreateClientInput): Promise<{
         authProvisioned,
       };
     } catch (error) {
-      authError = error instanceof Error ? error.message : "Auth provisioning failed.";
       await supabase.from("vyron_workspaces").delete().eq("id", workspace.id);
       await supabase.from("vyron_cost_companies").delete().eq("id", company.id);
-      throw new Error(`Owner login setup failed: ${authError}`);
+      throw error;
     }
   }
 

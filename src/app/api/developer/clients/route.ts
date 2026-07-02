@@ -4,28 +4,53 @@ import { createClientWorkspace, listClientWorkspaces, type CreateClientInput } f
 export const runtime = "nodejs";
 
 function serializeServerError(error: unknown) {
+  const extractOrigin = (stack: string | undefined | null) => {
+    if (!stack) return null;
+    const lines = stack.split("\n").map((line) => line.trim());
+    for (const line of lines) {
+      const match = line.match(/\(([^)]+):(\d+):(\d+)\)$/) || line.match(/at ([^\s]+):(\d+):(\d+)$/);
+      if (match) {
+        return {
+          file: match[1],
+          line: Number(match[2]),
+          column: Number(match[3]),
+        };
+      }
+    }
+    return null;
+  };
+
   if (error instanceof Error) {
     const e = error as Error & { step?: string; cause?: unknown };
+    const origin = extractOrigin(e.stack);
     return {
       step: e.step || "unknown",
+      name: e.name || "Error",
       message: e.message,
       cause:
         e.cause instanceof Error
-          ? e.cause.message
+          ? {
+              name: e.cause.name,
+              message: e.cause.message,
+              stack: e.cause.stack || null,
+            }
           : typeof e.cause === "string"
             ? e.cause
             : e.cause
-              ? JSON.stringify(e.cause)
+              ? e.cause
               : null,
       stack: e.stack || null,
+      origin,
     };
   }
 
   return {
     step: "unknown",
+    name: typeof error,
     message: typeof error === "string" ? error : "Client creation failed.",
     cause: null,
     stack: null,
+    origin: null,
   };
 }
 
@@ -77,9 +102,11 @@ export async function POST(request: NextRequest) {
       {
         ok: false,
         step: details.step,
+        name: details.name,
         message: details.message,
         cause: details.cause,
         stack: details.stack,
+        origin: details.origin,
         error: rawError,
       },
       { status: 400 }
