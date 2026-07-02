@@ -8,6 +8,8 @@ export type ScanWorkflow =
   | "inventory_count"
   | "inventory_lookup"
   | "inventory_transfer"
+  | "sales"
+  | "products"
   | "general";
 
 export type ScanContext = {

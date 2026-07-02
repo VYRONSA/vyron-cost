@@ -3,6 +3,8 @@ import { useInventoryAlerts, useOpsTasks, useReceivingQueue } from "@/hooks/useR
 import { useManufacturingStats, useProductionOpsTasks, useProductionPlanningStats, useProductionQueue } from "@/hooks/useProduction";
 import { useDispatchQueue, usePickingQueue, useStoreOpsTasks, useStoreOrderStats } from "@/hooks/useStoreOrders";
 import { useInventoryLedger, useInventoryOpsTasks, useInventoryStats, useLowStockAlerts } from "@/hooks/useInventory";
+import { useSalesInvoices } from "@/hooks/useSales";
+import { useStockCountSessions } from "@/hooks/useStockCounts";
 import { useCostAiInsights, useExecutionActions } from "@/hooks/useSupervisorApi";
 import { mergeOperationalActivity } from "@/platform/activity";
 import { listEquipmentCards } from "@/platform/equipment";
@@ -99,6 +101,9 @@ export function useSupervisorCommandCentre() {
   const productionTasks = useProductionOpsTasks(refresh);
   const storeTasks = useStoreOpsTasks(refresh);
   const inventoryTasks = useInventoryOpsTasks(refresh);
+  const stockCounts = useStockCountSessions();
+  const salesDrafts = useSalesInvoices({ status: "Draft" });
+  const salesOutstanding = useSalesInvoices({ status: "All" });
   const aiInsights = useCostAiInsights();
   const executionActions = useExecutionActions();
 
@@ -107,6 +112,9 @@ export function useSupervisorCommandCentre() {
     production.isLoading ||
     storeStats.isLoading ||
     inventoryStats.isLoading ||
+    stockCounts.isLoading ||
+    salesDrafts.isLoading ||
+    salesOutstanding.isLoading ||
     aiInsights.isLoading;
 
   const refetchAll = () => {
@@ -125,6 +133,9 @@ export function useSupervisorCommandCentre() {
     void productionTasks.refetch();
     void storeTasks.refetch();
     void inventoryTasks.refetch();
+    void stockCounts.refetch();
+    void salesDrafts.refetch();
+    void salesOutstanding.refetch();
     void aiInsights.refetch();
     void executionActions.refetch();
   };
@@ -173,6 +184,18 @@ export function useSupervisorCommandCentre() {
 
   const scanStats = useMemo(() => scannerManager.getDashboardStats(), [inventoryLedger.data, receiving.data]);
   const syncStats = useMemo(() => syncManager.getMetrics(), [inventoryLedger.data, receiving.data]);
+  const countsAwaitingApproval = useMemo(
+    () => (stockCounts.data ?? []).filter((row) => row.status === "Submitted" || row.status === "Recount Requested").length,
+    [stockCounts.data]
+  );
+  const unreadSalesOrders = useMemo(() => (salesDrafts.data ?? []).length, [salesDrafts.data]);
+  const outstandingInvoices = useMemo(
+    () =>
+      (salesOutstanding.data ?? [])
+        .filter((row) => !["Paid", "Cancelled"].includes(row.status))
+        .reduce((sum, row) => sum + row.sales_value, 0),
+    [salesOutstanding.data]
+  );
 
   const kpis: SupervisorKpi[] = useMemo(
     () => [
@@ -285,6 +308,33 @@ export function useSupervisorCommandCentre() {
         loading: inventoryLedger.isLoading,
       },
       {
+        id: "counts-awaiting",
+        title: "Counts Awaiting Approval",
+        subtitle: "Submitted count sessions",
+        value: countsAwaitingApproval,
+        accent: "amber",
+        route: "/inventory/count",
+        loading: stockCounts.isLoading,
+      },
+      {
+        id: "unread-sales-orders",
+        title: "Unread Sales Orders",
+        subtitle: "Draft sales orders needing action",
+        value: unreadSalesOrders,
+        accent: "sky",
+        route: "/sales",
+        loading: salesDrafts.isLoading,
+      },
+      {
+        id: "outstanding-invoices",
+        title: "Outstanding Invoices",
+        subtitle: "Unpaid or unsent invoices",
+        value: `R ${Math.round(outstandingInvoices)}`,
+        accent: "rose",
+        route: "/sales",
+        loading: salesOutstanding.isLoading,
+      },
+      {
         id: "production-efficiency",
         title: "Production Efficiency",
         subtitle: "Manufacturing efficiency",
@@ -374,6 +424,15 @@ export function useSupervisorCommandCentre() {
         route: "/sync",
         loading: false,
       },
+      {
+        id: "sync-health",
+        title: "Synchronization Health",
+        subtitle: "Completed vs pending syncs",
+        value: `${syncStats.completedToday} completed / ${syncStats.pendingSyncs} pending`,
+        accent: "violet",
+        route: "/sync",
+        loading: false,
+      },
     ],
     [
       todaysReceipts,
@@ -387,6 +446,9 @@ export function useSupervisorCommandCentre() {
       inventoryAlerts.data,
       criticalStock,
       stockCountsToday,
+      countsAwaitingApproval,
+      unreadSalesOrders,
+      outstandingInvoices,
       mfg,
       pickingEfficiency,
       dispatchEfficiency,
@@ -401,7 +463,10 @@ export function useSupervisorCommandCentre() {
       inventoryStats.isLoading,
       lowStockAlerts.isLoading,
       inventoryLedger.isLoading,
+      stockCounts.isLoading,
       manufacturingStats.isLoading,
+      salesDrafts.isLoading,
+      salesOutstanding.isLoading,
     ]
   );
 

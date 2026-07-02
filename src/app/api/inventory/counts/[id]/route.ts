@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   approveStockCount,
   getStockCountForCompany,
+  pauseStockCount,
   postStockCount,
+  rejectStockCount,
+  requestStockCountRecount,
+  resumeStockCount,
   submitStockCount,
   updateStockCountLine,
 } from "@/lib/vyron-inventory";
@@ -82,7 +86,41 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
     if (body.action === "approve") {
       await requireWorkspacePermission("inventory.counts.approve");
-      await approveStockCount(supabase, companyId, id, String(body.approvedBy || "supervisor"));
+      await approveStockCount(supabase, companyId, id, String(body.approvedBy || "supervisor"), {
+        overrideNote: body.overrideNote ? String(body.overrideNote) : undefined,
+      });
+      return NextResponse.json({ ok: true });
+    }
+    if (body.action === "pause") {
+      await requireWorkspacePermission("inventory.counts.create");
+      await pauseStockCount(supabase, companyId, id, String(body.actor || "operator"));
+      return NextResponse.json({ ok: true });
+    }
+    if (body.action === "resume") {
+      await requireWorkspacePermission("inventory.counts.create");
+      await resumeStockCount(supabase, companyId, id, String(body.actor || "operator"));
+      return NextResponse.json({ ok: true });
+    }
+    if (body.action === "reject") {
+      await requireWorkspacePermission("inventory.counts.approve");
+      await rejectStockCount(
+        supabase,
+        companyId,
+        id,
+        String(body.actor || body.approvedBy || "supervisor"),
+        body.reason ? String(body.reason) : undefined
+      );
+      return NextResponse.json({ ok: true });
+    }
+    if (body.action === "request_recount") {
+      await requireWorkspacePermission("inventory.counts.approve");
+      await requestStockCountRecount(
+        supabase,
+        companyId,
+        id,
+        String(body.actor || body.approvedBy || "supervisor"),
+        body.reason ? String(body.reason) : undefined
+      );
       return NextResponse.json({ ok: true });
     }
     if (body.action === "post") {

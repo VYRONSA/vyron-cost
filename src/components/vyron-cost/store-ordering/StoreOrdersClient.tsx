@@ -17,6 +17,16 @@ function formatMoney(value: number) {
   return `R${Number(value || 0).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+type QueueStatus = "New" | "Processing" | "Invoiced" | "Completed" | "Cancelled";
+
+function queueStatusFor(orderStatus: string): QueueStatus {
+  if (orderStatus === "Cancelled") return "Cancelled";
+  if (orderStatus === "Delivered") return "Completed";
+  if (orderStatus === "Dispatched") return "Invoiced";
+  if (["Approved", "Picking", "ReadyToDispatch"].includes(orderStatus)) return "Processing";
+  return "New";
+}
+
 export default function StoreOrdersClient() {
   const { canCreate } = useModulePermissions("store_orders");
   const [orders, setOrders] = useState<StoreOrderRow[]>([]);
@@ -63,6 +73,22 @@ export default function StoreOrdersClient() {
     );
   }, [orders, search]);
 
+  const queueSummary = useMemo(() => {
+    const summary: Record<QueueStatus, number> = {
+      New: 0,
+      Processing: 0,
+      Invoiced: 0,
+      Completed: 0,
+      Cancelled: 0,
+    };
+    for (const order of orders) {
+      summary[queueStatusFor(order.status)] += 1;
+    }
+    return summary;
+  }, [orders]);
+
+  const unreadCount = queueSummary.New;
+
   return (
     <VyronPremiumPageShell
       config={{
@@ -88,6 +114,20 @@ export default function StoreOrdersClient() {
       }
     >
       <div className="space-y-6">
+        <section className={VYRON_MASTER.moduleDataSection}>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-black text-rose-700">
+              Sales Orders Queue
+              <span className="rounded-full bg-rose-600 px-2.5 py-0.5 text-xs font-black text-white">{unreadCount}</span>
+            </div>
+            {(["New", "Processing", "Invoiced", "Completed", "Cancelled"] as QueueStatus[]).map((status) => (
+              <div key={status} className="rounded-full border border-[#E2E8F0] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#334155]">
+                {status}: {queueSummary[status]}
+              </div>
+            ))}
+          </div>
+        </section>
+
         {error ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
             {error}
@@ -174,7 +214,7 @@ export default function StoreOrdersClient() {
                         <span
                           className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${storeOrderStatusClass(order.status)}`}
                         >
-                          {renderStoreOrderStatus(order.status)}
+                          {queueStatusFor(order.status)}
                         </span>
                       </td>
                       <td className="px-4 py-3">

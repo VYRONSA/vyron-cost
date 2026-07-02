@@ -16,6 +16,7 @@ export default function InventoryLayout() {
       <Stack.Screen name="lookup/[id]" options={{ title: "Stock Detail" }} />
       <Stack.Screen name="count/index" options={{ title: "Stock Count" }} />
       <Stack.Screen name="count/[id]" options={{ title: "Count Item" }} />
+      <Stack.Screen name="count/review/[id]" options={{ title: "Count Approval" }} />
       <Stack.Screen name="count/success" options={{ title: "Count Saved", headerShown: false }} />
       <Stack.Screen name="adjustment/index" options={{ title: "Adjustment" }} />
       <Stack.Screen name="adjustment/summary" options={{ title: "Confirm Adjustment" }} />

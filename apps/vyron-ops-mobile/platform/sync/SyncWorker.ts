@@ -6,6 +6,12 @@ import {
   postStockCount,
   postStockTransfer,
 } from "@/services/inventory/inventory-api";
+import {
+  createStockCountSession,
+  stockCountAction,
+  updateStockCountLine,
+} from "@/services/inventory/stock-count-api";
+import { createSalesDraftInvoice, updateSalesInvoiceStatus } from "@/services/sales/sales-api";
 import { validateScanOnServer } from "@/services/scanner/scan-api";
 import type { SyncQueueItem } from "@/types/sync";
 import { ApiClientError } from "@/services/api/types";
@@ -35,11 +41,28 @@ export async function executeSyncQueueItem(item: SyncQueueItem) {
         actor: payload.actor as string | undefined,
       });
     case "inventory_count":
+      if (item.action === "count_session_create") {
+        return createStockCountSession(payload as never);
+      }
+      if (item.action === "count_session_update_line") {
+        return updateStockCountLine(payload as never);
+      }
+      if (item.action.startsWith("count_session_")) {
+        return stockCountAction(payload as never);
+      }
       return postStockCount(payload.count as never);
     case "inventory_adjustment":
       return postInventoryAdjustment(payload.adjustment as never);
     case "inventory_transfer":
       return postStockTransfer(payload.transfer as never);
+    case "sales":
+      if (item.action === "create_invoice_draft") {
+        return createSalesDraftInvoice(payload.draft as never);
+      }
+      if (item.action === "update_invoice_status") {
+        return updateSalesInvoiceStatus(String(payload.invoiceId), payload.action as never);
+      }
+      break;
     case "barcode_validation":
       return validateScanOnServer({
         barcode: String(payload.barcode),

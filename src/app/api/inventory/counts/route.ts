@@ -75,7 +75,17 @@ export async function POST(request: NextRequest) {
       items = await listStockItems(supabase, companyId, { entityType: entityTypeForCount(countType) });
     }
 
-    const result = await createStockCount(supabase, companyId, countType, String(body.createdBy || "supervisor"));
+    const result = await createStockCount(
+      supabase,
+      companyId,
+      countType,
+      String(body.createdBy || "supervisor"),
+      {
+        notes: body.notes ? String(body.notes) : undefined,
+        warehouseName: body.warehouseName ? String(body.warehouseName) : undefined,
+        locationName: body.locationName ? String(body.locationName) : undefined,
+      }
+    );
     return NextResponse.json({ ok: true, ...result, stockItemsFound: items.length });
   } catch (error) {
     return workspaceAccessErrorResponse(error, "Create failed.");

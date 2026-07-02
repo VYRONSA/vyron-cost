@@ -84,3 +84,48 @@ export type CountLineDraft = {
   reason: string;
   skipped: boolean;
 };
+
+export type StockCountStatus =
+  | "Draft"
+  | "In Progress"
+  | "Paused"
+  | "Submitted"
+  | "Approved"
+  | "Rejected"
+  | "Recount Requested"
+  | "Posted";
+
+export type StockCountSession = {
+  id: string;
+  count_number: string;
+  count_type: string;
+  status: StockCountStatus;
+  notes?: string | null;
+  variance_value_total: number;
+  created_by?: string | null;
+  approved_by?: string | null;
+  submitted_at?: string | null;
+  approved_at?: string | null;
+  posted_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type StockCountLine = {
+  id: string;
+  stock_count_id: string;
+  stock_item_id: string;
+  system_qty: number;
+  counted_qty: number;
+  variance_qty: number;
+  variance_pct: number;
+  variance_value: number;
+  variance_class: string;
+  unit_cost: number;
+  approved: boolean;
+  vyron_cost_stock_items?: {
+    item_code?: string;
+    description?: string;
+    unit?: string;
+  };
+};

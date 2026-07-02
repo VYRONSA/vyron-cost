@@ -105,7 +105,7 @@ export async function fetchOpenStockCounts() {
       "/api/inventory/counts"
     );
     return (response.counts || []).filter((count) =>
-      ["Draft", "In Progress", "Submitted"].includes(count.status)
+      ["Draft", "In Progress", "Paused", "Submitted", "Recount Requested"].includes(count.status)
     );
   } catch {
     return [];

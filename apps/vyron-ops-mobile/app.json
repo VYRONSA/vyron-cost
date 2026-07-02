@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "VYRON OPS",
-    "slug": "vyron-ops-mobile",
+    "slug": "vyronsoft",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
@@ -13,6 +13,11 @@
     },
     "android": {
       "package": "com.vyron.ops",
+      "permissions": [
+        "CAMERA",
+        "POST_NOTIFICATIONS",
+        "VIBRATE"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#070D18",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -27,6 +32,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-dev-client",
       "expo-secure-store",
       [
         "expo-splash-screen",
@@ -48,7 +54,12 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiBaseUrl": "http://localhost:3007"
-    }
+      "apiBaseUrl": "http://localhost:3007",
+      "router": {},
+      "eas": {
+        "projectId": "5ef7d502-9b1d-49e2-8f24-81f9884c106c"
+      }
+    },
+    "owner": "vyronsoft.co.za"
   }
 }

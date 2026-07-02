@@ -56,3 +56,4 @@ export * from "./inventory";
 export * from "./supervisor";
 export * from "./scanner";
 export * from "./sync";
+export * from "./sales";

@@ -6,6 +6,7 @@ import { useInventoryAlerts, useReceivingQueue } from "@/hooks/useReceiving";
 import { useProductionQueue } from "@/hooks/useProduction";
 import { usePickingQueue, useStoreOrderStats } from "@/hooks/useStoreOrders";
 import { useInventoryStats, useLowStockAlerts } from "@/hooks/useInventory";
+import { useSalesInvoices } from "@/hooks/useSales";
 import { useTenant } from "@/providers";
 
 function countTodaysReceipts(orders: Array<{ status: string; updated_at?: string | null }>) {
@@ -33,6 +34,7 @@ export function OperatorHomeDashboard() {
   const storeStats = useStoreOrderStats();
   const pickingQueue = usePickingQueue();
   const inventoryStats = useInventoryStats();
+  const salesInvoices = useSalesInvoices({ status: "Draft" });
   const lowStockAlerts = useLowStockAlerts();
   const inventoryAlerts = useInventoryAlerts();
   const columns = width >= 900 ? 2 : 1;
@@ -91,6 +93,14 @@ export function OperatorHomeDashboard() {
       value: store?.readyForDispatch ?? "—",
       loading: storeStats.isLoading,
       route: "/dispatch",
+    },
+    {
+      title: "Draft Invoices",
+      subtitle: "Pending sales invoices",
+      accent: "sky" as const,
+      value: salesInvoices.isLoading ? "…" : salesInvoices.data?.length ?? "—",
+      loading: salesInvoices.isLoading,
+      route: "/sales",
     },
     {
       title: "Inventory Alerts",

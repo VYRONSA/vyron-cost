@@ -15,7 +15,15 @@ export async function POST(request: Request) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
 
   try {
-    await requireWorkspacePermission("inventory.view");
+    try {
+      await requireWorkspacePermission("inventory.view");
+    } catch {
+      try {
+        await requireWorkspacePermission("invoices.view");
+      } catch {
+        await requireWorkspacePermission("products.view");
+      }
+    }
     const companyId = await resolveAndAlignApiCompanyId();
     if (!companyId) {
       return NextResponse.json({ ok: false, error: "No active company." }, { status: 400 });

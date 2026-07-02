@@ -80,6 +80,12 @@ export default function TasksScreen() {
         <View className="flex-row flex-wrap items-center justify-between gap-3">
           <Text className="text-2xl font-bold text-vyron-text">Operational tasks</Text>
           <View className="flex-row flex-wrap gap-2">
+            <VyronButton
+              label="Sales"
+              variant="secondary"
+              className="min-h-[48px] px-4"
+              onPress={() => router.push("/sales" as Href)}
+            />
             <VyronButton label="Inventory" variant="secondary" className="min-h-[48px] px-4" onPress={() => router.push("/inventory")} />
             <VyronButton label="Picking" variant="secondary" className="min-h-[48px] px-4" onPress={() => router.push("/picking")} />
             <VyronButton label="Dispatch" variant="secondary" className="min-h-[48px] px-4" onPress={() => router.push("/dispatch")} />

@@ -254,7 +254,6 @@ async function insertRecipeLines(
       unit: line.unit || "kg",
       unit_cost: Number(line.unit_cost || 0),
       wastage_percent: Number(line.wastage_percent || 0),
-      line_cost: round2(calcLineCost(lineCostInput(line))),
       sort_order: line.sort_order ?? index,
     }));
 
@@ -560,8 +559,6 @@ export async function updateRecipeLine(
     unit_cost: Number(patch.unit_cost ?? existing.unit_cost ?? 0),
     wastage_percent: Number(patch.wastage_percent ?? existing.wastage_percent ?? 0),
   };
-  patch.line_cost = round2(calcLineCost(lineCostInput(merged)));
-
   const { data, error } = await supabase
     .from("vyron_cost_bom_lines")
     .update(patch)

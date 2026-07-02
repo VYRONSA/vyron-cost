@@ -30,6 +30,7 @@ export default function RootLayout() {
         <Stack.Screen name="picking" />
         <Stack.Screen name="dispatch" />
         <Stack.Screen name="inventory" />
+        <Stack.Screen name="sales" />
         <Stack.Screen name="sync" />
       </Stack>
     </AppProviders>

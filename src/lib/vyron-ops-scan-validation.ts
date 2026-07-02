@@ -12,6 +12,8 @@ export const OPS_SCAN_WORKFLOWS = [
   "inventory_count",
   "inventory_lookup",
   "inventory_transfer",
+  "sales",
+  "products",
 ] as const;
 
 export type OpsScanWorkflow = (typeof OPS_SCAN_WORKFLOWS)[number];
@@ -153,6 +155,45 @@ export async function validateOpsScan(
         input.workflow === "inventory_count"
           ? `/inventory/count/${matched.stockItemId}`
           : `/inventory/lookup/${matched.stockItemId}`,
+    };
+  }
+
+  if (input.workflow === "sales") {
+    if (context.stockItemId && context.stockItemId !== matched.stockItemId) {
+      return {
+        valid: false,
+        status: "wrong_item",
+        barcode,
+        workflow: input.workflow,
+        matched,
+        expected: { label: context.expectedLabel || "Selected sales product" },
+        actual: { label: matched.description, itemCode: matched.itemCode },
+        recommendation: "Scanned item does not match selected sales line.",
+        action: "Scan correct sales product",
+      };
+    }
+    return {
+      valid: true,
+      status: "success",
+      barcode,
+      workflow: input.workflow,
+      matched,
+      recommendation: "Sales item verified.",
+      action: "Add line or increase quantity",
+      routeHint: "/sales/new",
+    };
+  }
+
+  if (input.workflow === "products") {
+    return {
+      valid: true,
+      status: "success",
+      barcode,
+      workflow: input.workflow,
+      matched,
+      recommendation: "Product verified for lookup.",
+      action: "Open product intelligence",
+      routeHint: "/sales/product-intelligence",
     };
   }
 

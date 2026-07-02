@@ -1096,7 +1096,12 @@ export async function createStockCount(
   supabase: SupabaseClient,
   companyId: string,
   countType: "ingredients" | "packaging" | "finished_goods",
-  createdBy = "user"
+  createdBy = "user",
+  metadata?: {
+    notes?: string;
+    warehouseName?: string;
+    locationName?: string;
+  }
 ) {
   const entityMap = { ingredients: "ingredient", packaging: "packaging", finished_goods: "finished_goods" } as const;
   const entityType = entityMap[countType];
@@ -1122,6 +1127,9 @@ export async function createStockCount(
       count_type: countType,
       status: "Draft",
       created_by: createdBy,
+      notes: [metadata?.notes, metadata?.warehouseName ? `Warehouse: ${metadata.warehouseName}` : null, metadata?.locationName ? `Location: ${metadata.locationName}` : null]
+        .filter(Boolean)
+        .join(" | ") || null,
     })
     .select("*")
     .single();
@@ -1215,15 +1223,86 @@ export async function submitStockCount(supabase: SupabaseClient, companyId: stri
     .eq("company_id", companyId);
 }
 
-export async function approveStockCount(supabase: SupabaseClient, companyId: string, countId: string, approvedBy: string) {
+export async function approveStockCount(
+  supabase: SupabaseClient,
+  companyId: string,
+  countId: string,
+  approvedBy: string,
+  options?: { overrideNote?: string }
+) {
   await getStockCountForCompany(supabase, companyId, countId);
+  const now = new Date().toISOString();
+  const note = options?.overrideNote?.trim();
   await supabase
     .from("vyron_cost_stock_counts")
     .update({
       status: "Approved",
       approved_by: approvedBy,
-      approved_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      approved_at: now,
+      updated_at: now,
+      notes: note ? `Supervisor Override: ${note}` : undefined,
+    })
+    .eq("id", countId)
+    .eq("company_id", companyId);
+}
+
+export async function pauseStockCount(supabase: SupabaseClient, companyId: string, countId: string, actor: string) {
+  await getStockCountForCompany(supabase, companyId, countId);
+  const now = new Date().toISOString();
+  await supabase
+    .from("vyron_cost_stock_counts")
+    .update({ status: "Paused", updated_at: now, notes: `Paused by ${actor} at ${now}` })
+    .eq("id", countId)
+    .eq("company_id", companyId);
+}
+
+export async function resumeStockCount(supabase: SupabaseClient, companyId: string, countId: string, actor: string) {
+  await getStockCountForCompany(supabase, companyId, countId);
+  const now = new Date().toISOString();
+  await supabase
+    .from("vyron_cost_stock_counts")
+    .update({ status: "In Progress", updated_at: now, notes: `Resumed by ${actor} at ${now}` })
+    .eq("id", countId)
+    .eq("company_id", companyId);
+}
+
+export async function rejectStockCount(
+  supabase: SupabaseClient,
+  companyId: string,
+  countId: string,
+  actor: string,
+  reason?: string
+) {
+  await getStockCountForCompany(supabase, companyId, countId);
+  const now = new Date().toISOString();
+  await supabase
+    .from("vyron_cost_stock_counts")
+    .update({
+      status: "Rejected",
+      approved_by: actor,
+      approved_at: now,
+      updated_at: now,
+      notes: reason?.trim() ? `Rejected: ${reason.trim()}` : "Rejected",
+    })
+    .eq("id", countId)
+    .eq("company_id", companyId);
+}
+
+export async function requestStockCountRecount(
+  supabase: SupabaseClient,
+  companyId: string,
+  countId: string,
+  actor: string,
+  reason?: string
+) {
+  await getStockCountForCompany(supabase, companyId, countId);
+  const now = new Date().toISOString();
+  await supabase
+    .from("vyron_cost_stock_counts")
+    .update({
+      status: "Recount Requested",
+      updated_at: now,
+      notes: reason?.trim() ? `Recount requested by ${actor}: ${reason.trim()}` : `Recount requested by ${actor}`,
     })
     .eq("id", countId)
     .eq("company_id", companyId);
@@ -1231,6 +1310,9 @@ export async function approveStockCount(supabase: SupabaseClient, companyId: str
 
 export async function postStockCount(supabase: SupabaseClient, companyId: string, countId: string, actor = "supervisor") {
   const header = await getStockCountForCompany(supabase, companyId, countId);
+  if (String(header.status || "") !== "Approved") {
+    throw new Error("Stock count must be approved before posting.");
+  }
 
   const { data: lines } = await supabase
     .from("vyron_cost_stock_count_lines")

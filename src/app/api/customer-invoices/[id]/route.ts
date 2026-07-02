@@ -51,7 +51,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       const invoice = await updateCustomerInvoiceStatus(supabase, id, "Approved", companyId);
       return NextResponse.json({ ok: true, invoice });
     }
-    if (body.action === "send") {
+    if (body.action === "send" || body.action === "email") {
       await requireWorkspacePermission("invoices.email");
       const invoice = await updateCustomerInvoiceStatus(supabase, id, "Sent", companyId);
       return NextResponse.json({ ok: true, invoice });
@@ -70,6 +70,32 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       await requireWorkspacePermission("invoices.create");
       const invoice = await updateCustomerInvoiceStatus(supabase, id, body.status, companyId);
       return NextResponse.json({ ok: true, invoice });
+    }
+    if (body.action === "pdf" || body.action === "whatsapp" || body.action === "signature") {
+      await requireWorkspacePermission("invoices.create");
+      const loaded = await getCustomerInvoice(supabase, id, companyId);
+      if (!loaded?.invoice) return NextResponse.json({ ok: false, error: "Not found." }, { status: 404 });
+
+      const now = new Date().toISOString();
+      const currentNotes = String(loaded.invoice.notes || "").trim();
+      let marker = "";
+      if (body.action === "pdf") marker = `[PDF generated ${now}]`;
+      if (body.action === "whatsapp") marker = `[WhatsApp sent ${now}]`;
+      if (body.action === "signature") {
+        const signer = String(body.signer || "operator");
+        marker = `[Signature captured by ${signer} at ${now}]`;
+      }
+
+      const mergedNotes = [currentNotes, marker].filter(Boolean).join(" \n");
+      const { data, error } = await supabase
+        .from("vyron_customer_invoices")
+        .update({ notes: mergedNotes, updated_at: now })
+        .eq("id", id)
+        .eq("company_id", companyId)
+        .select("*")
+        .single();
+      if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+      return NextResponse.json({ ok: true, invoice: data });
     }
     return NextResponse.json({ ok: false, error: "Unknown action." }, { status: 400 });
   } catch (error) {

@@ -22,6 +22,14 @@ export const queryKeys = {
   lowStockAlerts: ["low-stock-alerts"] as const,
   inventoryLedger: (stockItemId?: string) => ["inventory-ledger", stockItemId ?? "all"] as const,
   openStockCounts: ["open-stock-counts"] as const,
+  stockCountSessions: ["stock-count-sessions"] as const,
+  stockCountSession: (id: string) => ["stock-count-session", id] as const,
   costAiInsights: ["cost-ai-insights"] as const,
   executionActions: ["execution-actions"] as const,
+  salesCustomers: ["sales-customers"] as const,
+  salesProducts: (search?: string) => ["sales-products", search ?? ""] as const,
+  salesInvoices: (filters?: { status?: string; search?: string }) =>
+    ["sales-invoices", filters?.status ?? "All", filters?.search ?? ""] as const,
+  salesInvoice: (id: string) => ["sales-invoice", id] as const,
+  mobileProductIntelligence: ["mobile-product-intelligence"] as const,
 };

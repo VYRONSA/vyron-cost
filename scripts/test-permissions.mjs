@@ -11,10 +11,9 @@ for (const line of readFileSync(".env.local", "utf8").split("\n")) {
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/rest\/v1\/?$/i, "").replace(/\/$/, "");
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const base = process.env.PERMISSION_TEST_BASE || "http://localhost:3007";
 
-if (!url || !serviceKey || !anonKey) {
+if (!url || !serviceKey) {
   console.error("Missing Supabase env");
   process.exit(1);
 }
@@ -50,8 +49,8 @@ async function api(path, options = {}, cookies = "") {
 
 async function main() {
   const stamp = Date.now();
-  const ownerEmail = `perm-owner-${stamp}@vyron-test.local`;
-  const limitedEmail = `perm-limited-${stamp}@vyron-test.local`;
+  const ownerEmail = `perm-owner-${stamp}@example.com`;
+  const limitedEmail = `perm-limited-${stamp}@example.com`;
   const password = "PermTest123!";
   const limitedPassword = "Limited123!";
 
@@ -93,13 +92,15 @@ async function main() {
   }).then((r) => r.json());
   if (!ownerPatch.ok) throw new Error(`Owner setup failed: ${ownerPatch.error}`);
 
-  const authClient = createClient(url, anonKey, { auth: { persistSession: false } });
-  const { data: limitedAuth, error: limitedAuthError } = await authClient.auth.signUp({
+  const { data: limitedAuth, error: limitedAuthError } = await supabase.auth.admin.createUser({
     email: limitedEmail,
     password: limitedPassword,
-    options: { data: { first_name: "Limited", surname: "User" } },
+    email_confirm: true,
+    user_metadata: { first_name: "Limited", surname: "User" },
   });
-  if (limitedAuthError || !limitedAuth.user?.id) throw limitedAuthError || new Error("Limited auth failed");
+  if (limitedAuthError || !limitedAuth.user?.id) {
+    throw limitedAuthError || new Error("Limited auth createUser failed");
+  }
 
   const limitedUserId = limitedAuth.user.id;
   await supabase.from("vyron_user_profiles").upsert({

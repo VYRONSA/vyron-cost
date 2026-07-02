@@ -20,27 +20,23 @@ if (!url || !serviceKey) {
 
 const supabase = createClient(url, serviceKey, { auth: { persistSession: false } });
 
-function clientCookie(companyId, workspaceId) {
-  const client = encodeURIComponent(
-    JSON.stringify({
-      id: workspaceId,
-      companyId,
-      companyName: "Invoice Stock Test",
-      tradingName: "Invoice Stock Test",
-      packageName: "Professional",
-      status: "Setup",
-      demoMode: false,
-    })
-  );
-  return `vyron_cost_active_client=${client}`;
+function workspaceCookieHeader(client, session) {
+  const clientValue = encodeURIComponent(JSON.stringify(client));
+  const sessionValue = encodeURIComponent(JSON.stringify(session));
+  return `vyron_cost_active_client=${clientValue}; vyron_workspace_user_session=${sessionValue}`;
 }
 
 async function ensureSchema() {
   const { error } = await supabase.from("vyron_customer_invoices").select("stock_reversed").limit(1);
   if (!error) return;
+  if (String(error.code || "") === "PGRST205" && String(error.message || "").includes("vyron_customer_invoices")) {
+    throw new Error(
+      "vyron_customer_invoices table is missing in the connected Supabase project. Apply src/supabase/migrations/20260605_manufacturing_customer_invoices_stock.sql and src/supabase/migrations/20260701_customer_invoices_schema_alignment.sql, then restart PostgREST/schema cache."
+    );
+  }
   if (String(error.message).includes("stock_reversed")) {
     throw new Error(
-      "vyron_customer_invoices.stock_reversed is missing. Apply src/supabase/migrations/20260617_invoice_stock_reversal.sql in Supabase, then re-run."
+      "vyron_customer_invoices.stock_reversed is missing. Apply src/supabase/migrations/20260617_invoice_stock_reversal.sql and src/supabase/migrations/20260701_customer_invoices_schema_alignment.sql in Supabase, then re-run."
     );
   }
   throw error;
@@ -70,7 +66,28 @@ async function main() {
     .single();
   if (wsError) throw wsError;
 
-  const cookie = clientCookie(company.id, workspace.id);
+  const ownerEmail = `invoice-owner-${Date.now()}@example.com`;
+  const ownerPassword = "Invoice123!";
+
+  const ownerPatch = await fetch(`${base}/api/developer/clients/${workspace.id}/owner`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "password",
+      admin: { firstName: "Invoice", surname: "Owner", email: ownerEmail, mobile: "0821111111" },
+      loginSetup: { method: "password", password: ownerPassword },
+    }),
+  }).then((r) => r.json());
+  if (!ownerPatch.ok) throw new Error(`Owner setup failed: ${ownerPatch.error}`);
+
+  const ownerLogin = await fetch(`${base}/api/workspace/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: ownerEmail, password: ownerPassword }),
+  }).then((r) => r.json());
+  if (!ownerLogin.ok) throw new Error(`Owner login failed: ${ownerLogin.error}`);
+
+  const cookie = workspaceCookieHeader(ownerLogin.client, ownerLogin.session);
   const headers = { "Content-Type": "application/json", Cookie: cookie };
 
   const { data: fg, error: fgError } = await supabase

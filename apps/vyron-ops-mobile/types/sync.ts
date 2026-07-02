@@ -4,6 +4,7 @@ export type SyncWorkflow =
   | "picking"
   | "dispatch"
   | "delivery"
+  | "sales"
   | "inventory_count"
   | "inventory_adjustment"
   | "inventory_transfer"
@@ -89,6 +90,7 @@ export type EnqueueSyncInput = {
 export const WORKFLOW_SYNC_PRIORITY: Record<SyncWorkflow, number> = {
   receiving: 10,
   barcode_validation: 15,
+  sales: 18,
   inventory_count: 20,
   inventory_adjustment: 20,
   inventory_transfer: 20,

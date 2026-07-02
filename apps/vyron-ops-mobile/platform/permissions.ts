@@ -35,6 +35,11 @@ export type OpsPermissionSnapshot = {
   canScanInWorkflows: boolean;
   canViewScanHistory: boolean;
   canViewSyncDashboard: boolean;
+  canCreateSalesOrders: boolean;
+  canEditSalesOrderDrafts: boolean;
+  canConvertSalesOrderToInvoice: boolean;
+  canViewCustomerBalances: boolean;
+  canViewProductGp: boolean;
 };
 
 const SUPERVISOR_ROLES = new Set<WorkspaceSessionRole>(["OWNER", "ADMIN", "SUPERVISOR", "MANAGER"]);
@@ -54,6 +59,7 @@ const WAREHOUSE_OPERATOR_ROLES = new Set<WorkspaceSessionRole>([
   "SALES",
 ]);
 const INVENTORY_OPERATOR_ROLES = new Set<WorkspaceSessionRole>(["OWNER", "ADMIN", "INVENTORY"]);
+const SALES_OPERATOR_ROLES = new Set<WorkspaceSessionRole>(["OWNER", "ADMIN", "SALES", "SUPERVISOR"]);
 
 function normalizeRole(role: string | null | undefined): WorkspaceSessionRole | null {
   if (!role) return null;
@@ -71,6 +77,7 @@ export function resolveOpsPermissions(input: {
   const canOperateProduction = role ? PRODUCTION_OPERATOR_ROLES.has(role) : false;
   const canOperateWarehouse = role ? WAREHOUSE_OPERATOR_ROLES.has(role) : false;
   const canOperateInventory = role ? INVENTORY_OPERATOR_ROLES.has(role) : false;
+  const canOperateSales = role ? SALES_OPERATOR_ROLES.has(role) : false;
 
   return {
     role,
@@ -100,6 +107,11 @@ export function resolveOpsPermissions(input: {
       isSupervisor,
     canViewScanHistory: isSupervisor,
     canViewSyncDashboard: isSupervisor,
+    canCreateSalesOrders: canOperateSales || isSupervisor,
+    canEditSalesOrderDrafts: canOperateSales || isSupervisor,
+    canConvertSalesOrderToInvoice: canOperateSales || isSupervisor,
+    canViewCustomerBalances: canOperateSales || isSupervisor,
+    canViewProductGp: isSupervisor || role === "OWNER" || role === "ADMIN" || role === "SALES",
   };
 }
 
@@ -136,5 +148,10 @@ export function hasPermission(permissions: OpsPermissionSnapshot, key: string): 
   if (key === "ops.scan.use") return permissions.canScanInWorkflows;
   if (key === "ops.scan.history") return permissions.canViewScanHistory;
   if (key === "ops.sync.dashboard") return permissions.canViewSyncDashboard;
+  if (key === "sales_orders.create") return permissions.canCreateSalesOrders;
+  if (key === "sales_orders.edit") return permissions.canEditSalesOrderDrafts;
+  if (key === "invoices.create") return permissions.canConvertSalesOrderToInvoice;
+  if (key === "customers.view") return permissions.canViewCustomerBalances;
+  if (key === "products.view_gp") return permissions.canViewProductGp;
   return false;
 }
