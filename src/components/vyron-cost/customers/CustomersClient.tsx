@@ -21,9 +21,19 @@ type Customer = {
   status: string;
   revenue: number;
   gpMovement: number;
+  outstandingOrders: number;
+  outstandingInvoices: number;
+  averagePaymentDays: number;
+  lifetimeValue: number;
+  onHold: boolean;
 };
 
-const initialCustomers: Customer[] = [
+type SeedCustomer = Omit<
+  Customer,
+  "outstandingOrders" | "outstandingInvoices" | "averagePaymentDays" | "lifetimeValue" | "onHold"
+>;
+
+const initialCustomers: Customer[] = ([
   { id: "CUST-001", name: "Local Café Group", category: "Hospitality Group", contactEmail: "manager@localcafegroup.co.za", invoiceEmail: "accounts@localcafegroup.co.za", phone: "021 555 0148", terms: "7 Days", vatNumber: "4890123456", status: "Active", revenue: 128500, gpMovement: 42.3 },
   { id: "CUST-002", name: "Farmstall Foods", category: "Retail / Farmstall", contactEmail: "buyer@farmstallfoods.co.za", invoiceEmail: "orders@farmstallfoods.co.za", phone: "021 555 0191", terms: "14 Days", vatNumber: "4120987654", status: "Active", revenue: 94200, gpMovement: 38.5 },
   { id: "CUST-003", name: "Corporate Canteen Supplies", category: "Corporate Catering", contactEmail: "procurement@corporatecanteens.co.za", invoiceEmail: "finance@corporatecanteens.co.za", phone: "011 555 0188", terms: "30 Days", vatNumber: "4678901234", status: "Active", revenue: 76800, gpMovement: 45.1 },
@@ -32,7 +42,14 @@ const initialCustomers: Customer[] = [
   { id: "CUST-006", name: "Winelands Coffee Stops", category: "Hospitality", contactEmail: "ops@winelandscoffee.co.za", invoiceEmail: "finance@winelandscoffee.co.za", phone: "021 555 0180", terms: "14 Days", vatNumber: "4556789012", status: "Active", revenue: 49600, gpMovement: 41.8 },
   { id: "CUST-007", name: "Factory Canteen Group", category: "Industrial Catering", contactEmail: "orders@factorycanteens.co.za", invoiceEmail: "accounts@factorycanteens.co.za", phone: "011 555 0166", terms: "30 Days", vatNumber: "4789012345", status: "Watch", revenue: 73200, gpMovement: 35.9 },
   { id: "CUST-008", name: "Northern Suburbs Grocers", category: "Retail", contactEmail: "buying@nsgrocers.co.za", invoiceEmail: "accounts@nsgrocers.co.za", phone: "021 555 0160", terms: "21 Days", vatNumber: "4987654321", status: "Active", revenue: 58800, gpMovement: 40.2 },
-];
+] as SeedCustomer[]).map((customer) => ({
+  ...customer,
+  outstandingOrders: 0,
+  outstandingInvoices: 0,
+  averagePaymentDays: 0,
+  lifetimeValue: customer.revenue,
+  onHold: false,
+}));
 
 function customerStorageKey(workspaceId: string | null) {
   return workspaceId ? `vyron-cost-customers:${workspaceId}` : "vyron-cost-customers";
@@ -54,6 +71,11 @@ function mapApiCustomer(row: Record<string, unknown>): Customer {
     status: String(row.status || (row.active === false ? "Inactive" : "Active")),
     revenue: sales,
     gpMovement,
+    outstandingOrders: Number(row.outstanding_orders || 0),
+    outstandingInvoices: Number(row.outstanding_invoices || 0),
+    averagePaymentDays: Number(row.average_payment_days || 0),
+    lifetimeValue: Number(row.lifetime_value || sales),
+    onHold: Boolean(row.on_hold),
   };
 }
 
@@ -182,6 +204,11 @@ export default function CustomersClient() {
         status: form.status.trim() || "Active",
         revenue: 0,
         gpMovement: 0,
+        outstandingOrders: 0,
+        outstandingInvoices: 0,
+        averagePaymentDays: 0,
+        lifetimeValue: 0,
+        onHold: false,
       };
       setCustomers((current) => [next, ...current]);
     }
@@ -338,12 +365,20 @@ export default function CustomersClient() {
             </div>
 
             {canCreateInvoice ? (
-              <Link
-                href="/customer-invoices"
-                className="inline-flex shrink-0 items-center justify-center self-start rounded-2xl bg-purple-700 px-4 py-3 text-sm font-black text-white sm:self-center"
-              >
-                Create Invoice
-              </Link>
+              <div className="flex shrink-0 flex-wrap gap-2 self-start sm:self-center">
+                <Link
+                  href="/customer-sales-orders"
+                  className="inline-flex items-center justify-center rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-black text-violet-800"
+                >
+                  Sales Orders
+                </Link>
+                <Link
+                  href="/customer-invoices"
+                  className="inline-flex items-center justify-center rounded-2xl bg-purple-700 px-4 py-3 text-sm font-black text-white"
+                >
+                  Create Invoice
+                </Link>
+              </div>
             ) : null}
           </div>
 
@@ -387,13 +422,15 @@ export default function CustomersClient() {
                 <div className="text-xs font-bold text-slate-500">{customer.id} · {customer.phone || "No phone"}</div>
                 {(() => {
                   const stats = readCustomerHistoryLocally(customer.id.toLowerCase());
-                  if (!stats.invoiceCount) return null;
                   return (
                     <div className="mt-1 text-[11px] font-semibold text-slate-500">
-                      Sales {stats.totalSales.toLocaleString("en-ZA", { style: "currency", currency: "ZAR" })} · {stats.invoiceCount} invoices · Last {stats.lastInvoiceDate || "—"} · Avg {stats.averageInvoiceValue.toLocaleString("en-ZA", { style: "currency", currency: "ZAR" })}
+                      Sales {stats.totalSales.toLocaleString("en-ZA", { style: "currency", currency: "ZAR" })} · {stats.invoiceCount} invoices · Outstanding Orders {customer.outstandingOrders.toLocaleString("en-ZA", { style: "currency", currency: "ZAR" })} · Outstanding Invoices {customer.outstandingInvoices.toLocaleString("en-ZA", { style: "currency", currency: "ZAR" })}
                     </div>
                   );
                 })()}
+                <div className="mt-1 text-[11px] font-semibold text-slate-500">
+                  Avg Payment {customer.averagePaymentDays.toFixed(1)} days · LTV {customer.lifetimeValue.toLocaleString("en-ZA", { style: "currency", currency: "ZAR" })}
+                </div>
               </div>
               <div className="font-semibold text-slate-600">{customer.category}</div>
               <div className="truncate font-bold text-slate-700">{customer.invoiceEmail || "No invoice email"}</div>
@@ -404,10 +441,18 @@ export default function CustomersClient() {
                   <option>Active</option>
                   <option>Watch</option>
                   <option>Review</option>
+                  <option>On Hold</option>
                   <option>Inactive</option>
                 </select>
+                {customer.onHold ? <div className="mt-1 text-[10px] font-black uppercase tracking-[0.08em] text-rose-600">On Hold</div> : null}
               </div>
               <div className="flex items-center gap-2">
+                <Link
+                  href={`/customer-sales-orders?customerId=${customer.id}`}
+                  className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-black text-violet-800"
+                >
+                  Sales Orders
+                </Link>
                 {canDelete ? (
                   <button onClick={() => deleteCustomer(customer.id)} className="rounded-xl bg-rose-50 p-2 text-rose-600">
                     <Trash2 size={15} />

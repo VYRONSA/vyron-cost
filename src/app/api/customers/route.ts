@@ -47,6 +47,8 @@ export async function POST(request: NextRequest) {
       terms: body.terms,
       vatNumber: body.vatNumber,
       status: body.status,
+      creditLimit: body.creditLimit != null ? Number(body.creditLimit) : undefined,
+      onHold: body.onHold != null ? Boolean(body.onHold) : undefined,
     });
     return NextResponse.json({ ok: true, customer });
   } catch (error) {

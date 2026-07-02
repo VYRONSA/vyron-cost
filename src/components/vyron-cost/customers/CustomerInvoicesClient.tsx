@@ -198,15 +198,33 @@ function mapApiInvoice(row: Record<string, unknown>, lines: InvoiceLine[] = []):
 }
 
 function normaliseCustomer(raw: any, index: number): CustomerOption | null {
-  const name = String(raw?.name || raw?.customerName || raw?.companyName || raw?.tradingName || "").trim();
+  const name = String(
+    raw?.name ||
+      raw?.customerName ||
+      raw?.customer_name ||
+      raw?.companyName ||
+      raw?.company_name ||
+      raw?.tradingName ||
+      raw?.trading_name ||
+      ""
+  ).trim();
   if (!name) return null;
 
   return {
     id: String(raw?.id || raw?.customerId || `customer-${index}`),
     name,
-    email: String(raw?.invoiceEmail || raw?.email || raw?.customerEmail || raw?.contactEmail || "").trim(),
-    vatNumber: String(raw?.vatNumber || raw?.customerVatNumber || raw?.vat || "N/A").trim(),
-    terms: String(raw?.terms || raw?.paymentTerms || "30 Days").trim() || "30 Days",
+    email: String(
+      raw?.invoiceEmail ||
+        raw?.invoice_email ||
+        raw?.email ||
+        raw?.customerEmail ||
+        raw?.customer_email ||
+        raw?.contactEmail ||
+        raw?.contact_email ||
+        ""
+    ).trim(),
+    vatNumber: String(raw?.vatNumber || raw?.vat_number || raw?.customerVatNumber || raw?.vat || "N/A").trim(),
+    terms: String(raw?.terms || raw?.paymentTerms || raw?.payment_terms || "30 Days").trim() || "30 Days",
   };
 }
 

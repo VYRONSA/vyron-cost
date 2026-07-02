@@ -18,6 +18,8 @@ type CustomerForm = {
   terms: string;
   vatNumber: string;
   status: string;
+  creditLimit: string;
+  onHold: boolean;
 };
 
 function toForm(customer: CustomerRow): CustomerForm {
@@ -30,6 +32,8 @@ function toForm(customer: CustomerRow): CustomerForm {
     terms: customer.terms || "30 Days",
     vatNumber: customer.vat_number || "",
     status: customer.status || (customer.active ? "Active" : "Inactive"),
+    creditLimit: String(Number(customer.credit_limit || 0)),
+    onHold: Boolean(customer.on_hold),
   };
 }
 
@@ -136,12 +140,44 @@ export default function CustomerDetailPageClient({ customer }: { customer: Custo
             <option>Active</option>
             <option>Watch</option>
             <option>Review</option>
+            <option>On Hold</option>
             <option>Inactive</option>
           </select>
+        </label>
+        <label className="text-sm font-black text-slate-600">
+          Credit Limit
+          <input
+            type="number"
+            className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"
+            value={form.creditLimit}
+            onChange={(event) => update("creditLimit", event.target.value)}
+            disabled={!canEdit}
+          />
+        </label>
+        <label className="mt-7 inline-flex items-center gap-2 text-sm font-black text-slate-600">
+          <input
+            type="checkbox"
+            checked={form.onHold}
+            onChange={(event) => setForm((current) => ({ ...current, onHold: event.target.checked }))}
+            disabled={!canEdit}
+          />
+          Customer On Hold
         </label>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
+        <Link
+          href={`/customer-sales-orders?customerId=${customer.id}`}
+          className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-black text-violet-800"
+        >
+          View Sales Orders
+        </Link>
+        <Link
+          href={`/customer-sales-orders?customerId=${customer.id}&create=1`}
+          className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-800"
+        >
+          Create Sales Order
+        </Link>
         {canEdit ? (
           <button type="button" onClick={saveCustomer} className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-black text-white">
             <Save size={16} /> Save Customer

@@ -12,7 +12,8 @@ type CrudModule =
   | "purchase_orders"
   | "goods_receipts"
   | "stores"
-  | "store_orders";
+  | "store_orders"
+  | "sales_orders";
 
 export function useModulePermissions(module: CrudModule) {
   const { can, session } = useWorkspacePermissions();
@@ -117,6 +118,24 @@ export function useReportsPermissions() {
       session,
       canView: can("reports.view"),
       canExport: can("reports.export"),
+    }),
+    [can, session]
+  );
+}
+
+export function useSalesOrderPermissions() {
+  const { can, session } = useWorkspacePermissions();
+
+  return useMemo(
+    () => ({
+      session,
+      canView: can("sales_orders.view"),
+      canCreate: can("sales_orders.create"),
+      canEdit: can("sales_orders.edit"),
+      canApprove: can("sales_orders.approve"),
+      canPick: can("sales_orders.pick"),
+      canDispatch: can("sales_orders.dispatch"),
+      canConvert: can("sales_orders.convert"),
     }),
     [can, session]
   );

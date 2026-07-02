@@ -136,6 +136,8 @@ export const vyronNavSections: VyronNavSection[] = [
     id: "customers",
     section: "CUSTOMERS",
     items: [
+      { label: "Customer Register", icon: Users, href: "/customers" },
+      { label: "Sales Orders", icon: ShoppingCart, href: "/customer-sales-orders" },
       { label: "Customer Invoices", icon: ReceiptText, href: "/customer-invoices" },
     ],
   },

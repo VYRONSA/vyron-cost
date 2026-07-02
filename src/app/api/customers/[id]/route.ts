@@ -51,6 +51,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       terms: body.terms,
       vatNumber: body.vatNumber,
       status: body.status,
+      creditLimit: body.creditLimit != null ? Number(body.creditLimit) : undefined,
+      onHold: body.onHold != null ? Boolean(body.onHold) : undefined,
     });
     return NextResponse.json({ ok: true, customer });
   } catch (error) {

@@ -61,6 +61,17 @@ function round2(n: number) {
   return Math.round(n * 100) / 100;
 }
 
+function isMissingTableError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const message = String((error as { message?: string }).message || "").toLowerCase();
+  const code = String((error as { code?: string }).code || "").toUpperCase();
+  return (
+    code === "PGRST205" ||
+    message.includes("could not find the table") ||
+    message.includes("relation") && message.includes("does not exist")
+  );
+}
+
 function computeTotals(lines: CustomerInvoiceLineInput[]) {
   let sales = 0;
   let cost = 0;
@@ -935,11 +946,110 @@ export type CustomerRow = {
   terms?: string | null;
   vat_number?: string | null;
   status?: string | null;
+  credit_limit?: number | null;
+  on_hold?: boolean | null;
+  outstanding_orders?: number;
+  outstanding_invoices?: number;
+  average_payment_days?: number;
+  lifetime_value?: number;
+  total_gp?: number;
 };
 
 export async function listCustomersWithHistory(supabase: SupabaseClient, companyId: string) {
-  const data = await listCustomerContactsAsCustomers(supabase, companyId);
-  return (data || []) as CustomerRow[];
+  const [baseCustomers, { data: invoices, error: invoiceError }, { data: salesOrders, error: orderError }] =
+    await Promise.all([
+      listCustomerContactsAsCustomers(supabase, companyId),
+      supabase
+        .from("vyron_customer_invoices")
+        .select("customer_id, customer_name, sales_value, gross_profit, status, invoice_date, updated_at")
+        .eq("company_id", companyId),
+      supabase
+        .from("vyron_customer_sales_orders")
+        .select("customer_id, customer_name, total, status")
+        .eq("company_id", companyId),
+    ]);
+
+  if (invoiceError && !isMissingTableError(invoiceError)) throw new Error(invoiceError.message);
+  if (orderError && !isMissingTableError(orderError)) throw new Error(orderError.message);
+
+  const byCustomer = new Map<
+    string,
+    {
+      outstandingInvoices: number;
+      outstandingOrders: number;
+      lifetimeValue: number;
+      totalGp: number;
+      paidDays: number[];
+    }
+  >();
+
+  for (const row of invoices || []) {
+    const key = String(row.customer_id || row.customer_name || "");
+    if (!key) continue;
+    const current = byCustomer.get(key) || {
+      outstandingInvoices: 0,
+      outstandingOrders: 0,
+      lifetimeValue: 0,
+      totalGp: 0,
+      paidDays: [],
+    };
+
+    const status = String(row.status || "");
+    const salesValue = Number(row.sales_value || 0);
+    current.lifetimeValue += salesValue;
+    current.totalGp += Number(row.gross_profit || 0);
+    if (!["Paid", "Cancelled"].includes(status)) current.outstandingInvoices += salesValue;
+    if (status === "Paid" && row.invoice_date && row.updated_at) {
+      const from = new Date(String(row.invoice_date));
+      const to = new Date(String(row.updated_at));
+      const diff = to.getTime() - from.getTime();
+      if (Number.isFinite(diff) && diff >= 0) current.paidDays.push(Math.round(diff / 86400000));
+    }
+    byCustomer.set(key, current);
+  }
+
+  for (const row of salesOrders || []) {
+    const key = String(row.customer_id || row.customer_name || "");
+    if (!key) continue;
+    const current = byCustomer.get(key) || {
+      outstandingInvoices: 0,
+      outstandingOrders: 0,
+      lifetimeValue: 0,
+      totalGp: 0,
+      paidDays: [],
+    };
+    const status = String(row.status || "");
+    if (!["Invoiced", "Cancelled"].includes(status)) {
+      current.outstandingOrders += Number(row.total || 0);
+    }
+    byCustomer.set(key, current);
+  }
+
+  return ((baseCustomers || []) as CustomerRow[]).map((customer) => {
+    const merged =
+      byCustomer.get(String(customer.id || "")) ||
+      byCustomer.get(String(customer.customer_name || "")) || {
+        outstandingInvoices: 0,
+        outstandingOrders: 0,
+        lifetimeValue: Number(customer.total_sales || 0),
+        totalGp: 0,
+        paidDays: [],
+      };
+
+    const avgPaymentDays =
+      merged.paidDays.length > 0
+        ? Math.round((merged.paidDays.reduce((sum, days) => sum + days, 0) / merged.paidDays.length) * 100) / 100
+        : 0;
+
+    return {
+      ...customer,
+      outstanding_orders: Math.round(merged.outstandingOrders * 100) / 100,
+      outstanding_invoices: Math.round(merged.outstandingInvoices * 100) / 100,
+      average_payment_days: avgPaymentDays,
+      lifetime_value: Math.round(merged.lifetimeValue * 100) / 100,
+      total_gp: Math.round(merged.totalGp * 100) / 100,
+    };
+  });
 }
 
 export async function getCustomerById(
@@ -970,6 +1080,8 @@ export async function createCustomer(
     terms?: string;
     vatNumber?: string;
     status?: string;
+    creditLimit?: number;
+    onHold?: boolean;
   }
 ) {
   const { data, error } = await supabase
@@ -986,6 +1098,8 @@ export async function createCustomer(
       terms: input.terms || "30 Days",
       vat_number: input.vatNumber || null,
       status: input.status || "Active",
+      credit_limit: input.creditLimit ?? 0,
+      on_hold: Boolean(input.onHold),
     })
     .select("*")
     .single();
@@ -1014,6 +1128,8 @@ export async function updateCustomer(
     terms: string;
     vatNumber: string;
     status: string;
+    creditLimit: number;
+    onHold: boolean;
   }>
 ) {
   const patch: Record<string, unknown> = {};
@@ -1031,6 +1147,8 @@ export async function updateCustomer(
     patch.status = input.status;
     patch.active = input.status !== "Inactive";
   }
+  if (input.creditLimit !== undefined) patch.credit_limit = Number(input.creditLimit || 0);
+  if (input.onHold !== undefined) patch.on_hold = Boolean(input.onHold);
 
   const { data, error } = await supabase
     .from("vyron_customers")

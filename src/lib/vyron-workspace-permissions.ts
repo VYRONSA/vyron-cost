@@ -140,6 +140,18 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    label: "Sales Orders",
+    permissions: [
+      { key: "sales_orders.view", label: "View sales orders" },
+      { key: "sales_orders.create", label: "Create sales orders" },
+      { key: "sales_orders.edit", label: "Edit sales order drafts" },
+      { key: "sales_orders.approve", label: "Approve sales orders" },
+      { key: "sales_orders.pick", label: "Run picking workflow" },
+      { key: "sales_orders.dispatch", label: "Dispatch sales orders" },
+      { key: "sales_orders.convert", label: "Convert sales orders to invoices" },
+    ],
+  },
+  {
     label: "Xero",
     permissions: [
       { key: "xero.view", label: "View Xero integration" },
@@ -194,6 +206,10 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "inventory.counts.approve": true,
     "manufacturing.runs.complete": true,
     "reports.export": true,
+    "sales_orders.approve": true,
+    "sales_orders.pick": true,
+    "sales_orders.dispatch": true,
+    "sales_orders.convert": true,
   },
   MANAGER: {
     ...VIEW_ONLY_ACCESS,
@@ -205,6 +221,10 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "goods_receipts.approve": true,
     "inventory.counts.approve": true,
     "reports.export": true,
+    "sales_orders.approve": true,
+    "sales_orders.pick": true,
+    "sales_orders.dispatch": true,
+    "sales_orders.convert": true,
   },
   PROCUREMENT: {
     ...VIEW_ONLY_ACCESS,
@@ -242,6 +262,13 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "store_orders.edit": true,
     "invoices.create": true,
     "invoices.email": true,
+    "sales_orders.view": true,
+    "sales_orders.create": true,
+    "sales_orders.edit": true,
+    "sales_orders.approve": true,
+    "sales_orders.pick": true,
+    "sales_orders.dispatch": true,
+    "sales_orders.convert": true,
   },
   VIEW_ONLY: VIEW_ONLY_ACCESS,
   USER: VIEW_ONLY_ACCESS,
@@ -340,6 +367,14 @@ export const PERMISSION_ALIASES: Record<string, string> = {
   email_customer_invoices: "invoices.email",
   delete_customer_invoices: "invoices.reverse",
   reverse_customer_invoices: "invoices.reverse",
+
+  view_sales_orders: "sales_orders.view",
+  create_sales_orders: "sales_orders.create",
+  edit_sales_orders: "sales_orders.edit",
+  approve_sales_orders: "sales_orders.approve",
+  pick_sales_orders: "sales_orders.pick",
+  dispatch_sales_orders: "sales_orders.dispatch",
+  convert_sales_orders: "sales_orders.convert",
 
   view_reports: "reports.view",
   export_reports: "reports.export",
@@ -491,6 +526,7 @@ export const NAV_PATH_PERMISSIONS: Record<string, string> = {
   "/store-forecast": "store_orders.view",
 
   "/customer-invoices": "invoices.view",
+  "/customer-sales-orders": "sales_orders.view",
 
   "/integrations/xero": "xero.view",
 
