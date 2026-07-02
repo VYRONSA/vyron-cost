@@ -53,19 +53,26 @@ function periodLabel(type: BudgetPeriod, start: Date) {
 async function computeActuals(companyId: string) {
   const supabase = getSupabaseAdmin();
   const [spend, ingredients] = await Promise.all([
-    supabase ? computeSpendTotals(supabase, companyId) : Promise.resolve({ spendThisMonth: 0, spendThisYear: 0 }),
-    getIngredients(500),
+    supabase
+      ? computeSpendTotals(supabase, companyId).catch(() => ({ spendThisMonth: 0, spendThisYear: 0 }))
+      : Promise.resolve({ spendThisMonth: 0, spendThisYear: 0 }),
+    getIngredients(500).catch(() => []),
   ]);
 
   let inventoryValue = 0;
   let productionCost = 0;
   if (supabase) {
-    const [inv, mfg] = await Promise.all([
-      getInventoryDashboardStats(supabase, companyId),
-      getManufacturingDashboardStats(supabase, companyId),
-    ]);
-    inventoryValue = inv.totalInventoryValue;
-    productionCost = mfg.productionCost;
+    try {
+      const [inv, mfg] = await Promise.all([
+        getInventoryDashboardStats(supabase, companyId),
+        getManufacturingDashboardStats(supabase, companyId),
+      ]);
+      inventoryValue = inv.totalInventoryValue;
+      productionCost = mfg.productionCost;
+    } catch {
+      inventoryValue = 0;
+      productionCost = 0;
+    }
   }
 
   const packagingSpend = ingredients
@@ -75,7 +82,7 @@ async function computeActuals(companyId: string) {
     .filter((i) => !/pack/i.test(String(i.category || "")))
     .reduce((s, i) => s + Number(i.purchase_cost || 0) * 100, 0);
 
-  const suppliers = await getSuppliers();
+  const suppliers = await getSuppliers().catch(() => []);
   const supplierSpendMonth = suppliers.reduce((s, sup) => s + Number(sup.last_price_movement || 0) * 500 + 8000, 0);
 
   return {
@@ -109,12 +116,16 @@ export async function getBudgetDashboard(companyId = VYRON_DEFAULT_TENANT_ID): P
   }> = [];
 
   if (supabase) {
-    const { data } = await supabase
-      .from("vyron_enterprise_budgets")
-      .select("id, budget_category, period_type, period_start, budget_amount")
-      .eq("company_id", companyId)
-      .gte("period_end", monthStart.toISOString().slice(0, 10));
-    dbRows = (data || []) as typeof dbRows;
+    try {
+      const { data } = await supabase
+        .from("vyron_enterprise_budgets")
+        .select("id, budget_category, period_type, period_start, budget_amount")
+        .eq("company_id", companyId)
+        .gte("period_end", monthStart.toISOString().slice(0, 10));
+      dbRows = (data || []) as typeof dbRows;
+    } catch {
+      dbRows = [];
+    }
   }
 
   const categories: BudgetCategory[] = ["supplier_spend", "inventory", "production", "packaging", "ingredients"];
