@@ -32,7 +32,6 @@ import {
 } from "@/lib/vyron-developer-client";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { bootstrapWorkspaceSession, writeWorkspaceSession } from "@/lib/vyron-workspace-session";
-import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 type ClientStatus = "Active" | "Setup" | "Demo" | "Suspended" | "Archived";
 type XeroStatus = "Connected" | "Not Connected" | "Setup Required";
@@ -1005,7 +1004,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
 
   if (mode === "centre") {
     return (
-      <div className="space-y-6">
+      <div className="w-full max-w-full min-w-0 space-y-6 overflow-x-hidden">
         <PageHeader
           title="Developer Centre"
           subtitle="High-level overview of VYRON COST client workspaces and platform control."
@@ -1044,8 +1043,8 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
           ))}
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <section className="grid w-full max-w-full min-w-0 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-2xl font-black text-slate-900">Quick Actions</h2>
@@ -1074,7 +1073,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
             </div>
           </div>
 
-          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+          <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
             <h2 className="text-2xl font-black text-slate-900">Setup Notes</h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">Recent platform activity and onboarding reminders.</p>
             <ul className="mt-5 space-y-3">
@@ -1133,15 +1132,15 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
 
   if (mode === "clients") {
     return (
-      <div className="space-y-6">
+      <div className="w-full max-w-full min-w-0 space-y-6 overflow-x-hidden">
         <PageHeader
           title="Client Directory"
           subtitle="Search and manage existing VYRON COST client workspaces."
         />
 
-        <div className="rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex min-w-[240px] flex-1 items-center gap-3 rounded-2xl border border-violet-100 bg-slate-50 px-4 py-3">
+            <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-violet-100 bg-slate-50 px-4 py-3 sm:min-w-[240px]">
               <Search size={18} className="text-violet-700" />
               <input
                 value={search}
@@ -1155,7 +1154,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
               <select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-                className="mt-1 block min-w-[140px] rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none focus:border-violet-400"
+                className="mt-1 block w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none focus:border-violet-400 sm:min-w-[140px]"
               >
                 <option value="All">All</option>
                 <option value="Active">Active</option>
@@ -1170,7 +1169,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
               <select
                 value={packageFilter}
                 onChange={(event) => setPackageFilter(event.target.value)}
-                className="mt-1 block min-w-[160px] rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none focus:border-violet-400"
+                className="mt-1 block w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none focus:border-violet-400 sm:min-w-[160px]"
               >
                 <option value="All">All</option>
                 {packageOptions.map((pkg) => (
@@ -1223,7 +1222,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
 
         <FlashMessage message={message} activeClient={activeClient} />
 
-        <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-xl font-black text-slate-900">
               {directoryView === "archived" ? "Archived Clients" : "Client Register"}
@@ -1354,7 +1353,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-full min-w-0 space-y-6 overflow-x-hidden">
       <PageHeader
         title="Client Setup"
         subtitle={editingClientId ? "Update an existing client workspace." : "Create and onboard a new VYRON COST client workspace."}
@@ -1362,8 +1361,8 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
 
       <FlashMessage message={message} activeClient={activeClient} />
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <section ref={newClientRef} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <div className="grid w-full max-w-full min-w-0 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+        <section ref={newClientRef} className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
               <Plus size={22} />
@@ -1477,7 +1476,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
           </div>
         </section>
 
-        <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <h2 className="text-2xl font-black text-slate-900">Setup Checklist</h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">Complete these items before marking the workspace Live.</p>
           <ul className="mt-5 space-y-3">
@@ -1655,8 +1654,8 @@ function ClientRegisterTable({
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="overflow-x-auto rounded-3xl border border-slate-100">
-      <div className="grid min-w-[1480px] grid-cols-[1.1fr_1fr_0.8fr_0.7fr_0.5fr_0.9fr_520px] gap-3 bg-slate-50 px-5 py-4 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+    <div className="w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden rounded-3xl border border-slate-100">
+      <div className="grid min-w-[1180px] grid-cols-[1fr_1fr_0.75fr_0.7fr_0.55fr_0.75fr_420px] gap-3 bg-slate-50 px-5 py-4 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
         <div>Company</div>
         <div>Primary Admin</div>
         <div>Package</div>
@@ -1670,7 +1669,7 @@ function ClientRegisterTable({
         clients.map((client) => (
           <div
             key={client.id}
-            className={`grid min-w-[1480px] grid-cols-[1.1fr_1fr_0.8fr_0.7fr_0.5fr_0.9fr_520px] items-center gap-3 border-t border-slate-100 px-5 py-4 text-sm ${
+            className={`grid min-w-[1180px] grid-cols-[1fr_1fr_0.75fr_0.7fr_0.55fr_0.75fr_420px] items-center gap-3 border-t border-slate-100 px-5 py-4 text-sm ${
               selectedClientId === client.id ? "bg-violet-50/70" : "bg-white"
             }`}
           >
@@ -1706,7 +1705,7 @@ function ClientRegisterTable({
             <div>
               <span className={xeroClass(client.xeroStatus)}>{client.xeroStatus}</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
+            <div className="grid min-w-0 grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => onOpen(client.id)}
@@ -2042,23 +2041,15 @@ function NumberField({
   onChange: (value: number) => void;
 }) {
   return (
-    <VyronPremiumPageShell
-      config={{
-        title: "Developer",
-        subtitle: "Premium VYRON COST workflow for developer.",
-        formulas: ["GP % = (Price - Cost) / Price"],
-      }}
-    >
-      <label className="text-sm font-black text-slate-600">
-            {label}
-            <input
-              type="number"
-              min={1}
-              value={value}
-              onChange={(event) => onChange(Number(event.target.value))}
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
-            />
-          </label>
-    </VyronPremiumPageShell>
+    <label className="text-sm font-black text-slate-600">
+      {label}
+      <input
+        type="number"
+        min={1}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+      />
+    </label>
   );
 }

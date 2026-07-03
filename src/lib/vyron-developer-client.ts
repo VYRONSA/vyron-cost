@@ -192,7 +192,7 @@ export async function signOutClientWorkspace() {
   const returnToDeveloper = isPlatformAdminImpersonating();
 
   try {
-    await fetch("/api/workspace/logout", {
+    await fetch(returnToDeveloper ? "/api/platform-auth/logout" : "/api/workspace/logout", {
       method: "POST",
       credentials: "include",
     });

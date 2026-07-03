@@ -22,7 +22,7 @@ const SIDEBAR_WIDTH = "292px";
 
 async function exitDeveloper() {
   try {
-    await fetch("/api/workspace/logout", {
+    await fetch("/api/platform-auth/logout", {
       method: "POST",
       credentials: "include",
     });

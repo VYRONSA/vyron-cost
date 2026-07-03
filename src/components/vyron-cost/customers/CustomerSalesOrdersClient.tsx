@@ -439,8 +439,8 @@ export default function CustomerSalesOrdersClient({
   }
 
   return (
-    <div className="grid gap-6">
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-10">
+    <div className="grid w-full max-w-full min-w-0 gap-6 overflow-x-hidden">
+      <section className="grid w-full max-w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 min-[2200px]:grid-cols-8">
         <KpiCard label="Draft Orders" value={String(kpis.draftOrders)} />
         <KpiCard label="Awaiting Approval" value={String(kpis.awaitingApproval)} />
         <KpiCard label="Waiting for Picking" value={String(kpis.readyToPick)} />
@@ -453,13 +453,13 @@ export default function CustomerSalesOrdersClient({
         <KpiCard label="Procurement Required" value={String(kpis.procurementRequired)} />
       </section>
 
-      <section className="rounded-3xl bg-white p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+      <section className="w-full max-w-full min-w-0 overflow-x-hidden rounded-3xl bg-white p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
         <div className="flex flex-wrap items-center gap-3">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search customer, order number, salesperson..."
-            className="min-w-[260px] flex-1 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold outline-none"
+            className="min-w-0 flex-1 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold outline-none sm:min-w-[260px]"
           />
           <select
             value={statusFilter}
@@ -482,7 +482,7 @@ export default function CustomerSalesOrdersClient({
         </div>
 
         {createOpen ? (
-          <div className="mt-5 rounded-2xl border border-violet-200 bg-violet-50/40 p-5">
+          <div className="mt-5 w-full max-w-full min-w-0 rounded-2xl border border-violet-200 bg-violet-50/40 p-5">
             <h3 className="text-lg font-black text-slate-900">Create Sales Order</h3>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <label className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">
@@ -518,11 +518,11 @@ export default function CustomerSalesOrdersClient({
               </label>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="mt-4 w-full max-w-full min-w-0 rounded-2xl border border-slate-200 bg-white p-4">
               <div className="mb-2 text-xs font-black uppercase tracking-[0.12em] text-slate-500">Order Lines</div>
               <div className="grid gap-2">
                 {lines.map((line, index) => (
-                  <div key={line.id} className="grid gap-2 md:grid-cols-[1.2fr_1.8fr_0.7fr_0.7fr_0.8fr_0.8fr_0.8fr_auto]">
+                  <div key={line.id} className="grid min-w-0 gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-[1.2fr_1.8fr_0.7fr_0.7fr_0.8fr_0.8fr_0.8fr_auto]">
                     <select
                       value={line.product_id || ""}
                       onChange={(event) => {
@@ -534,19 +534,19 @@ export default function CustomerSalesOrdersClient({
                           cost_per_unit: Number(product?.total_cost || line.cost_per_unit),
                         });
                       }}
-                      className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+                      className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
                     >
                       <option value="">Product</option>
                       {products.map((product) => (
                         <option key={product.id} value={product.id}>{product.product_name}</option>
                       ))}
                     </select>
-                    <input value={line.description} onChange={(event) => setLine(index, { description: event.target.value })} placeholder="Description" className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
-                    <input type="number" value={line.quantity} onChange={(event) => setLine(index, { quantity: Number(event.target.value || 0) })} placeholder="Qty" className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
-                    <input value={line.unit} onChange={(event) => setLine(index, { unit: event.target.value })} placeholder="Unit" className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
-                    <input type="number" value={line.selling_price} onChange={(event) => setLine(index, { selling_price: Number(event.target.value || 0) })} placeholder="Price" className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
-                    <input type="number" value={line.discount_pct} onChange={(event) => setLine(index, { discount_pct: Number(event.target.value || 0) })} placeholder="Discount %" className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
-                    <input type="number" value={line.tax_rate} onChange={(event) => setLine(index, { tax_rate: Number(event.target.value || 0) })} placeholder="Tax %" className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
+                    <input value={line.description} onChange={(event) => setLine(index, { description: event.target.value })} placeholder="Description" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
+                    <input type="number" value={line.quantity} onChange={(event) => setLine(index, { quantity: Number(event.target.value || 0) })} placeholder="Qty" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
+                    <input value={line.unit} onChange={(event) => setLine(index, { unit: event.target.value })} placeholder="Unit" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
+                    <input type="number" value={line.selling_price} onChange={(event) => setLine(index, { selling_price: Number(event.target.value || 0) })} placeholder="Price" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
+                    <input type="number" value={line.discount_pct} onChange={(event) => setLine(index, { discount_pct: Number(event.target.value || 0) })} placeholder="Discount %" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
+                    <input type="number" value={line.tax_rate} onChange={(event) => setLine(index, { tax_rate: Number(event.target.value || 0) })} placeholder="Tax %" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
                     <button type="button" onClick={() => setLines((current) => current.filter((_, i) => i !== index))} className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-black text-rose-700">Remove</button>
                   </div>
                 ))}
@@ -554,7 +554,7 @@ export default function CustomerSalesOrdersClient({
 
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <button type="button" onClick={() => setLines((current) => [...current, emptyLine()])} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700">Add Line</button>
-                <input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Notes" className="min-w-[280px] flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
+                <input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Notes" className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm sm:min-w-[280px]" />
                 <button type="button" onClick={() => void saveOrder()} className="rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-black text-white">Save Draft</button>
               </div>
 
@@ -570,16 +570,16 @@ export default function CustomerSalesOrdersClient({
           </div>
         ) : null}
 
-        <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-100">
-          <div className="min-w-[1160px]">
-            <div className="grid grid-cols-[0.8fr_1.1fr_0.9fr_0.8fr_0.8fr_0.8fr_1.2fr] gap-3 bg-slate-50 px-4 py-3 text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
+        <div className="mt-5 w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden rounded-2xl border border-slate-100">
+          <div className="min-w-[1080px] max-w-none">
+            <div className="grid min-w-0 grid-cols-[0.8fr_1.1fr_0.9fr_0.8fr_0.8fr_0.8fr_1.2fr] gap-3 bg-slate-50 px-4 py-3 text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
               <div>Order</div><div>Customer</div><div>Status</div><div>Total</div><div>Requested</div><div>GP</div><div>Workflow</div>
             </div>
             {loading ? <div className="px-4 py-6 text-sm font-semibold text-slate-500">Loading sales orders...</div> : null}
             {!loading && orders.length === 0 ? <div className="px-4 py-6 text-sm font-semibold text-slate-500">No sales orders found.</div> : null}
 
             {orders.map((order) => (
-              <div key={order.id} className="grid grid-cols-[0.8fr_1.1fr_0.9fr_0.8fr_0.8fr_0.8fr_1.2fr] items-center gap-3 border-t border-slate-100 px-4 py-3 text-sm">
+              <div key={order.id} className="grid min-w-0 grid-cols-[0.8fr_1.1fr_0.9fr_0.8fr_0.8fr_0.8fr_1.2fr] items-center gap-3 border-t border-slate-100 px-4 py-3 text-sm">
                 <div className="font-black text-violet-700">{order.order_number}</div>
                 <div>
                   <div className="font-bold text-slate-900">{order.customer_name}</div>
@@ -610,7 +610,7 @@ export default function CustomerSalesOrdersClient({
         </div>
 
         {selectedOrder ? (
-          <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="mt-5 w-full max-w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-lg font-black text-slate-900">Sales Order Detail: {selectedOrder.order.order_number}</h3>
               <button type="button" onClick={() => setSelectedOrder(null)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700">Close</button>
@@ -629,7 +629,7 @@ export default function CustomerSalesOrdersClient({
 
             <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
               <div className="text-xs font-black uppercase tracking-[0.12em] text-emerald-800">Manufacturing Intelligence</div>
-              <div className="mt-2 grid gap-2 text-sm font-semibold text-emerald-900 md:grid-cols-6">
+              <div className="mt-2 grid gap-2 text-sm font-semibold text-emerald-900 sm:grid-cols-2 xl:grid-cols-6">
                 <div>{selectedOrder.manufacturing.stockAvailable ? "Stock Available" : "Stock Not Fully Available"}</div>
                 <div>{selectedOrder.manufacturing.insufficientStock ? "Insufficient Stock" : "Sufficient Stock"}</div>
                 <div>{selectedOrder.manufacturing.canManufacture ? "Can Manufacture" : "Cannot Manufacture"}</div>
@@ -651,16 +651,18 @@ export default function CustomerSalesOrdersClient({
 
             <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
               <div className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Picking List</div>
-              <div className="mt-2 grid gap-2">
-                {selectedOrder.picking_list.map((line) => (
-                  <div key={line.sales_order_line_id} className="grid grid-cols-[1.6fr_0.6fr_0.6fr_0.6fr_0.5fr] gap-2 text-sm font-semibold">
-                    <div className="text-slate-800">{line.description}</div>
-                    <div className="text-slate-700">Req {line.required_qty.toFixed(2)}</div>
-                    <div className="text-slate-700">Avail {line.available_qty.toFixed(2)}</div>
-                    <div className={line.shortfall_qty > 0 ? "text-rose-700" : "text-emerald-700"}>Short {line.shortfall_qty.toFixed(2)}</div>
-                    <div className={line.pick_status === "Short" ? "text-rose-700" : "text-emerald-700"}>{line.pick_status}</div>
-                  </div>
-                ))}
+              <div className="mt-2 overflow-x-auto">
+                <div className="min-w-[760px] grid gap-2">
+                  {selectedOrder.picking_list.map((line) => (
+                    <div key={line.sales_order_line_id} className="grid grid-cols-[1.6fr_0.6fr_0.6fr_0.6fr_0.5fr] gap-2 text-sm font-semibold">
+                      <div className="text-slate-800">{line.description}</div>
+                      <div className="text-slate-700">Req {line.required_qty.toFixed(2)}</div>
+                      <div className="text-slate-700">Avail {line.available_qty.toFixed(2)}</div>
+                      <div className={line.shortfall_qty > 0 ? "text-rose-700" : "text-emerald-700"}>Short {line.shortfall_qty.toFixed(2)}</div>
+                      <div className={line.pick_status === "Short" ? "text-rose-700" : "text-emerald-700"}>{line.pick_status}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -669,19 +671,21 @@ export default function CustomerSalesOrdersClient({
               {!selectedOrder.procurement.missingIngredients.length ? (
                 <div className="mt-2 text-sm font-semibold text-sky-900">No missing ingredients detected for current shortages.</div>
               ) : (
-                <div className="mt-2 grid gap-2">
-                  <div className="grid grid-cols-[1.4fr_1fr_0.9fr_0.8fr_0.9fr] gap-2 text-[11px] font-black uppercase tracking-[0.1em] text-sky-700">
-                    <div>Missing Ingredients</div><div>Supplier</div><div>Supplier Price</div><div>Lead Time</div><div>Estimated Cost</div>
-                  </div>
-                  {selectedOrder.procurement.missingIngredients.map((row, index) => (
-                    <div key={`${row.ingredient_id || row.ingredient_name}-${index}`} className="grid grid-cols-[1.4fr_1fr_0.9fr_0.8fr_0.9fr] gap-2 text-sm font-semibold text-sky-900">
-                      <div>{row.ingredient_name} (short {row.shortage_qty.toFixed(2)} {row.unit})</div>
-                      <div>{row.supplier_name || "No supplier"}</div>
-                      <div>{row.supplier_price != null ? money(row.supplier_price) : "-"}</div>
-                      <div>{row.lead_time_days != null ? `${row.lead_time_days} days` : "-"}</div>
-                      <div>{money(row.estimated_cost)}</div>
+                <div className="mt-2 overflow-x-auto">
+                  <div className="min-w-[920px] grid gap-2">
+                    <div className="grid grid-cols-[1.4fr_1fr_0.9fr_0.8fr_0.9fr] gap-2 text-[11px] font-black uppercase tracking-[0.1em] text-sky-700">
+                      <div>Missing Ingredients</div><div>Supplier</div><div>Supplier Price</div><div>Lead Time</div><div>Estimated Cost</div>
                     </div>
-                  ))}
+                    {selectedOrder.procurement.missingIngredients.map((row, index) => (
+                      <div key={`${row.ingredient_id || row.ingredient_name}-${index}`} className="grid grid-cols-[1.4fr_1fr_0.9fr_0.8fr_0.9fr] gap-2 text-sm font-semibold text-sky-900">
+                        <div>{row.ingredient_name} (short {row.shortage_qty.toFixed(2)} {row.unit})</div>
+                        <div>{row.supplier_name || "No supplier"}</div>
+                        <div>{row.supplier_price != null ? money(row.supplier_price) : "-"}</div>
+                        <div>{row.lead_time_days != null ? `${row.lead_time_days} days` : "-"}</div>
+                        <div>{money(row.estimated_cost)}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
               <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -714,7 +718,7 @@ export default function CustomerSalesOrdersClient({
 
             <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
               <div className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Workflow Timeline</div>
-              <div className="mt-2 grid gap-2 md:grid-cols-7">
+              <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
                 {selectedOrder.timeline.map((step) => (
                   <div key={step.key} className={`rounded-lg border p-2 ${step.completed ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-slate-50"}`}>
                     <div className="text-xs font-black text-slate-700">{step.label}</div>
@@ -768,9 +772,9 @@ export default function CustomerSalesOrdersClient({
 
 function KpiCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-[0_12px_34px_rgba(15,23,42,0.08)]">
+    <div className="h-full w-full max-w-full min-w-0 rounded-2xl bg-white p-4 shadow-[0_12px_34px_rgba(15,23,42,0.08)]">
       <div className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">{label}</div>
-      <div className="mt-2 text-2xl font-black text-slate-900">{value}</div>
+      <div className="mt-2 break-words text-2xl font-black text-slate-900">{value}</div>
     </div>
   );
 }

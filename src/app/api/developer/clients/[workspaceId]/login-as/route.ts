@@ -6,11 +6,18 @@ import {
 } from "@/lib/vyron-workspace-impersonation";
 import { setWorkspaceAuthCookiesOnResponse } from "@/lib/vyron-workspace-cookies";
 import { clearAuthUserCookie } from "@/lib/vyron-workspace-auth";
+import { requirePlatformSessionFromRequest } from "@/lib/vyron-platform-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ workspaceId: string }> }) {
+  try {
+    await requirePlatformSessionFromRequest(request, ["PLATFORM_ADMIN", "PLATFORM_OPERATOR"]);
+  } catch {
+    return NextResponse.redirect(new URL("/developer-login?error=Developer%20authentication%20required", request.url));
+  }
+
   try {
     const { workspaceId } = await context.params;
     const result = await startClientImpersonation(workspaceId);
