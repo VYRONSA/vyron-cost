@@ -98,7 +98,7 @@ export default function FinishedGoodsClient() {
 
         <div className="grid gap-4 lg:grid-cols-2">
           {items.map((item) => (
-            <Link key={item.id} href={`/inventory-intelligence/finished-goods/${item.id}`} className="rounded-[28px] border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl">
+            <Link key={item.id} href={`/products/${item.id}`} className="rounded-[28px] border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-lg font-black text-slate-950">{item.product_name}</p>

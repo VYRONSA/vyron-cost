@@ -1132,6 +1132,13 @@ export async function updateCustomer(
     onHold: boolean;
   }>
 ) {
+  const { data: existingCustomer } = await supabase
+    .from("vyron_customers")
+    .select("id, customer_name, email, phone, xero_contact_id")
+    .eq("id", customerId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+
   const patch: Record<string, unknown> = {};
   if (input.customerName !== undefined) patch.customer_name = input.customerName.trim();
   if (input.category !== undefined) {
@@ -1158,7 +1165,65 @@ export async function updateCustomer(
     .select("*")
     .single();
   if (error) throw new Error(error.message);
-  return data as CustomerRow;
+  const updated = data as CustomerRow & { xero_contact_id?: string | null };
+
+  let existingContactId: string | null = null;
+  const xeroContactId = String(updated.xero_contact_id || existingCustomer?.xero_contact_id || "").trim();
+
+  if (xeroContactId) {
+    const { data: byXero } = await supabase
+      .from("vyron_contacts")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("xero_contact_id", xeroContactId)
+      .maybeSingle();
+    existingContactId = byXero?.id ? String(byXero.id) : null;
+  }
+
+  if (!existingContactId && existingCustomer?.customer_name) {
+    const { data: byOldName } = await supabase
+      .from("vyron_contacts")
+      .select("id")
+      .eq("company_id", companyId)
+      .ilike("contact_name", String(existingCustomer.customer_name))
+      .maybeSingle();
+    existingContactId = byOldName?.id ? String(byOldName.id) : null;
+  }
+
+  if (!existingContactId && updated.customer_name) {
+    const { data: byNewName } = await supabase
+      .from("vyron_contacts")
+      .select("id")
+      .eq("company_id", companyId)
+      .ilike("contact_name", String(updated.customer_name))
+      .maybeSingle();
+    existingContactId = byNewName?.id ? String(byNewName.id) : null;
+  }
+
+  if (existingContactId) {
+    await supabase
+      .from("vyron_contacts")
+      .update({
+        contact_name: updated.customer_name,
+        email: updated.email,
+        phone: updated.phone,
+        xero_contact_id: xeroContactId || null,
+        is_customer: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("company_id", companyId)
+      .eq("id", existingContactId);
+  } else {
+    await upsertVyronContact(supabase, companyId, {
+      contact_name: updated.customer_name,
+      email: updated.email,
+      phone: updated.phone,
+      xero_contact_id: xeroContactId || null,
+      is_customer: true,
+    });
+  }
+
+  return updated;
 }
 
 async function clearCustomerRoleOnContact(

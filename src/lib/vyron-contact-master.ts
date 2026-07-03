@@ -937,17 +937,6 @@ export async function listCustomerContactsAsCustomers(
     }
   }
 
-  // Keep customer selectors reliable even when contacts are not yet linked.
-  for (const customer of customers || []) {
-    const customerId = String(customer.id);
-    const isActive = customer.active !== false && String(customer.status || "Active") !== "Inactive";
-    if (!isActive) continue;
-    if (!seenIds.has(customerId)) {
-      seenIds.add(customerId);
-      result.push(customer);
-    }
-  }
-
   result.sort((a, b) => String(a.customer_name).localeCompare(String(b.customer_name)));
   return result;
 }

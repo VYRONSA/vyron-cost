@@ -911,23 +911,97 @@ export async function listStockBackedFinishedGoodsForInvoice(
     new Set((stockItems || []).map((item) => String(item.entity_id || "")).filter(Boolean))
   );
 
-  const { data: products, error: productError } = productIds.length
-    ? await supabase
+  let products: Array<Record<string, unknown>> = [];
+  let productError: { message: string } | null = null;
+  if (productIds.length) {
+    const scoped = await supabase
+      .from("vyron_cost_products")
+      .select("id, product_name, sku, selling_price, total_cost, product_status, status")
+      .eq("company_id", companyId)
+      .in("id", productIds);
+
+    if (
+      scoped.error &&
+      (String(scoped.error.message || "").toLowerCase().includes("product_status") ||
+        String(scoped.error.message || "").toLowerCase().includes("sku"))
+    ) {
+      const legacyScoped = await supabase
         .from("vyron_cost_products")
-        .select("id, product_name, sku, selling_price, total_cost, product_status")
+        .select("id, product_name, selling_price, total_cost, status")
         .eq("company_id", companyId)
-        .in("id", productIds)
-    : { data: [], error: null };
+        .in("id", productIds);
+      products = (legacyScoped.data || []) as Array<Record<string, unknown>>;
+      productError = legacyScoped.error as { message: string } | null;
+    } else {
+      products = (scoped.data || []) as Array<Record<string, unknown>>;
+      productError = scoped.error as { message: string } | null;
+    }
+  }
   if (productError) throw new Error(productError.message);
 
   const productById = new Map((products || []).map((product) => [String(product.id), product]));
+
+  // Legacy environments can still hold stock items keyed to vyron_finished_goods.id.
+  // Resolve those to canonical vyron_cost_products.id where possible.
+  const unresolvedEntityIds = productIds.filter((id) => !productById.has(id));
+  if (unresolvedEntityIds.length) {
+    try {
+      const { data: legacyRows } = await supabase
+        .from("vyron_finished_goods")
+        .select("id, product_id")
+        .eq("company_id", companyId)
+        .in("id", unresolvedEntityIds);
+
+      const legacyProductIds = Array.from(
+        new Set((legacyRows || []).map((row) => String(row.product_id || "")).filter(Boolean))
+      );
+
+      if (legacyProductIds.length) {
+        const legacyProductScoped = await supabase
+          .from("vyron_cost_products")
+          .select("id, product_name, sku, selling_price, total_cost, product_status, status")
+          .eq("company_id", companyId)
+          .in("id", legacyProductIds);
+
+        const legacyProducts = legacyProductScoped.error &&
+          (String(legacyProductScoped.error.message || "").toLowerCase().includes("product_status") ||
+            String(legacyProductScoped.error.message || "").toLowerCase().includes("sku"))
+          ? (
+              await supabase
+                .from("vyron_cost_products")
+                .select("id, product_name, selling_price, total_cost, status")
+                .eq("company_id", companyId)
+                .in("id", legacyProductIds)
+            ).data
+          : legacyProductScoped.data;
+
+        for (const product of legacyProducts || []) {
+          productById.set(String(product.id), product);
+        }
+
+        for (const row of legacyRows || []) {
+          const canonicalId = String(row.product_id || "");
+          if (!canonicalId) continue;
+          const canonical = productById.get(canonicalId);
+          if (canonical) {
+            // Alias legacy entity id to canonical product record for downstream mapping.
+            productById.set(String(row.id), canonical);
+          }
+        }
+      }
+    } catch {
+      // Legacy table may not exist in some environments; skip aliasing safely.
+    }
+  }
 
   const results: StockBackedFinishedGoodOption[] = [];
   for (const item of stockItems || []) {
     const productId = String(item.entity_id || "");
     if (!productId) continue;
     const product = productById.get(productId);
-    if (product && String(product.product_status || "") === "Archived") continue;
+    if (!product) continue;
+    const productStatus = String((product.product_status || product.status || "") as string);
+    if (product && productStatus === "Archived") continue;
 
     results.push({
       productId,

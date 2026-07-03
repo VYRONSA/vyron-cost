@@ -15,6 +15,11 @@ export async function listSuppliers(supabase: SupabaseClient, companyId: string)
   return (data || []) as CostSupplier[];
 }
 
+export async function getSupplierById(supabase: SupabaseClient, companyId: string, supplierId: string) {
+  const suppliers = await listSupplierContactsAsSuppliers(supabase, companyId);
+  return ((suppliers || []).find((row) => String(row.id) === supplierId) as CostSupplier | undefined) || null;
+}
+
 export async function createSupplier(
   supabase: SupabaseClient,
   companyId: string,
@@ -56,6 +61,13 @@ export async function updateSupplier(
   supplierId: string,
   input: Partial<CostSupplier>
 ) {
+  const { data: existingSupplier } = await supabase
+    .from("vyron_cost_suppliers")
+    .select("id, supplier_name, contact_email, phone, xero_contact_id")
+    .eq("id", supplierId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (input.supplier_name !== undefined) patch.supplier_name = input.supplier_name.trim();
   if (input.category !== undefined) patch.category = input.category;
@@ -76,7 +88,65 @@ export async function updateSupplier(
     .select("*")
     .single();
   if (error) throw new Error(error.message);
-  return data as CostSupplier;
+  const updated = data as CostSupplier & { xero_contact_id?: string | null };
+
+  let existingContactId: string | null = null;
+  const xeroContactId = String(updated.xero_contact_id || existingSupplier?.xero_contact_id || "").trim();
+
+  if (xeroContactId) {
+    const { data: byXero } = await supabase
+      .from("vyron_contacts")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("xero_contact_id", xeroContactId)
+      .maybeSingle();
+    existingContactId = byXero?.id ? String(byXero.id) : null;
+  }
+
+  if (!existingContactId && existingSupplier?.supplier_name) {
+    const { data: byOldName } = await supabase
+      .from("vyron_contacts")
+      .select("id")
+      .eq("company_id", companyId)
+      .ilike("contact_name", String(existingSupplier.supplier_name))
+      .maybeSingle();
+    existingContactId = byOldName?.id ? String(byOldName.id) : null;
+  }
+
+  if (!existingContactId && updated.supplier_name) {
+    const { data: byNewName } = await supabase
+      .from("vyron_contacts")
+      .select("id")
+      .eq("company_id", companyId)
+      .ilike("contact_name", String(updated.supplier_name))
+      .maybeSingle();
+    existingContactId = byNewName?.id ? String(byNewName.id) : null;
+  }
+
+  if (existingContactId) {
+    await supabase
+      .from("vyron_contacts")
+      .update({
+        contact_name: updated.supplier_name,
+        email: updated.contact_email,
+        phone: updated.phone,
+        xero_contact_id: xeroContactId || null,
+        is_supplier: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("company_id", companyId)
+      .eq("id", existingContactId);
+  } else {
+    await upsertVyronContact(supabase, companyId, {
+      contact_name: updated.supplier_name,
+      email: updated.contact_email,
+      phone: updated.phone,
+      xero_contact_id: xeroContactId || null,
+      is_supplier: true,
+    });
+  }
+
+  return updated;
 }
 
 async function clearSupplierRoleOnContact(
@@ -141,6 +211,17 @@ export async function listIngredients(supabase: SupabaseClient, companyId: strin
     .order("ingredient_name");
   if (error) throw new Error(error.message);
   return (data || []) as CostIngredient[];
+}
+
+export async function getIngredientById(supabase: SupabaseClient, companyId: string, ingredientId: string) {
+  const { data, error } = await supabase
+    .from("vyron_cost_ingredients")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("id", ingredientId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as CostIngredient | null) || null;
 }
 
 export async function createIngredient(
@@ -235,6 +316,299 @@ export async function listProducts(supabase: SupabaseClient, companyId: string) 
     .order("product_name");
   if (error) throw new Error(error.message);
   return (data || []) as CostProduct[];
+}
+
+type ProductReferenceCounts = {
+  bom: number;
+  salesOrder: number;
+  invoice: number;
+  stockMovement: number;
+  productionRun: number;
+};
+
+type ProductDeleteResult =
+  | { ok: true; mode: "deleted" | "archived"; references: ProductReferenceCounts }
+  | {
+      ok: false;
+      code: "PRODUCT_REFERENCED";
+      canArchive: true;
+      references: ProductReferenceCounts;
+      message: string;
+    };
+
+async function tableExists(supabase: SupabaseClient, tableName: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("information_schema.tables")
+    .select("table_name")
+    .eq("table_schema", "public")
+    .eq("table_name", tableName)
+    .maybeSingle();
+  if (error) return false;
+  return Boolean(data?.table_name);
+}
+
+function isMissingTableError(error: unknown): boolean {
+  const code = String((error as { code?: string } | null)?.code || "");
+  const message = String((error as { message?: string } | null)?.message || "").toLowerCase();
+  return (
+    code === "42P01" ||
+    code === "PGRST205" ||
+    message.includes("could not find the table") ||
+    message.includes("relation") && message.includes("does not exist")
+  );
+}
+
+function isMissingColumnError(error: unknown, column: string): boolean {
+  const code = String((error as { code?: string } | null)?.code || "");
+  const message = String((error as { message?: string } | null)?.message || "").toLowerCase();
+  return code === "42703" || message.includes(`column`) && message.includes(column.toLowerCase());
+}
+
+function supabaseErrorMessage(error: unknown): string {
+  const err = (error || {}) as {
+    message?: string;
+    details?: string;
+    hint?: string;
+    code?: string;
+  };
+  const message = String(err.message || "").trim();
+  if (message) return message;
+  const details = String(err.details || "").trim();
+  const hint = String(err.hint || "").trim();
+  const code = String(err.code || "").trim();
+  const parts = [code, details, hint].filter(Boolean);
+  if (parts.length) return parts.join(" | ");
+  return "Database operation failed.";
+}
+
+async function countProductReferences(
+  supabase: SupabaseClient,
+  companyId: string,
+  productId: string
+): Promise<ProductReferenceCounts> {
+  const refs: ProductReferenceCounts = {
+    bom: 0,
+    salesOrder: 0,
+    invoice: 0,
+    stockMovement: 0,
+    productionRun: 0,
+  };
+
+  // Conservative baseline: if the product is linked to a BOM, treat it as referenced.
+  const productLink = await supabase
+    .from("vyron_cost_products")
+    .select("linked_bom_id")
+    .eq("id", productId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (!productLink.error && productLink.data?.linked_bom_id) {
+    refs.bom = Math.max(refs.bom, 1);
+  }
+
+  {
+    let response = await supabase
+      .from("vyron_cost_recipes")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("product_id", productId)
+      .neq("status", "Archived");
+
+    if (response.error && isMissingColumnError(response.error, "status")) {
+      response = await supabase
+        .from("vyron_cost_recipes")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", companyId)
+        .eq("product_id", productId);
+    }
+
+    if (response.error && isMissingColumnError(response.error, "company_id")) {
+      response = await supabase
+        .from("vyron_cost_recipes")
+        .select("id", { count: "exact", head: true })
+        .eq("product_id", productId);
+    }
+
+    if (
+      response.error &&
+      !isMissingTableError(response.error) &&
+      !isMissingColumnError(response.error, "product_id")
+    ) {
+      refs.bom = Math.max(refs.bom, 1);
+    } else {
+      refs.bom = response.error ? refs.bom : Math.max(refs.bom, Number(response.count || 0));
+    }
+  }
+
+  {
+    let response = await supabase
+      .from("vyron_customer_sales_order_lines")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("product_id", productId);
+    if (response.error && isMissingColumnError(response.error, "company_id")) {
+      response = await supabase
+        .from("vyron_customer_sales_order_lines")
+        .select("id", { count: "exact", head: true })
+        .eq("product_id", productId);
+    }
+    if (
+      response.error &&
+      !isMissingTableError(response.error) &&
+      !isMissingColumnError(response.error, "product_id")
+    ) {
+      refs.salesOrder = Math.max(refs.salesOrder, 1);
+    } else {
+      refs.salesOrder = response.error ? 0 : Number(response.count || 0);
+    }
+  }
+
+  {
+    let response = await supabase
+      .from("vyron_customer_invoice_lines")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("product_id", productId);
+    if (response.error && isMissingColumnError(response.error, "company_id")) {
+      response = await supabase
+        .from("vyron_customer_invoice_lines")
+        .select("id", { count: "exact", head: true })
+        .eq("product_id", productId);
+    }
+    if (
+      response.error &&
+      !isMissingTableError(response.error) &&
+      !isMissingColumnError(response.error, "product_id")
+    ) {
+      refs.invoice = Math.max(refs.invoice, 1);
+    } else {
+      refs.invoice = response.error ? 0 : Number(response.count || 0);
+    }
+  }
+
+  {
+    let response = await supabase
+      .from("vyron_cost_production_runs")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("product_id", productId);
+    if (response.error && isMissingColumnError(response.error, "company_id")) {
+      response = await supabase
+        .from("vyron_cost_production_runs")
+        .select("id", { count: "exact", head: true })
+        .eq("product_id", productId);
+    }
+    if (
+      response.error &&
+      !isMissingTableError(response.error) &&
+      !isMissingColumnError(response.error, "product_id")
+    ) {
+      refs.productionRun = Math.max(refs.productionRun, 1);
+    } else {
+      refs.productionRun = response.error ? 0 : Number(response.count || 0);
+    }
+  }
+
+  const stockItemIds: string[] = [];
+  {
+    let response = await supabase
+      .from("vyron_cost_stock_items")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("entity_type", "finished_goods")
+      .eq("entity_id", productId);
+    if (response.error && isMissingColumnError(response.error, "company_id")) {
+      response = await supabase
+        .from("vyron_cost_stock_items")
+        .select("id")
+        .eq("entity_type", "finished_goods")
+        .eq("entity_id", productId);
+    }
+    if (response.error && !isMissingTableError(response.error)) {
+      refs.stockMovement = Math.max(refs.stockMovement, 1);
+    } else {
+      for (const row of response.data || []) {
+        stockItemIds.push(String(row.id));
+      }
+    }
+  }
+
+  let stockMovements = 0;
+  if (stockItemIds.length) {
+    let response = await supabase
+      .from("vyron_cost_stock_ledger")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .in("stock_item_id", stockItemIds);
+    if (response.error && isMissingColumnError(response.error, "company_id")) {
+      response = await supabase
+        .from("vyron_cost_stock_ledger")
+        .select("id", { count: "exact", head: true })
+        .in("stock_item_id", stockItemIds);
+    }
+    if (response.error && !isMissingTableError(response.error)) {
+      stockMovements += 1;
+    } else {
+      stockMovements += response.error ? 0 : Number(response.count || 0);
+    }
+  }
+
+  {
+    const candidateIds = [productId];
+    let legacyResponse = await supabase
+      .from("vyron_finished_goods")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("product_id", productId);
+    if (legacyResponse.error && isMissingColumnError(legacyResponse.error, "company_id")) {
+      legacyResponse = await supabase
+        .from("vyron_finished_goods")
+        .select("id")
+        .eq("product_id", productId);
+    }
+    if (
+      legacyResponse.error &&
+      !isMissingTableError(legacyResponse.error) &&
+      !isMissingColumnError(legacyResponse.error, "product_id")
+    ) {
+      stockMovements += 1;
+    } else {
+      for (const row of legacyResponse.data || []) {
+        candidateIds.push(String(row.id));
+      }
+    }
+
+    let movementResponse = await supabase
+      .from("vyron_stock_movements")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("item_type", "finished_good")
+      .in("item_id", Array.from(new Set(candidateIds)));
+    if (movementResponse.error && isMissingColumnError(movementResponse.error, "company_id")) {
+      movementResponse = await supabase
+        .from("vyron_stock_movements")
+        .select("id", { count: "exact", head: true })
+        .eq("item_type", "finished_good")
+        .in("item_id", Array.from(new Set(candidateIds)));
+    }
+    if (movementResponse.error && isMissingColumnError(movementResponse.error, "item_type")) {
+      movementResponse = await supabase
+        .from("vyron_stock_movements")
+        .select("id", { count: "exact", head: true })
+        .in("item_id", Array.from(new Set(candidateIds)));
+    }
+    if (movementResponse.error && !isMissingTableError(movementResponse.error)) {
+      stockMovements += 1;
+    } else {
+      stockMovements += movementResponse.error ? 0 : Number(movementResponse.count || 0);
+    }
+  }
+
+  refs.stockMovement = stockMovements;
+  return refs;
+}
+
+function hasReferences(refs: ProductReferenceCounts) {
+  return refs.bom > 0 || refs.salesOrder > 0 || refs.invoice > 0 || refs.stockMovement > 0 || refs.productionRun > 0;
 }
 
 export async function createProduct(
@@ -335,16 +709,67 @@ export async function updateProduct(
   return data as CostProduct;
 }
 
-export async function deleteProduct(supabase: SupabaseClient, companyId: string, productId: string) {
-  const { error } = await supabase
+export async function deleteProduct(
+  supabase: SupabaseClient,
+  companyId: string,
+  productId: string,
+  options?: { mode?: "delete" | "archive" }
+): Promise<ProductDeleteResult> {
+  let refs: ProductReferenceCounts;
+  try {
+    refs = await countProductReferences(supabase, companyId, productId);
+  } catch (error) {
+    throw new Error(`Reference check failed: ${error instanceof Error ? error.message : "unknown error"}`);
+  }
+  const mode = options?.mode || "delete";
+
+  if (mode === "delete" && hasReferences(refs)) {
+    return {
+      ok: false,
+      code: "PRODUCT_REFERENCED",
+      canArchive: true,
+      references: refs,
+      message:
+        "Product cannot be deleted because it is referenced by operational records. Archive instead to preserve history.",
+    };
+  }
+
+  if (mode === "archive") {
+    const { error } = await supabase
+      .from("vyron_cost_products")
+      .update({
+        product_status: "Archived",
+        status: "Archived",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", productId)
+      .eq("company_id", companyId);
+    if (error) throw new Error(`Archive update failed: ${supabaseErrorMessage(error)}`);
+    return { ok: true, mode: "archived", references: refs };
+  }
+
+  const { error: deleteError } = await supabase
     .from("vyron_cost_products")
-    .update({
-      product_status: "Archived",
-      status: "Archived",
-      updated_at: new Date().toISOString(),
-    })
+    .delete()
     .eq("id", productId)
     .eq("company_id", companyId);
-  if (error) throw new Error(error.message);
-  return { ok: true };
+  if (deleteError) throw new Error(`Delete row failed: ${supabaseErrorMessage(deleteError)}`);
+
+  const { error: stockCleanupError } = await supabase
+    .from("vyron_cost_stock_items")
+    .delete()
+    .eq("company_id", companyId)
+    .eq("entity_type", "finished_goods")
+    .eq("entity_id", productId);
+  if (
+    stockCleanupError &&
+    !isMissingTableError(stockCleanupError) &&
+    !isMissingColumnError(stockCleanupError, "company_id") &&
+    !isMissingColumnError(stockCleanupError, "entity_type") &&
+    !isMissingColumnError(stockCleanupError, "entity_id")
+  ) {
+    throw new Error(`Stock cleanup failed: ${supabaseErrorMessage(stockCleanupError)}`);
+  }
+
+  return { ok: true, mode: "deleted", references: refs };
 }

@@ -13,6 +13,7 @@ import {
 type Item = {
   id: string;
   entity_id: string | null;
+  product_id: string | null;
   item_code: string;
   description: string;
   qty_on_hand: number;
@@ -112,8 +113,8 @@ export default function FinishedGoodsDashboardClient() {
                     <Link href={`/inventory/stock/${item.id}`} className="text-xs font-black text-violet-700">
                       Stock detail
                     </Link>
-                    {item.entity_id ? (
-                      <Link href={`/products/${item.entity_id}`} className="ml-3 text-xs font-black text-[#65A30D]">
+                    {item.product_id ? (
+                      <Link href={`/products/${item.product_id}`} className="ml-3 text-xs font-black text-[#65A30D]">
                         Product
                       </Link>
                     ) : null}

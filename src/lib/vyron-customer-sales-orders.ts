@@ -245,6 +245,17 @@ function round4(value: number) {
   return Math.round(value * 10000) / 10000;
 }
 
+function isMissingTableError(error: unknown) {
+  const code = String((error as { code?: string } | null)?.code || "");
+  const message = String((error as { message?: string } | null)?.message || "").toLowerCase();
+  return (
+    code === "42P01" ||
+    code === "PGRST205" ||
+    message.includes("does not exist") ||
+    message.includes("could not find the table")
+  );
+}
+
 function daysBetween(fromDate: string, toDate: string) {
   const a = new Date(fromDate);
   const b = new Date(toDate);
@@ -1451,8 +1462,8 @@ export async function getCustomerCommercialKpis(
       .eq("company_id", companyId)
       .eq("customer_id", customerId),
   ]);
-  if (invoiceError) throw new Error(invoiceError.message);
-  if (orderError) throw new Error(orderError.message);
+  if (invoiceError && !isMissingTableError(invoiceError)) throw new Error(invoiceError.message);
+  if (orderError && !isMissingTableError(orderError)) throw new Error(orderError.message);
 
   const invoiceRows = invoices || [];
   const orderRows = orders || [];
@@ -1535,8 +1546,8 @@ export async function getCustomerIntelligence(
       .eq("customer_id", customerId)
       .order("created_at", { ascending: true }),
   ]);
-  if (invoiceError) throw new Error(invoiceError.message);
-  if (orderError) throw new Error(orderError.message);
+  if (invoiceError && !isMissingTableError(invoiceError)) throw new Error(invoiceError.message);
+  if (orderError && !isMissingTableError(orderError)) throw new Error(orderError.message);
 
   const invoiceRows = invoices || [];
   const orderRows = orderHeaders || [];
@@ -1548,7 +1559,7 @@ export async function getCustomerIntelligence(
         .select("invoice_id, product_name, quantity, selling_price")
         .in("invoice_id", invoiceIds)
     : { data: [], error: null };
-  if (lineError) throw new Error(lineError.message);
+  if (lineError && !isMissingTableError(lineError)) throw new Error(lineError.message);
 
   const lifetimeValue = round2(invoiceRows.reduce((sum, row) => sum + Number(row.sales_value || 0), 0));
   const totalGp = round2(invoiceRows.reduce((sum, row) => sum + Number(row.gross_profit || 0), 0));

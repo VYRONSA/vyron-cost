@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recalculateBomsUsingIngredient } from "@/lib/vyron-cost-ingredient-intelligence";
-import { deleteIngredient, updateIngredient } from "@/lib/vyron-cost-master-data";
+import { deleteIngredient, getIngredientById, updateIngredient } from "@/lib/vyron-cost-master-data";
 import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import {
@@ -9,6 +9,26 @@ import {
 } from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
+
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!isSupabaseServiceRoleConfigured()) {
+    return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
+  }
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
+
+  const { id } = await params;
+
+  try {
+    await requireWorkspacePermission("ingredients.view");
+    const companyId = await requireApiCompanyId();
+    const ingredient = await getIngredientById(supabase, companyId, id);
+    if (!ingredient) return NextResponse.json({ ok: false, error: "Ingredient not found." }, { status: 404 });
+    return NextResponse.json({ ok: true, ingredient });
+  } catch (error) {
+    return workspaceAccessErrorResponse(error, "Load failed.");
+  }
+}
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!isSupabaseServiceRoleConfigured()) {

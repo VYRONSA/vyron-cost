@@ -4,11 +4,22 @@ import { notFound } from "next/navigation";
 import SupplierAiRecommendations from "@/components/SupplierAiRecommendations";
 import SupplierProcurementStats from "@/components/SupplierProcurementStats";
 import VyronCostAiShell from "@/components/VyronCostAiShell";
-import { formatMoney, getIngredients, getSupplierById } from "@/lib/vyron-cost-core-data";
+import { formatMoney } from "@/lib/vyron-cost-core-data";
+import { getIngredientById, getSupplierById, listIngredients } from "@/lib/vyron-cost-master-data";
+import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
+import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export default async function SupplierDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  if (!isSupabaseServiceRoleConfigured()) notFound();
+  const supabase = getSupabaseAdmin();
+  if (!supabase) notFound();
+
   const { id } = await params;
-  const [supplier, ingredients] = await Promise.all([getSupplierById(id), getIngredients()]);
+  const companyId = await requireApiCompanyId();
+  const [supplier, ingredients] = await Promise.all([
+    getSupplierById(supabase, companyId, id),
+    listIngredients(supabase, companyId),
+  ]);
   const linked = ingredients.filter((i) => i.supplier_id === id);
   if (!supplier) notFound();
   return (

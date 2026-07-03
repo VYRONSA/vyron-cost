@@ -1292,9 +1292,46 @@ export async function getFinishedGoodsDashboard(supabase: SupabaseClient, compan
     .eq("entity_type", "finished_goods")
     .order("description");
 
+  const entityIds = Array.from(
+    new Set((items || []).map((item) => String(item.entity_id || "")).filter(Boolean))
+  );
+
+  const { data: directProducts } = entityIds.length
+    ? await supabase
+        .from("vyron_cost_products")
+        .select("id")
+        .eq("company_id", companyId)
+        .in("id", entityIds)
+    : { data: [] as Array<{ id: string }> };
+
+  const directProductIds = new Set((directProducts || []).map((row) => String(row.id)));
+
+  let legacyMap = new Map<string, string>();
+  const unresolvedIds = entityIds.filter((id) => !directProductIds.has(id));
+  if (unresolvedIds.length) {
+    try {
+      const { data: legacyRows } = await supabase
+        .from("vyron_finished_goods")
+        .select("id, product_id")
+        .eq("company_id", companyId)
+        .in("id", unresolvedIds);
+
+      legacyMap = new Map(
+        (legacyRows || [])
+          .map((row): [string, string] => [String(row.id), String(row.product_id || "")])
+          .filter((entry) => Boolean(entry[1]))
+      );
+    } catch {
+      legacyMap = new Map();
+    }
+  }
+
   return (items || []).map((item) => ({
     id: item.id,
     entity_id: item.entity_id,
+    product_id: directProductIds.has(String(item.entity_id || ""))
+      ? String(item.entity_id)
+      : legacyMap.get(String(item.entity_id || "")) || null,
     item_code: item.item_code,
     description: item.description,
     qty_on_hand: Number(item.qty_on_hand || 0),

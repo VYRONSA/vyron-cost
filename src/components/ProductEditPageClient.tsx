@@ -155,8 +155,35 @@ export default function ProductEditPageClient({
       if (!product.id.startsWith("product")) {
         const response = await fetch(`/api/products/${product.id}`, { method: "DELETE" });
         const data = await response.json();
+        if (response.status === 409 && data?.code === "PRODUCT_REFERENCED") {
+          const refs = data.references || {};
+          const reasons = [
+            `BOM: ${Number(refs.bom || 0)}`,
+            `Sales Orders: ${Number(refs.salesOrder || 0)}`,
+            `Invoices: ${Number(refs.invoice || 0)}`,
+            `Stock Movements: ${Number(refs.stockMovement || 0)}`,
+            `Production Runs: ${Number(refs.productionRun || 0)}`,
+          ].join("\n");
+
+          const shouldArchive = window.confirm(
+            `This product is referenced and cannot be deleted.\n\n${reasons}\n\nArchive instead?`
+          );
+          if (!shouldArchive) {
+            setMessage(data.message || "Product is referenced and cannot be deleted.");
+            return;
+          }
+
+          const archiveResponse = await fetch(`/api/products/${product.id}?mode=archive`, { method: "DELETE" });
+          const archiveData = await archiveResponse.json();
+          if (!archiveResponse.ok || !archiveData.ok) {
+            setMessage(archiveData.error || "Could not archive product.");
+            return;
+          }
+          router.push("/products");
+          return;
+        }
         if (!data.ok) {
-          setMessage(data.error || "Could not archive product.");
+          setMessage(data.error || "Could not delete product.");
           return;
         }
       }

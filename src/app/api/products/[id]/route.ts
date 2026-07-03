@@ -37,13 +37,19 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
 
   const { id } = await params;
+  const mode = _request.nextUrl.searchParams.get("mode") === "archive" ? "archive" : "delete";
 
   try {
     await requireWorkspacePermission("products.delete");
     const companyId = await requireApiCompanyId();
-    await deleteProduct(supabase, companyId, id);
-    return NextResponse.json({ ok: true });
+    const result = await deleteProduct(supabase, companyId, id, { mode });
+
+    if (!result.ok && result.code === "PRODUCT_REFERENCED") {
+      return NextResponse.json(result, { status: 409 });
+    }
+
+    return NextResponse.json(result);
   } catch (error) {
-    return workspaceAccessErrorResponse(error, "Archive failed.");
+    return workspaceAccessErrorResponse(error, mode === "archive" ? "Archive failed." : "Delete failed.");
   }
 }

@@ -62,10 +62,92 @@ export async function getProductById(id: string): Promise<{ product: CostProduct
   if (companyId) query = query.eq("company_id", companyId);
   const { data, error } = await query.maybeSingle();
 
-  if (error || !data) return { product: null, bom: null, boms };
+  let resolved = (!error && data ? (data as CostProduct) : null);
 
-  const bom = boms.find((item) => item.id === data.linked_bom_id) || null;
-  return { product: data as CostProduct, bom, boms };
+  if (!resolved && typeof window === "undefined") {
+    try {
+      const { getSupabaseAdmin, isSupabaseServiceRoleConfigured } = await import("@/lib/supabase-server");
+      if (isSupabaseServiceRoleConfigured()) {
+        const admin = getSupabaseAdmin();
+        if (admin) {
+          let adminQuery = admin.from("vyron_cost_products").select("*").eq("id", id);
+          if (companyId) adminQuery = adminQuery.eq("company_id", companyId);
+          const { data: adminData } = await adminQuery.maybeSingle();
+          if (adminData) {
+            resolved = adminData as CostProduct;
+          }
+        }
+      }
+    } catch {
+      // Ignore admin fallback errors and continue legacy ID fallback checks below.
+    }
+  }
+
+  // Backward-compatible fallback paths for links carrying stock item IDs or legacy finished-goods IDs.
+  if (!resolved && companyId) {
+    try {
+      const { data: stockItem } = await supabase
+        .from("vyron_cost_stock_items")
+        .select("entity_id")
+        .eq("company_id", companyId)
+        .eq("id", id)
+        .eq("entity_type", "finished_goods")
+        .maybeSingle();
+
+      const stockEntityId = String(stockItem?.entity_id || "");
+      if (stockEntityId) {
+        const { data: byEntity } = await supabase
+          .from("vyron_cost_products")
+          .select("*")
+          .eq("company_id", companyId)
+          .eq("id", stockEntityId)
+          .maybeSingle();
+        if (byEntity) resolved = byEntity as CostProduct;
+      }
+    } catch {
+      // Ignore fallback lookup errors for environments missing optional stock tables.
+    }
+  }
+
+  if (!resolved && companyId) {
+    try {
+      const { data: legacyFg } = await supabase
+        .from("vyron_finished_goods")
+        .select("id, product_id, product_name")
+        .eq("company_id", companyId)
+        .eq("id", id)
+        .maybeSingle();
+
+      const canonicalProductId = String(legacyFg?.product_id || "");
+      if (canonicalProductId) {
+        const { data: byLegacyProductId } = await supabase
+          .from("vyron_cost_products")
+          .select("*")
+          .eq("company_id", companyId)
+          .eq("id", canonicalProductId)
+          .maybeSingle();
+        if (byLegacyProductId) resolved = byLegacyProductId as CostProduct;
+      }
+
+      if (!resolved && legacyFg?.product_name) {
+        const { data: byName } = await supabase
+          .from("vyron_cost_products")
+          .select("*")
+          .eq("company_id", companyId)
+          .ilike("product_name", String(legacyFg.product_name))
+          .limit(1)
+          .maybeSingle();
+        if (byName) resolved = byName as CostProduct;
+      }
+    } catch {
+      // Ignore fallback lookup errors for environments missing optional legacy tables.
+    }
+  }
+
+  if (!resolved) return { product: null, bom: null, boms };
+
+  const bom = boms.find((item) => item.id === resolved?.linked_bom_id) || null;
+  return { product: resolved, bom, boms };
 }
 
 export async function getProductFormData() {

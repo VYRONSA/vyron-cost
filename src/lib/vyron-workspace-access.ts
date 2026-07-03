@@ -87,10 +87,11 @@ export function workspaceAccessErrorResponse(error: unknown, fallbackMessage: st
       { status: 503 }
     );
   }
-  return NextResponse.json(
-    { ok: false, error: error instanceof Error ? error.message : fallbackMessage },
-    { status: 500 }
-  );
+  const message =
+    error instanceof Error && String(error.message || "").trim().length
+      ? error.message
+      : fallbackMessage;
+  return NextResponse.json({ ok: false, error: message }, { status: 500 });
 }
 
 export function canMutate(

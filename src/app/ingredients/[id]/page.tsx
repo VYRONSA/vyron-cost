@@ -1,10 +1,22 @@
 import IngredientEditPageClient from "@/components/IngredientEditPageClient";
 import VyronCostAiShell from "@/components/VyronCostAiShell";
-import { calculateMovementPercent, formatMoney, getIngredientById } from "@/lib/vyron-cost-core-data";
+import { calculateMovementPercent, formatMoney } from "@/lib/vyron-cost-core-data";
+import { getIngredientById } from "@/lib/vyron-cost-master-data";
+import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
+import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
 export default async function IngredientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  if (!isSupabaseServiceRoleConfigured()) {
+    return <VyronCostAiShell hidePageHeader title="Ingredient Not Found"><div className="rounded-[2rem] bg-white p-8">Ingredient not found.</div></VyronCostAiShell>;
+  }
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    return <VyronCostAiShell hidePageHeader title="Ingredient Not Found"><div className="rounded-[2rem] bg-white p-8">Ingredient not found.</div></VyronCostAiShell>;
+  }
+
   const { id } = await params;
-  const ingredient = await getIngredientById(id);
+  const companyId = await requireApiCompanyId();
+  const ingredient = await getIngredientById(supabase, companyId, id);
   if (!ingredient) return <VyronCostAiShell hidePageHeader title="Ingredient Not Found"><div className="rounded-[2rem] bg-white p-8">Ingredient not found.</div></VyronCostAiShell>;
   const movement = calculateMovementPercent(Number(ingredient.previous_cost || 0), Number(ingredient.purchase_cost || 0));
   return (

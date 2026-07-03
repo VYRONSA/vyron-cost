@@ -167,17 +167,47 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
       try {
         const response = await fetch(`/api/products/${id}`, { method: "DELETE" });
         const data = await response.json();
+        if (response.status === 409 && data?.code === "PRODUCT_REFERENCED") {
+          const refs = data.references || {};
+          const reasons = [
+            `BOM: ${Number(refs.bom || 0)}`,
+            `Sales Orders: ${Number(refs.salesOrder || 0)}`,
+            `Invoices: ${Number(refs.invoice || 0)}`,
+            `Stock Movements: ${Number(refs.stockMovement || 0)}`,
+            `Production Runs: ${Number(refs.productionRun || 0)}`,
+          ].join("\n");
+
+          const shouldArchive = window.confirm(
+            `This product is referenced and cannot be deleted.\n\n${reasons}\n\nArchive instead?`
+          );
+
+          if (shouldArchive) {
+            const archiveResponse = await fetch(`/api/products/${id}?mode=archive`, { method: "DELETE" });
+            const archiveData = await archiveResponse.json();
+            if (!archiveResponse.ok || !archiveData?.ok) {
+              setErrorMessage(archiveData?.error || "Failed to archive product.");
+              return;
+            }
+            setProducts((current) => current.filter((product) => product.id !== id));
+            setMessage("Product archived.");
+            return;
+          }
+
+          setErrorMessage(data.message || "Product is referenced and cannot be deleted.");
+          return;
+        }
+
         if (!data.ok) {
           setErrorMessage(data.error || "Failed to archive product.");
           return;
         }
       } catch {
-        setErrorMessage("Failed to archive product.");
+        setErrorMessage("Failed to delete product.");
         return;
       }
     }
     setProducts((current) => current.filter((product) => product.id !== id));
-    setMessage("Product archived.");
+    setMessage("Product deleted.");
   }
 
   return (
