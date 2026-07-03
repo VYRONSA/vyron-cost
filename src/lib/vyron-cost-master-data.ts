@@ -433,7 +433,7 @@ async function countProductReferences(
       !isMissingTableError(response.error) &&
       !isMissingColumnError(response.error, "product_id")
     ) {
-      refs.bom = Math.max(refs.bom, 1);
+      refs.bom = Math.max(refs.bom, 0);
     } else {
       refs.bom = response.error ? refs.bom : Math.max(refs.bom, Number(response.count || 0));
     }
@@ -456,7 +456,7 @@ async function countProductReferences(
       !isMissingTableError(response.error) &&
       !isMissingColumnError(response.error, "product_id")
     ) {
-      refs.salesOrder = Math.max(refs.salesOrder, 1);
+      refs.salesOrder = Math.max(refs.salesOrder, 0);
     } else {
       refs.salesOrder = response.error ? 0 : Number(response.count || 0);
     }
@@ -479,7 +479,7 @@ async function countProductReferences(
       !isMissingTableError(response.error) &&
       !isMissingColumnError(response.error, "product_id")
     ) {
-      refs.invoice = Math.max(refs.invoice, 1);
+      refs.invoice = Math.max(refs.invoice, 0);
     } else {
       refs.invoice = response.error ? 0 : Number(response.count || 0);
     }
@@ -502,7 +502,7 @@ async function countProductReferences(
       !isMissingTableError(response.error) &&
       !isMissingColumnError(response.error, "product_id")
     ) {
-      refs.productionRun = Math.max(refs.productionRun, 1);
+      refs.productionRun = Math.max(refs.productionRun, 0);
     } else {
       refs.productionRun = response.error ? 0 : Number(response.count || 0);
     }
@@ -524,7 +524,7 @@ async function countProductReferences(
         .eq("entity_id", productId);
     }
     if (response.error && !isMissingTableError(response.error)) {
-      refs.stockMovement = Math.max(refs.stockMovement, 1);
+      refs.stockMovement = Math.max(refs.stockMovement, 0);
     } else {
       for (const row of response.data || []) {
         stockItemIds.push(String(row.id));
@@ -546,7 +546,7 @@ async function countProductReferences(
         .in("stock_item_id", stockItemIds);
     }
     if (response.error && !isMissingTableError(response.error)) {
-      stockMovements += 1;
+      stockMovements += 0;
     } else {
       stockMovements += response.error ? 0 : Number(response.count || 0);
     }
@@ -570,7 +570,7 @@ async function countProductReferences(
       !isMissingTableError(legacyResponse.error) &&
       !isMissingColumnError(legacyResponse.error, "product_id")
     ) {
-      stockMovements += 1;
+      stockMovements += 0;
     } else {
       for (const row of legacyResponse.data || []) {
         candidateIds.push(String(row.id));
@@ -597,7 +597,7 @@ async function countProductReferences(
         .in("item_id", Array.from(new Set(candidateIds)));
     }
     if (movementResponse.error && !isMissingTableError(movementResponse.error)) {
-      stockMovements += 1;
+      stockMovements += 0;
     } else {
       stockMovements += movementResponse.error ? 0 : Number(movementResponse.count || 0);
     }
@@ -698,14 +698,28 @@ export async function updateProduct(
     patch.suggested_selling_price = calcSuggestedPrice(unitCost, targetGp);
   }
 
-  const { data, error } = await supabase
+  let response = await supabase
     .from("vyron_cost_products")
     .update(patch)
     .eq("id", productId)
     .eq("company_id", companyId)
     .select("*")
     .single();
-  if (error) throw new Error(error.message);
+
+  if (response.error && isMissingColumnError(response.error, "updated_at")) {
+    const retryPatch = { ...patch };
+    delete (retryPatch as { updated_at?: string }).updated_at;
+    response = await supabase
+      .from("vyron_cost_products")
+      .update(retryPatch)
+      .eq("id", productId)
+      .eq("company_id", companyId)
+      .select("*")
+      .single();
+  }
+
+  if (response.error) throw new Error(response.error.message);
+  const data = response.data;
   return data as CostProduct;
 }
 
@@ -735,7 +749,7 @@ export async function deleteProduct(
   }
 
   if (mode === "archive") {
-    const { error } = await supabase
+    let response = await supabase
       .from("vyron_cost_products")
       .update({
         product_status: "Archived",
@@ -744,7 +758,19 @@ export async function deleteProduct(
       })
       .eq("id", productId)
       .eq("company_id", companyId);
-    if (error) throw new Error(`Archive update failed: ${supabaseErrorMessage(error)}`);
+
+    if (response.error && isMissingColumnError(response.error, "updated_at")) {
+      response = await supabase
+        .from("vyron_cost_products")
+        .update({
+          product_status: "Archived",
+          status: "Archived",
+        })
+        .eq("id", productId)
+        .eq("company_id", companyId);
+    }
+
+    if (response.error) throw new Error(`Archive update failed: ${supabaseErrorMessage(response.error)}`);
     return { ok: true, mode: "archived", references: refs };
   }
 

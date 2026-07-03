@@ -108,10 +108,18 @@ export default function ProcurementPoFormClient({
   }, [poId, supplierOptions]);
 
   const supplierName = supplierOptions.find((s) => s.id === supplierId)?.supplier_name || "";
-  const total = useMemo(
-    () => lines.reduce((s, l) => s + calcLineTotals(l.quantity, l.unit_price, l.vat_rate).lineTotal, 0),
-    [lines]
-  );
+  const totals = useMemo(() => {
+    return lines.reduce(
+      (acc, line) => {
+        const calc = calcLineTotals(line.quantity, line.unit_price, line.vat_rate);
+        acc.subtotal += calc.subtotal;
+        acc.vat += calc.vatAmount;
+        acc.total += calc.lineTotal;
+        return acc;
+      },
+      { subtotal: 0, vat: 0, total: 0 }
+    );
+  }, [lines]);
 
   function updateLine(id: string, patch: Partial<LineRow>) {
     setLines((current) => current.map((l) => (l.id === id ? { ...l, ...patch } : l)));
@@ -212,7 +220,7 @@ export default function ProcurementPoFormClient({
       <div className="space-y-3">
         <div className="text-sm font-black text-slate-900">Lines</div>
         {lines.map((line) => (
-          <div key={line.id} className="grid gap-2 rounded-xl border border-slate-100 p-3 md:grid-cols-6">
+          <div key={line.id} className="grid gap-2 rounded-xl border border-slate-100 p-3 md:grid-cols-8">
             <select disabled={!canSaveDraft} className="rounded-lg border px-2 py-2 text-xs font-bold disabled:bg-slate-50" value={line.item_type} onChange={(e) => updateLine(line.id, { item_type: e.target.value as PoItemType })}>
               <option value="ingredient">Ingredient</option>
               <option value="packaging">Packaging</option>
@@ -223,13 +231,19 @@ export default function ProcurementPoFormClient({
             <input disabled={!canSaveDraft} type="number" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="Qty" value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: Number(e.target.value) })} />
             <input disabled={!canSaveDraft} className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="Unit" value={line.unit} onChange={(e) => updateLine(line.id, { unit: e.target.value })} />
             <input disabled={!canSaveDraft} type="number" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="Unit price" value={line.unit_price} onChange={(e) => updateLine(line.id, { unit_price: Number(e.target.value) })} />
+            <input disabled={!canSaveDraft} type="number" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="VAT %" value={line.vat_rate} onChange={(e) => updateLine(line.id, { vat_rate: Number(e.target.value) })} />
+            <input disabled={!canSaveDraft} type="date" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" value={line.expected_delivery_date} onChange={(e) => updateLine(line.id, { expected_delivery_date: e.target.value })} />
           </div>
         ))}
         <button type="button" disabled={!canSaveDraft} onClick={() => setLines((c) => [...c, emptyLine()])} className="text-xs font-black text-violet-700 disabled:opacity-50">
           + Add line
         </button>
       </div>
-      <div className="text-lg font-black">Total: R{total.toFixed(2)}</div>
+      <div className="grid gap-2 rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm font-bold text-slate-700 md:grid-cols-3">
+        <div>Subtotal: <span className="font-black">R{totals.subtotal.toFixed(2)}</span></div>
+        <div>VAT: <span className="font-black">R{totals.vat.toFixed(2)}</span></div>
+        <div>Total: <span className="font-black">R{totals.total.toFixed(2)}</span></div>
+      </div>
       {message ? <p className="text-sm font-bold text-red-600">{message}</p> : null}
       <div className="flex gap-2">
         {canSaveDraft ? (

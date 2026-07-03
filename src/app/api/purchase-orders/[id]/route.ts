@@ -64,11 +64,25 @@ export async function GET(request: NextRequest, context: RouteContext) {
         .order("created_at", { ascending: false }),
     ]);
 
+    const supplierId = purchaseOrder.supplier_id ? String(purchaseOrder.supplier_id) : "";
+    const supplier = supplierId
+      ? await supabase
+          .from("vyron_cost_suppliers")
+          .select("id, supplier_name, contact_email, invoice_email, phone")
+          .eq("id", supplierId)
+          .eq("company_id", companyId)
+          .maybeSingle()
+      : { data: null, error: null };
+
     return NextResponse.json({
       ok: true,
-      purchaseOrder: po,
+      purchaseOrder: {
+        ...po,
+        supplier: supplier.data || null,
+      },
       goodsReceipts: goodsReceipts || [],
       linkedInvoices: linkedInvoices || [],
+      supplier: supplier.data || null,
     });
   } catch (error) {
     return workspaceAccessErrorResponse(error, "Load failed.");

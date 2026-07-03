@@ -114,8 +114,8 @@ export default function FinishedGoodsDashboardClient() {
                       Stock detail
                     </Link>
                     {item.product_id ? (
-                      <Link href={`/products/${item.product_id}`} className="ml-3 text-xs font-black text-[#65A30D]">
-                        Product
+                      <Link href={`/products/${item.product_id}/edit`} className="ml-3 text-xs font-black text-[#65A30D]">
+                        Open maintenance
                       </Link>
                     ) : null}
                   </td>

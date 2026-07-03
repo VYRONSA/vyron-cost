@@ -44,9 +44,63 @@ const checks = [
   },
   {
     table: "vyron_cost_products",
-    select: "id,product_name,selling_price,total_cost,target_gp,calculated_gp,actual_gp,linked_bom_id",
+    select: "id,product_name,selling_price,total_cost,target_gp,calculated_gp,actual_gp,linked_bom_id,updated_at",
     migrationHint:
-      "Apply src/supabase/migrations/20260705_vyron_cost_products_actual_gp_alignment.sql",
+      "Apply src/supabase/migrations/20260705_vyron_cost_products_actual_gp_alignment.sql + src/supabase/migrations/20260709_vyron_cost_products_updated_at_fix.sql",
+  },
+  {
+    table: "vyron_cost_procurement_requisitions",
+    select: "id,company_id,requisition_number,status,required_date,notes,created_by,created_at,updated_at",
+    migrationHint:
+      "Apply src/supabase/migrations/20260701_vyron_procurement_requisitions.sql or consolidated sync migration.",
+  },
+  {
+    table: "vyron_cost_procurement_requisition_lines",
+    select: "id,company_id,requisition_id,ingredient_id,ingredient_name,required_qty,available_qty,shortage_qty,unit,estimated_cost,preferred_supplier_id,sort_order,created_at",
+    migrationHint:
+      "Apply src/supabase/migrations/20260701_vyron_procurement_requisitions.sql or consolidated sync migration.",
+  },
+  {
+    table: "vyron_cost_purchase_orders",
+    select: "id,company_id,supplier_id,po_number,supplier_name_snapshot,status,order_date,expected_date,notes,subtotal,vat_amount,total,expected_total,invoice_total,variance,outstanding_amount,approved_by,approved_at,approval_notes,match_status,procurement_requisition_id,created_by,submitted_at,sent_at,closed_at,created_at,updated_at",
+    migrationHint:
+      "Apply consolidated procurement/purchase-order schema sync migration.",
+  },
+  {
+    table: "vyron_cost_purchase_order_lines",
+    select: "id,company_id,purchase_order_id,item_type,item_id,item_name,quantity,unit,unit_price,vat_rate,vat_amount,line_total,expected_delivery_date,ordered_qty,received_qty,damaged_qty,rejected_qty,outstanding_qty,sort_order,created_at,updated_at",
+    migrationHint:
+      "Apply consolidated procurement/purchase-order schema sync migration.",
+  },
+  {
+    table: "vyron_cost_goods_receipts",
+    select: "id,company_id,purchase_order_id,grn_number,supplier_id,supplier_name_snapshot,receipt_type,status,received_at,received_by,notes,created_at,updated_at",
+    migrationHint:
+      "Apply consolidated procurement/purchase-order schema sync migration.",
+  },
+  {
+    table: "vyron_cost_goods_receipt_lines",
+    select: "id,company_id,goods_receipt_id,purchase_order_line_id,item_name,ordered_qty,received_qty,damaged_qty,rejected_qty,outstanding_qty,unit,sort_order,created_at,updated_at",
+    migrationHint:
+      "Apply consolidated procurement/purchase-order schema sync migration.",
+  },
+  {
+    table: "vyron_cost_back_orders",
+    select: "id,company_id,purchase_order_id,purchase_order_line_id,supplier_id,supplier_name_snapshot,item_name,outstanding_qty,expected_date,status,created_at,updated_at",
+    migrationHint:
+      "Apply consolidated procurement/purchase-order schema sync migration.",
+  },
+  {
+    table: "vyron_procurement_audit_log",
+    select: "id,company_id,event_type,entity_type,entity_id,entity_label,detail,actor,metadata,created_at",
+    migrationHint:
+      "Apply consolidated procurement/purchase-order schema sync migration.",
+  },
+  {
+    table: "vyron_po_approval_rules",
+    select: "id,company_id,auto_approve_below,supervisor_approve_below,require_po_before_invoice_approval,created_at,updated_at",
+    migrationHint:
+      "Apply consolidated procurement/purchase-order schema sync migration.",
   },
   {
     table: "vyron_cost_stock_items",

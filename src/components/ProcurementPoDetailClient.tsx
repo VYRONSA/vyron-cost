@@ -106,11 +106,16 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
     const body = encodeURIComponent(
       `Please find purchase order ${poNumber} for ${supplier}.\nTotal: ${total}\n\nSent from VYRON COST.`
     );
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    const to = supplierEmail ? encodeURIComponent(supplierEmail) : "";
+    window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
   }
 
   const lines = useMemo(() => ((po?.lines as Array<Record<string, unknown>>) || []), [po]);
   const fulfillment = po ? poFulfillmentStatus(po, lines) : "Open";
+  const supplier = (po?.supplier as Record<string, unknown> | undefined) || null;
+  const supplierEmail = supplier ? String(supplier.contact_email || supplier.invoice_email || "") : "";
+  const subtotal = Number(po?.subtotal || lines.reduce((sum, line) => sum + (Number(line.line_total || 0) - Number(line.vat_amount || 0)), 0));
+  const vatAmount = Number(po?.vat_amount || lines.reduce((sum, line) => sum + Number(line.vat_amount || 0), 0));
 
   if (!po) {
     return <p className="text-sm font-bold text-slate-500">{message || "Loading…"}</p>;
@@ -165,7 +170,7 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
           ) : null}
           <button type="button" onClick={printPo} className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800">
             <Printer size={14} />
-            Print
+            Print PDF
           </button>
           <button type="button" onClick={emailPo} className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800">
             <Mail size={14} />
@@ -187,6 +192,14 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
       {message ? <div className="rounded-xl bg-amber-50 px-4 py-2 text-xs font-bold text-amber-800 print:hidden">{message}</div> : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
+          <div className="text-[10px] font-black uppercase text-violet-600">Subtotal</div>
+          <div className="text-2xl font-black">{formatMoney(subtotal)}</div>
+        </div>
+        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
+          <div className="text-[10px] font-black uppercase text-violet-600">VAT</div>
+          <div className="text-2xl font-black">{formatMoney(vatAmount)}</div>
+        </div>
         <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
           <div className="text-[10px] font-black uppercase text-violet-600">PO Total</div>
           <div className="text-2xl font-black">{formatMoney(Number(po.total || 0))}</div>
@@ -222,6 +235,14 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
           ))}
       </div>
 
+      <div className="rounded-2xl border border-violet-100 bg-white p-4 text-sm font-semibold text-slate-700 print:hidden">
+        <div className="text-xs font-black uppercase tracking-[0.14em] text-violet-700">Supplier Details</div>
+        <div className="mt-1">{String(po.supplier_name_snapshot || "—")}</div>
+        <div className="text-slate-500">{supplierEmail || "No supplier email on file."}</div>
+        <div className="mt-3 text-xs font-black uppercase tracking-[0.14em] text-violet-700">Notes</div>
+        <div className="mt-1 whitespace-pre-wrap text-slate-600">{String(po.notes || "No notes")}</div>
+      </div>
+
       <div className="min-w-0 overflow-x-auto rounded-[2rem] border border-violet-100 bg-white">
         <table className="min-w-[880px] w-full text-left text-sm">
           <thead className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100">
@@ -231,6 +252,8 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
               <th className="px-4 py-3">Qty</th>
               <th className="px-4 py-3">Unit</th>
               <th className="px-4 py-3">Price</th>
+              <th className="px-4 py-3">VAT %</th>
+              <th className="px-4 py-3">VAT Amt</th>
               <th className="px-4 py-3">Received</th>
               <th className="px-4 py-3">Outstanding</th>
               <th className="px-4 py-3">Line Total</th>
@@ -244,6 +267,8 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
                 <td className="px-4 py-3">{Number(line.quantity)}</td>
                 <td className="px-4 py-3">{String(line.unit)}</td>
                 <td className="px-4 py-3">R{Number(line.unit_price).toFixed(2)}</td>
+                <td className="px-4 py-3">{Number(line.vat_rate || 0).toFixed(2)}</td>
+                <td className="px-4 py-3">R{Number(line.vat_amount || 0).toFixed(2)}</td>
                 <td className="px-4 py-3">{Number(line.received_qty)}</td>
                 <td className="px-4 py-3">{Number(line.outstanding_qty)}</td>
                 <td className="px-4 py-3 font-black">R{Number(line.line_total).toFixed(2)}</td>

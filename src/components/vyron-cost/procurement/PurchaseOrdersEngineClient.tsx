@@ -77,9 +77,14 @@ export default function PurchaseOrdersEngineClient() {
         ],
       }}
       actions={
-        <Link href="/procurement" className="rounded-xl border border-[#E2E8F0] px-4 py-2.5 text-sm font-bold text-[#334155]">
-          Procurement Requisitions
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/purchase-orders/new" className="rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-bold text-white">
+            Create Purchase Order
+          </Link>
+          <Link href="/procurement" className="rounded-xl border border-[#E2E8F0] px-4 py-2.5 text-sm font-bold text-[#334155]">
+            Procurement Requisitions
+          </Link>
+        </div>
       }
     >
       <div className="space-y-6">

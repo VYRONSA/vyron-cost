@@ -73,7 +73,7 @@ export default function ProductEditPageClient({
   companyId: string;
 }) {
   const router = useRouter();
-  const { canEdit, canDelete } = useModulePermissions("products");
+  const { canCreate, canEdit, canDelete } = useModulePermissions("products");
   const { canEdit: canEditBom } = useModulePermissions("boms");
   const canEditCostLines = canEdit || canEditBom;
   const [form, setForm] = useState<ProductForm>(() => productToForm(product));
@@ -144,6 +144,50 @@ export default function ProductEditPageClient({
     }
 
     setMessage("Product saved.");
+  }
+
+  async function archiveProduct() {
+    if (!canDelete) {
+      setMessage("You do not have permission to archive products.");
+      return;
+    }
+
+    const response = await fetch(`/api/products/${product.id}?mode=archive`, { method: "DELETE" });
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      setMessage(data.error || "Could not archive product.");
+      return;
+    }
+    router.push("/products");
+  }
+
+  async function duplicateProduct() {
+    if (!canCreate) {
+      setMessage("You do not have permission to duplicate products.");
+      return;
+    }
+
+    const sourceName = String(form.product_name || product.product_name || "Product").trim();
+    const response = await fetch("/api/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        product_name: `${sourceName} Copy`,
+        product_category: form.category,
+        linked_bom_id: product.linked_bom_id || null,
+        selling_price: Number(form.selling_price),
+        total_cost: Number(form.total_cost),
+        target_gp: Number(form.target_gp),
+        product_status: "Active",
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok || !data.product?.id) {
+      setMessage(data.error || "Could not duplicate product.");
+      return;
+    }
+
+    router.push(`/products/${data.product.id}/edit`);
   }
 
   function requestDeleteProduct() {
@@ -408,6 +452,18 @@ export default function ProductEditPageClient({
             <button type="button" onClick={saveProduct} className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(124,58,237,0.28)] transition hover:from-violet-800 hover:to-fuchsia-700">
               <Save size={18} />
               Save Product
+            </button>
+          ) : null}
+
+          {canCreate ? (
+            <button type="button" onClick={duplicateProduct} className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-6 py-4 text-sm font-black text-violet-800 transition hover:bg-violet-100">
+              Duplicate Product
+            </button>
+          ) : null}
+
+          {canDelete ? (
+            <button type="button" onClick={archiveProduct} className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-6 py-4 text-sm font-black text-amber-800 transition hover:bg-amber-100">
+              Archive Product
             </button>
           ) : null}
 

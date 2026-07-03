@@ -330,7 +330,7 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
                     {canEdit ? (
                       <button onClick={() => edit(product)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Edit</button>
                     ) : null}
-                    <Link href={`/products/${product.id}`} className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">Open</Link>
+                    <Link href={`/products/${product.id}/edit`} className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">Open</Link>
                     {canDelete ? (
                       <button onClick={() => deleteConfirm.requestDelete(() => remove(product.id))} className="rounded-xl bg-red-50 p-2 text-red-700"><Trash2 size={16} /></button>
                     ) : null}
