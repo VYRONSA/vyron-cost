@@ -64,7 +64,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         .order("created_at", { ascending: false }),
     ]);
 
-    const supplierId = purchaseOrder.supplier_id ? String(purchaseOrder.supplier_id) : "";
+    const supplierId = po.supplier_id ? String(po.supplier_id) : "";
     const supplier = supplierId
       ? await supabase
           .from("vyron_cost_suppliers")

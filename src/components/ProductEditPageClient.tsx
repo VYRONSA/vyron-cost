@@ -168,13 +168,15 @@ export default function ProductEditPageClient({
     }
 
     const sourceName = String(form.product_name || product.product_name || "Product").trim();
+    const linkedBomId = (product as Product & { linked_bom_id?: string | null }).linked_bom_id || null;
+
     const response = await fetch("/api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         product_name: `${sourceName} Copy`,
         product_category: form.category,
-        linked_bom_id: product.linked_bom_id || null,
+        linked_bom_id: linkedBomId,
         selling_price: Number(form.selling_price),
         total_cost: Number(form.total_cost),
         target_gp: Number(form.target_gp),
