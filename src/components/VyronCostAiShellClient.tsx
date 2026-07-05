@@ -26,6 +26,7 @@ import {
 } from "@/lib/vyron-package-manager";
 import { isNavItemActive, vyronNavSections } from "@/lib/vyron-navigation";
 import WorkspaceAccessDenied from "@/components/WorkspaceAccessDenied";
+import VyronMobileShell from "@/components/vyron-mobile/VyronMobileShell";
 import {
   canAccessPath,
   getRequiredPermissionForPath,
@@ -167,6 +168,7 @@ export default function VyronCostAiShellClient({
   const [activeClient, setActiveClient] = useState<ActiveClient | null>(null);
   const [workspaceSession, setWorkspaceSession] = useState<WorkspaceSession | null>(null);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [shellMode, setShellMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const restoreAttemptedRef = useRef(false);
 
   const effectiveClient = serverWorkspaceReady
@@ -305,6 +307,43 @@ export default function VyronCostAiShellClient({
   }, [isDeveloperArea, pathname]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const phoneMedia = window.matchMedia("(max-width: 767px)");
+    const tabletMedia = window.matchMedia("(min-width: 768px) and (max-width: 1023px)");
+
+    const update = () => {
+      if (phoneMedia.matches) {
+        setShellMode("mobile");
+        return;
+      }
+      if (tabletMedia.matches) {
+        setShellMode("tablet");
+        return;
+      }
+      setShellMode("desktop");
+    };
+
+    update();
+
+    if (typeof phoneMedia.addEventListener === "function" && typeof tabletMedia.addEventListener === "function") {
+      phoneMedia.addEventListener("change", update);
+      tabletMedia.addEventListener("change", update);
+      return () => {
+        phoneMedia.removeEventListener("change", update);
+        tabletMedia.removeEventListener("change", update);
+      };
+    }
+
+    phoneMedia.addListener(update);
+    tabletMedia.addListener(update);
+    return () => {
+      phoneMedia.removeListener(update);
+      tabletMedia.removeListener(update);
+    };
+  }, []);
+
+  useEffect(() => {
     if (isDeveloperArea) return;
 
     for (const section of sections) {
@@ -326,6 +365,22 @@ export default function VyronCostAiShellClient({
 
       return { [title]: true };
     });
+  }
+
+  const shellContent = accessDenied ? (
+    <WorkspaceAccessDenied pathname={accessDenied.pathname} permission={accessDenied.permission} />
+  ) : blockedFeature && effectiveClient ? (
+    <ModuleUpgradeNotice packageName={effectiveClient.packageName} feature={blockedFeature} />
+  ) : (
+    children
+  );
+
+  if (shellMode !== "desktop") {
+    return (
+      <VyronMobileShell title={title} subtitle={subtitle} mode={shellMode}>
+        {shellContent}
+      </VyronMobileShell>
+    );
   }
 
   return (
@@ -522,13 +577,7 @@ export default function VyronCostAiShellClient({
               </section>
             ) : null}
             <div className={`flex min-w-0 w-full max-w-full flex-col ${fullWidthMain ? "" : "gap-4"}`}>
-              {accessDenied ? (
-                <WorkspaceAccessDenied pathname={accessDenied.pathname} permission={accessDenied.permission} />
-              ) : blockedFeature && effectiveClient ? (
-                <ModuleUpgradeNotice packageName={effectiveClient.packageName} feature={blockedFeature} />
-              ) : (
-                children
-              )}
+              {shellContent}
             </div>
           </div>
         </main>

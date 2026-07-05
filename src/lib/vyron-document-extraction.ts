@@ -428,13 +428,6 @@ export async function runDocumentExtraction(input: {
     rawOpenAiResponsePreview: null,
   };
 
-  console.log("[document-extraction] request", {
-    fileName: input.fileName,
-    mime: input.mime,
-    byteSize: input.bytes.length,
-    models,
-  });
-
   for (const model of models) {
     log.modelsAttempted.push(model);
     try {
@@ -447,7 +440,6 @@ export async function runDocumentExtraction(input: {
       });
 
       log.rawOpenAiResponsePreview = result.outputText.slice(0, 2000);
-      console.log("[document-extraction] raw OpenAI output preview", log.rawOpenAiResponsePreview);
 
       if (!extractionIsUsable(result.extraction)) {
         errors.push(`${model} returned insufficient fields.`);
@@ -455,7 +447,6 @@ export async function runDocumentExtraction(input: {
       }
 
       log.modelUsed = model;
-      console.log("[document-extraction] success", { model, supplier: result.extraction.supplier, invoiceNo: result.extraction.invoiceNo });
 
       return { extraction: result.extraction, modelUsed: model, log };
     } catch (error) {

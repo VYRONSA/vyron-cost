@@ -80,15 +80,8 @@ export async function POST(request: NextRequest) {
     return developerApiUnauthorized(error instanceof Error ? error.message : "Developer authentication required.");
   }
 
-  console.log("[developer/clients][POST] start");
   try {
     const body = (await request.json()) as CreateClientInput;
-    console.log("[developer/clients][POST] payload parsed", {
-      companyName: body.companyName,
-      tradingName: body.tradingName,
-      adminEmail: body.admin?.email,
-      loginMethod: body.loginSetup?.method,
-    });
 
     const result = await createClientWorkspace(body);
 
@@ -125,6 +118,5 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   } finally {
-    console.log("[developer/clients][POST] end");
   }
 }

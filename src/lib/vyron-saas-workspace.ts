@@ -302,7 +302,6 @@ async function createAuthUser(
 ) {
   const email = input.email.trim().toLowerCase();
   if (input.method === "invite") {
-    console.log("Creating auth user...");
     const { data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
       redirectTo: `${appUrl()}/login`,
       data: {
@@ -324,7 +323,6 @@ async function createAuthUser(
     throw new Error("Password must be at least 8 characters.");
   }
 
-  console.log("Creating auth user...");
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password: input.password,
@@ -547,7 +545,6 @@ async function provisionWorkspaceOwner(
   ownerMember: WorkspaceMember | null;
 }> {
   const adminEmail = input.admin.email.trim().toLowerCase();
-  console.log("Creating auth user...");
   const auth = await createAuthUser(supabase, {
     email: adminEmail,
     firstName: input.admin.firstName.trim(),
@@ -566,7 +563,6 @@ async function provisionWorkspaceOwner(
     status: auth.status,
   });
 
-  console.log("Creating workspace membership...");
   const ownerMember = await upsertOwnerMembership(supabase, {
     workspaceId: input.workspaceId,
     userId: auth.userId,
@@ -643,7 +639,6 @@ export async function createClientWorkspace(input: CreateClientInput): Promise<{
   const ownerBase = buildOwnerDetails(input, "pending_activation");
 
   if (supabase) {
-    console.log("Creating company...");
     const { data: company, error: companyError } = await supabase
       .from("vyron_cost_companies")
       .insert({
@@ -677,7 +672,6 @@ export async function createClientWorkspace(input: CreateClientInput): Promise<{
       owner_login_status: ownerDetailsPending.loginStatus,
     };
 
-    console.log("Creating workspace...");
     let workspaceResult = await supabase.from("vyron_workspaces").insert(workspacePayload).select("*").single();
     if (workspaceResult.error?.message?.includes("owner_")) {
       const { owner_first_name, owner_surname, owner_email, owner_mobile, owner_login_method, owner_login_status, ...minimal } =

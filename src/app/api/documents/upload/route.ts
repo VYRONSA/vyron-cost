@@ -135,8 +135,6 @@ export async function POST(request: NextRequest) {
         }
       : null;
 
-    console.log("[documents/upload] tenant lookup", JSON.stringify(debugLog, null, 2));
-
     if (lookup.error) {
       return NextResponse.json(
         {

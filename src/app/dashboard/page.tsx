@@ -1,5 +1,6 @@
 import VyronCostAiShell from "@/components/VyronCostAiShell";
 import DashboardPremiumClient from "@/components/DashboardPremiumClient";
+import VyronMobileHomeLauncher from "@/components/vyron-mobile/VyronMobileHomeLauncher";
 import { getServerActiveWorkspace, shouldUseWorkspaceDemoData } from "@/lib/vyron-workspace-server";
 import {
   getPhase4RecoveryInsights,
@@ -16,13 +17,26 @@ import { getPurchaseOrderEngineDashboardStats } from "@/lib/vyron-purchase-order
 import { getDemandForecastDashboardStats } from "@/lib/vyron-demand-forecasting";
 import { getCostAiInsightDashboardStats } from "@/lib/vyron-cost-ai-insights";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import { headers } from "next/headers";
 
 export default async function DashboardPage() {
+  const requestHeaders = await headers();
+  const userAgent = requestHeaders.get("user-agent") || "";
+  const compactDevice = /Android|iPhone|iPad|iPod|Mobi/i.test(userAgent);
   const activeClient = await getServerActiveWorkspace();
-  const useDemo = await shouldUseWorkspaceDemoData();
   const tradingName =
     activeClient?.tradingName || activeClient?.companyName || "VYRON COST";
   const title = `${tradingName} Command Centre`;
+
+  if (compactDevice) {
+    return (
+      <VyronCostAiShell hidePageHeader title={title} subtitle="Touch-first launcher for your workspace.">
+        <VyronMobileHomeLauncher workspaceName={tradingName} />
+      </VyronCostAiShell>
+    );
+  }
+
+  const useDemo = await shouldUseWorkspaceDemoData();
 
   if (!useDemo) {
     let stats;

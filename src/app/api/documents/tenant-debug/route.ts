@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { lookupTenantById } from "@/lib/vyron-document-tenant";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
+import { requirePlatformSessionFromRequest } from "@/lib/vyron-platform-auth";
 import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
@@ -15,7 +16,16 @@ function maskHost(url: string | undefined) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  try {
+    await requirePlatformSessionFromRequest(request, ["PLATFORM_ADMIN", "PLATFORM_OPERATOR", "PLATFORM_AUDITOR"]);
+  } catch (error) {
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : "Developer authentication required." },
+      { status: 401 }
+    );
+  }
+
   const requestedTenantId = await resolveApiCompanyId();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -29,7 +39,6 @@ export async function GET() {
 
   if (!requestedTenantId) {
     debug.failurePoint = "no_active_workspace";
-    console.log("[tenant-debug]", JSON.stringify(debug, null, 2));
     return NextResponse.json({ ok: true, debug });
   }
 
@@ -49,7 +58,6 @@ export async function GET() {
   if (!admin) {
     debug.failurePoint = "service_role_missing";
     debug.adminClient = null;
-    console.log("[tenant-debug]", JSON.stringify(debug, null, 2));
     return NextResponse.json({ ok: false, debug });
   }
 
@@ -69,8 +77,6 @@ export async function GET() {
         ? "zero_rows_wrong_project"
         : "uuid_not_in_visible_rows"
       : "none";
-
-  console.log("[tenant-debug]", JSON.stringify(debug, null, 2));
 
   return NextResponse.json({ ok: true, debug });
 }
