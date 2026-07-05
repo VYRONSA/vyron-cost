@@ -183,7 +183,7 @@ export const mobileRecentRecords: MobileRecentRecord[] = [
       { label: "Value", value: "R 124,000" },
       { label: "Ship", value: "Tomorrow" },
     ],
-    href: "/customer-sales-orders/3281",
+    href: "/customer-sales-orders",
   },
 ];
 

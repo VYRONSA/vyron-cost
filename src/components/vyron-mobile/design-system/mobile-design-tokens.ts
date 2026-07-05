@@ -5,7 +5,7 @@ export const MOBILE_TOKENS = {
     cardRaised: "rounded-[1.75rem] border border-white/80 bg-white shadow-[0_24px_52px_rgba(12,23,41,0.13)]",
     cardMuted: "rounded-[1.45rem] border border-slate-100 bg-slate-50/92 shadow-[0_14px_30px_rgba(12,23,41,0.06)]",
     shellBackdrop:
-      "bg-[radial-gradient(circle_at_14%_12%,rgba(7,17,31,0.1),transparent_35%),radial-gradient(circle_at_86%_6%,rgba(199,154,43,0.18),transparent_32%),linear-gradient(180deg,#F8FAFD_0%,#E9EFF7_100%)]",
+      "bg-[radial-gradient(circle_at_12%_8%,rgba(124,58,237,0.09),transparent_34%),radial-gradient(circle_at_14%_12%,rgba(7,17,31,0.1),transparent_35%),radial-gradient(circle_at_86%_6%,rgba(199,154,43,0.18),transparent_32%),linear-gradient(180deg,#F8FAFD_0%,#E9EFF7_100%)]",
   },
   spacing: {
     pageX: "px-4 sm:px-5",

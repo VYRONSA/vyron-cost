@@ -9,13 +9,13 @@ import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPa
 import { VyronPremiumSectionHeading } from "@/components/vyron-premium/VyronPremiumSprint";
 
 const reportCards = [
-  { href: "/reports/open-purchase-orders", title: "Open Purchase Orders", description: "POs still open, approved, sent or partially received.", icon: FileSpreadsheet, badge: "Procurement" },
-  { href: "/reports/partially-received-pos", title: "Outstanding Purchase Orders", description: "POs with outstanding quantities and supplier follow-up risk.", icon: Truck, badge: "Procurement" },
+  { href: "/purchase-orders", title: "Open Purchase Orders", description: "POs still open, approved, sent or partially received.", icon: FileSpreadsheet, badge: "Procurement" },
+  { href: "/purchase-orders/back-orders", title: "Outstanding Purchase Orders", description: "POs with outstanding quantities and supplier follow-up risk.", icon: Truck, badge: "Procurement" },
   { href: "/purchase-orders/back-orders", title: "Back Orders", description: "Outstanding PO lines awaiting delivery. Opens source PO and receive balance.", icon: PackageSearch, badge: "Procurement" },
-  { href: "/reports/grn-variances", title: "GRN Variances", description: "Goods receipt records for quantity, damaged and rejected stock checks.", icon: Boxes, badge: "GRN" },
-  { href: "/reports/invoices-awaiting-approval", title: "Invoices Awaiting Approval", description: "Supplier invoices extracted but not yet approved or archived.", icon: FileSpreadsheet, badge: "Documents" },
-  { href: "/reports/duplicate-invoice-risks", title: "Duplicate Invoice Risks", description: "Once-off duplicate invoice exposure, potential recovery and confidence.", icon: ShieldAlert, badge: "Recovery" },
-  { href: "/reports/supplier-price-increases", title: "Supplier Price Increases", description: "Supplier price movement from approved invoices and cost history.", icon: TrendingUp, badge: "Supplier" },
+  { href: "/goods-receipts", title: "GRN Variances", description: "Goods receipt records for quantity, damaged and rejected stock checks.", icon: Boxes, badge: "GRN" },
+  { href: "/document-intelligence", title: "Invoices Awaiting Approval", description: "Supplier invoices extracted but not yet approved or archived.", icon: FileSpreadsheet, badge: "Documents" },
+  { href: "/financial-leakage", title: "Duplicate Invoice Risks", description: "Once-off duplicate invoice exposure, potential recovery and confidence.", icon: ShieldAlert, badge: "Recovery" },
+  { href: "/supplier-intelligence", title: "Supplier Price Increases", description: "Supplier price movement from approved invoices and cost history.", icon: TrendingUp, badge: "Supplier" },
   { href: "/supplier-intelligence", title: "Supplier Performance", description: "Supplier movement, risk, reliability and procurement exposure.", icon: Truck, badge: "Supplier" },
   { href: "/inventory", title: "Stock Valuation", description: "Inventory master value, low stock and slow-moving stock visibility.", icon: Boxes, badge: "Inventory" },
   { href: "/inventory/counts", title: "Stock Variance", description: "Stock count variance workflow: draft, submit, approve and post.", icon: PackageSearch, badge: "Inventory" },

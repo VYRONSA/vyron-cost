@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowLeft,
   Bell,
   Building2,
   ChevronDown,
@@ -10,7 +11,7 @@ import {
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   PremiumMobileBottomSheet,
@@ -26,10 +27,8 @@ import VyronMobileProcurementWorkspace from "@/components/vyron-mobile/experienc
 import VyronMobilePurchaseOrdersWorkspace from "@/components/vyron-mobile/experience/VyronMobilePurchaseOrdersWorkspace";
 import VyronMobileFinishedGoodsWorkspace from "@/components/vyron-mobile/experience/VyronMobileFinishedGoodsWorkspace";
 import VyronMobileRecordExperience from "@/components/vyron-mobile/experience/VyronMobileRecordExperience";
-import VyronMobileModuleWorkspace from "@/components/vyron-mobile/experience/VyronMobileModuleWorkspace";
 import {
   mobileBottomNavItems,
-  mobileLauncherTiles,
   mobileMoreLinks,
   mobileQuickCreateActions,
 } from "@/components/vyron-mobile/vyron-mobile-navigation";
@@ -218,6 +217,38 @@ function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
+function MobileScreenHeader({
+  title,
+  onBack,
+}: {
+  title: string;
+  onBack: () => void;
+}) {
+  return (
+    <section className="px-4 pb-1 pt-1 sm:px-5">
+      <PremiumMobileCard tone="default" className="p-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700"
+            aria-label="Go back"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Module</div>
+            <div className="truncate text-lg font-black tracking-[-0.03em] text-slate-950">{title}</div>
+          </div>
+          <PremiumMobileButton href="/ask-vyron" variant="secondary" size="compact">
+            Search
+          </PremiumMobileButton>
+        </div>
+      </PremiumMobileCard>
+    </section>
+  );
+}
+
 export default function VyronMobileShell({
   title,
   subtitle,
@@ -232,6 +263,7 @@ export default function VyronMobileShell({
   stickyActions?: StickyAction[];
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [activeClient, setActiveClient] = useState<ActiveClient | null>(null);
   const [sheet, setSheet] = useState<SheetKind>(null);
 
@@ -331,113 +363,20 @@ export default function VyronMobileShell({
   }, [customerDetailMatch, finishedGoodDetailMatch, invoiceDetailMatch, purchaseOrderDetailMatch, supplierDetailMatch]);
 
   const effectiveStickyActions = stickyActions.length ? stickyActions : defaultRecordActions;
+  const showScreenHeader = pathname !== "/dashboard" && pathname !== "/";
+
+  function handleBackNavigation() {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push("/dashboard");
+  }
 
   const mobileRouteExperience = useMemo(() => {
     if (pathname === "/procurement") return <VyronMobileProcurementWorkspace />;
     if (pathname === "/purchase-orders") return <VyronMobilePurchaseOrdersWorkspace />;
     if (pathname === "/products") return <VyronMobileFinishedGoodsWorkspace />;
-    if (pathname === "/inventory") {
-      return (
-        <VyronMobileModuleWorkspace
-          moduleName="Inventory"
-          summary="Stock, counts, movement and risk management in a touch-first workspace."
-          searchPlaceholder="Search stock, count sessions, alerts"
-          recentSearches={["Low stock", "Count variances", "Slow moving"]}
-          links={[
-            { title: "Stock", description: "View current stock by item", href: "/inventory/stock", icon: mobileMoreLinks[3].icon },
-            { title: "Counts", description: "Run and review stock counts", href: "/inventory/counts", icon: mobileBottomNavItems[1].icon },
-            { title: "Alerts", description: "Resolve low stock and variance alerts", href: "/inventory/alerts", icon: mobileMoreLinks[3].icon },
-            { title: "Ledger", description: "Review movement timeline", href: "/inventory/ledger", icon: mobileMoreLinks[0].icon },
-          ]}
-          records={[]}
-        />
-      );
-    }
-    if (pathname === "/manufacturing") {
-      return (
-        <VyronMobileModuleWorkspace
-          moduleName="Manufacturing"
-          summary="Production planning, runs and output quality in one connected flow."
-          searchPlaceholder="Search runs, batches, variances"
-          recentSearches={["Active runs", "Variances", "Finished goods"]}
-          links={[
-            { title: "Production Runs", description: "Track and complete runs", href: "/manufacturing/runs", icon: mobileLauncherTiles[3].icon },
-            { title: "New Run", description: "Launch a manufacturing job", href: "/manufacturing/runs/new", icon: mobileQuickCreateActions[3].icon },
-            { title: "Variances", description: "Review production variances", href: "/manufacturing/variances", icon: mobileMoreLinks[0].icon },
-            { title: "Finished Goods", description: "Open finished goods context", href: "/manufacturing/finished-goods", icon: mobileLauncherTiles[5].icon },
-          ]}
-          records={[]}
-        />
-      );
-    }
-    if (pathname === "/customers" || pathname === "/customer-sales-orders" || pathname === "/customer-invoices") {
-      return (
-        <VyronMobileModuleWorkspace
-          moduleName="Customers"
-          summary="Customer relationships, sales orders and invoices with executive clarity."
-          searchPlaceholder="Search customers, orders, invoices"
-          recentSearches={["Outstanding invoices", "Pending orders", "Top customers"]}
-          links={[
-            { title: "Customers", description: "Open customer register", href: "/customers", icon: mobileLauncherTiles[6].icon },
-            { title: "Sales Orders", description: "Track customer demand", href: "/customer-sales-orders", icon: mobileLauncherTiles[0].icon },
-            { title: "Invoices", description: "Review invoice lifecycle", href: "/customer-invoices", icon: mobileLauncherTiles[8].icon },
-            { title: "Statements", description: "Open customer statements", href: "/customer-statements", icon: mobileLauncherTiles[9].icon },
-          ]}
-          records={[]}
-        />
-      );
-    }
-    if (pathname === "/suppliers") {
-      return (
-        <VyronMobileModuleWorkspace
-          moduleName="Suppliers"
-          summary="Supplier performance, risk and pricing in a premium touch workspace."
-          searchPlaceholder="Search suppliers and risk"
-          recentSearches={["At-risk suppliers", "Price variance", "Top spend"]}
-          links={[
-            { title: "Suppliers", description: "View and manage suppliers", href: "/suppliers", icon: mobileLauncherTiles[7].icon },
-            { title: "Supplier Intelligence", description: "Open supplier insight workflows", href: "/supplier-intelligence", icon: mobileLauncherTiles[10].icon },
-            { title: "Benchmarks", description: "Review supplier benchmarking", href: "/supplier-benchmarks", icon: mobileMoreLinks[4].icon },
-            { title: "Inflation", description: "Track supplier inflation impact", href: "/supplier-inflation", icon: mobileMoreLinks[2].icon },
-          ]}
-          records={[]}
-        />
-      );
-    }
-    if (pathname === "/reports") {
-      return (
-        <VyronMobileModuleWorkspace
-          moduleName="Reports"
-          summary="Operational and executive reporting with mobile-first readability."
-          searchPlaceholder="Search reports"
-          recentSearches={["Product margins", "Supplier risk", "Sales intelligence"]}
-          links={[
-            { title: "Report Library", description: "Browse all reports", href: "/reports", icon: mobileLauncherTiles[9].icon },
-            { title: "Product Intelligence", description: "Open product intelligence report", href: "/reports/product-intelligence", icon: mobileLauncherTiles[5].icon },
-            { title: "Sales Intelligence", description: "Open sales report", href: "/reports/sales-intelligence", icon: mobileLauncherTiles[0].icon },
-            { title: "Supplier Risk", description: "Open supplier risk report", href: "/reports/supplier-risk", icon: mobileLauncherTiles[7].icon },
-          ]}
-          records={[]}
-        />
-      );
-    }
-    if (pathname === "/settings") {
-      return (
-        <VyronMobileModuleWorkspace
-          moduleName="Settings"
-          summary="Workspace controls and system preferences optimised for touch management."
-          searchPlaceholder="Search settings"
-          recentSearches={["Users", "Permissions", "Workspace"]}
-          links={[
-            { title: "Settings", description: "Open workspace settings", href: "/settings", icon: mobileLauncherTiles[11].icon },
-            { title: "Users", description: "Manage users and roles", href: "/users", icon: mobileLauncherTiles[6].icon },
-            { title: "Companies", description: "Open company setup", href: "/companies", icon: mobileLauncherTiles[7].icon },
-            { title: "Integrations", description: "Open integration setup", href: "/integrations/xero", icon: mobileLauncherTiles[10].icon },
-          ]}
-          records={[]}
-        />
-      );
-    }
 
     if (purchaseOrderDetailMatch?.[1]) {
       return (
@@ -599,6 +538,8 @@ export default function VyronMobileShell({
             </PremiumMobileButton>
           }
         />
+
+        {showScreenHeader ? <MobileScreenHeader title={title} onBack={handleBackNavigation} /> : null}
 
         <main className={`flex-1 pb-[calc(env(safe-area-inset-bottom)+7.5rem)] ${mode === "tablet" ? "pt-4" : "pt-3"}`}>{mobileRouteExperience}</main>
 
