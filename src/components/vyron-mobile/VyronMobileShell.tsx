@@ -25,7 +25,9 @@ import {
 import { MOBILE_TOKENS, MOBILE_TYPOGRAPHY } from "@/components/vyron-mobile/design-system";
 import VyronMobileProcurementWorkspace from "@/components/vyron-mobile/experience/VyronMobileProcurementWorkspace";
 import VyronMobilePurchaseOrdersWorkspace from "@/components/vyron-mobile/experience/VyronMobilePurchaseOrdersWorkspace";
+import VyronMobilePurchaseOrderDetailWorkspace from "@/components/vyron-mobile/experience/VyronMobilePurchaseOrderDetailWorkspace";
 import VyronMobileFinishedGoodsWorkspace from "@/components/vyron-mobile/experience/VyronMobileFinishedGoodsWorkspace";
+import VyronMobileFinishedGoodDetailWorkspace from "@/components/vyron-mobile/experience/VyronMobileFinishedGoodDetailWorkspace";
 import VyronMobileRecordExperience from "@/components/vyron-mobile/experience/VyronMobileRecordExperience";
 import {
   mobileBottomNavItems,
@@ -307,29 +309,11 @@ export default function VyronMobileShell({
 
   const defaultRecordActions = useMemo(() => {
     if (purchaseOrderDetailMatch?.[1]) {
-      const id = purchaseOrderDetailMatch[1];
-      return [
-        { id: "po-edit", label: "Edit", variant: "primary" as const, href: `/purchase-orders/${id}/edit` },
-        { id: "po-approve", label: "Approve", variant: "secondary" as const, href: `/purchase-orders/${id}` },
-        { id: "po-save", label: "Save", variant: "success" as const, href: `/purchase-orders/${id}` },
-        { id: "po-print", label: "Print", variant: "ghost" as const, onClick: () => window.print() },
-        { id: "po-email", label: "Email", variant: "ghost" as const, href: `mailto:?subject=Purchase Order ${id}` },
-        { id: "po-delete", label: "Delete", variant: "danger" as const, href: `/purchase-orders/${id}/edit` },
-        { id: "po-archive", label: "Archive", variant: "secondary" as const, href: `/purchase-orders/${id}` },
-      ];
+      return [];
     }
 
     if (finishedGoodDetailMatch?.[1]) {
-      const id = finishedGoodDetailMatch[1];
-      return [
-        { id: "fg-edit", label: "Edit", variant: "primary" as const, href: `/products/${id}/edit` },
-        { id: "fg-approve", label: "Approve", variant: "secondary" as const, href: `/products/${id}` },
-        { id: "fg-save", label: "Save", variant: "success" as const, href: `/products/${id}` },
-        { id: "fg-print", label: "Print", variant: "ghost" as const, onClick: () => window.print() },
-        { id: "fg-email", label: "Email", variant: "ghost" as const, href: `mailto:?subject=Finished Good ${id}` },
-        { id: "fg-delete", label: "Delete", variant: "danger" as const, href: `/products/${id}/edit` },
-        { id: "fg-archive", label: "Archive", variant: "secondary" as const, href: `/products/${id}` },
-      ];
+      return [];
     }
 
     if (customerDetailMatch?.[1]) {
@@ -379,39 +363,11 @@ export default function VyronMobileShell({
     if (pathname === "/products") return <VyronMobileFinishedGoodsWorkspace />;
 
     if (purchaseOrderDetailMatch?.[1]) {
-      return (
-        <VyronMobileRecordExperience
-          title={`Purchase Order ${purchaseOrderDetailMatch[1]}`}
-          subtitle="Record timeline, approvals and related detail"
-          status="Pending"
-          tone="pending"
-          timeline={[
-            { id: "created", label: "Created", detail: "Purchase order drafted and captured" },
-            { id: "approval", label: "Approval", detail: "Awaiting or processing sign-off" },
-            { id: "receiving", label: "Receiving", detail: "Goods receipt and variance control" },
-          ]}
-        >
-          {children}
-        </VyronMobileRecordExperience>
-      );
+      return <VyronMobilePurchaseOrderDetailWorkspace poId={purchaseOrderDetailMatch[1]} />;
     }
 
     if (finishedGoodDetailMatch?.[1]) {
-      return (
-        <VyronMobileRecordExperience
-          title={`Finished Good ${finishedGoodDetailMatch[1]}`}
-          subtitle="Cost, margin and production context"
-          status="Active"
-          tone="approved"
-          timeline={[
-            { id: "defined", label: "Defined", detail: "Product profile and costing baseline" },
-            { id: "linked", label: "Linked", detail: "BOM and inventory dependencies attached" },
-            { id: "live", label: "Live", detail: "In active margin and sales tracking" },
-          ]}
-        >
-          {children}
-        </VyronMobileRecordExperience>
-      );
+      return <VyronMobileFinishedGoodDetailWorkspace productId={finishedGoodDetailMatch[1]} />;
     }
 
     if (customerDetailMatch?.[1]) {

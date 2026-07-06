@@ -1,11 +1,11 @@
 export const MOBILE_TOKENS = {
   surface: {
-    page: "bg-[#EFF3F8]",
+    page: "bg-[#F8FAFC]",
     card: "rounded-[1.55rem] border border-white/80 bg-white/92 shadow-[0_18px_38px_rgba(12,23,41,0.08)]",
     cardRaised: "rounded-[1.75rem] border border-white/80 bg-white shadow-[0_24px_52px_rgba(12,23,41,0.13)]",
     cardMuted: "rounded-[1.45rem] border border-slate-100 bg-slate-50/92 shadow-[0_14px_30px_rgba(12,23,41,0.06)]",
     shellBackdrop:
-      "bg-[radial-gradient(circle_at_12%_8%,rgba(124,58,237,0.09),transparent_34%),radial-gradient(circle_at_14%_12%,rgba(7,17,31,0.1),transparent_35%),radial-gradient(circle_at_86%_6%,rgba(199,154,43,0.18),transparent_32%),linear-gradient(180deg,#F8FAFD_0%,#E9EFF7_100%)]",
+      "bg-[linear-gradient(115deg,transparent_0%,rgba(124,58,237,0.03)_36%,transparent_72%),radial-gradient(circle_at_82%_8%,rgba(244,63,94,0.04),transparent_24%),radial-gradient(circle_at_24%_92%,rgba(124,58,237,0.03),transparent_32%)] opacity-[0.85]",
   },
   spacing: {
     pageX: "px-4 sm:px-5",

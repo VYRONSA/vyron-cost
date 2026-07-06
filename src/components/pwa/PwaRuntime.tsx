@@ -1,6 +1,7 @@
 "use client";
 
 import { RefreshCw, Wifi, WifiOff, Download } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 type BeforeInstallPromptEvent = Event & {
@@ -17,6 +18,10 @@ type PwaNotice = {
 };
 
 const SW_PATH = "/sw.js";
+const INSTALL_DISMISS_KEY = "vyron-pwa-install-dismiss-until";
+const INSTALL_COMPLETE_KEY = "vyron-pwa-installed";
+const MIN_INTERACTIONS = 3;
+const MIN_AUTH_MS_BEFORE_PROMPT = 20000;
 
 function toneClass(tone: PwaNoticeTone) {
   if (tone === "success") return "border-emerald-200 bg-emerald-50 text-emerald-700";
@@ -25,14 +30,37 @@ function toneClass(tone: PwaNoticeTone) {
 }
 
 export default function PwaRuntime() {
+  const pathname = usePathname();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installing, setInstalling] = useState(false);
   const [online, setOnline] = useState(true);
   const [hasUpdate, setHasUpdate] = useState(false);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
   const [notices, setNotices] = useState<PwaNotice[]>([]);
+  const [interactionCount, setInteractionCount] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authSince, setAuthSince] = useState<number | null>(null);
+  const [dismissUntil, setDismissUntil] = useState(0);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
-  const showInstall = Boolean(deferredPrompt);
+  const isAuthRoute = pathname === "/login" || pathname === "/developer-login" || pathname === "/landing";
+
+  const canShowInstall = Boolean(
+    deferredPrompt &&
+      !isInstalled &&
+      !isStandalone &&
+      !isAuthRoute &&
+      isAuthenticated &&
+      interactionCount >= MIN_INTERACTIONS &&
+      authSince !== null &&
+      Date.now() - authSince >= MIN_AUTH_MS_BEFORE_PROMPT &&
+      Date.now() >= dismissUntil
+  );
+
+  const showInstall = canShowInstall;
+
+  const showBottomBar = hasUpdate || showInstall;
 
   const installHint = useMemo(() => {
     const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
@@ -67,6 +95,68 @@ export default function PwaRuntime() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    setIsStandalone(Boolean(standalone));
+    setIsInstalled(Boolean(standalone || window.localStorage.getItem(INSTALL_COMPLETE_KEY) === "1"));
+
+    const persistedDismiss = Number(window.localStorage.getItem(INSTALL_DISMISS_KEY) || "0");
+    if (!Number.isNaN(persistedDismiss)) {
+      setDismissUntil(persistedDismiss);
+    }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadWorkspaceStatus() {
+      try {
+        const response = await fetch("/api/workspace/status", { credentials: "include", cache: "no-store" });
+        const data = await response.json().catch(() => null);
+        const authenticated = Boolean(data?.ok && (data?.hasWorkspaceSession || data?.hasSessionCookie || data?.hasWorkspaceCookie));
+        if (!active) return;
+
+        setIsAuthenticated(authenticated);
+        setAuthSince((current) => {
+          if (!authenticated) return null;
+          return current || Date.now();
+        });
+      } catch {
+        if (!active) return;
+        setIsAuthenticated(false);
+        setAuthSince(null);
+      }
+    }
+
+    void loadWorkspaceStatus();
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    function markInteraction() {
+      if (!isAuthenticated || isAuthRoute) return;
+      setInteractionCount((current) => Math.min(current + 1, 10));
+    }
+
+    window.addEventListener("click", markInteraction);
+    window.addEventListener("touchstart", markInteraction, { passive: true });
+    window.addEventListener("keydown", markInteraction);
+    window.addEventListener("scroll", markInteraction, { passive: true });
+
+    return () => {
+      window.removeEventListener("click", markInteraction);
+      window.removeEventListener("touchstart", markInteraction);
+      window.removeEventListener("keydown", markInteraction);
+      window.removeEventListener("scroll", markInteraction);
+    };
+  }, [isAuthRoute, isAuthenticated]);
+
+  useEffect(() => {
     function onBeforeInstallPrompt(event: Event) {
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);
@@ -74,6 +164,10 @@ export default function PwaRuntime() {
 
     function onAppInstalled() {
       setDeferredPrompt(null);
+      setIsInstalled(true);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(INSTALL_COMPLETE_KEY, "1");
+      }
       pushNotice({ id: `installed-${Date.now()}`, tone: "success", text: "VYRON COST installed successfully." });
     }
 
@@ -146,10 +240,21 @@ export default function PwaRuntime() {
     setInstalling(true);
     try {
       await deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
+      const choice = await deferredPrompt.userChoice;
+      if (choice.outcome === "dismissed") {
+        dismissInstallForThirtyDays();
+      }
       setDeferredPrompt(null);
     } finally {
       setInstalling(false);
+    }
+  }
+
+  function dismissInstallForThirtyDays() {
+    const next = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    setDismissUntil(next);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(INSTALL_DISMISS_KEY, String(next));
     }
   }
 
@@ -184,18 +289,27 @@ export default function PwaRuntime() {
         ))}
       </div>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-[95] mx-auto flex w-full max-w-xl justify-center px-3">
+      <div className={`pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-[95] mx-auto flex w-full max-w-xl justify-center px-3 ${showBottomBar ? "" : "hidden"}`}>
         <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200/90 bg-white/95 p-2 shadow-[0_20px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl">
           {showInstall ? (
-            <button
-              type="button"
-              onClick={() => void handleInstall()}
-              className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#D8B24A] bg-[#FFF7E4] px-3 py-2 text-xs font-black uppercase tracking-[0.08em] text-[#A87A17]"
-              disabled={installing}
-            >
-              <Download size={14} />
-              {installing ? "Installing" : installHint}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => void handleInstall()}
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#D8B24A] bg-[#FFF7E4] px-3 py-2 text-xs font-black uppercase tracking-[0.08em] text-[#A87A17]"
+                disabled={installing}
+              >
+                <Download size={14} />
+                {installing ? "Installing" : installHint}
+              </button>
+              <button
+                type="button"
+                onClick={dismissInstallForThirtyDays}
+                className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.08em] text-slate-600"
+              >
+                Not Now
+              </button>
+            </>
           ) : null}
 
           {hasUpdate ? (
@@ -207,12 +321,7 @@ export default function PwaRuntime() {
               <RefreshCw size={14} />
               Update Ready
             </button>
-          ) : (
-            <div className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-500">
-              <Wifi size={13} />
-              App shell cached
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </>

@@ -25,6 +25,8 @@ export type PurchaseOrderLineInput = {
   unit: string;
   unit_price: number;
   vat_rate?: number;
+  discount_pct?: number;
+  discount_value?: number;
   expected_delivery_date?: string | null;
 };
 
@@ -62,6 +64,13 @@ export type PurchaseOrderRow = {
   match_status: string | null;
   created_at: string;
   lines?: PurchaseOrderLineRow[];
+};
+
+export type ArchivedPurchaseOrderRow = PurchaseOrderRow & {
+  archived: boolean;
+  archived_at: string | null;
+  archived_by: string | null;
+  archive_reason: string | null;
 };
 
 export type PoApprovalRules = {
@@ -185,6 +194,17 @@ export function calcLineTotals(quantity: number, unitPrice: number, vatRate = 15
   const vatAmount = Math.round(subtotal * (vatRate / 100) * 100) / 100;
   const lineTotal = Math.round((subtotal + vatAmount) * 100) / 100;
   return { subtotal, vatAmount, lineTotal };
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function normalizeDiscount(base: number, discountPct?: number, discountValue?: number) {
+  const pct = Number(discountPct || 0);
+  const val = Number(discountValue || 0);
+  const pctValue = pct > 0 ? (base * pct) / 100 : 0;
+  return clamp(Math.round((pctValue + val) * 100) / 100, 0, Math.round(base * 100) / 100);
 }
 
 export function calcPoHeaderTotals(lines: Array<{ line_total: number; vat_amount?: number; subtotal?: number }>) {
@@ -394,18 +414,46 @@ export async function savePurchaseOrder(
     status?: string;
     order_date?: string;
     notes?: string;
+    header_discount_pct?: number;
+    header_discount_value?: number;
     lines: PurchaseOrderLineInput[];
   },
   actor = "user"
 ) {
-  const builtLines = input.lines.map((line, index) => {
-    const { vatAmount, lineTotal } = calcLineTotals(line.quantity, line.unit_price, line.vat_rate ?? 15);
+  const lineBaseRows = input.lines.map((line) => {
+    const qty = Number(line.quantity || 0);
+    const baseSubtotal = Math.round(qty * Number(line.unit_price || 0) * 100) / 100;
+    const lineDiscount = normalizeDiscount(baseSubtotal, line.discount_pct, line.discount_value);
+    const discountedSubtotal = Math.round((baseSubtotal - lineDiscount) * 100) / 100;
     return {
-      ...line,
+      line,
+      qty,
+      baseSubtotal,
+      lineDiscount,
+      discountedSubtotal,
+    };
+  });
+
+  const preHeaderSubtotal = lineBaseRows.reduce((sum, row) => sum + row.discountedSubtotal, 0);
+  const headerDiscount = normalizeDiscount(
+    preHeaderSubtotal,
+    Number(input.header_discount_pct || 0),
+    Number(input.header_discount_value || 0)
+  );
+
+  const builtLines = lineBaseRows.map((row, index) => {
+    const proportionalHeaderDiscount =
+      preHeaderSubtotal > 0 ? Math.round(((row.discountedSubtotal / preHeaderSubtotal) * headerDiscount) * 100) / 100 : 0;
+    const finalSubtotal = Math.max(0, Math.round((row.discountedSubtotal - proportionalHeaderDiscount) * 100) / 100);
+    const effectiveUnitPrice = row.qty > 0 ? Math.round((finalSubtotal / row.qty) * 10000) / 10000 : 0;
+    const { vatAmount, lineTotal } = calcLineTotals(row.qty, effectiveUnitPrice, row.line.vat_rate ?? 15);
+    return {
+      ...row.line,
       vat_amount: vatAmount,
       line_total: lineTotal,
-      ordered_qty: line.quantity,
-      outstanding_qty: line.quantity,
+      unit_price: effectiveUnitPrice,
+      ordered_qty: row.qty,
+      outstanding_qty: row.qty,
       sort_order: index,
     };
   });
@@ -448,6 +496,29 @@ export async function savePurchaseOrder(
     headerPayload.approved_at = approvedAt;
     headerPayload.approved_by = approvedBy;
     headerPayload.approval_notes = approvalNotes;
+  }
+
+  if (headerDiscount > 0 || lineBaseRows.some((row) => row.lineDiscount > 0)) {
+    await writeProcurementAudit(supabase, {
+      companyId,
+      eventType: "PO Discount Applied",
+      entityType: "purchase_order",
+      entityId: input.id,
+      entityLabel: input.po_number,
+      detail: `Discounts applied on ${input.po_number}.`,
+      actor,
+      metadata: {
+        header_discount: headerDiscount,
+        header_discount_pct: Number(input.header_discount_pct || 0),
+        header_discount_value: Number(input.header_discount_value || 0),
+        line_discounts: lineBaseRows.map((row) => ({
+          item_name: row.line.item_name,
+          line_discount: row.lineDiscount,
+          discount_pct: Number(row.line.discount_pct || 0),
+          discount_value: Number(row.line.discount_value || 0),
+        })),
+      },
+    });
   }
 
   let poId = input.id;
@@ -543,7 +614,15 @@ export async function savePurchaseOrder(
 
   const insertRows = lineRows.map(({ _outstandingValue, ...row }) => row);
 
-  const { error: lineError } = await supabase.from("vyron_cost_purchase_order_lines").insert(insertRows);
+  let { error: lineError } = await supabase.from("vyron_cost_purchase_order_lines").insert(insertRows);
+  if (lineError && /line_total|vat_amount|non-DEFAULT value/i.test(String(lineError.message || ""))) {
+    const dbManagedRows = insertRows.map((row) => {
+      const { line_total, vat_amount, ...rest } = row as Record<string, unknown>;
+      return rest;
+    });
+    const retry = await supabase.from("vyron_cost_purchase_order_lines").insert(dbManagedRows);
+    lineError = retry.error;
+  }
   if (lineError) throw new Error(lineError.message);
 
   return getPurchaseOrderDetail(supabase, poId!, companyId);
@@ -629,6 +708,9 @@ export async function transitionPurchaseOrder(
   const eventMap: Record<string, string> = {
     Submitted: "PO Submitted",
     Approved: "PO Approved",
+    Rejected: "PO Rejected",
+    "Awaiting Revision": "PO Awaiting Revision",
+    "Returned for Changes": "PO Returned for Changes",
     Sent: "PO Sent",
     Closed: "PO Closed",
     Cancelled: "PO Cancelled",
@@ -647,6 +729,147 @@ export async function transitionPurchaseOrder(
   }
   const purchaseOrder = await getPurchaseOrderDetail(supabase, poId, companyId);
   return { purchaseOrder, approvalTier };
+}
+
+export async function getPurchaseOrderArchiveState(
+  supabase: SupabaseClient,
+  companyId: string,
+  poId: string
+): Promise<{ archived: boolean; archivedAt: string | null; archivedBy: string | null; reason: string | null }> {
+  const { data, error } = await supabase
+    .from("vyron_procurement_audit_log")
+    .select("event_type, actor, detail, metadata, created_at")
+    .eq("company_id", companyId)
+    .eq("entity_type", "purchase_order")
+    .eq("entity_id", poId)
+    .in("event_type", ["PO Archived", "PO Restored"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return { archived: false, archivedAt: null, archivedBy: null, reason: null };
+  const metadata = (data.metadata || {}) as Record<string, unknown>;
+  const archived = String(data.event_type) === "PO Archived";
+  return {
+    archived,
+    archivedAt: archived ? String(data.created_at || "") || null : null,
+    archivedBy: archived ? String(data.actor || "") || null : null,
+    reason: archived ? String(metadata.reason || data.detail || "") || null : null,
+  };
+}
+
+export async function setPurchaseOrderArchiveState(
+  supabase: SupabaseClient,
+  params: {
+    companyId: string;
+    poId: string;
+    archived: boolean;
+    actor?: string;
+    reason?: string;
+  }
+) {
+  const po = await getPurchaseOrderDetail(supabase, params.poId, params.companyId);
+  if (!po) throw new Error("Purchase order not found.");
+
+  const current = await getPurchaseOrderArchiveState(supabase, params.companyId, params.poId);
+  if (current.archived === params.archived) {
+    return { purchaseOrder: po, archive: current, changed: false };
+  }
+
+  const eventType = params.archived ? "PO Archived" : "PO Restored";
+  const reason = String(params.reason || "").trim();
+  await writeProcurementAudit(supabase, {
+    companyId: params.companyId,
+    eventType,
+    entityType: "purchase_order",
+    entityId: params.poId,
+    entityLabel: po.po_number,
+    detail: params.archived
+      ? `Purchase order ${po.po_number} archived.${reason ? ` Reason: ${reason}` : ""}`
+      : `Purchase order ${po.po_number} restored.${reason ? ` Reason: ${reason}` : ""}`,
+    actor: params.actor || "system",
+    metadata: {
+      archived: params.archived,
+      reason: reason || null,
+    },
+  });
+
+  const archive = await getPurchaseOrderArchiveState(supabase, params.companyId, params.poId);
+  return { purchaseOrder: po, archive, changed: true };
+}
+
+export async function listArchivedPurchaseOrders(
+  supabase: SupabaseClient,
+  companyId: string,
+  filters?: { search?: string; status?: string }
+): Promise<ArchivedPurchaseOrderRow[]> {
+  const { data: events, error: eventError } = await supabase
+    .from("vyron_procurement_audit_log")
+    .select("entity_id, event_type, actor, created_at, metadata")
+    .eq("company_id", companyId)
+    .eq("entity_type", "purchase_order")
+    .in("event_type", ["PO Archived", "PO Restored"])
+    .order("created_at", { ascending: false })
+    .limit(5000);
+  if (eventError) throw new Error(eventError.message);
+
+  const latestState = new Map<string, { archived: boolean; archived_at: string | null; archived_by: string | null; reason: string | null }>();
+  for (const row of events || []) {
+    const entityId = String(row.entity_id || "");
+    if (!entityId || latestState.has(entityId)) continue;
+    const metadata = (row.metadata || {}) as Record<string, unknown>;
+    const archived = String(row.event_type) === "PO Archived";
+    latestState.set(entityId, {
+      archived,
+      archived_at: archived ? String(row.created_at || "") || null : null,
+      archived_by: archived ? String(row.actor || "") || null : null,
+      reason: archived ? String(metadata.reason || "") || null : null,
+    });
+  }
+
+  const archivedIds = Array.from(latestState.entries())
+    .filter(([, state]) => state.archived)
+    .map(([id]) => id);
+
+  if (!archivedIds.length) return [];
+
+  const { data: rows, error } = await supabase
+    .from("vyron_cost_purchase_orders")
+    .select("*")
+    .eq("company_id", companyId)
+    .in("id", archivedIds)
+    .order("updated_at", { ascending: false });
+  if (error) throw new Error(error.message);
+
+  type ArchivedPoRow = ArchivedPurchaseOrderRow;
+
+  let items: ArchivedPoRow[] = (rows || []).map((row) => {
+    const cast = row as PurchaseOrderRow;
+    const state = latestState.get(String(cast.id));
+    return {
+      ...cast,
+      archived: true,
+      archived_at: state?.archived_at || null,
+      archived_by: state?.archived_by || null,
+      archive_reason: state?.reason || null,
+    };
+  });
+
+  if (filters?.status?.trim()) {
+    const target = filters.status.trim().toLowerCase();
+    items = items.filter((row) => String(row.status || "").toLowerCase() === target);
+  }
+  if (filters?.search?.trim()) {
+    const search = filters.search.trim().toLowerCase();
+    items = items.filter((row) =>
+      [row.po_number, row.supplier_name_snapshot, row.status, row.notes]
+        .join(" ")
+        .toLowerCase()
+        .includes(search)
+    );
+  }
+
+  return items;
 }
 
 type PoLineSnapshot = {

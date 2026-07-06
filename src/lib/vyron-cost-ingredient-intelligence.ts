@@ -37,6 +37,12 @@ function round2(n: number) {
   return Math.round(n * 100) / 100;
 }
 
+function isGeneratedColumnWriteError(error: unknown) {
+  const message = String((error as { message?: string } | null)?.message || "").toLowerCase();
+  const code = String((error as { code?: string } | null)?.code || "");
+  return code === "428C9" || message.includes("can only be updated to default");
+}
+
 export async function getIngredientIntelligence(id: string): Promise<{
   ingredient: CostIngredient | null;
   usage: IngredientUsageLine[];
@@ -231,13 +237,21 @@ export async function recalculateBomsUsingIngredient(
       })
     );
 
-    const { error: updateLineError } = await supabase
+    let updateLineResult = await supabase
       .from("vyron_cost_bom_lines")
       .update({ unit_cost: newUnitCost, line_cost: lineCost })
       .eq("id", line.id)
       .eq("company_id", companyId);
 
-    if (updateLineError) throw new Error(updateLineError.message);
+    if (updateLineResult.error && isGeneratedColumnWriteError(updateLineResult.error)) {
+      updateLineResult = await supabase
+        .from("vyron_cost_bom_lines")
+        .update({ unit_cost: newUnitCost })
+        .eq("id", line.id)
+        .eq("company_id", companyId);
+    }
+
+    if (updateLineResult.error) throw new Error(updateLineResult.error.message);
   }
 
   const bomIds = Array.from(new Set(lines.map((line) => String(line.bom_id))));

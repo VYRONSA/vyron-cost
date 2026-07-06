@@ -59,6 +59,8 @@ export async function POST(request: NextRequest) {
       status: body.status || "Draft",
       order_date: body.order_date,
       notes: body.notes,
+      header_discount_pct: body.header_discount_pct,
+      header_discount_value: body.header_discount_value,
       lines: Array.isArray(body.lines) ? body.lines : [],
     });
     return NextResponse.json({ ok: true, purchaseOrder: po });

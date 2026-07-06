@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   deletePurchaseOrder,
+  getPurchaseOrderArchiveState,
   getPurchaseOrderDetail,
   savePurchaseOrder,
   transitionPurchaseOrder,
@@ -47,6 +48,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const companyId = await requirePoCompanyId(supabase, companyContextFromRequest(request));
     const po = await getPurchaseOrderDetail(supabase, id, companyId);
     if (!po) return NextResponse.json({ ok: false, error: "Not found." }, { status: 404 });
+    const archive = await getPurchaseOrderArchiveState(supabase, companyId, id);
 
     const [{ data: goodsReceipts }, { data: linkedInvoices }] = await Promise.all([
       supabase
@@ -78,6 +80,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
       ok: true,
       purchaseOrder: {
         ...po,
+        archived: archive.archived,
+        archived_at: archive.archivedAt,
+        archived_by: archive.archivedBy,
+        archive_reason: archive.reason,
         supplier: supplier.data || null,
       },
       goodsReceipts: goodsReceipts || [],
@@ -112,6 +118,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         status: body.status || "Draft",
         order_date: body.order_date,
         notes: body.notes,
+        header_discount_pct: body.header_discount_pct,
+        header_discount_value: body.header_discount_value,
         lines: Array.isArray(body.lines) ? body.lines : [],
       },
       String(body.actor || "user")
@@ -134,14 +142,28 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   if (!status) return NextResponse.json({ ok: false, error: "status required." }, { status: 400 });
   try {
     await requirePackageFeature("purchase_orders");
-    const approvalStatuses = new Set(["Approved", "Sent", "Closed", "Cancelled"]);
+    const approvalStatuses = new Set([
+      "Approved",
+      "Sent",
+      "Closed",
+      "Cancelled",
+      "Rejected",
+      "Awaiting Revision",
+      "Returned for Changes",
+    ]);
     await requireWorkspacePermission(
       approvalStatuses.has(status) ? "purchase_orders.approve" : "purchase_orders.edit"
     );
     const companyId = await requirePoCompanyId(supabase, companyContextFromRequest(request, body));
+    const rejectReason = String(body.rejectReason || body.rejectionReason || "").trim();
+    const approvalComments = String(body.approvalComments || "").trim();
+    const combinedNotes = [body.approvalNotes, rejectReason ? `Reject reason: ${rejectReason}` : "", approvalComments]
+      .filter((part) => String(part || "").trim().length > 0)
+      .map((part) => String(part).trim())
+      .join(" · ");
     const { purchaseOrder, approvalTier } = await transitionPurchaseOrder(supabase, id, status, companyId, {
       approvedBy: body.approvedBy,
-      approvalNotes: body.approvalNotes,
+      approvalNotes: combinedNotes || body.approvalNotes,
       actor: body.actor,
     });
     return NextResponse.json({ ok: true, purchaseOrder, approvalTier });

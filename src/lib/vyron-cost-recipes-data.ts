@@ -64,6 +64,18 @@ function lineCostInput(line: RecipeLineInput) {
   };
 }
 
+function isMissingUpdatedAtError(error: unknown) {
+  const code = String((error as { code?: string } | null)?.code || "");
+  const message = String((error as { message?: string } | null)?.message || "").toLowerCase();
+  return code === "42703" || (message.includes("column") && message.includes("updated_at"));
+}
+
+function isMissingColumnError(error: unknown, column: string) {
+  const code = String((error as { code?: string } | null)?.code || "");
+  const message = String((error as { message?: string } | null)?.message || "").toLowerCase();
+  return code === "42703" || (message.includes("column") && message.includes(column.toLowerCase()));
+}
+
 export function computeRecipeCosts(
   lines: RecipeLineInput[],
   yieldQty: number,
@@ -178,12 +190,21 @@ async function syncLinkedProducts(
   previousProductId?: string | null
 ) {
   if (previousProductId && previousProductId !== productId) {
-    await supabase
+    let unlinkResponse = await supabase
       .from("vyron_cost_products")
       .update({ linked_bom_id: null, updated_at: new Date().toISOString() })
       .eq("id", previousProductId)
       .eq("company_id", companyId)
       .eq("linked_bom_id", recipeId);
+    if (unlinkResponse.error && isMissingUpdatedAtError(unlinkResponse.error)) {
+      unlinkResponse = await supabase
+        .from("vyron_cost_products")
+        .update({ linked_bom_id: null })
+        .eq("id", previousProductId)
+        .eq("company_id", companyId)
+        .eq("linked_bom_id", recipeId);
+    }
+    if (unlinkResponse.error) throw new Error(unlinkResponse.error.message);
   }
 
   const ids = new Set<string>();
@@ -215,19 +236,38 @@ async function syncLinkedProducts(
     const product = productById.get(id);
     const selling = Number(product?.selling_price || 0);
     const target = Number(product?.target_gp || 40);
-    await supabase
+    const basePatch = {
+      linked_bom_id: recipeId,
+      total_cost: costPerUnit,
+      cost_per_unit: costPerUnit,
+      calculated_gp: calcGp(selling, costPerUnit),
+      actual_gp: calcGp(selling, costPerUnit),
+      suggested_selling_price: calcSuggestedPrice(costPerUnit, target),
+      updated_at: new Date().toISOString(),
+    };
+
+    let updateResponse = await supabase
       .from("vyron_cost_products")
-      .update({
-        linked_bom_id: recipeId,
-        total_cost: costPerUnit,
-        cost_per_unit: costPerUnit,
-        calculated_gp: calcGp(selling, costPerUnit),
-        actual_gp: calcGp(selling, costPerUnit),
-        suggested_selling_price: calcSuggestedPrice(costPerUnit, target),
-        updated_at: new Date().toISOString(),
-      })
+      .update(basePatch)
       .eq("id", id)
       .eq("company_id", companyId);
+
+    if (
+      updateResponse.error &&
+      (isMissingUpdatedAtError(updateResponse.error) || isMissingColumnError(updateResponse.error, "cost_per_unit"))
+    ) {
+      const retryPatch: Record<string, unknown> = { ...basePatch };
+      if (isMissingUpdatedAtError(updateResponse.error)) delete retryPatch.updated_at;
+      if (isMissingColumnError(updateResponse.error, "cost_per_unit")) delete retryPatch.cost_per_unit;
+
+      updateResponse = await supabase
+        .from("vyron_cost_products")
+        .update(retryPatch)
+        .eq("id", id)
+        .eq("company_id", companyId);
+    }
+
+    if (updateResponse.error) throw new Error(updateResponse.error.message);
   }
 
   return ids.size;

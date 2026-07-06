@@ -12,7 +12,11 @@ import {
   sessionHasPermission,
 } from "@/lib/vyron-workspace-permissions";
 import type { WorkspaceSession } from "@/lib/vyron-workspace-session";
-import { SchemaReadinessError } from "@/lib/vyron-schema-readiness";
+import {
+  OPERATIONS_CATCHUP_SQL,
+  OPERATIONS_SCHEMA_TABLES,
+  SchemaReadinessError,
+} from "@/lib/vyron-schema-readiness";
 
 export class WorkspaceAccessError extends Error {
   status: number;
@@ -22,6 +26,49 @@ export class WorkspaceAccessError extends Error {
     this.name = "WorkspaceAccessError";
     this.status = status;
   }
+}
+
+function parseMissingTable(message: string): string | null {
+  const direct = message.match(/table\s+'public\.([a-zA-Z0-9_]+)'/i);
+  if (direct?.[1]) return direct[1];
+
+  const relation = message.match(/relation\s+"public\.([a-zA-Z0-9_]+)"\s+does not exist/i);
+  if (relation?.[1]) return relation[1];
+
+  return null;
+}
+
+function missingTableSchemaHint(table: string | null) {
+  if (!table) {
+    return {
+      catchupSql: null,
+      hint: "Database schema cache may be stale or the table is missing. Verify migrations and reload API schema cache.",
+    };
+  }
+
+  const operationsTables = new Set<string>(OPERATIONS_SCHEMA_TABLES.map((row) => row.table));
+  if (operationsTables.has(table)) {
+    return {
+      catchupSql: OPERATIONS_CATCHUP_SQL,
+      hint: "Sprint operations migrations are not applied to this Supabase project.",
+    };
+  }
+
+  if (
+    table.startsWith("vyron_cost_production_") ||
+    table === "vyron_stock_movements" ||
+    table === "vyron_finished_goods"
+  ) {
+    return {
+      catchupSql: "supabase/manufacturing-batch-d-production.sql",
+      hint: "Manufacturing schema is missing or not visible in API schema cache. Apply manufacturing migration and reload schema cache.",
+    };
+  }
+
+  return {
+    catchupSql: null,
+    hint: "Required table is missing from the API schema cache. Verify migration state and reload schema cache.",
+  };
 }
 
 export async function requireWorkspacePermission(
@@ -74,14 +121,21 @@ export function workspaceAccessErrorResponse(error: unknown, fallbackMessage: st
       { status: error.status }
     );
   }
-  if (error instanceof Error && error.message.toLowerCase().includes("could not find the table")) {
+  if (
+    error instanceof Error &&
+    (error.message.toLowerCase().includes("could not find the table") ||
+      error.message.toLowerCase().includes("does not exist"))
+  ) {
+    const missingTable = parseMissingTable(error.message);
+    const schemaHint = missingTableSchemaHint(missingTable);
     return NextResponse.json(
       {
         ok: false,
         error: error.message,
         schema: {
-          catchupSql: "supabase/vyron-cost-sprint-operations-catchup.sql",
-          hint: "Sprint operations migrations are not applied to this Supabase project.",
+          missingTable,
+          catchupSql: schemaHint.catchupSql,
+          hint: schemaHint.hint,
         },
       },
       { status: 503 }

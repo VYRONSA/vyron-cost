@@ -269,6 +269,14 @@ html:has(.vyron-public-page) body {
   padding-left: clamp(0.5rem, 2vw, 1rem);
   padding-right: clamp(0.5rem, 2vw, 1rem);
 }
+.vyron-phone-mode,
+.vyron-tablet-mode {
+  position: relative;
+  background:
+    radial-gradient(circle at 92% 4%, rgba(124, 58, 237, 0.04), transparent 34%),
+    radial-gradient(circle at 6% 20%, rgba(244, 63, 94, 0.03), transparent 30%),
+    linear-gradient(180deg, #f8fafc 0%, #f6f7fb 50%, #eef2f7 100%);
+}
 .vyron-tablet-bottomnav {
   padding-top: 0.85rem;
 }
