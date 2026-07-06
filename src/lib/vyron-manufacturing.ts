@@ -625,7 +625,7 @@ export async function transitionProductionRun(
       fields: { approved_by: actor, approved_at: new Date().toISOString() },
     },
     start: {
-      from: ["Approved"],
+      from: ["Planned", "Approved"],
       to: "In Production",
       fields: { started_by: actor, started_at: new Date().toISOString() },
     },
@@ -646,9 +646,14 @@ export async function transitionProductionRun(
     }
   }
 
+  const startFromPlannedFields =
+    action === "start" && run.status === "Planned"
+      ? { approved_by: actor, approved_at: new Date().toISOString() }
+      : {};
+
   await supabase
     .from("vyron_cost_production_runs")
-    .update({ status: t.to, ...t.fields, updated_at: new Date().toISOString() })
+    .update({ status: t.to, ...startFromPlannedFields, ...t.fields, updated_at: new Date().toISOString() })
     .eq("id", runId)
     .eq("company_id", companyId);
 

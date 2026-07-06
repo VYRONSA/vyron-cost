@@ -1,0 +1,12 @@
+
+> vyron-cost-web@0.1.0 build
+> next build
+
+⨯ Another next build process is already running.
+
+  This could be:
+  - A next build still in progress
+  - A previous build that didn't exit cleanly
+
+  Suggestion: Wait for the build to complete.
+EXIT:1
