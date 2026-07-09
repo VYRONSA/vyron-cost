@@ -97,6 +97,7 @@ export const vyronNavSections: VyronNavSection[] = [
       { label: "Stock Movements", icon: PackageCheck, href: "/stock-movements" },
       { label: "Inventory Ledger", icon: ClipboardList, href: "/inventory-ledger" },
       { label: "Inventory Counts", icon: ClipboardList, href: "/inventory/counts" },
+      { label: "Opening Stock Import", icon: Upload, href: "/opening-stock-import" },
       { label: "Inventory Intelligence", icon: Target, href: "/inventory-intelligence" },
     ],
   },
@@ -139,6 +140,9 @@ export const vyronNavSections: VyronNavSection[] = [
       { label: "Customer Register", icon: Users, href: "/customers" },
       { label: "Sales Orders", icon: ShoppingCart, href: "/customer-sales-orders" },
       { label: "Customer Invoices", icon: ReceiptText, href: "/customer-invoices" },
+      { label: "Customer Price Lists", icon: FileText, href: "/customer-price-lists" },
+      { label: "Price List Import", icon: Upload, href: "/price-list-import" },
+      { label: "Customer GP Reporting", icon: BarChart3, href: "/customer-gp-reporting" },
     ],
   },
 

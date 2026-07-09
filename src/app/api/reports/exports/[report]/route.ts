@@ -8,6 +8,7 @@ import {
   type ReportFilter,
   type TenantReportExportPayload,
 } from "@/lib/vyron-report-exports";
+import { getCustomerGpReport, writeReportAudit } from "@/lib/vyron-customer-gp-reporting";
 import {
   requireWorkspacePermission,
   workspaceAccessErrorResponse,
@@ -288,6 +289,85 @@ async function buildSalesExport(
   };
 }
 
+async function buildCustomerGpExport(
+  companyId: string,
+  request: NextRequest,
+  from: string | null,
+  to: string | null,
+  filters: ReportFilter[]
+): Promise<TenantReportExportPayload> {
+  const report = await getCustomerGpReport(getSupabaseAdmin()!, companyId, {
+    from,
+    to,
+    customerId: request.nextUrl.searchParams.get("customerId"),
+    customerGroup: request.nextUrl.searchParams.get("customerGroup"),
+    salesperson: request.nextUrl.searchParams.get("salesperson"),
+    warehouse: request.nextUrl.searchParams.get("warehouse"),
+    productId: request.nextUrl.searchParams.get("productId"),
+    productCategory: request.nextUrl.searchParams.get("productCategory"),
+    priceListId: request.nextUrl.searchParams.get("priceListId"),
+    search: request.nextUrl.searchParams.get("search"),
+  });
+
+  const generatedAt = new Date().toISOString();
+  const branding = await fetchBranding(companyId);
+
+  return {
+    reportKey: "customer-gp",
+    title: "Customer GP% Reporting",
+    subtitle: "Posted customer invoices only. Customer, invoice and product gross profit analysis.",
+    fileName: buildReportFileName("customer-gp", branding.companyName, generatedAt),
+    generatedAt,
+    branding,
+    filters,
+    summary: [
+      { label: "Revenue", value: formatMoney(report.metrics.revenue) },
+      { label: "Cost of Sales", value: formatMoney(report.metrics.costOfSales) },
+      { label: "Gross Profit", value: formatMoney(report.metrics.grossProfit) },
+      { label: "GP %", value: `${formatQty(report.metrics.gpPct, 2)}%` },
+      { label: "Margin %", value: `${formatQty(report.metrics.marginPct, 2)}%` },
+      { label: "Mark-up %", value: `${formatQty(report.metrics.markupPct, 2)}%` },
+      { label: "Quantity Sold", value: formatQty(report.metrics.qtySold, 2) },
+      { label: "Average Selling Price", value: formatMoney(report.metrics.avgSellingPrice) },
+      { label: "Average Cost Price", value: formatMoney(report.metrics.avgCostPrice) },
+    ],
+    columns: [
+      { key: "customer", label: "Customer" },
+      { key: "customerGroup", label: "Customer Group" },
+      { key: "invoice", label: "Invoice" },
+      { key: "invoiceDate", label: "Invoice Date" },
+      { key: "salesperson", label: "Salesperson" },
+      { key: "warehouse", label: "Warehouse" },
+      { key: "revenue", label: "Revenue" },
+      { key: "cost", label: "Cost of Sales" },
+      { key: "gp", label: "Gross Profit" },
+      { key: "gpPct", label: "GP %" },
+      { key: "marginPct", label: "Margin %" },
+      { key: "markupPct", label: "Mark-up %" },
+      { key: "qtySold", label: "Qty Sold" },
+      { key: "avgSelling", label: "Avg Selling" },
+      { key: "avgCost", label: "Avg Cost" },
+    ],
+    rows: report.byInvoice.map((row) => [
+      row.customerName,
+      row.customerGroup,
+      row.invoiceNumber,
+      row.invoiceDate,
+      row.salesperson,
+      row.warehouse,
+      formatMoney(row.revenue),
+      formatMoney(row.cost),
+      formatMoney(row.gp),
+      `${formatQty(row.gpPct, 2)}%`,
+      `${formatQty(row.marginPct, 2)}%`,
+      `${formatQty(row.markupPct, 2)}%`,
+      formatQty(row.qtySold, 2),
+      formatMoney(row.avgSellingPrice),
+      formatMoney(row.avgCostPrice),
+    ]),
+  };
+}
+
 export async function GET(request: NextRequest, context: RouteContext) {
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
@@ -313,9 +393,20 @@ export async function GET(request: NextRequest, context: RouteContext) {
       payload = await buildManufacturingExport(companyId, from, to, filters);
     } else if (reportKey === "sales") {
       payload = await buildSalesExport(companyId, from, to, filters);
+    } else if (reportKey === "customer-gp") {
+      payload = await buildCustomerGpExport(companyId, request, from, to, filters);
     } else {
       return NextResponse.json({ ok: false, error: "Unknown report export type." }, { status: 404 });
     }
+
+    await writeReportAudit(getSupabaseAdmin()!, {
+      companyId,
+      reportKey,
+      eventType: "Report Exported",
+      actor: "user",
+      detail: `Exported ${reportKey}`,
+      metadata: { filters },
+    });
 
     return NextResponse.json({ ok: true, export: payload }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createCustomerInvoice, type CustomerInvoiceRow } from "@/lib/vyron-customer-invoices";
+import { resolveCustomerProductPrice } from "@/lib/vyron-customer-price-lists";
 import { createProductionRun } from "@/lib/vyron-manufacturing";
 import {
   createProcurementRequisition,
@@ -810,6 +811,7 @@ async function buildTraceability(
 async function enrichProductCosts(
   supabase: SupabaseClient,
   companyId: string,
+  customerId: string | null | undefined,
   lines: SalesOrderLineInput[]
 ): Promise<SalesOrderLineInput[]> {
   const productIds = lines.map((line) => line.productId).filter(Boolean) as string[];
@@ -835,6 +837,30 @@ async function enrichProductCosts(
       sellingPrice: Number(line.sellingPrice || product.selling_price || 0),
     };
   });
+}
+
+async function applyCustomerPriceList(
+  supabase: SupabaseClient,
+  companyId: string,
+  customerId: string | null | undefined,
+  lines: SalesOrderLineInput[]
+) {
+  const resolved = await Promise.all(
+    lines.map(async (line) => {
+      if (!line.productId) return line;
+      const price = await resolveCustomerProductPrice(supabase, companyId, {
+        customerId,
+        productId: line.productId,
+      });
+      return {
+        ...line,
+        description: line.description || price.productName,
+        sellingPrice: Number(line.sellingPrice || price.sellingPrice || 0),
+        costPerUnit: Number(line.costPerUnit || price.costPerUnit || 0),
+      };
+    })
+  );
+  return resolved;
 }
 
 function ensureTransition(from: SalesOrderStatus, to: SalesOrderStatus) {
@@ -911,7 +937,8 @@ export async function saveCustomerSalesOrder(
   if (!input.customerName.trim()) throw new Error("Customer is required.");
   if (!Array.isArray(input.lines) || input.lines.length === 0) throw new Error("At least one line is required.");
 
-  const enriched = await enrichProductCosts(supabase, companyId, input.lines);
+  const enrichedBase = await enrichProductCosts(supabase, companyId, input.customerId, input.lines);
+  const enriched = await applyCustomerPriceList(supabase, companyId, input.customerId, enrichedBase);
 
   const mappedLines = enriched.map((line, index) => {
     const amounts = lineAmounts(line);

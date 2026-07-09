@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 import type { TenantReportExportPayload } from "@/lib/vyron-report-exports";
 
 function drawHeader(doc: jsPDF, payload: TenantReportExportPayload) {
@@ -119,4 +120,36 @@ export function exportTenantReportCsv(payload: TenantReportExportPayload) {
   anchor.download = payload.fileName.replace(/\.pdf$/i, ".csv");
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+export function exportTenantReportExcel(payload: TenantReportExportPayload) {
+  const workbook = XLSX.utils.book_new();
+
+  const summaryRows: Array<Record<string, string>> = [
+    { Metric: "Report", Value: payload.title },
+    { Metric: "Generated", Value: new Date(payload.generatedAt).toISOString() },
+    { Metric: "Company", Value: payload.branding.tradingName || payload.branding.companyName },
+    ...payload.summary.map((row) => ({ Metric: row.label, Value: row.value })),
+  ];
+  const summarySheet = XLSX.utils.json_to_sheet(summaryRows);
+  XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
+
+  if (payload.filters.length) {
+    const filterRows = payload.filters.map((row) => ({ Filter: row.label, Value: row.value }));
+    const filtersSheet = XLSX.utils.json_to_sheet(filterRows);
+    XLSX.utils.book_append_sheet(workbook, filtersSheet, "Filters");
+  }
+
+  const rowObjects = payload.rows.map((row) => {
+    const record: Record<string, string> = {};
+    payload.columns.forEach((column, index) => {
+      record[column.label] = String(row[index] || "");
+    });
+    return record;
+  });
+  const dataSheet = XLSX.utils.json_to_sheet(rowObjects);
+  XLSX.utils.book_append_sheet(workbook, dataSheet, "Data");
+
+  const fileName = payload.fileName.replace(/\.pdf$/i, ".xlsx");
+  XLSX.writeFile(workbook, fileName);
 }

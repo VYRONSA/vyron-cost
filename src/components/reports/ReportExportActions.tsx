@@ -2,16 +2,16 @@
 
 import { useState } from "react";
 import { useReportsPermissions } from "@/hooks/useModulePermissions";
-import { exportTenantReportCsv, exportTenantReportPdf } from "@/lib/vyron-report-pdf-export";
+import { exportTenantReportCsv, exportTenantReportExcel, exportTenantReportPdf } from "@/lib/vyron-report-pdf-export";
 import type { TenantReportExportPayload } from "@/lib/vyron-report-exports";
 
 type ReportExportActionsProps = {
-  reportKey: "inventory-stock" | "manufacturing" | "sales";
+  reportKey: "inventory-stock" | "manufacturing" | "sales" | "customer-gp";
 };
 
 export default function ReportExportActions({ reportKey }: ReportExportActionsProps) {
   const { canExport } = useReportsPermissions();
-  const [busy, setBusy] = useState<"pdf" | "csv" | null>(null);
+  const [busy, setBusy] = useState<"pdf" | "csv" | "excel" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function loadPayload() {
@@ -52,6 +52,19 @@ export default function ReportExportActions({ reportKey }: ReportExportActionsPr
     }
   }
 
+  async function exportExcel() {
+    setError(null);
+    setBusy("excel");
+    try {
+      const payload = await loadPayload();
+      exportTenantReportExcel(payload);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Excel export failed.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <>
       <button
@@ -65,6 +78,14 @@ export default function ReportExportActions({ reportKey }: ReportExportActionsPr
         type="button"
         disabled={!canExport || busy !== null}
         className="rounded-full bg-violet-700 px-4 py-2 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
+        onClick={exportExcel}
+      >
+        {busy === "excel" ? "Exporting Excel..." : "Export Excel"}
+      </button>
+      <button
+        type="button"
+        disabled={!canExport || busy !== null}
+        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black disabled:cursor-not-allowed disabled:opacity-50"
         onClick={exportCsv}
       >
         {busy === "csv" ? "Exporting CSV..." : "Export CSV"}

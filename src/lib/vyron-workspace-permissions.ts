@@ -536,6 +536,10 @@ export const NAV_PATH_PERMISSIONS: Record<string, string> = {
 
   "/customer-invoices": "invoices.view",
   "/customer-sales-orders": "sales_orders.view",
+  "/customer-price-lists": "sales_orders.view",
+  "/price-list-import": "admin.imports",
+  "/opening-stock-import": "inventory.adjustments.post",
+  "/customer-gp-reporting": "reports.view",
 
   "/integrations/xero": "xero.view",
 

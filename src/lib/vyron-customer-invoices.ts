@@ -12,6 +12,7 @@ import {
   type VyronFinishedGoodRow,
 } from "@/lib/vyron-inventory";
 import { getInvoiceStockPostingStatus } from "@/lib/vyron-invoice-stock-status";
+import { resolveCustomerProductPrice } from "@/lib/vyron-customer-price-lists";
 
 export type CustomerInvoiceStatus = "Draft" | "Approved" | "Posted" | "Sent" | "Paid" | "Cancelled";
 
@@ -91,6 +92,7 @@ function computeTotals(lines: CustomerInvoiceLineInput[]) {
 async function enrichInvoiceLinesFromProductMaster(
   supabase: SupabaseClient,
   companyId: string,
+  customerId: string | null | undefined,
   lines: CustomerInvoiceLineInput[]
 ): Promise<CustomerInvoiceLineInput[]> {
   const productIds = lines.map((line) => line.productId).filter(Boolean) as string[];
@@ -105,19 +107,27 @@ async function enrichInvoiceLinesFromProductMaster(
 
   const byId = new Map((products || []).map((product) => [String(product.id), product]));
 
-  return lines.map((line) => {
-    if (!line.productId) return line;
-    const product = byId.get(line.productId);
-    if (!product) return line;
-    return {
-      ...line,
-      productName: line.productName || String(product.product_name || ""),
-      sellingPrice:
-        Number(line.sellingPrice) > 0 ? Number(line.sellingPrice) : Number(product.selling_price || 0),
-      costPerUnit:
-        Number(line.costPerUnit) > 0 ? Number(line.costPerUnit) : Number(product.total_cost || 0),
-    };
-  });
+  const resolved = await Promise.all(
+    lines.map(async (line) => {
+      if (!line.productId) return line;
+      const product = byId.get(line.productId);
+      if (!product) return line;
+      const customerPrice = await resolveCustomerProductPrice(supabase, companyId, {
+        customerId,
+        productId: line.productId,
+      });
+      return {
+        ...line,
+        productName: line.productName || customerPrice.productName || String(product.product_name || ""),
+        sellingPrice:
+          Number(line.sellingPrice) > 0 ? Number(line.sellingPrice) : Number(customerPrice.sellingPrice || 0),
+        costPerUnit:
+          Number(line.costPerUnit) > 0 ? Number(line.costPerUnit) : Number(customerPrice.costPerUnit || 0),
+      };
+    })
+  );
+
+  return resolved;
 }
 
 export async function listCustomerInvoices(supabase: SupabaseClient, companyId: string) {
@@ -169,7 +179,12 @@ export async function createCustomerInvoice(
     if (!customerName) customerName = String(customer.customer_name || "").trim();
   }
 
-  const enrichedLines = await enrichInvoiceLinesFromProductMaster(supabase, companyId, params.lines);
+  const enrichedLines = await enrichInvoiceLinesFromProductMaster(
+    supabase,
+    companyId,
+    params.customerId,
+    params.lines
+  );
 
   for (const line of enrichedLines) {
     if (!line.productId) continue;
