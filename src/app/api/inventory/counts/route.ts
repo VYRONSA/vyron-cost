@@ -6,6 +6,7 @@ import {
   inventoryCompanyContextFromRequest,
   requireInventoryCompanyId,
 } from "@/lib/vyron-inventory-api-context";
+import { getAuthUserIdFromCookies } from "@/lib/vyron-workspace-auth";
 import {
   requireWorkspacePermission,
   workspaceAccessErrorResponse,
@@ -26,6 +27,18 @@ function entityTypeForCount(type: CountType) {
   if (type === "ingredients") return "ingredient";
   if (type === "packaging") return "packaging";
   return "finished_goods";
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+async function requireActorUserId() {
+  const authUserId = await getAuthUserIdFromCookies();
+  if (authUserId && UUID_RE.test(authUserId)) return authUserId;
+
+  const session = await requireWorkspacePermission("inventory.counts.create");
+  if (UUID_RE.test(session.userId)) return session.userId;
+
+  throw new Error("Authenticated user UUID required to create stock counts.");
 }
 
 export async function GET(request: NextRequest) {
@@ -65,7 +78,7 @@ export async function POST(request: NextRequest) {
   if (!countType) return NextResponse.json({ ok: false, error: "countType required." }, { status: 400 });
 
   try {
-    await requireWorkspacePermission("inventory.counts.create");
+    const createdBy = await requireActorUserId();
     const companyId = await requireInventoryCompanyId(supabase, inventoryCompanyContextFromRequest(request, body));
 
     let items = await listStockItems(supabase, companyId, { entityType: entityTypeForCount(countType) });
@@ -79,7 +92,7 @@ export async function POST(request: NextRequest) {
       supabase,
       companyId,
       countType,
-      String(body.createdBy || "supervisor"),
+      createdBy,
       {
         notes: body.notes ? String(body.notes) : undefined,
         warehouseName: body.warehouseName ? String(body.warehouseName) : undefined,

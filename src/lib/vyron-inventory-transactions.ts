@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   findOrCreateStockItem,
   postStockMovement,
+  writeInventoryAudit,
   type LedgerMovementType,
   type StockEntityType,
 } from "@/lib/vyron-inventory";
@@ -291,6 +292,18 @@ export async function postInventoryTransaction(
       allowNegative: input.allowNegative,
       metadata: { transaction_type: input.transactionType, transaction_number: transactionNumber },
     });
+
+    if (input.transactionType === "Adjustment") {
+      await writeInventoryAudit(supabase, {
+        companyId: input.companyId,
+        stockItemId,
+        eventType: "Inventory Adjustment",
+        actor: input.createdBy || "system",
+        detail: `ADJUST ${transactionNumber}: qty ${signedQty > 0 ? "+" : ""}${signedQty} @ ${unitCost}`,
+        referenceType: input.referenceType || "inventory_transaction",
+        referenceId: transactionId,
+      });
+    }
   }
 
   return {

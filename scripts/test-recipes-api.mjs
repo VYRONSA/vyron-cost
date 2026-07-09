@@ -67,16 +67,46 @@ async function main() {
   const ownerEmail = `recipes-owner-${Date.now()}@example.com`;
   const ownerPassword = "Recipes123!";
 
-  const ownerPatch = await fetch(`${base}/api/developer/clients/${workspace.id}/owner`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "password",
-      admin: { firstName: "Recipes", surname: "Owner", email: ownerEmail, mobile: "0821111111" },
-      loginSetup: { method: "password", password: ownerPassword },
-    }),
-  }).then((r) => r.json());
-  if (!ownerPatch.ok) throw new Error(`Owner setup failed: ${ownerPatch.error}`);
+  const ownerAuth = await supabase.auth.admin.createUser({
+    email: ownerEmail,
+    password: ownerPassword,
+    email_confirm: true,
+    user_metadata: { first_name: "Recipes", surname: "Owner" },
+  });
+  if (ownerAuth.error || !ownerAuth.data.user?.id) {
+    throw new Error(ownerAuth.error?.message || "Owner setup failed");
+  }
+  const ownerUserId = ownerAuth.data.user.id;
+
+  const workspaceOwner = await supabase
+    .from("vyron_workspaces")
+    .update({ owner_user_id: ownerUserId, contact_email: ownerEmail })
+    .eq("id", workspace.id);
+  if (workspaceOwner.error) throw workspaceOwner.error;
+
+  const profileUpsert = await supabase.from("vyron_user_profiles").upsert(
+    {
+      id: ownerUserId,
+      email: ownerEmail,
+      first_name: "Recipes",
+      surname: "Owner",
+      status: "Active",
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "id" }
+  );
+  if (profileUpsert.error) throw profileUpsert.error;
+
+  const membershipInsert = await supabase.from("vyron_workspace_memberships").insert({
+    workspace_id: workspace.id,
+    user_id: ownerUserId,
+    role: "OWNER",
+    status: "Active",
+    joined_at: new Date().toISOString(),
+  });
+  if (membershipInsert.error && !String(membershipInsert.error.message || "").includes("duplicate key")) {
+    throw membershipInsert.error;
+  }
 
   const ownerLogin = await fetch(`${base}/api/workspace/login`, {
     method: "POST",

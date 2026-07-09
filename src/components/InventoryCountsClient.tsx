@@ -61,7 +61,7 @@ export default function InventoryCountsClient() {
       const res = await fetch("/api/inventory/counts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...workspaceBody, countType, createdBy: "supervisor" }),
+        body: JSON.stringify({ ...workspaceBody, countType }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "Could not create stock count.");

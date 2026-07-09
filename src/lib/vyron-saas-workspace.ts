@@ -311,6 +311,37 @@ async function createAuthUser(
       },
     });
     if (error) {
+      const message = String(error.message || "").toLowerCase();
+      if (message.includes("rate limit")) {
+        const existingId = await findAuthUserIdByEmail(supabase, email);
+        if (existingId) {
+          const updated = await supabase.auth.admin.updateUserById(existingId, {
+            user_metadata: {
+              first_name: input.firstName,
+              surname: input.surname,
+              mobile: input.mobile,
+            },
+          });
+          if (updated.error) throw updated.error;
+          return { userId: existingId, status: "Invited" as MemberStatus };
+        }
+
+        const fallbackPassword = `Invite-${randomUUID()}`;
+        const fallback = await supabase.auth.admin.createUser({
+          email,
+          password: fallbackPassword,
+          email_confirm: false,
+          user_metadata: {
+            first_name: input.firstName,
+            surname: input.surname,
+            mobile: input.mobile,
+          },
+        });
+        if (fallback.error || !fallback.data.user?.id) {
+          throw fallback.error || new Error("Invite fallback failed.");
+        }
+        return { userId: fallback.data.user.id, status: "Invited" as MemberStatus };
+      }
       throw error;
     }
     if (!data.user?.id) {
@@ -1222,7 +1253,11 @@ export async function updateWorkspaceCompanyProfile(
   const now = new Date().toISOString();
 
   if (supabase) {
-    const { data: row } = await supabase.from("vyron_workspaces").select("id").eq("id", workspaceId).maybeSingle();
+    const { data: row } = await supabase
+      .from("vyron_workspaces")
+      .select("id, company_id")
+      .eq("id", workspaceId)
+      .maybeSingle();
     if (row) {
       const { error } = await supabase
         .from("vyron_workspaces")
@@ -1241,16 +1276,22 @@ export async function updateWorkspaceCompanyProfile(
         .eq("id", workspaceId);
       if (error) throw new Error(error.message);
 
-      await supabase
+      const companyId = row.company_id ? String(row.company_id) : "";
+      if (!companyId) throw new Error("Workspace company association missing.");
+
+      const { data: updatedCompany, error: companyError } = await supabase
         .from("vyron_cost_companies")
         .update({
           name: next.companyName,
           trading_name: next.tradingName,
           contact_email: next.contactEmail,
           phone: next.phone,
-          updated_at: now,
         })
-        .eq("id", (await getWorkspace(workspaceId))?.companyId || "");
+        .eq("id", companyId)
+        .select("id")
+        .maybeSingle();
+      if (companyError) throw new Error(companyError.message);
+      if (!updatedCompany) throw new Error("Linked company profile not found.");
     }
   }
 

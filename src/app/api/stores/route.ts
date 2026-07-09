@@ -38,6 +38,15 @@ export async function POST(request: NextRequest) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
 
   const body = await request.json().catch(() => ({}));
+  const storeCode = String(body.store_code || "").trim();
+  const storeName = String(body.store_name || "").trim();
+
+  if (!storeCode) {
+    return NextResponse.json({ ok: false, error: "store_code is required." }, { status: 400 });
+  }
+  if (!storeName) {
+    return NextResponse.json({ ok: false, error: "store_name is required." }, { status: 400 });
+  }
 
   try {
     await requirePackageFeature("stores");
@@ -45,8 +54,8 @@ export async function POST(request: NextRequest) {
     const companyId = await requireApiCompanyId();
     await assertOperationsSchemaReady(supabase, ["vyron_cost_stores"]);
     const store = await createStore(supabase, companyId, {
-      store_code: String(body.store_code || ""),
-      store_name: String(body.store_name || ""),
+      store_code: storeCode,
+      store_name: storeName,
       address: body.address,
       contact_name: body.contact_name,
       contact_email: body.contact_email,

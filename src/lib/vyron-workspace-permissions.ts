@@ -50,6 +50,15 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    label: "Units of Measure",
+    permissions: [
+      { key: "uom.view", label: "View units of measure" },
+      { key: "uom.create", label: "Create units of measure" },
+      { key: "uom.edit", label: "Edit units of measure" },
+      { key: "uom.delete", label: "Delete units of measure" },
+    ],
+  },
+  {
     label: "Recipes & BOM",
     permissions: [
       { key: "boms.view", label: "View BOMs" },

@@ -600,17 +600,21 @@ async function updateCustomerSalesHistory(
   if (!customerId) return;
   const { data: customer, error } = await supabase
     .from("vyron_customers")
-    .select("total_sales, invoice_count")
+    .select("id, company_id, total_sales, invoice_count")
     .eq("id", customerId)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  if (!customer) return;
+  if (!customer) throw new Error("Customer not found for invoice sales history update.");
+
+  if (invoice.company_id && customer.company_id && customer.company_id !== invoice.company_id) {
+    throw new Error("Customer company mismatch for invoice sales history update.");
+  }
 
   const totalSales = round2(Number(customer.total_sales || 0) + Number(invoice.sales_value || 0));
   const invoiceCount = Number(customer.invoice_count || 0) + 1;
   const average = invoiceCount ? round2(totalSales / invoiceCount) : 0;
 
-  await supabase
+  let updateQuery = supabase
     .from("vyron_customers")
     .update({
       total_sales: totalSales,
@@ -619,6 +623,13 @@ async function updateCustomerSalesHistory(
       last_invoice_date: invoice.invoice_date,
     })
     .eq("id", customerId);
+
+  if (invoice.company_id) {
+    updateQuery = updateQuery.eq("company_id", invoice.company_id);
+  }
+
+  const { error: updateError } = await updateQuery;
+  if (updateError) throw new Error(updateError.message);
 }
 
 async function queueXeroCustomerInvoice(
@@ -763,11 +774,6 @@ export async function postCustomerInvoiceStock(
     });
   }
 
-  if (options.updateInvoiceStatus !== false) {
-    await updateCustomerSalesHistory(supabase, invoice.customer_id, invoice);
-    await queueXeroCustomerInvoice(supabase, companyId, invoice);
-  }
-
   const patch: Record<string, unknown> = {
     stock_posted: true,
     stock_reversed: false,
@@ -787,6 +793,11 @@ export async function postCustomerInvoiceStock(
     .select("*")
     .single();
   if (error) throw new Error(error.message);
+
+  if (options.updateInvoiceStatus !== false) {
+    await updateCustomerSalesHistory(supabase, invoice.customer_id, posted as CustomerInvoiceRow);
+    await queueXeroCustomerInvoice(supabase, companyId, posted as CustomerInvoiceRow);
+  }
 
   return {
     invoice: posted as CustomerInvoiceRow,

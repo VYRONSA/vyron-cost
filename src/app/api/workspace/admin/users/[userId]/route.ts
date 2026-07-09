@@ -4,6 +4,15 @@ import { deleteWorkspaceMember, updateWorkspaceMember, type WorkspaceRole } from
 
 export const runtime = "nodejs";
 
+function adminErrorStatus(error: unknown, fallback = 400) {
+  const message = error instanceof Error ? String(error.message || "") : "";
+  if (message.includes("Workspace session required") || message.includes("Access denied") || message.includes("Admin access required")) {
+    return 403;
+  }
+  if (message.includes("No active client workspace")) return 400;
+  return fallback;
+}
+
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ userId: string }> }
@@ -22,7 +31,7 @@ export async function PATCH(
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "User update failed." },
-      { status: 400 }
+      { status: adminErrorStatus(error, 400) }
     );
   }
 }

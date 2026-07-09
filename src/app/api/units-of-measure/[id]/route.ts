@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteStore, getStoreById, updateStore } from "@/lib/vyron-store-orders";
-import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
-import { requirePackageFeature, requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
+import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import {
+  deleteUnitOfMeasure,
+  getUnitOfMeasureById,
+  updateUnitOfMeasure,
+} from "@/lib/vyron-units-of-measure";
+import {
+  requireWorkspacePermission,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 
@@ -16,16 +23,14 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
 
   try {
-    await requirePackageFeature("stores");
-    await requireWorkspacePermission("stores.view");
+    await requireWorkspacePermission("uom.view");
     const companyId = await requireApiCompanyId();
-
     const { id } = await context.params;
-    const store = await getStoreById(supabase, companyId, id);
-    if (!store) return NextResponse.json({ ok: false, error: "Store not found." }, { status: 404 });
-    return NextResponse.json({ ok: true, store });
+    const unit = await getUnitOfMeasureById(supabase, companyId, id);
+    if (!unit) return NextResponse.json({ ok: false, error: "Unit of measure not found." }, { status: 404 });
+    return NextResponse.json({ ok: true, unit });
   } catch (error) {
-    return workspaceAccessErrorResponse(error, "Get store failed.");
+    return workspaceAccessErrorResponse(error, "Get unit of measure failed.");
   }
 }
 
@@ -37,22 +42,15 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
 
   const body = await request.json().catch(() => ({}));
-  if (Object.prototype.hasOwnProperty.call(body, "store_code") && !String(body.store_code || "").trim()) {
-    return NextResponse.json({ ok: false, error: "store_code cannot be empty." }, { status: 400 });
-  }
-  if (Object.prototype.hasOwnProperty.call(body, "store_name") && !String(body.store_name || "").trim()) {
-    return NextResponse.json({ ok: false, error: "store_name cannot be empty." }, { status: 400 });
-  }
 
   try {
-    await requirePackageFeature("stores");
-    await requireWorkspacePermission("stores.edit");
+    await requireWorkspacePermission("uom.edit");
     const companyId = await requireApiCompanyId();
     const { id } = await context.params;
-    const store = await updateStore(supabase, companyId, id, body);
-    return NextResponse.json({ ok: true, store });
+    const unit = await updateUnitOfMeasure(supabase, companyId, id, body || {});
+    return NextResponse.json({ ok: true, unit });
   } catch (error) {
-    return workspaceAccessErrorResponse(error, "Update store failed.");
+    return workspaceAccessErrorResponse(error, "Update unit of measure failed.");
   }
 }
 
@@ -64,13 +62,12 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
 
   try {
-    await requirePackageFeature("stores");
-    await requireWorkspacePermission("stores.delete");
+    await requireWorkspacePermission("uom.delete");
     const companyId = await requireApiCompanyId();
     const { id } = await context.params;
-    await deleteStore(supabase, companyId, id);
+    await deleteUnitOfMeasure(supabase, companyId, id);
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return workspaceAccessErrorResponse(error, "Delete store failed.");
+    return workspaceAccessErrorResponse(error, "Delete unit of measure failed.");
   }
 }

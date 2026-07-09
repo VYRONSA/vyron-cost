@@ -69,16 +69,46 @@ async function main() {
   const ownerEmail = `invoice-owner-${Date.now()}@example.com`;
   const ownerPassword = "Invoice123!";
 
-  const ownerPatch = await fetch(`${base}/api/developer/clients/${workspace.id}/owner`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "password",
-      admin: { firstName: "Invoice", surname: "Owner", email: ownerEmail, mobile: "0821111111" },
-      loginSetup: { method: "password", password: ownerPassword },
-    }),
-  }).then((r) => r.json());
-  if (!ownerPatch.ok) throw new Error(`Owner setup failed: ${ownerPatch.error}`);
+  const ownerAuth = await supabase.auth.admin.createUser({
+    email: ownerEmail,
+    password: ownerPassword,
+    email_confirm: true,
+    user_metadata: { first_name: "Invoice", surname: "Owner" },
+  });
+  if (ownerAuth.error || !ownerAuth.data.user?.id) {
+    throw new Error(ownerAuth.error?.message || "Owner setup failed");
+  }
+  const ownerUserId = ownerAuth.data.user.id;
+
+  const workspaceOwner = await supabase
+    .from("vyron_workspaces")
+    .update({ owner_user_id: ownerUserId, contact_email: ownerEmail })
+    .eq("id", workspace.id);
+  if (workspaceOwner.error) throw workspaceOwner.error;
+
+  const profileUpsert = await supabase.from("vyron_user_profiles").upsert(
+    {
+      id: ownerUserId,
+      email: ownerEmail,
+      first_name: "Invoice",
+      surname: "Owner",
+      status: "Active",
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "id" }
+  );
+  if (profileUpsert.error) throw profileUpsert.error;
+
+  const membershipInsert = await supabase.from("vyron_workspace_memberships").insert({
+    workspace_id: workspace.id,
+    user_id: ownerUserId,
+    role: "OWNER",
+    status: "Active",
+    joined_at: new Date().toISOString(),
+  });
+  if (membershipInsert.error && !String(membershipInsert.error.message || "").includes("duplicate key")) {
+    throw membershipInsert.error;
+  }
 
   const ownerLogin = await fetch(`${base}/api/workspace/login`, {
     method: "POST",
@@ -90,21 +120,22 @@ async function main() {
   const cookie = workspaceCookieHeader(ownerLogin.client, ownerLogin.session);
   const headers = { "Content-Type": "application/json", Cookie: cookie };
 
-  const { data: fg, error: fgError } = await supabase
-    .from("vyron_finished_goods")
-    .insert({
-      company_id: company.id,
-      product_code: `FG-STOCK-${Date.now()}`,
+  const productRes = await fetch(`${base}/api/products`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
       product_name: "Stock Test Finished Good",
-      category: "Finished Goods",
-      standard_cost: 5,
-      latest_actual_cost: 5,
+      product_category: "Finished Goods",
       selling_price: 12,
-      current_stock: 0,
-    })
-    .select("*")
-    .single();
-  if (fgError) throw fgError;
+      total_cost: 5,
+      target_gp: 35,
+    }),
+  });
+  const productPayload = await productRes.json();
+  if (!productPayload.ok || !productPayload.product?.id) {
+    throw new Error(`Create product failed: ${productPayload.error || productRes.status}`);
+  }
+  const product = productPayload.product;
 
   const openingRes = await fetch(`${base}/api/inventory/stock`, {
     method: "POST",
@@ -112,9 +143,9 @@ async function main() {
     body: JSON.stringify({
       action: "create",
       entityType: "finished_goods",
-      entityId: fg.id,
-      description: fg.product_name,
-      itemCode: fg.product_code,
+      entityId: product.id,
+      description: product.product_name,
+      itemCode: `FG-STOCK-${Date.now()}`,
       currentCost: 5,
       openingQty: 100,
       openingDate: "2026-01-01",
@@ -129,7 +160,7 @@ async function main() {
     .from("vyron_cost_stock_items")
     .select("id, qty_on_hand")
     .eq("company_id", company.id)
-    .eq("entity_id", fg.id)
+    .eq("entity_id", product.id)
     .single();
   if (Number(stockAfterOpen?.qty_on_hand) !== 100) {
     throw new Error(`Expected opening stock 100, got ${stockAfterOpen?.qty_on_hand}`);
@@ -141,9 +172,9 @@ async function main() {
     body: JSON.stringify({
       action: "create",
       entityType: "finished_goods",
-      entityId: fg.id,
-      description: fg.product_name,
-      itemCode: fg.product_code,
+      entityId: product.id,
+      description: product.product_name,
+      itemCode: `FG-STOCK-DUP-${Date.now()}`,
       currentCost: 5,
       openingQty: 50,
     }),
@@ -159,8 +190,8 @@ async function main() {
       customerName: "Stock Test Customer",
       lines: [
         {
-          productId: fg.id,
-          productName: fg.product_name,
+          productId: product.id,
+          productName: product.product_name,
           quantity: 10,
           sellingPrice: 12,
           costPerUnit: 5,

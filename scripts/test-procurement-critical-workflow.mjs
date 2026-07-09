@@ -271,10 +271,15 @@ async function main() {
       );
       mark("Save Purchase Order", Boolean(savePo.data?.ok), savePo.data?.error || savePo.status);
 
-      const printPage = await fetch(`${appBase}/purchase-orders/${poScreenTarget}`, { headers: { Cookie: cookies } });
-      const printHtml = await printPage.text();
-      const printOk = printPage.ok && printHtml.includes("Print PDF");
-      mark("Print Purchase Order", printOk, printOk ? "Print control rendered." : `status=${printPage.status}`);
+      const printPage = await fetch(`${appBase}/api/purchase-orders/${poScreenTarget}/pdf`, { headers: { Cookie: cookies } });
+      const printBytes = new Uint8Array(await printPage.arrayBuffer());
+      const printType = String(printPage.headers.get("content-type") || "").toLowerCase();
+      const printOk = printPage.ok && printType.includes("application/pdf") && printBytes.length > 0;
+      mark(
+        "Print Purchase Order",
+        printOk,
+        printOk ? `status=${printPage.status}, bytes=${printBytes.length}` : `status=${printPage.status}, content-type=${printType}, bytes=${printBytes.length}`
+      );
     }
 
     for (const [name, result] of checks.entries()) {

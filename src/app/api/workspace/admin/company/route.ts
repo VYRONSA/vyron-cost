@@ -12,6 +12,15 @@ import {
 
 export const runtime = "nodejs";
 
+function adminErrorStatus(error: unknown, fallback = 400) {
+  const message = error instanceof Error ? String(error.message || "") : "";
+  if (message.includes("Workspace session required") || message.includes("Access denied") || message.includes("Admin access required")) {
+    return 403;
+  }
+  if (message.includes("No active client workspace")) return 400;
+  return fallback;
+}
+
 export async function GET() {
   try {
     await requireAdminSession("admin.company");
@@ -21,7 +30,7 @@ export async function GET() {
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Failed to load company profile." },
-      { status: error instanceof Error && error.message.includes("required") ? 403 : 500 }
+      { status: adminErrorStatus(error, 500) }
     );
   }
 }
@@ -36,7 +45,7 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Failed to update company profile." },
-      { status: 400 }
+      { status: adminErrorStatus(error, 400) }
     );
   }
 }

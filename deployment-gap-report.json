@@ -1,0 +1,181 @@
+{
+  "generatedAt": "2026-07-09T11:10:45.388Z",
+  "scope": [
+    "Branches / Warehouses",
+    "Dashboard",
+    "Products",
+    "Categories",
+    "Suppliers",
+    "Purchase Orders",
+    "Goods Receiving",
+    "Manufacturing",
+    "Bills of Materials",
+    "Sales Orders",
+    "Reporting",
+    "Notifications",
+    "Advanced Search",
+    "Excel Export",
+    "Printing",
+    "Email",
+    "AI Dashboards",
+    "Business Health",
+    "Root Cause",
+    "Early Warning",
+    "Demand Forecasting"
+  ],
+  "connectedDb": "https://bzzlhzgfvnnwxjxvpzdk.supabase.co",
+  "missingCount": 0,
+  "missing": [],
+  "moduleSummaries": [
+    {
+      "module": "Branches / Warehouses",
+      "missingCount": 0
+    },
+    {
+      "module": "Dashboard",
+      "missingCount": 0
+    },
+    {
+      "module": "Products",
+      "missingCount": 0
+    },
+    {
+      "module": "Categories",
+      "missingCount": 0
+    },
+    {
+      "module": "Suppliers",
+      "missingCount": 0
+    },
+    {
+      "module": "Purchase Orders",
+      "missingCount": 0
+    },
+    {
+      "module": "Goods Receiving",
+      "missingCount": 0
+    },
+    {
+      "module": "Manufacturing",
+      "missingCount": 0
+    },
+    {
+      "module": "Bills of Materials",
+      "missingCount": 0
+    },
+    {
+      "module": "Sales Orders",
+      "missingCount": 0
+    },
+    {
+      "module": "Reporting",
+      "missingCount": 0
+    },
+    {
+      "module": "Notifications",
+      "missingCount": 0
+    },
+    {
+      "module": "Advanced Search",
+      "missingCount": 0
+    },
+    {
+      "module": "Excel Export",
+      "missingCount": 0
+    },
+    {
+      "module": "Printing",
+      "missingCount": 0
+    },
+    {
+      "module": "Email",
+      "missingCount": 0
+    },
+    {
+      "module": "AI Dashboards",
+      "missingCount": 0
+    },
+    {
+      "module": "Business Health",
+      "missingCount": 0
+    },
+    {
+      "module": "Root Cause",
+      "missingCount": 0
+    },
+    {
+      "module": "Early Warning",
+      "missingCount": 0
+    },
+    {
+      "module": "Demand Forecasting",
+      "missingCount": 0
+    }
+  ],
+  "verificationLimitations": [
+    "Direct catalog introspection for indexes/foreign keys/functions/views via information_schema/pg_catalog is blocked in current PostgREST exposure.",
+    "Index/FK presence is reported as missing only when dependent tables are missing; otherwise flagged as requiring SQL metadata verification."
+  ],
+  "warnings": [
+    {
+      "module": "Branches / Warehouses",
+      "objectType": "foreign_key",
+      "objectName": "vyron_cost_store_orders.store_id -> vyron_cost_stores.id",
+      "warning": "not directly introspectable via PostgREST metadata; requires SQL metadata access"
+    },
+    {
+      "module": "Branches / Warehouses",
+      "objectType": "index",
+      "objectName": "vyron_cost_stores_company_code_uidx",
+      "warning": "not directly introspectable via PostgREST metadata; requires SQL metadata access"
+    },
+    {
+      "module": "Branches / Warehouses",
+      "objectType": "index",
+      "objectName": "vyron_cost_store_orders_company_number_uidx",
+      "warning": "not directly introspectable via PostgREST metadata; requires SQL metadata access"
+    },
+    {
+      "module": "Purchase Orders",
+      "objectType": "foreign_key",
+      "objectName": "vyron_cost_purchase_order_lines.purchase_order_id -> vyron_cost_purchase_orders.id",
+      "warning": "not directly introspectable via PostgREST metadata; requires SQL metadata access"
+    },
+    {
+      "module": "Purchase Orders",
+      "objectType": "index",
+      "objectName": "idx_vyron_po_lines_po",
+      "warning": "not directly introspectable via PostgREST metadata; requires SQL metadata access"
+    },
+    {
+      "module": "Goods Receiving",
+      "objectType": "index",
+      "objectName": "idx_vyron_grn_po",
+      "warning": "not directly introspectable via PostgREST metadata; requires SQL metadata access"
+    },
+    {
+      "module": "Manufacturing",
+      "objectType": "index",
+      "objectName": "idx_vyron_prod_runs_company",
+      "warning": "not directly introspectable via PostgREST metadata; requires SQL metadata access"
+    },
+    {
+      "module": "Bills of Materials",
+      "objectType": "index",
+      "objectName": "idx_vyron_bom_lines_bom",
+      "warning": "not directly introspectable via PostgREST metadata; requires SQL metadata access"
+    },
+    {
+      "module": "AI Dashboards",
+      "objectType": "index",
+      "objectName": "vyron_cost_ai_insights_company_key_uidx",
+      "warning": "not directly introspectable via PostgREST metadata; requires SQL metadata access"
+    },
+    {
+      "module": "Demand Forecasting",
+      "objectType": "index",
+      "objectName": "vyron_cost_demand_forecasts_company_date_idx",
+      "warning": "not directly introspectable via PostgREST metadata; requires SQL metadata access"
+    }
+  ]
+}
