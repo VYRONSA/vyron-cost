@@ -10,6 +10,7 @@ import {
   Plus,
   UserRound,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -40,7 +41,10 @@ import {
   signOutClientWorkspace,
   type ActiveClient,
 } from "@/lib/vyron-developer-client";
-import { isNavItemActive } from "@/lib/vyron-navigation";
+import { canAccessRoute } from "@/lib/vyron-package-manager";
+import { isNavItemActive, vyronNavSections } from "@/lib/vyron-navigation";
+import { canAccessPath } from "@/lib/vyron-workspace-permissions";
+import { readWorkspaceSession, type WorkspaceSession } from "@/lib/vyron-workspace-session";
 
 type SheetKind = "workspace" | "create" | "more" | null;
 
@@ -200,11 +204,19 @@ function CreateSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
   );
 }
 
-function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+function MoreSheet({
+  open,
+  onClose,
+  items,
+}: {
+  open: boolean;
+  onClose: () => void;
+  items: Array<{ label: string; href: string; icon: LucideIcon; description: string }>;
+}) {
   return (
     <PremiumMobileBottomSheet title="More" open={open} onClose={onClose}>
       <div className="grid gap-3 sm:grid-cols-2">
-        {mobileMoreLinks.map((item) => (
+        {items.map((item) => (
           <PremiumMobileModuleTile
             key={item.href}
             href={item.href}
@@ -267,11 +279,13 @@ export default function VyronMobileShell({
   const pathname = usePathname();
   const router = useRouter();
   const [activeClient, setActiveClient] = useState<ActiveClient | null>(null);
+  const [workspaceSession, setWorkspaceSession] = useState<WorkspaceSession | null>(null);
   const [sheet, setSheet] = useState<SheetKind>(null);
 
   useEffect(() => {
     function refresh() {
       setActiveClient(readActiveClient());
+      setWorkspaceSession(readWorkspaceSession());
     }
 
     refresh();
@@ -295,6 +309,27 @@ export default function VyronMobileShell({
       })),
     [pathname]
   );
+
+  const sharedMoreLinks = useMemo(() => {
+    const byHref = new Map(mobileMoreLinks.map((item) => [item.href, item]));
+    const packageName = activeClient?.packageName || "Professional";
+
+    for (const section of vyronNavSections) {
+      for (const item of section.items) {
+        if (!canAccessRoute(packageName, item.href, section.id)) continue;
+        if (workspaceSession && !canAccessPath(item.href, workspaceSession)) continue;
+        if (byHref.has(item.href)) continue;
+        byHref.set(item.href, {
+          label: item.label,
+          href: item.href,
+          icon: item.icon,
+          description: `${section.section} module`,
+        });
+      }
+    }
+
+    return Array.from(byHref.values());
+  }, [activeClient?.packageName, workspaceSession]);
 
   const workspaceName = activeClient?.tradingName || activeClient?.companyName || "VYRON COST";
   const workspaceSubtitle = activeClient?.packageName || "Touch-first workspace";
@@ -544,7 +579,7 @@ export default function VyronMobileShell({
         activeClient={activeClient}
       />
       <CreateSheet open={sheet === "create"} onClose={() => setSheet(null)} />
-      <MoreSheet open={sheet === "more"} onClose={() => setSheet(null)} />
+      <MoreSheet open={sheet === "more"} onClose={() => setSheet(null)} items={sharedMoreLinks} />
     </div>
   );
 }

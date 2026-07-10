@@ -410,11 +410,33 @@ export async function importCustomerPriceListRows(
   const actor = params.actor || "system";
   const createMissingProducts = Boolean(params.createMissingProducts);
 
-  const { data: customers, error: customerError } = await supabase
+  let customers: Array<{ id: string; customer_name: string | null; customer_code?: string | null }> = [];
+  let customerCodeSupported = true;
+
+  const withCode = await supabase
     .from("vyron_customers")
     .select("id, customer_name, customer_code")
     .eq("company_id", companyId);
-  if (customerError) throw new Error(customerError.message);
+
+  if (withCode.error) {
+    const missingCustomerCodeColumn =
+      withCode.error.code === "42703" ||
+      String(withCode.error.message || "").toLowerCase().includes("customer_code");
+
+    if (!missingCustomerCodeColumn) {
+      throw new Error(withCode.error.message);
+    }
+
+    customerCodeSupported = false;
+    const withoutCode = await supabase
+      .from("vyron_customers")
+      .select("id, customer_name")
+      .eq("company_id", companyId);
+    if (withoutCode.error) throw new Error(withoutCode.error.message);
+    customers = (withoutCode.data || []) as Array<{ id: string; customer_name: string | null }>;
+  } else {
+    customers = (withCode.data || []) as Array<{ id: string; customer_name: string | null; customer_code?: string | null }>;
+  }
 
   const { data: products, error: productsError } = await supabase
     .from("vyron_cost_products")
@@ -422,8 +444,19 @@ export async function importCustomerPriceListRows(
     .eq("company_id", companyId);
   if (productsError) throw new Error(productsError.message);
 
-  const customerByCode = new Map((customers || []).map((row) => [String(row.customer_code || "").toLowerCase(), row]));
-  const customerByName = new Map((customers || []).map((row) => [String(row.customer_name || "").toLowerCase(), row]));
+  const customerByCode = new Map(
+    customers
+      .map((row) => [String(row.customer_code || "").trim().toLowerCase(), row] as const)
+      .filter(([key]) => Boolean(key))
+  );
+  const customerByName = new Map<string, Array<{ id: string; customer_name: string | null; customer_code?: string | null }>>();
+  for (const row of customers) {
+    const key = String(row.customer_name || "").trim().toLowerCase();
+    if (!key) continue;
+    const bucket = customerByName.get(key) || [];
+    bucket.push(row);
+    customerByName.set(key, bucket);
+  }
   const productByCode = new Map((products || []).map((row) => [String(row.sku || "").toLowerCase(), row]));
   const productByName = new Map((products || []).map((row) => [String(row.product_name || "").toLowerCase(), row]));
 
@@ -493,8 +526,24 @@ export async function importCustomerPriceListRows(
 
     let customerId: string | null = null;
     if (input.customerCode || input.customerName) {
-      const byCode = customerByCode.get(String(input.customerCode || "").trim().toLowerCase()) || null;
-      const byName = customerByName.get(String(input.customerName || "").trim().toLowerCase()) || null;
+      const customerCodeKey = String(input.customerCode || "").trim().toLowerCase();
+      const customerNameKey = String(input.customerName || "").trim().toLowerCase();
+
+      const byCode = customerCodeSupported && customerCodeKey ? customerByCode.get(customerCodeKey) || null : null;
+
+      let byName: { id: string; customer_name: string | null; customer_code?: string | null } | null = null;
+      if (customerNameKey) {
+        const byNameMatches = customerByName.get(customerNameKey) || [];
+        if (byNameMatches.length > 1) {
+          errors.push({
+            row: rowNumber,
+            error: `Customer name matches multiple records (${input.customerName}). Provide customer_code or use a unique customer name.`,
+          });
+          continue;
+        }
+        byName = byNameMatches[0] || null;
+      }
+
       const customer = byCode || byName;
       if (!customer) {
         errors.push({ row: rowNumber, error: `Customer not found (${input.customerCode || input.customerName || "unknown"}).` });
