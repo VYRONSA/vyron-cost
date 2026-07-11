@@ -81,6 +81,7 @@ export type ReviewDraftLine = {
 
 export type ReviewDraft = {
   documentId: string;
+  status: string;
   viewerRegions?: DocumentViewerRegions;
   fields: {
     supplierName: string;
@@ -144,6 +145,7 @@ export async function loadReviewDraft(documentId: string, fallbackExtraction?: E
 
   const draft: ReviewDraft = {
     documentId,
+    status: String(payload.document.status || ""),
     fields: {
       supplierName: nonEmptyText(payload.document.supplier_name, fallbackExtraction?.supplier),
       supplierVatNumber: nonEmptyText(payload.document.supplier_vat_number, fallbackExtraction?.supplierVatNo),

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import InvoiceDocumentViewer from "@/components/InvoiceDocumentViewer";
@@ -76,6 +76,7 @@ type EditIngredientModal = {
 
 export default function DocumentReviewWorkspace({ documentId, embedded = false }: { documentId: string; embedded?: boolean }) {
   const router = useRouter();
+  const extractionTriggeredRef = useRef(false);
   const [draft, setDraft] = useState<ReviewDraft | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -141,6 +142,16 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     return next;
   }, [documentId]);
 
+  const shouldAutoExtract = useCallback((next: ReviewDraft) => {
+    const status = next.status.toLowerCase();
+    const eligibleStatus = status === "uploaded" || status === "uploading" || status === "stored";
+    const hasHeaderData = Boolean(
+      next.fields.supplierName || next.fields.invoiceNumber || next.fields.invoiceDate || next.fields.total !== null
+    );
+    const hasLines = next.lines.length > 0;
+    return eligibleStatus && !hasHeaderData && !hasLines;
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -169,6 +180,26 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
         } else {
           setPreviewError("Could not load stored document preview");
         }
+
+        if (!extractionTriggeredRef.current && shouldAutoExtract(next)) {
+          extractionTriggeredRef.current = true;
+          setMessage("Starting automatic extraction…");
+          const extractRes = await fetch(`/api/documents/${documentId}/extract`, { method: "POST" });
+          const extractData = await extractRes.json().catch(() => ({ ok: false }));
+          if (!extractRes.ok || (!extractData.ok && !extractData.partial)) {
+            throw new Error(extractData.error || "Automatic extraction failed.");
+          }
+          const refreshed = await loadReviewDraft(documentId);
+          if (!cancelled) {
+            setDraft(refreshed);
+            setLineMatchQuality(buildInitialLineMatchQuality(refreshed));
+            if (extractData.partial) {
+              setMessage("AI extraction failed. Manual review is available.");
+            } else {
+              setMessage("Automatic extraction completed.");
+            }
+          }
+        }
       } catch (error) {
         if (!cancelled) {
           setErrorMessage(error instanceof Error ? error.message : "Could not load review.");
@@ -181,6 +212,10 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     return () => {
       cancelled = true;
     };
+  }, [documentId, shouldAutoExtract]);
+
+  useEffect(() => {
+    extractionTriggeredRef.current = false;
   }, [documentId]);
 
   function updateField<K extends keyof ReviewDraft["fields"]>(key: K, value: ReviewDraft["fields"][K]) {
