@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { DEFAULT_XERO_ACCOUNT_MAPPING, type XeroAccountMapping } from "@/lib/vyron-xero-integration";
 import { requireXeroWorkspaceContext, xeroContextFromRequest } from "@/lib/vyron-xero-api-context";
 import { appendXeroAuditEvent } from "@/lib/vyron-xero-connection-store";
+import { readCompanyFinancialSettings } from "@/lib/vyron-financial-engine";
 import {
   mappingPanelStatus,
   readXeroWorkspaceSettings,
@@ -19,16 +20,19 @@ export const runtime = "nodejs";
 export async function GET(request: NextRequest) {
   try {
     await requireWorkspacePermission("xero.view");
-    const { workspaceId } = await requireXeroWorkspaceContext(xeroContextFromRequest(request));
-    const settings = await readXeroWorkspaceSettings(workspaceId);
+    const { workspaceId, companyId } = await requireXeroWorkspaceContext(xeroContextFromRequest(request));
+    const [settings, companySettings] = await Promise.all([
+      readXeroWorkspaceSettings(workspaceId),
+      readCompanyFinancialSettings(workspaceId, companyId, "XERO"),
+    ]);
     return NextResponse.json({
       ok: true,
       mapping: settings.accounts,
       syncConfig: settings.syncConfig,
       contactMappings: Object.values(settings.contactMappings),
       mappingPanel: mappingPanelStatus(settings),
-      invoiceSyncReady: Boolean(settings.accounts.salesAccount?.trim() && settings.accounts.vatStandard?.trim()),
-      billSyncReady: Boolean(settings.accounts.costOfSalesAccount?.trim() && settings.accounts.vatStandard?.trim()),
+      invoiceSyncReady: Boolean(companySettings.defaultSalesAccountId && companySettings.defaultVatTaxType),
+      billSyncReady: Boolean(companySettings.defaultCostOfSalesAccountId && companySettings.defaultVatTaxType),
     });
   } catch (error) {
     return workspaceAccessErrorResponse(error, "Mapping load failed.");

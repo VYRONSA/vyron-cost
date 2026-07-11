@@ -614,7 +614,19 @@ function hasReferences(refs: ProductReferenceCounts) {
 export async function createProduct(
   supabase: SupabaseClient,
   companyId: string,
-  input: Partial<CostProduct> & { product_name: string; total_cost?: number }
+  input: Partial<CostProduct> & {
+    product_name: string;
+    total_cost?: number;
+    financial_sales_account_id?: string | null;
+    financial_cost_of_sales_account_id?: string | null;
+    financial_inventory_asset_account_id?: string | null;
+    financial_wip_account_id?: string | null;
+    financial_manufacturing_variance_account_id?: string | null;
+    financial_stock_adjustment_account_id?: string | null;
+    financial_freight_income_account_id?: string | null;
+    financial_freight_expense_account_id?: string | null;
+    financial_vat_tax_type?: string | null;
+  }
 ) {
   const selling = Number(input.selling_price || 0);
   const cost = Number(input.total_cost || 0);
@@ -636,6 +648,15 @@ export async function createProduct(
       suggested_selling_price: calcSuggestedPrice(cost, target),
       product_status: input.product_status || "Active",
       status: input.product_status || "Active",
+      financial_sales_account_id: input.financial_sales_account_id || null,
+      financial_cost_of_sales_account_id: input.financial_cost_of_sales_account_id || null,
+      financial_inventory_asset_account_id: input.financial_inventory_asset_account_id || null,
+      financial_wip_account_id: input.financial_wip_account_id || null,
+      financial_manufacturing_variance_account_id: input.financial_manufacturing_variance_account_id || null,
+      financial_stock_adjustment_account_id: input.financial_stock_adjustment_account_id || null,
+      financial_freight_income_account_id: input.financial_freight_income_account_id || null,
+      financial_freight_expense_account_id: input.financial_freight_expense_account_id || null,
+      financial_vat_tax_type: input.financial_vat_tax_type || null,
     })
     .select("*")
     .single();
@@ -653,6 +674,15 @@ export async function updateProduct(
     packaging_cost?: number;
     overhead_cost?: number;
     wastage_percent?: number;
+    financial_sales_account_id?: string | null;
+    financial_cost_of_sales_account_id?: string | null;
+    financial_inventory_asset_account_id?: string | null;
+    financial_wip_account_id?: string | null;
+    financial_manufacturing_variance_account_id?: string | null;
+    financial_stock_adjustment_account_id?: string | null;
+    financial_freight_income_account_id?: string | null;
+    financial_freight_expense_account_id?: string | null;
+    financial_vat_tax_type?: string | null;
   }
 ) {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
@@ -679,6 +709,15 @@ export async function updateProduct(
   if (input.suggested_selling_price !== undefined) {
     patch.suggested_selling_price = Number(input.suggested_selling_price);
   }
+  if (input.financial_sales_account_id !== undefined) patch.financial_sales_account_id = input.financial_sales_account_id || null;
+  if (input.financial_cost_of_sales_account_id !== undefined) patch.financial_cost_of_sales_account_id = input.financial_cost_of_sales_account_id || null;
+  if (input.financial_inventory_asset_account_id !== undefined) patch.financial_inventory_asset_account_id = input.financial_inventory_asset_account_id || null;
+  if (input.financial_wip_account_id !== undefined) patch.financial_wip_account_id = input.financial_wip_account_id || null;
+  if (input.financial_manufacturing_variance_account_id !== undefined) patch.financial_manufacturing_variance_account_id = input.financial_manufacturing_variance_account_id || null;
+  if (input.financial_stock_adjustment_account_id !== undefined) patch.financial_stock_adjustment_account_id = input.financial_stock_adjustment_account_id || null;
+  if (input.financial_freight_income_account_id !== undefined) patch.financial_freight_income_account_id = input.financial_freight_income_account_id || null;
+  if (input.financial_freight_expense_account_id !== undefined) patch.financial_freight_expense_account_id = input.financial_freight_expense_account_id || null;
+  if (input.financial_vat_tax_type !== undefined) patch.financial_vat_tax_type = input.financial_vat_tax_type || null;
 
   const selling = input.selling_price !== undefined ? Number(input.selling_price) : undefined;
   const cost = input.total_cost !== undefined ? Number(input.total_cost) : undefined;

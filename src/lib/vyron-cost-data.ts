@@ -126,6 +126,15 @@ export type Category = {
   category_type: string;
   description: string | null;
   status: string;
+  financial_sales_account_id?: string | null;
+  financial_cost_of_sales_account_id?: string | null;
+  financial_inventory_asset_account_id?: string | null;
+  financial_wip_account_id?: string | null;
+  financial_manufacturing_variance_account_id?: string | null;
+  financial_stock_adjustment_account_id?: string | null;
+  financial_freight_income_account_id?: string | null;
+  financial_freight_expense_account_id?: string | null;
+  financial_vat_tax_type?: string | null;
 };
 
 export type InvoiceQueueItem = {

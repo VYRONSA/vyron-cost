@@ -15,6 +15,7 @@ import {
   mapXeroTenantsToOrganisationOptions,
   type XeroStoredConnection,
 } from "@/lib/vyron-xero-integration";
+import { syncFinancialAccountCatalogFromXero } from "@/lib/vyron-financial-engine";
 
 export const runtime = "nodejs";
 
@@ -238,6 +239,37 @@ export async function GET(request: NextRequest) {
         },
         companyId
       );
+
+      try {
+        const synced = await syncFinancialAccountCatalogFromXero(workspaceId, companyId, {
+          actor: connectedUser,
+          integrationType: "XERO",
+        });
+        await appendXeroAuditEvent(
+          workspaceId,
+          {
+            event: "account_catalog_synced",
+            actor: connectedUser,
+            companyId,
+            detail: `Automatically synced ${synced.accountCount} Xero account(s) after connection.`,
+            metadata: { accountCount: synced.accountCount },
+          },
+          companyId
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Automatic Xero account sync failed.";
+        await appendXeroAuditEvent(
+          workspaceId,
+          {
+            event: "account_catalog_sync_failed",
+            actor: connectedUser,
+            companyId,
+            detail: message,
+          },
+          companyId
+        );
+      }
+
       return xeroRedirect(appUrl, {
         xero: "connected",
         message: `Connected to ${tenants[0].tenantName}.`,

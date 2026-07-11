@@ -3,7 +3,7 @@ export default function StatusPill({
   tone = "lime",
 }: {
   children: React.ReactNode;
-  tone?: "lime" | "warning" | "red" | "slate" | "brand" | "emerald" | "amber";
+  tone?: "lime" | "warning" | "red" | "slate" | "brand" | "emerald" | "amber" | "blue";
 }) {
   const styles = {
     lime: "border border-[#A3E635]/30 bg-[#A3E635]/12 text-[#65A30D]",
@@ -13,6 +13,7 @@ export default function StatusPill({
     red: "border border-red-400/30 bg-red-500/12 text-red-700",
     slate: "border border-violet-400/25 bg-violet-500/10 text-slate-700",
     brand: "border border-violet-400/30 bg-violet-500/15 text-violet-700",
+    blue: "border border-sky-400/35 bg-sky-500/12 text-sky-700",
   };
 
   return (

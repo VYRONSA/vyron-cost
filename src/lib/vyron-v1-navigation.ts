@@ -155,7 +155,6 @@ export const vyronV1NavSections: VyronV1NavSection[] = [
     items: [
       { label: "Company Setup", icon: Settings, href: "/admin/company-setup" },
       { label: "User Setup", icon: Users, href: "/admin/users" },
-      { label: "Import Centre", icon: Upload, href: "/admin/imports" },
       { label: "Deployment Readiness", icon: Shield, href: "/deployment-readiness" },
     ],
   },

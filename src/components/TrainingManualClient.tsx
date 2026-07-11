@@ -8,7 +8,7 @@ const manualSections = [
   { n: 2, title: "Company setup", body: "Confirm tenant banner shows Handcrafted Food Products and target GP defaults." },
   { n: 3, title: "Add suppliers", body: "Operations → Suppliers → add supplier with category, risk and contact details." },
   { n: 4, title: "Add ingredients", body: "Operations → Ingredients → capture purchase cost, yield % and true unit cost." },
-  { n: 5, title: "Bulk import ingredients", body: "System → Bulk Imports → download template, upload CSV, validate and import." },
+  { n: 5, title: "Bulk import ingredients", body: "Master Data → Import Centre → open the required import workflow, download template, upload CSV, validate and import." },
   { n: 6, title: "Create finished products", body: "Operations → Products → add finished product with selling price and target GP." },
   { n: 7, title: "Build BOMs", body: "Recipes & BOM → open recipe edit → add ingredient, packaging, labour and wastage lines." },
   { n: 8, title: "Link BOM to product", body: "Open product detail → link BOM/recipe → update cost from BOM and review GP." },
@@ -64,7 +64,7 @@ export default function TrainingManualClient() {
               <div className="mt-4 flex flex-wrap gap-3 text-sm font-black">
                 <Link href="/products" className="rounded-full bg-white/10 px-4 py-2">Products</Link>
                 <Link href="/recipes" className="rounded-full bg-white/10 px-4 py-2">Recipes & BOM</Link>
-                <Link href="/imports" className="rounded-full bg-white/10 px-4 py-2">Bulk Imports</Link>
+                <Link href="/import-centre" className="rounded-full bg-white/10 px-4 py-2">Import Centre</Link>
                 <Link href="/document-intelligence" className="rounded-full bg-white/10 px-4 py-2">Document Intelligence</Link>
                 <Link href="/recovery-opportunities" className="rounded-full bg-white/10 px-4 py-2">Recovery</Link>
               </div>

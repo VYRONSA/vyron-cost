@@ -7,6 +7,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { BomHeader } from "@/lib/vyron-cost-bom-data";
 import { calcGp, calcSuggestedPrice, CostProduct, demoProducts, formatMoney } from "@/lib/vyron-cost-product-data";
+import {
+  filterXeroAccountsForRole,
+  type XeroAccountCatalogEntry,
+  type XeroAccountRole,
+} from "@/lib/vyron-xero-integration";
 import { readActiveClient } from "@/lib/vyron-developer-client";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
@@ -23,7 +28,18 @@ const emptyForm = {
   selling_price: "0",
   target_gp: "40",
   product_status: "Active",
+  financial_sales_account_id: "",
+  financial_cost_of_sales_account_id: "",
+  financial_inventory_asset_account_id: "",
+  financial_vat_tax_type: "",
 };
+
+function pickAccountCodeFromValue(value: string | null | undefined, accounts: XeroAccountCatalogEntry[]) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const account = accounts.find((entry) => entry.accountId === raw) || accounts.find((entry) => entry.accountCode === raw);
+  return account?.accountCode || "";
+}
 
 export default function ProductManagerClient({ initialProducts, boms }: { initialProducts: CostProduct[]; boms: BomHeader[] }) {
   const { canCreate, canEdit, canDelete } = useModulePermissions("products");
@@ -35,6 +51,8 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [accountCatalog, setAccountCatalog] = useState<XeroAccountCatalogEntry[]>([]);
+  const [taxTypes, setTaxTypes] = useState<string[]>([]);
   const deleteConfirm = useConfirmDelete();
 
   useEffect(() => {
@@ -67,6 +85,20 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
     loadProducts().finally(() => setLoading(false));
   }, [initialProducts]);
 
+  useEffect(() => {
+    fetch("/api/integrations/xero/accounts", { credentials: "include" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (!data?.ok) return;
+        setAccountCatalog(Array.isArray(data.accountCatalog?.accounts) ? data.accountCatalog.accounts : []);
+        setTaxTypes(Array.isArray(data.taxTypes) ? data.taxTypes : []);
+      })
+      .catch(() => {
+        setAccountCatalog([]);
+        setTaxTypes([]);
+      });
+  }, []);
+
   const selectedBom = boms.find((bom) => bom.id === form.linked_bom_id) || null;
   const cost = Number(selectedBom?.cost_per_unit || 0);
   const selling = Number(form.selling_price || 0);
@@ -84,6 +116,52 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function accountOptionsForRole(role: XeroAccountRole) {
+    return filterXeroAccountsForRole(accountCatalog, role);
+  }
+
+  function renderAccountSelector(role: XeroAccountRole, value: string, onChange: (next: string) => void) {
+    const options = accountOptionsForRole(role);
+    const current = String(value || "").trim();
+    const hasCurrent = current ? options.some((option) => option.accountCode === current) : false;
+
+    return (
+      <select
+        value={current}
+        onChange={(event) => onChange(event.target.value)}
+        className="rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none"
+      >
+        <option value="">Inherit from category</option>
+        {current && !hasCurrent ? <option value={current}>Current: {current}</option> : null}
+        {options.map((account) => (
+          <option key={`${role}-${account.accountCode}-${account.accountId}`} value={account.accountCode}>
+            {account.accountCode} - {account.accountName}
+            {account.accountType ? ` (${account.accountType})` : ""}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  function renderTaxTypeSelector(value: string, onChange: (next: string) => void) {
+    const current = String(value || "").trim();
+    const hasCurrent = current ? taxTypes.includes(current) : false;
+
+    return (
+      <select
+        value={current}
+        onChange={(event) => onChange(event.target.value)}
+        className="rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none"
+      >
+        <option value="">Inherit VAT from category/defaults</option>
+        {current && !hasCurrent ? <option value={current}>Current: {current}</option> : null}
+        {taxTypes.map((taxType) => (
+          <option key={taxType} value={taxType}>{taxType}</option>
+        ))}
+      </select>
+    );
+  }
+
   function edit(product: CostProduct) {
     setEditingId(product.id);
     setForm({
@@ -93,8 +171,40 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
       selling_price: String(product.selling_price || 0),
       target_gp: String(product.target_gp || 0),
       product_status: product.product_status || "Active",
+      financial_sales_account_id: pickAccountCodeFromValue(product.financial_sales_account_id, accountCatalog),
+      financial_cost_of_sales_account_id: pickAccountCodeFromValue(product.financial_cost_of_sales_account_id, accountCatalog),
+      financial_inventory_asset_account_id: pickAccountCodeFromValue(product.financial_inventory_asset_account_id, accountCatalog),
+      financial_vat_tax_type: String(product.financial_vat_tax_type || ""),
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function saveProductFinancialOverrides(productId: string) {
+    const response = await fetch("/api/integrations/xero/accounts", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "save-product",
+        productId,
+        mapping: {
+          salesAccount: form.financial_sales_account_id,
+          costOfSalesAccount: form.financial_cost_of_sales_account_id,
+          inventoryAssetAccount: form.financial_inventory_asset_account_id,
+          vatStandard: form.financial_vat_tax_type,
+        },
+      }),
+    });
+    const data = await response.json();
+    if (!data?.ok) {
+      throw new Error(data?.error || "Failed to save product financial overrides.");
+    }
+    return data.mapping as {
+      financial_sales_account_id?: string | null;
+      financial_cost_of_sales_account_id?: string | null;
+      financial_inventory_asset_account_id?: string | null;
+      financial_vat_tax_type?: string | null;
+    };
   }
 
   async function save() {
@@ -145,16 +255,18 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
         return;
       }
       const saved = data.product as CostProduct;
+      const savedFinancial = await saveProductFinancialOverrides(saved.id);
+      const merged = { ...saved, ...savedFinancial } as CostProduct;
       setProducts((current) =>
         editingId
-          ? current.map((p) => (p.id === editingId ? saved : p))
-          : [...current, saved].sort((a, b) => a.product_name.localeCompare(b.product_name))
+          ? current.map((p) => (p.id === editingId ? merged : p))
+          : [...current, merged].sort((a, b) => a.product_name.localeCompare(b.product_name))
       );
-      setMessage("Product saved and linked to BOM.");
+      setMessage("Product saved with financial overrides.");
       setForm(emptyForm);
       setEditingId(null);
     } catch {
-      setErrorMessage("Failed to save product.");
+      setErrorMessage("Failed to save product or financial overrides.");
     }
   }
 
@@ -267,6 +379,29 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
             <select value={form.product_status} onChange={(e) => update("product_status", e.target.value)} className="rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none">
               <option>Active</option><option>Review</option><option>Archived</option>
             </select>
+          </div>
+
+          <div className="grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <div className="text-sm font-black uppercase tracking-[0.1em] text-slate-700">Financial Overrides (Optional)</div>
+            <p className="text-xs font-semibold text-slate-500">Blank values inherit from category mapping, then company defaults.</p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="grid gap-2 text-xs font-bold text-slate-600">
+                Sales Account
+                {renderAccountSelector("salesAccount", form.financial_sales_account_id, (next) => update("financial_sales_account_id", next))}
+              </label>
+              <label className="grid gap-2 text-xs font-bold text-slate-600">
+                Cost of Sales Account
+                {renderAccountSelector("costOfSalesAccount", form.financial_cost_of_sales_account_id, (next) => update("financial_cost_of_sales_account_id", next))}
+              </label>
+              <label className="grid gap-2 text-xs font-bold text-slate-600">
+                Inventory Asset Account
+                {renderAccountSelector("inventoryAssetAccount", form.financial_inventory_asset_account_id, (next) => update("financial_inventory_asset_account_id", next))}
+              </label>
+              <label className="grid gap-2 text-xs font-bold text-slate-600">
+                VAT Code
+                {renderTaxTypeSelector(form.financial_vat_tax_type, (next) => update("financial_vat_tax_type", next))}
+              </label>
+            </div>
           </div>
 
           <div className="grid gap-3 rounded-3xl bg-slate-50 p-5 md:grid-cols-3">

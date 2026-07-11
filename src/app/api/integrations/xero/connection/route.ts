@@ -15,6 +15,7 @@ import {
   isXeroOAuthConfigured,
   getXeroRedirectUri,
 } from "@/lib/vyron-xero-integration";
+import { syncFinancialAccountCatalogFromXero } from "@/lib/vyron-financial-engine";
 import { requireXeroWorkspaceContext, xeroContextFromRequest } from "@/lib/vyron-xero-api-context";
 import { getServerActiveWorkspace, getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
 import {
@@ -101,6 +102,35 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: false, error: "tenantId is required." }, { status: 400 });
       }
       const connection = await selectXeroOrganisation(workspaceId, tenantId, { actor, companyId });
+      try {
+        const synced = await syncFinancialAccountCatalogFromXero(workspaceId, companyId, {
+          actor,
+          integrationType: "XERO",
+        });
+        await appendXeroAuditEvent(
+          workspaceId,
+          {
+            event: "account_catalog_synced",
+            actor,
+            companyId,
+            detail: `Automatically synced ${synced.accountCount} Xero account(s) after organisation selection.`,
+            metadata: { accountCount: synced.accountCount },
+          },
+          companyId
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Automatic Xero account sync failed.";
+        await appendXeroAuditEvent(
+          workspaceId,
+          {
+            event: "account_catalog_sync_failed",
+            actor,
+            companyId,
+            detail: message,
+          },
+          companyId
+        );
+      }
       return NextResponse.json({ ok: true, connection });
     }
 

@@ -97,7 +97,6 @@ export const vyronNavSections: VyronNavSection[] = [
       { label: "Stock Movements", icon: PackageCheck, href: "/stock-movements" },
       { label: "Inventory Ledger", icon: ClipboardList, href: "/inventory-ledger" },
       { label: "Inventory Counts", icon: ClipboardList, href: "/inventory/counts" },
-      { label: "Opening Stock Import", icon: Upload, href: "/opening-stock-import" },
       { label: "Inventory Intelligence", icon: Target, href: "/inventory-intelligence" },
     ],
   },
@@ -141,7 +140,6 @@ export const vyronNavSections: VyronNavSection[] = [
       { label: "Sales Orders", icon: ShoppingCart, href: "/customer-sales-orders" },
       { label: "Customer Invoices", icon: ReceiptText, href: "/customer-invoices" },
       { label: "Customer Price Lists", icon: FileText, href: "/customer-price-lists" },
-      { label: "Price List Import", icon: Upload, href: "/price-list-import" },
       { label: "Customer GP Reporting", icon: BarChart3, href: "/customer-gp-reporting" },
     ],
   },
@@ -197,7 +195,6 @@ export const vyronNavSections: VyronNavSection[] = [
     id: "system",
     section: "SYSTEM",
     items: [
-      { label: "Bulk Imports", icon: Upload, href: "/imports" },
       { label: "Training", icon: BookOpen, href: "/training" },
       { label: "Settings", icon: Settings, href: "/settings" },
     ],
@@ -209,7 +206,6 @@ export const vyronNavSections: VyronNavSection[] = [
     items: [
       { label: "Company Setup", icon: Settings, href: "/admin/company-setup" },
       { label: "User Setup", icon: Users, href: "/admin/users" },
-      { label: "Import Centre", icon: Upload, href: "/admin/imports" },
       { label: "Deployment Readiness", icon: Shield, href: "/deployment-readiness" },
     ],
   },

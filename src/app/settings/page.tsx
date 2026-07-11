@@ -16,8 +16,8 @@ export default function SettingsPage() {
             <Link href="/users" className="rounded-xl border border-white/10 bg-[#1e1635] px-4 py-3 font-bold transition hover:border-violet-300/40">
               Users & Roles
             </Link>
-            <Link href="/imports" className="rounded-xl border border-white/10 bg-[#1e1635] px-4 py-3 font-bold transition hover:border-violet-300/40">
-              Imports
+            <Link href="/import-centre" className="rounded-xl border border-white/10 bg-[#1e1635] px-4 py-3 font-bold transition hover:border-violet-300/40">
+              Import Centre
             </Link>
           </div>
         </div>

@@ -1,8 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   DEFAULT_XERO_ACCOUNT_MAPPING,
+  filterXeroAccountsForRole,
+  normalizeXeroAccountCode,
   type XeroAccountMapping,
+  type XeroAccountCatalog,
+  type XeroAccountCatalogEntry,
+  type XeroAccountResolutionContext,
+  type XeroAccountRole,
   type XeroQueueEntityType,
+  resolveXeroAccountMapping,
 } from "@/lib/vyron-xero-integration";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 
@@ -48,6 +55,18 @@ export type XeroWorkspaceSettings = {
   accounts: XeroAccountMapping;
   contactMappings: Record<string, XeroContactMapping>;
   syncConfig: XeroSyncConfig;
+  accountCatalog: XeroAccountCatalog;
+  categoryMappings: Record<string, Partial<XeroAccountMapping>>;
+  productOverrides: Record<string, Partial<XeroAccountMapping>>;
+};
+
+export type XeroAccountMappingInput = Partial<XeroAccountMapping>;
+
+const EMPTY_ACCOUNT_CATALOG: XeroAccountCatalog = {
+  syncedAt: null,
+  syncedBy: null,
+  source: "manual",
+  accounts: [],
 };
 
 const memoryStore = new Map<string, XeroWorkspaceSettings>();
@@ -66,6 +85,9 @@ function normalizeStored(raw: unknown): XeroWorkspaceSettings {
       accounts: DEFAULT_XERO_ACCOUNT_MAPPING,
       contactMappings: {},
       syncConfig: DEFAULT_XERO_SYNC_CONFIG,
+      accountCatalog: EMPTY_ACCOUNT_CATALOG,
+      categoryMappings: {},
+      productOverrides: {},
     };
   }
 
@@ -75,6 +97,15 @@ function normalizeStored(raw: unknown): XeroWorkspaceSettings {
       accounts: { ...DEFAULT_XERO_ACCOUNT_MAPPING, ...(obj.accounts as XeroAccountMapping) },
       contactMappings: (obj.contactMappings as Record<string, XeroContactMapping>) || {},
       syncConfig: { ...DEFAULT_XERO_SYNC_CONFIG, ...(obj.syncConfig as Partial<XeroSyncConfig>) },
+      accountCatalog: {
+        ...EMPTY_ACCOUNT_CATALOG,
+        ...(obj.accountCatalog as Partial<XeroAccountCatalog>),
+        accounts: Array.isArray((obj.accountCatalog as Partial<XeroAccountCatalog>)?.accounts)
+          ? ((obj.accountCatalog as Partial<XeroAccountCatalog>).accounts as XeroAccountCatalogEntry[])
+          : EMPTY_ACCOUNT_CATALOG.accounts,
+      },
+      categoryMappings: (obj.categoryMappings as Record<string, Partial<XeroAccountMapping>>) || {},
+      productOverrides: (obj.productOverrides as Record<string, Partial<XeroAccountMapping>>) || {},
     };
   }
 
@@ -82,6 +113,9 @@ function normalizeStored(raw: unknown): XeroWorkspaceSettings {
     accounts: { ...DEFAULT_XERO_ACCOUNT_MAPPING, ...(raw as XeroAccountMapping) },
     contactMappings: {},
     syncConfig: DEFAULT_XERO_SYNC_CONFIG,
+    accountCatalog: EMPTY_ACCOUNT_CATALOG,
+    categoryMappings: {},
+    productOverrides: {},
   };
 }
 
@@ -101,13 +135,25 @@ export async function readXeroWorkspaceSettings(workspaceId: string): Promise<Xe
 }
 
 export async function writeXeroWorkspaceSettings(workspaceId: string, settings: XeroWorkspaceSettings) {
-  memoryStore.set(settingsKey(workspaceId), settings);
+  const normalized: XeroWorkspaceSettings = {
+    accounts: { ...DEFAULT_XERO_ACCOUNT_MAPPING, ...settings.accounts },
+    contactMappings: settings.contactMappings || {},
+    syncConfig: { ...DEFAULT_XERO_SYNC_CONFIG, ...settings.syncConfig },
+    accountCatalog: {
+      ...EMPTY_ACCOUNT_CATALOG,
+      ...(settings.accountCatalog || EMPTY_ACCOUNT_CATALOG),
+      accounts: Array.isArray(settings.accountCatalog?.accounts) ? settings.accountCatalog.accounts : [],
+    },
+    categoryMappings: settings.categoryMappings || {},
+    productOverrides: settings.productOverrides || {},
+  };
+  memoryStore.set(settingsKey(workspaceId), normalized);
   if (isSupabaseServiceRoleConfigured()) {
     const supabase = getSupabaseAdmin();
     if (supabase) {
       await supabase.from("vyron_xero_workspace_settings").upsert({
         workspace_id: workspaceId,
-        account_mapping: settings,
+        account_mapping: normalized,
         updated_at: new Date().toISOString(),
       });
     }
@@ -118,6 +164,56 @@ export async function saveAccountMapping(workspaceId: string, accounts: XeroAcco
   const current = await readXeroWorkspaceSettings(workspaceId);
   const next = { ...current, accounts: { ...DEFAULT_XERO_ACCOUNT_MAPPING, ...accounts } };
   await writeXeroWorkspaceSettings(workspaceId, next);
+  return next;
+}
+
+export async function saveAccountCatalog(workspaceId: string, catalog: XeroAccountCatalog) {
+  const current = await readXeroWorkspaceSettings(workspaceId);
+  const next = { ...current, accountCatalog: catalog };
+  await writeXeroWorkspaceSettings(workspaceId, next);
+  return next.accountCatalog;
+}
+
+export async function saveCategoryMapping(workspaceId: string, category: string, mapping: XeroAccountMappingInput) {
+  const current = await readXeroWorkspaceSettings(workspaceId);
+  const key = normalizeMappingKey(category);
+  const next = {
+    ...current,
+    categoryMappings: {
+      ...current.categoryMappings,
+      [key]: { ...(current.categoryMappings[key] || {}), ...compactAccountMapping(mapping) },
+    },
+  };
+  await writeXeroWorkspaceSettings(workspaceId, next);
+  return next.categoryMappings[key];
+}
+
+export async function saveProductOverride(workspaceId: string, productKey: string, mapping: XeroAccountMappingInput) {
+  const current = await readXeroWorkspaceSettings(workspaceId);
+  const key = normalizeMappingKey(productKey);
+  const next = {
+    ...current,
+    productOverrides: {
+      ...current.productOverrides,
+      [key]: { ...(current.productOverrides[key] || {}), ...compactAccountMapping(mapping) },
+    },
+  };
+  await writeXeroWorkspaceSettings(workspaceId, next);
+  return next.productOverrides[key];
+}
+
+function normalizeMappingKey(value: string) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function compactAccountMapping(mapping: XeroAccountMappingInput) {
+  const next: Partial<XeroAccountMapping> = {};
+  for (const [key, value] of Object.entries(mapping)) {
+    const normalized = normalizeXeroAccountCode(value);
+    if (normalized) {
+      next[key as keyof XeroAccountMapping] = normalized;
+    }
+  }
   return next;
 }
 
@@ -151,6 +247,30 @@ export function getContactMapping(
   localId: string
 ) {
   return settings.contactMappings[contactKey(localType, localId)] || null;
+}
+
+export function getXeroAccountCatalog(settings: XeroWorkspaceSettings) {
+  return settings.accountCatalog || EMPTY_ACCOUNT_CATALOG;
+}
+
+export function getXeroAccountOptionsForRole(settings: XeroWorkspaceSettings, role: XeroAccountRole) {
+  return filterXeroAccountsForRole(getXeroAccountCatalog(settings).accounts, role);
+}
+
+export function resolveAccountCodeForContext(
+  settings: XeroWorkspaceSettings,
+  role: XeroAccountRole,
+  context: XeroAccountResolutionContext = {}
+) {
+  return resolveXeroAccountMapping(
+    {
+      accounts: settings.accounts,
+      categoryMappings: settings.categoryMappings,
+      productOverrides: settings.productOverrides,
+    },
+    role,
+    context
+  );
 }
 
 export type MappingReadiness = {
@@ -197,11 +317,14 @@ export function evaluateMappingReadiness(
 
 export function mappingPanelStatus(settings: XeroWorkspaceSettings) {
   const checks = [
+    { label: "Chart of accounts sync", ok: settings.accountCatalog.accounts.length > 0, required: "Sync account catalog from Xero" },
     { label: "Sales account", ok: Boolean(settings.accounts.salesAccount?.trim()), required: "Customer invoices" },
     { label: "Purchases / COGS account", ok: Boolean(settings.accounts.costOfSalesAccount?.trim()), required: "Supplier bills" },
     { label: "Inventory account", ok: Boolean(settings.accounts.inventoryAssetAccount?.trim()), required: "Inventory postings" },
     { label: "Cost of sales account", ok: Boolean(settings.accounts.costOfSalesAccount?.trim()), required: "COGS lines" },
     { label: "VAT / tax type", ok: Boolean(settings.accounts.vatStandard?.trim()), required: "Invoices & bills" },
+    { label: "Category mappings", ok: Object.keys(settings.categoryMappings).length > 0, required: "Optional enterprise routing" },
+    { label: "Product overrides", ok: Object.keys(settings.productOverrides).length > 0, required: "Optional enterprise routing" },
     { label: "Customer contact mappings", ok: Object.values(settings.contactMappings).some((m) => m.localType === "customer"), required: "Optional until first sync" },
     { label: "Supplier contact mappings", ok: Object.values(settings.contactMappings).some((m) => m.localType === "supplier"), required: "Optional until first sync" },
   ];

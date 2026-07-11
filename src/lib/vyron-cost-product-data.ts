@@ -14,6 +14,10 @@ export type CostProduct = {
   calculated_gp?: number | null;
   suggested_selling_price?: number | null;
   product_status?: string | null;
+  financial_sales_account_id?: string | null;
+  financial_cost_of_sales_account_id?: string | null;
+  financial_inventory_asset_account_id?: string | null;
+  financial_vat_tax_type?: string | null;
 };
 
 export function formatMoney(value: number | null | undefined) {

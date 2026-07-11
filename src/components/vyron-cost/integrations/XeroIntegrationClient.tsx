@@ -20,8 +20,13 @@ import { documentHasCookie } from "@/lib/vyron-workspace-context";
 import { WORKSPACE_SESSION_KEY } from "@/lib/vyron-workspace-session";
 import {
   DEFAULT_XERO_ACCOUNT_MAPPING,
+  filterXeroAccountsForRole,
+  XERO_ACCOUNT_ROLE_LABELS,
   defaultXeroConnection,
   type XeroAccountMapping,
+  type XeroAccountCatalog,
+  type XeroAccountCatalogEntry,
+  type XeroAccountRole,
   type XeroAuditEvent,
   type XeroConnectionState,
   type XeroSyncStatus,
@@ -100,13 +105,14 @@ const INBOUND_SYNC = [
   { key: "inboundItems", label: "Items", supported: false },
 ] as const;
 
-const MAPPING_FIELDS: Array<{ key: keyof XeroAccountMapping; label: string }> = [
-  { key: "salesAccount", label: "Sales account" },
-  { key: "costOfSalesAccount", label: "Purchases / COGS account" },
-  { key: "inventoryAssetAccount", label: "Inventory account" },
-  { key: "vatStandard", label: "VAT / tax type" },
-  { key: "zeroRated", label: "Zero rated tax" },
-  { key: "exempt", label: "Exempt tax" },
+const COMPANY_DEFAULT_FIELDS: Array<{ key: keyof XeroAccountMapping; label: string }> = [
+  { key: "salesAccount", label: "Default Sales Account" },
+  { key: "costOfSalesAccount", label: "Default Cost of Sales Account" },
+  { key: "inventoryAssetAccount", label: "Default Inventory Asset Account" },
+  { key: "manufacturingVarianceAccount", label: "Default Manufacturing Variance Account" },
+  { key: "stockAdjustmentAccount", label: "Default Stock Adjustment Account" },
+  { key: "freightIncomeAccount", label: "Default Freight Income Account" },
+  { key: "freightExpenseAccount", label: "Default Freight Expense Account" },
 ];
 
 const SYNC_NOW_LABELS: Record<SyncNowAction, string> = {
@@ -128,6 +134,13 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
   const [missingEnv, setMissingEnv] = useState<string[]>([]);
   const [queueRows, setQueueRows] = useState<QueueRow[]>([]);
   const [mapping, setMapping] = useState<XeroAccountMapping>(DEFAULT_XERO_ACCOUNT_MAPPING);
+  const [accountCatalog, setAccountCatalog] = useState<XeroAccountCatalog>({
+    syncedAt: null,
+    syncedBy: null,
+    source: "manual",
+    accounts: [],
+  });
+  const [taxTypes, setTaxTypes] = useState<string[]>([]);
   const [syncConfig, setSyncConfig] = useState<XeroSyncConfig>(DEFAULT_XERO_SYNC_CONFIG);
   const [mappingPanel, setMappingPanel] = useState<MappingPanelItem[]>([]);
   const [invoiceSyncReady, setInvoiceSyncReady] = useState(false);
@@ -219,8 +232,9 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       fetch("/api/integrations/xero/connection", fetchOpts).then((r) => r.json()),
       fetch("/api/integrations/xero/sync-queue", fetchOpts).then((r) => r.json()),
       fetch("/api/integrations/xero/mapping", fetchOpts).then((r) => r.json()),
+      fetch("/api/integrations/xero/accounts", fetchOpts).then((r) => r.json()),
     ])
-      .then(([connectionData, queueData, mappingData]) => {
+      .then(([connectionData, queueData, mappingData, accountsData]) => {
         if (connectionData.ok) {
           setWorkspaceCtx((current) => ({
             ...current,
@@ -241,10 +255,20 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
         }
 
         if (mappingData.ok) {
-          setMapping({ ...DEFAULT_XERO_ACCOUNT_MAPPING, ...(mappingData.mapping || {}) });
           setSyncConfig({ ...DEFAULT_XERO_SYNC_CONFIG, ...(mappingData.syncConfig || {}) });
-          setMappingPanel(Array.isArray(mappingData.mappingPanel) ? mappingData.mappingPanel : []);
-          setInvoiceSyncReady(Boolean(mappingData.invoiceSyncReady));
+        }
+
+        if (accountsData.ok) {
+          setAccountCatalog({
+            syncedAt: accountsData.accountCatalog?.syncedAt || null,
+            syncedBy: accountsData.accountCatalog?.syncedBy || null,
+            source: accountsData.accountCatalog?.source || "manual",
+            accounts: Array.isArray(accountsData.accountCatalog?.accounts) ? accountsData.accountCatalog.accounts : [],
+          });
+          setMapping({ ...DEFAULT_XERO_ACCOUNT_MAPPING, ...(accountsData.mapping || {}) });
+          setMappingPanel(Array.isArray(accountsData.mappingPanel) ? accountsData.mappingPanel : []);
+          setInvoiceSyncReady(Boolean(accountsData.invoiceSyncReady));
+          setTaxTypes(Array.isArray(accountsData.taxTypes) ? accountsData.taxTypes : []);
         }
       })
       .catch(() => setError("Could not load Xero integration data."))
@@ -375,10 +399,10 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
     if (!canEditMapping) return;
     setSavingMapping(true);
     try {
-      const res = await fetch("/api/integrations/xero/mapping", {
+      const res = await fetch("/api/integrations/xero/accounts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mapping }),
+        body: JSON.stringify({ action: "save-defaults", mapping }),
       });
       const data = await res.json();
       if (!data.ok) {
@@ -387,10 +411,98 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       }
       setMappingPanel(data.mappingPanel || []);
       setInvoiceSyncReady(Boolean(data.invoiceSyncReady));
-      setMessage("Account mapping saved.");
+      if (data.mapping) {
+        setMapping({ ...DEFAULT_XERO_ACCOUNT_MAPPING, ...(data.mapping || {}) });
+      }
+      if (Array.isArray(data.taxTypes)) setTaxTypes(data.taxTypes);
+      setMessage("Company financial defaults saved.");
     } finally {
       setSavingMapping(false);
     }
+  }
+
+  async function syncAccountCatalog() {
+    if (!canSync) {
+      setError("You do not have permission to sync to Xero.");
+      return;
+    }
+    if (!syncActionsEnabled) {
+      setError("Connect Xero and select an organisation before syncing accounts.");
+      return;
+    }
+
+    setBulkBusy("sync-accounts");
+    try {
+      const res = await fetch("/api/integrations/xero/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync-from-xero" }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setError(data.error || "Failed to sync Xero accounts.");
+        return;
+      }
+      setAccountCatalog(data.accountCatalog || { syncedAt: null, syncedBy: null, source: "manual", accounts: [] });
+      if (data.mapping) setMapping({ ...DEFAULT_XERO_ACCOUNT_MAPPING, ...(data.mapping || {}) });
+      setMappingPanel(Array.isArray(data.mappingPanel) ? data.mappingPanel : []);
+      setInvoiceSyncReady(Boolean(data.invoiceSyncReady));
+      setTaxTypes(Array.isArray(data.taxTypes) ? data.taxTypes : []);
+      setMessage(`Synced ${Array.isArray(data.accountCatalog?.accounts) ? data.accountCatalog.accounts.length : 0} Xero accounts.`);
+    } finally {
+      setBulkBusy(null);
+      refresh();
+    }
+  }
+
+  function accountOptionsForRole(role: XeroAccountRole) {
+    return filterXeroAccountsForRole(accountCatalog.accounts, role);
+  }
+
+  function renderAccountSelector(role: XeroAccountRole, value: string, onChange: (next: string) => void) {
+    const options = accountOptionsForRole(role);
+    const current = String(value || "").trim();
+    const hasCurrent = current ? options.some((option) => option.accountCode === current) : false;
+
+    return (
+      <select
+        value={current}
+        disabled={!canEditMapping}
+        onChange={(event) => onChange(event.target.value)}
+        className={`${M.select} mt-1 w-full`}
+      >
+        <option value="">Select {XERO_ACCOUNT_ROLE_LABELS[role]}</option>
+        {current && !hasCurrent ? <option value={current}>Current: {current}</option> : null}
+        {options.map((account) => (
+          <option key={`${role}-${account.accountCode}-${account.accountId}`} value={account.accountCode}>
+            {account.accountCode} - {account.accountName}
+            {account.accountType ? ` (${account.accountType})` : ""}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  function renderTaxTypeSelector(value: string, onChange: (next: string) => void) {
+    const current = String(value || "").trim();
+    const hasCurrent = current ? taxTypes.includes(current) : false;
+
+    return (
+      <select
+        value={current}
+        disabled={!canEditMapping || taxTypes.length === 0}
+        onChange={(event) => onChange(event.target.value)}
+        className={`${M.select} mt-1 w-full`}
+      >
+        <option value="">{taxTypes.length > 0 ? "Select Default VAT" : "No synced VAT tax types available"}</option>
+        {current && !hasCurrent ? <option value={current}>Current: {current}</option> : null}
+        {taxTypes.map((taxType) => (
+          <option key={taxType} value={taxType}>
+            {taxType}
+          </option>
+        ))}
+      </select>
+    );
   }
 
   async function saveSyncConfiguration(next: Partial<XeroSyncConfig>) {
@@ -1067,34 +1179,75 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
         <section className={M.moduleDataSection}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-bold text-[#0F172A]">Account mapping</h2>
+              <h2 className="text-xl font-bold text-[#0F172A]">Company financial defaults</h2>
               <p className="mt-1 text-sm font-medium text-[#64748B]">
-                Sales account and VAT tax type are required before invoice sync runs.
+                These persisted company defaults are the active mapping layer for accounting exports in Phase 2.
               </p>
             </div>
-            {canEditMapping ? (
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/integrations/xero/financial-defaults"
+                className={`${M.secondaryBtn} px-4 py-2 text-sm`}
+              >
+                Open Financial Defaults Page
+              </Link>
+              {canSync ? (
+                <button
+                  type="button"
+                  onClick={() => void syncAccountCatalog()}
+                  disabled={Boolean(bulkBusy)}
+                  className={`${M.secondaryBtn} px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  {bulkBusy === "sync-accounts" ? "Refreshing…" : "Refresh Chart of Accounts"}
+                </button>
+              ) : null}
+              {canEditMapping ? (
               <button
                 type="button"
                 onClick={() => void saveMapping()}
                 disabled={savingMapping}
                 className={`${M.primaryBtn} px-4 py-2 text-sm`}
               >
-                Save mapping
+                Save defaults
               </button>
-            ) : null}
+              ) : null}
+            </div>
           </div>
+
+          <div className="mt-4 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm text-[#334155]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-bold text-[#0F172A]">Chart of Accounts</p>
+                <p className="mt-1 text-xs font-medium text-[#64748B]">
+                  {accountCatalog.syncedAt
+                    ? `Synced ${new Date(accountCatalog.syncedAt).toLocaleString()} from Xero (${accountCatalog.accounts.length} accounts).`
+                    : "No synced chart of accounts yet. Sync Xero accounts before configuring company defaults."}
+                </p>
+              </div>
+              <div className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[#64748B]">
+                {accountCatalog.source === "xero" ? "Live Xero catalog" : "Manual/default catalog"}
+              </div>
+            </div>
+          </div>
+
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {MAPPING_FIELDS.map(({ key, label }) => (
+            {COMPANY_DEFAULT_FIELDS.map(({ key, label }) => (
               <label key={key} className="text-xs font-bold text-[#64748B]">
                 {label}
-                <input
-                  value={mapping[key]}
-                  disabled={!canEditMapping}
-                  onChange={(e) => setMapping((c) => ({ ...c, [key]: e.target.value }))}
-                  className={`${M.input} mt-1 w-full`}
-                />
+                {renderAccountSelector(key as XeroAccountRole, mapping[key], (next) =>
+                  setMapping((current) => ({ ...current, [key]: next }))
+                )}
               </label>
             ))}
+            <label className="text-xs font-bold text-[#64748B]">
+              Default VAT
+              {renderTaxTypeSelector(mapping.vatStandard, (next) =>
+                setMapping((current) => ({ ...current, vatStandard: next }))
+              )}
+            </label>
+          </div>
+          <div className="mt-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 text-xs font-medium text-[#475569]">
+            Resolution order is Product Override → Category Mapping → Company Default for invoice exports.
           </div>
           <div className="mt-4 space-y-2">
             {mappingPanel.map((item) => (

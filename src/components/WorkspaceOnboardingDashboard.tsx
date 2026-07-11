@@ -62,7 +62,7 @@ export default function WorkspaceOnboardingDashboard({
         {[
           { href: "/suppliers", title: "Add suppliers", note: "Capture supplier contacts and invoice emails.", Icon: Users },
           { href: "/ingredients", title: "Add ingredients", note: "Build your costing foundation.", Icon: Package },
-          { href: "/admin/imports", title: "Import Centre", note: "Bulk import suppliers, products and opening stock.", Icon: Warehouse },
+          { href: "/import-centre", title: "Import Centre", note: "Bulk import suppliers, products and opening stock.", Icon: Warehouse },
           { href: "/executive-boardroom", title: "Executive Boardroom", note: "Owner command centre for recovery and repricing.", Icon: Building2 },
         ].map(({ href, title, note, Icon }) => (
           <Link

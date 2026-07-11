@@ -85,21 +85,138 @@ export type XeroAccountMapping = {
   salesAccount: string;
   costOfSalesAccount: string;
   inventoryAssetAccount: string;
+  wipAccount: string;
   packagingAccount: string;
   manufacturingVarianceAccount: string;
   stockAdjustmentAccount: string;
+  freightIncomeAccount: string;
+  freightExpenseAccount: string;
   vatStandard: string;
   zeroRated: string;
   exempt: string;
 };
 
+export type XeroAccountRole = keyof XeroAccountMapping;
+
+export type XeroAccountCatalogEntry = {
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  accountType: string;
+  accountClass?: string | null;
+  status?: string | null;
+  taxType?: string | null;
+  systemAccount?: string | null;
+  isEnabled?: boolean;
+};
+
+export type XeroAccountDimensionType = "category" | "product" | "department" | "branch" | "warehouse" | "division";
+
+export type XeroAccountOverride = {
+  dimensionType: XeroAccountDimensionType;
+  dimensionValue: string;
+  accountMapping: Partial<XeroAccountMapping>;
+  updatedAt?: string | null;
+  updatedBy?: string | null;
+};
+
+export type XeroAccountCatalog = {
+  syncedAt: string | null;
+  syncedBy: string | null;
+  source: "xero" | "manual";
+  accounts: XeroAccountCatalogEntry[];
+};
+
+export type XeroAccountResolutionContext = {
+  productId?: string | null;
+  productCode?: string | null;
+  productCategory?: string | null;
+  dimensionType?: XeroAccountDimensionType;
+  dimensionValue?: string | null;
+};
+
+export const XERO_ACCOUNT_ROLE_LABELS: Record<XeroAccountRole, string> = {
+  salesAccount: "Sales",
+  costOfSalesAccount: "Cost of sales",
+  inventoryAssetAccount: "Inventory asset",
+  wipAccount: "WIP",
+  packagingAccount: "Packaging",
+  manufacturingVarianceAccount: "Manufacturing variance",
+  stockAdjustmentAccount: "Stock adjustment",
+  freightIncomeAccount: "Freight income",
+  freightExpenseAccount: "Freight expense",
+  vatStandard: "VAT standard",
+  zeroRated: "VAT zero rated",
+  exempt: "VAT exempt",
+};
+
+export const XERO_ACCOUNT_ROLE_TYPE_HINTS: Record<XeroAccountRole, string[]> = {
+  salesAccount: ["revenue", "income", "otherincome"],
+  costOfSalesAccount: ["directcosts", "expense"],
+  inventoryAssetAccount: ["current asset", "currentasset", "inventory", "stock"],
+  wipAccount: ["current asset", "currentasset"],
+  packagingAccount: ["directcosts", "expense", "overheads"],
+  manufacturingVarianceAccount: ["expense"],
+  stockAdjustmentAccount: ["inventory", "stock", "current asset", "currentasset", "expense", "directcosts"],
+  freightIncomeAccount: ["revenue"],
+  freightExpenseAccount: ["expense"],
+  vatStandard: ["tax", "liability"],
+  zeroRated: ["tax", "liability"],
+  exempt: ["tax", "liability"],
+};
+
+export function normalizeXeroAccountCode(accountCode: string | null | undefined) {
+  return String(accountCode || "").trim();
+}
+
+export function normalizeXeroAccountType(accountType: string | null | undefined) {
+  return String(accountType || "").trim().toLowerCase();
+}
+
+export function isXeroAccountTypeCompatible(role: XeroAccountRole, accountType: string | null | undefined) {
+  const type = normalizeXeroAccountType(accountType);
+  if (!type) return true;
+  const hints = XERO_ACCOUNT_ROLE_TYPE_HINTS[role] || [];
+  return hints.some((hint) => type.includes(hint));
+}
+
+export function filterXeroAccountsForRole(accounts: XeroAccountCatalogEntry[], role: XeroAccountRole) {
+  return accounts.filter((account) => account.isEnabled !== false && isXeroAccountTypeCompatible(role, account.accountType));
+}
+
+export function resolveXeroAccountMapping(
+  settings: {
+    accounts: XeroAccountMapping;
+    categoryMappings?: Record<string, Partial<XeroAccountMapping>>;
+    productOverrides?: Record<string, Partial<XeroAccountMapping>>;
+  },
+  role: XeroAccountRole,
+  context: XeroAccountResolutionContext = {}
+) {
+  const keys = [context.productId, context.productCode, context.productCategory, context.dimensionValue]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+
+  for (const key of keys) {
+    const productOverride = settings.productOverrides?.[key]?.[role];
+    if (productOverride?.trim()) return productOverride.trim();
+    const categoryOverride = settings.categoryMappings?.[key]?.[role];
+    if (categoryOverride?.trim()) return categoryOverride.trim();
+  }
+
+  return normalizeXeroAccountCode(settings.accounts[role]);
+}
+
 export const DEFAULT_XERO_ACCOUNT_MAPPING: XeroAccountMapping = {
   salesAccount: "200",
   costOfSalesAccount: "310",
   inventoryAssetAccount: "630",
+  wipAccount: "635",
   packagingAccount: "315",
   manufacturingVarianceAccount: "320",
   stockAdjustmentAccount: "625",
+  freightIncomeAccount: "250",
+  freightExpenseAccount: "325",
   vatStandard: "820",
   zeroRated: "821",
   exempt: "822",
@@ -181,11 +298,14 @@ export const XERO_OAUTH_GRANULAR_SCOPE_LIST = [
   "profile",
   "email",
   "offline_access",
+
+  "accounting.settings.read",
+
   "accounting.contacts.read",
   "accounting.contacts",
-  "accounting.transactions.read",
-  "accounting.transactions",
-  "accounting.settings.read",
+
+  "accounting.invoices.read",
+  "accounting.invoices",
 ] as const;
 
 /** Minimal scope set when XERO_SCOPE_MODE=minimal (invalid_scope troubleshooting). */

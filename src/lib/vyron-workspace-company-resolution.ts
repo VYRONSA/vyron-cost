@@ -31,6 +31,12 @@ export type WorkspaceCompanyResolution = {
   source: "handcrafted-demo" | "workspace-record" | "client-cookie" | "unresolved";
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string | null | undefined): value is string {
+  return UUID_RE.test(String(value || "").trim());
+}
+
 function isHandcraftedSandboxWorkspace(client: ActiveClient): boolean {
   if (HANDCRAFTED_DEMO_WORKSPACE_IDS.has(client.id)) return true;
   if (client.id === HANDCRAFTED_COMPANY_ID) return true;
@@ -40,6 +46,9 @@ function isHandcraftedSandboxWorkspace(client: ActiveClient): boolean {
 export async function lookupWorkspaceCompanyIdFromDatabase(
   workspaceId: string
 ): Promise<string | null> {
+  const scopedWorkspaceId = workspaceId.trim();
+  if (!isUuid(scopedWorkspaceId)) return null;
+
   const { getSupabaseAdmin, isSupabaseServiceRoleConfigured } = await import("@/lib/supabase-server");
   if (!isSupabaseServiceRoleConfigured()) return null;
 
@@ -49,7 +58,7 @@ export async function lookupWorkspaceCompanyIdFromDatabase(
   const { data, error } = await supabase
     .from("vyron_workspaces")
     .select("company_id")
-    .eq("id", workspaceId)
+    .eq("id", scopedWorkspaceId)
     .maybeSingle();
 
   if (error || !data?.company_id) return null;
@@ -81,7 +90,7 @@ export async function resolveActiveWorkspaceCompanyId(
   }
 
   const cookieCompanyId = client.companyId?.trim() || null;
-  if (cookieCompanyId) {
+  if (cookieCompanyId && isUuid(cookieCompanyId)) {
     return {
       companyId: cookieCompanyId,
       workspaceId: client.id,

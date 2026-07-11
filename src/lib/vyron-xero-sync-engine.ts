@@ -11,6 +11,11 @@ import {
   upsertContactMapping,
 } from "@/lib/vyron-xero-mapping";
 import type { XeroQueueEntityType } from "@/lib/vyron-xero-integration";
+import {
+  readCompanyFinancialSettings,
+  resolveAccountCodeForProductLine,
+  resolveVatTaxTypeForProductLine,
+} from "@/lib/vyron-financial-engine";
 
 function attemptCount(row: Record<string, unknown>) {
   const payload = (row.payload || {}) as Record<string, unknown>;
@@ -127,10 +132,15 @@ async function syncCustomerInvoiceRecord(
   entityId: string,
   actor: string
 ) {
-  const settings = await readXeroWorkspaceSettings(workspaceId);
-  const readiness = evaluateMappingReadiness(settings, "Customer Invoice");
-  if (!readiness.ready) {
-    throw new Error(`Missing required mappings: ${readiness.missing.join(", ")}`);
+  const [settings, companySettings] = await Promise.all([
+    readXeroWorkspaceSettings(workspaceId),
+    readCompanyFinancialSettings(workspaceId, companyId, "XERO"),
+  ]);
+  const missing: string[] = [];
+  if (!companySettings.defaultSalesAccountId) missing.push("Default sales account");
+  if (!companySettings.defaultVatTaxType) missing.push("Default VAT tax type");
+  if (missing.length > 0) {
+    throw new Error(`Missing required company defaults: ${missing.join(", ")}`);
   }
 
   if (!settings.syncConfig.outboundCustomerInvoices) {
@@ -140,6 +150,20 @@ async function syncCustomerInvoiceRecord(
   const loaded = await getCustomerInvoice(supabase, entityId, companyId);
   if (!loaded) throw new Error("Customer invoice not found for active company.");
   const { invoice, lines } = loaded;
+
+  const productIds = Array.from(new Set(lines.map((line) => String(line.product_id || "")).filter(Boolean)));
+  const productMap = new Map<string, { product_category?: string | null; category?: string | null }>();
+  if (productIds.length > 0) {
+    const { data: products, error } = await supabase
+      .from("vyron_cost_products")
+      .select("id, product_category, category")
+      .eq("company_id", companyId)
+      .in("id", productIds);
+    if (error) throw new Error(error.message);
+    for (const product of products || []) {
+      productMap.set(String((product as { id?: string }).id || ""), product as { product_category?: string | null; category?: string | null });
+    }
+  }
 
   let contactMapping = invoice.customer_id
     ? getContactMapping(settings, "customer", invoice.customer_id)
@@ -157,6 +181,29 @@ async function syncCustomerInvoiceRecord(
     throw new Error("Customer contact mapping is required before invoice sync.");
   }
 
+  const lineItems = await Promise.all(
+    lines.map(async (line) => {
+      const accountCode = await resolveAccountCodeForProductLine(
+        { workspaceId, companyId, productId: line.product_id, productCategory: productMap.get(String(line.product_id || ""))?.product_category || productMap.get(String(line.product_id || ""))?.category || null },
+        "salesAccount"
+      );
+      const taxType = await resolveVatTaxTypeForProductLine(
+        { workspaceId, companyId, productId: line.product_id, productCategory: productMap.get(String(line.product_id || ""))?.product_category || productMap.get(String(line.product_id || ""))?.category || null }
+      );
+      if (!accountCode) {
+        throw new Error("Customer invoice export could not resolve a financial sales account code from product, category, or company defaults.");
+      }
+
+      return {
+        Description: line.product_name,
+        Quantity: Number(line.quantity || 0),
+        UnitAmount: Number(line.selling_price || 0),
+        AccountCode: accountCode,
+        TaxType: taxType || undefined,
+      };
+    })
+  );
+
   const invoiceBody = {
     Invoices: [
       {
@@ -165,13 +212,7 @@ async function syncCustomerInvoiceRecord(
         Date: isoDate(invoice.invoice_date),
         DueDate: isoDate(invoice.due_date || invoice.invoice_date),
         InvoiceNumber: invoice.invoice_number,
-        LineItems: lines.map((line) => ({
-          Description: line.product_name,
-          Quantity: Number(line.quantity || 0),
-          UnitAmount: Number(line.selling_price || 0),
-          AccountCode: settings.accounts.salesAccount,
-          TaxType: settings.accounts.vatStandard,
-        })),
+        LineItems: lineItems,
         Status: settings.syncConfig.invoiceStatus || "DRAFT",
       },
     ],
@@ -509,12 +550,12 @@ export async function queueAllCustomerInvoicesForXeroSync(
   companyId: string,
   workspaceId: string
 ) {
-  const settings = await readXeroWorkspaceSettings(workspaceId);
-  const readiness = evaluateMappingReadiness(settings, "Customer Invoice");
-  if (!readiness.ready) {
-    throw new Error(
-      `Invoice sync blocked until required mappings are set: ${readiness.missing.join(", ")}`
-    );
+  const companySettings = await readCompanyFinancialSettings(workspaceId, companyId, "XERO");
+  const missing: string[] = [];
+  if (!companySettings.defaultSalesAccountId) missing.push("Default sales account");
+  if (!companySettings.defaultVatTaxType) missing.push("Default VAT tax type");
+  if (missing.length > 0) {
+    throw new Error(`Invoice sync blocked until required company defaults are set: ${missing.join(", ")}`);
   }
 
   const { data: invoices, error } = await supabase
