@@ -73,6 +73,27 @@ export type ExtractionRunLog = {
   rawOpenAiResponsePreview: string | null;
 };
 
+export type ExtractionTraceEvent = {
+  timestamp: string;
+  step: string;
+  input: Record<string, unknown> | null;
+  output: Record<string, unknown> | null;
+  durationMs: number;
+};
+
+export type ExtractionTraceHook = (event: ExtractionTraceEvent) => void;
+
+type ExtractionRuntimeContext = {
+  documentId?: string;
+  workspaceId?: string | null;
+  companyId?: string | null;
+};
+
+type ExtractionRuntimeOptions = {
+  onTrace?: ExtractionTraceHook;
+  context?: ExtractionRuntimeContext;
+};
+
 const MISSING = "Needs Review";
 const DEFAULT_FIELD_CONFIDENCE = 0;
 
@@ -151,6 +172,22 @@ function getOutputText(data: Record<string, unknown>): string {
     }
   }
   return chunks.join("\n").trim();
+}
+
+function emitTrace(
+  options: ExtractionRuntimeOptions | undefined,
+  step: string,
+  input: Record<string, unknown> | null,
+  output: Record<string, unknown> | null,
+  durationMs: number
+) {
+  options?.onTrace?.({
+    timestamp: new Date().toISOString(),
+    step,
+    input,
+    output,
+    durationMs,
+  });
 }
 
 function parseJsonBlock(text: string): Record<string, unknown> {
@@ -313,12 +350,14 @@ async function callOpenAI({
   fileName,
   mime,
   dataUrl,
+  runtime,
 }: {
   apiKey: string;
   model: string;
   fileName: string;
   mime: string;
   dataUrl: string;
+  runtime?: ExtractionRuntimeOptions;
 }) {
   const isPdf = mime === "application/pdf";
 
@@ -368,6 +407,38 @@ Return ONLY valid JSON matching this schema:
 }
 Use "${MISSING}" only for fields not visible on the document.`;
 
+  emitTrace(
+    runtime,
+    "Prompt built",
+    {
+      model,
+      fileName,
+      mime,
+      isPdf,
+      promptLength: prompt.length,
+      documentId: runtime?.context?.documentId || null,
+    },
+    {
+      promptPreview: prompt.slice(0, 500),
+    },
+    0
+  );
+
+  const requestStartedAt = Date.now();
+  emitTrace(
+    runtime,
+    "OpenAI request started",
+    {
+      model,
+      endpoint: "https://api.openai.com/v1/responses",
+      fileName,
+      mime,
+      dataUrlLength: dataUrl.length,
+    },
+    null,
+    0
+  );
+
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -383,7 +454,31 @@ Use "${MISSING}" only for fields not visible on the document.`;
 
   const data = (await response.json()) as Record<string, unknown>;
 
+  emitTrace(
+    runtime,
+    "OpenAI response received",
+    {
+      model,
+      status: response.status,
+      ok: response.ok,
+    },
+    {
+      responseKeys: Object.keys(data),
+      outputTextLength: getOutputText(data).length,
+    },
+    Date.now() - requestStartedAt
+  );
+
   if (!response.ok) {
+    console.error("[documents/extract/runtime] OpenAI error", {
+      timestamp: new Date().toISOString(),
+      step: "OpenAI response received",
+      httpStatus: response.status,
+      responseBody: data,
+      documentId: runtime?.context?.documentId || null,
+      workspaceId: runtime?.context?.workspaceId || null,
+      companyId: runtime?.context?.companyId || null,
+    });
     const err = data.error as { message?: string } | undefined;
     throw new Error(`${model} failed: ${err?.message || JSON.stringify(data).slice(0, 800)}`);
   }
@@ -393,14 +488,62 @@ Use "${MISSING}" only for fields not visible on the document.`;
     throw new Error(`${model} returned no extraction text.`);
   }
 
-  return { extraction: normaliseExtraction(parseJsonBlock(outputText), outputText), rawOpenAi: data, outputText };
+  const parsedStartedAt = Date.now();
+  let parsedJson: Record<string, unknown>;
+  try {
+    parsedJson = parseJsonBlock(outputText);
+  } catch (error) {
+    console.error("[documents/extract/runtime] JSON parse failed", {
+      timestamp: new Date().toISOString(),
+      step: "JSON parsed",
+      rawAiResponse: outputText,
+      documentId: runtime?.context?.documentId || null,
+      workspaceId: runtime?.context?.workspaceId || null,
+      companyId: runtime?.context?.companyId || null,
+    });
+    throw error;
+  }
+
+  emitTrace(
+    runtime,
+    "JSON parsed",
+    {
+      model,
+      rawResponseLength: outputText.length,
+    },
+    {
+      parsedKeys: Object.keys(parsedJson),
+    },
+    Date.now() - parsedStartedAt
+  );
+
+  const validationStartedAt = Date.now();
+  const extraction = normaliseExtraction(parsedJson, outputText);
+  emitTrace(
+    runtime,
+    "Validation completed",
+    {
+      model,
+      invoiceNo: extraction.invoiceNo,
+      supplier: extraction.supplier,
+    },
+    {
+      confidence: extraction.confidence,
+      warningsCount: extraction.warnings.length,
+      lineItems: extraction.lineItems.length,
+      usable: extractionIsUsable(extraction),
+    },
+    Date.now() - validationStartedAt
+  );
+
+  return { extraction, rawOpenAi: data, outputText };
 }
 
 export async function runDocumentExtraction(input: {
   fileName: string;
   mime: string;
   bytes: Buffer;
-}): Promise<{ extraction: ExtractedInvoice; modelUsed: string; log: ExtractionRunLog }> {
+}, options?: ExtractionRuntimeOptions): Promise<{ extraction: ExtractedInvoice; modelUsed: string; log: ExtractionRunLog }> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || apiKey.includes("PASTE_YOUR")) {
     throw new Error(
@@ -437,6 +580,7 @@ export async function runDocumentExtraction(input: {
         fileName: input.fileName,
         mime: input.mime,
         dataUrl,
+        runtime: options,
       });
 
       log.rawOpenAiResponsePreview = result.outputText.slice(0, 2000);
@@ -452,7 +596,14 @@ export async function runDocumentExtraction(input: {
     } catch (error) {
       const message = error instanceof Error ? error.message : `${model} failed.`;
       errors.push(message);
-      console.error("[document-extraction] model error", { model, message });
+      console.error("[document-extraction] model error", {
+        model,
+        message,
+        documentId: options?.context?.documentId || null,
+        workspaceId: options?.context?.workspaceId || null,
+        companyId: options?.context?.companyId || null,
+        stack: error instanceof Error ? error.stack || null : null,
+      });
     }
   }
 
@@ -480,12 +631,15 @@ export async function persistExtractionToDocument(
   supabase: SupabaseClient,
   documentId: string,
   extraction: ExtractedInvoice,
-  modelUsed: string
+  modelUsed: string,
+  options?: ExtractionRuntimeOptions
 ) {
   const invoiceDate =
     extraction.invoiceDate && extraction.invoiceDate !== MISSING ? extraction.invoiceDate : null;
 
-  const { error: updateError } = await supabase
+  const headerWhere = { id: documentId };
+  const headerUpdateStartedAt = Date.now();
+  const { data: updatedHeaders, error: updateError } = await supabase
     .from("vyron_documents")
     .update({
       document_type: extraction.documentType,
@@ -507,9 +661,35 @@ export async function persistExtractionToDocument(
       field_confidence: extraction.fieldConfidence,
       status: "extracted",
     })
-    .eq("id", documentId);
+    .eq("id", documentId)
+    .select("id");
+
+  emitTrace(
+    options,
+    "Database update completed",
+    {
+      table: "vyron_documents",
+      where: headerWhere,
+      documentId,
+    },
+    {
+      affectedRows: Array.isArray(updatedHeaders) ? updatedHeaders.length : 0,
+    },
+    Date.now() - headerUpdateStartedAt
+  );
+
   if (updateError) {
     throw new Error(`Could not persist extracted header fields: ${updateError.message}`);
+  }
+  if (!updatedHeaders?.length) {
+    console.error("[documents/extract/runtime] Database update affected 0 rows", {
+      timestamp: new Date().toISOString(),
+      sql: "update vyron_documents set ... where id = :documentId",
+      where: headerWhere,
+      workspaceId: options?.context?.workspaceId || null,
+      companyId: options?.context?.companyId || null,
+      documentId,
+    });
   }
 
   const { error: deleteLinesError } = await supabase

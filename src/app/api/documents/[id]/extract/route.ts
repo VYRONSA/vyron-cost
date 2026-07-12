@@ -3,6 +3,7 @@ import {
   loadDocumentBytes,
   logExtractionEvent,
   persistExtractionToDocument,
+  type ExtractionTraceEvent,
   runDocumentExtraction,
 } from "@/lib/vyron-document-extraction";
 import {
@@ -11,14 +12,51 @@ import {
   requireDocumentTenantId,
 } from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import { getServerActiveWorkspace, getWorkspaceCompanyResolution } from "@/lib/vyron-workspace-server";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
 type RouteContext = { params: Promise<{ id: string }> };
 
+function runtimeLog(event: ExtractionTraceEvent & { documentId: string }) {
+  console.log("[documents/extract/runtime]", JSON.stringify(event));
+}
+
+function createRouteTracer(documentId: string) {
+  return {
+    log(step: string, input: Record<string, unknown> | null, output: Record<string, unknown> | null, durationMs = 0) {
+      runtimeLog({
+        timestamp: new Date().toISOString(),
+        step,
+        input,
+        output,
+        durationMs,
+        documentId,
+      });
+    },
+    error(step: string, error: unknown, context: Record<string, unknown> = {}) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      console.error("[documents/extract/runtime]", JSON.stringify({
+        timestamp: new Date().toISOString(),
+        step,
+        input: context,
+        output: {
+          name: err.name,
+          message: err.message,
+        },
+        durationMs: 0,
+        documentId,
+      }));
+      console.error(err.stack || err.message);
+    },
+  };
+}
+
 export async function POST(_request: NextRequest, context: RouteContext) {
   const { id: documentId } = await context.params;
+  const trace = createRouteTracer(documentId);
+  trace.log("Route entered", { documentId, method: "POST" }, { runtime, maxDuration }, 0);
 
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json(
@@ -33,7 +71,40 @@ export async function POST(_request: NextRequest, context: RouteContext) {
   }
 
   try {
+    const workspaceStartedAt = Date.now();
+    const workspace = await getServerActiveWorkspace();
+    trace.log(
+      "Workspace resolved",
+      { documentId },
+      {
+        workspaceId: workspace?.id || null,
+        workspaceName: workspace?.companyName || workspace?.tradingName || null,
+        demoMode: workspace?.demoMode ?? null,
+      },
+      Date.now() - workspaceStartedAt
+    );
+
+    const companyStartedAt = Date.now();
+    const companyResolution = await getWorkspaceCompanyResolution();
+    trace.log(
+      "Company resolved",
+      { workspaceId: workspace?.id || null },
+      {
+        workspaceId: companyResolution.workspaceId,
+        companyId: companyResolution.companyId,
+        source: companyResolution.source,
+      },
+      Date.now() - companyStartedAt
+    );
+
     const tenantId = await requireDocumentTenantId();
+    const runtimeContext = {
+      documentId,
+      workspaceId: companyResolution.workspaceId || workspace?.id || null,
+      companyId: tenantId,
+    };
+
+    const documentStartedAt = Date.now();
     const document = await loadDocumentForTenant<{
       id: string;
       tenant_id: string;
@@ -50,72 +121,185 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       tenantId,
       "id, tenant_id, status, storage_bucket, storage_path, original_filename, file_mime, file_size_bytes, deleted_at"
     );
+    trace.log(
+      "Document loaded",
+      { documentId, tenantId },
+      {
+        status: document.status,
+        tenantId: document.tenant_id,
+        storageBucket: document.storage_bucket,
+        storagePath: document.storage_path,
+        fileName: document.original_filename,
+        mime: document.file_mime,
+        fileSizeBytes: document.file_size_bytes,
+        deletedAt: document.deleted_at,
+      },
+      Date.now() - documentStartedAt
+    );
 
     if (document.deleted_at) {
       return NextResponse.json({ ok: false, error: `Document ${documentId} was deleted.` }, { status: 404 });
     }
 
-    try {
-      await supabase.from("vyron_documents").update({ status: "extracting" }).eq("id", documentId).eq("tenant_id", tenantId);
-
-      const { bytes, mime, fileName, bucket, path } = await loadDocumentBytes(supabase, document);
-
-      console.log("[documents/extract] loaded from storage", {
+    const extractingUpdateStartedAt = Date.now();
+    const { data: extractingRows, error: extractingUpdateError } = await supabase
+      .from("vyron_documents")
+      .update({ status: "extracting" })
+      .eq("id", documentId)
+      .eq("tenant_id", tenantId)
+      .select("id");
+    if (extractingUpdateError) {
+      throw new Error(`Could not mark document extracting: ${extractingUpdateError.message}`);
+    }
+    if (!extractingRows?.length) {
+      console.error("[documents/extract/runtime] Database update affected 0 rows", {
+        timestamp: new Date().toISOString(),
+        sql: "update vyron_documents set status = 'extracting' where id = :documentId and tenant_id = :tenantId",
+        where: { id: documentId, tenant_id: tenantId },
+        workspaceId: runtimeContext.workspaceId,
+        companyId: runtimeContext.companyId,
         documentId,
-        fileName,
-        mime,
-        byteSize: bytes.length,
-        bucket,
-        path,
-      });
-
-      await logExtractionEvent(supabase, documentId, "started", "Downloaded file from storage; calling OpenAI.", {
-        fileName,
-        mime,
-        byteSize: bytes.length,
-        bucket,
-        path,
-      });
-
-      const { extraction, modelUsed, log } = await runDocumentExtraction({ fileName, mime, bytes });
-
-      await persistExtractionToDocument(supabase, documentId, extraction, modelUsed);
-
-      return NextResponse.json({
-        ok: true,
-        documentId,
-        modelUsed,
-        extraction,
-        log,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Extraction failed.";
-
-      await supabase
-        .from("vyron_documents")
-        .update({
-          status: "needs_review",
-          processing_notes: `AI extraction failed — manual review required. ${message}`.slice(0, 500),
-        })
-        .eq("id", documentId)
-        .eq("tenant_id", tenantId);
-
-      await logExtractionEvent(supabase, documentId, "failed", message, {
-        documentId,
-        fallbackStatus: "needs_review",
-      });
-
-      console.error("[documents/extract] failed — graceful fallback to needs_review", { documentId, message });
-
-      return NextResponse.json({
-        ok: true,
-        partial: true,
-        needsReview: true,
-        documentId,
-        error: message,
       });
     }
+    trace.log(
+      "Database update started",
+      {
+        table: "vyron_documents",
+        operation: "mark_extracting",
+        where: { id: documentId, tenant_id: tenantId },
+      },
+      {
+        affectedRows: extractingRows?.length || 0,
+      },
+      Date.now() - extractingUpdateStartedAt
+    );
+
+    trace.log(
+      "Storage download started",
+      {
+        bucket: document.storage_bucket,
+        path: document.storage_path,
+        fileName: document.original_filename,
+      },
+      null,
+      0
+    );
+    const storageStartedAt = Date.now();
+    const { bytes, mime, fileName, bucket, path } = await loadDocumentBytes(supabase, document);
+    trace.log(
+      "Storage download completed",
+      {
+        bucket,
+        path,
+      },
+      {
+        fileName,
+        mime,
+        byteSize: bytes.length,
+      },
+      Date.now() - storageStartedAt
+    );
+
+    console.log("[documents/extract] loaded from storage", {
+      documentId,
+      fileName,
+      mime,
+      byteSize: bytes.length,
+      bucket,
+      path,
+    });
+
+    await logExtractionEvent(supabase, documentId, "started", "Downloaded file from storage; calling OpenAI.", {
+      fileName,
+      mime,
+      byteSize: bytes.length,
+      bucket,
+      path,
+    });
+
+    trace.log(
+      "OCR invoked",
+      {
+        fileName,
+        mime,
+        byteSize: bytes.length,
+      },
+      {
+        implementation: "No separate OCR service in this runtime; multimodal extraction continues in OpenAI pipeline.",
+      },
+      0
+    );
+    trace.log(
+      "OCR returned",
+      {
+        implementation: "pass-through",
+      },
+      {
+        implementation: "No standalone OCR response; downstream stages emit OpenAI and JSON logs.",
+      },
+      0
+    );
+
+    const { extraction, modelUsed, log } = await runDocumentExtraction(
+      { fileName, mime, bytes },
+      {
+        context: runtimeContext,
+        onTrace: (event) => trace.log(event.step, event.input, event.output, event.durationMs),
+      }
+    );
+
+    trace.log(
+      "Database update started",
+      {
+        table: "vyron_documents",
+        operation: "persist_extraction",
+        where: { id: documentId },
+        modelUsed,
+      },
+      null,
+      0
+    );
+
+    await persistExtractionToDocument(supabase, documentId, extraction, modelUsed, {
+      context: runtimeContext,
+      onTrace: (event) => trace.log(event.step, event.input, event.output, event.durationMs),
+    });
+
+    trace.log(
+      "Review draft updated",
+      {
+        documentId,
+      },
+      {
+        source: "Review draft is derived from persisted vyron_documents and vyron_document_line_items rows.",
+        status: "ready_for_review_reload",
+        lineItems: extraction.lineItems.length,
+      },
+      0
+    );
+
+    trace.log(
+      "HTTP response returned",
+      {
+        documentId,
+      },
+      {
+        ok: true,
+        modelUsed,
+        lineItems: extraction.lineItems.length,
+      },
+      0
+    );
+
+    return NextResponse.json({
+      ok: true,
+      documentId,
+      modelUsed,
+      extraction,
+      log,
+    });
   } catch (error) {
+    trace.error("Unhandled exception", error, { documentId });
     return documentTenantAccessErrorResponse(error, "Extraction failed.");
   }
 }
