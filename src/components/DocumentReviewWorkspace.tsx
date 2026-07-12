@@ -146,10 +146,17 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     const status = next.status.toLowerCase();
     const eligibleStatus = status === "uploaded" || status === "uploading" || status === "stored";
     const hasHeaderData = Boolean(
-      next.fields.supplierName || next.fields.invoiceNumber || next.fields.invoiceDate || next.fields.total !== null
+      next.fields.supplierName.trim() || next.fields.invoiceNumber.trim() || next.fields.invoiceDate.trim()
     );
-    const hasLines = next.lines.length > 0;
-    return eligibleStatus && !hasHeaderData && !hasLines;
+    const hasExtractedLines = next.lines.some(
+      (line) =>
+        line.description.trim().length > 0 ||
+        line.skuOrProductCode.trim().length > 0 ||
+        line.confidenceScore !== null ||
+        line.sourcePage != null ||
+        line.sourceBbox != null
+    );
+    return eligibleStatus && !hasHeaderData && !hasExtractedLines;
   }, []);
 
   useEffect(() => {
