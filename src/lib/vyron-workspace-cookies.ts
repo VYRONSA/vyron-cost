@@ -105,6 +105,8 @@ export function expandWorkspaceSessionFromCookie(
     email: "",
     firstName: "Workspace",
     surname: "User",
+    workspaceId: compact.workspaceId,
+    companyId: compact.companyId ?? null,
     role: compact.role,
     permissions: {},
   };

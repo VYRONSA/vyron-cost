@@ -145,18 +145,32 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
   const shouldAutoExtract = useCallback((next: ReviewDraft) => {
     const status = next.status.toLowerCase();
     const eligibleStatus = status === "uploaded" || status === "uploading" || status === "stored";
-    const hasHeaderData = Boolean(
-      next.fields.supplierName.trim() || next.fields.invoiceNumber.trim() || next.fields.invoiceDate.trim()
-    );
-    const hasExtractedLines = next.lines.some(
-      (line) =>
-        line.description.trim().length > 0 ||
-        line.skuOrProductCode.trim().length > 0 ||
-        line.confidenceScore !== null ||
-        line.sourcePage != null ||
-        line.sourceBbox != null
-    );
-    return eligibleStatus && !hasHeaderData && !hasExtractedLines;
+    const hasSupplier = next.fields.supplierName.trim().length > 0;
+    const hasInvoiceNumber = next.fields.invoiceNumber.trim().length > 0;
+    const hasInvoiceDate = (() => {
+      const value = next.fields.invoiceDate.trim();
+      if (!value) return false;
+      return !Number.isNaN(Date.parse(value));
+    })();
+    const hasCommercialLine = next.lines.some((line) => {
+      const hasDescription = line.description.trim().length > 0;
+      const hasSkuOrProductCode = line.skuOrProductCode.trim().length > 0;
+      const hasQuantity = line.quantity !== null;
+      const hasUnitPrice = line.unitPrice !== null;
+      const hasLineTotal = line.lineTotal !== null;
+      const hasVat = line.vat !== null;
+      const hasUom = line.unit.trim().length > 0;
+      return (
+        hasDescription ||
+        hasSkuOrProductCode ||
+        hasQuantity ||
+        hasUnitPrice ||
+        hasLineTotal ||
+        hasVat ||
+        hasUom
+      );
+    });
+    return eligibleStatus && !hasSupplier && !hasInvoiceNumber && !hasInvoiceDate && !hasCommercialLine;
   }, []);
 
   useEffect(() => {

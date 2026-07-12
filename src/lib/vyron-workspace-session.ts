@@ -13,6 +13,8 @@ export type WorkspaceSession = {
   email: string;
   firstName: string;
   surname: string;
+  workspaceId?: string | null;
+  companyId?: string | null;
   role: WorkspaceUserRole;
   permissions: Record<string, boolean>;
 };

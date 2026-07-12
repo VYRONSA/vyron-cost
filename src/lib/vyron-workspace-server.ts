@@ -3,8 +3,15 @@ import { isHandcraftedDataReady, isHandcraftedTenantEnabled } from "@/lib/handcr
 import { ACTIVE_CLIENT_KEY, readActiveClient, type ActiveClient } from "@/lib/vyron-developer-client";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { parseCookieJsonValue } from "@/lib/vyron-workspace-cookie-parse";
-import { expandActiveClientFromCookie } from "@/lib/vyron-workspace-cookies";
+import { expandActiveClientFromCookie, expandWorkspaceSessionFromCookie } from "@/lib/vyron-workspace-cookies";
 import { resolveActiveWorkspaceCompanyId } from "@/lib/vyron-workspace-company-resolution";
+import { WORKSPACE_SESSION_KEY } from "@/lib/vyron-workspace-session";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string | null | undefined): value is string {
+  return UUID_RE.test(String(value || "").trim());
+}
 
 export function parseActiveClient(raw: string | null | undefined): ActiveClient | null {
   const parsed = parseCookieJsonValue<ActiveClient>(raw);
@@ -41,7 +48,21 @@ export async function shouldUseWorkspaceDemoData(): Promise<boolean> {
 export async function getWorkspaceCompanyId(): Promise<string | null> {
   const client = await getServerActiveWorkspace();
   const resolution = await resolveActiveWorkspaceCompanyId(client);
-  return resolution.companyId;
+  if (resolution.companyId) return resolution.companyId;
+
+  // Fallback for sessions where active-client cookie is unavailable but
+  // workspace session cookie still carries canonical company scope.
+  try {
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const raw = cookieStore.get(WORKSPACE_SESSION_KEY)?.value;
+    const parsed = parseCookieJsonValue<Parameters<typeof expandWorkspaceSessionFromCookie>[0]>(raw);
+    const session = parsed ? expandWorkspaceSessionFromCookie(parsed) : null;
+    const cookieCompanyId = session?.companyId?.trim() || null;
+    return isUuid(cookieCompanyId) ? cookieCompanyId : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getWorkspaceCompanyResolution() {
