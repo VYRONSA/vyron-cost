@@ -79,6 +79,8 @@ type EditIngredientModal = {
 export default function DocumentReviewWorkspace({ documentId, embedded = false }: { documentId: string; embedded?: boolean }) {
   const router = useRouter();
   const extractionTriggeredRef = useRef(false);
+  const loadSequenceRef = useRef(0);
+  const activeLoadRef = useRef<{ id: number; controller: AbortController } | null>(null);
   const [draft, setDraft] = useState<ReviewDraft | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -176,18 +178,22 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
     async function load() {
+      const requestId = ++loadSequenceRef.current;
+      activeLoadRef.current?.controller.abort();
+      const controller = new AbortController();
+      activeLoadRef.current = { id: requestId, controller };
+
       setLoading(true);
       setErrorMessage("");
       try {
         const [next, preview, auditRes, trailRes] = await Promise.all([
-          loadReviewDraft(documentId),
-          fetchDocumentPreview(documentId).catch(() => null),
-          fetch(`/api/documents/${documentId}/cost-audit`).then((r) => r.json()).catch(() => ({ ok: false })),
-          fetch(`/api/documents/${documentId}/audit-trail`).then((r) => r.json()).catch(() => ({ ok: false })),
+          loadReviewDraft(documentId, undefined, { signal: controller.signal }),
+          fetchDocumentPreview(documentId, { signal: controller.signal }).catch(() => null),
+          fetch(`/api/documents/${documentId}/cost-audit`, { signal: controller.signal }).then((r) => r.json()).catch(() => ({ ok: false })),
+          fetch(`/api/documents/${documentId}/audit-trail`, { signal: controller.signal }).then((r) => r.json()).catch(() => ({ ok: false })),
         ]);
-        if (cancelled) return;
+        if (activeLoadRef.current?.id !== requestId) return;
         setDraft(next);
         setLineMatchQuality(buildInitialLineMatchQuality(next));
         if (auditRes?.ok) setCostAuditRows(auditRes.rows || []);
@@ -207,33 +213,39 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
         if (!extractionTriggeredRef.current && shouldAutoExtract(next)) {
           extractionTriggeredRef.current = true;
           setMessage("Starting automatic extraction…");
-          const extractRes = await fetch(`/api/documents/${documentId}/extract`, { method: "POST" });
+          const extractRes = await fetch(`/api/documents/${documentId}/extract`, {
+            method: "POST",
+            signal: controller.signal,
+          });
           const extractData = await extractRes.json().catch(() => ({ ok: false }));
           if (!extractRes.ok || (!extractData.ok && !extractData.partial)) {
             throw new Error(extractData.error || "Automatic extraction failed.");
           }
-          const refreshed = await loadReviewDraft(documentId);
-          if (!cancelled) {
-            setDraft(refreshed);
-            setLineMatchQuality(buildInitialLineMatchQuality(refreshed));
-            if (extractData.partial) {
-              setMessage("AI extraction failed. Manual review is available.");
-            } else {
-              setMessage("Automatic extraction completed.");
-            }
+          const refreshed = await loadReviewDraft(documentId, undefined, { signal: controller.signal });
+          if (activeLoadRef.current?.id !== requestId) return;
+          setDraft(refreshed);
+          setLineMatchQuality(buildInitialLineMatchQuality(refreshed));
+          if (extractData.partial) {
+            setMessage("AI extraction failed. Manual review is available.");
+          } else {
+            setMessage("Automatic extraction completed.");
           }
         }
       } catch (error) {
-        if (!cancelled) {
-          setErrorMessage(error instanceof Error ? error.message : "Could not load review.");
-        }
+        if (error instanceof Error && error.name === "AbortError") return;
+        if (activeLoadRef.current?.id !== requestId) return;
+        setErrorMessage(error instanceof Error ? error.message : "Could not load review.");
       } finally {
-        if (!cancelled) setLoading(false);
+        if (activeLoadRef.current?.id === requestId) {
+          setLoading(false);
+          activeLoadRef.current = null;
+        }
       }
     }
     load();
     return () => {
-      cancelled = true;
+      activeLoadRef.current?.controller.abort();
+      activeLoadRef.current = null;
     };
   }, [documentId, shouldAutoExtract]);
 

@@ -129,8 +129,12 @@ function nonEmptyText(...values: Array<unknown>): string {
   return "";
 }
 
-export async function loadReviewDraft(documentId: string, fallbackExtraction?: Extraction): Promise<ReviewDraft> {
-  const response = await fetch(`/api/documents/${documentId}/review`);
+export async function loadReviewDraft(
+  documentId: string,
+  fallbackExtraction?: Extraction,
+  options?: { signal?: AbortSignal }
+): Promise<ReviewDraft> {
+  const response = await fetch(`/api/documents/${documentId}/review`, { signal: options?.signal });
   const data = await response.json();
   if (!response.ok || !data.ok) {
     throw new Error(data.error || "Could not load review draft.");
@@ -409,8 +413,8 @@ export async function fetchNextReviewDocumentId(afterDocumentId?: string) {
   return (data.documentId as string | null) ?? null;
 }
 
-export async function fetchDocumentPreview(documentId: string) {
-  const response = await fetch(`/api/documents/${documentId}/preview`);
+export async function fetchDocumentPreview(documentId: string, options?: { signal?: AbortSignal }) {
+  const response = await fetch(`/api/documents/${documentId}/preview`, { signal: options?.signal });
   const data = await response.json();
   if (!response.ok || !data.ok) {
     throw new Error(data.error || "Could not load stored document preview");
