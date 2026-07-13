@@ -109,6 +109,7 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { key: "manufacturing.runs.start", label: "Start production runs" },
       { key: "manufacturing.runs.complete", label: "Complete production runs" },
       { key: "manufacturing.runs.reverse", label: "Reverse production runs" },
+      { key: "finished_goods.export", label: "Export finished goods" },
     ],
   },
   {
@@ -214,6 +215,7 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "goods_receipts.approve": true,
     "inventory.counts.approve": true,
     "manufacturing.runs.complete": true,
+    "finished_goods.export": true,
     "reports.export": true,
     "sales_orders.approve": true,
     "sales_orders.pick": true,
@@ -229,6 +231,7 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "store_orders.approve": true,
     "goods_receipts.approve": true,
     "inventory.counts.approve": true,
+    "finished_goods.export": true,
     "reports.export": true,
     "sales_orders.approve": true,
     "sales_orders.pick": true,
@@ -251,6 +254,7 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "manufacturing.runs.create": true,
     "manufacturing.runs.start": true,
     "manufacturing.runs.complete": true,
+    "finished_goods.export": true,
     "boms.view": true,
     "ingredients.view": true,
   },
@@ -260,6 +264,7 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "inventory.adjustments.post": true,
     "goods_receipts.create": true,
     "goods_receipts.approve": true,
+    "finished_goods.export": true,
   },
   SALES: {
     ...VIEW_ONLY_ACCESS,
@@ -363,6 +368,7 @@ export const PERMISSION_ALIASES: Record<string, string> = {
   start_manufacturing_runs: "manufacturing.runs.start",
   complete_manufacturing_runs: "manufacturing.runs.complete",
   reverse_manufacturing_runs: "manufacturing.runs.reverse",
+  export_finished_goods: "finished_goods.export",
 
   view_customers: "customers.view",
   create_customers: "customers.create",

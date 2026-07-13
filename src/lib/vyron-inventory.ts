@@ -79,6 +79,7 @@ export async function writeInventoryAudit(
     detail?: string;
     referenceType?: string;
     referenceId?: string;
+    metadata?: Record<string, unknown>;
   }
 ) {
   await supabase.from("vyron_inventory_audit_log").insert({
@@ -92,6 +93,7 @@ export async function writeInventoryAudit(
     detail: params.detail || null,
     reference_type: params.referenceType || null,
     reference_id: params.referenceId || null,
+    metadata: params.metadata || {},
   });
 }
 
@@ -889,8 +891,16 @@ export type StockBackedFinishedGoodOption = {
   sku: string;
   stockOnHand: number;
   unitCost: number;
+  standardCost: number;
   sellingPrice: number;
   inventoryValue: number;
+  category: string;
+  unitOfMeasure: string;
+  linkedBomId: string | null;
+  linkedBomName: string | null;
+  activityStatus: "Active" | "Inactive";
+  createdAt: string | null;
+  updatedAt: string | null;
   stockStatus?: string | null;
 };
 
@@ -915,11 +925,32 @@ export async function listStockBackedFinishedGoodsForInvoice(
   if (productIds.length) {
     const { data, error } = await supabase
       .from("vyron_cost_products")
-      .select("id, product_name, sku, selling_price, total_cost, product_status, status")
+      .select("id, product_name, sku, product_category, category, selling_price, total_cost, product_status, status, linked_bom_id, created_at, updated_at")
       .eq("company_id", companyId)
       .in("id", productIds);
     if (error) throw new Error(error.message);
     products = (data || []) as Array<Record<string, unknown>>;
+  }
+
+  const bomIds = Array.from(
+    new Set(
+      (products || [])
+        .map((product) => String(product.linked_bom_id || "").trim())
+        .filter(Boolean)
+    )
+  );
+
+  const bomNamesById = new Map<string, string>();
+  if (bomIds.length) {
+    const { data, error } = await supabase
+      .from("vyron_cost_boms")
+      .select("id,bom_name")
+      .eq("company_id", companyId)
+      .in("id", bomIds);
+    if (error) throw new Error(error.message);
+    for (const bom of data || []) {
+      bomNamesById.set(String(bom.id), String((bom as { bom_name?: string }).bom_name || ""));
+    }
   }
 
   const productById = new Map((products || []).map((product) => [String(product.id), product]));
@@ -939,8 +970,20 @@ export async function listStockBackedFinishedGoodsForInvoice(
       sku: String(product?.sku || item.item_code || ""),
       stockOnHand: Number(item.qty_on_hand || 0),
       unitCost: Number(item.average_cost || product?.total_cost || 0),
+      standardCost: Number(product?.total_cost || 0),
       sellingPrice: Number(product?.selling_price || 0),
       inventoryValue: Number(item.inventory_value || 0),
+      category: String(product?.product_category || product?.category || item.category || ""),
+      unitOfMeasure: String(item.unit || "unit"),
+      linkedBomId: product?.linked_bom_id ? String(product.linked_bom_id) : null,
+      linkedBomName: product?.linked_bom_id ? bomNamesById.get(String(product.linked_bom_id)) || null : null,
+      activityStatus:
+        String(product?.product_status || product?.status || "active").toLowerCase() === "archived" ||
+        String(product?.product_status || product?.status || "active").toLowerCase() === "inactive"
+          ? "Inactive"
+          : "Active",
+      createdAt: product?.created_at ? String(product.created_at) : null,
+      updatedAt: item.updated_at ? String(item.updated_at) : product?.updated_at ? String(product.updated_at) : null,
       stockStatus: item.stock_status as string | null | undefined,
     });
   }

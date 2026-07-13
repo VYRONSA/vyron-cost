@@ -1,0 +1,126 @@
+{
+  "context": {
+    "workspaceId": "928710a1-ec4a-4f4b-bd31-233c94ad9c78",
+    "companyId": "30df5bad-5dff-495c-9923-8484fab7ad37"
+  },
+  "matrix": {
+    "emptyDataset": true,
+    "singleRecord": true,
+    "multipleRecords": true,
+    "largerThanOneUiPage": true,
+    "allFilteredRecordsExported": true,
+    "companyIsolation": true,
+    "permissionDenied": true,
+    "excelOpensWithoutWarnings": true,
+    "csvOpensInExcel": true,
+    "currencyFormatting": true,
+    "percentageFormatting": true,
+    "dateFormatting": true,
+    "excelHeaderBold": true,
+    "excelHeaderCentered": true,
+    "excelHeaderPalette": true,
+    "excelHeaderFrozen": true,
+    "excelAutoSizedColumns": true
+  },
+  "audit": {
+    "before": 10,
+    "after": 15,
+    "delta": 5,
+    "expectedMinDelta": 5,
+    "fieldCoverage": true,
+    "latest": [
+      {
+        "id": "080b8399-c7ad-4138-b9f0-36f63a806c68",
+        "event_type": "Finished Goods Exported",
+        "actor": "71e6fa89-01ad-433f-af80-b754f6dd1c13",
+        "metadata": {
+          "userId": "71e6fa89-01ad-433f-af80-b754f6dd1c13",
+          "filters": {
+            "search": "",
+            "sortBy": "name",
+            "status": "",
+            "category": "cert_category",
+            "sortDirection": "asc"
+          },
+          "clientIp": "::1",
+          "companyId": "30df5bad-5dff-495c-9923-8484fab7ad37",
+          "userAgent": "FG-Certification/1.0",
+          "exportType": "CSV",
+          "workspaceId": null,
+          "exportTimestamp": "2026-07-13T16:45:15.990Z",
+          "exportedRowCount": 25
+        },
+        "created_at": "2026-07-13T16:45:16.358088+00:00",
+        "reference_type": "finished_goods_export"
+      },
+      {
+        "id": "6f618305-4aed-4002-8562-fbdd8f8c52ed",
+        "event_type": "Finished Goods Exported",
+        "actor": "71e6fa89-01ad-433f-af80-b754f6dd1c13",
+        "metadata": {
+          "userId": "71e6fa89-01ad-433f-af80-b754f6dd1c13",
+          "filters": {
+            "search": "",
+            "sortBy": "name",
+            "status": "",
+            "category": "",
+            "sortDirection": "asc"
+          },
+          "clientIp": "::1",
+          "companyId": "30df5bad-5dff-495c-9923-8484fab7ad37",
+          "userAgent": "FG-Certification/1.0",
+          "exportType": "Excel",
+          "workspaceId": null,
+          "exportTimestamp": "2026-07-13T16:45:14.062Z",
+          "exportedRowCount": 25
+        },
+        "created_at": "2026-07-13T16:45:14.433547+00:00",
+        "reference_type": "finished_goods_export"
+      },
+      {
+        "id": "98697633-29f2-489b-a883-50917664b903",
+        "event_type": "Finished Goods Exported",
+        "actor": "71e6fa89-01ad-433f-af80-b754f6dd1c13",
+        "metadata": {
+          "userId": "71e6fa89-01ad-433f-af80-b754f6dd1c13",
+          "filters": {
+            "search": "",
+            "sortBy": "name",
+            "status": "",
+            "category": "",
+            "sortDirection": "asc"
+          },
+          "clientIp": "::1",
+          "companyId": "30df5bad-5dff-495c-9923-8484fab7ad37",
+          "userAgent": "FG-Certification/1.0",
+          "exportType": "CSV",
+          "workspaceId": null,
+          "exportTimestamp": "2026-07-13T16:45:13.182Z",
+          "exportedRowCount": 25
+        },
+        "created_at": "2026-07-13T16:45:13.547634+00:00",
+        "reference_type": "finished_goods_export"
+      }
+    ]
+  },
+  "counts": {
+    "seededCount": 25,
+    "defaultItems": 25,
+    "emptyRows": 0,
+    "singleRows": 1,
+    "multiRows": 25,
+    "filteredApiRows": 25,
+    "filteredExportRows": 25
+  },
+  "files": {
+    "emptyCsv": "C:\\Users\\humres\\vyron-cost-web\\.tmp-fg-cert\\empty.csv",
+    "singleCsv": "C:\\Users\\humres\\vyron-cost-web\\.tmp-fg-cert\\single.csv",
+    "multiCsv": "C:\\Users\\humres\\vyron-cost-web\\.tmp-fg-cert\\multi.csv",
+    "multiXlsx": "C:\\Users\\humres\\vyron-cost-web\\.tmp-fg-cert\\multi.xlsx",
+    "filteredCsv": "C:\\Users\\humres\\vyron-cost-web\\.tmp-fg-cert\\filtered.csv"
+  },
+  "denied": {
+    "status": 403,
+    "ok": false
+  }
+}

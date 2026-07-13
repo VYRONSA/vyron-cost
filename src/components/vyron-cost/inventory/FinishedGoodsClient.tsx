@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { formatCurrency, formatNumber, type FinishedGoodSummary } from "@/lib/vyron-cost/stock-engine";
+import { Download } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { formatCurrency, formatNumber } from "@/lib/vyron-cost/stock-engine";
 import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
 import {
   VyronPremiumEmptyState,
@@ -11,30 +12,138 @@ import {
   VyronPremiumSectionHeading,
 } from "@/components/vyron-premium/VyronPremiumSprint";
 
+type FinishedGoodItem = {
+  id: string;
+  productId: string;
+  product_name: string;
+  sku: string;
+  code?: string;
+  category?: string;
+  unit_of_measure?: string;
+  standard_cost?: number;
+  current_stock: number;
+  qty_on_hand: number;
+  average_unit_cost: number;
+  selling_price: number;
+  stock_value: number;
+  gross_profit?: number;
+  gross_profit_percent?: number;
+  activity_status?: "Active" | "Inactive";
+  linked_bom_id?: string | null;
+  recipe_bom_version?: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+  last_manufactured_at: string;
+  sales_velocity_30_days: number;
+  days_cover: number;
+  status: "Healthy" | "Low Stock" | "Overstocked" | "Watch";
+};
+
+type SortBy =
+  | "name"
+  | "code"
+  | "category"
+  | "status"
+  | "standard_cost"
+  | "current_cost"
+  | "selling_price"
+  | "gross_profit"
+  | "gross_profit_percent"
+  | "updated_at";
+
+type SortDirection = "asc" | "desc";
+
+function parseFileName(contentDisposition: string | null) {
+  if (!contentDisposition) return null;
+  const utf8 = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8?.[1]) return decodeURIComponent(utf8[1]);
+  const fallback = contentDisposition.match(/filename="?([^\";]+)"?/i);
+  if (fallback?.[1]) return fallback[1];
+  return null;
+}
+
 export default function FinishedGoodsClient() {
-  const [items, setItems] = useState<FinishedGoodSummary[]>([]);
+  const [items, setItems] = useState<FinishedGoodItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exportBusy, setExportBusy] = useState<"csv" | "xlsx" | null>(null);
+  const [exportError, setExportError] = useState("");
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"" | "active" | "inactive">("");
+  const [sortBy, setSortBy] = useState<SortBy>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const refresh = useCallback(() => {
-    const { query } = poApiWorkspaceContext();
-    fetch(`/api/inventory/finished-goods${query}`, { cache: "no-store" })
+    setLoading(true);
+    const context = poApiWorkspaceContext();
+    const params = new URLSearchParams(context.query.replace(/^\?/, ""));
+    params.set("search", search);
+    params.set("category", categoryFilter);
+    params.set("status", statusFilter);
+    params.set("sortBy", sortBy);
+    params.set("sortDirection", sortDirection);
+
+    fetch(`/api/inventory/finished-goods?${params.toString()}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok && Array.isArray(d.items)) {
-          setItems(d.items as FinishedGoodSummary[]);
+          setItems(d.items as FinishedGoodItem[]);
         }
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [categoryFilter, search, sortBy, sortDirection, statusFilter]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
+  const categoryOptions = useMemo(() => {
+    return Array.from(
+      new Set(items.map((item) => String(item.category || "").trim()).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b));
+  }, [items]);
+
   const totalValue = items.reduce((sum, item) => sum + item.stock_value, 0);
   const totalUnits = items.reduce((sum, item) => sum + item.current_stock, 0);
   const lowStock = items.filter((item) => item.status === "Low Stock").length;
   const fastest = [...items].sort((a, b) => b.sales_velocity_30_days - a.sales_velocity_30_days)[0];
+
+  async function runExport(format: "csv" | "xlsx") {
+    setExportError("");
+    setExportBusy(format);
+    try {
+      const context = poApiWorkspaceContext();
+      const params = new URLSearchParams(context.query.replace(/^\?/, ""));
+      params.set("format", format);
+      params.set("search", search);
+      params.set("category", categoryFilter);
+      params.set("status", statusFilter);
+      params.set("sortBy", sortBy);
+      params.set("sortDirection", sortDirection);
+
+      const response = await fetch(`/api/inventory/finished-goods/export?${params.toString()}`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(String(payload?.error || "Finished goods export failed."));
+      }
+
+      const blob = await response.blob();
+      const fileName = parseFileName(response.headers.get("Content-Disposition")) || `FinishedGoods.${format}`;
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : "Finished goods export failed.");
+    } finally {
+      setExportBusy(null);
+    }
+  }
 
   return (
     <div className="grid gap-8">
@@ -82,8 +191,80 @@ export default function FinishedGoodsClient() {
             <h2 className="text-xl font-black text-slate-950">Finished Goods Intelligence</h2>
             <p className="text-sm font-medium text-slate-600">Manufactured stock ready for customer sale, with cost, value and days-cover intelligence.</p>
           </div>
-          <Link href="/manufacturing-intelligence" className="rounded-full bg-purple-700 px-5 py-2 text-sm font-black text-white shadow-lg shadow-purple-700/20">Open Manufacturing</Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void runExport("xlsx")}
+              disabled={exportBusy !== null}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Download size={14} /> {exportBusy === "xlsx" ? "Exporting..." : "Export Excel"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void runExport("csv")}
+              disabled={exportBusy !== null}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Download size={14} /> {exportBusy === "csv" ? "Exporting..." : "Export CSV"}
+            </button>
+            <Link href="/manufacturing-intelligence" className="rounded-full bg-purple-700 px-5 py-2 text-sm font-black text-white shadow-lg shadow-purple-700/20">Open Manufacturing</Link>
+          </div>
         </div>
+
+        <div className="mb-5 grid gap-3 lg:grid-cols-5">
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search finished goods..."
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 outline-none"
+          />
+          <select
+            value={categoryFilter}
+            onChange={(event) => setCategoryFilter(event.target.value)}
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 outline-none"
+          >
+            <option value="">All categories</option>
+            {categoryOptions.map((category) => (
+              <option key={category} value={category}>{category}</option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as "" | "active" | "inactive")}
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 outline-none"
+          >
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <select
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value as SortBy)}
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 outline-none"
+          >
+            <option value="name">Sort: Name</option>
+            <option value="code">Sort: Code</option>
+            <option value="category">Sort: Category</option>
+            <option value="status">Sort: Status</option>
+            <option value="standard_cost">Sort: Standard Cost</option>
+            <option value="current_cost">Sort: Current Cost</option>
+            <option value="selling_price">Sort: Selling Price</option>
+            <option value="gross_profit">Sort: Gross Profit</option>
+            <option value="gross_profit_percent">Sort: Gross Profit %</option>
+            <option value="updated_at">Sort: Last Updated</option>
+          </select>
+          <select
+            value={sortDirection}
+            onChange={(event) => setSortDirection(event.target.value as SortDirection)}
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 outline-none"
+          >
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
+        </div>
+
+        {exportError ? <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-700">{exportError}</div> : null}
 
         {!loading && items.length === 0 ? (
           <VyronPremiumEmptyState
