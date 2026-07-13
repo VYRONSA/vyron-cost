@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "crypto";
 import {
   loadDocumentBytes,
   logExtractionEvent,
@@ -18,6 +19,17 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 type RouteContext = { params: Promise<{ id: string }> };
+
+function first100Hex(bytes: Buffer) {
+  return bytes.subarray(0, 100).toString("hex");
+}
+
+function first100Readable(bytes: Buffer) {
+  return bytes
+    .subarray(0, 100)
+    .toString("utf8")
+    .replace(/[^\x20-\x7E]/g, ".");
+}
 
 function runtimeLog(event: ExtractionTraceEvent & { documentId: string }) {
   console.log("[documents/extract/runtime]", JSON.stringify(event));
@@ -177,9 +189,13 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     trace.log(
       "Storage download started",
       {
+        executed: "YES",
         bucket: document.storage_bucket,
         path: document.storage_path,
         fileName: document.original_filename,
+        mimeType: document.file_mime,
+        byteSize: document.file_size_bytes,
+        first100Bytes: "N/A (object metadata stage)",
       },
       null,
       0
@@ -189,15 +205,51 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     trace.log(
       "Storage download completed",
       {
+        executed: "YES",
         bucket,
         path,
+        mimeType: mime,
       },
       {
         fileName,
         mime,
         byteSize: bytes.length,
+        first100Bytes: first100Hex(bytes),
+        first100Readable: first100Readable(bytes),
+        sha256: createHash("sha256").update(bytes).digest("hex"),
       },
       Date.now() - storageStartedAt
+    );
+
+    trace.log(
+      "Downloaded bytes prepared",
+      {
+        executed: "YES",
+        bucket,
+        path,
+        mimeType: mime,
+        byteSize: bytes.length,
+      },
+      {
+        first100Bytes: first100Hex(bytes),
+        first100Readable: first100Readable(bytes),
+      },
+      0
+    );
+
+    trace.log(
+      "Upload/download byte comparison",
+      {
+        executed: "YES",
+        originalUploadByteSize: document.file_size_bytes,
+        downloadedByteSize: bytes.length,
+        mimeType: mime,
+      },
+      {
+        identical: typeof document.file_size_bytes === "number" ? (document.file_size_bytes === bytes.length ? "YES" : "NO") : "UNKNOWN",
+        first100Bytes: first100Hex(bytes),
+      },
+      0
     );
 
     console.log("[documents/extract] loaded from storage", {

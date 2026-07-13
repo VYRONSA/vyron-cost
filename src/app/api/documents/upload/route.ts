@@ -33,11 +33,21 @@ async function logDocumentEvent(
 }
 
 export async function POST(request: NextRequest) {
+  const contentTypeHeader = request.headers.get("content-type") || "";
+  const contentLengthHeader = request.headers.get("content-length");
+  const boundaryMatch = contentTypeHeader.match(/boundary=([^;]+)/i);
+  const multipartBoundary = boundaryMatch ? boundaryMatch[1] : null;
+
   const debugLog: Record<string, unknown> = {
     requestedTenantId: null as string | null,
     requestedTenantIdLength: 0,
     serviceRoleConfigured: isSupabaseServiceRoleConfigured(),
     supabaseConfigured: isSupabaseServerConfigured(),
+    multipart: {
+      contentType: contentTypeHeader || null,
+      contentLength: contentLengthHeader ? Number(contentLengthHeader) : null,
+      boundary: multipartBoundary,
+    },
   };
 
   try {
@@ -81,6 +91,11 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData();
+    const clientFileSize = Number(String(formData.get("__client_file_size") || ""));
+    const clientLastModified = Number(String(formData.get("__client_file_last_modified") || ""));
+    const clientFileName = String(formData.get("__client_file_name") || "").trim() || null;
+    const clientMime = String(formData.get("__client_file_mime") || "").trim() || null;
+
     const companyId = await requireApiCompanyId();
     const requestedTenantId = String(formData.get("tenant_id") || companyId).trim();
     if (requestedTenantId !== companyId) {
@@ -107,6 +122,24 @@ export async function POST(request: NextRequest) {
     }
 
     const mime = file.type || "application/octet-stream";
+
+    const browserFileTrace = {
+      executed: Number.isFinite(clientFileSize) && clientFileSize >= 0 ? "YES" : "NO",
+      fileName: clientFileName || file.name,
+      browserReportedSize: Number.isFinite(clientFileSize) ? clientFileSize : null,
+      mimeType: clientMime || mime,
+      lastModified: Number.isFinite(clientLastModified) ? clientLastModified : null,
+    };
+
+    debugLog.browserFile = browserFileTrace;
+    debugLog.multipart = {
+      contentType: contentTypeHeader || null,
+      contentLength: contentLengthHeader ? Number(contentLengthHeader) : null,
+      boundary: multipartBoundary,
+      uploadedBytes: Number(contentLengthHeader) ? Number(contentLengthHeader) : null,
+      executed: "YES",
+    };
+
     if (!isAllowedDocumentMime(mime)) {
       return NextResponse.json(
         {
@@ -166,6 +199,17 @@ export async function POST(request: NextRequest) {
     const documentId = randomUUID();
     const storagePath = buildDocumentStoragePath(tenantId, documentId, file.name);
     const fileBytes = Buffer.from(await file.arrayBuffer());
+
+    const apiTrace = {
+      executed: "YES",
+      fileName: file.name,
+      mimeType: mime,
+      fileSize: file.size,
+      receivedByteCount: fileBytes.length,
+      bufferLength: fileBytes.length,
+      fileLength: fileBytes.length,
+    };
+    debugLog.apiUpload = apiTrace;
 
     const { error: insertError } = await supabase.from("vyron_documents").insert({
       id: documentId,
@@ -228,6 +272,44 @@ export async function POST(request: NextRequest) {
       .update({ status: "uploaded", storage_path: storagePath })
       .eq("id", documentId);
 
+    const folder = storagePath.split("/").slice(0, -1).join("/");
+    const objectName = storagePath.split("/").pop() || file.name;
+
+    const { data: listedObjects } = await supabase.storage
+      .from(VYRON_DOCUMENTS_BUCKET)
+      .list(folder, { search: objectName, limit: 100 });
+    const objectMeta = (listedObjects || []).find((row) => row.name === objectName) || null;
+
+    const { data: storedBlob } = await supabase.storage.from(VYRON_DOCUMENTS_BUCKET).download(storagePath);
+    const storedBytes = storedBlob ? Buffer.from(await storedBlob.arrayBuffer()) : null;
+
+    const storageTrace = {
+      executed: "YES",
+      bytesWritten: fileBytes.length,
+      storageObjectMetadata: objectMeta,
+      contentType: objectMeta?.metadata?.mimetype || mime,
+      storageSize: typeof objectMeta?.metadata?.size === "number" ? objectMeta.metadata.size : storedBytes?.length || null,
+    };
+    debugLog.storage = storageTrace;
+
+    const browserSize = Number.isFinite(clientFileSize) ? clientFileSize : null;
+    const apiSize = fileBytes.length;
+    const storageSize = storageTrace.storageSize;
+
+    let firstPointWhereSizeChanges: string | null = null;
+    if (browserSize !== null && browserSize !== apiSize) {
+      firstPointWhereSizeChanges = "Browser File Object -> API Upload Route";
+    } else if (storageSize !== null && apiSize !== storageSize) {
+      firstPointWhereSizeChanges = "API Upload Route -> Supabase Storage Upload";
+    }
+
+    debugLog.sizeComparison = {
+      originalBrowserFileSize: browserSize,
+      apiReceivedSize: apiSize,
+      storageSize,
+      firstPointWhereSizeChanges: firstPointWhereSizeChanges || "No size change detected",
+    };
+
     await logDocumentEvent(supabase, documentId, "upload", "success", "Document stored in Supabase Storage.", {
       storagePath,
       storageBucket: VYRON_DOCUMENTS_BUCKET,
@@ -246,6 +328,13 @@ export async function POST(request: NextRequest) {
       status: "uploaded",
       serviceRoleUsed: true,
       debug: debugLog,
+      uploadTrace: {
+        browserFile: browserFileTrace,
+        multipart: debugLog.multipart,
+        apiUpload: apiTrace,
+        storage: storageTrace,
+        sizeComparison: debugLog.sizeComparison,
+      },
     });
   } catch (error) {
     return NextResponse.json(

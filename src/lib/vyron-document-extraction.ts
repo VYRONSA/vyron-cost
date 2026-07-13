@@ -32,9 +32,9 @@ export type ExtractedInvoice = {
   accountNumber: string;
   customerReference: string;
   salesRepresentative: string;
-  subtotal: string;
-  vat: string;
-  total: string;
+  subtotal: number | null;
+  vat: number | null;
+  total: number | null;
   currency: string;
   confidence: number;
   fieldConfidence: {
@@ -94,6 +94,17 @@ type ExtractionRuntimeOptions = {
   context?: ExtractionRuntimeContext;
 };
 
+function first100Hex(bytes: Buffer) {
+  return bytes.subarray(0, 100).toString("hex");
+}
+
+function first100Readable(bytes: Buffer) {
+  return bytes
+    .subarray(0, 100)
+    .toString("utf8")
+    .replace(/[^\x20-\x7E]/g, ".");
+}
+
 const MISSING = "Needs Review";
 const DEFAULT_FIELD_CONFIDENCE = 0;
 
@@ -115,37 +126,37 @@ function fieldString(value: unknown): string {
   return text || MISSING;
 }
 
-export function numberFromMoney(value: string) {
+export function numberFromMoney(value: unknown) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value !== "string") return null;
   if (!value || value === MISSING) return null;
   const cleaned = value
     .replace(/[^\d,.-]/g, "")
     .replace(/\s/g, "")
     .replace(/,/g, ".");
+  if (!/[0-9]/.test(cleaned)) return null;
   const parts = cleaned.split(".");
   const normalised = parts.length > 2 ? `${parts.slice(0, -1).join("")}.${parts.at(-1)}` : cleaned;
   const num = Number(normalised);
   return Number.isFinite(num) ? num : null;
 }
 
-function money(value: unknown) {
-  const text = fieldString(value);
-  if (text === MISSING) return text;
-  const num = numberFromMoney(text);
-  if (num === null) return text;
-  return `R${num.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 function parseDate(value: unknown) {
   const text = fieldString(value);
   if (text === MISSING) return text;
 
-  const iso = text.match(/(20\d{2})[-/](0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])/);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    return text;
+  }
+
+  const iso = text.match(/^(20\d{2})[-/](0?[1-9]|1[0-2])[-/]([12]\d|3[01]|0?[1-9])$/);
   if (iso) {
     const [, y, m, d] = iso;
     return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
   }
 
-  const local = text.match(/(0?[1-9]|[12]\d|3[01])[-/](0?[1-9]|1[0-2])[-/](20\d{2})/);
+  const local = text.match(/^([12]\d|3[01]|0?[1-9])[-/](0?[1-9]|1[0-2])[-/](20\d{2})$/);
   if (local) {
     const [, d, m, y] = local;
     return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
@@ -230,7 +241,7 @@ function validateExtraction(extraction: ExtractedInvoice): ExtractedInvoice {
     ["invoiceDate", extraction.invoiceDate],
     ["total", extraction.total],
   ]
-    .filter(([, value]) => value === MISSING)
+    .filter(([, value]) => value === MISSING || value === null || value === "")
     .map(([field]) => field as string);
 
   const warnings = [...(extraction.warnings || [])];
@@ -274,9 +285,9 @@ export function normaliseExtraction(raw: Record<string, unknown>, rawText: strin
           description: fieldString(row.description || row.productDescription || row.item),
           quantity: fieldString(row.quantity || row.qty),
           unit: fieldString(row.unit || row.uom || row.measurement),
-          unitPrice: money(row.unitPrice || row.price || row.rate),
-          vatAmount: money(row.vatAmount || row.vat || row.taxAmount),
-          lineTotal: money(row.lineTotal || row.total || row.netPrice || row.amount),
+          unitPrice: fieldString(row.unitPrice || row.price || row.rate),
+          vatAmount: fieldString(row.vatAmount || row.vat || row.taxAmount),
+          lineTotal: fieldString(row.lineTotal || row.total || row.netPrice || row.amount),
           skuOrProductCode: fieldString(row.skuOrProductCode || row.sku || row.productCode || row.code),
           confidenceScore: Number(row.confidenceScore || row.lineConfidence || row.confidence || 0),
           fieldConfidence: {
@@ -303,9 +314,9 @@ export function normaliseExtraction(raw: Record<string, unknown>, rawText: strin
     accountNumber: fieldString(raw.accountNumber || raw.accountNo || raw.customerAccountNumber),
     customerReference: fieldString(raw.customerReference || raw.reference || raw.customerRef),
     salesRepresentative: fieldString(raw.salesRepresentative || raw.representative || raw.salesRep),
-    subtotal: money(raw.subtotal || raw.subTotal || raw.netAmount || raw.excludingVat),
-    vat: money(raw.vat || raw.vatAmount || raw.tax),
-    total: money(raw.total || raw.totalAmount || raw.grossAmount || raw.includingVat),
+    subtotal: numberFromMoney(raw.subtotal || raw.subTotal || raw.netAmount || raw.excludingVat),
+    vat: numberFromMoney(raw.vat || raw.vatAmount || raw.tax),
+    total: numberFromMoney(raw.total || raw.totalAmount || raw.grossAmount || raw.includingVat),
     currency: fieldString(raw.currency) === MISSING ? "ZAR" : fieldString(raw.currency),
     confidence: Number(raw.confidence || 0),
     fieldConfidence: {
@@ -340,7 +351,7 @@ export function normaliseExtraction(raw: Record<string, unknown>, rawText: strin
 
 function extractionIsUsable(extraction: ExtractedInvoice) {
   const core = [extraction.supplier, extraction.invoiceNo, extraction.invoiceDate, extraction.total];
-  const populated = core.filter((value) => value !== MISSING).length;
+  const populated = core.filter((value) => value !== MISSING && value !== null && value !== "").length;
   return populated >= 2 || extraction.confidence >= 50;
 }
 
@@ -407,16 +418,75 @@ Return ONLY valid JSON matching this schema:
 }
 Use "${MISSING}" only for fields not visible on the document.`;
 
+  const requestBody = {
+    model,
+    input: [{ role: "user", content: [{ type: "input_text", text: prompt }, filePart] }],
+    temperature: 0,
+  };
+
+  emitTrace(
+    runtime,
+    "OpenAI request body built",
+    {
+      executed: "YES",
+      model,
+      mimeType: mime,
+      fileName,
+      byteSize: Buffer.byteLength(dataUrl, "utf8"),
+      dataUrlLength: dataUrl.length,
+      first100Bytes: dataUrl.slice(0, 100),
+    },
+    {
+      requestBody,
+    },
+    0
+  );
+
+  const specCheck = isPdf
+    ? {
+        expectedFileType: "input_file",
+        actualFileType: (filePart as { type: string }).type,
+        hasFileData: typeof (filePart as { file_data?: unknown }).file_data === "string",
+        fileDataPrefixOk: String((filePart as { file_data?: unknown }).file_data || "").startsWith(`data:${mime};base64,`),
+      }
+    : {
+        expectedFileType: "input_image",
+        actualFileType: (filePart as { type: string }).type,
+        hasImageUrl: typeof (filePart as { image_url?: unknown }).image_url === "string",
+        imageUrlPrefixOk: String((filePart as { image_url?: unknown }).image_url || "").startsWith(`data:${mime};base64,`),
+      };
+  const specConforms = isPdf
+    ? specCheck.actualFileType === "input_file" && specCheck.hasFileData && specCheck.fileDataPrefixOk
+    : specCheck.actualFileType === "input_image" && specCheck.hasImageUrl && specCheck.imageUrlPrefixOk;
+
+  emitTrace(
+    runtime,
+    "OpenAI payload spec verification",
+    {
+      executed: "YES",
+      mimeType: mime,
+      model,
+    },
+    {
+      conforms: specConforms ? "YES" : "NO",
+      checks: specCheck,
+      mismatch: specConforms ? null : "Request body file object does not match expected Responses API input shape.",
+    },
+    0
+  );
+
   emitTrace(
     runtime,
     "Prompt built",
     {
+      executed: "YES",
       model,
       fileName,
       mime,
       isPdf,
       promptLength: prompt.length,
       documentId: runtime?.context?.documentId || null,
+      first100Bytes: Buffer.from(prompt, "utf8").subarray(0, 100).toString("utf8"),
     },
     {
       promptPreview: prompt.slice(0, 500),
@@ -429,11 +499,13 @@ Use "${MISSING}" only for fields not visible on the document.`;
     runtime,
     "OpenAI request started",
     {
+      executed: "YES",
       model,
       endpoint: "https://api.openai.com/v1/responses",
       fileName,
       mime,
       dataUrlLength: dataUrl.length,
+      first100Bytes: dataUrl.slice(0, 100),
     },
     null,
     0
@@ -446,9 +518,7 @@ Use "${MISSING}" only for fields not visible on the document.`;
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model,
-      input: [{ role: "user", content: [{ type: "input_text", text: prompt }, filePart] }],
-      temperature: 0,
+      ...requestBody,
     }),
   });
 
@@ -458,6 +528,7 @@ Use "${MISSING}" only for fields not visible on the document.`;
     runtime,
     "OpenAI response received",
     {
+      executed: "YES",
       model,
       status: response.status,
       ok: response.ok,
@@ -560,7 +631,59 @@ export async function runDocumentExtraction(input: {
     process.env.OPENAI_DOCUMENT_FALLBACK_MODEL || "gpt-4o-mini",
   ].filter((value, index, array) => value && array.indexOf(value) === index);
 
-  const dataUrl = `data:${input.mime};base64,${input.bytes.toString("base64")}`;
+  emitTrace(
+    options,
+    "Buffer prepared",
+    {
+      executed: "YES",
+      fileName: input.fileName,
+      mimeType: input.mime,
+      byteSize: input.bytes.length,
+      first100Bytes: first100Hex(input.bytes),
+      first100Readable: first100Readable(input.bytes),
+    },
+    {
+      bufferLength: input.bytes.length,
+    },
+    0
+  );
+
+  const base64StartedAt = Date.now();
+  const base64 = input.bytes.toString("base64");
+  emitTrace(
+    options,
+    "Base64 conversion completed",
+    {
+      executed: "YES",
+      mimeType: input.mime,
+      byteSize: input.bytes.length,
+      first100Bytes: first100Hex(input.bytes),
+    },
+    {
+      base64Length: base64.length,
+      first100Bytes: base64.slice(0, 100),
+    },
+    Date.now() - base64StartedAt
+  );
+
+  const dataUrlStartedAt = Date.now();
+  const dataUrl = `data:${input.mime};base64,${base64}`;
+  emitTrace(
+    options,
+    "Data URL constructed",
+    {
+      executed: "YES",
+      mimeType: input.mime,
+      base64Length: base64.length,
+      first100Bytes: base64.slice(0, 100),
+    },
+    {
+      dataUrlLength: dataUrl.length,
+      first100Bytes: dataUrl.slice(0, 100),
+    },
+    Date.now() - dataUrlStartedAt
+  );
+
   const errors: string[] = [];
   const log: ExtractionRunLog = {
     fileName: input.fileName,

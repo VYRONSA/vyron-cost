@@ -256,6 +256,10 @@ async function storeDocument(file: File): Promise<{
 }> {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("__client_file_size", String(file.size));
+  formData.append("__client_file_last_modified", String(file.lastModified || 0));
+  formData.append("__client_file_name", file.name);
+  formData.append("__client_file_mime", file.type || "application/octet-stream");
 
   const response = await fetch("/api/documents/upload", {
     method: "POST",

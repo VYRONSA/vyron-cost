@@ -1,0 +1,72 @@
+{
+  "openAiRawJson": {
+    "supplier": "Omega Fresh Foods Pty Ltd",
+    "invoiceNo": "INV-847392",
+    "invoiceDate": "2026-07-11",
+    "subtotal": "Needs Review",
+    "vat": "1867.61",
+    "total": "12450.75",
+    "currency": "ZAR",
+    "lineItems": []
+  },
+  "internalParsedObject": {
+    "supplier": "Omega Fresh Foods Pty Ltd",
+    "invoiceNo": "INV-847392",
+    "invoiceDate": "2026-07-11",
+    "subtotal": "Needs Review",
+    "vat": "1867.61",
+    "total": "12450.75",
+    "currency": "ZAR",
+    "lineItems": []
+  },
+  "validation": {
+    "supplier": "Omega Fresh Foods Pty Ltd",
+    "invoiceNo": "INV-847392",
+    "invoiceDate": "2026-07-11",
+    "subtotal": null,
+    "vat": 1867.61,
+    "total": 12450.75,
+    "currency": "ZAR",
+    "lineItems": []
+  },
+  "persistenceModel": {
+    "supplier": "Omega Fresh Foods Pty Ltd",
+    "invoiceNo": "INV-847392",
+    "invoiceDate": "2026-07-11",
+    "subtotal": null,
+    "vat": 1867.61,
+    "total": 12450.75,
+    "currency": "ZAR",
+    "lineItems": []
+  },
+  "database": {
+    "supplier": "Omega Fresh Foods Pty Ltd",
+    "invoiceNo": "INV-847392",
+    "invoiceDate": "2026-07-11",
+    "subtotal": null,
+    "vat": 1867.61,
+    "total": 12450.75,
+    "currency": "ZAR",
+    "lineItems": []
+  },
+  "reviewApi": {
+    "supplier": "Omega Fresh Foods Pty Ltd",
+    "invoiceNo": "INV-847392",
+    "invoiceDate": "2026-07-11",
+    "subtotal": null,
+    "vat": 1867.61,
+    "total": 12450.75,
+    "currency": "ZAR",
+    "lineItems": []
+  },
+  "react": {
+    "supplier": "Omega Fresh Foods Pty Ltd",
+    "invoiceNo": "INV-847392",
+    "invoiceDate": "2026-07-11",
+    "subtotal": null,
+    "vat": 1867.61,
+    "total": 12450.75,
+    "currency": "ZAR",
+    "lineItems": []
+  }
+}

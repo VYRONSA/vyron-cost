@@ -107,6 +107,7 @@ export type ReviewDraft = {
 
 export function parseMoneyNumber(value: string) {
   const cleaned = value.replace(/[^\d,.-]/g, "").replace(/\s/g, "").replace(/,/g, ".");
+  if (!/[0-9]/.test(cleaned)) return null;
   const parts = cleaned.split(".");
   const normalised = parts.length > 2 ? `${parts.slice(0, -1).join("")}.${parts.at(-1)}` : cleaned;
   const num = Number(normalised);
