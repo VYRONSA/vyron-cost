@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
-import InvoiceDocumentViewer from "@/components/InvoiceDocumentViewer";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import PoLinkPanel from "@/components/PoLinkPanel";
 import InvoiceReviewTotalsFooter, { InvoiceTotalsWarningBanner } from "@/components/InvoiceReviewTotalsFooter";
@@ -40,6 +40,8 @@ import {
   type ViewerFocusTarget,
   estimateLineBBox,
 } from "@/lib/vyron-document-viewer-types";
+
+const InvoiceDocumentViewer = dynamic(() => import("@/components/InvoiceDocumentViewer"), { ssr: false });
 
 function confidenceTone(score: number | null) {
   if (score === null) return "bg-slate-200 text-slate-600";
