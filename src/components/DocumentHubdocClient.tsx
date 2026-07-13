@@ -24,6 +24,7 @@ import {
   bulkRestoreDocuments,
   deleteDocument,
   fetchDocumentQueueStats,
+  loadReviewDraft,
 } from "@/lib/vyron-document-review-client";
 
 type DocStatus =
@@ -631,6 +632,7 @@ export default function DocumentHubdocClient({
         setDocs((current) => current.map((doc) => (doc.fileUrl === tempDoc.fileUrl ? extractingDoc : doc)));
 
         const { extraction, modelUsed } = await extractStoredDocument(stored.documentId);
+        await loadReviewDraft(stored.documentId);
 
         const captured: DemoDoc = {
           ...extractingDoc,

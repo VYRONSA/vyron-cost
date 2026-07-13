@@ -81,6 +81,8 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
   const extractionTriggeredRef = useRef(false);
   const loadSequenceRef = useRef(0);
   const activeLoadRef = useRef<{ id: number; controller: AbortController } | null>(null);
+  const pollingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollingStartedAtRef = useRef<number | null>(null);
   const [draft, setDraft] = useState<ReviewDraft | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -145,6 +147,19 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     setDraft(next);
     return next;
   }, [documentId]);
+
+  const hasExtractedContent = useCallback((next: ReviewDraft) => {
+    const hasSupplier = next.fields.supplierName.trim().length > 0;
+    const hasInvoiceNumber = next.fields.invoiceNumber.trim().length > 0;
+    return next.status.toLowerCase() === "extracted" || hasSupplier || hasInvoiceNumber;
+  }, []);
+
+  const shouldPollForExtraction = useCallback((next: ReviewDraft | null) => {
+    if (!next) return false;
+    if (hasExtractedContent(next)) return false;
+    const status = next.status.toLowerCase();
+    return status === "uploaded" || status === "uploading" || status === "stored" || status === "extracting";
+  }, [hasExtractedContent]);
 
   const shouldAutoExtract = useCallback((next: ReviewDraft) => {
     const status = next.status.toLowerCase();
@@ -252,6 +267,61 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
   useEffect(() => {
     extractionTriggeredRef.current = false;
   }, [documentId]);
+
+  useEffect(() => {
+    if (pollingTimerRef.current) {
+      clearTimeout(pollingTimerRef.current);
+      pollingTimerRef.current = null;
+    }
+
+    if (!shouldPollForExtraction(draft)) {
+      pollingStartedAtRef.current = null;
+      return;
+    }
+
+    const startedAt = pollingStartedAtRef.current ?? Date.now();
+    pollingStartedAtRef.current = startedAt;
+
+    const poll = async () => {
+      try {
+        const next = await loadReviewDraft(documentId);
+        if (hasExtractedContent(next)) {
+          setDraft(next);
+          setLineMatchQuality(buildInitialLineMatchQuality(next));
+          pollingStartedAtRef.current = null;
+          return;
+        }
+        if (Date.now() - startedAt >= 60000) {
+          setMessage("Extraction is taking longer than expected.");
+          pollingStartedAtRef.current = null;
+          return;
+        }
+        pollingTimerRef.current = setTimeout(() => {
+          void poll();
+        }, 1000);
+      } catch {
+        if (Date.now() - startedAt >= 60000) {
+          setMessage("Extraction is taking longer than expected.");
+          pollingStartedAtRef.current = null;
+          return;
+        }
+        pollingTimerRef.current = setTimeout(() => {
+          void poll();
+        }, 1000);
+      }
+    };
+
+    pollingTimerRef.current = setTimeout(() => {
+      void poll();
+    }, 1000);
+
+    return () => {
+      if (pollingTimerRef.current) {
+        clearTimeout(pollingTimerRef.current);
+        pollingTimerRef.current = null;
+      }
+    };
+  }, [documentId, draft, hasExtractedContent, shouldPollForExtraction]);
 
   function updateField<K extends keyof ReviewDraft["fields"]>(key: K, value: ReviewDraft["fields"][K]) {
     setDraft((current) => (current ? { ...current, fields: { ...current.fields, [key]: value } } : current));
