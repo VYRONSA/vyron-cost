@@ -3,13 +3,17 @@ import {
   buildFinishedGoodsExportFileName,
   listFinishedGoodsExportRows,
   parseFinishedGoodsExportFilters,
-  toFinishedGoodsCsv,
+  toFinishedGoodsCsvWithCentre,
+  toFinishedGoodsPdf,
   toFinishedGoodsXlsx,
+  toFinishedGoodsXlsxWithCentre,
 } from "@/lib/vyron-finished-goods-export";
 import { writeInventoryAudit } from "@/lib/vyron-inventory";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
 import { inventoryCompanyContextFromRequest } from "@/lib/vyron-inventory-api-context";
+import { getServerWorkspaceSession } from "@/lib/vyron-workspace-admin-server";
+import { BrandingService } from "@/lib/platform/branding";
 import {
   requireWorkspacePermission,
   workspaceAccessErrorResponse,
@@ -43,7 +47,7 @@ export async function GET(request: NextRequest) {
     await requireWorkspacePermission("finished_goods.export");
 
     const format = String(request.nextUrl.searchParams.get("format") || "xlsx").toLowerCase();
-    if (format !== "csv" && format !== "xlsx") {
+    if (format !== "csv" && format !== "xlsx" && format !== "pdf") {
       return NextResponse.json({ ok: false, error: "Unsupported export format." }, { status: 400 });
     }
 
@@ -53,7 +57,21 @@ export async function GET(request: NextRequest) {
     );
 
     const filters = parseFinishedGoodsExportFilters(request.nextUrl.searchParams);
+    if (filters.scope === "selected" && filters.selectedIds.length === 0) {
+      return NextResponse.json({ ok: false, error: "No selected finished goods provided." }, { status: 400 });
+    }
+
+    const startedAt = Date.now();
     const rows = companyId ? await listFinishedGoodsExportRows(supabase, companyId, filters) : [];
+
+    const workspaceSession = await getServerWorkspaceSession();
+    const generatedAtIso = new Date().toISOString();
+    const branding = companyId ? await BrandingService.getBrandingByCompanyId(companyId) : null;
+    const companyName = branding?.companyName || "VYRON Client";
+    const tradingName = branding?.tradingName || null;
+    const logoUrl = branding?.logoUrl || null;
+    const logoDataUrl = branding?.logoDataUrl || null;
+    const userName = `${workspaceSession?.firstName || "Workspace"} ${workspaceSession?.surname || "User"}`.trim();
 
     if (companyId) {
       await writeInventoryAudit(supabase, {
@@ -66,7 +84,10 @@ export async function GET(request: NextRequest) {
           userId: session.userId,
           workspaceId: session.workspaceId || null,
           companyId,
-          exportType: format === "csv" ? "CSV" : "Excel",
+          exportType: format === "csv" ? "CSV" : format === "pdf" ? "PDF" : "Excel",
+          exportScope: filters.scope,
+          durationMs: Date.now() - startedAt,
+          includeZeroBalance: filters.includeZeroBalance,
           exportTimestamp: new Date().toISOString(),
           exportedRowCount: rows.length,
           filters,
@@ -76,9 +97,37 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    if (format === "pdf") {
+      const fileName = buildFinishedGoodsExportFileName("xlsx").replace(/\.xlsx$/i, ".pdf");
+      const pdf = toFinishedGoodsPdf(rows, {
+        companyName,
+        tradingName,
+        logoUrl,
+        logoDataUrl,
+        userName,
+        generatedAtIso,
+        filters,
+      });
+      return new NextResponse(pdf, {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename=\"${fileName}\"`,
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+
     if (format === "csv") {
       const fileName = buildFinishedGoodsExportFileName("csv");
-      const csv = `\uFEFF${toFinishedGoodsCsv(rows)}`;
+      const csv = toFinishedGoodsCsvWithCentre(rows, {
+        companyName,
+        tradingName,
+        logoUrl,
+        logoDataUrl,
+        userName,
+        generatedAtIso,
+        filters,
+      });
       return new NextResponse(csv, {
         headers: {
           "Content-Type": "text/csv; charset=utf-8",
@@ -89,7 +138,15 @@ export async function GET(request: NextRequest) {
     }
 
     const fileName = buildFinishedGoodsExportFileName("xlsx");
-  const workbook = await toFinishedGoodsXlsx(rows);
+    const workbook = await toFinishedGoodsXlsxWithCentre(rows, {
+      companyName,
+      tradingName,
+      logoUrl,
+      logoDataUrl,
+      userName,
+      generatedAtIso,
+      filters,
+    });
 
     return new NextResponse(workbook, {
       headers: {

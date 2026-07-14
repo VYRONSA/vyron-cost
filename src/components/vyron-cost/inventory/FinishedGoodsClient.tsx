@@ -5,6 +5,7 @@ import { Download } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatCurrency, formatNumber } from "@/lib/vyron-cost/stock-engine";
 import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
+import ExportCentreDialog, { type ExportCentreState } from "@/components/vyron-platform/ExportCentreDialog";
 import {
   VyronPremiumEmptyState,
   VyronPremiumFormulaCard,
@@ -52,6 +53,63 @@ type SortBy =
   | "updated_at";
 
 type SortDirection = "asc" | "desc";
+type ExportScope = "stock_only" | "all";
+type ExportScopeWithSelected = "stock_only" | "all" | "selected";
+
+const INCLUDE_OPTIONS = [
+  { key: "includeActive", label: "Include Active Products" },
+  { key: "includeInactive", label: "Include Inactive Products" },
+  { key: "includeArchived", label: "Include Archived Products" },
+  { key: "includeRecipes", label: "Include Recipes / BOM" },
+  { key: "includeSuppliers", label: "Include Current Suppliers" },
+  { key: "includeCostInfo", label: "Include Cost Information" },
+  { key: "includeSellingPrices", label: "Include Selling Prices" },
+  { key: "includePricingHistory", label: "Include Pricing History" },
+  { key: "includeLastManufacturingDate", label: "Include Last Manufacturing Date" },
+  { key: "includeLastProductionQty", label: "Include Last Production Quantity" },
+  { key: "includeInventoryStats", label: "Include Inventory Statistics" },
+] as const;
+
+const INVENTORY_FIELD_OPTIONS = [
+  { key: "stockOnHand", label: "Stock On Hand" },
+  { key: "availableStock", label: "Available Stock" },
+  { key: "allocatedStock", label: "Allocated Stock" },
+  { key: "onOrder", label: "On Order" },
+  { key: "reorderLevel", label: "Reorder Level" },
+  { key: "inventoryValue", label: "Inventory Value" },
+  { key: "averageCost", label: "Average Cost" },
+  { key: "standardCost", label: "Standard Cost" },
+  { key: "currentCost", label: "Current Cost" },
+] as const;
+
+const MANUFACTURING_FIELD_OPTIONS = [
+  { key: "recipeVersion", label: "Recipe Version" },
+  { key: "yield", label: "Yield" },
+  { key: "batchSize", label: "Batch Size" },
+  { key: "productionUnit", label: "Production Unit" },
+  { key: "defaultWarehouse", label: "Default Warehouse" },
+  { key: "manufacturingStatus", label: "Manufacturing Status" },
+] as const;
+
+const COMMERCIAL_FIELD_OPTIONS = [
+  { key: "sellingPrice", label: "Selling Price" },
+  { key: "grossProfit", label: "Gross Profit" },
+  { key: "grossProfitPercent", label: "Gross Profit %" },
+  { key: "category", label: "Category" },
+  { key: "brand", label: "Brand" },
+  { key: "productGroup", label: "Product Group" },
+] as const;
+
+const SORT_OPTIONS = [
+  { key: "code", label: "Product Code" },
+  { key: "name", label: "Product Name" },
+  { key: "category", label: "Category" },
+  { key: "current_cost", label: "Cost" },
+  { key: "selling_price", label: "Selling Price" },
+  { key: "gross_profit", label: "Gross Profit" },
+  { key: "created_at", label: "Created Date" },
+  { key: "updated_at", label: "Updated Date" },
+] as const;
 
 function parseFileName(contentDisposition: string | null) {
   if (!contentDisposition) return null;
@@ -72,6 +130,69 @@ export default function FinishedGoodsClient() {
   const [statusFilter, setStatusFilter] = useState<"" | "active" | "inactive">("");
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [exportScope, setExportScope] = useState<ExportScope>("stock_only");
+  const [includeZeroBalance, setIncludeZeroBalance] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({});
+  const [exportCentreOpen, setExportCentreOpen] = useState(false);
+  const [exportConfig, setExportConfig] = useState<ExportCentreState>({
+    format: "xlsx",
+    scope: "stock_only",
+    includeZeroBalance: true,
+    includeFlags: {
+      includeActive: true,
+      includeInactive: false,
+      includeArchived: false,
+      includeRecipes: true,
+      includeSuppliers: true,
+      includeCostInfo: true,
+      includeSellingPrices: true,
+      includePricingHistory: false,
+      includeLastManufacturingDate: false,
+      includeLastProductionQty: false,
+      includeInventoryStats: false,
+    },
+    inventoryFieldFlags: {
+      stockOnHand: true,
+      availableStock: true,
+      allocatedStock: true,
+      onOrder: true,
+      reorderLevel: true,
+      inventoryValue: true,
+      averageCost: true,
+      standardCost: true,
+      currentCost: true,
+    },
+    manufacturingFieldFlags: {
+      recipeVersion: true,
+      yield: true,
+      batchSize: true,
+      productionUnit: true,
+      defaultWarehouse: true,
+      manufacturingStatus: true,
+    },
+    commercialFieldFlags: {
+      sellingPrice: true,
+      grossProfit: true,
+      grossProfitPercent: true,
+      category: true,
+      brand: true,
+      productGroup: true,
+    },
+    filters: {
+      dateCreatedFrom: "",
+      dateCreatedTo: "",
+      dateUpdatedFrom: "",
+      dateUpdatedTo: "",
+      createdBy: "",
+      supplier: "",
+      category: "",
+      status: "",
+      productGroup: "",
+      search: "",
+    },
+    sortBy: "name",
+    sortDirection: "asc",
+  });
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -108,18 +229,32 @@ export default function FinishedGoodsClient() {
   const lowStock = items.filter((item) => item.status === "Low Stock").length;
   const fastest = [...items].sort((a, b) => b.sales_velocity_30_days - a.sales_velocity_30_days)[0];
 
-  async function runExport(format: "csv" | "xlsx") {
+  async function runExportFromCentre() {
     setExportError("");
-    setExportBusy(format);
+    setExportBusy(exportConfig.format === "pdf" ? "xlsx" : exportConfig.format);
     try {
       const context = poApiWorkspaceContext();
       const params = new URLSearchParams(context.query.replace(/^\?/, ""));
-      params.set("format", format);
-      params.set("search", search);
-      params.set("category", categoryFilter);
-      params.set("status", statusFilter);
-      params.set("sortBy", sortBy);
-      params.set("sortDirection", sortDirection);
+      params.set("format", exportConfig.format);
+      params.set("search", exportConfig.filters.search || search);
+      params.set("category", exportConfig.filters.category || categoryFilter);
+      params.set("status", exportConfig.filters.status || statusFilter);
+      params.set("sortBy", exportConfig.sortBy || sortBy);
+      params.set("sortDirection", exportConfig.sortDirection || sortDirection);
+      params.set("scope", exportConfig.scope as ExportScopeWithSelected);
+      params.set("includeZeroBalance", String(exportConfig.includeZeroBalance));
+      params.set("dateCreatedFrom", exportConfig.filters.dateCreatedFrom);
+      params.set("dateCreatedTo", exportConfig.filters.dateCreatedTo);
+      params.set("dateUpdatedFrom", exportConfig.filters.dateUpdatedFrom);
+      params.set("dateUpdatedTo", exportConfig.filters.dateUpdatedTo);
+      params.set("createdBy", exportConfig.filters.createdBy);
+      params.set("supplier", exportConfig.filters.supplier);
+      params.set("productGroup", exportConfig.filters.productGroup);
+      params.set("selectedIds", Object.keys(selectedIds).filter((id) => selectedIds[id]).join(","));
+      params.set("includeFlags", JSON.stringify(exportConfig.includeFlags));
+      params.set("inventoryFieldFlags", JSON.stringify(exportConfig.inventoryFieldFlags));
+      params.set("manufacturingFieldFlags", JSON.stringify(exportConfig.manufacturingFieldFlags));
+      params.set("commercialFieldFlags", JSON.stringify(exportConfig.commercialFieldFlags));
 
       const response = await fetch(`/api/inventory/finished-goods/export?${params.toString()}`, {
         credentials: "include",
@@ -131,13 +266,14 @@ export default function FinishedGoodsClient() {
       }
 
       const blob = await response.blob();
-      const fileName = parseFileName(response.headers.get("Content-Disposition")) || `FinishedGoods.${format}`;
+      const fileName = parseFileName(response.headers.get("Content-Disposition")) || `FinishedGoods.${exportConfig.format}`;
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
       anchor.download = fileName;
       anchor.click();
       URL.revokeObjectURL(url);
+      setExportCentreOpen(false);
     } catch (error) {
       setExportError(error instanceof Error ? error.message : "Finished goods export failed.");
     } finally {
@@ -194,19 +330,11 @@ export default function FinishedGoodsClient() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => void runExport("xlsx")}
+              onClick={() => setExportCentreOpen(true)}
               disabled={exportBusy !== null}
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Download size={14} /> {exportBusy === "xlsx" ? "Exporting..." : "Export Excel"}
-            </button>
-            <button
-              type="button"
-              onClick={() => void runExport("csv")}
-              disabled={exportBusy !== null}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Download size={14} /> {exportBusy === "csv" ? "Exporting..." : "Export CSV"}
+              <Download size={14} /> Export
             </button>
             <Link href="/manufacturing-intelligence" className="rounded-full bg-purple-700 px-5 py-2 text-sm font-black text-white shadow-lg shadow-purple-700/20">Open Manufacturing</Link>
           </div>
@@ -279,7 +407,21 @@ export default function FinishedGoodsClient() {
 
         <div className="grid gap-4 lg:grid-cols-2">
           {items.map((item) => (
-            <Link key={item.id} href={`/products/${item.id}/edit`} className="rounded-[28px] border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl">
+            <div key={item.id} className="rounded-[28px] border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl">
+              <label className="mb-3 inline-flex items-center gap-2 text-xs font-bold text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={Boolean(selectedIds[item.id])}
+                  onChange={(event) =>
+                    setSelectedIds((prev) => ({
+                      ...prev,
+                      [item.id]: event.target.checked,
+                    }))
+                  }
+                />
+                Select for export
+              </label>
+              <Link href={`/products/${item.id}/edit`}>
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-lg font-black text-slate-950">{item.product_name}</p>
@@ -298,9 +440,27 @@ export default function FinishedGoodsClient() {
               <div className="mt-5 rounded-2xl bg-purple-50 p-4 text-sm font-semibold text-purple-900">
                 AI: {recommendation(item.status, item.product_name)}
               </div>
-            </Link>
+              </Link>
+            </div>
           ))}
         </div>
+
+        <ExportCentreDialog
+          open={exportCentreOpen}
+          title="Finished Goods Export Centre"
+          selectedCount={Object.keys(selectedIds).filter((id) => selectedIds[id]).length}
+          busy={exportBusy !== null}
+          error={exportError}
+          state={exportConfig}
+          onClose={() => setExportCentreOpen(false)}
+          onStateChange={setExportConfig}
+          onExport={() => void runExportFromCentre()}
+          includeOptions={[...INCLUDE_OPTIONS]}
+          inventoryFieldOptions={[...INVENTORY_FIELD_OPTIONS]}
+          manufacturingFieldOptions={[...MANUFACTURING_FIELD_OPTIONS]}
+          commercialFieldOptions={[...COMMERCIAL_FIELD_OPTIONS]}
+          sortOptions={[...SORT_OPTIONS]}
+        />
       </div>
     </div>
   );

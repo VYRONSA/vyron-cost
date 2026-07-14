@@ -1,0 +1,60 @@
+export type BrandingPalette = {
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  darkTextColor: string;
+  lightTextColor: string;
+  headerBackground: string;
+  footerBackground: string;
+};
+
+export type CompanyBranding = {
+  workspaceId: string | null;
+  companyId: string | null;
+  companyName: string;
+  tradingName: string | null;
+  logoUrl: string | null;
+  logoDataUrl: string | null;
+  palette: BrandingPalette;
+  physicalAddress: string | null;
+  postalAddress: string | null;
+  city: string | null;
+  province: string | null;
+  country: string | null;
+  postalCode: string | null;
+  telephone: string | null;
+  mobile: string | null;
+  email: string | null;
+  website: string | null;
+  vatNumber: string | null;
+  registrationNumber: string | null;
+  taxNumber: string | null;
+  licenseNumber: string | null;
+};
+
+export type BrandingUpdateInput = Partial<{
+  companyName: string;
+  tradingName: string;
+  logoUrl: string;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  darkTextColor: string;
+  lightTextColor: string;
+  headerBackground: string;
+  footerBackground: string;
+  physicalAddress: string;
+  postalAddress: string;
+  city: string;
+  province: string;
+  country: string;
+  postalCode: string;
+  telephone: string;
+  mobile: string;
+  email: string;
+  website: string;
+  vatNumber: string;
+  registrationNumber: string;
+  taxNumber: string;
+  licenseNumber: string;
+}>;

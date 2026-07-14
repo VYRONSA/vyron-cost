@@ -73,6 +73,12 @@ export type ExtractionRunLog = {
   rawOpenAiResponsePreview: string | null;
 };
 
+export type ExtractionTokenUsage = {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+};
+
 export type ExtractionTraceEvent = {
   timestamp: string;
   step: string;
@@ -370,6 +376,7 @@ async function callOpenAI({
   dataUrl: string;
   runtime?: ExtractionRuntimeOptions;
 }) {
+  const callStartedAt = Date.now();
   const isPdf = mime === "application/pdf";
 
   const filePart = isPdf
@@ -607,14 +614,29 @@ Use "${MISSING}" only for fields not visible on the document.`;
     Date.now() - validationStartedAt
   );
 
-  return { extraction, rawOpenAi: data, outputText };
+  const usageRaw = (data as { usage?: Record<string, unknown> }).usage;
+  const usage: ExtractionTokenUsage | null = usageRaw
+    ? {
+        promptTokens: Number(usageRaw.input_tokens || 0),
+        completionTokens: Number(usageRaw.output_tokens || 0),
+        totalTokens: Number(usageRaw.total_tokens || 0),
+      }
+    : null;
+
+  return { extraction, rawOpenAi: data, outputText, usage, apiExecutionTimeMs: Date.now() - callStartedAt };
 }
 
 export async function runDocumentExtraction(input: {
   fileName: string;
   mime: string;
   bytes: Buffer;
-}, options?: ExtractionRuntimeOptions): Promise<{ extraction: ExtractedInvoice; modelUsed: string; log: ExtractionRunLog }> {
+}, options?: ExtractionRuntimeOptions): Promise<{
+  extraction: ExtractedInvoice;
+  modelUsed: string;
+  log: ExtractionRunLog;
+  usage: ExtractionTokenUsage | null;
+  executionTimeMs: number;
+}> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || apiKey.includes("PASTE_YOUR")) {
     throw new Error(
@@ -715,7 +737,13 @@ export async function runDocumentExtraction(input: {
 
       log.modelUsed = model;
 
-      return { extraction: result.extraction, modelUsed: model, log };
+      return {
+        extraction: result.extraction,
+        modelUsed: model,
+        log,
+        usage: result.usage,
+        executionTimeMs: result.apiExecutionTimeMs,
+      };
     } catch (error) {
       const message = error instanceof Error ? error.message : `${model} failed.`;
       errors.push(message);

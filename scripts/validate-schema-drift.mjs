@@ -127,6 +127,23 @@ const checks = [
     select: "id,company_id,bom_name,status,yield_qty",
     migrationHint: "Apply src/supabase/migrations/20260615_bom_company_scope.sql",
   },
+  {
+    table: "vyron_ai_usage_events",
+    select:
+      "id,company_id,workspace_id,user_id,product_id,feature_id,provider,model,prompt_tokens,completion_tokens,total_tokens,estimated_cost_usd,estimated_cost_company_currency,company_currency,execution_time_ms,success,error_message,metadata,created_at",
+    migrationHint: "Apply src/supabase/migrations/20260714_vyron_ai_usage_billing.sql",
+  },
+  {
+    table: "vyron_ai_company_allowances",
+    select:
+      "id,company_id,package_id_override,monthly_credits_override,monthly_spend_usd_override,monthly_requests_override,reset_anchor_day,last_notified_80_period,last_notified_80_at,last_notified_95_period,last_notified_95_at,created_at,updated_at",
+    migrationHint: "Apply src/supabase/migrations/20260714_vyron_ai_usage_billing.sql",
+  },
+  {
+    table: "vyron_cost_companies",
+    select: "id,currency_code",
+    migrationHint: "Apply src/supabase/migrations/20260714_vyron_ai_usage_billing.sql",
+  },
 ];
 
 async function checkTable({ table, select, migrationHint }) {

@@ -14,6 +14,9 @@ import {
 } from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { getServerActiveWorkspace, getWorkspaceCompanyResolution } from "@/lib/vyron-workspace-server";
+import { getServerWorkspaceSession } from "@/lib/vyron-workspace-admin-server";
+import { resolveSubscription } from "@/platform/managers/subscription-manager";
+import { AiUsageService, resolveProviderForModel } from "@/lib/platform/ai";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -115,6 +118,26 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       workspaceId: companyResolution.workspaceId || workspace?.id || null,
       companyId: tenantId,
     };
+
+    const subscription = await resolveSubscription();
+    const allowanceCheck = await AiUsageService.checkAllowance({ companyId: tenantId, packageName: subscription.packageName });
+    if (!allowanceCheck.allowed) {
+      trace.log(
+        "AI allowance exceeded",
+        { companyId: tenantId, packageName: subscription.packageName },
+        { percentOfLimitUsed: allowanceCheck.percentOfLimitUsed },
+        0
+      );
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "AI_ALLOWANCE_EXCEEDED",
+          message: "You have reached your monthly AI allowance. Upgrade your subscription to continue using AI features.",
+          check: allowanceCheck,
+        },
+        { status: 402 }
+      );
+    }
 
     const documentStartedAt = Date.now();
     const document = await loadDocumentForTenant<{
@@ -292,13 +315,59 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       0
     );
 
-    const { extraction, modelUsed, log } = await runDocumentExtraction(
-      { fileName, mime, bytes },
-      {
-        context: runtimeContext,
-        onTrace: (event) => trace.log(event.step, event.input, event.output, event.durationMs),
-      }
-    );
+    const aiUsageAttributionStartedAt = Date.now();
+    const session = await getServerWorkspaceSession();
+    trace.log("AI usage attribution resolved", null, { userId: session?.userId || null }, Date.now() - aiUsageAttributionStartedAt);
+
+    let extraction: Awaited<ReturnType<typeof runDocumentExtraction>>["extraction"];
+    let modelUsed: string;
+    let log: Awaited<ReturnType<typeof runDocumentExtraction>>["log"];
+    try {
+      const result = await runDocumentExtraction(
+        { fileName, mime, bytes },
+        {
+          context: runtimeContext,
+          onTrace: (event) => trace.log(event.step, event.input, event.output, event.durationMs),
+        }
+      );
+      extraction = result.extraction;
+      modelUsed = result.modelUsed;
+      log = result.log;
+
+      await AiUsageService.recordUsage({
+        companyId: tenantId,
+        workspaceId: runtimeContext.workspaceId,
+        userId: session?.userId || null,
+        packageName: subscription.packageName,
+        productId: "vyron_cost",
+        featureId: "document_intelligence",
+        provider: resolveProviderForModel(modelUsed),
+        model: modelUsed,
+        promptTokens: result.usage?.promptTokens || 0,
+        completionTokens: result.usage?.completionTokens || 0,
+        totalTokens: result.usage?.totalTokens || 0,
+        executionTimeMs: result.executionTimeMs,
+        success: true,
+      });
+    } catch (extractionError) {
+      await AiUsageService.recordUsage({
+        companyId: tenantId,
+        workspaceId: runtimeContext.workspaceId,
+        userId: session?.userId || null,
+        packageName: subscription.packageName,
+        productId: "vyron_cost",
+        featureId: "document_intelligence",
+        provider: "openai",
+        model: "unknown",
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+        executionTimeMs: 0,
+        success: false,
+        errorMessage: extractionError instanceof Error ? extractionError.message : "Extraction failed.",
+      });
+      throw extractionError;
+    }
 
     trace.log(
       "Database update started",

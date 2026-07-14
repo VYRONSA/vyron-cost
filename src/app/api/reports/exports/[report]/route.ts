@@ -8,6 +8,7 @@ import {
   type ReportFilter,
   type TenantReportExportPayload,
 } from "@/lib/vyron-report-exports";
+import { BrandingService } from "@/lib/platform/branding";
 import { getCustomerGpReport, writeReportAudit } from "@/lib/vyron-customer-gp-reporting";
 import {
   requireWorkspacePermission,
@@ -35,18 +36,10 @@ function parseDateFilters(request: NextRequest) {
 }
 
 async function fetchBranding(companyId: string) {
-  const supabase = getSupabaseAdmin();
-  if (!supabase) return { companyName: "VYRON Client", tradingName: null };
-
-  const { data } = await supabase
-    .from("vyron_cost_companies")
-    .select("name,trading_name")
-    .eq("id", companyId)
-    .maybeSingle();
-
+  const branding = await BrandingService.getBrandingByCompanyId(companyId);
   return {
-    companyName: String(data?.name || "VYRON Client"),
-    tradingName: data?.trading_name ? String(data.trading_name) : null,
+    companyName: branding.companyName,
+    tradingName: branding.tradingName,
   };
 }
 
