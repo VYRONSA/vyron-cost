@@ -11,6 +11,8 @@ import { recipeLineToBomLine, recipeToBomHeader } from "@/lib/vyron-cost-recipes
 import { CostIngredient } from "@/lib/vyron-cost-core-data";
 import { readActiveClient } from "@/lib/vyron-developer-client";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
+import { ItemLookupField } from "@/components/vyron-platform/item-lookup/ItemLookupField";
+import type { ItemLookupResult } from "@/lib/platform/item-lookup/ItemLookupTypes";
 
 type DraftLine = Omit<BomLine, "id" | "bom_id" | "line_cost"> & { temp_id: string };
 type ProductOption = { id: string; product_name: string };
@@ -89,7 +91,6 @@ export default function BomBuilderClient({
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [saving, setSaving] = useState(false);
-  const [itemSearch, setItemSearch] = useState("");
 
   const [lines, setLines] = useState<DraftLine[]>(
     existingLines?.length
@@ -186,17 +187,6 @@ export default function BomBuilderClient({
       });
   }, [demoMode, existingBom?.id, recipeId]);
 
-  const filteredIngredients = useMemo(() => {
-    const term = itemSearch.trim().toLowerCase();
-    if (!term) return ingredients;
-    return ingredients.filter((item) =>
-      [item.ingredient_name, item.category || "", item.purchase_unit || "", item.recipe_unit || ""]
-        .join(" ")
-        .toLowerCase()
-        .includes(term)
-    );
-  }, [ingredients, itemSearch]);
-
   const totalCost = useMemo(() => lines.reduce((sum, line) => sum + calcLineCost(line), 0), [lines]);
   const numericYield = Number(yieldQty || 0);
   const numericSelling = Number(sellingPrice || 0);
@@ -210,20 +200,18 @@ export default function BomBuilderClient({
     setLines((current) => current.map((line) => (line.temp_id === tempId ? { ...line, [field]: value } : line)));
   }
 
-  function selectIngredient(tempId: string, ingredientId: string) {
+  function selectIngredientFromLookup(tempId: string, item: ItemLookupResult) {
     if (readOnly) return;
-    const ingredient = ingredients.find((item) => item.id === ingredientId);
-    if (!ingredient) return;
-
+    const ingredientId = item.entityId || item.stockItemId;
     setLines((current) =>
       current.map((line) =>
         line.temp_id === tempId
           ? {
               ...line,
-              ingredient_id: ingredient.id,
-              line_name: ingredient.ingredient_name,
-              unit: ingredient.recipe_unit || ingredient.purchase_unit || "kg",
-              unit_cost: Number(ingredient.true_unit_cost || ingredient.purchase_cost || 0),
+              ingredient_id: ingredientId,
+              line_name: item.productName,
+              unit: item.unit,
+              unit_cost: item.currentCost,
             }
           : line
       )
@@ -558,21 +546,6 @@ export default function BomBuilderClient({
               ) : null}
             </div>
 
-            <label className="mb-5 block">
-              <span className={labelClass}>Search Master Items</span>
-              <input
-                disabled={readOnly}
-                readOnly={readOnly}
-                value={itemSearch}
-                onChange={(event) => setItemSearch(event.target.value)}
-                placeholder="Search ingredients / packaging while selecting..."
-                className={`mt-2 w-full rounded-2xl border border-violet-100 px-4 py-3 text-sm font-bold outline-none placeholder:text-slate-400 focus:border-violet-400 ${readOnly ? "bg-slate-50 text-slate-600" : "bg-violet-50"}`}
-              />
-              <FieldHint example="beef, foil, spice">
-                Filter the ingredient list when picking lines — does not remove items from the BOM.
-              </FieldHint>
-            </label>
-
             {!ingredients.length ? (
               <div className="mb-5 rounded-2xl border border-dashed border-violet-200 bg-violet-50/60 px-5 py-6 text-center">
                 <p className="text-sm font-black text-violet-800">No ingredients loaded yet</p>
@@ -627,19 +600,12 @@ export default function BomBuilderClient({
                     </select>
 
                     {line.line_type === "Ingredient" || line.line_type === "Packaging" ? (
-                      <select
-                        disabled={readOnly}
-                        value={line.ingredient_id || ""}
-                        onChange={(e) => selectIngredient(line.temp_id, e.target.value)}
-                        className={`mx-2 ${lineInputClass}`}
-                      >
-                        <option value="">Choose item...</option>
-                        {filteredIngredients.map((ingredient) => (
-                          <option key={ingredient.id} value={ingredient.id}>
-                            {ingredient.ingredient_name}
-                          </option>
-                        ))}
-                      </select>
+                      <ItemLookupField
+                        className="mx-2"
+                        initialValue={line.line_name}
+                        defaultType={line.line_type === "Packaging" ? "packaging" : "ingredients"}
+                        onSelect={(item) => selectIngredientFromLookup(line.temp_id, item)}
+                      />
                     ) : (
                       <input
                         disabled={readOnly}

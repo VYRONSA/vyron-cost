@@ -7,6 +7,9 @@ import { useInventoryPermissions, useInvoicePermissions } from "@/hooks/useModul
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import type { InvoiceStockPostingStatus } from "@/lib/vyron-invoice-stock-status";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { ItemLookupField } from "@/components/vyron-platform/item-lookup/ItemLookupField";
+import type { ItemLookupResult } from "@/lib/platform/item-lookup/ItemLookupTypes";
+import { DocumentPdfActions } from "@/components/vyron-platform/documents/DocumentPdfActions";
 
 type InvoiceStatus = "Draft" | "Approved" | "Posted" | "Sent" | "Paid" | "Cancelled";
 
@@ -576,6 +579,16 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
     setProductPickerLineId(null);
   }
 
+  function selectItemLookupResult(lineId: string, item: ItemLookupResult) {
+    updateLine(lineId, {
+      productId: item.entityId || item.stockItemId,
+      description: item.productName,
+      unitPrice: item.currentCost,
+      unitCost: item.currentCost,
+      vatRate: item.vatRate ?? 15,
+    });
+  }
+
   function updateLine(id: string, patch: Partial<InvoiceLine>) {
     setLines((current) => current.map((line) => (line.id === id ? { ...line, ...patch } : line)));
   }
@@ -1022,44 +1035,58 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                       <div className="rounded-2xl bg-violet-100 px-3 py-3 text-center text-sm font-black text-violet-800">Line {index + 1}</div>
 
                       <div className="relative">
-                        <Input
-                          label="Finished Good / Product"
-                          value={line.description}
-                          onFocus={() => setProductPickerLineId(line.id)}
-                          onChange={(value) => {
-                            updateLine(line.id, { description: value, productId: undefined });
-                            setProductPickerLineId(line.id);
-                          }}
-                        />
-                        {productPickerLineId === line.id ? (
-                          <PickerBox>
-                            {products.length > 0 ? (
-                              products.map((product) => (
-                                <button
-                                  key={product.id}
-                                  type="button"
-                                  onClick={() => selectFinishedGood(line.id, product)}
-                                  className="flex w-full items-start justify-between gap-3 border-b border-violet-50 px-4 py-3 text-left transition hover:bg-violet-50"
-                                >
-                                  <span>
-                                    <span className="block text-sm font-black text-slate-950">{product.name}</span>
-                                    <span className="block text-xs font-semibold text-slate-500">
-                                      {product.sku ? `${product.sku} • ` : ""}Stock {product.stockOnHand}
-                                    </span>
-                                  </span>
-                                  <span className="text-right text-xs font-black text-slate-700">
-                                    {money(product.sellingPrice)}
-                                    <span className="block text-[#65A30D]">Cost {money(product.unitCost)}</span>
-                                  </span>
-                                </button>
-                              ))
-                            ) : (
-                              <div className="px-4 py-3 text-sm font-bold text-amber-700">
-                                No finished goods found. Add products/finished goods, or type manually.
-                              </div>
-                            )}
-                          </PickerBox>
-                        ) : null}
+                        {demoMode ? (
+                          <>
+                            <Input
+                              label="Finished Good / Product"
+                              value={line.description}
+                              onFocus={() => setProductPickerLineId(line.id)}
+                              onChange={(value) => {
+                                updateLine(line.id, { description: value, productId: undefined });
+                                setProductPickerLineId(line.id);
+                              }}
+                            />
+                            {productPickerLineId === line.id ? (
+                              <PickerBox>
+                                {products.length > 0 ? (
+                                  products.map((product) => (
+                                    <button
+                                      key={product.id}
+                                      type="button"
+                                      onClick={() => selectFinishedGood(line.id, product)}
+                                      className="flex w-full items-start justify-between gap-3 border-b border-violet-50 px-4 py-3 text-left transition hover:bg-violet-50"
+                                    >
+                                      <span>
+                                        <span className="block text-sm font-black text-slate-950">{product.name}</span>
+                                        <span className="block text-xs font-semibold text-slate-500">
+                                          {product.sku ? `${product.sku} • ` : ""}Stock {product.stockOnHand}
+                                        </span>
+                                      </span>
+                                      <span className="text-right text-xs font-black text-slate-700">
+                                        {money(product.sellingPrice)}
+                                        <span className="block text-[#65A30D]">Cost {money(product.unitCost)}</span>
+                                      </span>
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="px-4 py-3 text-sm font-bold text-amber-700">
+                                    No finished goods found. Add products/finished goods, or type manually.
+                                  </div>
+                                )}
+                              </PickerBox>
+                            ) : null}
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Finished Good / Product</span>
+                            <ItemLookupField
+                              initialValue={line.description}
+                              defaultType="finished_goods"
+                              className="mt-2"
+                              onSelect={(item) => selectItemLookupResult(line.id, item)}
+                            />
+                          </>
+                        )}
                       </div>
 
                       <NumberInput label="Qty" value={line.qty} onChange={(value) => updateLine(line.id, { qty: value })} />
@@ -1270,10 +1297,19 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                   Delete
                 </button>
               ) : null}
-              <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-2xl border border-violet-100 bg-white px-5 py-3 text-sm font-black text-violet-800">
-                <Printer size={17} />
-                Print
-              </button>
+              {demoMode ? (
+                <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-2xl border border-violet-100 bg-white px-5 py-3 text-sm font-black text-violet-800">
+                  <Printer size={17} />
+                  Print
+                </button>
+              ) : (
+                <DocumentPdfActions
+                  pdfUrl={`/api/customer-invoices/${selectedInvoice.id}/pdf`}
+                  emailUrl={canEmail ? `/api/customer-invoices/${selectedInvoice.id}/email` : undefined}
+                  fileName={`${selectedInvoice.invoiceNumber}.pdf`}
+                  defaultRecipient={selectedInvoice.customerEmail}
+                />
+              )}
               <button onClick={() => setSelectedInvoiceId(null)} className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white">Close</button>
             </div>
           </div>

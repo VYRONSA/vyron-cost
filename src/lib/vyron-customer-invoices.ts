@@ -971,6 +971,9 @@ export type CustomerRow = {
   invoice_email?: string | null;
   terms?: string | null;
   vat_number?: string | null;
+  registration_number?: string | null;
+  billing_address?: string | null;
+  website?: string | null;
   status?: string | null;
   credit_limit?: number | null;
   on_hold?: boolean | null;
@@ -1105,6 +1108,9 @@ export async function createCustomer(
     phone?: string;
     terms?: string;
     vatNumber?: string;
+    registrationNumber?: string;
+    billingAddress?: string;
+    website?: string;
     status?: string;
     creditLimit?: number;
     onHold?: boolean;
@@ -1123,6 +1129,9 @@ export async function createCustomer(
       invoice_email: input.invoiceEmail || input.contactEmail || null,
       terms: input.terms || "30 Days",
       vat_number: input.vatNumber || null,
+      registration_number: input.registrationNumber || null,
+      billing_address: input.billingAddress || null,
+      website: input.website || null,
       status: input.status || "Active",
       credit_limit: input.creditLimit ?? 0,
       on_hold: Boolean(input.onHold),
@@ -1153,6 +1162,9 @@ export async function updateCustomer(
     phone: string;
     terms: string;
     vatNumber: string;
+    registrationNumber: string;
+    billingAddress: string;
+    website: string;
     status: string;
     creditLimit: number;
     onHold: boolean;
@@ -1176,6 +1188,9 @@ export async function updateCustomer(
   if (input.phone !== undefined) patch.phone = input.phone;
   if (input.terms !== undefined) patch.terms = input.terms;
   if (input.vatNumber !== undefined) patch.vat_number = input.vatNumber;
+  if (input.registrationNumber !== undefined) patch.registration_number = input.registrationNumber;
+  if (input.billingAddress !== undefined) patch.billing_address = input.billingAddress;
+  if (input.website !== undefined) patch.website = input.website;
   if (input.status !== undefined) {
     patch.status = input.status;
     patch.active = input.status !== "Inactive";

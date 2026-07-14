@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Printer } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { formatMoney } from "@/lib/vyron-cost-data";
 import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
+import { DocumentPdfActions } from "@/components/vyron-platform/documents/DocumentPdfActions";
 
 function poFulfillmentStatus(po: Record<string, unknown>, lines: Array<Record<string, unknown>>) {
   const status = String(po.status || "").toLowerCase();
@@ -94,22 +94,6 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
     } else setMessage(data.error || "Update failed");
   }
 
-  function printPo() {
-    window.print();
-  }
-
-  function emailPo() {
-    const poNumber = String(po?.po_number || "");
-    const supplier = String(po?.supplier_name_snapshot || "");
-    const total = formatMoney(Number(po?.total || 0));
-    const subject = encodeURIComponent(`Purchase Order ${poNumber}`);
-    const body = encodeURIComponent(
-      `Please find purchase order ${poNumber} for ${supplier}.\nTotal: ${total}\n\nSent from VYRON COST.`
-    );
-    const to = supplierEmail ? encodeURIComponent(supplierEmail) : "";
-    window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
-  }
-
   const lines = useMemo(() => ((po?.lines as Array<Record<string, unknown>>) || []), [po]);
   const fulfillment = po ? poFulfillmentStatus(po, lines) : "Open";
   const supplier = (po?.supplier as Record<string, unknown> | undefined) || null;
@@ -168,14 +152,12 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
               Edit PO
             </Link>
           ) : null}
-          <button type="button" onClick={printPo} className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800">
-            <Printer size={14} />
-            Print PDF
-          </button>
-          <button type="button" onClick={emailPo} className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800">
-            <Mail size={14} />
-            Email PO
-          </button>
+          <DocumentPdfActions
+            pdfUrl={`/api/purchase-orders/${poId}/pdf${poApiWorkspaceContext().query}`}
+            emailUrl={`/api/purchase-orders/${poId}/email${poApiWorkspaceContext().query}`}
+            fileName={`${String(po.po_number || "purchase-order")}.pdf`}
+            defaultRecipient={supplierEmail}
+          />
           {canReceiveGoods ? (
             <Link href={`/goods-receipts/new?po=${poId}`} className="rounded-xl bg-fuchsia-600 px-3 py-2 text-xs font-black text-white">
               Receive Goods

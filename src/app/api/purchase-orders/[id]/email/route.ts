@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendPurchaseOrderEmail } from "@/lib/vyron-po-email";
 import { getPurchaseOrderDetail, writeProcurementAudit } from "@/lib/vyron-procurement";
-import { buildPurchaseOrderPdf } from "@/lib/vyron-purchase-order-pdf";
+import { buildPurchaseOrderPdf } from "@/lib/platform/documents/adapters/purchase-order";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
 import { requirePackageFeature, requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
@@ -47,12 +47,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const po = await getPurchaseOrderDetail(supabase, poId, companyId);
     if (!po) return NextResponse.json({ ok: false, error: "Purchase order not found." }, { status: 404 });
 
-    const [{ data: company }, { data: supplier }] = await Promise.all([
-      supabase.from("vyron_cost_companies").select("*").eq("id", companyId).maybeSingle(),
-      po.supplier_id
-        ? supabase.from("vyron_cost_suppliers").select("*").eq("id", po.supplier_id).eq("company_id", companyId).maybeSingle()
-        : Promise.resolve({ data: null as Record<string, unknown> | null }),
-    ]);
+    const { data: supplier } = po.supplier_id
+      ? await supabase.from("vyron_cost_suppliers").select("*").eq("id", po.supplier_id).eq("company_id", companyId).maybeSingle()
+      : { data: null as Record<string, unknown> | null };
 
     const to = String(body.to || supplier?.contact_email || supplier?.invoice_email || "").trim();
     if (!to) {
@@ -71,45 +68,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
         `<p>Please find attached purchase order <strong>${po.po_number}</strong>.</p><p>Supplier: ${po.supplier_name_snapshot || "Supplier"}<br/>Total: ${Number(po.total || 0).toFixed(2)}</p>`
     ).trim();
 
-    const pdfBytes = buildPurchaseOrderPdf({
-      company: {
-        name: String(company?.company_name || company?.name || company?.trading_name || "VYRON COST"),
-        tradingName: company?.trading_name ? String(company.trading_name) : null,
-        vatNumber: company?.vat_number ? String(company.vat_number) : null,
-        email: company?.contact_email ? String(company.contact_email) : null,
-        phone: company?.contact_phone ? String(company.contact_phone) : null,
-        address: [company?.address_line1, company?.address_line2, company?.city, company?.province, company?.postal_code, company?.country]
-          .filter(Boolean)
-          .join(", ") || null,
-      },
-      supplier: {
-        name: String(po.supplier_name_snapshot || supplier?.supplier_name || "Supplier"),
-        email: supplier?.contact_email ? String(supplier.contact_email) : supplier?.invoice_email ? String(supplier.invoice_email) : null,
-        phone: supplier?.phone ? String(supplier.phone) : null,
-      },
-      po: {
-        poNumber: String(po.po_number),
-        status: String(po.status),
-        requiredDate: po.order_date ? String(po.order_date) : null,
-        expectedDelivery: (po.lines || []).find((line) => line.expected_delivery_date)?.expected_delivery_date || null,
-        notes: po.notes ? String(po.notes) : null,
-        terms: null,
-        subtotal: Number(po.subtotal || 0),
-        vatAmount: Number(po.vat_amount || 0),
-        discountTotal: Math.max(0, Number(po.expected_total || 0) - Number(po.total || 0)),
-        total: Number(po.total || 0),
-        currency: "ZAR",
-        lineItems: (po.lines || []).map((line) => ({
-          itemName: String(line.item_name),
-          unit: String(line.unit),
-          quantity: Number(line.quantity || 0),
-          unitPrice: Number(line.unit_price || 0),
-          vatRate: Number(line.vat_rate || 0),
-          vatAmount: Number(line.vat_amount || 0),
-          lineTotal: Number(line.line_total || 0),
-        })),
-      },
-    });
+    const pdf = await buildPurchaseOrderPdf(supabase, companyId, poId);
+    if (!pdf) return NextResponse.json({ ok: false, error: "Purchase order not found." }, { status: 404 });
 
     const result = await sendPurchaseOrderEmail({
       purchaseOrderId: poId,
@@ -121,7 +81,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       textBody,
       htmlBody,
       pdfFileName: `${String(po.po_number)}.pdf`,
-      pdfBytes,
+      pdfBytes: pdf.bytes,
     });
 
     const actor = String(body.actor || "user");

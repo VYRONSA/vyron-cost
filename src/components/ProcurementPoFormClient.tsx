@@ -8,10 +8,13 @@ import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { readActiveClient } from "@/lib/vyron-developer-client";
 import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
+import { ItemLookupField } from "@/components/vyron-platform/item-lookup/ItemLookupField";
+import type { ItemLookupResult } from "@/lib/platform/item-lookup/ItemLookupTypes";
 
 type LineRow = {
   id: string;
   item_type: PoItemType;
+  item_id: string | null;
   item_name: string;
   quantity: number;
   unit: string;
@@ -23,6 +26,7 @@ type LineRow = {
 const emptyLine = (): LineRow => ({
   id: crypto.randomUUID(),
   item_type: "ingredient",
+  item_id: null,
   item_name: "",
   quantity: 1,
   unit: "kg",
@@ -30,6 +34,12 @@ const emptyLine = (): LineRow => ({
   vat_rate: 15,
   expected_delivery_date: "",
 });
+
+function poItemTypeFromEntityType(entityType: ItemLookupResult["entityType"]): PoItemType {
+  if (entityType === "finished_goods") return "product";
+  if (entityType === "packaging") return "packaging";
+  return "ingredient";
+}
 
 export default function ProcurementPoFormClient({
   suppliers,
@@ -94,6 +104,7 @@ export default function ProcurementPoFormClient({
           (po.lines || []).map((line: Record<string, unknown>) => ({
             id: String(line.id || crypto.randomUUID()),
             item_type: (line.item_type as PoItemType) || "ingredient",
+            item_id: line.item_id ? String(line.item_id) : null,
             item_name: String(line.item_name || ""),
             quantity: Number(line.quantity || 0),
             unit: String(line.unit || "kg"),
@@ -227,7 +238,26 @@ export default function ProcurementPoFormClient({
               <option value="product">Finished Product</option>
               <option value="non_stock">Non-Stock</option>
             </select>
-            <input disabled={!canSaveDraft} className="rounded-lg border px-2 py-2 text-sm md:col-span-2 disabled:bg-slate-50" placeholder="Item" value={line.item_name} onChange={(e) => updateLine(line.id, { item_name: e.target.value })} />
+            <div className="md:col-span-2">
+              {canSaveDraft ? (
+                <ItemLookupField
+                  initialValue={line.item_name}
+                  placeholder="Search item..."
+                  onSelect={(item) =>
+                    updateLine(line.id, {
+                      item_id: item.entityId || item.stockItemId,
+                      item_type: poItemTypeFromEntityType(item.entityType),
+                      item_name: item.productName,
+                      unit: item.unit,
+                      unit_price: item.currentCost,
+                      vat_rate: item.vatRate ?? line.vat_rate,
+                    })
+                  }
+                />
+              ) : (
+                <input disabled className="w-full rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" value={line.item_name} readOnly />
+              )}
+            </div>
             <input disabled={!canSaveDraft} type="number" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="Qty" value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: Number(e.target.value) })} />
             <input disabled={!canSaveDraft} className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="Unit" value={line.unit} onChange={(e) => updateLine(line.id, { unit: e.target.value })} />
             <input disabled={!canSaveDraft} type="number" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="Unit price" value={line.unit_price} onChange={(e) => updateLine(line.id, { unit_price: Number(e.target.value) })} />

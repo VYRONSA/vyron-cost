@@ -7,6 +7,7 @@ import { useManufacturingPermissions } from "@/hooks/useModulePermissions";
 import { formatMoney } from "@/lib/vyron-cost-data";
 import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
 import { WASTE_REASONS } from "@/lib/vyron-manufacturing";
+import { DocumentPdfActions } from "@/components/vyron-platform/documents/DocumentPdfActions";
 
 type Run = {
   id: string;
@@ -380,6 +381,10 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
         <Link href="/inventory/ledger" className="rounded-2xl border px-5 py-3 text-sm font-black text-slate-700">
           Stock ledger
         </Link>
+        <DocumentPdfActions
+          pdfUrl={`/api/production/runs/${runId}/pdf${poApiWorkspaceContext().query}`}
+          fileName={`${String(run.run_number || runId)}.pdf`}
+        />
       </div>
 
         {(run.audit || []).length > 0 ? (

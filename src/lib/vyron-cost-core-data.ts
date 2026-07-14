@@ -14,6 +14,11 @@ export type CostSupplier = {
   payment_terms?: string | null;
   lead_time_days?: number | null;
   notes?: string | null;
+  vat_number?: string | null;
+  registration_number?: string | null;
+  physical_address?: string | null;
+  postal_address?: string | null;
+  website?: string | null;
 };
 
 export type CostIngredient = {

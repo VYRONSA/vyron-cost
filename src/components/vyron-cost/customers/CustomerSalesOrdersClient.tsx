@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, ClipboardCheck, PackageCheck, Plus, Send, Truck } from "lucide-react";
 import type { ReactNode } from "react";
 import { useInvoicePermissions, useSalesOrderPermissions } from "@/hooks/useModulePermissions";
+import { ItemLookupField } from "@/components/vyron-platform/item-lookup/ItemLookupField";
+import { DocumentPdfActions } from "@/components/vyron-platform/documents/DocumentPdfActions";
 
 type SalesOrderStatus =
   | "Draft"
@@ -136,14 +138,6 @@ type CustomerOption = {
   invoice_email?: string | null;
 };
 
-type ProductOption = {
-  id: string;
-  product_name: string;
-  sku?: string | null;
-  selling_price?: number;
-  total_cost?: number;
-};
-
 function money(value: number) {
   return new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(Number(value || 0));
 }
@@ -193,7 +187,6 @@ export default function CustomerSalesOrdersClient({
     procurementRequired: 0,
   });
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
-  const [products, setProducts] = useState<ProductOption[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [createOpen, setCreateOpen] = useState(initialCreateOpen);
@@ -257,18 +250,11 @@ export default function CustomerSalesOrdersClient({
     setCustomers(Array.isArray(data.customers) ? data.customers : []);
   }
 
-  async function loadProducts() {
-    const res = await fetch("/api/products");
-    const data = await res.json();
-    if (!data.ok) return;
-    setProducts(Array.isArray(data.products) ? data.products : []);
-  }
-
   useEffect(() => {
     async function run() {
       setLoading(true);
       try {
-        await Promise.all([loadOrders(), loadCustomers(), loadProducts()]);
+        await Promise.all([loadOrders(), loadCustomers()]);
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Load failed.");
       } finally {
@@ -523,24 +509,22 @@ export default function CustomerSalesOrdersClient({
               <div className="grid gap-2">
                 {lines.map((line, index) => (
                   <div key={line.id} className="grid min-w-0 gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-[1.2fr_1.8fr_0.7fr_0.7fr_0.8fr_0.8fr_0.8fr_auto]">
-                    <select
-                      value={line.product_id || ""}
-                      onChange={(event) => {
-                        const product = products.find((row) => row.id === event.target.value);
+                    <ItemLookupField
+                      initialValue={line.description}
+                      defaultType="finished_goods"
+                      placeholder="Search product..."
+                      className="min-w-0"
+                      onSelect={(item) =>
                         setLine(index, {
-                          product_id: event.target.value || null,
-                          description: product?.product_name || line.description,
-                          selling_price: Number(product?.selling_price || line.selling_price),
-                          cost_per_unit: Number(product?.total_cost || line.cost_per_unit),
-                        });
-                      }}
-                      className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-                    >
-                      <option value="">Product</option>
-                      {products.map((product) => (
-                        <option key={product.id} value={product.id}>{product.product_name}</option>
-                      ))}
-                    </select>
+                          product_id: item.entityId || item.stockItemId,
+                          description: item.productName,
+                          unit: item.unit,
+                          selling_price: item.currentCost,
+                          cost_per_unit: item.currentCost,
+                          tax_rate: item.vatRate ?? line.tax_rate,
+                        })
+                      }
+                    />
                     <input value={line.description} onChange={(event) => setLine(index, { description: event.target.value })} placeholder="Description" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
                     <input type="number" value={line.quantity} onChange={(event) => setLine(index, { quantity: Number(event.target.value || 0) })} placeholder="Qty" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
                     <input value={line.unit} onChange={(event) => setLine(index, { unit: event.target.value })} placeholder="Unit" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
@@ -613,7 +597,14 @@ export default function CustomerSalesOrdersClient({
           <div className="mt-5 w-full max-w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-lg font-black text-slate-900">Sales Order Detail: {selectedOrder.order.order_number}</h3>
-              <button type="button" onClick={() => setSelectedOrder(null)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700">Close</button>
+              <div className="flex flex-wrap items-center gap-2">
+                <DocumentPdfActions
+                  pdfUrl={`/api/customer-sales-orders/${selectedOrder.order.id}/pdf`}
+                  emailUrl={salesPermissions.canApprove ? `/api/customer-sales-orders/${selectedOrder.order.id}/email` : undefined}
+                  fileName={`${selectedOrder.order.order_number}.pdf`}
+                />
+                <button type="button" onClick={() => setSelectedOrder(null)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700">Close</button>
+              </div>
             </div>
 
             {selectedOrder.approval_rules.length ? (

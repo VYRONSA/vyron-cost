@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Download, Mail, Pencil, Printer, Save, ShieldCheck, Truck } from "lucide-react";
+import { Download, Pencil, Save, ShieldCheck, Truck } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
+import { DocumentPdfActions } from "@/components/vyron-platform/documents/DocumentPdfActions";
 import {
   VyronPremiumFormulaCard,
   VyronPremiumHeroBanner,
@@ -123,12 +124,6 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
     }
   }
 
-  function emailGrn() {
-    const subject = encodeURIComponent(`Goods Received Note ${String(receipt?.grn_number || grnId)}`);
-    const body = encodeURIComponent(`Please find goods received note ${String(receipt?.grn_number || grnId)}.\nSupplier: ${String(receipt?.supplier_name_snapshot || "Supplier")}\nSource PO: ${po?.po_number || "N/A"}\nReceived: ${totals.received.toFixed(2)}\nDamaged/Rejected: ${(totals.damaged + totals.rejected).toFixed(2)}\nOutstanding: ${totals.outstanding.toFixed(2)}\n\nSent from VYRON COST.`);
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
-  }
-
   function exportCsv() {
     const header = ["Item", "Ordered", "Received", "Damaged", "Rejected", "Outstanding", "Unit"];
     const rows = lines.map((line) => {
@@ -189,9 +184,12 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
             <button type="button" onClick={() => setEditing((value) => !value)} className="inline-flex items-center gap-1 rounded-xl bg-violet-700 px-3 py-2 text-xs font-black text-white"><Pencil size={14} />{editing ? "Cancel Edit" : stockPosted ? "Edit Notes" : "Edit GRN"}</button>
           ) : null}
           {editing && canEdit ? <button type="button" disabled={saving} onClick={() => void saveGrn()} className="inline-flex items-center gap-1 rounded-xl bg-[#24183F] border border-[#A3E635]/30 px-3 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"><Save size={14} />{saving ? "Saving…" : "Save GRN"}</button> : null}
-          <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800"><Printer size={14} />Print</button>
           <button type="button" onClick={exportCsv} className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800"><Download size={14} />Export CSV</button>
-          <button type="button" onClick={emailGrn} className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800"><Mail size={14} />Email</button>
+          <DocumentPdfActions
+            pdfUrl={`/api/goods-receipts/${grnId}/pdf${poApiWorkspaceContext().query}`}
+            emailUrl={`/api/goods-receipts/${grnId}/email${poApiWorkspaceContext().query}`}
+            fileName={`${String(receipt?.grn_number || grnId)}.pdf`}
+          />
         </div>
       </div>
 

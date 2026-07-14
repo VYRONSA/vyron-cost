@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { buildPurchaseOrderPdf } from "@/lib/platform/documents/adapters/purchase-order";
+import { buildGoodsReceiptPdf } from "@/lib/platform/documents/adapters/goods-receipt";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
-import { requirePackageFeature, requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
+import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 
@@ -20,29 +20,22 @@ export async function GET(request: NextRequest, context: RouteContext) {
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
   }
-
   const supabase = getSupabaseAdmin();
-  if (!supabase) {
-    return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
-  }
+  if (!supabase) return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
 
   try {
-    await requirePackageFeature("purchase_orders");
-    await requireWorkspacePermission("purchase_orders.view");
-
+    await requireWorkspacePermission("goods_receipts.view");
     const companyId = await resolveApiCompanyIdWithContext(supabase, companyContextFromRequest(request));
-    if (!companyId) {
-      return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
-    }
+    if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
 
-    const result = await buildPurchaseOrderPdf(supabase, companyId, id);
-    if (!result) return NextResponse.json({ ok: false, error: "Purchase order not found." }, { status: 404 });
+    const result = await buildGoodsReceiptPdf(supabase, companyId, id);
+    if (!result) return NextResponse.json({ ok: false, error: "Goods receipt not found." }, { status: 404 });
 
     return new NextResponse(Buffer.from(result.bytes), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${result.poNumber || "purchase-order"}.pdf"`,
+        "Content-Disposition": `attachment; filename="${result.grnNumber || "goods-receipt"}.pdf"`,
         "Cache-Control": "no-store",
       },
     });

@@ -313,7 +313,7 @@ export function calculateSalesOrderTotals(lines: SalesOrderLineInput[]) {
   };
 }
 
-async function writeSalesOrderAudit(
+export async function writeSalesOrderAudit(
   supabase: SupabaseClient,
   params: {
     companyId: string;

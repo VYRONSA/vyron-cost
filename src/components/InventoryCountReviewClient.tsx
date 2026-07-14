@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Download, Printer, Save, Search } from "lucide-react";
+import { Download, Save, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatMoney } from "@/lib/vyron-cost-data";
 import { useInventoryPermissions } from "@/hooks/useModulePermissions";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
+import { DocumentPdfActions } from "@/components/vyron-platform/documents/DocumentPdfActions";
 
 type LineRow = Record<string, unknown>;
 
@@ -176,7 +177,10 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
         </div>
         <div className="flex flex-wrap gap-2">
           {editable && canCreateCount ? <button type="button" disabled={saving} onClick={() => void saveLines()} className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"><Save size={14} />{saving ? "Saving…" : "Save Count Lines"}</button> : null}
-          <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-4 py-2 text-xs font-black text-violet-800"><Printer size={14} />Print</button>
+          <DocumentPdfActions
+            pdfUrl={`/api/inventory/counts/${countId}/pdf${poApiWorkspaceContext().query}`}
+            fileName={`${String(count.count_number || countId)}.pdf`}
+          />
           <button type="button" onClick={exportCsv} className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-4 py-2 text-xs font-black text-violet-800"><Download size={14} />Export CSV</button>
         </div>
       </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { VYRON_MASTER } from "@/components/vyron-ui";
+import { ItemLookupField } from "@/components/vyron-platform/item-lookup/ItemLookupField";
 
 type StockItemOption = {
   id: string;
@@ -156,18 +157,14 @@ export default function StockMovementsPageClient() {
 
           <label className="block">
             <span className="text-xs font-bold uppercase tracking-wide text-[#64748B]">Stock Item</span>
-            <select
-              className="mt-1 w-full rounded-xl border border-[#E2E8F0] px-3 py-2.5 text-sm"
-              value={stockItemId}
-              onChange={(e) => setStockItemId(e.target.value)}
-            >
-              <option value="">Select item…</option>
-              {items.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.description} ({item.qty_on_hand} {item.unit})
-                </option>
-              ))}
-            </select>
+            <ItemLookupField
+              className="mt-1"
+              initialValue={selectedItem?.description || ""}
+              onSelect={(item) => {
+                setStockItemId(item.stockItemId);
+                setUnitCost(String(item.currentCost || 0));
+              }}
+            />
           </label>
 
           {selectedItem ? (

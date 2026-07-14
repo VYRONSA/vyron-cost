@@ -71,7 +71,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       const invoice = await updateCustomerInvoiceStatus(supabase, id, body.status, companyId);
       return NextResponse.json({ ok: true, invoice });
     }
-    if (body.action === "pdf" || body.action === "whatsapp" || body.action === "signature") {
+    if (body.action === "whatsapp" || body.action === "signature") {
       await requireWorkspacePermission("invoices.create");
       const loaded = await getCustomerInvoice(supabase, id, companyId);
       if (!loaded?.invoice) return NextResponse.json({ ok: false, error: "Not found." }, { status: 404 });
@@ -79,7 +79,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       const now = new Date().toISOString();
       const currentNotes = String(loaded.invoice.notes || "").trim();
       let marker = "";
-      if (body.action === "pdf") marker = `[PDF generated ${now}]`;
       if (body.action === "whatsapp") marker = `[WhatsApp sent ${now}]`;
       if (body.action === "signature") {
         const signer = String(body.signer || "operator");

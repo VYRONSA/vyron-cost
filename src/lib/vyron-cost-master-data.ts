@@ -40,6 +40,11 @@ export async function createSupplier(
       payment_terms: input.payment_terms || "30 Days",
       lead_time_days: Number(input.lead_time_days || 0),
       notes: input.notes || null,
+      vat_number: input.vat_number || null,
+      registration_number: input.registration_number || null,
+      physical_address: input.physical_address || null,
+      postal_address: input.postal_address || null,
+      website: input.website || null,
     })
     .select("*")
     .single();
@@ -79,6 +84,11 @@ export async function updateSupplier(
   if (input.payment_terms !== undefined) patch.payment_terms = input.payment_terms;
   if (input.lead_time_days !== undefined) patch.lead_time_days = Number(input.lead_time_days);
   if (input.notes !== undefined) patch.notes = input.notes;
+  if (input.vat_number !== undefined) patch.vat_number = input.vat_number;
+  if (input.registration_number !== undefined) patch.registration_number = input.registration_number;
+  if (input.physical_address !== undefined) patch.physical_address = input.physical_address;
+  if (input.postal_address !== undefined) patch.postal_address = input.postal_address;
+  if (input.website !== undefined) patch.website = input.website;
 
   const { data, error } = await supabase
     .from("vyron_cost_suppliers")

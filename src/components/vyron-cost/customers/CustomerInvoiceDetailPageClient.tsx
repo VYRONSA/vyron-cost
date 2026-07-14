@@ -242,7 +242,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
               eyebrow="Customer Invoice"
               title={invoice.invoiceNumber}
               subtitle={`${invoice.customerName} • ${invoice.invoiceDate}`}
-              actions={<CustomerInvoiceDetailActions invoiceNumber={invoice.invoiceNumber} />}
+              actions={<CustomerInvoiceDetailActions invoiceId={invoice.id} invoiceNumber={invoice.invoiceNumber} />}
             >
               <section className="grid gap-4 md:grid-cols-6">
                 <div className="rounded-[28px] bg-white/90 p-5 shadow-lg">
