@@ -10,7 +10,7 @@ import type {
 
 const TYPE_FILTERS: { value: ItemLookupItemType | "all"; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "ingredients", label: "Ingredients" },
+  { value: "ingredient", label: "Ingredients" },
   { value: "packaging", label: "Packaging" },
   { value: "finished_goods", label: "Finished Goods" },
 ];

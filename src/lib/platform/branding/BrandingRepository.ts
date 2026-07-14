@@ -1,6 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import type { BrandingUpdateInput, CompanyBranding } from "@/lib/platform/branding/BrandingTypes";
+import type { BrandingUpdateInput, CompanyBranding, LogoPosition, LogoSizePreset } from "@/lib/platform/branding/BrandingTypes";
+
+const LOGO_POSITIONS: LogoPosition[] = [
+  "top_left",
+  "top_center",
+  "top_right",
+  "full_width_header",
+  "watermark",
+  "footer",
+  "custom",
+];
+const LOGO_SIZE_PRESETS: LogoSizePreset[] = ["small", "medium", "large", "custom"];
 
 function pickString(source: Record<string, unknown> | null | undefined, keys: string[]): string | null {
   if (!source) return null;
@@ -12,6 +23,35 @@ function pickString(source: Record<string, unknown> | null | undefined, keys: st
     }
   }
   return null;
+}
+
+function pickNumber(source: Record<string, unknown> | null | undefined, keys: string[]): number | null {
+  if (!source) return null;
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim() && Number.isFinite(Number(value))) return Number(value);
+  }
+  return null;
+}
+
+function pickBoolean(source: Record<string, unknown> | null | undefined, keys: string[], fallback: boolean): boolean {
+  if (!source) return fallback;
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "boolean") return value;
+  }
+  return fallback;
+}
+
+function pickEnum<T extends string>(
+  source: Record<string, unknown> | null | undefined,
+  keys: string[],
+  allowed: T[],
+  fallback: T
+): T {
+  const raw = pickString(source, keys);
+  return raw && (allowed as string[]).includes(raw) ? (raw as T) : fallback;
 }
 
 function safeRecord(value: unknown): Record<string, unknown> | null {
@@ -27,6 +67,13 @@ function defaultBranding(input: { workspaceId?: string | null; companyId?: strin
     tradingName: null,
     logoUrl: null,
     logoDataUrl: null,
+    logoPosition: "top_left",
+    logoPositionX: null,
+    logoPositionY: null,
+    logoSizePreset: "medium",
+    logoWidth: null,
+    logoHeight: null,
+    logoMaintainAspectRatio: true,
     palette: {
       primaryColor: "#4338CA",
       secondaryColor: "#0F172A",
@@ -50,6 +97,9 @@ function defaultBranding(input: { workspaceId?: string | null; companyId?: strin
     registrationNumber: null,
     taxNumber: null,
     licenseNumber: null,
+    footerText: null,
+    termsAndConditions: null,
+    authorisationFooterText: null,
   };
 }
 
@@ -71,6 +121,13 @@ function mapBranding(
     companyName,
     tradingName,
     logoUrl: pickString(company, ["logo_url", "logo", "company_logo"]) || pickString(workspace, ["logo_url", "company_logo"]),
+    logoPosition: pickEnum(company, ["logo_position"], LOGO_POSITIONS, base.logoPosition),
+    logoPositionX: pickNumber(company, ["logo_position_x"]),
+    logoPositionY: pickNumber(company, ["logo_position_y"]),
+    logoSizePreset: pickEnum(company, ["logo_size_preset"], LOGO_SIZE_PRESETS, base.logoSizePreset),
+    logoWidth: pickNumber(company, ["logo_width"]),
+    logoHeight: pickNumber(company, ["logo_height"]),
+    logoMaintainAspectRatio: pickBoolean(company, ["logo_maintain_aspect_ratio"], true),
     palette: {
       primaryColor: pickString(company, ["primary_color", "branding_primary_color"]) || base.palette.primaryColor,
       secondaryColor: pickString(company, ["secondary_color", "branding_secondary_color"]) || base.palette.secondaryColor,
@@ -96,6 +153,9 @@ function mapBranding(
       pickString(workspace, ["registration_number"]),
     taxNumber: pickString(company, ["tax_number"]),
     licenseNumber: pickString(company, ["license_number"]),
+    footerText: pickString(company, ["footer_text"]),
+    termsAndConditions: pickString(company, ["terms_and_conditions"]),
+    authorisationFooterText: pickString(company, ["authorisation_footer_text"]),
   };
 }
 
@@ -193,6 +253,13 @@ export class BrandingRepository {
         name: nullOrTrim(input.companyName),
         trading_name: nullOrTrim(input.tradingName),
         logo_url: nullOrTrim(input.logoUrl),
+        logo_position: input.logoPosition ?? null,
+        logo_position_x: input.logoPositionX ?? null,
+        logo_position_y: input.logoPositionY ?? null,
+        logo_size_preset: input.logoSizePreset ?? null,
+        logo_width: input.logoWidth ?? null,
+        logo_height: input.logoHeight ?? null,
+        logo_maintain_aspect_ratio: input.logoMaintainAspectRatio ?? true,
         primary_color: nullOrTrim(input.primaryColor),
         secondary_color: nullOrTrim(input.secondaryColor),
         accent_color: nullOrTrim(input.accentColor),
@@ -214,6 +281,9 @@ export class BrandingRepository {
         registration_number: nullOrTrim(input.registrationNumber),
         tax_number: nullOrTrim(input.taxNumber),
         license_number: nullOrTrim(input.licenseNumber),
+        footer_text: nullOrTrim(input.footerText),
+        terms_and_conditions: nullOrTrim(input.termsAndConditions),
+        authorisation_footer_text: nullOrTrim(input.authorisationFooterText),
         updated_at: new Date().toISOString(),
       });
 

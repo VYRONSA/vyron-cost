@@ -1,4 +1,6 @@
-export type ItemLookupEntityType = "ingredients" | "packaging" | "finished_goods";
+// Must match StockEntityType in src/lib/vyron-inventory.ts — that module owns the
+// vyron_cost_stock_items.entity_type column and writes "ingredient" (singular).
+export type ItemLookupEntityType = "ingredient" | "packaging" | "finished_goods";
 
 export type ItemLookupItemType = ItemLookupEntityType | "consumables" | "services";
 

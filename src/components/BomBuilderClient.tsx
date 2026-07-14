@@ -603,7 +603,7 @@ export default function BomBuilderClient({
                       <ItemLookupField
                         className="mx-2"
                         initialValue={line.line_name}
-                        defaultType={line.line_type === "Packaging" ? "packaging" : "ingredients"}
+                        defaultType={line.line_type === "Packaging" ? "packaging" : "ingredient"}
                         onSelect={(item) => selectIngredientFromLookup(line.temp_id, item)}
                       />
                     ) : (

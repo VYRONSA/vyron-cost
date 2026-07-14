@@ -34,6 +34,13 @@ export default function ClientCompanySetupClient() {
     tradingName: null,
     logoUrl: null,
     logoDataUrl: null,
+    logoPosition: "top_left",
+    logoPositionX: null,
+    logoPositionY: null,
+    logoSizePreset: "medium",
+    logoWidth: null,
+    logoHeight: null,
+    logoMaintainAspectRatio: true,
     palette: {
       primaryColor: "#4338CA",
       secondaryColor: "#0F172A",
@@ -57,6 +64,9 @@ export default function ClientCompanySetupClient() {
     registrationNumber: null,
     taxNumber: null,
     licenseNumber: null,
+    footerText: null,
+    termsAndConditions: null,
+    authorisationFooterText: null,
   });
   const [message, setMessage] = useState<string | null>(null);
   const [brandingMessage, setBrandingMessage] = useState<string | null>(null);

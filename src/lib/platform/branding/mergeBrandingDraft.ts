@@ -1,0 +1,45 @@
+import type { BrandingUpdateInput, CompanyBranding } from "@/lib/platform/branding/BrandingTypes";
+
+/** Applies unsaved Branding Designer form state on top of the persisted branding, for live preview. */
+export function mergeBrandingDraft(base: CompanyBranding, draft: BrandingUpdateInput): CompanyBranding {
+  return {
+    ...base,
+    companyName: draft.companyName ?? base.companyName,
+    tradingName: draft.tradingName ?? base.tradingName,
+    logoUrl: draft.logoUrl ?? base.logoUrl,
+    logoDataUrl: draft.logoUrl ?? base.logoDataUrl,
+    logoPosition: draft.logoPosition ?? base.logoPosition,
+    logoPositionX: draft.logoPositionX === undefined ? base.logoPositionX : draft.logoPositionX,
+    logoPositionY: draft.logoPositionY === undefined ? base.logoPositionY : draft.logoPositionY,
+    logoSizePreset: draft.logoSizePreset ?? base.logoSizePreset,
+    logoWidth: draft.logoWidth === undefined ? base.logoWidth : draft.logoWidth,
+    logoHeight: draft.logoHeight === undefined ? base.logoHeight : draft.logoHeight,
+    logoMaintainAspectRatio: draft.logoMaintainAspectRatio ?? base.logoMaintainAspectRatio,
+    palette: {
+      primaryColor: draft.primaryColor ?? base.palette.primaryColor,
+      secondaryColor: draft.secondaryColor ?? base.palette.secondaryColor,
+      accentColor: draft.accentColor ?? base.palette.accentColor,
+      darkTextColor: draft.darkTextColor ?? base.palette.darkTextColor,
+      lightTextColor: draft.lightTextColor ?? base.palette.lightTextColor,
+      headerBackground: draft.headerBackground ?? base.palette.headerBackground,
+      footerBackground: draft.footerBackground ?? base.palette.footerBackground,
+    },
+    physicalAddress: draft.physicalAddress ?? base.physicalAddress,
+    postalAddress: draft.postalAddress ?? base.postalAddress,
+    city: draft.city ?? base.city,
+    province: draft.province ?? base.province,
+    country: draft.country ?? base.country,
+    postalCode: draft.postalCode ?? base.postalCode,
+    telephone: draft.telephone ?? base.telephone,
+    mobile: draft.mobile ?? base.mobile,
+    email: draft.email ?? base.email,
+    website: draft.website ?? base.website,
+    vatNumber: draft.vatNumber ?? base.vatNumber,
+    registrationNumber: draft.registrationNumber ?? base.registrationNumber,
+    taxNumber: draft.taxNumber ?? base.taxNumber,
+    licenseNumber: draft.licenseNumber ?? base.licenseNumber,
+    footerText: draft.footerText ?? base.footerText,
+    termsAndConditions: draft.termsAndConditions ?? base.termsAndConditions,
+    authorisationFooterText: draft.authorisationFooterText ?? base.authorisationFooterText,
+  };
+}

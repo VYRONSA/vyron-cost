@@ -91,7 +91,7 @@ export async function buildPurchaseOrderDocumentModel(
       grandTotal: Number(po.total || 0),
     },
     notes: po.notes ? String(po.notes) : null,
-    termsAndConditions: STANDARD_PO_TERMS,
+    termsAndConditions: branding.termsAndConditions || STANDARD_PO_TERMS,
     authorisation: [
       { label: "Prepared By", value: "" },
       { label: "Approved By", value: "" },

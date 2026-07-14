@@ -1,17 +1,29 @@
-import jsPDF from "jspdf";
+import jsPDF, { GState } from "jspdf";
 import autoTable from "jspdf-autotable";
+import type { BrandingPalette, LogoPosition, LogoSizePreset } from "@/lib/platform/branding/BrandingTypes";
 
 /**
  * Shared VYRON platform document engine — every document type (Purchase Order, Goods
  * Receipt Note, Customer Invoice, Sales Order, Stock Count Sheet, Production Run, and
  * future document types) supplies only header/lines/totals/footer data through this
  * contract. This module owns the actual PDF layout so no document type duplicates it.
+ *
+ * Branding (palette, logo placement/size, footer/terms/authorisation defaults) comes from
+ * the Branding Designer via resolveDocumentBranding() — this file only *consumes* it.
  */
 
 export type DocumentPdfBranding = {
   companyName: string;
   tradingName: string | null;
   logoDataUrl: string | null;
+  logoPosition: LogoPosition;
+  logoPositionX: number | null;
+  logoPositionY: number | null;
+  logoSizePreset: LogoSizePreset;
+  logoWidth: number | null;
+  logoHeight: number | null;
+  logoMaintainAspectRatio: boolean;
+  palette: BrandingPalette;
   vatNumber: string | null;
   registrationNumber: string | null;
   address: string | null;
@@ -19,6 +31,9 @@ export type DocumentPdfBranding = {
   telephone: string | null;
   email: string | null;
   website: string | null;
+  footerText: string | null;
+  termsAndConditions: string | null;
+  authorisationFooterText: string | null;
 };
 
 export type DocumentPdfParty = {
@@ -104,33 +119,106 @@ function fitText(doc: jsPDF, text: string, maxWidth: number): string {
   return truncated + ellipsis;
 }
 
+function hexToRgb(hex: string | null | undefined, fallback: [number, number, number]): [number, number, number] {
+  const match = hex ? /^#?([0-9a-f]{6})$/i.exec(hex.trim()) : null;
+  if (!match) return fallback;
+  const value = parseInt(match[1], 16);
+  return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
+}
+
+const LOGO_SIZE_MM: Record<"small" | "medium" | "large", number> = { small: 12, medium: 18, large: 26 };
+
+/** Resolves the configured logo box (before aspect-ratio fitting) from the Branding Designer's size setting. */
+function resolveLogoBox(branding: DocumentPdfBranding): { width: number; height: number } {
+  if (branding.logoSizePreset === "custom") {
+    return {
+      width: branding.logoWidth && branding.logoWidth > 0 ? branding.logoWidth : LOGO_SIZE_MM.medium,
+      height: branding.logoHeight && branding.logoHeight > 0 ? branding.logoHeight : LOGO_SIZE_MM.medium,
+    };
+  }
+  const size = LOGO_SIZE_MM[branding.logoSizePreset] ?? LOGO_SIZE_MM.medium;
+  return { width: size, height: size };
+}
+
+/** Fits the logo box to the image's natural aspect ratio ("Maintain Aspect Ratio"), or returns the box unchanged ("Stretch"). */
+function resolveLogoDrawSize(
+  doc: jsPDF,
+  branding: DocumentPdfBranding,
+  box: { width: number; height: number }
+): { width: number; height: number } {
+  if (!branding.logoMaintainAspectRatio || !branding.logoDataUrl) return box;
+  try {
+    const props = doc.getImageProperties(branding.logoDataUrl);
+    const naturalRatio = props.width / props.height;
+    if (!Number.isFinite(naturalRatio) || naturalRatio <= 0) return box;
+    const boxRatio = box.width / box.height;
+    if (naturalRatio > boxRatio) return { width: box.width, height: box.width / naturalRatio };
+    return { width: box.height * naturalRatio, height: box.height };
+  } catch {
+    return box;
+  }
+}
+
+function drawLogoImage(doc: jsPDF, dataUrl: string, x: number, y: number, width: number, height: number) {
+  try {
+    doc.addImage(dataUrl, x, y, width, height);
+  } catch {
+    // Non-blocking: skip the logo if the embedded image data can't be decoded.
+  }
+}
+
 export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const currency = model.totals?.currency || "ZAR";
   const generatedAt = new Date(model.generatedAtIso || new Date().toISOString());
+  const palette = model.branding.palette;
+  const headerRgb = hexToRgb(palette?.headerBackground, [7, 17, 31]);
+  const headerTextRgb = hexToRgb(palette?.lightTextColor, [255, 255, 255]);
+  const darkTextRgb = hexToRgb(palette?.darkTextColor, [15, 23, 42]);
+  const logoPosition = model.branding.logoPosition || "top_left";
+  const hasLogo = Boolean(model.branding.logoDataUrl);
+  const logoBox = hasLogo ? resolveLogoDrawSize(doc, model.branding, resolveLogoBox(model.branding)) : null;
 
   // Header band
-  doc.setFillColor(7, 17, 31);
+  doc.setFillColor(...headerRgb);
   doc.rect(0, 0, PAGE_WIDTH, 34, "F");
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(...headerTextRgb);
 
-  const headerTextX = model.branding.logoDataUrl ? PAGE_MARGIN + 22 : PAGE_MARGIN;
-  if (model.branding.logoDataUrl) {
-    try {
-      doc.addImage(model.branding.logoDataUrl, "PNG", PAGE_MARGIN, 6, 18, 18);
-    } catch {
-      // Non-blocking: fall back to text-only header when the logo can't be embedded.
+  let headerTextX = PAGE_MARGIN;
+  let headerTextTop = 15;
+  let headerMetaRightLimit = PAGE_CONTENT_RIGHT;
+
+  if (hasLogo && logoBox && logoPosition !== "watermark" && logoPosition !== "footer") {
+    if (logoPosition === "top_center") {
+      drawLogoImage(doc, model.branding.logoDataUrl as string, (PAGE_WIDTH - logoBox.width) / 2, (34 - logoBox.height) / 2, logoBox.width, logoBox.height);
+    } else if (logoPosition === "top_right") {
+      drawLogoImage(doc, model.branding.logoDataUrl as string, PAGE_CONTENT_RIGHT - logoBox.width, (34 - logoBox.height) / 2, logoBox.width, logoBox.height);
+      headerMetaRightLimit = PAGE_CONTENT_RIGHT - logoBox.width - 4;
+    } else if (logoPosition === "full_width_header") {
+      const fullWidth = PAGE_CONTENT_RIGHT - PAGE_MARGIN;
+      const fullHeight = Math.min(14, logoBox.height);
+      drawLogoImage(doc, model.branding.logoDataUrl as string, PAGE_MARGIN, 3, fullWidth, fullHeight);
+      headerTextTop = fullHeight + 10;
+    } else if (logoPosition === "custom") {
+      const x = model.branding.logoPositionX ?? PAGE_MARGIN;
+      const y = model.branding.logoPositionY ?? 6;
+      drawLogoImage(doc, model.branding.logoDataUrl as string, x, y, logoBox.width, logoBox.height);
+      headerTextX = x + logoBox.width + 4;
+    } else {
+      // top_left (default)
+      drawLogoImage(doc, model.branding.logoDataUrl as string, PAGE_MARGIN, 6, logoBox.width, logoBox.height);
+      headerTextX = PAGE_MARGIN + logoBox.width + 4;
     }
   }
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text(displayCompanyName(model.branding), headerTextX, 15);
+  doc.text(displayCompanyName(model.branding), headerTextX, headerTextTop);
   doc.setFontSize(11);
-  doc.text(model.docTitle, headerTextX, 24);
+  doc.text(model.docTitle, headerTextX, headerTextTop + 9);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  doc.text(`${model.docNumber} · Generated ${generatedAt.toLocaleString("en-ZA")}`, headerTextX, 30);
+  doc.text(`${model.docNumber} · Generated ${generatedAt.toLocaleString("en-ZA")}`, headerTextX, headerTextTop + 15);
 
   const companyMetaLines = [
     model.branding.address,
@@ -141,14 +229,34 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
   ].filter(Boolean) as string[];
   doc.setFontSize(7);
   doc.setTextColor(203, 213, 225);
-  const headerMetaMaxWidth = PAGE_CONTENT_RIGHT - headerTextX - 4;
+  const headerMetaMaxWidth = headerMetaRightLimit - headerTextX - 4;
   companyMetaLines.forEach((line, index) =>
-    doc.text(fitText(doc, line, headerMetaMaxWidth), PAGE_CONTENT_RIGHT, 10 + index * 4, { align: "right" })
+    doc.text(fitText(doc, line, headerMetaMaxWidth), headerMetaRightLimit, 10 + index * 4, { align: "right" })
   );
+
+  if (hasLogo && logoBox && logoPosition === "footer") {
+    drawLogoImage(doc, model.branding.logoDataUrl as string, PAGE_MARGIN, 288 - logoBox.height, logoBox.width, logoBox.height);
+  }
+
+  if (hasLogo && logoBox && logoPosition === "watermark") {
+    const watermarkWidth = Math.min(120, PAGE_WIDTH * 0.55);
+    const watermarkHeight = watermarkWidth * (logoBox.height / logoBox.width || 1);
+    doc.saveGraphicsState();
+    doc.setGState(new GState({ opacity: 0.06 }));
+    drawLogoImage(
+      doc,
+      model.branding.logoDataUrl as string,
+      (PAGE_WIDTH - watermarkWidth) / 2,
+      120,
+      watermarkWidth,
+      watermarkHeight
+    );
+    doc.restoreGraphicsState();
+  }
 
   // Party blocks (company / counterparty)
   let y = 44;
-  doc.setTextColor(15, 23, 42);
+  doc.setTextColor(...darkTextRgb);
   const columnWidth = (PAGE_CONTENT_RIGHT - PAGE_MARGIN) / Math.max(1, model.parties.length);
   const partyTextWidth = columnWidth - 6;
   model.parties.forEach((party, index) => {
@@ -186,7 +294,7 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
       doc.text(fitText(doc, field.label.toUpperCase(), metaTextWidth), x, fieldY);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      doc.setTextColor(15, 23, 42);
+      doc.setTextColor(...darkTextRgb);
       doc.text(fitText(doc, field.value || "-", metaTextWidth), x, fieldY + 5);
     });
     y += metaBoxHeight + 8;
@@ -196,7 +304,7 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
   autoTable(doc, {
     startY: y,
     theme: "grid",
-    headStyles: { fillColor: [7, 17, 31], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
+    headStyles: { fillColor: headerRgb, textColor: headerTextRgb, fontStyle: "bold", fontSize: 8 },
     styles: { fontSize: 8, cellPadding: 2 },
     head: [model.lineColumns.map((column) => column.label)],
     body: model.lineRows.map((row) => model.lineColumns.map((column) => row[column.key] ?? "")),
@@ -212,7 +320,7 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
   if (model.totals) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.setTextColor(15, 23, 42);
+    doc.setTextColor(...darkTextRgb);
     let totalsY = tableEndY;
     doc.text("Subtotal", totalsX, totalsY);
     doc.text(money(model.totals.subtotal, currency), PAGE_CONTENT_RIGHT, totalsY, { align: "right" });
@@ -260,13 +368,14 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
     sectionY += 10 + notesLines.length * 4;
   }
 
-  if (model.termsAndConditions) {
+  const termsAndConditions = model.termsAndConditions ?? model.branding.termsAndConditions ?? null;
+  if (termsAndConditions) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text("Terms & Conditions", PAGE_MARGIN, sectionY);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    const termsLines = doc.splitTextToSize(model.termsAndConditions, PAGE_CONTENT_RIGHT - PAGE_MARGIN);
+    const termsLines = doc.splitTextToSize(termsAndConditions, PAGE_CONTENT_RIGHT - PAGE_MARGIN);
     doc.text(termsLines, PAGE_MARGIN, sectionY + 5);
     sectionY += 10 + termsLines.length * 4;
   }
@@ -289,8 +398,17 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
       doc.setFontSize(7.5);
       doc.setTextColor(100, 116, 139);
       doc.text(line.label.toUpperCase(), x, lineY + 5);
-      doc.setTextColor(15, 23, 42);
+      doc.setTextColor(...darkTextRgb);
     });
+
+    if (model.branding.authorisationFooterText) {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139);
+      const authNoteLines = doc.splitTextToSize(model.branding.authorisationFooterText, PAGE_CONTENT_RIGHT - PAGE_MARGIN);
+      doc.text(authNoteLines, PAGE_MARGIN, sectionY + 24);
+      doc.setTextColor(...darkTextRgb);
+    }
   }
 
   const pageCount = doc.getNumberOfPages();
@@ -303,6 +421,10 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
     doc.setTextColor(71, 85, 105);
     doc.text(`${displayCompanyName(model.branding)} | ${model.docTitle} ${model.docNumber}`, PAGE_MARGIN, 291);
     doc.text(`Page ${page} of ${pageCount}`, PAGE_CONTENT_RIGHT, 291, { align: "right" });
+    if (model.branding.footerText) {
+      doc.setFontSize(7);
+      doc.text(fitText(doc, model.branding.footerText, PAGE_CONTENT_RIGHT - PAGE_MARGIN), PAGE_WIDTH / 2, 295, { align: "center" });
+    }
   }
 
   return new Uint8Array(doc.output("arraybuffer"));
