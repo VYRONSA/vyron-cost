@@ -69,7 +69,6 @@ export async function searchItemLookup(
         `barcode.ilike.%${escaped}%`,
         `supplier_item_code.ilike.%${escaped}%`,
         `customer_item_code.ilike.%${escaped}%`,
-        `aliases::text.ilike.%${escaped}%`,
       ].join(",")
     );
   }
