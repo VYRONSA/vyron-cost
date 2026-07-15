@@ -112,7 +112,16 @@ function MiniSparkline({ color = "#9333EA" }: { color?: string }) {
 }
 
 function LightCard({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`${M.lightCard} p-5 ${M.lightCardHover} ${className}`}>{children}</div>;
+  // Tailwind's generated stylesheet order — not this string's order — decides which padding
+  // utility wins, so a hardcoded default here can silently beat a caller-supplied override
+  // (e.g. p-3/sm:p-4 on the KPI cards). Only fall back to the default when the caller hasn't
+  // set its own padding.
+  const hasPaddingOverride = /(^|\s)(p|px|py)-/.test(className);
+  return (
+    <div className={`${M.lightCard} ${hasPaddingOverride ? "" : "p-5"} ${M.lightCardHover} ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 const intelligenceModules = [
@@ -281,11 +290,13 @@ export default function VyronPublicLandingPage() {
             ].map(([value, label, accent]) => (
               <LightCard key={String(label)} className="p-3 sm:p-4">
                 <div
-                  className={`text-xl sm:text-2xl ${accent ? M.accentKpiGradient : "font-black text-[#0F172A]"}`}
+                  className={`whitespace-nowrap text-xl sm:text-2xl ${accent ? M.accentKpiGradient : "font-black text-[#0F172A]"}`}
                 >
                   {value}
                 </div>
-                <div className={`mt-1 text-[10px] font-bold uppercase tracking-[0.12em] sm:text-xs ${M.muted}`}>
+                <div
+                  className={`mt-1 min-h-[30px] text-[10px] font-bold uppercase tracking-[0.12em] sm:min-h-[32px] sm:text-xs ${M.muted}`}
+                >
                   {label}
                 </div>
               </LightCard>

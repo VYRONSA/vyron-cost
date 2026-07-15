@@ -233,62 +233,79 @@ export class BrandingRepository {
     const company = safeRecord(companyData);
 
     const workspacePayload = filterPayloadByKnownColumns(workspace, {
-      company_name: nullOrTrim(input.companyName),
-      trading_name: nullOrTrim(input.tradingName),
-      vat_number: nullOrTrim(input.vatNumber),
-      registration_number: nullOrTrim(input.registrationNumber),
-      contact_email: nullOrTrim(input.email),
-      phone: nullOrTrim(input.telephone),
-      physical_address: nullOrTrim(input.physicalAddress),
-      postal_address: nullOrTrim(input.postalAddress),
+      ...(input.companyName !== undefined ? { company_name: nullOrTrim(input.companyName) } : {}),
+      ...(input.tradingName !== undefined ? { trading_name: nullOrTrim(input.tradingName) } : {}),
+      ...(input.vatNumber !== undefined ? { vat_number: nullOrTrim(input.vatNumber) } : {}),
+      ...(input.registrationNumber !== undefined ? { registration_number: nullOrTrim(input.registrationNumber) } : {}),
+      ...(input.email !== undefined ? { contact_email: nullOrTrim(input.email) } : {}),
+      ...(input.telephone !== undefined ? { phone: nullOrTrim(input.telephone) } : {}),
+      ...(input.physicalAddress !== undefined ? { physical_address: nullOrTrim(input.physicalAddress) } : {}),
+      ...(input.postalAddress !== undefined ? { postal_address: nullOrTrim(input.postalAddress) } : {}),
       updated_at: new Date().toISOString(),
     });
 
     if (Object.keys(workspacePayload).length) {
-      await supabase.from("vyron_workspaces").update(workspacePayload).eq("id", workspaceId);
+      const { error } = await supabase.from("vyron_workspaces").update(workspacePayload).eq("id", workspaceId);
+      if (error) throw new Error(error.message);
     }
 
     if (companyId) {
+      // Only fields the caller actually provided are written — omitted fields must not be
+      // reset to null, since callers like the logo upload route send a single field (e.g.
+      // { logoUrl }) and updating the row must never blank out unrelated required columns.
       const companyPayload = filterPayloadByKnownColumns(company, {
-        name: nullOrTrim(input.companyName),
-        trading_name: nullOrTrim(input.tradingName),
-        logo_url: nullOrTrim(input.logoUrl),
-        logo_position: input.logoPosition ?? null,
-        logo_position_x: input.logoPositionX ?? null,
-        logo_position_y: input.logoPositionY ?? null,
-        logo_size_preset: input.logoSizePreset ?? null,
-        logo_width: input.logoWidth ?? null,
-        logo_height: input.logoHeight ?? null,
-        logo_maintain_aspect_ratio: input.logoMaintainAspectRatio ?? true,
-        primary_color: nullOrTrim(input.primaryColor),
-        secondary_color: nullOrTrim(input.secondaryColor),
-        accent_color: nullOrTrim(input.accentColor),
-        dark_text_color: nullOrTrim(input.darkTextColor),
-        light_text_color: nullOrTrim(input.lightTextColor),
-        header_background_color: nullOrTrim(input.headerBackground),
-        footer_background_color: nullOrTrim(input.footerBackground),
-        physical_address: nullOrTrim(input.physicalAddress),
-        postal_address: nullOrTrim(input.postalAddress),
-        city: nullOrTrim(input.city),
-        province: nullOrTrim(input.province),
-        country: nullOrTrim(input.country),
-        postal_code: nullOrTrim(input.postalCode),
-        phone: nullOrTrim(input.telephone),
-        mobile: nullOrTrim(input.mobile),
-        contact_email: nullOrTrim(input.email),
-        website: nullOrTrim(input.website),
-        vat_number: nullOrTrim(input.vatNumber),
-        registration_number: nullOrTrim(input.registrationNumber),
-        tax_number: nullOrTrim(input.taxNumber),
-        license_number: nullOrTrim(input.licenseNumber),
-        footer_text: nullOrTrim(input.footerText),
-        terms_and_conditions: nullOrTrim(input.termsAndConditions),
-        authorisation_footer_text: nullOrTrim(input.authorisationFooterText),
+        ...(input.companyName !== undefined ? { name: nullOrTrim(input.companyName) } : {}),
+        ...(input.tradingName !== undefined ? { trading_name: nullOrTrim(input.tradingName) } : {}),
+        ...(input.logoUrl !== undefined ? { logo_url: nullOrTrim(input.logoUrl) } : {}),
+        ...(input.logoPosition !== undefined ? { logo_position: input.logoPosition } : {}),
+        ...(input.logoPositionX !== undefined ? { logo_position_x: input.logoPositionX } : {}),
+        ...(input.logoPositionY !== undefined ? { logo_position_y: input.logoPositionY } : {}),
+        ...(input.logoSizePreset !== undefined ? { logo_size_preset: input.logoSizePreset } : {}),
+        ...(input.logoWidth !== undefined ? { logo_width: input.logoWidth } : {}),
+        ...(input.logoHeight !== undefined ? { logo_height: input.logoHeight } : {}),
+        ...(input.logoMaintainAspectRatio !== undefined
+          ? { logo_maintain_aspect_ratio: input.logoMaintainAspectRatio }
+          : {}),
+        ...(input.primaryColor !== undefined ? { primary_color: nullOrTrim(input.primaryColor) } : {}),
+        ...(input.secondaryColor !== undefined ? { secondary_color: nullOrTrim(input.secondaryColor) } : {}),
+        ...(input.accentColor !== undefined ? { accent_color: nullOrTrim(input.accentColor) } : {}),
+        ...(input.darkTextColor !== undefined ? { dark_text_color: nullOrTrim(input.darkTextColor) } : {}),
+        ...(input.lightTextColor !== undefined ? { light_text_color: nullOrTrim(input.lightTextColor) } : {}),
+        ...(input.headerBackground !== undefined
+          ? { header_background_color: nullOrTrim(input.headerBackground) }
+          : {}),
+        ...(input.footerBackground !== undefined
+          ? { footer_background_color: nullOrTrim(input.footerBackground) }
+          : {}),
+        ...(input.physicalAddress !== undefined ? { physical_address: nullOrTrim(input.physicalAddress) } : {}),
+        ...(input.postalAddress !== undefined ? { postal_address: nullOrTrim(input.postalAddress) } : {}),
+        ...(input.city !== undefined ? { city: nullOrTrim(input.city) } : {}),
+        ...(input.province !== undefined ? { province: nullOrTrim(input.province) } : {}),
+        ...(input.country !== undefined ? { country: nullOrTrim(input.country) } : {}),
+        ...(input.postalCode !== undefined ? { postal_code: nullOrTrim(input.postalCode) } : {}),
+        ...(input.telephone !== undefined ? { phone: nullOrTrim(input.telephone) } : {}),
+        ...(input.mobile !== undefined ? { mobile: nullOrTrim(input.mobile) } : {}),
+        ...(input.email !== undefined ? { contact_email: nullOrTrim(input.email) } : {}),
+        ...(input.website !== undefined ? { website: nullOrTrim(input.website) } : {}),
+        ...(input.vatNumber !== undefined ? { vat_number: nullOrTrim(input.vatNumber) } : {}),
+        ...(input.registrationNumber !== undefined
+          ? { registration_number: nullOrTrim(input.registrationNumber) }
+          : {}),
+        ...(input.taxNumber !== undefined ? { tax_number: nullOrTrim(input.taxNumber) } : {}),
+        ...(input.licenseNumber !== undefined ? { license_number: nullOrTrim(input.licenseNumber) } : {}),
+        ...(input.footerText !== undefined ? { footer_text: nullOrTrim(input.footerText) } : {}),
+        ...(input.termsAndConditions !== undefined
+          ? { terms_and_conditions: nullOrTrim(input.termsAndConditions) }
+          : {}),
+        ...(input.authorisationFooterText !== undefined
+          ? { authorisation_footer_text: nullOrTrim(input.authorisationFooterText) }
+          : {}),
         updated_at: new Date().toISOString(),
       });
 
       if (Object.keys(companyPayload).length) {
-        await supabase.from("vyron_cost_companies").update(companyPayload).eq("id", companyId);
+        const { error } = await supabase.from("vyron_cost_companies").update(companyPayload).eq("id", companyId);
+        if (error) throw new Error(error.message);
       }
     }
 
