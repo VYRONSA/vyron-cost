@@ -1,10 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { WorkspaceCompanyProfile } from "@/lib/vyron-saas-workspace";
 import { useAdminPermissions } from "@/hooks/useModulePermissions";
 import { VYRON_BTN } from "@/components/vyron-ui";
-import type { CompanyBranding } from "@/lib/platform/branding";
+import type { CompanyBranding, LogoPosition, LogoSizePreset } from "@/lib/platform/branding";
+import LogoUploadCard, { type LogoToast } from "@/components/admin/LogoUploadCard";
+import { PREVIEW_DOCUMENT_TYPES, type PreviewDocumentType } from "@/lib/platform/documents/buildPreviewDocumentModel";
+
+const LOGO_POSITIONS: { value: LogoPosition; label: string }[] = [
+  { value: "top_left", label: "Top Left" },
+  { value: "top_center", label: "Top Centre" },
+  { value: "top_right", label: "Top Right" },
+  { value: "full_width_header", label: "Full Width Header" },
+  { value: "watermark", label: "Watermark" },
+  { value: "footer", label: "Footer" },
+  { value: "custom", label: "Custom Position" },
+];
+
+const LOGO_SIZES: { value: LogoSizePreset; label: string }[] = [
+  { value: "small", label: "Small" },
+  { value: "medium", label: "Medium" },
+  { value: "large", label: "Large" },
+  { value: "custom", label: "Custom Width / Height" },
+];
 
 const emptyProfile: WorkspaceCompanyProfile = {
   workspaceId: "",
@@ -73,6 +92,87 @@ export default function ClientCompanySetupClient() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [brandingSaving, setBrandingSaving] = useState(false);
+  const [toast, setToast] = useState<LogoToast | null>(null);
+  const [previewType, setPreviewType] = useState<PreviewDocumentType>("purchase_order");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const previewDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previewObjectUrlRef = useRef<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function showToast(next: LogoToast) {
+    setToast(next);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToast(null), 4000);
+  }
+
+  // Reuses the existing branding preview route (PDF renderer) — no new preview implementation.
+  const runPreview = useCallback(async (type: PreviewDocumentType, current: CompanyBranding) => {
+    setPreviewLoading(true);
+    try {
+      const response = await fetch("/api/workspace/admin/company/branding/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentType: type,
+          branding: {
+            companyName: current.companyName,
+            tradingName: current.tradingName,
+            logoUrl: current.logoUrl,
+            logoPosition: current.logoPosition,
+            logoPositionX: current.logoPositionX,
+            logoPositionY: current.logoPositionY,
+            logoSizePreset: current.logoSizePreset,
+            logoWidth: current.logoWidth,
+            logoHeight: current.logoHeight,
+            logoMaintainAspectRatio: current.logoMaintainAspectRatio,
+            primaryColor: current.palette.primaryColor,
+            secondaryColor: current.palette.secondaryColor,
+            accentColor: current.palette.accentColor,
+            darkTextColor: current.palette.darkTextColor,
+            lightTextColor: current.palette.lightTextColor,
+            headerBackground: current.palette.headerBackground,
+            footerBackground: current.palette.footerBackground,
+            physicalAddress: current.physicalAddress,
+            postalAddress: current.postalAddress,
+            telephone: current.telephone,
+            email: current.email,
+            website: current.website,
+            vatNumber: current.vatNumber,
+            registrationNumber: current.registrationNumber,
+            footerText: current.footerText,
+            termsAndConditions: current.termsAndConditions,
+            authorisationFooterText: current.authorisationFooterText,
+          },
+        }),
+      });
+      if (!response.ok) return;
+      const blob = await response.blob();
+      const nextUrl = URL.createObjectURL(blob);
+      if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current);
+      previewObjectUrlRef.current = nextUrl;
+      setPreviewUrl(nextUrl);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
+    previewDebounceRef.current = setTimeout(() => void runPreview(previewType, branding), 400);
+    return () => {
+      if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branding, previewType, loading]);
+
+  useEffect(() => {
+    return () => {
+      if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current);
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -132,6 +232,13 @@ export default function ClientCompanySetupClient() {
         companyName: branding.companyName,
         tradingName: branding.tradingName,
         logoUrl: branding.logoUrl,
+        logoPosition: branding.logoPosition,
+        logoPositionX: branding.logoPositionX,
+        logoPositionY: branding.logoPositionY,
+        logoSizePreset: branding.logoSizePreset,
+        logoWidth: branding.logoWidth,
+        logoHeight: branding.logoHeight,
+        logoMaintainAspectRatio: branding.logoMaintainAspectRatio,
         primaryColor: branding.palette.primaryColor,
         secondaryColor: branding.palette.secondaryColor,
         accentColor: branding.palette.accentColor,
@@ -166,6 +273,17 @@ export default function ClientCompanySetupClient() {
 
   return (
     <div className="space-y-6">
+      {toast ? (
+        <div
+          role="status"
+          className={`fixed right-6 top-6 z-50 rounded-2xl px-5 py-3 text-sm font-bold text-white shadow-xl ${
+            toast.type === "success" ? "bg-emerald-600" : "bg-red-600"
+          }`}
+        >
+          {toast.message}
+        </div>
+      ) : null}
+
       {message ? (
         <div className="rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">
           {message}
@@ -212,12 +330,117 @@ export default function ClientCompanySetupClient() {
 
       <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
         <h2 className="md:col-span-2 text-lg font-black text-slate-950">Company Branding</h2>
-        <Field
-          label="Company Logo URL"
-          value={String(branding.logoUrl || "")}
-          onChange={(v) => setBranding((b) => ({ ...b, logoUrl: v }))}
-          className="md:col-span-2"
-        />
+
+        <LogoUploadCard branding={branding} canEdit={canCompany} onBrandingChange={setBranding} onToast={showToast} />
+
+        <div className="md:col-span-2">
+          <h3 className="text-sm font-black text-slate-950">Brand Studio</h3>
+
+          <div className="mt-3">
+            <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Logo Position</span>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {LOGO_POSITIONS.map((pos) => (
+                <label
+                  key={pos.value}
+                  className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold transition ${
+                    branding.logoPosition === pos.value
+                      ? "border-violet-400 bg-violet-50 text-violet-900"
+                      : "border-violet-100 text-slate-600 hover:border-violet-200"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="logoPosition"
+                    disabled={!canCompany}
+                    checked={branding.logoPosition === pos.value}
+                    onChange={() => setBranding((b) => ({ ...b, logoPosition: pos.value }))}
+                    className="accent-violet-600"
+                  />
+                  {pos.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {branding.logoPosition === "custom" ? (
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <Field
+                label="Position X (mm)"
+                type="number"
+                value={branding.logoPositionX == null ? "" : String(branding.logoPositionX)}
+                onChange={(v) => setBranding((b) => ({ ...b, logoPositionX: v ? Number(v) : null }))}
+              />
+              <Field
+                label="Position Y (mm)"
+                type="number"
+                value={branding.logoPositionY == null ? "" : String(branding.logoPositionY)}
+                onChange={(v) => setBranding((b) => ({ ...b, logoPositionY: v ? Number(v) : null }))}
+              />
+            </div>
+          ) : null}
+
+          <div className="mt-5">
+            <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Logo Size</span>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {LOGO_SIZES.map((size) => (
+                <button
+                  key={size.value}
+                  type="button"
+                  disabled={!canCompany}
+                  onClick={() => setBranding((b) => ({ ...b, logoSizePreset: size.value }))}
+                  className={`rounded-full px-3 py-1.5 text-xs font-black transition ${
+                    branding.logoSizePreset === size.value
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {size.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {branding.logoSizePreset === "custom" ? (
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <Field
+                label="Custom Width (mm)"
+                type="number"
+                value={branding.logoWidth == null ? "" : String(branding.logoWidth)}
+                onChange={(v) => setBranding((b) => ({ ...b, logoWidth: v ? Number(v) : null }))}
+              />
+              <Field
+                label="Custom Height (mm)"
+                type="number"
+                value={branding.logoHeight == null ? "" : String(branding.logoHeight)}
+                onChange={(v) => setBranding((b) => ({ ...b, logoHeight: v ? Number(v) : null }))}
+              />
+            </div>
+          ) : null}
+
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              disabled={!canCompany}
+              onClick={() => setBranding((b) => ({ ...b, logoMaintainAspectRatio: true }))}
+              className={`rounded-full px-3 py-1.5 text-xs font-black transition ${
+                branding.logoMaintainAspectRatio ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              Maintain Aspect Ratio
+            </button>
+            <button
+              type="button"
+              disabled={!canCompany}
+              onClick={() => setBranding((b) => ({ ...b, logoMaintainAspectRatio: false }))}
+              className={`rounded-full px-3 py-1.5 text-xs font-black transition ${
+                !branding.logoMaintainAspectRatio ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              Stretch
+            </button>
+          </div>
+        </div>
+
         <Field
           label="Primary Colour"
           value={branding.palette.primaryColor}
@@ -293,6 +516,35 @@ export default function ClientCompanySetupClient() {
           value={String(branding.licenseNumber || "")}
           onChange={(v) => setBranding((b) => ({ ...b, licenseNumber: v }))}
         />
+      </section>
+
+      <section className="rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-black text-slate-950">Live Preview</h2>
+          {previewLoading ? <span className="text-xs font-bold text-slate-400">Updating…</span> : null}
+        </div>
+        <p className="mt-1 text-sm font-semibold text-slate-500">See how your logo and branding will appear on generated documents.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {PREVIEW_DOCUMENT_TYPES.map((doc) => (
+            <button
+              key={doc.value}
+              type="button"
+              onClick={() => setPreviewType(doc.value)}
+              className={`rounded-full px-3 py-1.5 text-xs font-black transition ${
+                previewType === doc.value ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {doc.label}
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50" style={{ height: "70vh" }}>
+          {previewUrl ? (
+            <iframe title="Document branding preview" src={previewUrl} className="h-full w-full" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm font-bold text-slate-400">Generating preview…</div>
+          )}
+        </div>
       </section>
 
       {canCompany ? (
