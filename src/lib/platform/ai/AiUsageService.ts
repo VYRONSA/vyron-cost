@@ -16,6 +16,21 @@ function currentPeriod(): { periodStart: Date; periodEnd: Date; periodKey: strin
   return { periodStart, periodEnd, periodKey };
 }
 
+/**
+ * Company IDs exempt from AI allowance enforcement (platform-owner / dev
+ * workspaces). Configured via VYRON_AI_ALLOWANCE_EXEMPT_COMPANY_IDS, a
+ * comma-separated list of company UUIDs. Empty by default — enforcement
+ * applies to everyone unless explicitly exempted.
+ */
+function isAllowanceExemptCompany(companyId: string): boolean {
+  const raw = process.env.VYRON_AI_ALLOWANCE_EXEMPT_COMPANY_IDS || "";
+  return raw
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean)
+    .includes(companyId);
+}
+
 export class AiUsageService {
   static async checkAllowance(input: { companyId: string; packageName: string }): Promise<AiAllowanceCheckResult> {
     const { periodStart, periodEnd } = currentPeriod();
@@ -23,6 +38,11 @@ export class AiUsageService {
       AiUsageRepository.getMonthlyRollup(input.companyId, periodStart.toISOString(), periodEnd.toISOString()),
       AiUsageRepository.getAllowanceOverride(input.companyId),
     ]);
+
+    // Self-heal: guarantee a row exists for this company so future admin
+    // overrides and threshold notifications have somewhere to land. Never
+    // blocks enforcement on this succeeding.
+    void AiUsageRepository.ensureAllowanceRow(input.companyId).catch(() => {});
 
     const allowance = resolveTierAllowance(input.packageName, {
       monthlyCredits: override?.monthlyCreditsOverride ?? undefined,
@@ -35,11 +55,12 @@ export class AiUsageService {
     const requestsRatio = allowance.maxRequests > 0 ? rollup.requestsUsed / allowance.maxRequests : rollup.requestsUsed > 0 ? Infinity : 0;
     const percentOfLimitUsed = Math.round(Math.min(999, Math.max(creditsRatio, spendRatio, requestsRatio) * 100));
 
-    const status = evaluateAllowanceStatus(percentOfLimitUsed);
+    const exempt = isAllowanceExemptCompany(input.companyId);
+    const status = exempt ? "ok" : evaluateAllowanceStatus(percentOfLimitUsed);
 
     return {
       status,
-      allowed: status !== "exceeded",
+      allowed: exempt ? true : status !== "exceeded",
       companyId: input.companyId,
       packageId: allowance.packageId,
       periodStart: periodStart.toISOString(),

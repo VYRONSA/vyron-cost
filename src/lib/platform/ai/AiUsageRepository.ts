@@ -241,6 +241,26 @@ export class AiUsageRepository {
     };
   }
 
+  /**
+   * Guarantees a row exists for the company so allowance state (threshold
+   * notifications, admin overrides) has somewhere to live. Override columns
+   * are intentionally left NULL on insert — NULL means "inherit the current
+   * package's tier default", resolved live by resolveTierAllowance(). This
+   * only inserts; it never touches an existing row's values.
+   */
+  static async ensureAllowanceRow(companyId: string): Promise<void> {
+    const supabase = this.admin();
+    if (!supabase) return;
+
+    const { error } = await supabase
+      .from("vyron_ai_company_allowances")
+      .upsert({ company_id: companyId }, { onConflict: "company_id", ignoreDuplicates: true });
+
+    if (error) {
+      console.error("[ai-usage] Failed to ensure allowance row", error.message);
+    }
+  }
+
   static async markThresholdNotified(companyId: string, threshold: 80 | 95, period: string): Promise<void> {
     const supabase = this.admin();
     if (!supabase) return;
