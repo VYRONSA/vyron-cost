@@ -483,7 +483,7 @@ function ActionCard({ action }: { action: ExecutiveHealthAction }) {
 function RiskColumn({ level, items }: { level: RiskLevel; items: Array<{ id: string; title: string; detail: string; href: string }> }) {
   const colors: Record<RiskLevel, string> = {
     Critical: "border-rose-200 bg-rose-50",
-    High: "border-orange-200 bg-orange-50",
+    High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]",
     Medium: "border-fuchsia-200 bg-fuchsia-50",
     Low: "border-violet-200 bg-violet-50",
   };
@@ -513,7 +513,7 @@ function StatusBadge({ status, large }: { status: HealthStatus; large?: boolean 
   const classes: Record<HealthStatus, string> = {
     Healthy: "border-violet-200 bg-violet-50 text-violet-800",
     Watch: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
-    Risk: "border-orange-200 bg-orange-50 text-orange-900",
+    Risk: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
     "Insufficient Data": "border-slate-200 bg-slate-50 text-slate-700",
   };
@@ -531,7 +531,7 @@ function StatusBadge({ status, large }: { status: HealthStatus; large?: boolean 
 function RiskLevelBadge({ level }: { level: RiskLevel }) {
   const classes: Record<RiskLevel, string> = {
     Critical: "border-rose-200 bg-rose-50 text-rose-700",
-    High: "border-orange-200 bg-orange-50 text-orange-800",
+    High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Medium: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
     Low: "border-violet-200 bg-violet-50 text-violet-800",
   };

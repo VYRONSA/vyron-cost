@@ -23,7 +23,7 @@ export default async function SupplierIntelligencePage() {
           ["Active Suppliers", centreStats.activeSuppliers, "bg-[#A855F7]/10"],
           ["High Risk Suppliers", centreStats.highRiskSuppliers, "bg-red-50"],
           ["Inflation Alerts", centreStats.inflationAlerts, "bg-fuchsia-50"],
-          ["Open Variances", centreStats.openVariances, "bg-orange-50"],
+          ["Open Variances", centreStats.openVariances, "bg-[var(--vyron-warning-bg)]"],
           ["Savings Opportunities", formatSupplierSpend(centreStats.savingsOpportunities), "bg-violet-50"],
         ].map(([label, value, bg]) => (
           <div key={String(label)} className={`rounded-[2rem] p-5 shadow-sm ${bg}`}>

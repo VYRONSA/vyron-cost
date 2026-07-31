@@ -252,7 +252,7 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
           </div>
           <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/8 p-4">
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Movement</div>
-            <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-orange-400" : "text-[#A855F7]"}`}>{movement.toFixed(1)}%</div>
+            <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#A855F7]"}`}>{movement.toFixed(1)}%</div>
           </div>
         </div>
 
@@ -339,7 +339,7 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
             </div>
           </details>
 
-          <button onClick={save} className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[#F8FAFC]">
+          <button onClick={save} className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[#F8FAFC]">
             <Save size={18} />
             Save Ingredient
           </button>
@@ -384,7 +384,7 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
                   <div className="font-bold text-slate-500">{item.category}</div>
                   <div className="font-black text-slate-900">{formatMoney(item.purchase_cost)}</div>
                   <div className="font-black text-violet-700">{formatMoney(item.true_unit_cost)}</div>
-                  <div className={`font-black ${move > 5 ? "text-orange-400" : "text-[#A855F7]"}`}>{move.toFixed(1)}%</div>
+                  <div className={`font-black ${move > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#A855F7]"}`}>{move.toFixed(1)}%</div>
                   <div className="flex gap-2">
                     {canEdit ? (
                       <button onClick={() => edit(item)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Edit</button>

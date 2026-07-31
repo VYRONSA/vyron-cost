@@ -969,7 +969,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
               type="button"
               onClick={() => void handleApprove()}
               disabled={approving}
-              className="rounded-lg bg-[#24183F] border border-[#A855F7]/30 px-2.5 py-1 text-[10px] font-black text-[#F8FAFC] disabled:opacity-60"
+              className="rounded-lg vyron-grad-surface border border-transparent px-2.5 py-1 text-[10px] font-black text-[#F8FAFC] disabled:opacity-60"
             >
               {approving ? "Approving…" : "Approve & Update Costs"}
             </button>

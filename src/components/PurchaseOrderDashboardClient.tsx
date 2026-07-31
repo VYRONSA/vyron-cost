@@ -44,16 +44,16 @@ export default function PurchaseOrderDashboardClient() {
 
   const actions = (
     <>
-      <Link href="/purchase-orders/new" className="rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
+      <Link href="/purchase-orders/new" className="rounded-xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
         + New Purchase Order
       </Link>
-      <Link href="/goods-receipts" className="rounded-xl border border-white/10 bg-[#21163A] px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
+      <Link href="/goods-receipts" className="rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#0F172A]">
         GRN Dashboard
       </Link>
-      <Link href="/goods-receipts/new" className="rounded-xl border border-white/10 bg-[#21163A] px-5 py-3 text-sm font-semibold text-[#CBD5E1]">
+      <Link href="/goods-receipts/new" className="rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
         New GRN
       </Link>
-      <Link href="/purchase-orders/settings" className="rounded-xl border border-white/10 bg-[#21163A] px-5 py-3 text-sm font-semibold text-[#CBD5E1]">
+      <Link href="/purchase-orders/settings" className="rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
         PO Approval Settings
       </Link>
     </>

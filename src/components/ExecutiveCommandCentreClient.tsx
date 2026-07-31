@@ -296,7 +296,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                     </ul>
                   </div>
                   <div>
-                    <div className="text-[10px] font-black uppercase text-orange-600">Top risk</div>
+                    <div className="text-[10px] font-black uppercase text-[var(--vyron-warning-fg)]">Top risk</div>
                     <ul className="mt-2 space-y-2 text-sm font-bold">
                       {supplierIntelligence.topRiskSuppliers.map((s) => (
                         <li key={s.supplierId}>

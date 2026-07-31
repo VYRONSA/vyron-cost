@@ -103,7 +103,7 @@ export default function ProductBomPanelClient({
             </label>
 
             <div className="mt-4 flex flex-wrap gap-3">
-              <button type="button" onClick={updateFromBom} className="rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-[#F8FAFC]">
+              <button type="button" onClick={updateFromBom} className="rounded-xl border border-transparent vyron-grad-surface px-4 py-2 text-xs font-black text-[#F8FAFC]">
                 Update cost from BOM
               </button>
               {summary.linkedRecipe ? (

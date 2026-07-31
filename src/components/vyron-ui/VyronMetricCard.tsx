@@ -14,11 +14,15 @@ function valueClass(tone: VyronMetricTone, value: ReactNode) {
   return M.metricValueDefault;
 }
 
+// Health indicators carry a semantic left edge so state stays legible without
+// relying on the value's colour alone. The edge is applied in CSS (see
+// .vyron-tone-* in globals) so it composes with the card's elevation rather
+// than being overwritten by it.
 const toneBorder: Record<VyronMetricTone, string> = {
-  default: "border-[#E2E8F0]",
-  healthy: "border-[#E2E8F0]",
-  warning: "border-[#3B82F6]/25",
-  danger: "border-[#3B82F6]/30",
+  default: "",
+  healthy: "vyron-tone-success",
+  warning: "vyron-tone-warning",
+  danger: "vyron-tone-error",
 };
 
 export function VyronMetricCard({

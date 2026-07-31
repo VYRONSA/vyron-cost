@@ -55,7 +55,7 @@ export default function BoardPackCentreClient({ snapshot }: { snapshot: LaunchRe
             <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
               <h2 className="text-2xl font-black">Download Board Pack</h2>
               <p className="mt-3 text-sm font-semibold text-slate-300">Export a client-facing summary for owner / director review.</p>
-              <button onClick={downloadPack} className="mt-6 inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
+              <button onClick={downloadPack} className="mt-6 inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-black text-[#F8FAFC]">
                 <Download size={17} /> Download
               </button>
             </div>

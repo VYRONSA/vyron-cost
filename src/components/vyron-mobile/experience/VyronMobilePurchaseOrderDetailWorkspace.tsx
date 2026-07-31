@@ -492,7 +492,7 @@ export default function VyronMobilePurchaseOrderDetailWorkspace({ poId }: { poId
   return (
     <section className="space-y-4 px-4 pb-36 pt-1 sm:px-5">
       <PremiumMobileCard tone="raised" className="overflow-hidden p-0">
-        <div className="bg-gradient-to-br from-[#062A2A] via-[#074F50] to-[#0D7B7E] p-5 text-white">
+        <div className="vyron-grad-deep p-5 text-white">
           <div className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-100">Purchase Order</div>
           <div className="mt-2 flex items-start justify-between gap-3">
             <div>

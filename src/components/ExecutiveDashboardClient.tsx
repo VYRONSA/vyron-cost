@@ -399,7 +399,7 @@ export default function ExecutiveDashboardClient({
         >
           Export Recovery CSV
         </button>
-        <Link href="/ai-cost-intelligence" className="rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/20">
+        <Link href="/ai-cost-intelligence" className="rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/20">
           AI Cost Intelligence
         </Link>
       </VyronPremiumHeroBanner>
@@ -502,7 +502,7 @@ export default function ExecutiveDashboardClient({
             <Link href="/financial-leakage" className="inline-flex items-center justify-between rounded-2xl bg-white px-5 py-4 text-sm font-black text-[#F8FAFC]">
               Explain recovery <ArrowRight size={17} />
             </Link>
-            <Link href="/product-profitability" className="inline-flex items-center justify-between rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC]">
+            <Link href="/product-profitability" className="inline-flex items-center justify-between rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC]">
               Open profitability <ArrowRight size={17} />
             </Link>
           </div>
@@ -617,7 +617,7 @@ export default function ExecutiveDashboardClient({
               <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Inventory Intelligence</div>
               <h3 className="mt-2 text-2xl font-black">Weighted average valuation · live ledger</h3>
             </div>
-            <Link href="/inventory" className="rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
+            <Link href="/inventory" className="rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-black text-[#F8FAFC]">
               Open inventory →
             </Link>
           </div>

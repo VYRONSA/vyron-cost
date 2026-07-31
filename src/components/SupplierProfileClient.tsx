@@ -12,7 +12,7 @@ function money(value: number) {
 
 function riskColour(level: string) {
   if (level === "Critical") return "text-red-800 bg-red-50 border-red-200";
-  if (level === "High") return "text-orange-800 bg-orange-50 border-orange-200";
+  if (level === "High") return "text-[var(--vyron-warning-fg)] bg-[var(--vyron-warning-bg)] border-[var(--vyron-warning-border)]";
   if (level === "Medium") return "text-fuchsia-800 bg-fuchsia-50 border-fuchsia-200";
   return "text-[#4D7C0F] bg-[#A855F7]/10 border-[#A855F7]/25";
 }

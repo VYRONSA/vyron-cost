@@ -86,7 +86,7 @@ export function CommandCentreClient({ data }: { data: AutonomousBusinessIntellig
           >
             <div className="flex justify-between">
               <h3 className="font-black text-[#F8FAFC]">{d.label}</h3>
-              <span className={`text-xs font-black uppercase ${d.status === "healthy" ? "text-[#A855F7]" : d.status === "watch" ? "text-orange-300" : "text-red-300"}`}>{d.status}</span>
+              <span className={`text-xs font-black uppercase ${d.status === "healthy" ? "text-[#A855F7]" : d.status === "watch" ? "text-[var(--vyron-warning-fg)]" : "text-red-300"}`}>{d.status}</span>
             </div>
             <dl className="mt-4 space-y-2 text-sm">
               {d.metrics.map((m) => (

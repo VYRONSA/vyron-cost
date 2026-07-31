@@ -6,27 +6,34 @@ type StatusPillProps = {
   status: string;
 };
 
+// Workflow and approval state — the canonical use of semantic colour.
 const toneByStatus: Record<string, string> = {
-  Completed: M.statusBrand,
-  Paid: "rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-black text-violet-700",
-  Posted: "rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-black text-violet-700",
-  Active: M.statusBrand,
-  Live: M.statusBrand,
-  Monitoring: M.statusBrand,
-  Sent: "rounded-full border border-[#1D6BFF]/25 bg-[#1D6BFF]/8 px-3 py-1 text-xs font-black text-[#1D6BFF]",
-  Approved: "rounded-full border border-[#1D6BFF]/25 bg-[#1D6BFF]/8 px-3 py-1 text-xs font-black text-[#1D6BFF]",
-  Draft: "rounded-full border border-[#E2E8F0] bg-[#F6F7FB] px-3 py-1 text-xs font-black text-[#64748B]",
-  "In Production": "rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/8 px-3 py-1 text-xs font-black text-[#2563EB]",
-  Warning: "rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/8 px-3 py-1 text-xs font-black text-[#2563EB]",
-  Cancelled: "rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/10 px-3 py-1 text-xs font-black text-[#2563EB]",
-  Connected: M.statusXero,
+  Completed: M.statusSuccess,
+  Paid: M.statusSuccess,
+  Posted: M.statusSuccess,
+  Approved: M.statusSuccess,
+  Delivered: M.statusSuccess,
+  Connected: M.statusSuccess,
+
+  Active: M.statusInfo,
+  Live: M.statusInfo,
+  Monitoring: M.statusInfo,
+  Sent: M.statusInfo,
+  "In Production": M.statusInfo,
+
+  Warning: M.statusWarning,
+  Pending: M.statusWarning,
+  "Awaiting Approval": M.statusWarning,
+  Overdue: M.statusWarning,
+
+  Cancelled: M.statusError,
+  Rejected: M.statusError,
+  Failed: M.statusError,
+
+  Draft: M.statusNeutral,
   Xero: M.statusXero,
 };
 
 export default function StatusPill({ status }: StatusPillProps) {
-  return (
-    <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-black ${toneByStatus[status] ?? M.statusBrand}`}>
-      {status}
-    </span>
-  );
+  return <span className={toneByStatus[status] ?? M.statusNeutral}>{status}</span>;
 }

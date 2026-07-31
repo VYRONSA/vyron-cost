@@ -406,11 +406,11 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
 
           <div className="grid gap-3 rounded-3xl bg-slate-50 p-5 md:grid-cols-3">
             <div><div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">BOM Cost</div><div className="mt-1 text-2xl font-black text-slate-900">{formatMoney(cost)}</div></div>
-            <div><div className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Actual GP</div><div className={`mt-1 text-2xl font-black ${gp < target ? "text-orange-400" : "text-[#A855F7]"}`}>{gp.toFixed(1)}%</div></div>
+            <div><div className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Actual GP</div><div className={`mt-1 text-2xl font-black ${gp < target ? "text-[var(--vyron-warning-fg)]" : "text-[#A855F7]"}`}>{gp.toFixed(1)}%</div></div>
             <div><div className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Suggested</div><div className="mt-1 text-2xl font-black text-[#A855F7]">{formatMoney(suggested)}</div></div>
           </div>
 
-          <button onClick={save} className="rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[#F8FAFC]">Save Finished Product</button>
+          <button onClick={save} className="rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[#F8FAFC]">Save Finished Product</button>
           {message && <div className="rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#A855F7]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div>}
         </div>
@@ -460,7 +460,7 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
                   <div className="truncate font-bold text-violet-700">{linked?.bom_name || "Not linked"}</div>
                   <div className="font-black text-slate-900">{formatMoney(product.total_cost)}</div>
                   <div className="font-black text-slate-900">{formatMoney(product.selling_price)}</div>
-                  <div className={`font-black ${productGp < Number(product.target_gp || 0) ? "text-orange-400" : "text-[#A855F7]"}`}>{productGp.toFixed(1)}%</div>
+                  <div className={`font-black ${productGp < Number(product.target_gp || 0) ? "text-[var(--vyron-warning-fg)]" : "text-[#A855F7]"}`}>{productGp.toFixed(1)}%</div>
                   <div className="flex gap-2">
                     {canEdit ? (
                       <button onClick={() => edit(product)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Edit</button>

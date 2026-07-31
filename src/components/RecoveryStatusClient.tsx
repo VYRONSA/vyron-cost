@@ -228,7 +228,7 @@ export default function RecoveryStatusClient({
           <input className="rounded-lg border border-slate-200 px-2 py-1 text-sm md:col-span-2" placeholder="Document URL (optional)" value={newEvidenceUrl} onChange={(e) => setNewEvidenceUrl(e.target.value)} />
           <textarea className="rounded-lg border border-slate-200 px-2 py-1 text-sm md:col-span-2" rows={2} placeholder="Evidence details" value={newEvidenceContent} onChange={(e) => setNewEvidenceContent(e.target.value)} />
         </div>
-        <button type="button" onClick={addEvidenceItem} className="mt-2 rounded-xl bg-[#24183F] border border-[#A855F7]/30 px-4 py-2 text-xs font-black text-white">
+        <button type="button" onClick={addEvidenceItem} className="mt-2 rounded-xl vyron-grad-surface border border-transparent px-4 py-2 text-xs font-black text-white">
           Add Evidence
         </button>
 

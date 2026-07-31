@@ -27,12 +27,12 @@ export default function PremiumMobileExecutiveHeader({
         </div>
 
         <PremiumMobileCard tone="default" className="relative overflow-hidden p-5">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(199,154,43,0.16),transparent_46%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(79,70,229,0.12),transparent_46%)]" />
 
           <div className="relative text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Executive Workspace</div>
           <div className={`relative mt-1 truncate ${MOBILE_TOKENS.text.title}`}>{title}</div>
           {subtitle ? <div className={`relative mt-2 max-w-2xl ${MOBILE_TOKENS.text.body}`}>{subtitle}</div> : null}
-          <div className="relative mt-3 inline-flex rounded-full border border-[#E8D6A4] bg-[#FFF9EC] px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-[#A77915]">
+          <div className="relative mt-3 inline-flex rounded-full border border-[rgba(79,70,229,0.18)] bg-[rgba(79,70,229,0.06)] px-3 py-1 vyron-t-label text-[11px] text-[#4F46E5]">
             {workspaceLabel}
           </div>
         </PremiumMobileCard>

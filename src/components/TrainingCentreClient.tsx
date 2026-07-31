@@ -47,7 +47,7 @@ export default function TrainingCentreClient() {
               <button
                 type="button"
                 onClick={downloadManual}
-                className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]"
+                className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-black text-[#F8FAFC]"
               >
                 <Download size={17} />
                 Download manual

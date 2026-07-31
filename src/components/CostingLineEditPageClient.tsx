@@ -135,7 +135,7 @@ export default function CostingLineEditPageClient({
                 </label>
 
                 <div className="flex flex-wrap gap-3">
-                  <button type="button" onClick={saveLine} className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-6 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
+                  <button type="button" onClick={saveLine} className="inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-6 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
                     <Save size={18} />
                     Save Costing Line
                   </button>

@@ -29,7 +29,7 @@ export const VYRON_MASTER_COLOUR = {
 
 /** Tailwind class bundles — single source for public + future internal migration */
 export const VYRON_MASTER = {
-  page: "vyron-public-page min-h-screen overflow-x-hidden text-[#334155]",
+  page: "vyron-public-page vyron-interactive-root min-h-screen overflow-x-hidden text-[#334155]",
   pageAlt: "bg-[#F6F7FB]",
   pageMuted: "bg-[#EEF2F7]",
 
@@ -57,6 +57,19 @@ export const VYRON_MASTER = {
   tableHead:
     "bg-[rgba(15,23,42,0.03)] vyron-t-label text-[11px] text-[#64748B]",
   tableRow: "border-b border-[rgba(15,23,42,0.06)] transition hover:bg-[rgba(79,70,229,0.045)]",
+
+  /** Semantic status — reserved hues from the design language. Use ONLY where
+      state is communicated (badges, alerts, validation, workflow/approval,
+      health, AI recommendations, executive signals). Never decorative. */
+  statusSuccess: "vyron-status vyron-status-success",
+  statusWarning: "vyron-status vyron-status-warning",
+  statusError: "vyron-status vyron-status-error",
+  statusInfo: "vyron-status vyron-status-info",
+  statusNeutral: "vyron-status vyron-status-neutral",
+  alertSuccess: "vyron-alert vyron-alert-success",
+  alertWarning: "vyron-alert vyron-alert-warning",
+  alertError: "vyron-alert vyron-alert-error",
+  alertInfo: "vyron-alert vyron-alert-info",
 
   statusRecommended:
     "rounded-full border border-[#2563EB]/30 bg-gradient-to-r from-[#2563EB]/10 to-[#1D6BFF]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#2563EB]",
@@ -102,7 +115,7 @@ export const VYRON_MASTER = {
 
   /** Internal app shell (Batch 2) */
   shellRoot:
-    "vyron-cost-shell vyron-master-workspace h-screen w-full overflow-hidden bg-[#F8FAFC] text-[#334155]",
+    "vyron-cost-shell vyron-master-workspace vyron-interactive-root h-screen w-full overflow-hidden bg-[#F8FAFC] text-[#334155]",
   shellSidebar:
     "vyron-cost-shell-sidebar fixed left-0 top-0 z-[50] flex h-screen w-[330px] min-w-[330px] max-w-[330px] flex-col overflow-hidden border-r border-white/10 bg-[#3D3AB8] px-4 py-5",
   shellTopbar: "shrink-0 border-b border-[rgba(15,23,42,0.06)] bg-white/68 backdrop-blur-xl backdrop-saturate-150",
@@ -154,10 +167,10 @@ export const VYRON_MASTER = {
     "min-w-0 overflow-hidden rounded-xl border border-[#E2E8F0] bg-white/90 p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)] backdrop-blur-lg transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(15,23,42,0.09)]",
   dashboardWidgetNested: "rounded-xl border border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.025)] px-4 py-3",
   metricValueDefault: "text-[#0F172A]",
-  metricValueHealthy: "text-[#1D6BFF]",
-  metricValueWarning: "text-[#2563EB]",
-  metricValueDanger: "text-[#2563EB]",
-  metricValueMonitoring: "text-[#1D6BFF]",
+  metricValueHealthy: "vyron-metric-success",
+  metricValueWarning: "vyron-metric-warning",
+  metricValueDanger: "vyron-metric-error",
+  metricValueMonitoring: "vyron-metric-info",
 
   /** Module page framework (Batch 4) */
   moduleHeader:

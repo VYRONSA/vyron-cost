@@ -66,7 +66,7 @@ function FunConfetti() {
       <span className="absolute left-60 top-16 text-lg text-[#A855F7]">◆</span>
       <span className="absolute right-28 top-8 text-2xl text-blue-500">✦</span>
       <span className="absolute right-52 top-20 text-xl text-fuchsia-500">⌁</span>
-      <span className="absolute bottom-8 left-32 text-lg text-orange-400">✺</span>
+      <span className="absolute bottom-8 left-32 text-lg text-[var(--vyron-warning-fg)]">✺</span>
       <span className="absolute bottom-16 right-24 text-lg text-[#A855F7]">✦</span>
     </div>
   );
@@ -112,8 +112,8 @@ export default async function FinancialLeakagePage() {
       title: "Packaging & Material Waste",
       detail: "Reduce over-spec and unused materials",
       value: kpis.wastageLosses * 12,
-      tone: "text-orange-600",
-      bg: "bg-orange-50",
+      tone: "text-[var(--vyron-warning-fg)]",
+      bg: "bg-[var(--vyron-warning-bg)]",
     },
     {
       icon: ClipboardCheck,
@@ -202,13 +202,13 @@ export default async function FinancialLeakagePage() {
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-orange-400 to-pink-600 p-6 text-white shadow-[0_18px_45px_rgba(249,115,22,0.22)]">
+            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br to-[var(--vyron-warning-bg)] to-pink-600 p-6 text-white shadow-[0_18px_45px_rgba(249,115,22,0.22)]">
               <MiniSparkline tone="orange" />
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs font-black uppercase tracking-[0.16em] text-orange-100">Supplier Exposure</div>
+                  <div className="text-xs font-black uppercase tracking-[0.16em] text-[var(--vyron-warning-fg)]">Supplier Exposure</div>
                   <div className="mt-3 text-4xl font-black">{formatMoney(kpis.supplierInflationExposure * 12)}</div>
-                  <div className="mt-2 text-sm font-bold text-orange-100">↑ Inflation impact / year</div>
+                  <div className="mt-2 text-sm font-bold text-[var(--vyron-warning-fg)]">↑ Inflation impact / year</div>
                 </div>
                 <div className="rounded-2xl bg-white/15 p-3"><TrendingUp size={28} /></div>
               </div>
@@ -231,7 +231,7 @@ export default async function FinancialLeakagePage() {
             {[
               [CircleDollarSign, "Detected", detected, "Total leakage identified", "bg-violet-100 text-violet-700"],
               [ShieldAlert, "Recoverable", recoverable, "High confidence recovery", "bg-[#A855F7]/12 text-[#7E22CE]"],
-              [ClipboardCheck, "Approved", approved, "Approved recovery actions", "bg-orange-100 text-orange-700"],
+              [ClipboardCheck, "Approved", approved, "Approved recovery actions", "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
               [Banknote, "Recovered", recovered, "Value already recovered", "bg-fuchsia-100 text-fuchsia-700"],
             ].map(([Icon, label, value, detail, tone]: any) => (
               <div key={label} className="rounded-2xl bg-slate-50/60 p-4 text-center">
@@ -302,7 +302,7 @@ export default async function FinancialLeakagePage() {
             const recovery = loss * recoveryRate(row);
             const tones = [
               ["bg-red-50 text-red-600", "HIGH IMPACT"],
-              ["bg-orange-50 text-orange-600", "HIGH IMPACT"],
+              ["bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]", "HIGH IMPACT"],
               ["bg-blue-50 text-blue-600", "MEDIUM IMPACT"],
               ["bg-[#A855F7]/10 text-[#84CC16]", "MEDIUM IMPACT"],
             ];

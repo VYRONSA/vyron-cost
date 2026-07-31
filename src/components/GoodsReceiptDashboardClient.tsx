@@ -75,27 +75,27 @@ export default function GoodsReceiptDashboardClient() {
   const grnActions = (
     <>
       {canCreate ? (
-        <Link href="/goods-receipts/new" className="rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
+        <Link href="/goods-receipts/new" className="rounded-xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
           New GRN
         </Link>
       ) : null}
-      <Link href="/goods-receipts/history" className="rounded-xl border border-white/10 bg-[#21163A] px-5 py-3 text-sm font-semibold text-[#CBD5E1]">
+      <Link href="/goods-receipts/history" className="rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
         GRN History
       </Link>
-      <Link href="/purchase-orders/back-orders" className="rounded-xl border border-orange-400/30 bg-orange-500/15 px-5 py-3 text-sm font-semibold text-orange-200">
+      <Link href="/purchase-orders/back-orders" className="rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-5 py-3 text-sm font-semibold text-[var(--vyron-warning-fg)]">
         Back Orders
       </Link>
       <button
         type="button"
         onClick={() => window.print()}
-        className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#21163A] px-5 py-3 text-sm font-semibold text-[#CBD5E1]"
+        className="inline-flex items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]"
       >
         <Printer size={16} /> Print
       </button>
       <button
         type="button"
         onClick={emailSummary}
-        className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#21163A] px-5 py-3 text-sm font-semibold text-[#CBD5E1]"
+        className="inline-flex items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]"
       >
         <Mail size={16} /> Email
       </button>

@@ -1,0 +1,295 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   VYRON ENTERPRISE DESIGN LANGUAGE  ·  v1.0  ·  canonical
+   ═══════════════════════════════════════════════════════════════════════════
+
+   The shared presentation layer for every VYRON product. This file is
+   product-agnostic: it defines atmosphere, type, spacing, elevation, glass,
+   motion, focus and status, but never brand hue.
+
+   A product supplies its own identity by overriding the four brand fades
+   (--vyron-grad-*) and --vyron-brand-*. Everything else is inherited, which is
+   how two VYRON products end up feeling like one company while staying
+   visually distinct.
+
+   Consumed by VYRON COST via src/app/globals.css.
+
+   ── Contents ──
+     1. Brand hooks          (product overrides these)
+     2. Semantic status      (reserved; never decorative)
+     3. Elevation
+     4. Hairlines & glass
+     5. Spacing rhythm
+     6. Motion
+     7. Focus
+     8. Typography
+     9. Status components
+    10. Interaction patterns
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── 1. Brand hooks ──────────────────────────────────────────────────────
+     Products override these. Defaults are VYRON-neutral indigo. */
+  --vyron-brand: #4f46e5;
+  --vyron-brand-strong: #4338ca;
+  --vyron-brand-wash: rgba(79, 70, 229, 0.06);
+  --vyron-brand-edge: rgba(79, 70, 229, 0.18);
+
+  /* ── 2. Semantic status ──────────────────────────────────────────────────
+     RESERVED. These four hues sit deliberately outside every product's brand
+     fade so that "this is state" can never be confused with "this is brand".
+     Use only for: badges, alerts, validation, workflow/approval state, health
+     indicators, AI recommendations, executive signals. Never as decoration.
+
+     Each has: -fg (text/icon on light), -bg (fill), -border, -solid (filled
+     badge bg), -on-deep (text on the deep brand panels). */
+
+  --vyron-success-fg: #047857;
+  --vyron-success-bg: #ecfdf5;
+  --vyron-success-border: #a7f3d0;
+  --vyron-success-solid: #059669;
+  --vyron-success-on-deep: #6ee7b7;
+
+  --vyron-warning-fg: #b45309;
+  --vyron-warning-bg: #fffbeb;
+  --vyron-warning-border: #fde68a;
+  --vyron-warning-solid: #d97706;
+  --vyron-warning-on-deep: #fcd34d;
+
+  --vyron-error-fg: #be123c;
+  --vyron-error-bg: #fff1f2;
+  --vyron-error-border: #fecdd3;
+  --vyron-error-solid: #e11d48;
+  --vyron-error-on-deep: #fda4af;
+
+  /* Cyan, not blue: info must stay distinguishable from a blue brand hue. */
+  --vyron-info-fg: #0e7490;
+  --vyron-info-bg: #ecfeff;
+  --vyron-info-border: #a5f3fc;
+  --vyron-info-solid: #0891b2;
+  --vyron-info-on-deep: #67e8f9;
+
+  --vyron-neutral-fg: #475569;
+  --vyron-neutral-bg: rgba(15, 23, 42, 0.03);
+  --vyron-neutral-border: rgba(15, 23, 42, 0.10);
+
+  /* ── 3. Elevation ────────────────────────────────────────────────────────
+     Layered and low-alpha. Enterprise depth is many soft shadows; one heavy
+     drop reads consumer. */
+  --vyron-elev-1: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.03);
+  --vyron-elev-2: 0 2px 4px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.05);
+  --vyron-elev-3: 0 4px 8px rgba(15, 23, 42, 0.04), 0 12px 28px rgba(15, 23, 42, 0.07);
+  --vyron-elev-4: 0 8px 16px rgba(15, 23, 42, 0.05), 0 24px 56px rgba(15, 23, 42, 0.09);
+  --vyron-elev-brand: 0 4px 12px rgba(79, 70, 229, 0.10), 0 16px 40px rgba(79, 70, 229, 0.12);
+
+  /* ── 4. Hairlines & glass ────────────────────────────────────────────────
+     Borders at full slate read as boxes; at 7% they read as edges. */
+  --vyron-hairline: rgba(15, 23, 42, 0.07);
+  --vyron-hairline-strong: rgba(15, 23, 42, 0.11);
+  --vyron-hairline-brand: var(--vyron-brand-edge);
+  --vyron-glass: rgba(255, 255, 255, 0.72);
+  --vyron-glass-strong: rgba(255, 255, 255, 0.86);
+  --vyron-glass-blur: blur(14px) saturate(1.4);
+
+  /* ── 5. Spacing rhythm ───────────────────────────────────────────────────
+     A 4px base. Documented so future products inherit the same cadence;
+     applying these to an existing product is opt-in, never a reflow. */
+  --vyron-space-1: 0.25rem;
+  --vyron-space-2: 0.5rem;
+  --vyron-space-3: 0.75rem;
+  --vyron-space-4: 1rem;
+  --vyron-space-5: 1.25rem;
+  --vyron-space-6: 1.5rem;
+  --vyron-space-8: 2rem;
+  --vyron-space-10: 2.5rem;
+  --vyron-radius-sm: 0.5rem;
+  --vyron-radius-md: 0.75rem;
+  --vyron-radius-lg: 1rem;
+  --vyron-radius-xl: 1.5rem;
+
+  /* ── 6. Motion ───────────────────────────────────────────────────────────
+     One curve, one duration, product-wide. */
+  --vyron-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --vyron-dur: 180ms;
+  --vyron-dur-slow: 260ms;
+
+  /* ── 7. Focus ────────────────────────────────────────────────────────────
+     A single visible ring on every interactive element. */
+  --vyron-focus-ring: 0 0 0 3px rgba(29, 107, 255, 0.20);
+}
+
+/* ── 8. Typography ─────────────────────────────────────────────────────────
+   Hierarchy is carried by weight and tracking rather than size jumps, so
+   adopting it never reflows an existing layout. */
+.vyron-t-display {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.vyron-t-title {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.vyron-t-section {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+}
+
+.vyron-t-label {
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+/* Financial columns must align on the digit. */
+.vyron-t-metric,
+.vyron-metric-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.vyron-t-body {
+  font-weight: 450;
+  line-height: 1.6;
+}
+
+.vyron-t-caption {
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* ── 9. Status components ──────────────────────────────────────────────────
+   The only place semantic colour is permitted. */
+.vyron-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 999px;
+  border: 1px solid;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.vyron-status-success {
+  color: var(--vyron-success-fg);
+  background: var(--vyron-success-bg);
+  border-color: var(--vyron-success-border);
+}
+
+.vyron-status-warning {
+  color: var(--vyron-warning-fg);
+  background: var(--vyron-warning-bg);
+  border-color: var(--vyron-warning-border);
+}
+
+.vyron-status-error {
+  color: var(--vyron-error-fg);
+  background: var(--vyron-error-bg);
+  border-color: var(--vyron-error-border);
+}
+
+.vyron-status-info {
+  color: var(--vyron-info-fg);
+  background: var(--vyron-info-bg);
+  border-color: var(--vyron-info-border);
+}
+
+.vyron-status-neutral {
+  color: var(--vyron-neutral-fg);
+  background: var(--vyron-neutral-bg);
+  border-color: var(--vyron-neutral-border);
+}
+
+/* Alert / banner surfaces — same semantics, block form, 3px leading edge. */
+.vyron-alert {
+  border-radius: var(--vyron-radius-lg);
+  border: 1px solid;
+  padding: var(--vyron-space-4);
+  box-shadow: var(--vyron-elev-1);
+}
+
+.vyron-alert-success {
+  color: var(--vyron-success-fg);
+  background: var(--vyron-success-bg);
+  border-color: var(--vyron-success-border);
+  box-shadow: inset 3px 0 0 var(--vyron-success-solid), var(--vyron-elev-1);
+}
+
+.vyron-alert-warning {
+  color: var(--vyron-warning-fg);
+  background: var(--vyron-warning-bg);
+  border-color: var(--vyron-warning-border);
+  box-shadow: inset 3px 0 0 var(--vyron-warning-solid), var(--vyron-elev-1);
+}
+
+.vyron-alert-error {
+  color: var(--vyron-error-fg);
+  background: var(--vyron-error-bg);
+  border-color: var(--vyron-error-border);
+  box-shadow: inset 3px 0 0 var(--vyron-error-solid), var(--vyron-elev-1);
+}
+
+.vyron-alert-info {
+  color: var(--vyron-info-fg);
+  background: var(--vyron-info-bg);
+  border-color: var(--vyron-info-border);
+  box-shadow: inset 3px 0 0 var(--vyron-info-solid), var(--vyron-elev-1);
+}
+
+/* Status text on the deep brand panels, where the light fills would vanish. */
+.vyron-on-deep-success { color: var(--vyron-success-on-deep); }
+.vyron-on-deep-warning { color: var(--vyron-warning-on-deep); }
+.vyron-on-deep-error { color: var(--vyron-error-on-deep); }
+.vyron-on-deep-info { color: var(--vyron-info-on-deep); }
+
+/* Metric health indicators. */
+.vyron-metric-success { color: var(--vyron-success-fg); }
+.vyron-metric-warning { color: var(--vyron-warning-fg); }
+.vyron-metric-error { color: var(--vyron-error-fg); }
+.vyron-metric-info { color: var(--vyron-info-fg); }
+
+/* ── 10. Interaction patterns ──────────────────────────────────────────────
+   Scoped by the host product to its shell + public roots. */
+.vyron-interactive-root :is(button, a, input, select, textarea, [role="button"]):focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--vyron-focus-ring);
+  border-radius: 0.6rem;
+}
+
+.vyron-interactive-root :is(button, a) {
+  transition: background-color var(--vyron-dur) var(--vyron-ease),
+    border-color var(--vyron-dur) var(--vyron-ease),
+    box-shadow var(--vyron-dur) var(--vyron-ease),
+    transform var(--vyron-dur) var(--vyron-ease),
+    color var(--vyron-dur) var(--vyron-ease);
+}
+
+.vyron-interactive-root :is(input, select, textarea) {
+  transition: border-color var(--vyron-dur) var(--vyron-ease),
+    box-shadow var(--vyron-dur) var(--vyron-ease),
+    background-color var(--vyron-dur) var(--vyron-ease);
+}
+
+.vyron-interactive-root :is(input, select, textarea):hover {
+  border-color: var(--vyron-hairline-strong);
+}
+
+.vyron-interactive-root [aria-invalid="true"] {
+  border-color: var(--vyron-error-solid);
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vyron-interactive-root * {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+  }
+}

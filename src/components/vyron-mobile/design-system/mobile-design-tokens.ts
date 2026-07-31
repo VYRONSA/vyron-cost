@@ -28,14 +28,15 @@ export const MOBILE_TOKENS = {
   },
 } as const;
 
+// Workflow state -> reserved semantic tokens, matching StatusPill on desktop.
 export const MOBILE_STATUS_TONES = {
-  draft: "border-slate-200 bg-slate-100 text-slate-700",
-  pending: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700",
-  approved: "border-violet-200 bg-violet-50 text-violet-700",
-  completed: "border-violet-200 bg-violet-50 text-violet-700",
-  archived: "border-indigo-200 bg-indigo-50 text-indigo-700",
-  cancelled: "border-rose-200 bg-rose-50 text-rose-700",
-  received: "border-sky-200 bg-sky-50 text-sky-700",
+  draft: "vyron-status-neutral",
+  pending: "vyron-status-warning",
+  approved: "vyron-status-success",
+  completed: "vyron-status-success",
+  archived: "vyron-status-neutral",
+  cancelled: "vyron-status-error",
+  received: "vyron-status-info",
 } as const;
 
 export type MobileStatusTone = keyof typeof MOBILE_STATUS_TONES;

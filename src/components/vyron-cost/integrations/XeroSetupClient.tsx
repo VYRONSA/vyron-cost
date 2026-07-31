@@ -225,7 +225,7 @@ export default function XeroSetupClient() {
             {canView ? (
               <Link
                 href="/integrations/xero/sync-centre"
-                className="inline-flex items-center gap-2 rounded-2xl bg-[#24183F] border border-[#A855F7]/30 px-5 py-3 text-sm font-black text-white"
+                className="inline-flex items-center gap-2 rounded-2xl vyron-grad-surface border border-transparent px-5 py-3 text-sm font-black text-white"
               >
                 <ExternalLink size={16} />
                 Open Sync Centre

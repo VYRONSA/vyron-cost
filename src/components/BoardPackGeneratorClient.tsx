@@ -66,7 +66,7 @@ export default function BoardPackGeneratorClient({ pack }: { pack: BoardPackData
           type="button"
           disabled={!!busy}
           onClick={() => runExport("excel")}
-          className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-50"
         >
           <FileSpreadsheet size={16} /> {busy === "excel" ? "Generating…" : "Excel"}
         </button>

@@ -252,7 +252,7 @@ export default function CategoriesManager({ initialCategories, companyId }: { in
               </div>
             </div>
           )}
-          <div className="flex flex-wrap gap-3"><button type="button" onClick={saveCategory} className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC]"><Save size={18} />{editingId ? "Update Category" : "Save Category"}</button>{editingId && <button type="button" onClick={resetForm} className="inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-5 py-4 text-sm font-black text-slate-700"><X size={18} />Cancel</button>}</div>
+          <div className="flex flex-wrap gap-3"><button type="button" onClick={saveCategory} className="inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC]"><Save size={18} />{editingId ? "Update Category" : "Save Category"}</button>{editingId && <button type="button" onClick={resetForm} className="inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-5 py-4 text-sm font-black text-slate-700"><X size={18} />Cancel</button>}</div>
           {(message || savingFinancial) && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#7E22CE]">{savingFinancial ? "Saving category financial mapping..." : message}</div>}
         </div>
       </div>

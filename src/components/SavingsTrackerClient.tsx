@@ -45,7 +45,7 @@ export default function SavingsTrackerClient() {
               <div className="grid gap-3 md:grid-cols-[1fr_160px_140px]">
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Saving item..." className="rounded-2xl border px-4 py-3 font-bold" />
                 <input type="number" value={value} onChange={(e) => setValue(e.target.value)} className="rounded-2xl border px-4 py-3 font-bold" />
-                <button onClick={add} className="rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 font-black text-[#F8FAFC]">Add</button>
+                <button onClick={add} className="rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 font-black text-[#F8FAFC]">Add</button>
               </div>
             </div>
             <div className="grid gap-3">

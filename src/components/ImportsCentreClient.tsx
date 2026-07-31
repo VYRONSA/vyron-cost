@@ -180,7 +180,7 @@ export default function ImportsCentreClient() {
               <button
                 type="button"
                 onClick={importValidRows}
-                className="rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]"
+                className="rounded-xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-black text-[#F8FAFC]"
               >
                 Import Valid Rows
               </button>

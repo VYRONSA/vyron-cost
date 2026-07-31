@@ -348,7 +348,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
                 type="button"
                 disabled={loading}
                 onClick={() => void complete(shortages.length > 0)}
-                className="rounded-2xl bg-[#24183F] border border-[#A855F7]/30 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+                className="rounded-2xl vyron-grad-surface border border-transparent px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
               >
                 Complete & post to stock
               </button>
@@ -369,7 +369,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
           </button>
         ) : null}
         {(run.status === "Approved" || run.status === "In Production") && canComplete ? (
-          <button type="button" disabled={loading} onClick={() => void complete(false)} className="rounded-2xl bg-[#24183F] border border-[#A855F7]/30 px-5 py-3 text-sm font-black text-white">
+          <button type="button" disabled={loading} onClick={() => void complete(false)} className="rounded-2xl vyron-grad-surface border border-transparent px-5 py-3 text-sm font-black text-white">
             Quick complete
           </button>
         ) : null}

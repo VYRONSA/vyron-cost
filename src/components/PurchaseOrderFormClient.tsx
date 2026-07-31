@@ -266,7 +266,7 @@ export default function PurchaseOrderFormClient({
               </label>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <button type="button" onClick={savePo} className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-6 py-4 text-sm font-black text-[#F8FAFC]">
+                <button type="button" onClick={savePo} className="inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-6 py-4 text-sm font-black text-[#F8FAFC]">
                   <Save size={18} />
                   Save PO
                 </button>

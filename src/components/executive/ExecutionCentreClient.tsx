@@ -761,7 +761,7 @@ function PriorityBadge({ priority }: { priority: string }) {
     priority === "Critical"
       ? "border-rose-200 bg-rose-50 text-rose-800"
       : priority === "High"
-        ? "border-orange-200 bg-orange-50 text-orange-900"
+        ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
         : priority === "Medium"
           ? "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900"
           : "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]";

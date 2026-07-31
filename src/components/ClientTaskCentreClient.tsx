@@ -28,7 +28,7 @@ export default function ClientTaskCentreClient() {
       <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="flex gap-3">
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add client task..." className="flex-1 rounded-2xl border px-4 py-3 font-bold outline-none" />
-          <button onClick={addTask} className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 font-black text-[#F8FAFC]"><Plus size={17} /> Add</button>
+          <button onClick={addTask} className="inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 font-black text-[#F8FAFC]"><Plus size={17} /> Add</button>
         </div>
       </div>
 

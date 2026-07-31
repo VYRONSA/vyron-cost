@@ -140,7 +140,7 @@ export default function RecoveryOpportunitiesClient({
               <button
                 type="button"
                 onClick={() => setVerifiedOnly(true)}
-                className={`rounded-xl px-3 py-2 ${verifiedOnly ? "bg-[#24183F] border border-[#A855F7]/30 text-white" : "text-slate-600"}`}
+                className={`rounded-xl px-3 py-2 ${verifiedOnly ? "vyron-grad-surface border border-transparent text-white" : "text-slate-600"}`}
               >
                 Verified Only
               </button>

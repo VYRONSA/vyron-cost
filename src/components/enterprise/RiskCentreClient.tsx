@@ -6,7 +6,7 @@ import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPa
 
 function riskBg(level: string) {
   if (level === "Critical") return "border-red-300 bg-red-50";
-  if (level === "High") return "border-orange-300 bg-orange-50";
+  if (level === "High") return "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]";
   if (level === "Medium") return "border-fuchsia-300 bg-fuchsia-50";
   return "border-[#A855F7]/30 bg-[#A855F7]/10";
 }

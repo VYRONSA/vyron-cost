@@ -26,9 +26,9 @@ export const VYRON_TEXT = {
 
   lime: "text-[#1D6BFF]",
 
-  warning: "text-[#2563EB]",
+  warning: "vyron-metric-warning",
 
-  danger: "text-[#2563EB]",
+  danger: "vyron-metric-error",
 
 } as const;
 
@@ -36,17 +36,17 @@ export const VYRON_TEXT = {
 
 export const VYRON_STATUS = {
 
-  lime: M.statusBrand,
+  lime: M.statusSuccess,
 
-  warning: "rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/8 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#2563EB]",
+  warning: M.statusWarning,
 
   brand: M.statusBrand,
 
-  neutral: "rounded-full border border-[#E2E8F0] bg-[#F6F7FB] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#64748B]",
+  neutral: M.statusNeutral,
 
   xero: M.statusXero,
 
-  positive: "rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700",
+  positive: M.statusSuccess,
 
 } as const;
 
@@ -58,7 +58,7 @@ export const VYRON_BTN = {
 
   secondary: `${M.secondaryBtn} px-5 py-3 text-sm`,
 
-  warning: "rounded-xl border border-[#3B82F6]/25 bg-[#3B82F6]/8 px-5 py-3 text-sm font-semibold text-[#2563EB]",
+  warning: "rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-5 py-3 text-sm font-semibold text-[var(--vyron-warning-fg)]",
 
 } as const;
 
@@ -82,7 +82,7 @@ export const VYRON_SURFACE = {
 
 /** Positive financial values on light surfaces */
 
-export const VYRON_POSITIVE_ON_LIGHT = "text-violet-700";
+export const VYRON_POSITIVE_ON_LIGHT = "vyron-metric-success";
 
 export const VYRON_LIME_ON_LIGHT = "text-[#1D6BFF]";
 

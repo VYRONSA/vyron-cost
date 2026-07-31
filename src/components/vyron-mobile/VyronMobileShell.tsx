@@ -74,9 +74,9 @@ function MobileNavButton({
   accent?: boolean;
 }) {
   const className = accent
-    ? "-mt-8 flex h-16 w-16 items-center justify-center rounded-[1.8rem] border border-[#D8B24A]/70 bg-[#C79A2B] text-white shadow-[0_18px_40px_rgba(199,154,43,0.4)]"
+    ? "-mt-8 flex h-16 w-16 items-center justify-center rounded-[1.8rem] border border-white/25 vyron-grad-surface text-white shadow-[var(--vyron-elev-brand)]"
     : `flex min-h-12 w-full flex-col items-center justify-center gap-1 rounded-2xl transition ${
-        active ? "text-[#07111F]" : "text-slate-400"
+        active ? "text-[#4F46E5]" : "text-slate-400"
       }`;
 
   const content = (
@@ -193,7 +193,7 @@ function CreateSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
                 <div className="text-sm font-black text-slate-950">{action.label}</div>
                 <div className="text-xs font-semibold text-slate-500">{action.detail}</div>
               </div>
-              <div className="rounded-full border border-[#E4CF98] bg-[#FFF8E9] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#AA7B16]">
+              <div className="rounded-full border border-[rgba(79,70,229,0.18)] bg-[rgba(79,70,229,0.06)] px-2.5 py-1 vyron-t-label text-[10px] text-[#4F46E5]">
                 Run
               </div>
             </Link>

@@ -59,8 +59,8 @@ function HeroPanel() {
   return (
     <Link href="/executive-briefing" className="relative mb-5 block overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#4d2aa8] via-[#524dd2] to-[#101f5a] p-7 text-white shadow-[0_24px_70px_rgba(88,80,214,0.35)]">
       <div className="absolute inset-0 opacity-80">
-        <div className="absolute -bottom-12 -left-10 h-48 w-[900px] rounded-[50%] bg-gradient-to-r from-fuchsia-500 via-orange-400 to-blue-400 blur-2xl" />
-        <div className="absolute right-16 top-5 h-52 w-52 rounded-full border-[18px] border-orange-400/80 shadow-[0_0_55px_rgba(255,119,44,0.8)]" />
+        <div className="absolute -bottom-12 -left-10 h-48 w-[900px] rounded-[50%] bg-gradient-to-r from-fuchsia-500 to-[var(--vyron-warning-bg)] to-blue-400 blur-2xl" />
+        <div className="absolute right-16 top-5 h-52 w-52 rounded-full border-[18px] border-[var(--vyron-warning-border)] shadow-[0_0_55px_rgba(255,119,44,0.8)]" />
       </div>
 
       <div className="relative z-10">
@@ -89,7 +89,7 @@ function HeroPanel() {
           </div>
 
           <div className="flex justify-center xl:justify-end">
-            <div className="relative flex h-44 w-44 items-center justify-center rounded-full border-[18px] border-orange-400 bg-white/10 shadow-[0_0_50px_rgba(255,113,44,0.65)]">
+            <div className="relative flex h-44 w-44 items-center justify-center rounded-full border-[18px] border-[var(--vyron-warning-border)] bg-white/10 shadow-[0_0_50px_rgba(255,113,44,0.65)]">
               <div className="text-center">
                 <Target className="mx-auto mb-1" size={22} />
                 <div className="text-xs font-black uppercase">GP Target</div>
@@ -128,7 +128,7 @@ function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
                 : p.tone === "blue"
                   ? "border-blue-200 bg-gradient-to-br from-white to-blue-50"
                   : p.tone === "amber"
-                    ? "border-orange-200 bg-gradient-to-br from-white to-orange-50"
+                    ? "border-[var(--vyron-warning-border)] bg-gradient-to-br from-white to-[var(--vyron-warning-bg)]"
                     : "border-red-200 bg-gradient-to-br from-white to-red-50"
             }`}
           >
@@ -143,7 +143,7 @@ function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
                     : p.tone === "blue"
                       ? "bg-blue-100 text-blue-700"
                       : p.tone === "amber"
-                        ? "bg-orange-100 text-orange-700"
+                        ? "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
                         : "bg-red-100 text-red-700"
                 }`}
               >
@@ -161,7 +161,7 @@ function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
                   : p.tone === "blue"
                     ? "text-blue-700"
                     : p.tone === "amber"
-                      ? "text-orange-700"
+                      ? "text-[var(--vyron-warning-fg)]"
                       : "text-red-700"
               }`}
             >
@@ -189,7 +189,7 @@ function AiAssistant() {
       <div className="mt-5 space-y-4">
         {recommendations.map((item) => {
           const Icon = item.icon;
-          const bg = item.color === "green" ? "bg-[#A855F7]/100" : item.color === "orange" ? "bg-orange-500" : "bg-violet-600";
+          const bg = item.color === "green" ? "bg-[#A855F7]/100" : item.color === "orange" ? "bg-[var(--vyron-warning-solid)]" : "bg-violet-600";
 
           return (
             <Link key={item.title} href={item.href} className="flex items-center gap-4 rounded-3xl bg-slate-50 p-4 transition hover:bg-violet-50">
@@ -199,7 +199,7 @@ function AiAssistant() {
               <div className="flex-1">
                 <div className="font-black text-slate-900">{item.title}</div>
                 <div className="mt-1 text-xs font-semibold text-slate-500">{item.sub}</div>
-                <div className={`mt-1 text-2xl font-black ${item.color === "green" ? "text-[#84CC16]" : item.color === "orange" ? "text-orange-600" : "text-violet-600"}`}>
+                <div className={`mt-1 text-2xl font-black ${item.color === "green" ? "text-[#84CC16]" : item.color === "orange" ? "text-[var(--vyron-warning-fg)]" : "text-violet-600"}`}>
                   {item.value}
                 </div>
               </div>
@@ -299,7 +299,7 @@ export default async function VyronCostAiStyleDashboard() {
               <Link href="/procurement-risk" className="block rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
                 <h2 className="text-base font-black text-slate-900">COST RISK RADAR</h2>
                 <div className="mt-5 flex h-36 items-center justify-center rounded-3xl bg-violet-50">
-                  <div className="h-28 w-28 rounded-full bg-gradient-to-br from-violet-600 via-fuchsia-500 to-orange-400 opacity-85" />
+                  <div className="h-28 w-28 rounded-full bg-gradient-to-br from-violet-600 via-fuchsia-500 to-[var(--vyron-warning-bg)] opacity-85" />
                 </div>
                 <div className="mt-4 text-sm font-black text-violet-700">Open procurement risk →</div>
               </Link>

@@ -150,7 +150,7 @@ export default function DocumentIntelligenceClient() {
                   <button
                     type="button"
                     onClick={() => approveImport(doc.id)}
-                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-[#F8FAFC]"
+                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-transparent vyron-grad-surface px-4 py-2 text-xs font-black text-[#F8FAFC]"
                   >
                     <CheckCircle2 size={14} />
                     Approve import

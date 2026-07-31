@@ -435,7 +435,7 @@ export default function ManufacturingIntelligenceClient() {
               <button
                 type="button"
                 onClick={completeAllOpen}
-                className="rounded-full bg-[#24183F] border border-[#A855F7]/30 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-black/20"
+                className="rounded-full vyron-grad-surface border border-transparent px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-black/20"
               >
                 Complete All Open
               </button>

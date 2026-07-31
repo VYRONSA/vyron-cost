@@ -868,7 +868,7 @@ export default function DocumentHubdocClient({
                       type="button"
                       disabled={bulkApproving}
                       onClick={() => void handleBulkApprove()}
-                      className="inline-flex items-center gap-1 rounded-full border border-[#A855F7]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-white disabled:opacity-60"
+                      className="inline-flex items-center gap-1 rounded-full border border-transparent vyron-grad-surface px-4 py-2 text-xs font-black text-white disabled:opacity-60"
                     >
                       {bulkApproving ? "Approving…" : `Approve (${selectedIds.size})`}
                     </button>
@@ -889,7 +889,7 @@ export default function DocumentHubdocClient({
                     type="button"
                     disabled={bulkRestoring}
                     onClick={() => void handleBulkRestore()}
-                    className="inline-flex items-center gap-1 rounded-full border border-[#A855F7]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-white disabled:opacity-60"
+                    className="inline-flex items-center gap-1 rounded-full border border-transparent vyron-grad-surface px-4 py-2 text-xs font-black text-white disabled:opacity-60"
                   >
                     {bulkRestoring ? "Restoring…" : `Restore (${selectedIds.size})`}
                   </button>

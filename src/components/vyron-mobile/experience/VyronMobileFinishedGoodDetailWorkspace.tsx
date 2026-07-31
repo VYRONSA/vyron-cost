@@ -406,7 +406,7 @@ export default function VyronMobileFinishedGoodDetailWorkspace({ productId }: { 
   return (
     <section className="space-y-4 px-4 pb-36 pt-1 sm:px-5">
       <PremiumMobileCard tone="raised" className="overflow-hidden p-0">
-        <div className="bg-gradient-to-br from-[#2B1F63] via-[#3C2B7E] to-[#1B1C48] p-5 text-white">
+        <div className="vyron-grad-deep p-5 text-white">
           <div className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-100">Finished Good</div>
           <div className="mt-2 flex items-start justify-between gap-3">
             <div>

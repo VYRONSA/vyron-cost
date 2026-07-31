@@ -109,9 +109,9 @@ export default function AiCostIntelligenceClient({
           <h2 className="text-xl font-black text-[#F8FAFC]">Supplier inflation</h2>
           <div className="mt-4 space-y-3">
             {intelligence.supplierInflation.slice(0, 8).map((row) => (
-              <div key={row.supplierName} className="rounded-xl border border-orange-400/35 bg-orange-500/15 px-4 py-3">
-                <div className="font-black text-orange-200">{row.supplierName}</div>
-                <div className="text-sm font-semibold text-orange-300">
+              <div key={row.supplierName} className="rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-3">
+                <div className="font-black text-[var(--vyron-warning-fg)]">{row.supplierName}</div>
+                <div className="text-sm font-semibold text-[var(--vyron-warning-fg)]">
                   {row.movementPct}% · {row.category} · Exposure {money(row.monthlyExposure)}/month
                 </div>
               </div>

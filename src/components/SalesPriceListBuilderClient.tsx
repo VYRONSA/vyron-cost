@@ -63,7 +63,7 @@ export default function SalesPriceListBuilderClient({ products }: { products: Pr
               <div className="mt-5 grid gap-4 md:grid-cols-[1fr_220px_220px]">
                 <input value={customerGroup} onChange={(e) => setCustomerGroup(e.target.value)} className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 font-bold outline-none" />
                 <input type="number" value={increase} onChange={(e) => setIncrease(Number(e.target.value))} className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 font-bold outline-none" />
-                <button onClick={downloadCsv} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
+                <button onClick={downloadCsv} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-black text-[#F8FAFC]">
                   <Download size={17} /> Download CSV
                 </button>
               </div>

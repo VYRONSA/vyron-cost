@@ -435,7 +435,7 @@ export default function CustomersClient() {
               <div className="font-semibold text-slate-600">{customer.category}</div>
               <div className="truncate font-bold text-slate-700">{customer.invoiceEmail || "No invoice email"}</div>
               <div className="font-bold text-slate-700">{customer.terms}</div>
-              <div className={`font-bold ${customer.gpMovement < 38 ? "text-orange-400" : "text-[#A855F7]"}`}>{customer.gpMovement.toFixed(1)}%</div>
+              <div className={`font-bold ${customer.gpMovement < 38 ? "text-[var(--vyron-warning-fg)]" : "text-[#A855F7]"}`}>{customer.gpMovement.toFixed(1)}%</div>
               <div>
                 <select value={customer.status} onChange={(event) => updateCustomerStatus(customer.id, event.target.value)} disabled={!canEdit} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-black text-purple-700 outline-none disabled:opacity-60">
                   <option>Active</option>

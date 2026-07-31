@@ -111,7 +111,7 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
                 <option key={category}>{category}</option>
               ))}
             </select>
-            <button type="button" onClick={addPlan} className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
+            <button type="button" onClick={addPlan} className="inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-black text-[#F8FAFC]">
               <Plus size={16} />
               Create plan
             </button>

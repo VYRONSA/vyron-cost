@@ -84,7 +84,7 @@ export default function InventoryDashboardClient() {
 
   const inventoryActions = (
     <>
-      <Link href="/inventory/stock" className="inline-flex items-center gap-2 rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
+      <Link href="/inventory/stock" className="inline-flex items-center gap-2 rounded-xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
         <PackagePlus size={17} />
         Add / Manage Stock Items
       </Link>
@@ -93,17 +93,17 @@ export default function InventoryDashboardClient() {
           type="button"
           onClick={() => void syncMasters()}
           disabled={syncing}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#21163A] px-5 py-3 text-sm font-semibold text-[#CBD5E1] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155] disabled:opacity-60"
         >
           <RefreshCcw size={17} />
           {syncing ? "Syncing…" : "Sync from Ingredients & Products"}
         </button>
       ) : null}
-      <Link href="/inventory/ledger" className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#21163A] px-5 py-3 text-sm font-semibold text-[#CBD5E1]">
+      <Link href="/inventory/ledger" className="inline-flex items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
         <Boxes size={17} />
         Stock Ledger
       </Link>
-      <Link href="/inventory/counts" className="inline-flex items-center gap-2 rounded-xl border border-orange-400/30 bg-orange-500/15 px-5 py-3 text-sm font-semibold text-orange-200">
+      <Link href="/inventory/counts" className="inline-flex items-center gap-2 rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-5 py-3 text-sm font-semibold text-[var(--vyron-warning-fg)]">
         <ClipboardList size={17} />
         Stock Counts
       </Link>
@@ -160,7 +160,7 @@ export default function InventoryDashboardClient() {
         ))}
       </div>
 
-      <p className="rounded-xl border border-white/10 bg-[#21163A] px-5 py-4 text-sm font-medium leading-6 text-[#CBD5E1]">
+      <p className="rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-4 text-sm font-medium leading-6 text-[#334155]">
         Valuation: weighted average active. FIFO and standard cost settings remain available in stock item detail screens.
       </p>
     </VyronPremiumPageShell>

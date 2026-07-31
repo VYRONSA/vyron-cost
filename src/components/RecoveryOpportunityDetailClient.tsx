@@ -126,7 +126,7 @@ export default function RecoveryOpportunityDetailClient({
                   <button
                     type="button"
                     onClick={() => setStatus("Approved")}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-4 py-3 text-sm font-black text-[#F8FAFC]"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-transparent vyron-grad-surface px-4 py-3 text-sm font-black text-[#F8FAFC]"
                   >
                     <CheckCircle2 size={16} />
                     Approve

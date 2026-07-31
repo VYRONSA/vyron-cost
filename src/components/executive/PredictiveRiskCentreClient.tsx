@@ -612,7 +612,7 @@ function HeatmapGrid({ risks }: { risks: HeatmapRisk[] }) {
 
   const impactColors: Record<string, string> = {
     Critical: "bg-rose-100 border-rose-300",
-    High: "bg-orange-100 border-orange-300",
+    High: "bg-[var(--vyron-warning-bg)] border-[var(--vyron-warning-border)]",
     Medium: "bg-fuchsia-100 border-fuchsia-300",
     Low: "bg-[#F6F7FB] border-[#E2E8F0]",
   };
@@ -684,7 +684,7 @@ function PreventiveActionCard({ action }: { action: PreventiveAction }) {
 function SeverityBadge({ severity }: { severity: ForecastedRisk["severity"] }) {
   const classes: Record<ForecastedRisk["severity"], string> = {
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
-    High: "border-orange-200 bg-orange-50 text-orange-900",
+    High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Medium: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
     Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
   };

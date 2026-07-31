@@ -111,14 +111,14 @@ export default function SupplierIntelligenceDashboardClient({ rows }: { rows: Su
               <div className="col-span-2 font-bold text-[#F8FAFC]">{row.supplier_name}</div>
               <div>{row.category}</div>
               <div>{formatSupplierSpend(row.current_spend)}</div>
-              <div className="font-bold text-orange-300">{row.price_movement_percent.toFixed(1)}%</div>
+              <div className="font-bold text-[var(--vyron-warning-fg)]">{row.price_movement_percent.toFixed(1)}%</div>
               <div>{row.linked_ingredients}</div>
               <div>{row.invoice_count}</div>
               <div>{row.duplicate_invoice_risk}</div>
               <div>{formatSupplierSpend(row.price_variance)}</div>
               <div>{row.reliability_score}</div>
               <div className="font-bold text-[#A855F7]">{formatSupplierSpend(row.negotiation_opportunity)}</div>
-              <div className="font-bold text-orange-300">{row.supplier_risk_score}</div>
+              <div className="font-bold text-[var(--vyron-warning-fg)]">{row.supplier_risk_score}</div>
               <div className="text-xs font-semibold text-[#94A3B8]">{row.recommended_action}</div>
             </Link>
           ))}

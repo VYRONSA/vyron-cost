@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* Canonical, product-agnostic VYRON Enterprise Design Language. VYRON COST
+   supplies only its brand hues below; everything else is inherited. */
+@import "../styles/vyron-enterprise-design-language.css";
 
 :root {
   --vyron-bg: #120a1f;
@@ -189,23 +192,8 @@ button, input, select, textarea { font: inherit; }
   color: var(--vyron-muted);
 }
 
-.vyron-status-lime {
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  background: rgba(168, 85, 247, 0.12);
-  color: var(--vyron-lime);
-}
-
-.vyron-status-warning {
-  border: 1px solid rgba(192, 38, 211, 0.35);
-  background: rgba(192, 38, 211, 0.15);
-  color: var(--vyron-orange);
-}
-
-.vyron-status-brand {
-  border: 1px solid rgba(96, 165, 250, 0.3);
-  background: rgba(29, 107, 255, 0.15);
-  color: #dbeafe;
-}
+/* Legacy .vyron-status-* rules removed: unused, and `.vyron-status-warning`
+   collided with the design language's semantic badge of the same name. */
 
 /* ── VYRON Master — public pages (landing, login) ── */
 :root {
@@ -282,153 +270,41 @@ html:has(.vyron-public-page) body {
   box-shadow: 0 20px 60px rgba(7, 17, 31, 0.32);
 }
 
-/* ══ VYRON ENTERPRISE DESIGN LANGUAGE ══
-   One authoritative presentation layer. Every shared component reads from these
-   tokens; no page-specific styling. Layout, spacing relationships and card
-   positions are untouched — this file only governs how surfaces look. */
+/* ── VYRON COST brand identity ──
+   The only thing this product overrides. Atmosphere, type, spacing, elevation,
+   glass, motion, focus and status all come from the design language file. */
 :root {
-  /* Elevation — layered and low-alpha. Enterprise depth reads as many soft
-     shadows, never one heavy drop; a single dark shadow looks consumer. */
-  --vyron-elev-1: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.03);
-  --vyron-elev-2: 0 2px 4px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.05);
-  --vyron-elev-3: 0 4px 8px rgba(15, 23, 42, 0.04), 0 12px 28px rgba(15, 23, 42, 0.07);
-  --vyron-elev-4: 0 8px 16px rgba(15, 23, 42, 0.05), 0 24px 56px rgba(15, 23, 42, 0.09);
-  --vyron-elev-brand: 0 4px 12px rgba(79, 70, 229, 0.10), 0 16px 40px rgba(79, 70, 229, 0.12);
-
-  /* Hairlines — borders at full slate read as boxes; at 7% they read as edges. */
-  --vyron-hairline: rgba(15, 23, 42, 0.07);
-  --vyron-hairline-strong: rgba(15, 23, 42, 0.11);
-  --vyron-hairline-brand: rgba(79, 70, 229, 0.18);
-
-  /* Glass */
-  --vyron-glass: rgba(255, 255, 255, 0.72);
-  --vyron-glass-strong: rgba(255, 255, 255, 0.86);
-
-  /* Motion — one duration and one curve across the product. */
-  --vyron-ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --vyron-dur: 180ms;
-
-  /* Focus — a single visible ring for keyboard users on every control. */
-  --vyron-focus-ring: 0 0 0 3px rgba(29, 107, 255, 0.20);
+  --vyron-brand: #4f46e5;
+  --vyron-brand-strong: #3d3ab8;
+  --vyron-brand-wash: rgba(79, 70, 229, 0.06);
+  --vyron-brand-edge: rgba(79, 70, 229, 0.18);
 }
 
-/* ── Typography hierarchy ──
-   Weight and tracking carry the hierarchy rather than size jumps, so nothing
-   reflows. Metrics use tabular figures — financial columns must align. */
-.vyron-t-display {
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-}
-
-.vyron-t-title {
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-.vyron-t-section {
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  line-height: 1.3;
-}
-
-.vyron-t-label {
-  font-weight: 600;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-}
-
-.vyron-t-metric,
-.vyron-metric-value {
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-}
-
-.vyron-t-body {
-  font-weight: 450;
-  line-height: 1.6;
-}
-
-.vyron-t-caption {
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-/* Numeric table cells align on the decimal across long datasets. */
+/* ── Table comfort (product-scoped) ──
+   Enterprise datasets get read for hours: quiet rules, clear hover, and a
+   selected state that does not rely on colour alone. */
 .vyron-cost-shell-main table td,
 .vyron-cost-shell-main table th {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Interaction polish ──
-   One focus ring, one transition curve, applied to every control in the shell. */
-.vyron-cost-shell-main :is(button, a, input, select, textarea, [role="button"]):focus-visible,
-.vyron-public-page :is(button, a, input, select, textarea, [role="button"]):focus-visible {
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-  box-shadow: var(--vyron-focus-ring);
-  border-radius: 0.6rem;
-}
-
-.vyron-cost-shell-main button,
-.vyron-cost-shell-main a,
-.vyron-public-page button,
-.vyron-public-page a {
-  transition: background-color var(--vyron-dur) var(--vyron-ease),
-    border-color var(--vyron-dur) var(--vyron-ease),
-    box-shadow var(--vyron-dur) var(--vyron-ease),
-    transform var(--vyron-dur) var(--vyron-ease),
-    color var(--vyron-dur) var(--vyron-ease);
-}
-
-/* ── Table comfort ──
-   Enterprise datasets get read for hours: quieter rules, clearer hover, and a
-   selected state that does not rely on colour alone. */
 .vyron-cost-shell-main tbody tr {
   transition: background-color var(--vyron-dur) var(--vyron-ease);
 }
 
 .vyron-cost-shell-main tbody tr:hover {
-  background-color: rgba(79, 70, 229, 0.045);
+  background-color: var(--vyron-brand-wash);
 }
 
 .vyron-cost-shell-main tbody tr[aria-selected="true"],
 .vyron-cost-shell-main tbody tr[data-selected="true"] {
   background-color: rgba(79, 70, 229, 0.08);
-  box-shadow: inset 3px 0 0 #4f46e5;
+  box-shadow: inset 3px 0 0 var(--vyron-brand);
 }
 
 .vyron-cost-shell-main thead th {
   font-weight: 600;
   letter-spacing: 0.08em;
-}
-
-/* ── Form calm ── */
-.vyron-cost-shell-main input:not([type="checkbox"]):not([type="radio"]),
-.vyron-cost-shell-main select,
-.vyron-cost-shell-main textarea {
-  transition: border-color var(--vyron-dur) var(--vyron-ease),
-    box-shadow var(--vyron-dur) var(--vyron-ease),
-    background-color var(--vyron-dur) var(--vyron-ease);
-}
-
-.vyron-cost-shell-main input:not([type="checkbox"]):not([type="radio"]):hover,
-.vyron-cost-shell-main select:hover,
-.vyron-cost-shell-main textarea:hover {
-  border-color: var(--vyron-hairline-strong);
-}
-
-.vyron-cost-shell-main [aria-invalid="true"] {
-  border-color: rgba(225, 29, 72, 0.55);
-  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .vyron-cost-shell-main *,
-  .vyron-public-page * {
-    transition-duration: 1ms !important;
-  }
 }
 
 /* ── Brand fade ──
@@ -500,6 +376,19 @@ html:has(.vyron-public-page) body {
   transition: box-shadow var(--vyron-dur) var(--vyron-ease),
     border-color var(--vyron-dur) var(--vyron-ease),
     transform var(--vyron-dur) var(--vyron-ease);
+}
+
+/* Semantic health edge, composed with the card's elevation. */
+.vyron-metric-card.vyron-tone-success {
+  box-shadow: inset 3px 0 0 var(--vyron-success-solid), var(--vyron-elev-2);
+}
+
+.vyron-metric-card.vyron-tone-warning {
+  box-shadow: inset 3px 0 0 var(--vyron-warning-solid), var(--vyron-elev-2);
+}
+
+.vyron-metric-card.vyron-tone-error {
+  box-shadow: inset 3px 0 0 var(--vyron-error-solid), var(--vyron-elev-2);
 }
 
 .vyron-metric-card:hover {

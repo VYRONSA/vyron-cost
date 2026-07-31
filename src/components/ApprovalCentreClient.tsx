@@ -146,7 +146,7 @@ export default function ApprovalCentreClient({
                         <button
                           type="button"
                           onClick={() => decide(approval.id, "Approved")}
-                          className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]"
+                          className="inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-black text-[#F8FAFC]"
                         >
                           <CheckCircle2 size={18} />
                           Approve
