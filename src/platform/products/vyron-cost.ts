@@ -18,8 +18,8 @@ export const VYRON_COST_PRODUCT: VyronProductDefinition = {
   shortName: "COST",
   tagline: "AI cost intelligence, procurement control and inventory accuracy.",
   theme: {
-    primary: "#7C3AED",
-    accent: "#F43F5E",
+    primary: "#1D6BFF",
+    accent: "#7E22CE",
     label: "COST",
   },
   packages: VYRON_COST_PACKAGES,

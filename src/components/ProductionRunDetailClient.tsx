@@ -290,7 +290,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
       </div>
 
       {run.status === "Completed" ? (
-        <div className="rounded-[2rem] border border-[#A3E635]/20 bg-[#A3E635]/10 p-6">
+        <div className="rounded-[2rem] border border-[#A855F7]/20 bg-[#A855F7]/10 p-6">
           <h3 className="text-sm font-black uppercase text-[#4D7C0F]">Variance Analysis</h3>
           <div className="mt-4 grid gap-3 sm:grid-cols-3 text-sm font-bold">
             <div>Cost variance: {run.cost_variance_pct}%</div>
@@ -348,7 +348,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
                 type="button"
                 disabled={loading}
                 onClick={() => void complete(shortages.length > 0)}
-                className="rounded-2xl bg-[#24183F] border border-[#A3E635]/30 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+                className="rounded-2xl bg-[#24183F] border border-[#A855F7]/30 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
               >
                 Complete & post to stock
               </button>
@@ -364,12 +364,12 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
           </button>
         ) : null}
         {run.status === "Approved" && canStart ? (
-          <button type="button" disabled={loading} onClick={() => void action(`/api/production/runs/${runId}/start`)} className="rounded-2xl bg-amber-600 px-5 py-3 text-sm font-black text-white">
+          <button type="button" disabled={loading} onClick={() => void action(`/api/production/runs/${runId}/start`)} className="rounded-2xl bg-fuchsia-600 px-5 py-3 text-sm font-black text-white">
             Start production
           </button>
         ) : null}
         {(run.status === "Approved" || run.status === "In Production") && canComplete ? (
-          <button type="button" disabled={loading} onClick={() => void complete(false)} className="rounded-2xl bg-[#24183F] border border-[#A3E635]/30 px-5 py-3 text-sm font-black text-white">
+          <button type="button" disabled={loading} onClick={() => void complete(false)} className="rounded-2xl bg-[#24183F] border border-[#A855F7]/30 px-5 py-3 text-sm font-black text-white">
             Quick complete
           </button>
         ) : null}

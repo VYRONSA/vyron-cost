@@ -23,6 +23,7 @@ export {
 } from "@/components/vyron-ui/colours";
 export { VyronFooterStrip } from "@/components/vyron-ui/VyronFooterStrip";
 export { VyronInsightCard } from "@/components/vyron-ui/VyronInsightCard";
+export { VyronLogoLockup, VyronLogoMark, type VyronLogoVariant } from "@/components/vyron-ui/VyronLogo";
 export { VyronMetricCard, VyronMetricGrid, type VyronMetricTone } from "@/components/vyron-ui/VyronMetricCard";
 export { VyronPageContainer } from "@/components/vyron-ui/VyronPageContainer";
 export { VyronPageFrame } from "@/components/vyron-ui/VyronPageFrame";

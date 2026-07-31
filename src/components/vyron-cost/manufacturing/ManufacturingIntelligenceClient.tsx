@@ -435,7 +435,7 @@ export default function ManufacturingIntelligenceClient() {
               <button
                 type="button"
                 onClick={completeAllOpen}
-                className="rounded-full bg-[#24183F] border border-[#A3E635]/30 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-black/20"
+                className="rounded-full bg-[#24183F] border border-[#A855F7]/30 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-black/20"
               >
                 Complete All Open
               </button>
@@ -605,7 +605,7 @@ export default function ManufacturingIntelligenceClient() {
                 <div className="text-right font-bold">{formatNumber(batch.actualQty)}</div>
                 <div className="text-right font-bold">{formatCurrency(batch.expectedCost)}</div>
                 <div className="text-right font-black">{formatCurrency(batch.actualCost)}</div>
-                <div className={`text-right font-black ${variance > 0 ? "text-rose-700" : "text-[#65A30D]"}`}>{formatCurrency(variance)}</div>
+                <div className={`text-right font-black ${variance > 0 ? "text-rose-700" : "text-[#7E22CE]"}`}>{formatCurrency(variance)}</div>
                 <div>
                   <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${statusClass(batch.status)}`}>
                     {batch.status}
@@ -734,7 +734,7 @@ function ActionButton({
 }) {
   const tones = {
     indigo: "bg-indigo-100 text-indigo-800",
-    emerald: "bg-[#A3E635]/12 text-[#4D7C0F]",
+    emerald: "bg-[#A855F7]/12 text-[#4D7C0F]",
     purple: "bg-purple-100 text-purple-800",
     rose: "bg-rose-100 text-rose-800",
     slate: "bg-slate-100 text-slate-700",
@@ -748,9 +748,9 @@ function ActionButton({
 }
 
 function statusClass(status: BatchStatus) {
-  if (status === "Completed") return "bg-[#A3E635]/12 text-[#4D7C0F]";
+  if (status === "Completed") return "bg-[#A855F7]/12 text-[#4D7C0F]";
   if (status === "In Production") return "bg-indigo-100 text-indigo-800";
   if (status === "Reversed") return "bg-rose-100 text-rose-800";
   if (status === "Cancelled") return "bg-slate-200 text-slate-700";
-  return "bg-amber-100 text-amber-800";
+  return "bg-fuchsia-100 text-fuchsia-800";
 }

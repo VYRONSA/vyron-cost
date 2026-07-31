@@ -30,7 +30,7 @@ export default function ProductMarginReportClient({ products }: { products: Prod
     >
       <div className="overflow-x-auto rounded-3xl border border-slate-100">
         <div className="min-w-[1020px]">
-          <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+          <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
             <div>Product</div><div>Category</div><div>Cost Price</div><div>Selling Price</div><div>Target GP</div><div>Actual GP</div><div>Variance</div><div>Status</div>
           </div>
           {filtered.map((product) => {
@@ -52,7 +52,7 @@ export default function ProductMarginReportClient({ products }: { products: Prod
                       <div>{formatMoney(Number(product.total_cost))}</div>
                       <div>{formatMoney(Number(product.selling_price))}</div>
                       <div>{Number(product.target_gp || 0).toFixed(1)}%</div>
-                      <div className="font-black text-[#65A30D]">{gp.toFixed(1)}%</div>
+                      <div className="font-black text-[#7E22CE]">{gp.toFixed(1)}%</div>
                       <div>{variance.toFixed(1)}%</div>
                       <div><StatusPill tone={tone}>{tone === "red" ? "Critical" : tone === "amber" ? "Review" : "Healthy"}</StatusPill></div>
                     </div>

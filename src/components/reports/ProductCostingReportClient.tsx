@@ -38,7 +38,7 @@ export default function ProductCostingReportClient({ lines }: { lines: ProductCo
           >
             <div className="overflow-x-auto rounded-3xl border border-slate-100">
               <div className="min-w-[1120px]">
-                <div className="grid grid-cols-9 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+                <div className="grid grid-cols-9 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
                   <div>Product</div><div>Type</div><div>Line</div><div>Qty</div><div>Unit</div><div>Unit Cost</div><div>Waste</div><div>Line Cost</div><div>Source</div>
                 </div>
                 {filtered.map((line) => (
@@ -50,7 +50,7 @@ export default function ProductCostingReportClient({ lines }: { lines: ProductCo
                     <div>{line.unit}</div>
                     <div>{formatMoney(Number(line.unit_cost || 0))}</div>
                     <div>{Number(line.wastage_percent || 0).toFixed(1)}%</div>
-                    <div className="font-black text-[#65A30D]">{formatMoney(Number(line.line_cost || line.line_cost_imported || 0))}</div>
+                    <div className="font-black text-[#7E22CE]">{formatMoney(Number(line.line_cost || line.line_cost_imported || 0))}</div>
                     <div>{line.source_sheet || "Manual"}</div>
                   </div>
                 ))}

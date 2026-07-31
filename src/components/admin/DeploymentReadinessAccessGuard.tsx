@@ -34,7 +34,7 @@ export default function DeploymentReadinessAccessGuard({ children }: { children:
           <p className="mt-3 text-sm font-medium text-[#64748B]">
             Deployment readiness is available to platform developers and workspace administrators only.
           </p>
-          <Link href="/dashboard" className="mt-6 inline-block rounded-xl bg-[#7C3AED] px-5 py-2.5 text-sm font-bold text-white">
+          <Link href="/dashboard" className="mt-6 inline-block rounded-xl bg-[#1D6BFF] px-5 py-2.5 text-sm font-bold text-white">
             Go to Dashboard
           </Link>
         </div>

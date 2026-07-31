@@ -52,7 +52,7 @@ export function MultiCompanyClient({ data }: { data: EnterprisePlatformPayload["
               <div>
                 <span className={EP_LABEL}>{u.unitType}</span>
                 <div className="font-black text-[#F8FAFC]">{u.unitLabel}</div>
-                {u.isPrimary ? <span className="text-xs font-bold text-[#A3E635]">Primary · live data</span> : null}
+                {u.isPrimary ? <span className="text-xs font-bold text-[#A855F7]">Primary · live data</span> : null}
               </div>
               <span className={`text-xs font-bold ${EP_MUTED}`}>{u.industry}</span>
             </div>
@@ -162,7 +162,7 @@ export function BenchmarkingClient({ engines }: { engines: EnterprisePlatformPay
                     key={r.unitKey}
                     className={
                       r.isBest
-                        ? "bg-[#A3E635]/10"
+                        ? "bg-[#A855F7]/10"
                         : r.isWorst
                           ? "bg-red-500/10"
                           : EP_TABLE_ROW
@@ -170,7 +170,7 @@ export function BenchmarkingClient({ engines }: { engines: EnterprisePlatformPay
                   >
                     <td className="px-4 py-2 font-black text-[#F8FAFC]">{r.rank}</td>
                     <td className="px-4 py-2 font-bold text-[#CBD5E1]">{r.unitLabel}</td>
-                    <td className={`px-4 py-2 text-right font-black ${r.isBest ? "text-[#A3E635]" : r.isWorst ? "text-red-300" : "text-[#F8FAFC]"}`}>
+                    <td className={`px-4 py-2 text-right font-black ${r.isBest ? "text-[#A855F7]" : r.isWorst ? "text-red-300" : "text-[#F8FAFC]"}`}>
                       {eng.dimension.includes("yield") || eng.dimension.includes("health") ? `${r.metricValue}` : money(r.metricValue)}
                     </td>
                   </tr>
@@ -433,7 +433,7 @@ export function PerformanceClient({ perf }: { perf: EnterprisePlatformPayload["p
         </div>
         <div className={`${EP_CARD_LG} border border-violet-400/30 bg-violet-500/15`}>
           <div className={`${EP_LABEL} text-violet-200`}>Readiness</div>
-          <div className="mt-2 text-3xl font-black text-[#A3E635]">{perf.readinessPct}%</div>
+          <div className="mt-2 text-3xl font-black text-[#A855F7]">{perf.readinessPct}%</div>
         </div>
       </div>
       <ul className="space-y-2">

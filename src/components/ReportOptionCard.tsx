@@ -38,7 +38,7 @@ export default function ReportOptionCard({
       <h3 className="mt-5 text-xl font-black text-[#F8FAFC]">{title}</h3>
       <p className="mt-3 text-sm font-medium leading-7 text-[#CBD5E1]">{description}</p>
 
-      <div className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-[#A3E635]">
+      <div className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-[#A855F7]">
         Open report
         <ArrowRight className="transition group-hover:translate-x-1" size={16} />
       </div>

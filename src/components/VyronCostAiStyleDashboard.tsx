@@ -66,7 +66,7 @@ function HeroPanel() {
       <div className="relative z-10">
         <div className="mb-8 flex items-center gap-3">
           <span className="text-sm font-black uppercase tracking-[0.14em]">Today · Handcrafted Food Products</span>
-          <span className="rounded-full border border-[#A3E635]/25 bg-[#A3E635]/100 px-3 py-1 text-xs font-black">LIVE</span>
+          <span className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/100 px-3 py-1 text-xs font-black">LIVE</span>
         </div>
 
         <div className="grid gap-8 xl:grid-cols-[1fr_1fr_1fr_0.9fr] xl:items-center">
@@ -124,7 +124,7 @@ function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
             href={`/products/${p.id}`}
             className={`relative block overflow-hidden rounded-3xl border p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl ${
               p.tone === "green"
-                ? "border-[#A3E635]/25 bg-gradient-to-br from-white to-[#A3E635]/10"
+                ? "border-[#A855F7]/25 bg-gradient-to-br from-white to-[#A855F7]/10"
                 : p.tone === "blue"
                   ? "border-blue-200 bg-gradient-to-br from-white to-blue-50"
                   : p.tone === "amber"
@@ -139,7 +139,7 @@ function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
               <div
                 className={`rounded-full px-3 py-1 text-xs font-black ${
                   p.tone === "green"
-                    ? "bg-[#A3E635]/12 text-[#65A30D]"
+                    ? "bg-[#A855F7]/12 text-[#7E22CE]"
                     : p.tone === "blue"
                       ? "bg-blue-100 text-blue-700"
                       : p.tone === "amber"
@@ -157,7 +157,7 @@ function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
             <div
               className={`mt-5 text-5xl font-black tracking-tight ${
                 p.tone === "green"
-                  ? "text-[#65A30D]"
+                  ? "text-[#7E22CE]"
                   : p.tone === "blue"
                     ? "text-blue-700"
                     : p.tone === "amber"
@@ -189,7 +189,7 @@ function AiAssistant() {
       <div className="mt-5 space-y-4">
         {recommendations.map((item) => {
           const Icon = item.icon;
-          const bg = item.color === "green" ? "bg-[#A3E635]/100" : item.color === "orange" ? "bg-orange-500" : "bg-violet-600";
+          const bg = item.color === "green" ? "bg-[#A855F7]/100" : item.color === "orange" ? "bg-orange-500" : "bg-violet-600";
 
           return (
             <Link key={item.title} href={item.href} className="flex items-center gap-4 rounded-3xl bg-slate-50 p-4 transition hover:bg-violet-50">

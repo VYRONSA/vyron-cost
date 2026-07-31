@@ -66,7 +66,7 @@ export default function FinishedGoodsDashboardClient() {
           ]}
         />
         <div className="relative overflow-hidden rounded-[2rem] bg-[#07110d] p-8 text-white shadow-[0_24px_60px_rgba(6,20,14,0.28)]">
-          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-[#A3E635]">Total finished goods value</div>
+          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-[#A855F7]">Total finished goods value</div>
           <div className="mt-2 text-4xl font-black">{formatMoney(totalValue)}</div>
           <p className="mt-3 text-sm font-semibold leading-6 text-slate-400">Linked to inventory module — updated on each completed production run.</p>
         </div>
@@ -114,7 +114,7 @@ export default function FinishedGoodsDashboardClient() {
                       Stock detail
                     </Link>
                     {item.product_id ? (
-                      <Link href={`/products/${item.product_id}/edit`} className="ml-3 text-xs font-black text-[#65A30D]">
+                      <Link href={`/products/${item.product_id}/edit`} className="ml-3 text-xs font-black text-[#7E22CE]">
                         Open maintenance
                       </Link>
                     ) : null}

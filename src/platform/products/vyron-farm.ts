@@ -6,7 +6,7 @@ export const VYRON_FARM_PRODUCT: VyronProductDefinition = {
   shortName: "FARM",
   tagline: "Agricultural operations, yield intelligence and supply planning.",
   theme: {
-    primary: "#65A30D",
+    primary: "#7E22CE",
     accent: "#84CC16",
     label: "FARM",
   },

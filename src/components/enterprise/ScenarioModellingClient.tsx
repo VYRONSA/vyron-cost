@@ -88,12 +88,12 @@ export default function ScenarioModellingClient({ initial }: { initial: Scenario
                   {impact.gpChangePts} pts
                 </div>
               </div>
-              <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-5">
-                <div className="text-xs font-black uppercase text-[#65A30D]">Recovery</div>
+              <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-5">
+                <div className="text-xs font-black uppercase text-[#7E22CE]">Recovery</div>
                 <div className="mt-2 text-2xl font-black">{money(impact.recoveryImpact)}/mo</div>
               </div>
-              <div className="rounded-2xl bg-amber-50 p-5">
-                <div className="text-xs font-black uppercase text-amber-700">Inventory</div>
+              <div className="rounded-2xl bg-fuchsia-50 p-5">
+                <div className="text-xs font-black uppercase text-fuchsia-700">Inventory</div>
                 <div className="mt-2 text-2xl font-black">{money(impact.inventoryImpact)}</div>
               </div>
               <div className="rounded-2xl bg-violet-50 p-5">
@@ -102,7 +102,7 @@ export default function ScenarioModellingClient({ initial }: { initial: Scenario
               </div>
             </div>
             <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-              <div className="text-xs font-black uppercase text-[#A3E635]">Annual profit impact</div>
+              <div className="text-xs font-black uppercase text-[#A855F7]">Annual profit impact</div>
               <div className="mt-2 text-4xl font-black">{money(impact.annualProfitImpact)}</div>
               <ul className="mt-4 space-y-2 text-sm font-semibold text-slate-300">
                 {impact.narrative.map((n) => (

@@ -303,11 +303,11 @@ export default function DeveloperManageUsersClient({
                       Reset
                     </button>
                     {member.status === "Disabled" ? (
-                      <button type="button" onClick={() => void enableUser(member.userId)} className="rounded-xl border border-[#A3E635]/25 bg-[#A3E635]/12 px-3 py-2 text-xs font-black text-[#4D7C0F]">
+                      <button type="button" onClick={() => void enableUser(member.userId)} className="rounded-xl border border-[#A855F7]/25 bg-[#A855F7]/12 px-3 py-2 text-xs font-black text-[#4D7C0F]">
                         Enable
                       </button>
                     ) : member.role !== "OWNER" ? (
-                      <button type="button" onClick={() => void disableUser(member.userId)} className="rounded-xl bg-amber-100 px-3 py-2 text-xs font-black text-amber-800">
+                      <button type="button" onClick={() => void disableUser(member.userId)} className="rounded-xl bg-fuchsia-100 px-3 py-2 text-xs font-black text-fuchsia-800">
                         Disable
                       </button>
                     ) : null}

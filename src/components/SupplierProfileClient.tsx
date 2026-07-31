@@ -13,8 +13,8 @@ function money(value: number) {
 function riskColour(level: string) {
   if (level === "Critical") return "text-red-800 bg-red-50 border-red-200";
   if (level === "High") return "text-orange-800 bg-orange-50 border-orange-200";
-  if (level === "Medium") return "text-amber-800 bg-amber-50 border-amber-200";
-  return "text-[#4D7C0F] bg-[#A3E635]/10 border-[#A3E635]/25";
+  if (level === "Medium") return "text-fuchsia-800 bg-fuchsia-50 border-fuchsia-200";
+  return "text-[#4D7C0F] bg-[#A855F7]/10 border-[#A855F7]/25";
 }
 
 type ChartPeriod = "monthly" | "quarterly" | "yearly";
@@ -124,7 +124,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                   </div>
                 </div>
                 <div className="mt-4">
-                  <ExecutiveSparkChart data={chartData.length ? chartData : [{ label: "—", value: 0 }]} height={140} colour="#7c3aed" />
+                  <ExecutiveSparkChart data={chartData.length ? chartData : [{ label: "—", value: 0 }]} height={140} colour="#1d6bff" />
                 </div>
                 {profile.priceHistory.latest ? (
                   <div className="mt-4 grid gap-2 rounded-xl bg-slate-50 p-4 text-sm sm:grid-cols-4">
@@ -161,9 +161,9 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                         : "None detected"}
                     </div>
                   </div>
-                  <div className="rounded-xl bg-amber-50 p-4">
-                    <div className="text-xs font-black uppercase text-amber-700">Most Frequent Increase</div>
-                    <div className="mt-1 font-black text-amber-900">
+                  <div className="rounded-xl bg-fuchsia-50 p-4">
+                    <div className="text-xs font-black uppercase text-fuchsia-700">Most Frequent Increase</div>
+                    <div className="mt-1 font-black text-fuchsia-900">
                       {profile.inflation.mostFrequentIncrease
                         ? `${profile.inflation.mostFrequentIncrease.itemName} · ${profile.inflation.mostFrequentIncrease.count}×`
                         : "—"}
@@ -195,7 +195,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                       </div>
                       <div className="mt-2 flex flex-wrap gap-4 text-xs font-bold text-slate-600">
                         <span>Difference: {money(b.difference)}</span>
-                        <span className="text-[#65A30D]">Potential saving: {money(b.potentialSaving)}/mo est.</span>
+                        <span className="text-[#7E22CE]">Potential saving: {money(b.potentialSaving)}/mo est.</span>
                       </div>
                     </div>
                   ))
@@ -257,23 +257,23 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                       </li>
                     ))
                   ) : (
-                    <li className="text-sm font-bold text-[#65A30D]">No elevated risk factors.</li>
+                    <li className="text-sm font-bold text-[#7E22CE]">No elevated risk factors.</li>
                   )}
                 </ul>
               </div>
             </section>
 
-            <section className="rounded-[2rem] bg-[#A3E635]/10 p-6">
+            <section className="rounded-[2rem] bg-[#A855F7]/10 p-6">
               <h3 className="text-lg font-black text-[#4D7C0F]">Savings Opportunities</h3>
               <div className="mt-4 space-y-2">
                 {profile.savingsOpportunities.map((o) => (
                   <div key={o.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-4">
                     <div>
-                      <div className="text-xs font-black uppercase text-[#65A30D]">{o.type}</div>
+                      <div className="text-xs font-black uppercase text-[#7E22CE]">{o.type}</div>
                       <div className="font-black text-slate-900">{o.title}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-black text-[#65A30D]">{money(o.potentialAnnual)}/yr</div>
+                      <div className="font-black text-[#7E22CE]">{money(o.potentialAnnual)}/yr</div>
                       <div className="text-xs font-bold text-slate-500">{o.confidence}% confidence</div>
                       {o.href ? (
                         <Link href={o.href} className="text-xs font-black text-violet-700 hover:underline">

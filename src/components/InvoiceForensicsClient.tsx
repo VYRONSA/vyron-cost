@@ -98,7 +98,7 @@ export default function InvoiceForensicsClient({ rows }: { rows: InvoiceRiskFind
                     <div>{row.duplicate_of || "—"}</div>
                     <div>{row.review_status}</div>
                     <div>
-                      <Link href="/invoice-centre" className="rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]">
+                      <Link href="/invoice-centre" className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]">
                         Open
                       </Link>
                     </div>

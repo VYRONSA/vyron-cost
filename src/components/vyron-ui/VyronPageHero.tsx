@@ -27,13 +27,13 @@ export function VyronPageHero({
 }: VyronPageHeroProps) {
   return (
     <section className={M.moduleHeaderNavy}>
-      <div className="pointer-events-none absolute -right-8 top-6 h-36 w-36 rounded-full bg-[#7C3AED]/12 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-4 left-1/4 h-28 w-28 rounded-full bg-[#F43F5E]/8 blur-2xl" />
+      <div className="pointer-events-none absolute -right-8 top-6 h-36 w-36 rounded-full bg-[#1D6BFF]/12 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-4 left-1/4 h-28 w-28 rounded-full bg-[#3B82F6]/8 blur-2xl" />
 
       <div className={`relative p-5 md:p-6 ${M.dashboardHeroInner}`}>
         <div className="flex min-w-0 max-w-3xl flex-col justify-center">
           <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#CBD5E1]">
-            <Sparkles size={13} className="shrink-0 text-[#F43F5E]" />
+            <Sparkles size={13} className="shrink-0 text-[#3B82F6]" />
             <span className="break-words">{badge}</span>
           </div>
 

@@ -273,7 +273,7 @@ export default function AskVyronClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#F43F5E]/35 bg-[#F43F5E]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 VYRON Intelligence Assistant
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Ask VYRON</h1>
@@ -339,7 +339,7 @@ export default function AskVyronClient({
         <>
           <section className={M.moduleDataSection}>
             <div className="flex items-start gap-3">
-              <Sparkles size={20} className="mt-0.5 shrink-0 text-[#7C3AED]" />
+              <Sparkles size={20} className="mt-0.5 shrink-0 text-[#1D6BFF]" />
               <div className="min-w-0 flex-1">
                 <h2 className="text-lg font-bold text-[#0F172A]">Ask a business question</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
@@ -351,7 +351,7 @@ export default function AskVyronClient({
                     onChange={(event) => setQuestion(event.target.value)}
                     rows={3}
                     placeholder="Ask: What is hurting margin? · What should we fix first? · Which suppliers are risky? · What are my top actions?"
-                    className="w-full rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm font-medium text-[#0F172A] shadow-sm outline-none transition focus:border-[#7C3AED]/40 focus:ring-2 focus:ring-[#7C3AED]/15"
+                    className="w-full rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm font-medium text-[#0F172A] shadow-sm outline-none transition focus:border-[#1D6BFF]/40 focus:ring-2 focus:ring-[#1D6BFF]/15"
                   />
                   <div className="flex flex-wrap items-center gap-2">
                     <button
@@ -370,7 +370,7 @@ export default function AskVyronClient({
                           setQuestion(chip);
                           void submitQuestion(chip);
                         }}
-                        className="rounded-full border border-[#E2E8F0] bg-[#F6F7FB] px-3 py-1.5 text-xs font-semibold text-[#334155] transition hover:border-[#7C3AED]/30 hover:text-[#7C3AED]"
+                        className="rounded-full border border-[#E2E8F0] bg-[#F6F7FB] px-3 py-1.5 text-xs font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
                       >
                         {chip}
                       </button>
@@ -387,17 +387,17 @@ export default function AskVyronClient({
           {currentAnswer ? (
             <section className={M.moduleDataSection}>
               <div className="flex flex-wrap items-center gap-2">
-                <MessageSquare size={18} className="text-[#7C3AED]" />
+                <MessageSquare size={18} className="text-[#1D6BFF]" />
                 <h2 className="text-xl font-bold text-[#0F172A]">Answer</h2>
                 <ConfidenceBadge confidence={currentAnswer.confidence} />
                 {currentAnswer.insufficientData ? (
-                  <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-amber-900">
+                  <span className="rounded-full border border-fuchsia-200 bg-fuchsia-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-fuchsia-900">
                     Needs data
                   </span>
                 ) : null}
               </div>
 
-              <div className="mt-4 rounded-2xl border border-[#7C3AED]/20 bg-[#7C3AED]/5 p-5">
+              <div className="mt-4 rounded-2xl border border-[#1D6BFF]/20 bg-[#1D6BFF]/5 p-5">
                 <p className="text-base font-bold leading-7 text-[#0F172A]">{currentAnswer.answer}</p>
                 <p className="mt-3 text-sm font-medium leading-6 text-[#475569]">{currentAnswer.summary}</p>
               </div>
@@ -408,7 +408,7 @@ export default function AskVyronClient({
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     {currentAnswer.evidence.map((item) => (
                       <div key={`${item.label}-${item.value}`} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7C3AED]">{item.label}</div>
+                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1D6BFF]">{item.label}</div>
                         <p className="mt-1 text-sm font-semibold text-[#0F172A]">{item.value}</p>
                       </div>
                     ))}
@@ -444,7 +444,7 @@ export default function AskVyronClient({
                     <Link
                       key={link.href}
                       href={link.href}
-                      className="inline-flex items-center gap-1 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#7C3AED]/30 hover:text-[#7C3AED]"
+                      className="inline-flex items-center gap-1 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
                     >
                       {link.label}
                       <ArrowRight size={14} />
@@ -477,7 +477,7 @@ export default function AskVyronClient({
                           setQuestion(q);
                           void submitQuestion(q);
                         }}
-                        className="block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-left text-sm font-semibold text-[#334155] transition hover:border-[#7C3AED]/30 hover:text-[#7C3AED]"
+                        className="block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-left text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
                       >
                         {q}
                       </button>
@@ -513,7 +513,7 @@ export default function AskVyronClient({
                       setQuestion(entry.question);
                       setCurrentAnswer(entry.answer);
                     }}
-                    className="block w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 text-left transition hover:border-[#7C3AED]/30"
+                    className="block w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 text-left transition hover:border-[#1D6BFF]/30"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="font-bold text-[#0F172A]">{entry.question}</p>
@@ -586,12 +586,12 @@ function SourceCard({ source }: { source: IntelligenceSourceStatus }) {
   return (
     <Link
       href={source.href}
-      className={`${M.moduleDataSection} block p-4 transition hover:border-[#7C3AED]/30 hover:shadow-md`}
+      className={`${M.moduleDataSection} block p-4 transition hover:border-[#1D6BFF]/30 hover:shadow-md`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className="rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] p-2">
-            <Icon size={18} className="text-[#7C3AED]" />
+            <Icon size={18} className="text-[#1D6BFF]" />
           </div>
           <div>
             <h3 className="font-bold text-[#0F172A]">{source.label}</h3>
@@ -609,8 +609,8 @@ function SourceCard({ source }: { source: IntelligenceSourceStatus }) {
 
 function ConfidenceBadge({ confidence }: { confidence: DecisionConfidence }) {
   const classes = {
-    High: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    Medium: "border-amber-200 bg-amber-50 text-amber-900",
+    High: "border-violet-200 bg-violet-50 text-violet-800",
+    Medium: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
     Low: "border-[#E2E8F0] bg-[#F6F7FB] text-[#64748B]",
   };
   return (

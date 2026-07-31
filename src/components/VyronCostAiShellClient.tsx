@@ -2,7 +2,6 @@
 
 import {
   ArrowLeft,
-  Building2,
   ChevronDown,
   ChevronRight,
   Home,
@@ -39,6 +38,7 @@ import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import { VYRON_MAX_WIDTH, VYRON_PAGE_PADDING } from "@/components/vyron-ui/constants";
 import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
+import { VyronLogoLockup } from "@/components/vyron-ui/VyronLogo";
 
 const M = VYRON_MASTER;
 
@@ -118,9 +118,9 @@ function cn(...classes: Array<string | false | undefined | null>) {
   return classes.filter(Boolean).join(" ");
 }
 
-const activeNavClass = M.navActive;
-const dashboardActiveClass = M.navActiveDashboard;
-const inactiveNavClass = M.navInactive;
+const activeNavClass = M.sidebarNavActive;
+const dashboardActiveClass = M.sidebarNavActiveDashboard;
+const inactiveNavClass = M.sidebarNavInactive;
 
 function isActivePath(pathname: string, href: string) {
   if (href === "/developer") return pathname === "/developer";
@@ -130,18 +130,7 @@ function isActivePath(pathname: string, href: string) {
 function Logo({ developer }: { developer: boolean }) {
   return (
     <Link href={developer ? "/developer" : "/dashboard"} className="flex items-center gap-3">
-      <div className={`relative flex h-14 w-14 items-center justify-center rounded-3xl ${M.iconEmphasis}`}>
-        {developer ? <Building2 size={30} className="relative text-white" /> : (
-          <div className="relative flex gap-0.5">
-            <span className="block h-8 w-3 rotate-[-24deg] rounded-full bg-white/95" />
-            <span className="block h-8 w-3 rotate-[24deg] rounded-full bg-[#07111F]/80" />
-          </div>
-        )}
-      </div>
-      <div>
-        <div className="text-2xl font-black tracking-[0.32em] text-[#0F172A]">VYRON</div>
-        <div className="-mt-1 text-sm font-black tracking-[0.46em] text-[#7C3AED]">{developer ? "DEV" : "COST"}</div>
-      </div>
+      <VyronLogoLockup variant="onDark" size={56} suffix={developer ? "DEV" : "COST"} />
     </Link>
   );
 }
@@ -389,15 +378,15 @@ export default function VyronCostAiShellClient({
         nav.vyron-sidebar-nav::-webkit-scrollbar { width: 6px; }
         nav.vyron-sidebar-nav::-webkit-scrollbar-track { background: transparent; }
         nav.vyron-sidebar-nav::-webkit-scrollbar-thumb {
-          background: linear-gradient(180deg, rgba(124,58,237,0.45), rgba(225,29,72,0.35));
+          background: linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0.25));
           border-radius: 999px;
         }
         nav.vyron-sidebar-nav::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(180deg, rgba(124,58,237,0.65), rgba(225,29,72,0.5));
+          background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.45));
         }
       `}</style>
       <aside className={M.shellSidebar}>
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.04),transparent_42%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_42%)]" />
 
         <div className="relative flex min-h-0 flex-1 flex-col">
           <div className="shrink-0 px-2 py-2">
@@ -416,7 +405,7 @@ export default function VyronCostAiShellClient({
                 >
                   <dashboardNavItem.icon
                     size={20}
-                    className={isActivePath(pathname, dashboardNavItem.href) ? "text-white" : "text-[#7C3AED]"}
+                    className={isActivePath(pathname, dashboardNavItem.href) ? "text-[#1D4ED8]" : M.sidebarIcon}
                   />
                   <span className="min-w-0 flex-1 truncate">{dashboardNavItem.label}</span>
                 </Link>
@@ -428,13 +417,16 @@ export default function VyronCostAiShellClient({
                 <button
                   type="button"
                   onClick={() => toggleSection(section.title)}
-                  className="mb-2.5 flex w-full min-w-0 items-center justify-between rounded-xl px-3 py-2"
+                  className={cn(
+                    "mb-2.5 flex w-full min-w-0 items-center justify-between rounded-xl px-3 py-2 transition",
+                    open[section.title] === true ? M.sidebarSectionOpen : M.sidebarSectionClosed
+                  )}
                 >
-                  <span className={`min-w-0 flex-1 truncate text-left ${M.navSectionLabel}`}>{section.title}</span>
+                  <span className={`min-w-0 flex-1 truncate text-left ${M.sidebarSectionLabel}`}>{section.title}</span>
                   {open[section.title] === true ? (
-                    <ChevronDown size={16} className="shrink-0 text-[#94A3B8]" />
+                    <ChevronDown size={16} className={`shrink-0 ${M.sidebarIcon}`} />
                   ) : (
-                    <ChevronRight size={16} className="shrink-0 text-[#94A3B8]" />
+                    <ChevronRight size={16} className={`shrink-0 ${M.sidebarIcon}`} />
                   )}
                 </button>
 
@@ -452,12 +444,12 @@ export default function VyronCostAiShellClient({
                           <div
                             key={item.href}
                             title={feature ? getFeatureTooltip(feature) : undefined}
-                            className="flex min-w-0 cursor-not-allowed items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-semibold text-[#94A3B8]/80 opacity-60"
+                            className={`flex min-w-0 cursor-not-allowed items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-semibold opacity-60 ${M.sidebarLockedRow}`}
                           >
-                            <item.icon size={20} className="shrink-0 text-[#94A3B8]" />
+                            <item.icon size={20} className={`shrink-0 ${M.sidebarIcon}`} />
                             <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                            <Lock size={14} className="shrink-0 text-[#94A3B8]" />
-                            <span className="shrink-0 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#64748B]">
+                            <Lock size={14} className={`shrink-0 ${M.sidebarIcon}`} />
+                            <span className={`shrink-0 ${M.sidebarBadge}`}>
                               Premium
                             </span>
                           </div>
@@ -473,7 +465,7 @@ export default function VyronCostAiShellClient({
                             active ? activeNavClass : inactiveNavClass
                           )}
                         >
-                          <item.icon size={20} className={active ? "text-[#7C3AED]" : "text-[#64748B]"} />
+                          <item.icon size={20} className={active ? M.sidebarIconActive : M.sidebarIcon} />
                           <span className="min-w-0 flex-1 truncate">{item.label}</span>
                         </Link>
                       );
@@ -485,11 +477,11 @@ export default function VyronCostAiShellClient({
           </nav>
 
           {!isDeveloperArea ? (
-            <div className="relative mt-auto shrink-0 border-t border-[#E2E8F0] px-1 pt-4">
+            <div className={`relative mt-auto shrink-0 border-t px-1 pt-4 ${M.sidebarDivider}`}>
               {effectiveWorkspaceMode && effectiveClient ? (
-                <div className={`mb-3 ${M.shellClientCard}`}>
-                  <div className="truncate text-sm font-bold text-[#0F172A]">{effectiveClient.companyName}</div>
-                  <div className="mt-1 truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">
+                <div className={`mb-3 ${M.sidebarClientCard}`}>
+                  <div className={M.sidebarClientName}>{effectiveClient.companyName}</div>
+                  <div className={M.sidebarClientMeta}>
                     {effectiveClient.packageName || "Professional"} Package
                   </div>
                 </div>
@@ -497,7 +489,7 @@ export default function VyronCostAiShellClient({
               <button
                 type="button"
                 onClick={() => void signOutClientWorkspace()}
-                className={`w-full ${M.secondaryBtn} justify-center px-3 py-2 text-xs`}
+                className={`w-full ${M.sidebarSignOutBtn} justify-center px-3 py-2 text-xs`}
               >
                 <LogOut size={15} />
                 Logout / Exit Workspace

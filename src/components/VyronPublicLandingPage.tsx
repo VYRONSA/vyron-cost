@@ -23,6 +23,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
+import { VyronLogoLockup } from "@/components/vyron-ui/VyronLogo";
 import { getProductLandingContent } from "@/platform/landing/framework";
 import {
   getUpgradePackageLabel,
@@ -79,25 +80,12 @@ const premiumCapabilities = vyronCostLanding.premiumCapabilities;
 function Logo() {
   return (
     <Link href="/" className="flex items-center gap-3">
-      <div
-        className={`relative flex h-12 w-12 items-center justify-center sm:h-14 sm:w-14 sm:rounded-3xl ${M.iconEmphasis}`}
-      >
-        <div className="relative flex gap-0.5">
-          <span className="block h-6 w-2 rotate-[-24deg] rounded-full bg-white/95 sm:h-8 sm:w-3" />
-          <span className="block h-6 w-2 rotate-[24deg] rounded-full bg-[#07111F]/80 sm:h-8 sm:w-3" />
-        </div>
-      </div>
-      <div>
-        <div className="text-lg font-black tracking-[0.28em] text-[#0F172A] sm:text-2xl sm:tracking-[0.32em]">VYRON</div>
-        <div className="-mt-0.5 text-xs font-black tracking-[0.4em] text-[#7C3AED] sm:-mt-1 sm:text-sm sm:tracking-[0.46em]">
-          COST
-        </div>
-      </div>
+      <VyronLogoLockup variant="onLight" size={52} suffix="COST" />
     </Link>
   );
 }
 
-function MiniSparkline({ color = "#9333EA" }: { color?: string }) {
+function MiniSparkline({ color = "#3B82F6" }: { color?: string }) {
   return (
     <svg viewBox="0 0 180 42" className="absolute bottom-3 right-3 h-8 w-28 opacity-40 sm:h-10 sm:w-36">
       <path
@@ -197,8 +185,8 @@ export default function VyronPublicLandingPage() {
   return (
     <main className={M.page}>
       <div className="pointer-events-none fixed inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(124,58,237,0.07),transparent_42%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_12%,rgba(244,63,94,0.05),transparent_38%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(29,107,255,0.07),transparent_42%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_12%,rgba(59,130,246,0.05),transparent_38%)]" />
         <div
           className="absolute inset-0 opacity-[0.35]"
           style={{
@@ -247,7 +235,7 @@ export default function VyronPublicLandingPage() {
       <section className="relative z-10 mx-auto grid max-w-7xl gap-12 px-4 py-10 sm:px-6 sm:py-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-14">
         <div>
           <div className={M.eyebrow}>
-            <Sparkles size={14} className="text-[#E11D48]" />
+            <Sparkles size={14} className="text-[#2563EB]" />
             VYRON COST
           </div>
 
@@ -305,7 +293,7 @@ export default function VyronPublicLandingPage() {
         </div>
 
         <div className="relative">
-          <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-[#E11D48]/10 via-[#7C3AED]/8 to-transparent blur-xl" />
+          <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-[#2563EB]/10 via-[#1D6BFF]/8 to-transparent blur-xl" />
           <div className={`relative p-4 sm:p-5 ${M.darkPanel}`}>
             <div className={`p-5 sm:p-6 ${M.darkPanelInner}`}>
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -340,7 +328,7 @@ export default function VyronPublicLandingPage() {
 
             <div className="mt-4 grid gap-4 sm:mt-5 md:grid-cols-2">
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 sm:rounded-[1.5rem]">
-                <MiniSparkline color="#F43F5E" />
+                <MiniSparkline color="#3B82F6" />
                 <div className={`h-10 w-10 sm:h-12 sm:w-12 ${M.iconEmphasis}`}>
                   <Target size={22} />
                 </div>
@@ -355,7 +343,7 @@ export default function VyronPublicLandingPage() {
 
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 sm:rounded-[1.5rem]">
                 <MiniSparkline />
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-[#7C3AED]/20 text-violet-200 sm:h-12 sm:w-12 sm:rounded-2xl">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-[#1D6BFF]/20 text-violet-200 sm:h-12 sm:w-12 sm:rounded-2xl">
                   <BrainCircuit size={22} />
                 </div>
                 <div className={`mt-4 text-[10px] font-bold uppercase tracking-[0.14em] sm:text-xs ${M.mutedOnDark}`}>
@@ -424,7 +412,7 @@ export default function VyronPublicLandingPage() {
             const Icon = CAPABILITY_ICONS[feature] || Sparkles;
             return (
             <LightCard key={feature} className="relative overflow-hidden">
-              <div className="absolute right-3 top-3 rounded-full border border-[#7C3AED]/20 bg-[#7C3AED]/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#7C3AED]">
+              <div className="absolute right-3 top-3 rounded-full border border-[#1D6BFF]/20 bg-[#1D6BFF]/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#1D6BFF]">
                 {getUpgradePackageLabel(feature)}
               </div>
               <div className={`h-11 w-11 ${M.iconEmphasis}`}>
@@ -460,7 +448,7 @@ export default function VyronPublicLandingPage() {
                   </div>
                 </LightCard>
                 {index < workflowSteps.length - 1 ? (
-                  <ArrowRight className="hidden shrink-0 text-[#7C3AED]/50 sm:block" size={18} />
+                  <ArrowRight className="hidden shrink-0 text-[#1D6BFF]/50 sm:block" size={18} />
                 ) : null}
               </div>
             );
@@ -484,7 +472,7 @@ export default function VyronPublicLandingPage() {
           <div className="grid gap-3 sm:gap-4">
             {clientOutcomes.map((outcome) => (
               <div key={outcome} className={`flex items-start gap-3 p-4 ${M.lightCard}`}>
-                <CheckCircle2 className="mt-0.5 shrink-0 text-[#7C3AED]" size={20} />
+                <CheckCircle2 className="mt-0.5 shrink-0 text-[#1D6BFF]" size={20} />
                 <span className={`text-sm leading-6 ${M.body}`}>{outcome}</span>
               </div>
             ))}
@@ -536,7 +524,7 @@ export default function VyronPublicLandingPage() {
                 <div className="mt-5 flex-1 space-y-2.5">
                   {plan.highlights.map((highlight) => (
                     <div key={highlight} className={`flex items-start gap-2.5 text-sm ${M.body}`}>
-                      <CheckCircle2 className="mt-0.5 shrink-0 text-[#7C3AED]/70" size={16} />
+                      <CheckCircle2 className="mt-0.5 shrink-0 text-[#1D6BFF]/70" size={16} />
                       <span>{highlight}</span>
                     </div>
                   ))}
@@ -559,7 +547,7 @@ export default function VyronPublicLandingPage() {
       {/* CTA */}
       <section className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-6 sm:pb-20">
         <div className={`relative overflow-hidden rounded-[2rem] p-8 sm:rounded-[2.5rem] sm:p-12 ${M.darkPanel}`}>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(244,63,94,0.08),transparent_42%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(59,130,246,0.08),transparent_42%)]" />
           <div className="relative text-center">
             <div className={`inline-flex items-center gap-2 ${M.statusBrand}`}>
               <Users size={14} />

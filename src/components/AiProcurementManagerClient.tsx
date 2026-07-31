@@ -16,9 +16,9 @@ import {
 
 const STATUS_COLOURS: Record<string, string> = {
   New: "bg-slate-100 text-slate-700",
-  Assigned: "bg-amber-100 text-amber-800",
+  Assigned: "bg-fuchsia-100 text-fuchsia-800",
   "Under Review": "bg-sky-100 text-sky-800",
-  Accepted: "bg-[#A3E635]/12 text-[#4D7C0F]",
+  Accepted: "bg-[#A855F7]/12 text-[#4D7C0F]",
   Rejected: "bg-red-100 text-red-800",
   Implemented: "bg-indigo-100 text-indigo-800",
   Closed: "bg-slate-200 text-slate-600",
@@ -131,7 +131,7 @@ export default function AiProcurementManagerClient({
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Open Recommendations</div>
-          <div className="mt-3 text-4xl font-black text-amber-600">{stats.openRecommendations}</div>
+          <div className="mt-3 text-4xl font-black text-fuchsia-600">{stats.openRecommendations}</div>
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Accepted</div>
@@ -139,7 +139,7 @@ export default function AiProcurementManagerClient({
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Implemented</div>
-          <div className="mt-3 text-4xl font-black text-[#65A30D]">{stats.implementedRecommendations}</div>
+          <div className="mt-3 text-4xl font-black text-[#7E22CE]">{stats.implementedRecommendations}</div>
         </div>
         <div className="rounded-[2rem] bg-red-50 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-red-600">High risk items</div>
@@ -150,10 +150,10 @@ export default function AiProcurementManagerClient({
           <div className="mt-3 text-4xl font-black text-violet-700">{procurementMoney(stats.potentialSavingsAnnual)}</div>
           <p className="mt-1 text-xs font-bold text-slate-500">Annualized open actions</p>
         </div>
-        <div className="rounded-[2rem] bg-[#A3E635]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-[#A855F7]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Realized Savings</div>
           <div className="mt-3 text-4xl font-black text-[#84CC16]">{procurementMoney(stats.realizedSavingsAnnual)}</div>
-          <p className="mt-1 text-xs font-bold text-[#65A30D]">From implemented actions</p>
+          <p className="mt-1 text-xs font-bold text-[#7E22CE]">From implemented actions</p>
         </div>
       </div>
 
@@ -204,7 +204,7 @@ export default function AiProcurementManagerClient({
                     {row.status}
                   </span>
                   {row.is_estimated && (
-                    <span className="rounded-full bg-amber-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-amber-800">
+                    <span className="rounded-full bg-fuchsia-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-fuchsia-800">
                       Assumption
                     </span>
                   )}
@@ -214,14 +214,14 @@ export default function AiProcurementManagerClient({
               </div>
               <div className="text-right">
                 <div className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">Potential / year</div>
-                <div className="mt-1 text-2xl font-black text-[#65A30D]">
+                <div className="mt-1 text-2xl font-black text-[#7E22CE]">
                   {procurementMoney(row.potential_benefit_annual)}
                 </div>
                 <div className="mt-1 text-xs font-bold text-slate-500">{row.confidence_level}</div>
               </div>
             </div>
-            <div className="mt-4 rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-4">
-              <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#65A30D]">Recommendation</div>
+            <div className="mt-4 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-4">
+              <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7E22CE]">Recommendation</div>
               <p className="mt-1 text-sm font-bold text-[#4D7C0F]">{row.recommended_action}</p>
             </div>
             <p className="mt-3 text-xs font-bold text-slate-500">{row.expected_result}</p>

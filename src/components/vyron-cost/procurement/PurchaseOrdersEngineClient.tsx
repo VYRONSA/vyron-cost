@@ -16,7 +16,7 @@ function formatMoney(value: number) {
 
 function statusClass(status: string) {
   if (status === "Received" || status === "Fully Received") return "bg-slate-100 text-slate-700";
-  if (status === "Partially Received") return "bg-amber-100 text-amber-800";
+  if (status === "Partially Received") return "bg-fuchsia-100 text-fuchsia-800";
   if (status === "Sent" || status === "Approved") return "bg-blue-100 text-blue-800";
   if (status === "Cancelled") return "bg-rose-100 text-rose-800";
   return "bg-violet-100 text-violet-800";
@@ -78,7 +78,7 @@ export default function PurchaseOrdersEngineClient() {
       }}
       actions={
         <div className="flex flex-wrap gap-2">
-          <Link href="/purchase-orders/new" className="rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-bold text-white">
+          <Link href="/purchase-orders/new" className="rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white">
             Create Purchase Order
           </Link>
           <Link href="/procurement" className="rounded-xl border border-[#E2E8F0] px-4 py-2.5 text-sm font-bold text-[#334155]">
@@ -103,7 +103,7 @@ export default function PurchaseOrdersEngineClient() {
                   type="button"
                   onClick={() => setStatusFilter(status)}
                   className={`rounded-full px-3 py-1.5 text-xs font-bold ${
-                    statusFilter === status ? "bg-[#7C3AED] text-white" : "bg-[#F1F5F9] text-[#64748B]"
+                    statusFilter === status ? "bg-[#1D6BFF] text-white" : "bg-[#F1F5F9] text-[#64748B]"
                   }`}
                 >
                   {status}
@@ -147,7 +147,7 @@ export default function PurchaseOrdersEngineClient() {
                   {filtered.map((row) => (
                     <tr key={row.id} className={VYRON_TABLE.row}>
                       <td className="px-4 py-3">
-                        <Link href={`/purchase-orders/${row.id}`} className="font-bold text-[#7C3AED] hover:underline">
+                        <Link href={`/purchase-orders/${row.id}`} className="font-bold text-[#1D6BFF] hover:underline">
                           {row.po_number}
                         </Link>
                       </td>

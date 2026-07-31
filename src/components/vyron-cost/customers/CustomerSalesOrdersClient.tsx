@@ -548,7 +548,7 @@ export default function CustomerSalesOrdersClient({
                 <div><span className="text-slate-500">Total</span><div className="mt-1 text-sm text-slate-900">{money(liveTotals.total)}</div></div>
                 <div><span className="text-slate-500">Cost</span><div className="mt-1 text-sm text-slate-900">{money(liveTotals.cost)}</div></div>
                 <div><span className="text-slate-500">Gross Profit</span><div className="mt-1 text-sm text-slate-900">{money(liveTotals.gp)}</div></div>
-                <div><span className="text-slate-500">Margin %</span><div className={`mt-1 text-sm ${liveTotals.gpPct < 30 ? "text-amber-700" : "text-emerald-700"}`}>{liveTotals.gpPct.toFixed(2)}%</div></div>
+                <div><span className="text-slate-500">Margin %</span><div className={`mt-1 text-sm ${liveTotals.gpPct < 30 ? "text-fuchsia-700" : "text-violet-700"}`}>{liveTotals.gpPct.toFixed(2)}%</div></div>
               </div>
             </div>
           </div>
@@ -572,7 +572,7 @@ export default function CustomerSalesOrdersClient({
                 <div><StatusPill status={order.status} /></div>
                 <div className="font-bold text-slate-900">{money(order.total)}</div>
                 <div className="font-semibold text-slate-600">{order.requested_delivery_date || "-"}</div>
-                <div className={`font-bold ${Number(order.gp_percentage || 0) < 30 ? "text-amber-700" : "text-emerald-700"}`}>{Number(order.gp_percentage || 0).toFixed(1)}%</div>
+                <div className={`font-bold ${Number(order.gp_percentage || 0) < 30 ? "text-fuchsia-700" : "text-violet-700"}`}>{Number(order.gp_percentage || 0).toFixed(1)}%</div>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={() => void loadInsight(order.id)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700">Detail</button>
                   {order.status === "Draft" ? <ActionButton icon={<ClipboardCheck size={14} />} label="Submit" onClick={() => void runAction(order.id, "submit")} /> : null}
@@ -608,19 +608,19 @@ export default function CustomerSalesOrdersClient({
             </div>
 
             {selectedOrder.approval_rules.length ? (
-              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
-                <div className="text-xs font-black uppercase tracking-[0.12em] text-amber-800">Automatic Approval Rules</div>
+              <div className="mt-3 rounded-xl border border-fuchsia-200 bg-fuchsia-50 p-3">
+                <div className="text-xs font-black uppercase tracking-[0.12em] text-fuchsia-800">Automatic Approval Rules</div>
                 <div className="mt-2 grid gap-2">
                   {selectedOrder.approval_rules.map((rule, index) => (
-                    <div key={`${rule.code}-${index}`} className="text-sm font-semibold text-amber-900">{rule.code}: {rule.message}</div>
+                    <div key={`${rule.code}-${index}`} className="text-sm font-semibold text-fuchsia-900">{rule.code}: {rule.message}</div>
                   ))}
                 </div>
               </div>
             ) : null}
 
-            <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-              <div className="text-xs font-black uppercase tracking-[0.12em] text-emerald-800">Manufacturing Intelligence</div>
-              <div className="mt-2 grid gap-2 text-sm font-semibold text-emerald-900 sm:grid-cols-2 xl:grid-cols-6">
+            <div className="mt-3 rounded-xl border border-violet-200 bg-violet-50 p-3">
+              <div className="text-xs font-black uppercase tracking-[0.12em] text-violet-800">Manufacturing Intelligence</div>
+              <div className="mt-2 grid gap-2 text-sm font-semibold text-violet-900 sm:grid-cols-2 xl:grid-cols-6">
                 <div>{selectedOrder.manufacturing.stockAvailable ? "Stock Available" : "Stock Not Fully Available"}</div>
                 <div>{selectedOrder.manufacturing.insufficientStock ? "Insufficient Stock" : "Sufficient Stock"}</div>
                 <div>{selectedOrder.manufacturing.canManufacture ? "Can Manufacture" : "Cannot Manufacture"}</div>
@@ -649,8 +649,8 @@ export default function CustomerSalesOrdersClient({
                       <div className="text-slate-800">{line.description}</div>
                       <div className="text-slate-700">Req {line.required_qty.toFixed(2)}</div>
                       <div className="text-slate-700">Avail {line.available_qty.toFixed(2)}</div>
-                      <div className={line.shortfall_qty > 0 ? "text-rose-700" : "text-emerald-700"}>Short {line.shortfall_qty.toFixed(2)}</div>
-                      <div className={line.pick_status === "Short" ? "text-rose-700" : "text-emerald-700"}>{line.pick_status}</div>
+                      <div className={line.shortfall_qty > 0 ? "text-rose-700" : "text-violet-700"}>Short {line.shortfall_qty.toFixed(2)}</div>
+                      <div className={line.pick_status === "Short" ? "text-rose-700" : "text-violet-700"}>{line.pick_status}</div>
                     </div>
                   ))}
                 </div>
@@ -711,7 +711,7 @@ export default function CustomerSalesOrdersClient({
               <div className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Workflow Timeline</div>
               <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
                 {selectedOrder.timeline.map((step) => (
-                  <div key={step.key} className={`rounded-lg border p-2 ${step.completed ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-slate-50"}`}>
+                  <div key={step.key} className={`rounded-lg border p-2 ${step.completed ? "border-violet-300 bg-violet-50" : "border-slate-200 bg-slate-50"}`}>
                     <div className="text-xs font-black text-slate-700">{step.label}</div>
                     <div className="mt-1 text-[11px] font-semibold text-slate-600">{step.timestamp ? new Date(step.timestamp).toLocaleString("en-ZA") : "Pending"}</div>
                     <div className="text-[11px] font-semibold text-slate-500">{step.actor || "-"}</div>
@@ -726,11 +726,11 @@ export default function CustomerSalesOrdersClient({
                 {selectedOrder.traceability.map((item, index) => (
                   <div key={item.key} className="inline-flex items-center gap-2">
                     {item.href ? (
-                      <Link href={item.href} className={`rounded-full px-3 py-1 ${item.status === "linked" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>
+                      <Link href={item.href} className={`rounded-full px-3 py-1 ${item.status === "linked" ? "bg-violet-100 text-violet-800" : "bg-slate-100 text-slate-600"}`}>
                         {item.label}{item.reference ? ` (${item.reference})` : ""}
                       </Link>
                     ) : (
-                      <span className={`rounded-full px-3 py-1 ${item.status === "linked" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>
+                      <span className={`rounded-full px-3 py-1 ${item.status === "linked" ? "bg-violet-100 text-violet-800" : "bg-slate-100 text-slate-600"}`}>
                         {item.label}{item.reference ? ` (${item.reference})` : ""}
                       </span>
                     )}
@@ -791,11 +791,11 @@ function ActionButton({ icon, label, onClick }: { icon: ReactNode; label: string
 function StatusPill({ status }: { status: SalesOrderStatus }) {
   const tone =
     status === "Invoiced"
-      ? "bg-emerald-100 text-emerald-800"
+      ? "bg-violet-100 text-violet-800"
       : status === "Cancelled"
         ? "bg-rose-100 text-rose-800"
         : status === "Awaiting Approval"
-          ? "bg-amber-100 text-amber-800"
+          ? "bg-fuchsia-100 text-fuchsia-800"
           : status === "Dispatched"
             ? "bg-sky-100 text-sky-800"
             : "bg-violet-100 text-violet-800";

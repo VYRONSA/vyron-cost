@@ -166,7 +166,7 @@ export default function SupplierLearningClient() {
               ) : null}
             </div>
 
-            {message ? <p className="rounded-xl border border-[#A3E635]/25 bg-[#A3E635]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
+            {message ? <p className="rounded-xl border border-[#A855F7]/25 bg-[#A855F7]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
             {error ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800">{error}</p> : null}
 
             <div className="grid gap-6 lg:grid-cols-[280px_1fr]">

@@ -36,16 +36,16 @@ export default function CustomerPricingImpactClient({ products }: { products: Pr
             <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
               <h2 className="text-3xl font-black">Customer Pricing Impact</h2>
               <p className="mt-3 text-sm font-semibold text-slate-300">Model selling price changes before sending updated price lists to clients.</p>
-              <label className="mt-5 block max-w-sm text-sm font-black text-[#A3E635]">
+              <label className="mt-5 block max-w-sm text-sm font-black text-[#A855F7]">
                 Price increase %
                 <input type="number" value={increase} onChange={(e) => setIncrease(Number(e.target.value))} className="mt-2 w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-white outline-none" />
               </label>
             </div>
 
             <section className="grid gap-5 md:grid-cols-2">
-              <div className="rounded-[2rem] bg-[#A3E635]/10 p-6">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#65A30D]">Monthly Revenue Impact</div>
-                <div className="mt-3 text-4xl font-black text-[#65A30D]">{money(monthly)}</div>
+              <div className="rounded-[2rem] bg-[#A855F7]/10 p-6">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#7E22CE]">Monthly Revenue Impact</div>
+                <div className="mt-3 text-4xl font-black text-[#7E22CE]">{money(monthly)}</div>
               </div>
               <div className="rounded-[2rem] bg-white p-6">
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Annualised</div>
@@ -54,7 +54,7 @@ export default function CustomerPricingImpactClient({ products }: { products: Pr
             </section>
 
             <div className="overflow-hidden rounded-[2rem] bg-white">
-              <div className="grid grid-cols-5 bg-[#07110d] px-5 py-4 text-xs font-black uppercase text-[#A3E635]">
+              <div className="grid grid-cols-5 bg-[#07110d] px-5 py-4 text-xs font-black uppercase text-[#A855F7]">
                 <div className="col-span-2">Product</div>
                 <div>Old Price</div>
                 <div>New Price</div>
@@ -64,7 +64,7 @@ export default function CustomerPricingImpactClient({ products }: { products: Pr
                 <div key={row.product.id} className="grid grid-cols-5 border-t border-slate-100 px-5 py-5 text-sm">
                   <div className="col-span-2 font-black">{row.product.product_name}</div>
                   <div>{money(row.oldPrice)}</div>
-                  <div className="font-black text-[#65A30D]">{money(row.newPrice)}</div>
+                  <div className="font-black text-[#7E22CE]">{money(row.newPrice)}</div>
                   <div>{money(row.monthlyImpact)}</div>
                 </div>
               ))}

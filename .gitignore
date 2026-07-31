@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Visual validation artefacts (regenerate: node scripts/visual-capture.mjs)
+visual-validation/

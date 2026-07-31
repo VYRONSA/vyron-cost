@@ -204,7 +204,7 @@ export default function PredictiveRiskCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#F43F5E]/35 bg-[#F43F5E]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Predictive Risk Centre
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Predictive Risk Centre</h1>
@@ -289,9 +289,9 @@ export default function PredictiveRiskCentreClient({
             <SummaryCard
               label="Critical Forecast Risks"
               value={String(snapshot.summary.criticalForecastRisks)}
-              accent="#E11D48"
+              accent="#2563EB"
             />
-            <SummaryCard label="High Forecast Risks" value={String(snapshot.summary.highForecastRisks)} accent="#F97316" />
+            <SummaryCard label="High Forecast Risks" value={String(snapshot.summary.highForecastRisks)} accent="#A855F7" />
             <SummaryCard
               label="Forecast Exposure"
               value={
@@ -302,17 +302,17 @@ export default function PredictiveRiskCentreClient({
               accent="#0F172A"
               small={snapshot.summary.forecastExposure == null}
             />
-            <SummaryCard label="Confidence Level" value={snapshot.summary.confidenceLevel} accent="#7C3AED" />
-            <SummaryCard label="Forecast Horizon" value={snapshot.summary.outlookLabel} accent="#9333EA" small />
+            <SummaryCard label="Confidence Level" value={snapshot.summary.confidenceLevel} accent="#1D6BFF" />
+            <SummaryCard label="Forecast Horizon" value={snapshot.summary.outlookLabel} accent="#3B82F6" small />
           </section>
 
           {snapshot.forecastedRisks.length === 0 ? (
-            <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
+            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-6">
               <div className="flex items-start gap-3">
-                <LineChart size={22} className="mt-0.5 shrink-0 text-emerald-700" />
+                <LineChart size={22} className="mt-0.5 shrink-0 text-violet-700" />
                 <div>
-                  <h2 className="text-lg font-bold text-emerald-950">No significant forecast risks detected.</h2>
-                  <p className="mt-2 text-sm font-medium leading-6 text-emerald-900">
+                  <h2 className="text-lg font-bold text-violet-950">No significant forecast risks detected.</h2>
+                  <p className="mt-2 text-sm font-medium leading-6 text-violet-900">
                     Current operational signals show no material forward-looking risk escalation within the{" "}
                     {snapshot.summary.forecastHorizon.toLowerCase()} horizon.
                   </p>
@@ -468,7 +468,7 @@ export default function PredictiveRiskCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#7C3AED]/30 hover:text-[#7C3AED]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
                 >
                   <link.icon size={16} />
                   {link.label}
@@ -510,7 +510,7 @@ function ForecastRow({ row }: { row: ForecastedRisk }) {
   return (
     <tr className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
       <td className="px-4 py-3 font-bold text-[#0F172A]">{row.risk}</td>
-      <td className="px-4 py-3 font-semibold text-[#7C3AED]">{row.category}</td>
+      <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{row.category}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#64748B]">{row.currentStatus}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.forecastedOutcome}</td>
       <td className="px-4 py-3">
@@ -522,7 +522,7 @@ function ForecastRow({ row }: { row: ForecastedRisk }) {
       <td className="px-4 py-3 text-sm font-medium text-[#64748B]">{row.forecastHorizon}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.recommendedAction}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -544,7 +544,7 @@ function FutureRiskRow({ row }: { row: FutureRiskItem }) {
       <td className="px-4 py-3 text-sm font-medium text-[#64748B]">{row.timeHorizon}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.recommendedResponse}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -557,7 +557,7 @@ function ModelCard({ model }: { model: PredictiveModel }) {
     <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7C3AED]">{model.category}</div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1D6BFF]">{model.category}</div>
           <h3 className="mt-1 font-bold text-[#0F172A]">{model.title}</h3>
         </div>
         <ConfidenceBadge confidence={model.confidence} />
@@ -573,7 +573,7 @@ function ModelCard({ model }: { model: PredictiveModel }) {
           ))}
         </ul>
       </div>
-      <Link href={model.href} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+      <Link href={model.href} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
         Open module <ArrowRight size={14} />
       </Link>
     </div>
@@ -583,7 +583,7 @@ function ModelCard({ model }: { model: PredictiveModel }) {
 function ScenarioCard({ scenario }: { scenario: ScenarioItem }) {
   const accent =
     scenario.title === "Best Case"
-      ? "border-emerald-200 bg-emerald-50"
+      ? "border-violet-200 bg-violet-50"
       : scenario.title === "Worst Case"
         ? "border-rose-200 bg-rose-50"
         : "border-[#E2E8F0] bg-[#F8FAFC]";
@@ -613,7 +613,7 @@ function HeatmapGrid({ risks }: { risks: HeatmapRisk[] }) {
   const impactColors: Record<string, string> = {
     Critical: "bg-rose-100 border-rose-300",
     High: "bg-orange-100 border-orange-300",
-    Medium: "bg-amber-100 border-amber-300",
+    Medium: "bg-fuchsia-100 border-fuchsia-300",
     Low: "bg-[#F6F7FB] border-[#E2E8F0]",
   };
 
@@ -646,7 +646,7 @@ function HeatmapGrid({ risks }: { risks: HeatmapRisk[] }) {
                         <Link
                           key={row.id}
                           href={row.href}
-                          className="block rounded-lg bg-white/80 px-2 py-1 text-xs font-semibold text-[#334155] hover:text-[#7C3AED]"
+                          className="block rounded-lg bg-white/80 px-2 py-1 text-xs font-semibold text-[#334155] hover:text-[#1D6BFF]"
                         >
                           {row.label}
                         </Link>
@@ -667,14 +667,14 @@ function PreventiveActionCard({ action }: { action: PreventiveAction }) {
   return (
     <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
       <div className="flex items-center gap-2">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#0B1220] text-[10px] font-bold text-white">
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full vyron-grad-surface text-[10px] font-bold text-white">
           {action.priority}
         </span>
         <div className="font-bold text-[#0F172A]">{action.title}</div>
       </div>
       <p className="mt-2 text-sm font-medium text-[#64748B]">{action.whyItMatters}</p>
       <p className="mt-2 text-xs font-semibold text-[#334155]">Expected benefit: {action.expectedBenefit}</p>
-      <Link href={action.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+      <Link href={action.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
         Open module <ArrowRight size={14} />
       </Link>
     </div>
@@ -685,8 +685,8 @@ function SeverityBadge({ severity }: { severity: ForecastedRisk["severity"] }) {
   const classes: Record<ForecastedRisk["severity"], string> = {
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
     High: "border-orange-200 bg-orange-50 text-orange-900",
-    Medium: "border-amber-200 bg-amber-50 text-amber-900",
-    Low: "border-[#7C3AED]/25 bg-[#7C3AED]/10 text-[#7C3AED]",
+    Medium: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
   };
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes[severity]}`}>
@@ -697,8 +697,8 @@ function SeverityBadge({ severity }: { severity: ForecastedRisk["severity"] }) {
 
 function ConfidenceBadge({ confidence }: { confidence: ForecastedRisk["confidence"] }) {
   const classes = {
-    High: "text-emerald-700",
-    Medium: "text-amber-800",
+    High: "text-violet-700",
+    Medium: "text-fuchsia-800",
     Low: "text-[#64748B]",
   };
   return <span className={`text-xs font-bold ${classes[confidence]}`}>{confidence}</span>;

@@ -24,7 +24,7 @@ export default async function ExecutiveBriefingPage() {
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Open Actions</div>
           <div className="mt-3 text-4xl font-black text-slate-900">{opportunities.length}</div>
         </div>
-        <div className="rounded-[2rem] bg-[#A3E635]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-[#A855F7]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Priority</div>
           <div className="mt-3 text-3xl font-black text-[#84CC16]">Recover</div>
         </div>

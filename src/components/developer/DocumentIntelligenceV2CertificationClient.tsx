@@ -76,7 +76,7 @@ type ApiPayload =
   | ({ ok: true } & Partial<SuccessPayload>);
 
 function statusColor(status: "PASS" | "FAIL") {
-  return status === "PASS" ? "text-emerald-700" : "text-red-700";
+  return status === "PASS" ? "text-violet-700" : "text-red-700";
 }
 
 function FieldRow({ label, value }: { label: string; value: string }) {

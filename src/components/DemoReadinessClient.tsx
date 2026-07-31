@@ -39,7 +39,7 @@ export default function DemoReadinessClient() {
                   <button
                     type="button"
                     onClick={() => setDone((current) => ({ ...current, [href]: !checked }))}
-                    className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-[#A3E635]/100 text-white" : "bg-slate-100 text-slate-400"}`}
+                    className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-[#A855F7]/100 text-white" : "bg-slate-100 text-slate-400"}`}
                   >
                     <CheckCircle2 size={24} />
                   </button>
@@ -48,7 +48,7 @@ export default function DemoReadinessClient() {
                     <div className="mt-1 text-lg font-black text-[#F8FAFC]">{label}</div>
                     <div className="mt-1 text-xs font-bold text-slate-500">{href}</div>
                   </div>
-                  <Link href={href} className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-3 text-center text-sm font-black text-[#4D7C0F]">
+                  <Link href={href} className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-3 text-center text-sm font-black text-[#4D7C0F]">
                     Open
                   </Link>
                 </div>

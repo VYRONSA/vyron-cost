@@ -26,14 +26,14 @@ export default async function PriceOptimizerPage() {
             <Link
               key={product.id}
               href={`/products/${product.id}`}
-              className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 transition hover:bg-[#A3E635]/10"
+              className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 transition hover:bg-[#A855F7]/10"
             >
               <div>
                 <div className="font-black text-[#07110d]">{product.product_name}</div>
                 <div className="text-xs text-slate-500">{product.category} · {gp.toFixed(1)}% GP</div>
               </div>
               <div className="text-right">
-                <div className="font-black text-[#65A30D]">{formatMoney(suggested)}</div>
+                <div className="font-black text-[#7E22CE]">{formatMoney(suggested)}</div>
                 <div className="text-xs font-bold text-slate-500">+{formatMoney(gap)} opportunity</div>
               </div>
             </Link>

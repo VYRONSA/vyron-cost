@@ -138,7 +138,7 @@ export default function ProcurementRecommendationDetailClient({
                 </div>
                 <div className="text-right">
                   <div className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">Potential benefit</div>
-                  <div className="text-3xl font-black text-[#65A30D]">
+                  <div className="text-3xl font-black text-[#7E22CE]">
                     {procurementMoney(recommendation.potential_benefit_annual)}/yr
                   </div>
                   <div className="mt-1 text-sm font-bold text-slate-500">
@@ -166,7 +166,7 @@ export default function ProcurementRecommendationDetailClient({
                   </div>
                   <div>
                     <dt className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Potential benefit</dt>
-                    <dd className="mt-1 font-bold text-[#65A30D]">{procurementMoney(recommendation.potential_benefit_annual)}/yr</dd>
+                    <dd className="mt-1 font-bold text-[#7E22CE]">{procurementMoney(recommendation.potential_benefit_annual)}/yr</dd>
                   </div>
                   <div>
                     <dt className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Confidence</dt>
@@ -201,7 +201,7 @@ export default function ProcurementRecommendationDetailClient({
                   {JSON.stringify(recommendation.data_used, null, 2)}
                 </pre>
                 {recommendation.missing_inputs.length > 0 && (
-                  <div className="mt-4 rounded-xl bg-amber-50 p-4 text-xs font-bold text-amber-900">
+                  <div className="mt-4 rounded-xl bg-fuchsia-50 p-4 text-xs font-bold text-fuchsia-900">
                     Assumptions / missing inputs: {recommendation.missing_inputs.join("; ")}
                   </div>
                 )}
@@ -239,8 +239,8 @@ export default function ProcurementRecommendationDetailClient({
               </div>
             </div>
 
-            <div className="rounded-[2rem] bg-[#A3E635]/10 p-6">
-              <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#65A30D]">Recommended action</div>
+            <div className="rounded-[2rem] bg-[#A855F7]/10 p-6">
+              <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7E22CE]">Recommended action</div>
               <p className="mt-2 text-sm font-bold text-[#4D7C0F]">{recommendation.recommended_action}</p>
             </div>
 
@@ -350,7 +350,7 @@ export default function ProcurementRecommendationDetailClient({
                 Save tracking
               </button>
 
-              {message && <p className="mt-3 text-sm font-bold text-[#65A30D]">{message}</p>}
+              {message && <p className="mt-3 text-sm font-bold text-[#7E22CE]">{message}</p>}
               {errorMessage && <p className="mt-3 text-sm font-bold text-red-600">{errorMessage}</p>}
             </div>
 

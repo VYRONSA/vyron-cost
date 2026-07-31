@@ -54,7 +54,7 @@ export default function ProductionVariancesClient() {
       <section className="grid gap-6">
         <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="min-w-[1100px]">
-          <div className="grid grid-cols-10 bg-[#07110d] px-4 py-3 text-[10px] font-black uppercase tracking-[0.14em] text-[#A3E635]">
+          <div className="grid grid-cols-10 bg-[#07110d] px-4 py-3 text-[10px] font-black uppercase tracking-[0.14em] text-[#A855F7]">
             <div>Run</div>
             <div className="col-span-2">Recipe</div>
             <div>Planned cost</div>

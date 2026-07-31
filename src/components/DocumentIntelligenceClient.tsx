@@ -90,7 +90,7 @@ export default function DocumentIntelligenceClient() {
       <div className="grid gap-5 md:grid-cols-3">
         <label className="cursor-pointer rounded-[2rem] border border-white bg-white p-6 shadow-sm">
           <div className="flex items-center gap-3">
-            <FileUp className="text-[#65A30D]" />
+            <FileUp className="text-[#7E22CE]" />
             <div className="font-black text-[#F8FAFC]">Upload invoice PDF/image</div>
           </div>
           <input type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" onChange={(e) => handleUpload(e.target.files, "invoice")} />
@@ -98,7 +98,7 @@ export default function DocumentIntelligenceClient() {
         </label>
         <label className="cursor-pointer rounded-[2rem] border border-white bg-white p-6 shadow-sm">
           <div className="flex items-center gap-3">
-            <Upload className="text-[#65A30D]" />
+            <Upload className="text-[#7E22CE]" />
             <div className="font-black text-[#F8FAFC]">Upload purchase order PDF/image</div>
           </div>
           <input type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" onChange={(e) => handleUpload(e.target.files, "purchase-order")} />
@@ -116,7 +116,7 @@ export default function DocumentIntelligenceClient() {
         </div>
       </div>
 
-      {message ? <div className="rounded-xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-black text-[#4D7C0F]">{message}</div> : null}
+      {message ? <div className="rounded-xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-black text-[#4D7C0F]">{message}</div> : null}
 
         <div className="space-y-4">
         {docs.length === 0 ? (
@@ -150,7 +150,7 @@ export default function DocumentIntelligenceClient() {
                   <button
                     type="button"
                     onClick={() => approveImport(doc.id)}
-                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[#A3E635]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-[#F8FAFC]"
+                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-[#F8FAFC]"
                   >
                     <CheckCircle2 size={14} />
                     Approve import
@@ -176,13 +176,13 @@ export default function DocumentIntelligenceClient() {
                 ))}
               </div>
               <div className="mt-4 flex flex-wrap gap-3 text-xs font-black">
-                <Link href="/suppliers" className="text-[#65A30D]">
+                <Link href="/suppliers" className="text-[#7E22CE]">
                   Match supplier →
                 </Link>
-                <Link href="/ingredients" className="text-[#65A30D]">
+                <Link href="/ingredients" className="text-[#7E22CE]">
                   Match ingredient →
                 </Link>
-                <Link href="/products" className="text-[#65A30D]">
+                <Link href="/products" className="text-[#7E22CE]">
                   Match product →
                 </Link>
               </div>

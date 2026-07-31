@@ -7,7 +7,7 @@ export const VYRON_PAY_PRODUCT: VyronProductDefinition = {
   tagline: "Payments, collections and finance operations for VYRON tenants.",
   theme: {
     primary: "#059669",
-    accent: "#10B981",
+    accent: "#8B5CF6",
     label: "PAY",
   },
   packages: ["professional", "enterprise"],

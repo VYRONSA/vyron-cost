@@ -24,8 +24,8 @@ const MIN_INTERACTIONS = 3;
 const MIN_AUTH_MS_BEFORE_PROMPT = 20000;
 
 function toneClass(tone: PwaNoticeTone) {
-  if (tone === "success") return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  if (tone === "warning") return "border-amber-200 bg-amber-50 text-amber-700";
+  if (tone === "success") return "border-violet-200 bg-violet-50 text-violet-700";
+  if (tone === "warning") return "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700";
   return "border-slate-200 bg-white text-slate-700";
 }
 
@@ -271,7 +271,7 @@ export default function PwaRuntime() {
         aria-live="polite"
       >
         {!online ? (
-          <div className="pointer-events-auto rounded-xl border border-amber-200 bg-amber-50/95 px-3 py-2 text-xs font-bold text-amber-700 shadow-[0_10px_30px_rgba(120,53,15,0.15)] backdrop-blur">
+          <div className="pointer-events-auto rounded-xl border border-fuchsia-200 bg-fuchsia-50/95 px-3 py-2 text-xs font-bold text-fuchsia-700 shadow-[0_10px_30px_rgba(120,53,15,0.15)] backdrop-blur">
             <span className="inline-flex items-center gap-1.5">
               <WifiOff size={14} />
               Offline mode active

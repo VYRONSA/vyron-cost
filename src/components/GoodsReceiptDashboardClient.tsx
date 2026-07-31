@@ -75,7 +75,7 @@ export default function GoodsReceiptDashboardClient() {
   const grnActions = (
     <>
       {canCreate ? (
-        <Link href="/goods-receipts/new" className="rounded-xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
+        <Link href="/goods-receipts/new" className="rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
           New GRN
         </Link>
       ) : null}
@@ -147,7 +147,7 @@ export default function GoodsReceiptDashboardClient() {
         </div>
       </div>
 
-      {message ? <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-black text-amber-800">{message}</p> : null}
+      {message ? <p className="rounded-2xl bg-fuchsia-50 px-4 py-3 text-sm font-black text-fuchsia-800">{message}</p> : null}
 
       <div className="overflow-x-auto rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         <table className="min-w-[980px] w-full text-left text-sm">

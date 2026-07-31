@@ -38,21 +38,21 @@ export default function SavingsTrackerClient() {
     >
       <section className="grid gap-6">
             <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Savings Tracked</div>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Savings Tracked</div>
               <div className="mt-3 text-5xl font-black">{money(total)}</div>
             </div>
             <div className="rounded-[2rem] bg-white p-6">
               <div className="grid gap-3 md:grid-cols-[1fr_160px_140px]">
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Saving item..." className="rounded-2xl border px-4 py-3 font-bold" />
                 <input type="number" value={value} onChange={(e) => setValue(e.target.value)} className="rounded-2xl border px-4 py-3 font-bold" />
-                <button onClick={add} className="rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 font-black text-[#F8FAFC]">Add</button>
+                <button onClick={add} className="rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 font-black text-[#F8FAFC]">Add</button>
               </div>
             </div>
             <div className="grid gap-3">
               {rows.map(([label, amount]) => (
                 <div key={String(label)} className="flex justify-between rounded-[2rem] bg-white p-5 font-black">
                   <span>{label}</span>
-                  <span className="text-[#65A30D]">{money(Number(amount))}</span>
+                  <span className="text-[#7E22CE]">{money(Number(amount))}</span>
                 </div>
               ))}
             </div>

@@ -149,7 +149,7 @@ export default function VyronCoreSimulationClient({ initialSimulations }: { init
                       {sim.scenarioType.replace(/_/g, " ")} · {new Date(sim.createdAt).toLocaleString("en-ZA")}
                     </div>
                   </div>
-                  <span className="rounded-full bg-[#A3E635]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]">{sim.status}</span>
+                  <span className="rounded-full bg-[#A855F7]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]">{sim.status}</span>
                 </div>
                 <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {Object.entries(sim.outputResults).map(([key, value]) => (

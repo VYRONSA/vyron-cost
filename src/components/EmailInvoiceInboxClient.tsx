@@ -96,7 +96,7 @@ export default function EmailInvoiceInboxClient() {
 
   return (
     <section className="grid gap-6">
-      <div className="rounded-[2rem] border border-violet-100 bg-gradient-to-br from-violet-700 to-fuchsia-800 p-6 text-white shadow-[0_18px_55px_rgba(124,58,237,0.24)]">
+      <div className="rounded-[2rem] border border-violet-100 bg-gradient-to-br from-violet-700 to-fuchsia-800 p-6 text-white shadow-[0_18px_55px_rgba(29,107,255,0.24)]">
         <MailCheck size={34} className="text-fuchsia-200" />
         <h2 className="mt-5 text-3xl font-black">Email Invoice Inbox</h2>
         <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-violet-100">

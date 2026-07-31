@@ -24,12 +24,12 @@ export default function WasteControlCentreClient({ branches }: { branches: Branc
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Monthly Waste</div>
                 <div className="mt-3 text-4xl font-black text-red-700">{money(totalWaste)}</div>
               </div>
-              <div className="rounded-[2rem] bg-[#A3E635]/10 p-6">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#65A30D]">Recoverable</div>
-                <div className="mt-3 text-4xl font-black text-[#65A30D]">{money(totalWaste * 0.65)}</div>
+              <div className="rounded-[2rem] bg-[#A855F7]/10 p-6">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#7E22CE]">Recoverable</div>
+                <div className="mt-3 text-4xl font-black text-[#7E22CE]">{money(totalWaste * 0.65)}</div>
               </div>
               <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Target</div>
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Target</div>
                 <div className="mt-3 text-3xl font-black">Reduce waste by 35%</div>
               </div>
             </section>

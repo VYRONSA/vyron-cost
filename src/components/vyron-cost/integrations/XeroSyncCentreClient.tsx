@@ -214,7 +214,7 @@ export default function XeroSyncCentreClient() {
                     </button>
                   ) : null}
                   {row.status === "Needs Review" ? (
-                    <Link href="/integrations/xero/setup" className="rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-black text-amber-900">
+                    <Link href="/integrations/xero/setup" className="rounded-xl bg-fuchsia-100 px-3 py-1.5 text-xs font-black text-fuchsia-900">
                       Review
                     </Link>
                   ) : null}
@@ -233,7 +233,7 @@ export default function XeroSyncCentreClient() {
 
 function Metric({ title, value, tone = "default" }: { title: string; value: string; tone?: "default" | "good" | "warn" | "bad" }) {
   const toneClass =
-    tone === "good" ? "text-[#65A30D]" : tone === "warn" ? "text-amber-700" : tone === "bad" ? "text-rose-700" : "text-slate-950";
+    tone === "good" ? "text-[#7E22CE]" : tone === "warn" ? "text-fuchsia-700" : tone === "bad" ? "text-rose-700" : "text-slate-950";
   return (
     <div className="rounded-[1.75rem] border border-violet-100 bg-white p-5 shadow-sm">
       <div className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-600">{title}</div>
@@ -245,9 +245,9 @@ function Metric({ title, value, tone = "default" }: { title: string; value: stri
 function StatusBadge({ status }: { status: XeroSyncStatus }) {
   const classes: Record<XeroSyncStatus, string> = {
     Ready: "bg-violet-100 text-violet-800",
-    Synced: "bg-emerald-100 text-emerald-800",
+    Synced: "bg-violet-100 text-violet-800",
     Failed: "bg-rose-100 text-rose-800",
-    "Needs Review": "bg-amber-100 text-amber-800",
+    "Needs Review": "bg-fuchsia-100 text-fuchsia-800",
     Processing: "bg-blue-100 text-blue-800",
     Cancelled: "bg-slate-100 text-slate-600",
   };

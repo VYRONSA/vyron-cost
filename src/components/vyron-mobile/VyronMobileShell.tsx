@@ -111,7 +111,7 @@ function WorkspaceSwitcherButton({ client, onOpen }: { client: ActiveClient | nu
       onClick={onOpen}
       className={`${MOBILE_TYPOGRAPHY.family} flex min-w-0 w-full items-center gap-3 rounded-[1.4rem] border border-white/70 bg-white/85 px-3 py-3 text-left shadow-[0_12px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl`}
     >
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#07111F] text-white shadow-[0_10px_24px_rgba(7,17,31,0.2)]">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl vyron-grad-surface text-white shadow-[0_10px_24px_rgba(7,17,31,0.2)]">
         <Building2 size={20} />
       </div>
       <div className="min-w-0 flex-1">
@@ -186,7 +186,7 @@ function CreateSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
               href={action.href}
               className="flex items-center gap-4 rounded-[1.4rem] border border-slate-100 bg-slate-50 px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
             >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#07111F] text-white">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl vyron-grad-surface text-white">
                 <Icon size={19} />
               </div>
               <div className="min-w-0 flex-1">

@@ -41,7 +41,7 @@ export default function YieldEngineAdvancedClient({
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.2fr]">
             <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
               <div className="mb-5 flex items-center gap-3">
-                <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-3 text-[#65A30D]">
+                <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-3 text-[#7E22CE]">
                   <Wheat size={22} />
                 </div>
                 <div>
@@ -99,7 +99,7 @@ export default function YieldEngineAdvancedClient({
                   <input type="number" value={rawCost} onChange={(event) => setRawCost(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none focus:border-violet-400" />
                 </label>
 
-                <button type="button" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
+                <button type="button" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
                   <Save size={18} />
                   Save Yield Rule Later
                 </button>
@@ -108,7 +108,7 @@ export default function YieldEngineAdvancedClient({
 
             <div className="rounded-[2rem] bg-[#07110d] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
               <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-[#A3E635]/12 p-3 text-[#A3E635]">
+                <div className="rounded-2xl bg-[#A855F7]/12 p-3 text-[#A855F7]">
                   <Calculator size={22} />
                 </div>
                 <div>
@@ -118,28 +118,28 @@ export default function YieldEngineAdvancedClient({
               </div>
 
               <div className="mt-8 grid gap-4 md:grid-cols-2">
-                <div className="rounded-[1.5rem] border border-[#A3E635]/20 bg-white/5 p-5">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A3E635]">Ingredient</div>
+                <div className="rounded-[1.5rem] border border-[#A855F7]/20 bg-white/5 p-5">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A855F7]">Ingredient</div>
                   <div className="mt-2 text-2xl font-black">{selected?.ingredient_name || "None"}</div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-[#A3E635]/20 bg-white/5 p-5">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A3E635]">Yield Mode</div>
+                <div className="rounded-[1.5rem] border border-[#A855F7]/20 bg-white/5 p-5">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A855F7]">Yield Mode</div>
                   <div className="mt-2"><StatusPill tone="emerald">{mode.replaceAll("_", " ")}</StatusPill></div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-[#A3E635]/20 bg-white/5 p-5">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A3E635]">Yield %</div>
+                <div className="rounded-[1.5rem] border border-[#A855F7]/20 bg-white/5 p-5">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A855F7]">Yield %</div>
                   <div className="mt-2 text-4xl font-black">{yieldPercent.toFixed(1)}%</div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-[#A3E635]/20 bg-white/5 p-5">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A3E635]">True Usable Cost</div>
+                <div className="rounded-[1.5rem] border border-[#A855F7]/20 bg-white/5 p-5">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A855F7]">True Usable Cost</div>
                   <div className="mt-2 text-4xl font-black">{formatMoney(trueCost)}</div>
                 </div>
               </div>
 
-              <div className="mt-6 rounded-[1.5rem] border border-[#A3E635]/20 bg-[#A3E635]/10 p-5 text-sm leading-7 text-slate-200">
+              <div className="mt-6 rounded-[1.5rem] border border-[#A855F7]/20 bg-[#A855F7]/10 p-5 text-sm leading-7 text-slate-200">
                 Example: if rice increases from 10kg raw to 25kg cooked, yield is 250%. If avocado drops from 10kg whole to 6.5kg usable, yield is 65%. This is what protects the real product GP.
               </div>
             </div>

@@ -130,7 +130,7 @@ export default function ProductsManager({
     <section className="grid gap-6 xl:grid-cols-[0.8fr_1.5fr]">
       <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-3 text-[#84CC16]"><Plus size={20} /></div>
+          <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-3 text-[#84CC16]"><Plus size={20} /></div>
           <div>
             <h2 className="text-2xl font-black text-[#F8FAFC]">Add Product</h2>
             <p className="text-sm text-slate-500">Fast product creation.</p>
@@ -160,12 +160,12 @@ export default function ProductsManager({
             </label>
           </div>
 
-          <button type="button" onClick={addProduct} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
+          <button type="button" onClick={addProduct} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
             <Plus size={18} />
             Add Product
           </button>
 
-          {message && <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-bold text-[#65A30D]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#7E22CE]">{message}</div>}
         </div>
       </div>
 
@@ -199,7 +199,7 @@ export default function ProductsManager({
 
         <div className="overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[1080px]">
-            <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+            <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
               <div>Product</div><div>Category</div><div>Price</div><div>Cost</div><div>GP</div><div>Status</div><div>Edit</div><div>Delete</div>
             </div>
 
@@ -211,17 +211,17 @@ export default function ProductsManager({
               return (
                 <div key={product.id} className="grid grid-cols-8 items-center border-t border-slate-100 px-5 py-5 text-sm">
                   <div>
-                    <Link href={`/products/${product.id}`} className="font-black text-[#F8FAFC] hover:text-[#65A30D]">
+                    <Link href={`/products/${product.id}`} className="font-black text-[#F8FAFC] hover:text-[#7E22CE]">
                       {product.product_name}
                     </Link>
                   </div>
                   <div className="font-bold text-slate-600">{product.category}</div>
                   <div className="font-black">{formatMoney(Number(product.selling_price))}</div>
                   <div>{formatMoney(Number(product.total_cost))}</div>
-                  <div className="font-black text-[#65A30D]">{gp.toFixed(1)}%</div>
+                  <div className="font-black text-[#7E22CE]">{gp.toFixed(1)}%</div>
                   <div><StatusPill tone={tone}>{action}</StatusPill></div>
                   <div>
-                    <Link href={`/products/${product.id}/edit`} className="inline-flex items-center gap-2 rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]">
+                    <Link href={`/products/${product.id}/edit`} className="inline-flex items-center gap-2 rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]">
                       <Edit3 size={14} />
                       Edit
                     </Link>

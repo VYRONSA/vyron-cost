@@ -38,7 +38,7 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
         {snapshot.cards.map((card) => (
           <div key={card.horizon} className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
             <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{card.label} forecast</div>
-            <div className="mt-3 text-4xl font-black text-[#65A30D]">{card.gpForecast}% GP</div>
+            <div className="mt-3 text-4xl font-black text-[#7E22CE]">{card.gpForecast}% GP</div>
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-xl bg-slate-50 p-3">
                 <div className="text-xs font-black uppercase text-slate-400">COGS</div>
@@ -57,7 +57,7 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
       <div className="grid gap-5 xl:grid-cols-2">
         <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
           <h2 className="text-xl font-black text-[#F8FAFC]">GP Forecast Trend</h2>
-          <div className="mt-5 h-44 rounded-2xl bg-gradient-to-b from-[#A3E635]/10 to-white p-4">
+          <div className="mt-5 h-44 rounded-2xl bg-gradient-to-b from-[#A855F7]/10 to-white p-4">
             <svg viewBox="0 0 360 150" className="h-full w-full">
               <polyline
                 fill="none"
@@ -104,7 +104,7 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
             <div>Risk</div>
           </div>
           {filteredRisks.map((row) => (
-            <Link key={row.id} href={row.href} className="grid grid-cols-6 border-t border-slate-100 px-5 py-4 text-sm transition hover:bg-[#A3E635]/10">
+            <Link key={row.id} href={row.href} className="grid grid-cols-6 border-t border-slate-100 px-5 py-4 text-sm transition hover:bg-[#A855F7]/10">
               <div className="col-span-2">
                 <div className="font-black text-slate-900">{row.name}</div>
                 <div className="text-xs text-slate-500">{row.category}</div>

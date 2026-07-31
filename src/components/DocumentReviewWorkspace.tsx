@@ -45,8 +45,8 @@ const InvoiceDocumentViewer = dynamic(() => import("@/components/InvoiceDocument
 
 function confidenceTone(score: number | null) {
   if (score === null) return "bg-slate-200 text-slate-600";
-  if (score >= 85) return "bg-[#A3E635]/12 text-[#65A30D]";
-  if (score >= 70) return "bg-amber-100 text-amber-700";
+  if (score >= 85) return "bg-[#A855F7]/12 text-[#7E22CE]";
+  if (score >= 70) return "bg-fuchsia-100 text-fuchsia-700";
   return "bg-red-100 text-red-700";
 }
 
@@ -969,13 +969,13 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
               type="button"
               onClick={() => void handleApprove()}
               disabled={approving}
-              className="rounded-lg bg-[#24183F] border border-[#A3E635]/30 px-2.5 py-1 text-[10px] font-black text-[#F8FAFC] disabled:opacity-60"
+              className="rounded-lg bg-[#24183F] border border-[#A855F7]/30 px-2.5 py-1 text-[10px] font-black text-[#F8FAFC] disabled:opacity-60"
             >
               {approving ? "Approving…" : "Approve & Update Costs"}
             </button>
           </div>
         </div>
-        {message ? <div className="mt-1 rounded bg-[#A3E635]/10 px-2 py-1 text-[10px] font-bold text-[#4D7C0F]">{message}</div> : null}
+        {message ? <div className="mt-1 rounded bg-[#A855F7]/10 px-2 py-1 text-[10px] font-bold text-[#4D7C0F]">{message}</div> : null}
         {errorMessage ? <div className="mt-1 rounded bg-red-50 px-2 py-1 text-[10px] font-bold text-red-700">{errorMessage}</div> : null}
         {costAuditRows.length > 0 ? (
           <div className="mt-1 rounded bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">
@@ -1161,7 +1161,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
                 type="button"
                 disabled={approving}
                 onClick={() => void submitSupervisorOverride()}
-                className="rounded-xl bg-amber-600 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
+                className="rounded-xl bg-fuchsia-600 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
               >
                 {approving ? "Approving…" : "Supervisor override & approve"}
               </button>

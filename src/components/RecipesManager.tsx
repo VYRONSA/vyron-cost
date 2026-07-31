@@ -135,7 +135,7 @@ export default function RecipesManager({
     <section className="grid gap-6 xl:grid-cols-[0.8fr_1.5fr]">
       <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-3 text-[#84CC16]"><Plus size={20} /></div>
+          <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-3 text-[#84CC16]"><Plus size={20} /></div>
           <div>
             <h2 className="text-2xl font-black text-[#F8FAFC]">Add New Recipe</h2>
             <p className="text-sm text-slate-500">Create recipes and assign categories.</p>
@@ -153,12 +153,12 @@ export default function RecipesManager({
             <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400" value={form.category} onChange={(event) => updateForm("category", event.target.value)} />
           </label>
 
-          <button type="button" onClick={addRecipe} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
+          <button type="button" onClick={addRecipe} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
             <Plus size={18} />
             Add Recipe
           </button>
 
-          {message && <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-bold text-[#65A30D]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#7E22CE]">{message}</div>}
         </div>
       </div>
 
@@ -190,7 +190,7 @@ export default function RecipesManager({
 
         <div className="overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[1080px]">
-            <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+            <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
               <div className="col-span-2">Recipe</div><div>Type</div><div>Category</div><div>Cost</div><div>Price</div><div>Status</div><div>Full Edit</div><div>Delete</div>
             </div>
 
@@ -201,7 +201,7 @@ export default function RecipesManager({
               return (
                 <div key={recipe.id} className="grid grid-cols-8 items-center border-t border-slate-100 px-5 py-5 text-sm">
                   <div className="col-span-2">
-                    <Link href={`/recipes/${recipe.id}`} className="font-black text-[#F8FAFC] hover:text-[#65A30D]">
+                    <Link href={`/recipes/${recipe.id}`} className="font-black text-[#F8FAFC] hover:text-[#7E22CE]">
                       {recipe.recipe_name}
                     </Link>
                     <div className="mt-1 text-xs text-slate-500">{recipe.version_note || "No version note"}</div>
@@ -212,7 +212,7 @@ export default function RecipesManager({
                   <div>{Number(recipe.selling_price || 0) > 0 ? formatMoney(Number(recipe.selling_price)) : "N/A"}</div>
                   <div><StatusPill tone={statusTone(status)}>{status}</StatusPill></div>
                   <div>
-                    <Link href={`/recipes/${recipe.id}/edit`} className="inline-flex items-center gap-2 rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]">
+                    <Link href={`/recipes/${recipe.id}/edit`} className="inline-flex items-center gap-2 rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]">
                       <Edit3 size={14} />
                       Edit
                     </Link>

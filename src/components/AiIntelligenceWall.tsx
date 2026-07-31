@@ -10,9 +10,9 @@ function buildCards(kpis: LeakageKpis, feed: AiFinancialFeedItem[]) {
   return [
     { title: "Supplier Inflation", metric: supplierFeed ? formatExecutiveMoney(supplierFeed.lossAmount) : formatCompactAnnual(kpis.supplierInflationExposure), href: "/supplier-inflation", icon: TrendingUp, tone: "text-[#EF4444]" },
     { title: "Product GP Collapse", metric: formatExecutiveMoney(kpis.productsBelowGp), href: "/product-profitability", icon: Percent, tone: "text-[#EF4444]" },
-    { title: "Packaging Cost Trend", metric: formatExecutiveMoney(kpis.procurementAnomalies), href: "/procurement-risk", icon: Package, tone: "text-[#F59E0B]" },
-    { title: "Recipe Optimisation", metric: formatExecutiveMoney(kpis.wastageLosses), href: "/recipes", icon: Sparkles, tone: "text-[#22C55E]" },
-    { title: "Duplicate Invoice Detection", metric: formatExecutiveMoney(kpis.duplicateInvoiceRisks), href: "/invoice-forensics", icon: FileSearch, tone: "text-[#F59E0B]" },
+    { title: "Packaging Cost Trend", metric: formatExecutiveMoney(kpis.procurementAnomalies), href: "/procurement-risk", icon: Package, tone: "text-[#C026D3]" },
+    { title: "Recipe Optimisation", metric: formatExecutiveMoney(kpis.wastageLosses), href: "/recipes", icon: Sparkles, tone: "text-[#9333EA]" },
+    { title: "Duplicate Invoice Detection", metric: formatExecutiveMoney(kpis.duplicateInvoiceRisks), href: "/invoice-forensics", icon: FileSearch, tone: "text-[#C026D3]" },
     { title: "Supplier Variance", metric: formatCompactAnnual(kpis.supplierInflationExposure), href: "/supplier-intelligence", icon: LineChart, tone: "text-[#0F172A]" },
   ].map((c) => ({
     ...c,

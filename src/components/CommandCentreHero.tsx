@@ -80,7 +80,7 @@ export default function CommandCentreHero({
           <VyronPremiumCard className="p-6">
             <div className="text-[10px] font-black uppercase tracking-[0.28em] text-white/45">Active Risks</div>
             <div className="mt-3 text-5xl font-black text-white">{activeRisks}</div>
-            <div className="mt-2 text-xs font-bold text-[#f59e0b]">Requires executive attention</div>
+            <div className="mt-2 text-xs font-bold text-[#c026d3]">Requires executive attention</div>
           </VyronPremiumCard>
 
           <VyronPremiumCard className="p-6 sm:col-span-2 xl:col-span-1">

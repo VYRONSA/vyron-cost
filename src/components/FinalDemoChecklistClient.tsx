@@ -33,14 +33,14 @@ export default function FinalDemoChecklistClient() {
       }}
     >
       <div key={href} className="grid gap-4 rounded-[2rem] bg-white p-5 md:grid-cols-[60px_1fr_180px] md:items-center">
-                  <button onClick={() => setDone((current) => ({ ...current, [href]: !checked }))} className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-[#A3E635]/100 text-white" : "bg-slate-100 text-slate-400"}`}>
+                  <button onClick={() => setDone((current) => ({ ...current, [href]: !checked }))} className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-[#A855F7]/100 text-white" : "bg-slate-100 text-slate-400"}`}>
                     <CheckCircle2 size={24} />
                   </button>
                   <div>
                     <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Final test {index + 1}</div>
                     <div className="font-black text-[#F8FAFC]">{label}</div>
                   </div>
-                  <Link href={href} className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-3 text-center text-sm font-black text-[#4D7C0F]">Open</Link>
+                  <Link href={href} className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-3 text-center text-sm font-black text-[#4D7C0F]">Open</Link>
                 </div>
     </VyronPremiumPageShell>
   );

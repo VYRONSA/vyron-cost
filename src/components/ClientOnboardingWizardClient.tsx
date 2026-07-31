@@ -41,7 +41,7 @@ export default function ClientOnboardingWizardClient() {
                     <button
                       type="button"
                       onClick={() => setDone((current) => ({ ...current, [title]: !checked }))}
-                      className={`flex h-14 w-14 items-center justify-center rounded-2xl ${checked ? "bg-[#A3E635]/100 text-white" : "bg-slate-100 text-slate-400"}`}
+                      className={`flex h-14 w-14 items-center justify-center rounded-2xl ${checked ? "bg-[#A855F7]/100 text-white" : "bg-slate-100 text-slate-400"}`}
                     >
                       <CheckCircle2 size={26} />
                     </button>
@@ -50,7 +50,7 @@ export default function ClientOnboardingWizardClient() {
                       <h3 className="mt-1 text-xl font-black text-[#F8FAFC]">{title}</h3>
                       <p className="mt-1 text-sm font-semibold text-slate-500">{detail}</p>
                     </div>
-                    <Link href={href} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
+                    <Link href={href} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
                       Open <ArrowRight size={16} />
                     </Link>
                   </div>

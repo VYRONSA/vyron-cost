@@ -62,16 +62,16 @@ const M = VYRON_MASTER;
 function DashboardHero({ tradingName }: { tradingName: string }) {
   return (
     <section className={M.dashboardHero}>
-      <div className="pointer-events-none absolute -right-8 top-8 h-40 w-40 rounded-full bg-[#7C3AED]/10 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-6 left-1/4 h-32 w-32 rounded-full bg-[#F43F5E]/8 blur-2xl" />
+      <div className="pointer-events-none absolute -right-8 top-8 h-40 w-40 rounded-full bg-[#1D6BFF]/10 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-6 left-1/4 h-32 w-32 rounded-full bg-[#3B82F6]/8 blur-2xl" />
 
       <div className="relative p-6 md:p-8">
         <div className={`p-5 md:p-6 ${M.dashboardHeroInner}`}>
           <div className="flex min-w-0 max-w-3xl flex-col justify-center">
             <div className={`inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#CBD5E1]`}>
-              <Sparkles size={13} className="text-[#F43F5E]" />
+              <Sparkles size={13} className="text-[#3B82F6]" />
               <span>
-                VYRON COST <span className="text-[#9333EA]">Command Centre</span>
+                VYRON COST <span className="text-[#3B82F6]">Command Centre</span>
               </span>
             </div>
 
@@ -79,7 +79,7 @@ function DashboardHero({ tradingName }: { tradingName: string }) {
 
             <h1 className={`mt-2 break-words text-3xl leading-[1.12] tracking-[-0.03em] text-balance md:text-4xl ${M.headingOnDark}`}>
               AI Cost Intelligence{" "}
-              <span className={M.gradientText}>Command Centre</span>
+              <span className={M.gradientTextOnDark}>Command Centre</span>
             </h1>
 
             <p className={`mt-4 max-w-lg text-sm font-medium leading-6 ${M.bodyOnDark}`}>
@@ -89,16 +89,16 @@ function DashboardHero({ tradingName }: { tradingName: string }) {
             <div className="mt-5 grid max-w-xl gap-3">
               <div className={`flex min-w-0 items-center justify-between gap-2 overflow-hidden ${M.dashboardHeroRow}`}>
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-[#7C3AED]" />
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-[#1D6BFF]" />
                   <span className={`min-w-0 break-words text-xs font-bold uppercase tracking-[0.1em] ${M.bodyOnDark}`}>
                     Inventory Exposure
                   </span>
                 </div>
-                <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-[#9333EA]">Monitoring</span>
+                <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-[#3B82F6]">Monitoring</span>
               </div>
               <div className={`flex min-w-0 items-center justify-between gap-2 overflow-hidden ${M.dashboardHeroRow}`}>
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-[#F43F5E]" />
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-[#3B82F6]" />
                   <span className={`min-w-0 break-words text-xs font-bold uppercase tracking-[0.1em] ${M.bodyOnDark}`}>
                     Revenue Intelligence
                   </span>
@@ -217,7 +217,7 @@ export default function DashboardPremiumClient({
       </section>
 
       {mode === "onboarding" ? (
-        <PackageGatedSection packageName={packageName} feature="store_ordering" title="Store Ordering Operations">
+        <PackageGatedSection packageName={packageName} feature="store_ordering" title="Store Ordering Operations" stripe>
           <VyronSectionHeader title="Store Ordering Operations" />
           <VyronMetricGrid>
             <VyronMetricCard
@@ -313,7 +313,7 @@ export default function DashboardPremiumClient({
       ) : null}
 
       {mode === "onboarding" ? (
-        <PackageGatedSection packageName={packageName} feature="procurement" title="Procurement Intelligence">
+        <PackageGatedSection packageName={packageName} feature="procurement" title="Procurement Intelligence" stripe>
           <VyronSectionHeader title="Procurement Intelligence" />
           <VyronMetricGrid>
             <VyronMetricCard
@@ -393,7 +393,7 @@ export default function DashboardPremiumClient({
       ) : null}
 
       {mode === "onboarding" ? (
-        <PackageGatedSection packageName={packageName} feature="forecasting" title="Demand Forecasting">
+        <PackageGatedSection packageName={packageName} feature="forecasting" title="Demand Forecasting" stripe>
           <VyronSectionHeader title="Demand Forecasting" />
           <VyronMetricGrid>
             <VyronMetricCard
@@ -434,7 +434,7 @@ export default function DashboardPremiumClient({
               {demandForecastOps.warnings.slice(0, 4).map((warning) => (
                 <div
                   key={`${warning.code}-${warning.product_id}`}
-                  className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-900"
+                  className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-2.5 text-sm font-semibold text-fuchsia-900"
                 >
                   {warning.message}
                 </div>
@@ -485,7 +485,7 @@ export default function DashboardPremiumClient({
       ) : null}
 
       {mode === "onboarding" ? (
-        <PackageGatedSection packageName={packageName} feature="production_planning" title="Production Planning">
+        <PackageGatedSection packageName={packageName} feature="production_planning" title="Production Planning" stripe>
           <VyronSectionHeader title="Production Planning" />
           <VyronMetricGrid>
             <VyronMetricCard
@@ -566,7 +566,7 @@ export default function DashboardPremiumClient({
             <h2 className={`mt-2 text-2xl tracking-tight md:text-[1.65rem] ${M.heading}`}>Cost command layer</h2>
           </div>
           <div className={M.statusBrand}>
-            <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[#7C3AED]" />
+            <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[#1D6BFF]" />
             AI Feed Active
           </div>
         </div>
@@ -580,11 +580,11 @@ export default function DashboardPremiumClient({
             <div key={label} className={`min-h-[136px] min-w-0 ${M.dashboardWidget}`}>
               <div className="flex items-center justify-between gap-3">
                 <div className={`flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] ${M.muted}`}>
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#7C3AED]" />
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#1D6BFF]" />
                   {label}
                 </div>
                 <div className="rounded-full border border-[#E2E8F0] bg-[#F6F7FB] px-2.5 py-0.5 text-[10px] font-bold text-[#334155]">
-                  <span className="text-[#E11D48]">{confidence}</span> confidence
+                  <span className="text-[#2563EB]">{confidence}</span> confidence
                 </div>
               </div>
               <p className={`mt-3 text-sm font-medium leading-6 ${M.body}`}>{detail}</p>

@@ -52,7 +52,7 @@ export default function TrainingManualClient() {
             <div className="grid gap-4 md:grid-cols-2">
               {manualSections.map((section) => (
                 <div key={section.n} className="rounded-[2rem] border border-white bg-white p-5 shadow-sm">
-                  <div className="text-xs font-black uppercase tracking-[0.16em] text-[#65A30D]">Step {section.n}</div>
+                  <div className="text-xs font-black uppercase tracking-[0.16em] text-[#7E22CE]">Step {section.n}</div>
                   <h3 className="mt-2 text-lg font-black text-[#F8FAFC]">{section.title}</h3>
                   <p className="mt-2 text-sm leading-7 text-slate-600">{section.body}</p>
                 </div>

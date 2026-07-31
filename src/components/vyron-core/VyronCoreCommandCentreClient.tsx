@@ -163,7 +163,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
           </div>
         </CommandCentreCard>
 
-        <CommandCentreCard title="Cost & Risk Intelligence" subtitle="Labour · leakage · compliance" href="/financial-leakage" accent="bg-gradient-to-br from-amber-800 to-red-950">
+        <CommandCentreCard title="Cost & Risk Intelligence" subtitle="Labour · leakage · compliance" href="/financial-leakage" accent="bg-gradient-to-br from-fuchsia-800 to-red-950">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <KpiTile label="Labour cost" value={money(modules.costIntelligence.labourCostMonth)} />
             <KpiTile label="Overtime" value={money(modules.costIntelligence.overtimeCost)} />
@@ -190,7 +190,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
             </div>
             <div>
               <div className="text-[10px] font-black uppercase text-slate-400">Productivity index</div>
-              <ExecutiveSparkChart data={trends.productivityTrend} colour="#10b981" height={100} variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
+              <ExecutiveSparkChart data={trends.productivityTrend} colour="#8b5cf6" height={100} variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
             </div>
           </div>
         </div>
@@ -206,7 +206,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
             </Link>
           </div>
           <div className="mt-6 h-40">
-            <ExecutiveSparkChart data={attritionForecast} colour="#f43f5e" height={140} variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
+            <ExecutiveSparkChart data={attritionForecast} colour="#3b82f6" height={140} variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
           </div>
         </div>
       </section>
@@ -238,7 +238,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
               <div key={item.id} className="rounded-xl bg-white/10 p-3">
                 <span
                   className={`rounded-lg px-2 py-0.5 text-[10px] font-black uppercase ${
-                    item.severity === "high" ? "bg-red-500/30 text-red-200" : item.severity === "medium" ? "bg-amber-500/30 text-amber-100" : "bg-slate-500/30"
+                    item.severity === "high" ? "bg-red-500/30 text-red-200" : item.severity === "medium" ? "bg-fuchsia-500/30 text-fuchsia-100" : "bg-slate-500/30"
                   }`}
                 >
                   {item.category}
@@ -288,10 +288,10 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
               </div>
               <div className="font-semibold text-slate-600">{t.department}</div>
               <div className="font-black text-violet-700">{t.clockInRate}%</div>
-              <div className="font-black text-[#65A30D]">{t.productivityIndex}%</div>
+              <div className="font-black text-[#7E22CE]">{t.productivityIndex}%</div>
               <div className="font-black">{t.healthScore}</div>
               <div className={`font-black ${t.riskScore >= 40 ? "text-red-600" : "text-slate-700"}`}>{t.riskScore}</div>
-              <div className={`font-black ${t.attritionProbability >= 0.2 ? "text-amber-600" : "text-slate-700"}`}>
+              <div className={`font-black ${t.attritionProbability >= 0.2 ? "text-fuchsia-600" : "text-slate-700"}`}>
                 {(t.attritionProbability * 100).toFixed(0)}%
               </div>
               <div className="font-black text-slate-700">{money(t.costPerHour)}</div>

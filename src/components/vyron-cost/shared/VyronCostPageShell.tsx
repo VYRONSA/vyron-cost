@@ -24,8 +24,8 @@ export default function VyronCostPageShell({
   return (
     <main className={`min-h-screen ${M.page}`}>
       <div className="pointer-events-none fixed inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(124,58,237,0.05),transparent_42%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_12%,rgba(244,63,94,0.04),transparent_38%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(29,107,255,0.05),transparent_42%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_12%,rgba(59,130,246,0.04),transparent_38%)]" />
       </div>
 
       <section className="relative mx-auto flex w-full max-w-7xl flex-col gap-7 px-5 py-7 lg:px-8">

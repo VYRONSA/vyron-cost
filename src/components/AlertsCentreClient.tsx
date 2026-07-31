@@ -57,15 +57,15 @@ export default function AlertsCentreClient({
     >
       <section className="grid gap-6">
             <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3">
-                <Search size={20} className="text-[#65A30D]" />
+              <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3">
+                <Search size={20} className="text-[#7E22CE]" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search alerts by severity, type, message or title..."
                   className="w-full bg-transparent text-sm font-black text-slate-700 outline-none placeholder:text-slate-400"
                 />
-                <div className="rounded-full bg-[#07110d] px-4 py-2 text-xs font-black text-[#A3E635]">
+                <div className="rounded-full bg-[#07110d] px-4 py-2 text-xs font-black text-[#A855F7]">
                   {filtered.length} alerts
                 </div>
               </div>
@@ -78,7 +78,7 @@ export default function AlertsCentreClient({
                   className={`rounded-[2rem] border p-6 shadow-[0_10px_35px_rgba(15,23,42,0.06)] ${
                     alert.is_read
                       ? "border-white bg-white"
-                      : "border-[#A3E635]/25 bg-white shadow-black/10"
+                      : "border-[#A855F7]/25 bg-white shadow-black/10"
                   }`}
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -109,7 +109,7 @@ export default function AlertsCentreClient({
                     <button
                       type="button"
                       onClick={() => markRead(alert.id)}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]"
                     >
                       <CheckCircle2 size={18} />
                       Mark Read

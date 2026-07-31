@@ -38,7 +38,7 @@ export default async function RecoveryOpportunityDetailPage({
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Monthly</div>
           <div className="mt-3 text-4xl font-black text-violet-700">{money(opportunity.monthly_value)}</div>
         </div>
-        <div className="rounded-[2rem] bg-[#A3E635]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-[#A855F7]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Annual</div>
           <div className="mt-3 text-4xl font-black text-[#84CC16]">{money(opportunity.annual_value)}</div>
         </div>
@@ -94,16 +94,16 @@ export default async function RecoveryOpportunityDetailPage({
             </div>
           ) : null}
 
-          <div className="mt-5 rounded-3xl bg-amber-50 p-5">
-            <div className="text-xs font-black uppercase tracking-[0.14em] text-amber-700">Missing Inputs</div>
-            <div className="mt-2 text-sm font-bold text-amber-900">
+          <div className="mt-5 rounded-3xl bg-fuchsia-50 p-5">
+            <div className="text-xs font-black uppercase tracking-[0.14em] text-fuchsia-700">Missing Inputs</div>
+            <div className="mt-2 text-sm font-bold text-fuchsia-900">
               {opportunity.missing_inputs?.length
                 ? opportunity.missing_inputs.join(", ")
                 : "No missing inputs. Formula inputs are complete."}
             </div>
           </div>
 
-          <div className="mt-5 rounded-3xl bg-[#A3E635]/10 p-5">
+          <div className="mt-5 rounded-3xl bg-[#A855F7]/10 p-5">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Recommended Action</div>
             <div className="mt-2 text-lg font-black text-[#4D7C0F]">
               {opportunity.recommended_action || "Review and investigate this opportunity."}
@@ -202,8 +202,8 @@ export default async function RecoveryOpportunityDetailPage({
             </div>
 
             {drilldown?.affectedProducts?.length ? (
-              <div className="mt-5 rounded-3xl bg-[#A3E635]/10 p-5">
-                <div className="text-xs font-black uppercase tracking-[0.14em] text-[#65A30D]">Affected Products</div>
+              <div className="mt-5 rounded-3xl bg-[#A855F7]/10 p-5">
+                <div className="text-xs font-black uppercase tracking-[0.14em] text-[#7E22CE]">Affected Products</div>
                 <div className="mt-3 space-y-2">
                   {drilldown.affectedProducts.slice(0, 6).map((product) => (
                     <div key={product.productId} className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-[#4D7C0F]">

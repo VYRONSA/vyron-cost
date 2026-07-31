@@ -45,13 +45,13 @@ export default function IngredientPriceWatchClient({ products }: { products: Pro
                 <div className="mt-3 text-4xl font-black text-[#F8FAFC]">{rows.length}</div>
               </div>
               <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Alert Rule</div>
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Alert Rule</div>
                 <div className="mt-3 text-3xl font-black">Flag movement above 5%</div>
               </div>
             </section>
 
             <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="grid grid-cols-6 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+              <div className="grid grid-cols-6 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
                 <div className="col-span-2">Item / Product</div>
                 <div>Category</div>
                 <div>Movement</div>
@@ -62,9 +62,9 @@ export default function IngredientPriceWatchClient({ products }: { products: Pro
                 <div key={row.id} className="grid grid-cols-6 items-center border-t border-slate-100 px-5 py-5 text-sm">
                   <div className="col-span-2 font-black text-[#F8FAFC]">{row.item}</div>
                   <div>{row.category}</div>
-                  <div className={row.movement > 8 ? "font-black text-red-700" : "font-black text-amber-600"}>{row.movement.toFixed(1)}%</div>
+                  <div className={row.movement > 8 ? "font-black text-red-700" : "font-black text-fuchsia-600"}>{row.movement.toFixed(1)}%</div>
                   <div className="font-black">{money(row.exposure)}</div>
-                  <Link href={row.href} className="font-black text-[#65A30D]">Open →</Link>
+                  <Link href={row.href} className="font-black text-[#7E22CE]">Open →</Link>
                 </div>
               ))}
             </div>

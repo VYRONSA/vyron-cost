@@ -1,13 +1,50 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="VYRON COST">
   <defs>
-    <linearGradient id="vyron-cost-bg" x1="8%" y1="8%" x2="92%" y2="92%">
-      <stop offset="0%" stop-color="#E11D48" />
-      <stop offset="100%" stop-color="#7C3AED" />
+    <radialGradient id="vc-ground" cx="50%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#0D2F66" />
+      <stop offset="58%" stop-color="#061630" />
+      <stop offset="100%" stop-color="#030B1C" />
+    </radialGradient>
+    <linearGradient id="vc-chrome" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="45%" stop-color="#D5DEE9" />
+      <stop offset="100%" stop-color="#7E8DA1" />
     </linearGradient>
+    <linearGradient id="vc-chrome-dark" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#9AA8BA" />
+      <stop offset="100%" stop-color="#55637A" />
+    </linearGradient>
+    <linearGradient id="vc-blue" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0%" stop-color="#7FD8FF" />
+      <stop offset="40%" stop-color="#22A6FF" />
+      <stop offset="100%" stop-color="#0B4FD6" />
+    </linearGradient>
+    <linearGradient id="vc-blue-dark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1668D8" />
+      <stop offset="100%" stop-color="#06308F" />
+    </linearGradient>
+    <linearGradient id="vc-ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2FA8FF" stop-opacity="0.15" />
+      <stop offset="50%" stop-color="#6FD0FF" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#2FA8FF" stop-opacity="0.15" />
+    </linearGradient>
+    <filter id="vc-glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="11" result="b" />
+      <feMerge>
+        <feMergeNode in="b" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#vyron-cost-bg)" />
-  <g transform="translate(256 256)">
-    <rect x="-34" y="-132" width="68" height="264" rx="34" fill="#FFFFFF" fill-opacity="0.95" transform="rotate(-24)" />
-    <rect x="-34" y="-132" width="68" height="264" rx="34" fill="#07111F" fill-opacity="0.82" transform="rotate(24)" />
+
+  <rect width="512" height="512" rx="112" fill="url(#vc-ground)" />
+
+  <g transform="translate(256 256) scale(8) translate(-32 -32)">
+    <circle cx="32" cy="31" r="20.5" fill="none" stroke="url(#vc-ring)" stroke-width="1.4" />
+    <path d="M11 14 L24.5 17.2 L32 53.5 Z" fill="url(#vc-chrome)" />
+    <path d="M24.5 17.2 L32 53.5 L27.4 30.5 Z" fill="url(#vc-chrome-dark)" opacity="0.9" />
+    <path d="M53 10 L39.5 19 L32 53.5 Z" fill="url(#vc-blue)" />
+    <path d="M39.5 19 L32 53.5 L36.4 31 Z" fill="url(#vc-blue-dark)" opacity="0.85" />
+    <path d="M53 10 L50.4 12.4 L33.4 52 L32 53.5 Z" fill="#CFF0FF" opacity="0.75" />
   </g>
 </svg>

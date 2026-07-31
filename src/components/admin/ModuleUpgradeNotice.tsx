@@ -22,13 +22,13 @@ export default function ModuleUpgradeNotice({
   const tooltip = getFeatureTooltip(resolvedFeature);
 
   return (
-    <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">
-      <h1 className="text-2xl font-black text-amber-950">{title}</h1>
-      <p className="mt-3 text-sm font-semibold text-amber-800">{message}</p>
-      <p className="mt-2 text-xs font-medium text-amber-700">{tooltip}</p>
+    <div className="rounded-[2rem] border border-fuchsia-200 bg-fuchsia-50 p-8 text-center shadow-sm">
+      <h1 className="text-2xl font-black text-fuchsia-950">{title}</h1>
+      <p className="mt-3 text-sm font-semibold text-fuchsia-800">{message}</p>
+      <p className="mt-2 text-xs font-medium text-fuchsia-700">{tooltip}</p>
       <Link
         href="/admin/company-setup"
-        className="mt-6 inline-block rounded-xl bg-amber-700 px-5 py-2.5 text-sm font-black text-white"
+        className="mt-6 inline-block rounded-xl bg-fuchsia-700 px-5 py-2.5 text-sm font-black text-white"
       >
         View package details
       </Link>

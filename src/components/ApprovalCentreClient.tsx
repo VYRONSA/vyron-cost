@@ -79,15 +79,15 @@ export default function ApprovalCentreClient({
     >
       <section className="grid gap-6">
             <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3">
-                <Search size={20} className="text-[#65A30D]" />
+              <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3">
+                <Search size={20} className="text-[#7E22CE]" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search approvals..."
                   className="w-full bg-transparent text-sm font-black text-slate-700 outline-none placeholder:text-slate-400"
                 />
-                <div className="rounded-full bg-[#07110d] px-4 py-2 text-xs font-black text-[#A3E635]">
+                <div className="rounded-full bg-[#07110d] px-4 py-2 text-xs font-black text-[#A855F7]">
                   {filtered.length} items
                 </div>
               </div>
@@ -134,7 +134,7 @@ export default function ApprovalCentreClient({
                             <div className="mt-1 text-lg font-black">{Number(approval.proposed_value || 0).toFixed(2)}</div>
                           </div>
                           <div className="rounded-2xl bg-[#07110d] px-4 py-3 text-white">
-                            <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Impact</div>
+                            <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Impact</div>
                             <div className="mt-1 text-lg font-black">{formatMoney(Number(approval.financial_impact || 0))}</div>
                           </div>
                         </div>
@@ -146,7 +146,7 @@ export default function ApprovalCentreClient({
                         <button
                           type="button"
                           onClick={() => decide(approval.id, "Approved")}
-                          className="inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]"
+                          className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]"
                         >
                           <CheckCircle2 size={18} />
                           Approve

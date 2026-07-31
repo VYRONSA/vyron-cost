@@ -11,7 +11,7 @@ function formatMoney(value: number) {
 }
 
 function trendClass(trend: string) {
-  if (trend === "Growing") return "bg-emerald-100 text-emerald-800";
+  if (trend === "Growing") return "bg-violet-100 text-violet-800";
   if (trend === "Declining") return "bg-rose-100 text-rose-800";
   return "bg-slate-100 text-slate-700";
 }
@@ -81,7 +81,7 @@ export default function DemandForecastClient() {
             type="button"
             disabled={saving}
             onClick={() => void saveSnapshot()}
-            className="rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+            className="rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save Snapshot"}
           </button>
@@ -105,7 +105,7 @@ export default function DemandForecastClient() {
               {warnings.slice(0, 8).map((warning) => (
                 <div
                   key={`${warning.code}-${warning.product_id}`}
-                  className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900"
+                  className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm font-semibold text-fuchsia-900"
                 >
                   {warning.message}
                 </div>

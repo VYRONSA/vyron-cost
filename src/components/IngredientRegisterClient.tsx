@@ -282,7 +282,7 @@ export default function IngredientRegisterClient({
                 )}
 
                 {message && (
-                  <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-bold text-[#65A30D]">
+                  <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#7E22CE]">
                     {message}
                   </div>
                 )}

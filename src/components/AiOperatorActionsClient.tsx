@@ -20,7 +20,7 @@ export default function AiOperatorActionsClient() {
   return (
     <section className="grid gap-6">
       <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-        <Bot size={34} className="text-[#A3E635]" />
+        <Bot size={34} className="text-[#A855F7]" />
         <h2 className="mt-5 text-3xl font-black">AI Operator Actions</h2>
         <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
           These are the action routes VYRON AI can guide or execute next. This turns the assistant from answer-only into operator-ready.
@@ -42,13 +42,13 @@ export default function AiOperatorActionsClient() {
                     <button
                       type="button"
                       onClick={() => setExecuted((current) => ({ ...current, [title]: !done }))}
-                      className={`flex h-12 w-12 items-center justify-center rounded-2xl ${done ? "bg-[#A3E635]/100 text-white" : "bg-slate-100 text-slate-400"}`}
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl ${done ? "bg-[#A855F7]/100 text-white" : "bg-slate-100 text-slate-400"}`}
                     >
                       <CheckCircle2 size={24} />
                     </button>
                     <h3 className="mt-5 text-xl font-black text-[#F8FAFC]">{title}</h3>
                     <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">{detail}</p>
-                    <Link href={href} className="mt-5 inline-flex rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
+                    <Link href={href} className="mt-5 inline-flex rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
                       Open action
                     </Link>
                   </div>

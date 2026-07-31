@@ -183,7 +183,7 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
           {canEdit ? (
             <button type="button" onClick={() => setEditing((value) => !value)} className="inline-flex items-center gap-1 rounded-xl bg-violet-700 px-3 py-2 text-xs font-black text-white"><Pencil size={14} />{editing ? "Cancel Edit" : stockPosted ? "Edit Notes" : "Edit GRN"}</button>
           ) : null}
-          {editing && canEdit ? <button type="button" disabled={saving} onClick={() => void saveGrn()} className="inline-flex items-center gap-1 rounded-xl bg-[#24183F] border border-[#A3E635]/30 px-3 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"><Save size={14} />{saving ? "Saving…" : "Save GRN"}</button> : null}
+          {editing && canEdit ? <button type="button" disabled={saving} onClick={() => void saveGrn()} className="inline-flex items-center gap-1 rounded-xl bg-[#24183F] border border-[#A855F7]/30 px-3 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"><Save size={14} />{saving ? "Saving…" : "Save GRN"}</button> : null}
           <button type="button" onClick={exportCsv} className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800"><Download size={14} />Export CSV</button>
           <DocumentPdfActions
             pdfUrl={`/api/goods-receipts/${grnId}/pdf${poApiWorkspaceContext().query}`}
@@ -193,7 +193,7 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
         </div>
       </div>
 
-      {message ? <p className="rounded-xl bg-amber-50 px-4 py-2 text-sm font-bold text-amber-800 print:hidden">{message}</p> : null}
+      {message ? <p className="rounded-xl bg-fuchsia-50 px-4 py-2 text-sm font-bold text-fuchsia-800 print:hidden">{message}</p> : null}
 
       <div className="grid gap-4 lg:grid-cols-2 print:hidden">
         <VyronPremiumFormulaCard
@@ -225,7 +225,7 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
         <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Linked PO</div>{po?.id ? <Link href={`/purchase-orders/${po.id}`} className="mt-2 block text-lg font-black text-violet-700">{po.po_number}</Link> : <div className="mt-2 text-lg font-black">—</div>}</div>
         <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Received</div><div className="mt-2 text-lg font-black">{totals.received.toFixed(2)}</div></div>
         <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Damaged/Rejected</div><div className="mt-2 text-lg font-black">{(totals.damaged + totals.rejected).toFixed(2)}</div></div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Status</div>{editing && !stockPosted ? <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-2 w-full rounded-xl border px-3 py-2 font-bold"><option>Posted</option><option>Draft</option><option>Corrected</option><option>Cancelled</option></select> : <div className="mt-2 text-lg font-black">{String(receipt.status || "Posted")}{stockPosted ? <span className="mt-1 block text-xs font-bold text-[#65A30D]">Stock posted</span> : null}</div>}</div>
+        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Status</div>{editing && !stockPosted ? <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-2 w-full rounded-xl border px-3 py-2 font-bold"><option>Posted</option><option>Draft</option><option>Corrected</option><option>Cancelled</option></select> : <div className="mt-2 text-lg font-black">{String(receipt.status || "Posted")}{stockPosted ? <span className="mt-1 block text-xs font-bold text-[#7E22CE]">Stock posted</span> : null}</div>}</div>
       </div>
 
       <div className="min-w-0 overflow-x-auto rounded-[2rem] border border-violet-100 bg-white">

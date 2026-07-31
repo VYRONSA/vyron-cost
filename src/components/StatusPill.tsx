@@ -6,8 +6,8 @@ export default function StatusPill({
   tone?: "lime" | "warning" | "red" | "slate" | "brand" | "emerald" | "amber" | "blue";
 }) {
   const styles = {
-    lime: "border border-[#A3E635]/30 bg-[#A3E635]/12 text-[#65A30D]",
-    emerald: "border border-[#A3E635]/30 bg-[#A3E635]/12 text-[#65A30D]",
+    lime: "border border-[#A855F7]/30 bg-[#A855F7]/12 text-[#7E22CE]",
+    emerald: "border border-[#A855F7]/30 bg-[#A855F7]/12 text-[#7E22CE]",
     warning: "border border-orange-400/35 bg-orange-500/15 text-orange-700",
     amber: "border border-orange-400/35 bg-orange-500/15 text-orange-700",
     red: "border border-red-400/30 bg-red-500/12 text-red-700",

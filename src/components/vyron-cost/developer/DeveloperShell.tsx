@@ -2,7 +2,6 @@
 
 import {
   ArrowLeft,
-  Building2,
   ChevronDown,
   ChevronRight,
   Home,
@@ -16,6 +15,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
+import { VyronLogoLockup } from "@/components/vyron-ui/VyronLogo";
 
 const M = VYRON_MASTER;
 const SIDEBAR_WIDTH = "292px";
@@ -52,13 +52,7 @@ function cn(...classes: Array<string | false | undefined | null>) {
 function Logo() {
   return (
     <Link href="/developer" className="flex items-center gap-3">
-      <div className={`relative flex h-14 w-14 items-center justify-center rounded-3xl ${M.iconEmphasis}`}>
-        <Building2 className="relative text-white" size={28} />
-      </div>
-      <div>
-        <div className="text-2xl font-black tracking-[0.32em] text-[#0F172A]">VYRON</div>
-        <div className="-mt-1 text-sm font-black tracking-[0.46em] text-[#7C3AED]">DEV</div>
-      </div>
+      <VyronLogoLockup variant="onLight" size={56} suffix="DEV" />
     </Link>
   );
 }
@@ -82,7 +76,7 @@ export default function DeveloperShell({
       style={{ ["--vyron-sidebar-width" as string]: SIDEBAR_WIDTH }}
     >
       <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-[292px] shrink-0 flex-col overflow-hidden border-r border-[#E2E8F0] bg-white px-4 py-5 shadow-[4px_0_24px_rgba(15,23,42,0.04)] xl:relative xl:z-30 xl:block">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.04),transparent_42%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(29,107,255,0.04),transparent_42%)]" />
         <div className="relative flex h-full min-h-0 flex-col">
           <div className="shrink-0 px-2 py-2">
             <Logo />
@@ -119,7 +113,7 @@ export default function DeveloperShell({
                             active ? M.navActiveDashboard : M.navInactive
                           )}
                         >
-                          <item.icon size={19} className={active ? "text-white" : "text-[#7C3AED]"} />
+                          <item.icon size={19} className={active ? "text-white" : "text-[#1D6BFF]"} />
                           <span className="min-w-0 flex-1 truncate">{item.label}</span>
                         </Link>
                       );

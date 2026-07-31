@@ -87,17 +87,17 @@ export default function RecoveryOpportunitiesClient({
         <div className="grid gap-5 md:grid-cols-4">
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Estimated Recovery</div>
-          <div className="mt-3 text-4xl font-black text-amber-600">{money(summary.estimatedRecovery)}</div>
+          <div className="mt-3 text-4xl font-black text-fuchsia-600">{money(summary.estimatedRecovery)}</div>
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Verified Recovery</div>
-          <div className="mt-3 text-4xl font-black text-[#65A30D]">{money(summary.verifiedRecovery)}</div>
+          <div className="mt-3 text-4xl font-black text-[#7E22CE]">{money(summary.verifiedRecovery)}</div>
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Potential Recovery</div>
           <div className="mt-3 text-4xl font-black text-violet-700">{money(summary.potentialRecovery)}</div>
         </div>
-        <div className="rounded-[2rem] bg-[#A3E635]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-[#A855F7]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Recovered To Date</div>
           <div className="mt-3 text-4xl font-black text-[#84CC16]">{money(summary.recoveredToDate)}</div>
         </div>
@@ -140,7 +140,7 @@ export default function RecoveryOpportunitiesClient({
               <button
                 type="button"
                 onClick={() => setVerifiedOnly(true)}
-                className={`rounded-xl px-3 py-2 ${verifiedOnly ? "bg-[#24183F] border border-[#A3E635]/30 text-white" : "text-slate-600"}`}
+                className={`rounded-xl px-3 py-2 ${verifiedOnly ? "bg-[#24183F] border border-[#A855F7]/30 text-white" : "text-slate-600"}`}
               >
                 Verified Only
               </button>
@@ -169,7 +169,7 @@ export default function RecoveryOpportunitiesClient({
         </div>
 
         {message && (
-          <div className="mt-4 rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-4 text-sm font-bold text-[#65A30D]">
+          <div className="mt-4 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-bold text-[#7E22CE]">
             {message}
           </div>
         )}
@@ -200,7 +200,7 @@ export default function RecoveryOpportunitiesClient({
             <div>
               <div className="font-black text-slate-900">{item.title}</div>
               <div className="mt-1 flex flex-wrap gap-1">
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${item.is_estimated ? "bg-amber-100 text-amber-700" : "bg-[#A3E635]/12 text-[#65A30D]"}`}>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${item.is_estimated ? "bg-fuchsia-100 text-fuchsia-700" : "bg-[#A855F7]/12 text-[#7E22CE]"}`}>
                   {item.is_estimated ? "Estimated" : "Verified"}
                 </span>
                 {(item.missing_inputs?.length || 0) > 0 ? (
@@ -214,10 +214,10 @@ export default function RecoveryOpportunitiesClient({
             <div className="font-black text-violet-700">{money(item.monthly_value)}</div>
             <div className="font-black text-[#84CC16]">{money(item.annual_value)}</div>
             <div className="font-black text-slate-900">{Number(item.confidence || 0).toFixed(0)}%</div>
-            <div className={`font-black ${item.confidence_level === "High Confidence" ? "text-[#65A30D]" : item.confidence_level === "Medium Confidence" ? "text-amber-700" : "text-red-700"}`}>
+            <div className={`font-black ${item.confidence_level === "High Confidence" ? "text-[#7E22CE]" : item.confidence_level === "Medium Confidence" ? "text-fuchsia-700" : "text-red-700"}`}>
               {item.confidence_level || "Medium Confidence"}
             </div>
-            <div className={`text-xs font-black ${item.is_estimated ? "text-amber-700" : "text-[#65A30D]"}`}>
+            <div className={`text-xs font-black ${item.is_estimated ? "text-fuchsia-700" : "text-[#7E22CE]"}`}>
               {item.is_estimated ? "Estimated Recovery" : "Verified Recovery"}
             </div>
             <div className="font-black text-violet-700">{item.status || "Identified"}</div>

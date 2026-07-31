@@ -20,7 +20,7 @@ export function PremiumMobileEmptyState({
     <PremiumMobileCard tone="default" className={`${MOBILE_TYPOGRAPHY.family} relative overflow-hidden p-6 text-center`}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(199,154,43,0.14),transparent_46%)]" />
 
-      <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] bg-[#07111F] text-white shadow-[0_16px_34px_rgba(7,17,31,0.18)]">
+      <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] vyron-grad-surface text-white shadow-[0_16px_34px_rgba(7,17,31,0.18)]">
         <Icon size={30} />
       </div>
 

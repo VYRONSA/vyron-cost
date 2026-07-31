@@ -30,9 +30,9 @@ export default function GPRecoveryPlannerClient({ products }: { products: Produc
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] bg-[#A3E635]/10 p-6">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#65A30D]">Monthly GP Recovery Plan</div>
-              <div className="mt-3 text-5xl font-black text-[#65A30D]">{money(total)}</div>
+            <div className="rounded-[2rem] bg-[#A855F7]/10 p-6">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#7E22CE]">Monthly GP Recovery Plan</div>
+              <div className="mt-3 text-5xl font-black text-[#7E22CE]">{money(total)}</div>
             </div>
             <div className="grid gap-4">
               {rows.map((row) => (
@@ -43,7 +43,7 @@ export default function GPRecoveryPlannerClient({ products }: { products: Produc
                       <p className="text-sm font-bold text-slate-500">GP gap {Number(row.product.gp_gap || 0).toFixed(1)}%</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-black text-[#65A30D]">{money(row.total)}</div>
+                      <div className="text-3xl font-black text-[#7E22CE]">{money(row.total)}</div>
                       <div className="text-xs font-bold text-slate-400">monthly recovery</div>
                     </div>
                   </div>

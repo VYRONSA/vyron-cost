@@ -72,7 +72,7 @@ export default function StoreProductionRunDetailClient({ runId }: { runId: strin
               type="button"
               disabled={completing}
               onClick={() => void completeRun()}
-              className="rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+              className="rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
             >
               {completing ? "Completing…" : "Complete Run"}
             </button>
@@ -165,7 +165,7 @@ export default function StoreProductionRunDetailClient({ runId }: { runId: strin
                         <td className="px-4 py-3 text-right text-sm">{row.shortfall} {row.unit}</td>
                         <td className="px-4 py-3">
                           {row.has_shortage ? (
-                            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-amber-800">
+                            <span className="rounded-full bg-fuchsia-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-fuchsia-800">
                               Shortage Warning
                             </span>
                           ) : (

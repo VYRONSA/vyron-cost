@@ -297,7 +297,7 @@ export default function BomBuilderClient({
   return (
     <section className="grid gap-8">
       {readOnly ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-bold text-amber-900">
+        <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-5 py-4 text-sm font-bold text-fuchsia-900">
           Read-only access — you do not have permission to create or edit recipes / BOMs.
         </div>
       ) : null}
@@ -305,7 +305,7 @@ export default function BomBuilderClient({
       {/* Premium hero + quote strip */}
       <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-violet-700 via-indigo-800 to-[#07110d] p-8 text-white shadow-[0_24px_60px_rgba(81,63,190,0.28)]">
         <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-fuchsia-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 left-1/3 h-48 w-48 rounded-full bg-[#A3E635]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 left-1/3 h-48 w-48 rounded-full bg-[#A855F7]/10 blur-3xl" />
         <div className="relative grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#CBD5E1]">
@@ -320,7 +320,7 @@ export default function BomBuilderClient({
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#A3E635]">Costing principle</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#A855F7]">Costing principle</div>
               <p className="mt-2 text-sm font-semibold leading-6 text-slate-100">
                 &ldquo;Margin is not luck — it is engineered from yield, wastage and true unit cost.&rdquo;
               </p>
@@ -340,8 +340,8 @@ export default function BomBuilderClient({
         {[
           ["Total Batch Cost", formatMoney(totalCost), "text-slate-900", "bg-white"],
           ["Cost / Unit", formatMoney(costPerUnit), "text-violet-700", "bg-violet-50"],
-          ["Actual GP", `${actualGp.toFixed(1)}%`, actualGp < numericTargetGp ? "text-red-600" : "text-[#84CC16]", actualGp < numericTargetGp ? "bg-red-50" : "bg-[#A3E635]/10"],
-          ["Suggested Batch Price", formatMoney(suggestedPrice), "text-[#65A30D]", "bg-[#A3E635]/10"],
+          ["Actual GP", `${actualGp.toFixed(1)}%`, actualGp < numericTargetGp ? "text-red-600" : "text-[#84CC16]", actualGp < numericTargetGp ? "bg-red-50" : "bg-[#A855F7]/10"],
+          ["Suggested Batch Price", formatMoney(suggestedPrice), "text-[#7E22CE]", "bg-[#A855F7]/10"],
         ].map(([label, value, cls, bg]) => (
           <div key={label} className={`rounded-[2rem] p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)] ${bg}`}>
             <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">{label}</div>
@@ -351,7 +351,7 @@ export default function BomBuilderClient({
       </div>
 
       {gpGap > 0 && numericSelling > 0 ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-900">
+        <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-5 py-4 text-sm font-semibold text-fuchsia-900">
           GP is <span className="font-black">{gpGap.toFixed(1)}%</span> below your target. Review ingredient costs, yield or selling price before approving this BOM.
         </div>
       ) : null}
@@ -377,7 +377,7 @@ export default function BomBuilderClient({
                 <button
                   onClick={() => void saveBom()}
                   disabled={saving}
-                  className="inline-flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(124,58,237,0.35)] disabled:opacity-60"
+                  className="inline-flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(29,107,255,0.35)] disabled:opacity-60"
                 >
                   <Save size={18} /> {saving ? "Saving..." : "Save BOM"}
                 </button>
@@ -456,7 +456,7 @@ export default function BomBuilderClient({
           {/* Section 2 — Pricing */}
           <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)] md:p-8">
             <div className="mb-6 flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#A3E635]/25 bg-[#A3E635]/12 text-[#65A30D]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/12 text-[#7E22CE]">
                 <TrendingUp size={24} />
               </div>
               <div>
@@ -512,7 +512,7 @@ export default function BomBuilderClient({
             </div>
           </div>
 
-          {message && <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-4 text-sm font-bold text-[#65A30D]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-bold text-[#7E22CE]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-5 py-4 text-sm font-bold text-red-700">{errorMessage}</div>}
 
           {/* Section 3 — Cost lines */}
@@ -572,7 +572,7 @@ export default function BomBuilderClient({
 
             <div className="overflow-x-auto rounded-2xl border border-slate-100">
               <div className="min-w-[1050px]">
-                <div className="grid grid-cols-[125px_290px_90px_90px_110px_90px_120px_55px] bg-[#07110d] px-3 py-3 text-[11px] font-black uppercase tracking-[0.14em] text-[#A3E635]">
+                <div className="grid grid-cols-[125px_290px_90px_90px_110px_90px_120px_55px] bg-[#07110d] px-3 py-3 text-[11px] font-black uppercase tracking-[0.14em] text-[#A855F7]">
                   <div>Type</div>
                   <div>Line</div>
                   <div>Qty</div>
@@ -667,10 +667,10 @@ export default function BomBuilderClient({
         {/* Right sidebar — formula, how-it-works, field guide */}
         <div className="grid gap-6 self-start 2xl:sticky 2xl:top-6">
           <aside className="relative overflow-hidden rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-600/20 via-transparent to-[#A3E635]/10" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-600/20 via-transparent to-[#A855F7]/10" />
             <div className="relative">
-              <Calculator size={28} className="text-[#A3E635]" />
-              <div className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-[#A3E635]">Formula Panel</div>
+              <Calculator size={28} className="text-[#A855F7]" />
+              <div className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-[#A855F7]">Formula Panel</div>
               <h2 className="mt-2 text-2xl font-black">How costs roll up</h2>
               <div className="mt-5 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm font-semibold leading-7 text-slate-200">
                 <p>
@@ -689,7 +689,7 @@ export default function BomBuilderClient({
                   <span className="font-black text-white">Suggested Price</span> = Cost / Unit ÷ (1 − Target GP%)
                 </p>
               </div>
-              <div className="mt-5 rounded-2xl border border-[#A3E635]/25 bg-[#A3E635]/10 p-4">
+              <div className="mt-5 rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/10 p-4">
                 <div className="text-[10px] font-black uppercase tracking-[0.14em] text-[#CBD5E1]">Live preview</div>
                 <div className="mt-2 text-3xl font-black text-white">{actualGp.toFixed(1)}% GP</div>
                 <div className="mt-1 text-xs font-semibold text-[#CBD5E1]">Suggested: {formatMoney(suggestedPrice)}</div>
@@ -728,7 +728,7 @@ export default function BomBuilderClient({
 
           <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-violet-800 via-indigo-900 to-slate-950 p-6 text-white shadow-[0_18px_55px_rgba(81,63,190,0.2)]">
             <div className="pointer-events-none absolute -right-8 top-8 h-32 w-32 rounded-full border border-white/10" />
-            <div className="pointer-events-none absolute bottom-6 left-6 h-20 w-20 rounded-full border border-[#A3E635]/25" />
+            <div className="pointer-events-none absolute bottom-6 left-6 h-20 w-20 rounded-full border border-[#A855F7]/25" />
             <div className="relative">
               <div className="text-[10px] font-black uppercase tracking-[0.18em] text-fuchsia-200">Wealth protection</div>
               <p className="mt-3 text-lg font-black leading-snug">

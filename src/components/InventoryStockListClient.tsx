@@ -208,7 +208,7 @@ export default function InventoryStockListClient({
 
       <VyronModuleDataSection>
         {message ? (
-          <div className="mb-4 rounded-2xl border border-[#7C3AED]/20 bg-[#7C3AED]/8 px-4 py-3 text-sm font-semibold text-[#0F172A]">
+          <div className="mb-4 rounded-2xl border border-[#1D6BFF]/20 bg-[#1D6BFF]/8 px-4 py-3 text-sm font-semibold text-[#0F172A]">
             {message}
           </div>
         ) : null}
@@ -305,14 +305,14 @@ export default function InventoryStockListClient({
                   <td className="px-4 py-3 font-semibold text-[#0F172A]">{item.item_code}</td>
                   <td className="px-4 py-3 font-medium text-[#334155]">{item.description}</td>
                   <td className="px-4 py-3 text-[#334155]">{item.entity_type}</td>
-                  <td className="px-4 py-3 font-semibold text-[#7C3AED]">{item.stock_status}</td>
+                  <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{item.stock_status}</td>
                   <td className="px-4 py-3 text-right font-bold">
                     {Number(item.qty_on_hand).toFixed(2)} {item.unit}
                   </td>
                   <td className="px-4 py-3 text-right">R{Number(item.average_cost).toFixed(2)}</td>
                   <td className="px-4 py-3 text-right font-black">{formatMoney(item.inventory_value)}</td>
                   <td className="px-4 py-3">
-                    <Link href={`/inventory/stock/${item.id}`} className="text-xs font-bold text-[#7C3AED]">
+                    <Link href={`/inventory/stock/${item.id}`} className="text-xs font-bold text-[#1D6BFF]">
                       Detail →
                     </Link>
                   </td>

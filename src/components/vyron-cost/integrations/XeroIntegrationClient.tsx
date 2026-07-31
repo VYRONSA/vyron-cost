@@ -707,20 +707,20 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
           </div>
         </header>
 
-        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
+        <section className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-6">
           <div className="flex items-start gap-3">
-            <AlertTriangle size={22} className="mt-0.5 shrink-0 text-amber-700" />
+            <AlertTriangle size={22} className="mt-0.5 shrink-0 text-fuchsia-700" />
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.12em] text-amber-800">
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-fuchsia-800">
                 Workspace session fix v3 active
               </p>
-              <h2 className="mt-2 text-lg font-bold text-amber-950">No active workspace selected</h2>
-              <p className="mt-2 text-sm font-medium leading-6 text-amber-900">
+              <h2 className="mt-2 text-lg font-bold text-fuchsia-950">No active workspace selected</h2>
+              <p className="mt-2 text-sm font-medium leading-6 text-fuchsia-900">
                 Xero integration is scoped to your active company workspace. The server could not find a workspace
                 cookie — local browser storage alone is not used for security.
               </p>
-              <p className="mt-3 text-sm font-medium text-amber-900">To fix this:</p>
-              <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm font-medium text-amber-900">
+              <p className="mt-3 text-sm font-medium text-fuchsia-900">To fix this:</p>
+              <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm font-medium text-fuchsia-900">
                 <li>Log in to your company workspace, or</li>
                 <li>Open Developer → Clients and enter a client workspace (platform admin), or</li>
                 <li>Return to the Dashboard and confirm the workspace switcher shows your company.</li>
@@ -830,8 +830,8 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
         <div
           className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${
             syncErrors.length > 0
-              ? "border-amber-200 bg-amber-50 text-amber-900"
-              : "border-emerald-200 bg-emerald-50 text-emerald-800"
+              ? "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900"
+              : "border-violet-200 bg-violet-50 text-violet-800"
           }`}
         >
           {message}
@@ -862,15 +862,15 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       ) : null}
 
       {!oauthReady ? (
-        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          <div className="flex items-center gap-2 font-bold text-amber-900">
+        <section className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-4">
+          <div className="flex items-center gap-2 font-bold text-fuchsia-900">
             <AlertTriangle size={18} />
             Xero OAuth not configured
           </div>
-          <p className="mt-2 text-sm font-medium text-amber-900">
+          <p className="mt-2 text-sm font-medium text-fuchsia-900">
             Set the following environment variables on the server before users can connect to Xero:
           </p>
-          <ul className="mt-2 space-y-1 text-sm font-bold text-amber-950">
+          <ul className="mt-2 space-y-1 text-sm font-bold text-fuchsia-950">
             {REQUIRED_XERO_ENV.map((key) => (
               <li key={key}>
                 · {key}
@@ -878,19 +878,19 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-xs font-medium text-amber-800">
+          <p className="mt-2 text-xs font-medium text-fuchsia-800">
             Connect to Xero is disabled until all variables are present. Reconnect and sync actions require OAuth.
           </p>
         </section>
       ) : null}
 
       {setupWarnings.length > 0 ? (
-        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          <div className="flex items-center gap-2 font-bold text-amber-900">
+        <section className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-4">
+          <div className="flex items-center gap-2 font-bold text-fuchsia-900">
             <AlertTriangle size={18} />
             Setup notes
           </div>
-          <ul className="mt-2 space-y-1 text-sm font-medium text-amber-900">
+          <ul className="mt-2 space-y-1 text-sm font-medium text-fuchsia-900">
             {setupWarnings.map((item) => (
               <li key={item}>· {item}</li>
             ))}
@@ -905,11 +905,11 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Workspace: <span className="font-bold text-[#0F172A]">{displayWorkspaceName}</span>
               {workspaceCtx.companyLinked ? (
-                <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">
+                <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-800">
                   Company linked
                 </span>
               ) : (
-                <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
+                <span className="ml-2 rounded-full bg-fuchsia-100 px-2 py-0.5 text-xs font-bold text-fuchsia-800">
                   Company not linked
                 </span>
               )}
@@ -970,7 +970,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
                     <button
                       type="button"
                       onClick={() => void disconnectXero()}
-                      className="inline-flex items-center gap-2 rounded-2xl bg-[#0B1220] px-4 py-2.5 text-sm font-bold text-white"
+                      className="inline-flex items-center gap-2 rounded-2xl vyron-grad-surface px-4 py-2.5 text-sm font-bold text-white"
                     >
                       <Unplug size={16} />
                       Disconnect
@@ -1020,7 +1020,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
         ) : null}
 
         {isPendingOrganisation && connection.availableOrganisations?.length ? (
-          <div className="mt-5 rounded-2xl border border-[#7C3AED]/25 bg-[#7C3AED]/8 p-4">
+          <div className="mt-5 rounded-2xl border border-[#1D6BFF]/25 bg-[#1D6BFF]/8 p-4">
             <h3 className="text-sm font-bold text-[#0F172A]">Select Xero organisation</h3>
             <p className="mt-1 text-xs font-medium text-[#64748B]">
               Multiple organisations were returned. Choose one — sync stays disabled until an organisation is selected.
@@ -1108,7 +1108,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
           </div>
         </div>
         {!orgSelected && connection.connected ? (
-          <p className="mt-3 text-sm font-medium text-amber-800">
+          <p className="mt-3 text-sm font-medium text-fuchsia-800">
             Sync actions are disabled until a Xero organisation is selected.
           </p>
         ) : null}
@@ -1256,7 +1256,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
                 className="flex items-center justify-between rounded-lg border border-[#E2E8F0] px-3 py-2 text-sm"
               >
                 <span className="font-medium text-[#334155]">{item.label}</span>
-                <span className={`font-bold ${item.ok ? "text-emerald-700" : "text-amber-700"}`}>
+                <span className={`font-bold ${item.ok ? "text-violet-700" : "text-fuchsia-700"}`}>
                   {item.ok ? "Ready" : "Required"}
                 </span>
               </div>
@@ -1304,7 +1304,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
               ) : (
                 queueRows.map((row) => (
                   <tr key={row.id} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-                    <td className="px-4 py-3 font-semibold text-[#7C3AED]">{row.type}</td>
+                    <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{row.type}</td>
                     <td className="px-4 py-3 font-medium text-[#334155]">{row.reference}</td>
                     <td className="px-4 py-3 text-[#334155]">{row.counterparty}</td>
                     <td className="px-4 py-3">
@@ -1320,7 +1320,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
                           <button
                             type="button"
                             onClick={() => void syncQueueItem(row.id, row.status === "Failed" ? "retry" : "sync")}
-                            className="rounded-lg bg-[#7C3AED] px-2 py-1 text-xs font-bold text-white"
+                            className="rounded-lg bg-[#1D6BFF] px-2 py-1 text-xs font-bold text-white"
                           >
                             <UploadCloud size={12} className="inline" /> Sync
                           </button>
@@ -1345,7 +1345,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
                           </a>
                         ) : null}
                         {sourceHref(row) ? (
-                          <Link href={sourceHref(row)!} className="rounded-lg px-2 py-1 text-xs font-bold text-[#7C3AED]">
+                          <Link href={sourceHref(row)!} className="rounded-lg px-2 py-1 text-xs font-bold text-[#1D6BFF]">
                             Source
                           </Link>
                         ) : null}
@@ -1411,10 +1411,10 @@ function InfoTile({ label, value, xero }: { label: string; value: string; xero?:
 
 function StatusBadge({ status }: { status: XeroSyncStatus }) {
   const classes: Record<string, string> = {
-    Ready: "border-[#7C3AED]/25 bg-[#7C3AED]/10 text-[#7C3AED]",
-    Synced: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    Ready: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
+    Synced: "border-violet-200 bg-violet-50 text-violet-700",
     Failed: "border-rose-200 bg-rose-50 text-rose-700",
-    "Needs Review": "border-amber-200 bg-amber-50 text-amber-800",
+    "Needs Review": "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800",
     Processing: "border-blue-200 bg-blue-50 text-blue-700",
     Cancelled: "border-slate-200 bg-slate-50 text-slate-600",
   };

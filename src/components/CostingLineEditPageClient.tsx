@@ -135,7 +135,7 @@ export default function CostingLineEditPageClient({
                 </label>
 
                 <div className="flex flex-wrap gap-3">
-                  <button type="button" onClick={saveLine} className="inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-6 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
+                  <button type="button" onClick={saveLine} className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-6 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
                     <Save size={18} />
                     Save Costing Line
                   </button>
@@ -146,12 +146,12 @@ export default function CostingLineEditPageClient({
                   </button>
                 </div>
 
-                {message && <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-4 text-sm font-black text-[#65A30D]">{message}</div>}
+                {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-black text-[#7E22CE]">{message}</div>}
               </div>
             </div>
 
             <aside className="rounded-[2rem] bg-[#07110d] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-              <div className="text-xs font-black uppercase tracking-[0.25em] text-[#A3E635]">
+              <div className="text-xs font-black uppercase tracking-[0.25em] text-[#A855F7]">
                 LINE COST PREVIEW
               </div>
 
@@ -161,8 +161,8 @@ export default function CostingLineEditPageClient({
                 Quantity multiplied by the selected ingredient true usable unit cost.
               </div>
 
-              <div className="mt-6 rounded-3xl border border-[#A3E635]/20 bg-white/5 p-5">
-                <div className="text-sm font-black text-[#A3E635]">Selected Ingredient</div>
+              <div className="mt-6 rounded-3xl border border-[#A855F7]/20 bg-white/5 p-5">
+                <div className="text-sm font-black text-[#A855F7]">Selected Ingredient</div>
                 <div className="mt-2 text-sm leading-7 text-slate-300">
                   {selectedIngredient?.ingredient_name || "None selected"}
                 </div>

@@ -41,8 +41,8 @@ export default function EnterpriseForecastClient({ forecast }: { forecast: Enter
                 <div className="text-xs font-black uppercase text-red-700">Supplier inflation trend</div>
                 <div className="mt-2 text-3xl font-black text-red-800">{forecast.supplierInflationPct}%</div>
               </div>
-              <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-5">
-                <div className="text-xs font-black uppercase text-[#65A30D]">Recovery opportunity (annual)</div>
+              <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-5">
+                <div className="text-xs font-black uppercase text-[#7E22CE]">Recovery opportunity (annual)</div>
                 <div className="mt-2 text-3xl font-black text-[#4D7C0F]">{money(forecast.recoveryOpportunityAnnual)}</div>
               </div>
             </div>

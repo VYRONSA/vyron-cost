@@ -28,7 +28,7 @@ export default function BranchPerformanceClient({ branches }: { branches: Branch
             </section>
 
             <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+              <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
                 <div className="col-span-2">Branch</div>
                 <div>Spend</div>
                 <div>Wastage</div>
@@ -43,7 +43,7 @@ export default function BranchPerformanceClient({ branches }: { branches: Branch
                   <div className="font-black text-red-700">{money(branch.wastage_estimate)}</div>
                   <div>{Number(branch.gp_erosion_percent || 0).toFixed(1)}%</div>
                   <div>{Number(branch.procurement_efficiency || 0).toFixed(0)}%</div>
-                  <div className="font-black text-amber-700">{branch.risk_level}</div>
+                  <div className="font-black text-fuchsia-700">{branch.risk_level}</div>
                 </div>
               ))}
             </div>

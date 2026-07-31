@@ -445,7 +445,7 @@ function MiniBars({ data, suffix, moneyMode }: { data: Array<{ label: string; va
         <div key={row.label}>
           <div className="mb-1 flex items-center justify-between text-xs text-slate-600"><span>{row.label}</span><span>{moneyMode ? money(row.value) : `${row.value.toFixed(2)}${suffix || ""}`}</span></div>
           <div className="h-2 rounded bg-slate-100">
-            <div className={`h-2 rounded ${row.value >= 0 ? "bg-emerald-500" : "bg-rose-500"}`} style={{ width: `${Math.min(100, (Math.abs(row.value) / max) * 100)}%` }} />
+            <div className={`h-2 rounded ${row.value >= 0 ? "bg-violet-500" : "bg-rose-500"}`} style={{ width: `${Math.min(100, (Math.abs(row.value) / max) * 100)}%` }} />
           </div>
         </div>
       ))}
@@ -463,7 +463,7 @@ function DualBars({ data }: { data: Array<{ month: string; revenue: number; cost
           <div className="text-[11px] text-slate-500">Revenue {money(row.revenue)} · Cost {money(row.cost)}</div>
           <div className="mt-1 grid gap-1">
             <div className="h-2 rounded bg-slate-100"><div className="h-2 rounded bg-indigo-500" style={{ width: `${Math.min(100, (row.revenue / max) * 100)}%` }} /></div>
-            <div className="h-2 rounded bg-slate-100"><div className="h-2 rounded bg-amber-500" style={{ width: `${Math.min(100, (row.cost / max) * 100)}%` }} /></div>
+            <div className="h-2 rounded bg-slate-100"><div className="h-2 rounded bg-fuchsia-500" style={{ width: `${Math.min(100, (row.cost / max) * 100)}%` }} /></div>
           </div>
         </div>
       ))}

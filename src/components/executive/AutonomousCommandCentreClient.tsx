@@ -209,7 +209,7 @@ export default function AutonomousCommandCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#F43F5E]/35 bg-[#F43F5E]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Autonomous Command Centre
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Autonomous Command Centre</h1>
@@ -288,12 +288,12 @@ export default function AutonomousCommandCentreClient({
       ) : (
         <>
           {snapshot.isHealthy ? (
-            <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
+            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-6">
               <div className="flex items-start gap-3">
-                <Zap size={22} className="mt-0.5 shrink-0 text-emerald-700" />
+                <Zap size={22} className="mt-0.5 shrink-0 text-violet-700" />
                 <div>
-                  <h2 className="text-lg font-bold text-emerald-950">Business operating within expected thresholds.</h2>
-                  <p className="mt-2 text-sm font-medium leading-6 text-emerald-900">
+                  <h2 className="text-lg font-bold text-violet-950">Business operating within expected thresholds.</h2>
+                  <p className="mt-2 text-sm font-medium leading-6 text-violet-900">
                     No critical warnings, risks, root causes, decisions or actions require immediate executive
                     intervention.
                   </p>
@@ -306,17 +306,17 @@ export default function AutonomousCommandCentreClient({
             <SummaryCard
               label="Health Score"
               value={snapshot.summary.healthScore != null ? `${snapshot.summary.healthScore}/100` : "—"}
-              accent="#10B981"
+              accent="#8B5CF6"
             />
-            <SummaryCard label="Active Warnings" value={String(snapshot.summary.activeWarnings)} accent="#F97316" />
-            <SummaryCard label="Forecast Risks" value={String(snapshot.summary.forecastRisks)} accent="#E11D48" />
-            <SummaryCard label="Root Causes" value={String(snapshot.summary.rootCauses)} accent="#7C3AED" />
-            <SummaryCard label="Decisions" value={String(snapshot.summary.decisions)} accent="#9333EA" />
+            <SummaryCard label="Active Warnings" value={String(snapshot.summary.activeWarnings)} accent="#A855F7" />
+            <SummaryCard label="Forecast Risks" value={String(snapshot.summary.forecastRisks)} accent="#2563EB" />
+            <SummaryCard label="Root Causes" value={String(snapshot.summary.rootCauses)} accent="#1D6BFF" />
+            <SummaryCard label="Decisions" value={String(snapshot.summary.decisions)} accent="#3B82F6" />
             <SummaryCard label="Actions" value={String(snapshot.summary.actions)} accent="#6366F1" />
             <SummaryCard
               label="Estimated Exposure"
               value={snapshot.summary.estimatedExposure != null ? snapshot.summary.exposureLabel : "Exposure Not Yet Measurable"}
-              accent="#F43F5E"
+              accent="#3B82F6"
               small={snapshot.summary.estimatedExposure == null}
             />
             <SummaryCard label="Confidence" value={snapshot.summary.confidence} accent="#0F172A" />
@@ -438,13 +438,13 @@ export default function AutonomousCommandCentreClient({
               Action execution status derived from the Actions engine and dependency blockers.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <ReadinessCard label="Ready" value={snapshot.executionReadiness.ready} accent="#10B981" />
-              <ReadinessCard label="Waiting" value={snapshot.executionReadiness.waiting} accent="#F59E0B" />
-              <ReadinessCard label="Blocked" value={snapshot.executionReadiness.blocked} accent="#E11D48" />
+              <ReadinessCard label="Ready" value={snapshot.executionReadiness.ready} accent="#8B5CF6" />
+              <ReadinessCard label="Waiting" value={snapshot.executionReadiness.waiting} accent="#C026D3" />
+              <ReadinessCard label="Blocked" value={snapshot.executionReadiness.blocked} accent="#2563EB" />
               <ReadinessCard
                 label="Overall Readiness"
                 value={snapshot.executionReadiness.readiness}
-                accent="#7C3AED"
+                accent="#1D6BFF"
                 text
               />
             </div>
@@ -523,7 +523,7 @@ export default function AutonomousCommandCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#7C3AED]/30 hover:text-[#7C3AED]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
                 >
                   <link.icon size={16} />
                   {link.label}
@@ -565,9 +565,9 @@ function PipelineStageCard({ stage }: { stage: IntelligencePipelineStage }) {
   return (
     <Link
       href={stage.href}
-      className="block min-w-[140px] rounded-2xl border border-[#E2E8F0] bg-white p-4 text-center shadow-sm transition hover:border-[#7C3AED]/30 hover:shadow-md"
+      className="block min-w-[140px] rounded-2xl border border-[#E2E8F0] bg-white p-4 text-center shadow-sm transition hover:border-[#1D6BFF]/30 hover:shadow-md"
     >
-      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7C3AED]">{stage.label}</div>
+      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1D6BFF]">{stage.label}</div>
       <div className="mt-2 text-2xl font-black text-[#0F172A]">{stage.count}</div>
       <div className="mt-1 text-xs font-semibold text-[#64748B]">{stage.status}</div>
       {stage.severity !== "None" ? (
@@ -589,7 +589,7 @@ function PipelineTableRow({ stage }: { stage: IntelligencePipelineStage }) {
         {stage.severity !== "None" ? <PriorityBadge priority={stage.severity} /> : <span className="text-[#94A3B8]">—</span>}
       </td>
       <td className="px-4 py-3 text-right">
-        <Link href={stage.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+        <Link href={stage.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -603,12 +603,12 @@ function PriorityRow({ row }: { row: ExecutivePriority }) {
       <td className="px-4 py-3">
         <PriorityBadge priority={row.priority} />
       </td>
-      <td className="px-4 py-3 font-semibold text-[#7C3AED]">{row.category}</td>
+      <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{row.category}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.reason}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#0F172A]">{row.recommendedResponse}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.owner}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -620,11 +620,11 @@ function ExposureCard({ exposure }: { exposure: ExposureCategory }) {
   return (
     <Link
       href={exposure.href}
-      className={`${M.moduleDataSection} block p-5 transition hover:border-[#7C3AED]/30 hover:shadow-md`}
+      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1D6BFF]/30 hover:shadow-md`}
     >
       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">{exposure.label}</div>
       <p className="mt-2 text-sm font-bold leading-6 text-[#0F172A]">{exposure.value}</p>
-      <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+      <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
         View module <ArrowRight size={14} />
       </span>
     </Link>
@@ -636,13 +636,13 @@ function RecommendationCard({ recommendation }: { recommendation: AutonomousReco
     <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-5">
       <div className="flex flex-wrap items-center gap-2">
         <PriorityBadge priority={recommendation.priority} />
-        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7C3AED]">{recommendation.source}</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1D6BFF]">{recommendation.source}</span>
       </div>
       <h3 className="mt-2 font-bold text-[#0F172A]">{recommendation.title}</h3>
       <p className="mt-2 text-sm font-medium text-[#64748B]">{recommendation.impact}</p>
       <div className="mt-3 flex items-center justify-between gap-2">
         <ConfidenceBadge confidence={recommendation.confidence} />
-        <Link href={recommendation.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+        <Link href={recommendation.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
           Open <ArrowRight size={14} />
         </Link>
       </div>
@@ -673,21 +673,21 @@ function ReadinessCard({
 
 function BlockerCard({ blocker }: { blocker: AggregatedBlocker }) {
   return (
-    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+    <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-4">
       <div className="flex flex-wrap items-center gap-2">
         <PriorityBadge priority={blocker.severity} />
-        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-800">{blocker.source}</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-fuchsia-800">{blocker.source}</span>
       </div>
-      <h3 className="mt-2 font-bold text-amber-950">{blocker.blocker}</h3>
-      <p className="mt-2 text-sm font-medium text-amber-900">{blocker.resolutionPath}</p>
+      <h3 className="mt-2 font-bold text-fuchsia-950">{blocker.blocker}</h3>
+      <p className="mt-2 text-sm font-medium text-fuchsia-900">{blocker.resolutionPath}</p>
       {blocker.affectedItems.length > 0 ? (
-        <ul className="mt-3 space-y-1 text-xs font-medium text-amber-900">
+        <ul className="mt-3 space-y-1 text-xs font-medium text-fuchsia-900">
           {blocker.affectedItems.slice(0, 4).map((item) => (
             <li key={item}>· {item}</li>
           ))}
         </ul>
       ) : null}
-      <Link href={blocker.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-amber-900">
+      <Link href={blocker.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-fuchsia-900">
         Resolve <ArrowRight size={14} />
       </Link>
     </div>
@@ -705,7 +705,7 @@ function QueueRow({ row }: { row: CommandQueueItem }) {
         <span
           className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${
             row.type === "Decision"
-              ? "border-[#7C3AED]/25 bg-[#7C3AED]/10 text-[#7C3AED]"
+              ? "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]"
               : "border-indigo-200 bg-indigo-50 text-indigo-800"
           }`}
         >
@@ -719,7 +719,7 @@ function QueueRow({ row }: { row: CommandQueueItem }) {
         <ConfidenceBadge confidence={row.confidence} />
       </td>
       <td className="px-4 py-3 text-right">
-        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -731,8 +731,8 @@ function PriorityBadge({ priority }: { priority: CommandPriority }) {
   const classes: Record<CommandPriority, string> = {
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
     High: "border-orange-200 bg-orange-50 text-orange-900",
-    Medium: "border-amber-200 bg-amber-50 text-amber-900",
-    Low: "border-[#7C3AED]/25 bg-[#7C3AED]/10 text-[#7C3AED]",
+    Medium: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
   };
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes[priority]}`}>
@@ -743,8 +743,8 @@ function PriorityBadge({ priority }: { priority: CommandPriority }) {
 
 function ConfidenceBadge({ confidence }: { confidence: DecisionConfidence }) {
   const classes = {
-    High: "text-emerald-700",
-    Medium: "text-amber-800",
+    High: "text-violet-700",
+    Medium: "text-fuchsia-800",
     Low: "text-[#64748B]",
   };
   return <span className={`text-xs font-bold ${classes[confidence]}`}>{confidence}</span>;

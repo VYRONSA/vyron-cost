@@ -189,7 +189,7 @@ export default function ProductBOMManager({
     <section className="mt-6 grid gap-8">
       <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-violet-950 to-[#07110d] p-7 text-white shadow-[0_22px_65px_rgba(15,23,42,0.24)]">
         <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-fuchsia-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 left-1/4 h-52 w-52 rounded-full bg-[#A3E635]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 left-1/4 h-52 w-52 rounded-full bg-[#A855F7]/10 blur-3xl" />
         <div className="relative grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#CBD5E1]">
@@ -213,9 +213,9 @@ export default function ProductBOMManager({
           { label: "Ingredients", value: formatMoney(totals.Ingredient), tone: "bg-white text-slate-950", icon: Layers },
           { label: "Packaging", value: formatMoney(totals.Packaging), tone: "bg-violet-50 text-violet-800", icon: Layers },
           { label: "Salaries", value: formatMoney(totals.Salary), tone: "bg-white text-slate-950", icon: Layers },
-          { label: "Wastage", value: formatMoney(totals.Wastage), tone: "bg-amber-50 text-amber-800", icon: ShieldCheck },
+          { label: "Wastage", value: formatMoney(totals.Wastage), tone: "bg-fuchsia-50 text-fuchsia-800", icon: ShieldCheck },
           { label: "Cost Price", value: formatMoney(totals.costPrice), tone: "bg-[#07110d] text-white", icon: Calculator },
-          { label: "Margin", value: `${totals.gp.toFixed(1)}%`, tone: isBelowTarget ? "bg-red-50 text-red-700" : "bg-[#A3E635]/10 text-[#65A30D]", icon: TrendingUp },
+          { label: "Margin", value: `${totals.gp.toFixed(1)}%`, tone: isBelowTarget ? "bg-red-50 text-red-700" : "bg-[#A855F7]/10 text-[#7E22CE]", icon: TrendingUp },
         ].map((card) => (
           <div key={card.label} className={`rounded-[1.6rem] p-5 shadow-[0_18px_45px_rgba(81,63,190,0.08)] ${card.tone}`}>
             <div className="flex items-center justify-between gap-3">
@@ -237,7 +237,7 @@ export default function ProductBOMManager({
         {!readOnly ? (
           <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_18px_55px_rgba(81,63,190,0.08)]">
             <div className="mb-5 flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#A3E635]/25 bg-[#A3E635]/12 text-[#65A30D]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/12 text-[#7E22CE]">
                 <Plus size={22} />
               </div>
               <div>
@@ -290,18 +290,18 @@ export default function ProductBOMManager({
               </div>
 
               <div className="relative overflow-hidden rounded-3xl bg-[#07110d] p-5 text-white">
-                <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#A3E635]/10 blur-2xl" />
-                <div className="relative text-xs font-black uppercase tracking-[0.22em] text-[#A3E635]">Line Cost Preview</div>
+                <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#A855F7]/10 blur-2xl" />
+                <div className="relative text-xs font-black uppercase tracking-[0.22em] text-[#A855F7]">Line Cost Preview</div>
                 <div className="relative mt-2 text-3xl font-black">{formatMoney(previewLineCost)}</div>
                 <p className="relative mt-2 text-xs font-semibold leading-5 text-slate-300">Quantity × unit cost with wastage applied.</p>
               </div>
 
-              <button type="button" onClick={addLine} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(124,58,237,0.25)] transition hover:from-violet-800 hover:to-fuchsia-700">
+              <button type="button" onClick={addLine} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(29,107,255,0.25)] transition hover:from-violet-800 hover:to-fuchsia-700">
                 <Plus size={18} />
                 Add Cost Line
               </button>
 
-              {message && <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-bold text-[#65A30D]">{message}</div>}
+              {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#7E22CE]">{message}</div>}
             </div>
           </div>
         ) : null}
@@ -331,7 +331,7 @@ export default function ProductBOMManager({
 
           <div className="overflow-x-auto rounded-3xl border border-slate-100">
             <div className="min-w-[1080px]">
-              <div className={`grid ${readOnly ? "grid-cols-7" : "grid-cols-9"} bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]`}>
+              <div className={`grid ${readOnly ? "grid-cols-7" : "grid-cols-9"} bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]`}>
                 <div>Type</div><div>Name</div><div>Qty</div><div>Unit</div><div>Unit Cost</div><div>Waste %</div><div>Line Cost</div>
                 {!readOnly ? <><div>Full Edit</div><div>Delete</div></> : null}
               </div>
@@ -344,7 +344,7 @@ export default function ProductBOMManager({
                   <div>{line.unit}</div>
                   <div>{formatMoney(Number(line.unit_cost))}</div>
                   <div>{Number(line.wastage_percent).toFixed(1)}%</div>
-                  <div className="font-black text-[#65A30D]">{formatMoney(Number(line.line_cost || line.line_cost_imported || 0))}</div>
+                  <div className="font-black text-[#7E22CE]">{formatMoney(Number(line.line_cost || line.line_cost_imported || 0))}</div>
                   {!readOnly ? (
                     <>
                       <div>

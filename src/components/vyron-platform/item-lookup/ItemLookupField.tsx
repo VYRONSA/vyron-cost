@@ -31,7 +31,7 @@ function highlightMatch(text: string, query: string) {
   return (
     <>
       {text.slice(0, index)}
-      <mark className="rounded bg-amber-200 px-0.5 text-slate-950">{text.slice(index, index + trimmed.length)}</mark>
+      <mark className="rounded bg-fuchsia-200 px-0.5 text-slate-950">{text.slice(index, index + trimmed.length)}</mark>
       {text.slice(index + trimmed.length)}
     </>
   );
@@ -156,7 +156,7 @@ export function ItemLookupField({ onSelect, placeholder, initialValue, defaultTy
               type="button"
               onClick={() => setStatusFilter((current) => (current === "active" ? "all" : "active"))}
               className={`ml-auto rounded-full px-3 py-1 text-xs font-black uppercase tracking-wide transition ${
-                statusFilter === "active" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
+                statusFilter === "active" ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-600"
               }`}
             >
               {statusFilter === "active" ? "Active Only" : "All Statuses"}

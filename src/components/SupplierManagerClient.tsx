@@ -238,11 +238,11 @@ export default function SupplierManagerClient({ initialSuppliers }: { initialSup
             type="button"
             onClick={save}
             disabled={editingId ? !canEdit : !canCreate}
-            className="rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-50"
           >
             Save Supplier
           </button>
-          {message && <div className="rounded-2xl border border-[#A3E635]/25 bg-[#A3E635]/10 px-4 py-3 text-sm font-bold text-[#A3E635]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#A855F7]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div>}
         </div>
       </div>
@@ -278,7 +278,7 @@ export default function SupplierManagerClient({ initialSuppliers }: { initialSup
                 <Link href={`/suppliers/${supplier.id}`} className="font-black text-violet-700">{supplier.supplier_name}</Link>
                 <div className="font-bold text-slate-500">{supplier.category}</div>
                 <div className="font-black text-violet-700">{supplier.risk_status}</div>
-                <div className={`font-black ${Number(supplier.last_price_movement || 0) > 5 ? "text-orange-400" : "text-[#A3E635]"}`}>{Number(supplier.last_price_movement || 0).toFixed(1)}%</div>
+                <div className={`font-black ${Number(supplier.last_price_movement || 0) > 5 ? "text-orange-400" : "text-[#A855F7]"}`}>{Number(supplier.last_price_movement || 0).toFixed(1)}%</div>
                 <div className="flex gap-2">
                   {canEdit ? (
                     <button onClick={() => edit(supplier)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Edit</button>

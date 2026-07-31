@@ -66,7 +66,7 @@ export function VyronPremiumHeroBanner({
   return (
     <section className="grid gap-5">
       <div className="relative overflow-hidden rounded-[2.4rem] border border-white/70 bg-gradient-to-br from-orange-50 via-rose-50 to-violet-50 p-0 shadow-[0_28px_90px_rgba(76,29,149,0.13)]">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_87%_10%,rgba(251,146,60,0.38),transparent_30%),radial-gradient(circle_at_78%_75%,rgba(45,212,191,0.18),transparent_34%),radial-gradient(circle_at_28%_16%,rgba(124,58,237,0.12),transparent_34%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_87%_10%,rgba(251,146,60,0.38),transparent_30%),radial-gradient(circle_at_78%_75%,rgba(45,212,191,0.18),transparent_34%),radial-gradient(circle_at_28%_16%,rgba(29,107,255,0.12),transparent_34%)]" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-white/50 to-transparent" />
 
         <div className="relative grid min-h-[350px] gap-8 p-7 md:p-9 xl:grid-cols-[1fr_0.95fr] xl:items-center">
@@ -138,7 +138,7 @@ export function VyronPremiumControlPanel({ title, actions, quotes }: VyronPremiu
   return (
     <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#1a0b2e] via-[#2a0f4f] to-[#080315] p-6 text-white shadow-[0_24px_70px_rgba(76,29,149,0.22)] ring-1 ring-white/10">
       <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-orange-500/25 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-16 left-1/2 h-56 w-56 rounded-full bg-teal-400/12 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-16 left-1/2 h-56 w-56 rounded-full bg-indigo-400/12 blur-3xl" />
 
       <div className="relative grid gap-5 xl:grid-cols-[1fr_0.9fr] xl:items-center">
         <div>
@@ -155,7 +155,7 @@ export function VyronPremiumControlPanel({ title, actions, quotes }: VyronPremiu
             {quotes.slice(0, 2).map((item) => (
               <div key={item.label} className="rounded-2xl border border-white/10 bg-white/8 p-4 backdrop-blur-md">
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-orange-200">
-                  <ShieldCheck size={14} className="text-teal-300" />
+                  <ShieldCheck size={14} className="text-indigo-300" />
                   {item.label}
                 </div>
                 <p className="mt-2 text-sm font-semibold leading-6 text-slate-100">&ldquo;{item.quote}&rdquo;</p>
@@ -231,7 +231,7 @@ export function VyronPremiumFormulaCard({
     <aside
       className={`relative overflow-hidden rounded-[2rem] p-6 ${
         isDark
-          ? "bg-gradient-to-br from-[#1a0b2e] via-[#12081f] to-[#07110d] text-white shadow-[0_18px_55px_rgba(109,40,217,0.22)] ring-1 ring-violet-500/20"
+          ? "bg-gradient-to-br from-[#1a0b2e] via-[#12081f] to-[#07110d] text-white shadow-[0_18px_55px_rgba(29,78,216,0.22)] ring-1 ring-violet-500/20"
           : "border border-orange-100/80 bg-gradient-to-br from-orange-50/80 via-white to-violet-50/60 text-slate-900 shadow-[0_18px_50px_rgba(251,146,60,0.08)]"
       } ${className}`}
     >
@@ -243,7 +243,7 @@ export function VyronPremiumFormulaCard({
           <div className={`mt-5 space-y-3 text-sm font-semibold leading-7 ${isDark ? "text-slate-200" : "text-slate-700"}`}>
             {formulas.map((line) => (
               <p key={line.label}>
-                <span className={`font-black ${isDark ? "text-teal-200" : "text-slate-900"}`}>{line.label}</span> = {line.formula}
+                <span className={`font-black ${isDark ? "text-indigo-200" : "text-slate-900"}`}>{line.label}</span> = {line.formula}
               </p>
             ))}
           </div>
@@ -266,11 +266,11 @@ export function VyronPremiumIntelligencePanel({
   items: Array<{ label: string; detail: string }>;
 }) {
   return (
-    <aside className="relative overflow-hidden rounded-[2rem] border border-teal-100/80 bg-gradient-to-br from-teal-50/50 via-white to-orange-50/60 p-6 shadow-[0_20px_55px_rgba(45,212,191,0.12)]">
-      <div className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 rounded-full bg-teal-300/20 blur-3xl" />
+    <aside className="relative overflow-hidden rounded-[2rem] border border-indigo-100/80 bg-gradient-to-br from-indigo-50/50 via-white to-orange-50/60 p-6 shadow-[0_20px_55px_rgba(45,212,191,0.12)]">
+      <div className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 rounded-full bg-indigo-300/20 blur-3xl" />
       <div className="relative flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-teal-700">{eyebrow}</div>
+          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-indigo-700">{eyebrow}</div>
           <h3 className="mt-1 text-xl font-black text-slate-950">{title}</h3>
           <div className="mt-5 grid gap-3">
             {items.map((item) => (
@@ -299,7 +299,7 @@ export function VyronPremiumInsightCard({ category, message, href }: { category:
   );
   return (
     <li className="rounded-2xl border border-orange-100/90 bg-gradient-to-r from-white to-orange-50/40 px-5 py-4 text-sm font-semibold leading-6 text-slate-800 shadow-sm">
-      <span className="mr-2 inline-block rounded-lg bg-gradient-to-r from-orange-100 to-amber-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-orange-900">
+      <span className="mr-2 inline-block rounded-lg bg-gradient-to-r from-orange-100 to-fuchsia-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-orange-900">
         {category}
       </span>
       {body}
@@ -328,7 +328,7 @@ export function VyronPremiumMetricCard({ label, value, href, icon, note, tone = 
     tone === "danger"
       ? "border-red-200 bg-gradient-to-br from-red-50/80 to-white"
       : tone === "warning"
-        ? "border-amber-200 bg-gradient-to-br from-amber-50/90 to-white"
+        ? "border-fuchsia-200 bg-gradient-to-br from-fuchsia-50/90 to-white"
         : "border-violet-100/80 bg-gradient-to-br from-white via-violet-50/30 to-orange-50/40";
   return (
     <Link href={href} className={`rounded-[2rem] border p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)] transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-[0_26px_70px_rgba(76,29,149,0.14)] ${toneClass}`}>
@@ -342,7 +342,7 @@ export function VyronPremiumMetricCard({ label, value, href, icon, note, tone = 
 
 export function VyronPremiumInsightsPanel({ title, icon, children, empty }: { title: string; icon?: ReactNode; children: ReactNode; empty?: ReactNode }) {
   return (
-    <div className="rounded-[2rem] border border-orange-100/90 bg-gradient-to-br from-orange-50/70 via-amber-50/40 to-white p-6 md:p-8">
+    <div className="rounded-[2rem] border border-orange-100/90 bg-gradient-to-br from-orange-50/70 via-fuchsia-50/40 to-white p-6 md:p-8">
       <div className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-orange-900">
         {icon}
         {title}

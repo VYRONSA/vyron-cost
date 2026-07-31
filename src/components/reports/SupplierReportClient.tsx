@@ -38,7 +38,7 @@ export default function SupplierReportClient({ suppliers }: { suppliers: Supplie
           >
             <div className="overflow-x-auto rounded-3xl border border-slate-100">
               <div className="min-w-[960px]">
-                <div className="grid grid-cols-6 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+                <div className="grid grid-cols-6 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
                   <div>Supplier</div><div>Category</div><div>Contact</div><div>Invoice Email</div><div>Movement</div><div>Risk</div>
                 </div>
                 {filtered.map((supplier) => (
@@ -47,7 +47,7 @@ export default function SupplierReportClient({ suppliers }: { suppliers: Supplie
                     <div>{supplier.category}</div>
                     <div>{supplier.contact_email || "Not captured"}</div>
                     <div>{supplier.invoice_email || "Not active"}</div>
-                    <div className="font-black text-[#65A30D]">{Number(supplier.last_price_movement || 0).toFixed(1)}%</div>
+                    <div className="font-black text-[#7E22CE]">{Number(supplier.last_price_movement || 0).toFixed(1)}%</div>
                     <div><StatusPill tone={statusTone(supplier.risk_status)}>{supplier.risk_status}</StatusPill></div>
                   </div>
                 ))}

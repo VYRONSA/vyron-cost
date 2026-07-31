@@ -169,7 +169,7 @@ export default function ClientUserSetupClient() {
       </div>
 
       {!canCreateUser ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-900">
+        <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm font-bold text-fuchsia-900">
           User limit reached for this package. Upgrade package to add more users.
         </div>
       ) : null}

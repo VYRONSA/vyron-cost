@@ -84,7 +84,7 @@ export default function InventoryDashboardClient() {
 
   const inventoryActions = (
     <>
-      <Link href="/inventory/stock" className="inline-flex items-center gap-2 rounded-xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
+      <Link href="/inventory/stock" className="inline-flex items-center gap-2 rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
         <PackagePlus size={17} />
         Add / Manage Stock Items
       </Link>

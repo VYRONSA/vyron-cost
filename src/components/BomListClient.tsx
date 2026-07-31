@@ -257,7 +257,7 @@ export default function BomListClient({
                 <div className="font-bold text-slate-500">{bom.category || "Uncategorised"}</div>
                 <div className="font-bold text-slate-500">{Number(bom.yield_qty || 0).toFixed(2)} {bom.yield_unit || ""}</div>
                 <div className="font-black text-slate-900">{formatMoney(bom.cost_per_unit)}</div>
-                <div className="font-black text-[#A3E635]">{formatMoney(bom.suggested_selling_price)}</div>
+                <div className="font-black text-[#A855F7]">{formatMoney(bom.suggested_selling_price)}</div>
                 <div className="font-black text-violet-700">{bom.status || "Draft"}</div>
                 <div className="flex gap-2">
                   <Link href={`/recipes/${bom.id}`} className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">Open</Link>

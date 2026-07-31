@@ -154,9 +154,9 @@ export default function RecipeDetailClient({
             </div>
       
             {linkedProduct ? (
-              <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-4 text-sm font-bold text-[#4D7C0F]">
+              <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-bold text-[#4D7C0F]">
                 Linked finished product:{" "}
-                <Link href={`/products/${linkedProduct.id}/edit`} className="font-black text-[#65A30D] underline">
+                <Link href={`/products/${linkedProduct.id}/edit`} className="font-black text-[#7E22CE] underline">
                   {linkedProduct.product_name}
                 </Link>
                 {" · "}Product cost syncs when this BOM is saved.
@@ -213,7 +213,7 @@ export default function RecipeDetailClient({
             </section>
       
             {demoMode ? (
-              <p className="text-xs font-bold text-amber-700">Demo workspace — sample BOM data only.</p>
+              <p className="text-xs font-bold text-fuchsia-700">Demo workspace — sample BOM data only.</p>
             ) : null}
           </section>
     </VyronPremiumPageShell>

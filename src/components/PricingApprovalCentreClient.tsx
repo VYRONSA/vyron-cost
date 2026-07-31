@@ -48,21 +48,21 @@ export default function PricingApprovalCentreClient({ products }: { products: Pr
             <section className="grid gap-5 md:grid-cols-3">
               <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Pending Price Decisions</div>
-                <div className="mt-3 text-4xl font-black text-amber-600">{rows.filter((row) => row.decision === "Pending").length}</div>
+                <div className="mt-3 text-4xl font-black text-fuchsia-600">{rows.filter((row) => row.decision === "Pending").length}</div>
               </div>
-              <div className="rounded-[2rem] bg-[#A3E635]/10 p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#65A30D]">Approved Monthly Impact</div>
-                <div className="mt-3 text-4xl font-black text-[#65A30D]">{money(approvedMonthly)}</div>
+              <div className="rounded-[2rem] bg-[#A855F7]/10 p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#7E22CE]">Approved Monthly Impact</div>
+                <div className="mt-3 text-4xl font-black text-[#7E22CE]">{money(approvedMonthly)}</div>
               </div>
               <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Annualised</div>
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Annualised</div>
                 <div className="mt-3 text-4xl font-black">{money(approvedMonthly * 12)}</div>
               </div>
             </section>
 
             <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
               <div className="min-w-[1180px]">
-                <div className="grid grid-cols-10 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+                <div className="grid grid-cols-10 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
                   <div className="col-span-2">Product</div>
                   <div>Current</div>
                   <div>Suggested</div>
@@ -81,14 +81,14 @@ export default function PricingApprovalCentreClient({ products }: { products: Pr
                       <div className="text-xs text-slate-500">{row.category}</div>
                     </div>
                     <div>{money(row.selling_price)}</div>
-                    <div className="font-black text-[#65A30D]">{money(row.suggested_price)}</div>
+                    <div className="font-black text-[#7E22CE]">{money(row.suggested_price)}</div>
                     <div>{money(row.increase)}</div>
                     <div className="font-black text-red-700">{Number(row.gp_gap || 0).toFixed(1)}%</div>
-                    <div className="font-black text-[#65A30D]">{money(row.monthlyImpact)}</div>
+                    <div className="font-black text-[#7E22CE]">{money(row.monthlyImpact)}</div>
                     <div>{money(row.annualImpact)}</div>
                     <div><StatusPill tone={row.decision === "Approved" ? "emerald" : row.decision === "Rejected" ? "red" : "amber"}>{row.decision}</StatusPill></div>
                     <div className="flex gap-2">
-                      <button onClick={() => setDecisions((current) => ({ ...current, [row.id]: "Approved" }))} className="rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 p-2 text-[#65A30D]"><CheckCircle2 size={16} /></button>
+                      <button onClick={() => setDecisions((current) => ({ ...current, [row.id]: "Approved" }))} className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 p-2 text-[#7E22CE]"><CheckCircle2 size={16} /></button>
                       <button onClick={() => setDecisions((current) => ({ ...current, [row.id]: "Rejected" }))} className="rounded-full bg-red-50 p-2 text-red-700"><XCircle size={16} /></button>
                     </div>
                   </div>

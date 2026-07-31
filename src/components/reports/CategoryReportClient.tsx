@@ -58,7 +58,7 @@ export default function CategoryReportClient({
           >
             <div className="overflow-x-auto rounded-3xl border border-slate-100">
               <div className="min-w-[980px]">
-                <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+                <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
                   <div>Category</div><div>Type</div><div>Products</div><div>Ingredients</div><div>Suppliers</div><div>Recipes</div><div>Status</div><div>Description</div>
                 </div>
                 {filtered.map((row) => (

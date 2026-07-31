@@ -44,7 +44,7 @@ export default function PurchaseOrderDashboardClient() {
 
   const actions = (
     <>
-      <Link href="/purchase-orders/new" className="rounded-xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
+      <Link href="/purchase-orders/new" className="rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
         + New Purchase Order
       </Link>
       <Link href="/goods-receipts" className="rounded-xl border border-white/10 bg-[#21163A] px-5 py-3 text-sm font-semibold text-[#F8FAFC]">

@@ -182,7 +182,7 @@ export default function CustomerPriceListsClient() {
 
   return (
     <div className="space-y-6">
-      {message ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{message}</div> : null}
+      {message ? <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-2 text-sm text-violet-800">{message}</div> : null}
       {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-800">{error}</div> : null}
 
       <section className="grid gap-4 lg:grid-cols-2">

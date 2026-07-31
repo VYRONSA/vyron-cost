@@ -231,7 +231,7 @@ export default function RecipeBomBuilder({
       <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-black uppercase tracking-[0.14em] text-slate-500">{title}</h3>
-          <button type="button" onClick={() => addLine(type)} className="rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-1.5 text-xs font-black text-[#65A30D]">
+          <button type="button" onClick={() => addLine(type)} className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-1.5 text-xs font-black text-[#7E22CE]">
             + Add {title.toLowerCase()}
           </button>
         </div>
@@ -308,7 +308,7 @@ export default function RecipeBomBuilder({
               <h2 className="text-3xl font-black text-[#F8FAFC]">BOM Builder</h2>
               <p className="mt-2 text-sm text-slate-500">Add ingredients, packaging, labour and wastage lines with live totals.</p>
             </div>
-            <Link href={`/recipes/${recipe.id}`} className="text-sm font-black text-[#65A30D]">
+            <Link href={`/recipes/${recipe.id}`} className="text-sm font-black text-[#7E22CE]">
               View recipe
             </Link>
           </div>
@@ -359,7 +359,7 @@ export default function RecipeBomBuilder({
         {renderLineGroup("Wastage", "wastage")}
 
         <div className="flex flex-wrap gap-3">
-          <button type="button" onClick={saveRecipe} className="inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-6 py-4 text-sm font-black text-[#F8FAFC]">
+          <button type="button" onClick={saveRecipe} className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-6 py-4 text-sm font-black text-[#F8FAFC]">
             <Save size={18} />
             Save recipe & BOM
           </button>
@@ -374,7 +374,7 @@ export default function RecipeBomBuilder({
             Delete recipe
           </button>
         </div>
-        {message ? <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-4 text-sm font-black text-[#65A30D]">{message}</div> : null}
+        {message ? <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-black text-[#7E22CE]">{message}</div> : null}
       </div>
 
       <aside className="space-y-5">

@@ -11,8 +11,8 @@ function money(value: number) {
 function riskClass(level: string) {
   if (level === "Critical") return "bg-red-100 text-red-800 border-red-200";
   if (level === "High") return "bg-orange-100 text-orange-800 border-orange-200";
-  if (level === "Medium") return "bg-amber-100 text-amber-800 border-amber-200";
-  return "bg-[#A3E635]/12 text-[#4D7C0F] border-[#A3E635]/25";
+  if (level === "Medium") return "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200";
+  return "bg-[#A855F7]/12 text-[#4D7C0F] border-[#A855F7]/25";
 }
 
 export default function FinanceIntelligenceClient({
@@ -77,7 +77,7 @@ export default function FinanceIntelligenceClient({
                   <div className="text-2xl font-black">{money(leakage.projectedAnnualImpact)}</div>
                 </div>
               </div>
-              <Link href="/financial-leakage" className="mt-6 inline-block text-sm font-black text-[#A3E635] hover:underline">
+              <Link href="/financial-leakage" className="mt-6 inline-block text-sm font-black text-[#A855F7] hover:underline">
                 Open Financial Leakage Centre →
               </Link>
             </div>

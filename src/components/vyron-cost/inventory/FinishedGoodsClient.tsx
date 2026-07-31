@@ -474,9 +474,9 @@ function SmallMetric({ label, value }: { label: string; value: string }) {
 }
 function badgeClass(status: string) {
   if (status === "Low Stock") return "bg-rose-100 text-rose-800";
-  if (status === "Overstocked") return "bg-amber-100 text-amber-800";
+  if (status === "Overstocked") return "bg-fuchsia-100 text-fuchsia-800";
   if (status === "Watch") return "bg-indigo-100 text-indigo-800";
-  return "bg-[#A3E635]/12 text-[#4D7C0F]";
+  return "bg-[#A855F7]/12 text-[#4D7C0F]";
 }
 function recommendation(status: string, product: string) {
   if (status === "Low Stock") return `${product} is below safe cover. Recommend manufacturing within 48 hours.`;

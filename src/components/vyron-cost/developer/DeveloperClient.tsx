@@ -189,9 +189,9 @@ async function fetchWorkspaceClient(clientId: string): Promise<ClientWorkspace |
 }
 
 function clientLoginDisplayClass(status: ClientLoginDisplayStatus) {
-  if (status === "active_login") return "rounded-full bg-[#A3E635]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]";
+  if (status === "active_login") return "rounded-full bg-[#A855F7]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]";
   if (status === "disabled_login") return "rounded-full bg-rose-100 px-3 py-1 text-xs font-black text-rose-800";
-  return "rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800";
+  return "rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-800";
 }
 
 function readStoredClients(): ClientWorkspace[] {
@@ -276,9 +276,9 @@ function buildLocalClient(
 }
 
 function statusClass(status: ClientStatus) {
-  if (status === "Active") return "bg-[#A3E635]/12 text-[#4D7C0F]";
+  if (status === "Active") return "bg-[#A855F7]/12 text-[#4D7C0F]";
   if (status === "Demo") return "bg-violet-100 text-violet-800";
-  if (status === "Suspended") return "bg-amber-100 text-amber-800";
+  if (status === "Suspended") return "bg-fuchsia-100 text-fuchsia-800";
   if (status === "Archived") return "bg-slate-200 text-slate-700";
   return "bg-slate-100 text-slate-700";
 }
@@ -308,8 +308,8 @@ function validateAdminForm(admin: typeof emptyAdminForm, requirePassword = false
 }
 
 function xeroClass(status: XeroStatus) {
-  if (status === "Connected") return "rounded-full bg-[#A3E635]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]";
-  if (status === "Setup Required") return "rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800";
+  if (status === "Connected") return "rounded-full bg-[#A855F7]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]";
+  if (status === "Setup Required") return "rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-800";
   return "rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700";
 }
 
@@ -1030,10 +1030,10 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
           {[
             ["Active Clients", statusCounts.total, "bg-violet-50 text-violet-800"],
-            ["Live", statusCounts.active, "bg-[#A3E635]/10 text-[#4D7C0F]"],
+            ["Live", statusCounts.active, "bg-[#A855F7]/10 text-[#4D7C0F]"],
             ["Demo", statusCounts.demo, "bg-fuchsia-50 text-fuchsia-800"],
             ["In Setup", statusCounts.setup, "bg-slate-50 text-slate-800"],
-            ["Suspended", statusCounts.suspended, "bg-amber-50 text-amber-800"],
+            ["Suspended", statusCounts.suspended, "bg-fuchsia-50 text-fuchsia-800"],
             ["Archived", statusCounts.archived, "bg-slate-100 text-slate-700"],
           ].map(([label, value, tone]) => (
             <div key={label} className={`rounded-[1.75rem] p-5 ${tone}`}>
@@ -1494,7 +1494,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
               </li>
             ))}
           </ul>
-          <div className="mt-5 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-900">
+          <div className="mt-5 rounded-2xl border border-fuchsia-100 bg-fuchsia-50 px-4 py-3 text-xs font-semibold text-fuchsia-900">
             Save Client creates the workspace, auth user, profile, OWNER membership and login credentials. Then connect Xero from Integrations when the tenant goes live.
           </div>
         </section>
@@ -1747,7 +1747,7 @@ function ClientRegisterTable({
                 <button
                   type="button"
                   onClick={() => onArchive(client.id)}
-                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-amber-100 px-3 py-2 text-xs font-black text-amber-800"
+                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-fuchsia-100 px-3 py-2 text-xs font-black text-fuchsia-800"
                 >
                   <Archive size={14} />
                   Archive
@@ -1994,7 +1994,7 @@ function ManageLoginModal({
             type="button"
             disabled={saving}
             onClick={onEnable}
-            className="rounded-2xl border border-[#A3E635]/25 bg-[#A3E635]/10 px-5 py-3 text-sm font-black text-[#4D7C0F] disabled:opacity-60"
+            className="rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/10 px-5 py-3 text-sm font-black text-[#4D7C0F] disabled:opacity-60"
           >
             Enable Login
           </button>

@@ -116,7 +116,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
             <button
               type="button"
               onClick={() => void markSent()}
-              className="rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-bold text-white"
+              className="rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white"
             >
               Mark Sent
             </button>
@@ -127,7 +127,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
                 type="button"
                 disabled={receiving}
                 onClick={() => void receive("full")}
-                className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+                className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
               >
                 Receive Full
               </button>
@@ -135,7 +135,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
                 type="button"
                 disabled={receiving}
                 onClick={() => void receive("partial")}
-                className="rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-bold text-emerald-700 disabled:opacity-60"
+                className="rounded-xl border border-violet-200 px-4 py-2.5 text-sm font-bold text-violet-700 disabled:opacity-60"
               >
                 Receive Partial
               </button>
@@ -154,7 +154,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
           </div>
         ) : null}
         {message ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+          <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800">
             {message}
           </div>
         ) : null}
@@ -194,7 +194,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
                   <div>Purchase value: <strong>{formatMoney(supplierPerformance.purchase_value)}</strong></div>
                 </div>
                 {supplierPerformance.warning ? (
-                  <div className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+                  <div className="mt-3 rounded-xl bg-fuchsia-50 px-4 py-3 text-sm font-semibold text-fuchsia-800">
                     {supplierPerformance.warning}
                   </div>
                 ) : null}
@@ -221,7 +221,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
                         <td className="px-4 py-3 font-semibold">{line.ingredient_name}</td>
                         <td className="px-4 py-3 text-right text-sm">{line.quantity} {line.unit}</td>
                         <td className="px-4 py-3 text-right text-sm">{line.received_qty} {line.unit}</td>
-                        <td className="px-4 py-3 text-right text-sm font-bold text-amber-700">
+                        <td className="px-4 py-3 text-right text-sm font-bold text-fuchsia-700">
                           {line.outstanding_qty} {line.unit}
                         </td>
                         <td className="px-4 py-3 text-right font-bold">{formatMoney(line.line_total)}</td>

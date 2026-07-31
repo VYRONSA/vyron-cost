@@ -5,7 +5,7 @@ const M = VYRON_MASTER;
 export function VyronQuoteCard({ quote, attribution }: { quote: string; attribution: string }) {
   return (
     <div className={`relative overflow-hidden p-6 md:p-7 ${M.lightCard}`}>
-      <div className="pointer-events-none absolute -right-6 -top-6 text-[96px] font-black leading-none text-[#7C3AED]/10">
+      <div className="pointer-events-none absolute -right-6 -top-6 text-[96px] font-black leading-none text-[#1D6BFF]/10">
         &ldquo;
       </div>
       <p className={`relative max-w-3xl text-lg font-bold leading-snug md:text-xl ${M.heading}`}>&ldquo;{quote}&rdquo;</p>

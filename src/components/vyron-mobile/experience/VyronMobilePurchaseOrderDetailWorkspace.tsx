@@ -127,9 +127,9 @@ function when(value?: string | null) {
 function statusTone(status: string) {
   const value = String(status || "").toLowerCase();
   if (value.includes("cancel")) return "text-rose-700 bg-rose-50 border-rose-200";
-  if (value.includes("received") || value.includes("closed")) return "text-emerald-700 bg-emerald-50 border-emerald-200";
+  if (value.includes("received") || value.includes("closed")) return "text-violet-700 bg-violet-50 border-violet-200";
   if (value.includes("approved") || value.includes("sent")) return "text-blue-700 bg-blue-50 border-blue-200";
-  if (value.includes("submit") || value.includes("partial")) return "text-amber-700 bg-amber-50 border-amber-200";
+  if (value.includes("submit") || value.includes("partial")) return "text-fuchsia-700 bg-fuchsia-50 border-fuchsia-200";
   return "text-slate-700 bg-slate-50 border-slate-200";
 }
 
@@ -493,17 +493,17 @@ export default function VyronMobilePurchaseOrderDetailWorkspace({ poId }: { poId
     <section className="space-y-4 px-4 pb-36 pt-1 sm:px-5">
       <PremiumMobileCard tone="raised" className="overflow-hidden p-0">
         <div className="bg-gradient-to-br from-[#062A2A] via-[#074F50] to-[#0D7B7E] p-5 text-white">
-          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-100">Purchase Order</div>
+          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-100">Purchase Order</div>
           <div className="mt-2 flex items-start justify-between gap-3">
             <div>
               <div className="text-2xl font-black tracking-[-0.04em]">{po.po_number}</div>
-              <div className="mt-1 text-sm font-semibold text-teal-50">{po.supplier_name_snapshot || "Supplier"}</div>
+              <div className="mt-1 text-sm font-semibold text-indigo-50">{po.supplier_name_snapshot || "Supplier"}</div>
             </div>
             <span className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${statusTone(po.status)}`}>
               {po.status}
             </span>
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-semibold text-teal-50/95">
+          <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-semibold text-indigo-50/95">
             <div>Required: {when(po.order_date)}</div>
             <div>Expected: {when(po.order_date)}</div>
             <div>Priority: {Number(po.total || 0) >= 200000 ? "High" : Number(po.total || 0) >= 60000 ? "Medium" : "Normal"}</div>
@@ -512,7 +512,7 @@ export default function VyronMobilePurchaseOrderDetailWorkspace({ poId }: { poId
         </div>
       </PremiumMobileCard>
 
-      {message ? <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">{message}</div> : null}
+      {message ? <div className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 px-3 py-2 text-xs font-bold text-fuchsia-800">{message}</div> : null}
 
       <div className="grid gap-3 md:grid-cols-3">
         <PremiumMobileCard tone="default" className="p-4">

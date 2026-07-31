@@ -138,14 +138,14 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
         <button
           type="button"
           onClick={() => setRollbackOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-xs font-black uppercase text-amber-900"
+          className="inline-flex items-center gap-2 rounded-xl border border-fuchsia-300 bg-fuchsia-50 px-4 py-2 text-xs font-black uppercase text-fuchsia-900"
         >
           <RotateCcw size={14} />
           Rollback cost update
         </button>
       </div>
 
-      {message ? <p className="rounded-xl border border-[#A3E635]/25 bg-[#A3E635]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
+      {message ? <p className="rounded-xl border border-[#A855F7]/25 bg-[#A855F7]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
       {error ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800">{error}</p> : null}
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -304,7 +304,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
             </div>
           ))}
           {detail.rollbacks.map((row) => (
-            <div key={String(row.id)} className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs">
+            <div key={String(row.id)} className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 p-3 text-xs">
               Rollback by {String(row.rolled_back_by)} · {String(row.rolled_back_at || "").slice(0, 16)} ·{" "}
               {Number(row.reversal_count || 0)} reversal(s)
             </div>
@@ -379,7 +379,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
                 type="button"
                 disabled={rollingBack}
                 onClick={() => void handleRollback()}
-                className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+                className="rounded-xl bg-fuchsia-600 px-4 py-2 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
               >
                 {rollingBack ? "Rolling back…" : "Confirm rollback"}
               </button>

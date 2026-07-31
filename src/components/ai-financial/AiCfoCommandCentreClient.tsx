@@ -52,7 +52,7 @@ export default function AiCfoCommandCentreClient({ data }: { data: AiFinancialIn
                   <div key={String(l)} className="rounded-xl bg-white/10 p-3">
                     <div className="text-[10px] font-black uppercase text-violet-200">{l}</div>
                     <div className="text-2xl font-black">{v}</div>
-                    <Link href={String(h)} className="text-[10px] font-bold text-[#A3E635] hover:underline">
+                    <Link href={String(h)} className="text-[10px] font-bold text-[#A855F7] hover:underline">
                       Drill down →
                     </Link>
                   </div>

@@ -139,7 +139,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
           className="min-w-[200px] flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm"
         />
         {canReverse ? (
-          <label className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-black text-amber-900">
+          <label className="flex items-center gap-2 rounded-xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-2 text-xs font-black text-fuchsia-900">
             <input type="checkbox" checked={supervisorMode} onChange={(e) => setSupervisorMode(e.target.checked)} />
             Supervisor mode
           </label>
@@ -150,7 +150,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
 
       <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="min-w-[1100px]">
-          <div className="grid grid-cols-9 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+          <div className="grid grid-cols-9 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
             <div>Batch #</div>
             <div>Date</div>
             <div className="col-span-2">Product</div>
@@ -198,7 +198,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
                         run.status === "Reversed"
                           ? "bg-red-100 text-red-800"
                           : run.status === "Completed"
-                            ? "bg-[#A3E635]/12 text-[#4D7C0F]"
+                            ? "bg-[#A855F7]/12 text-[#4D7C0F]"
                             : "bg-slate-100 text-slate-700"
                       }`}
                     >
@@ -216,7 +216,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
                     {canAdjust ? (
                       <Link
                         href={`/manufacturing/runs/${run.id}?adjust=1`}
-                        className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-800 hover:bg-amber-100"
+                        className="rounded-lg bg-fuchsia-50 px-3 py-1.5 text-xs font-black text-fuchsia-800 hover:bg-fuchsia-100"
                       >
                         Adjust
                       </Link>

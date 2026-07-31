@@ -22,7 +22,7 @@ export default function PremiumMobileModuleTile({
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(199,154,43,0.12),transparent_42%)] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
 
         <div className="relative flex items-start justify-between gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#07111F] text-white shadow-[0_12px_25px_rgba(7,17,31,0.2)] transition-transform duration-200 group-hover:scale-105">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl vyron-grad-surface text-white shadow-[0_12px_25px_rgba(7,17,31,0.2)] transition-transform duration-200 group-hover:scale-105">
             <Icon size={25} strokeWidth={2.1} />
           </div>
           <div className="rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">

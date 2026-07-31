@@ -12,7 +12,7 @@ export function InsightCard({ insight }: { insight: FinanceExplainableInsight })
     insight.severity === "critical"
       ? "border-red-300 bg-red-50"
       : insight.severity === "high"
-        ? "border-amber-300 bg-amber-50"
+        ? "border-fuchsia-300 bg-fuchsia-50"
         : "border-slate-200 bg-white";
   return (
     <article className={`rounded-2xl border p-5 ${sev}`}>

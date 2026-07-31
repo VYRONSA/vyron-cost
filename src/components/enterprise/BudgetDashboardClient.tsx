@@ -52,7 +52,7 @@ export default function BudgetDashboardClient({ dashboard }: { dashboard: Budget
             <div className="overflow-x-auto rounded-[2rem] bg-white shadow-sm">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-900 text-left text-[10px] font-black uppercase text-[#A3E635]">
+                  <tr className="bg-slate-900 text-left text-[10px] font-black uppercase text-[#A855F7]">
                     <th className="p-4">Category</th>
                     <th className="p-4">Period</th>
                     <th className="p-4">Budget</th>

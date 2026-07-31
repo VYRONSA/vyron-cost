@@ -124,7 +124,7 @@ export default function DocumentIntelligenceDashboard() {
         <p className="mt-1 text-sm font-semibold text-slate-500">
           Uploaded → Extracting → Captured → Needs Review → Approved → Archived
         </p>
-        {message ? <div className="mt-3 rounded-xl bg-amber-50 px-4 py-2 text-xs font-bold text-amber-800">{message}</div> : null}
+        {message ? <div className="mt-3 rounded-xl bg-fuchsia-50 px-4 py-2 text-xs font-bold text-fuchsia-800">{message}</div> : null}
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
           {[
             ["Uploaded today", stats?.uploadedToday ?? "—", "New in queue"],

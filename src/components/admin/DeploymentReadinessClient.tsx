@@ -67,7 +67,7 @@ function StatusPill({ ok, label }: { ok: boolean; label?: string }) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${
-        ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-800"
+        ok ? "border-violet-200 bg-violet-50 text-violet-800" : "border-rose-200 bg-rose-50 text-rose-800"
       }`}
     >
       {ok ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
@@ -118,7 +118,7 @@ export default function DeploymentReadinessClient() {
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#F43F5E]/35 bg-[#F43F5E]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Deployment
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Deployment Readiness</h1>
@@ -155,14 +155,14 @@ export default function DeploymentReadinessClient() {
         <>
           <section
             className={`rounded-2xl border px-5 py-4 ${
-              overallReady ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"
+              overallReady ? "border-violet-200 bg-violet-50" : "border-fuchsia-200 bg-fuchsia-50"
             }`}
           >
             <div className="flex items-start gap-3">
               {overallReady ? (
-                <CheckCircle2 size={22} className="mt-0.5 shrink-0 text-emerald-700" />
+                <CheckCircle2 size={22} className="mt-0.5 shrink-0 text-violet-700" />
               ) : (
-                <AlertTriangle size={22} className="mt-0.5 shrink-0 text-amber-700" />
+                <AlertTriangle size={22} className="mt-0.5 shrink-0 text-fuchsia-700" />
               )}
               <div>
                 <h2 className="text-lg font-bold text-[#0F172A]">
@@ -195,7 +195,7 @@ export default function DeploymentReadinessClient() {
           <div className="grid gap-6 lg:grid-cols-2">
             <section className={M.moduleDataSection}>
               <h2 className="flex items-center gap-2 text-lg font-bold text-[#0F172A]">
-                <Server size={20} className="text-[#7C3AED]" />
+                <Server size={20} className="text-[#1D6BFF]" />
                 Environment
               </h2>
               <div className="mt-4">
@@ -214,7 +214,7 @@ export default function DeploymentReadinessClient() {
 
             <section className={M.moduleDataSection}>
               <h2 className="flex items-center gap-2 text-lg font-bold text-[#0F172A]">
-                <Link2 size={20} className="text-[#7C3AED]" />
+                <Link2 size={20} className="text-[#1D6BFF]" />
                 Workspace &amp; Company
               </h2>
               <div className="mt-4">
@@ -241,7 +241,7 @@ export default function DeploymentReadinessClient() {
 
             <section className={M.moduleDataSection}>
               <h2 className="flex items-center gap-2 text-lg font-bold text-[#0F172A]">
-                <Database size={20} className="text-[#7C3AED]" />
+                <Database size={20} className="text-[#1D6BFF]" />
                 Required migrations
               </h2>
               <div className="mt-4">
@@ -258,7 +258,7 @@ export default function DeploymentReadinessClient() {
 
             <section className={M.moduleDataSection}>
               <h2 className="flex items-center gap-2 text-lg font-bold text-[#0F172A]">
-                <Shield size={20} className="text-[#7C3AED]" />
+                <Shield size={20} className="text-[#1D6BFF]" />
                 Integrations &amp; persistence
               </h2>
               <div className="mt-4">

@@ -30,7 +30,7 @@ export default function RecipeCostDrilldownClient({ products }: { products: Prod
     >
       <section className="grid gap-6">
             <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-              <Boxes size={34} className="text-[#A3E635]" />
+              <Boxes size={34} className="text-[#A855F7]" />
               <h2 className="mt-5 text-3xl font-black">Recipe Cost Drilldown</h2>
               <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
                 Breakdown every product cost into ingredient, packaging, labour and overhead exposure.
@@ -45,16 +45,16 @@ export default function RecipeCostDrilldownClient({ products }: { products: Prod
                       <h3 className="text-2xl font-black text-[#F8FAFC]">{product.product_name}</h3>
                       <p className="mt-1 text-sm font-bold text-slate-500">{product.category} · Total cost {money(total)}</p>
                     </div>
-                    <Link href={product.product_id ? `/products/${product.product_id}` : "/products"} className="inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
+                    <Link href={product.product_id ? `/products/${product.product_id}` : "/products"} className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
                       Open product <ArrowRight size={16} />
                     </Link>
                   </div>
 
                   <div className="mt-5 grid gap-3 md:grid-cols-4">
                     {[
-                      ["Ingredients", ingredient, "bg-[#A3E635]/10 text-[#4D7C0F]"],
+                      ["Ingredients", ingredient, "bg-[#A855F7]/10 text-[#4D7C0F]"],
                       ["Packaging", packaging, "bg-violet-50 text-violet-800"],
-                      ["Labour", labour, "bg-amber-50 text-amber-800"],
+                      ["Labour", labour, "bg-fuchsia-50 text-fuchsia-800"],
                       ["Overheads", overhead, "bg-slate-50 text-slate-800"],
                     ].map(([label, value, cls]) => (
                       <div key={String(label)} className={`rounded-2xl p-4 ${cls}`}>

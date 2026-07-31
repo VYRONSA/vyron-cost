@@ -158,7 +158,7 @@ export default function CostIntelligenceCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#CBD5E1]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#1D6BFF]/30 bg-[#1D6BFF]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#CBD5E1]">
                 Cost Intelligence
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Cost Intelligence Centre</h1>
@@ -214,28 +214,28 @@ export default function CostIntelligenceCentreClient({
               value={String(summary?.erosionCount ?? 0)}
               href="/reports/product-margins"
               icon={TrendingDown}
-              accent="#E11D48"
+              accent="#2563EB"
             />
             <KpiCard
               label="Need repricing"
               value={String(summary?.repricingCount ?? 0)}
               href="/products"
               icon={AlertTriangle}
-              accent="#F43F5E"
+              accent="#3B82F6"
             />
             <KpiCard
               label="Supplier inflation"
               value={String(summary?.inflationSuppliers ?? 0)}
               href="/document-intelligence/price-history/supplier"
               icon={Truck}
-              accent="#9333EA"
+              accent="#3B82F6"
             />
             <KpiCard
               label="BOM movement"
               value={String(bomMovementCount)}
               href="/recipes"
               icon={ChefHat}
-              accent="#7C3AED"
+              accent="#1D6BFF"
             />
           </section>
 
@@ -307,7 +307,7 @@ export default function CostIntelligenceCentreClient({
                   <p className="mt-2 text-xs font-medium text-[#94A3B8]">
                     Process purchase orders and GRNs, or update supplier master costs to build inflation signals.
                   </p>
-                  <Link href="/purchase-orders" className="mt-3 inline-flex text-sm font-bold text-[#7C3AED]">
+                  <Link href="/purchase-orders" className="mt-3 inline-flex text-sm font-bold text-[#1D6BFF]">
                     Open purchase orders →
                   </Link>
                 </div>
@@ -327,7 +327,7 @@ export default function CostIntelligenceCentreClient({
                         <tr key={row.supplierName} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
                           <td className="px-4 py-3 font-semibold text-[#0F172A]">{row.supplierName}</td>
                           <td className="px-4 py-3 text-[#64748B]">{row.category}</td>
-                          <td className="px-4 py-3 text-right font-bold text-[#E11D48]">{pct(row.movementPct)}</td>
+                          <td className="px-4 py-3 text-right font-bold text-[#2563EB]">{pct(row.movementPct)}</td>
                           <td className="px-4 py-3">
                             <RiskBadge level={row.riskLevel} />
                           </td>
@@ -360,7 +360,7 @@ export default function CostIntelligenceCentreClient({
                   <p className="mt-2 text-xs font-medium text-[#94A3B8]">
                     Add ingredients with current and previous purchase costs, or import procurement price history.
                   </p>
-                  <Link href="/ingredients" className="mt-3 inline-flex text-sm font-bold text-[#7C3AED]">
+                  <Link href="/ingredients" className="mt-3 inline-flex text-sm font-bold text-[#1D6BFF]">
                     Open ingredients →
                   </Link>
                 </div>
@@ -382,7 +382,7 @@ export default function CostIntelligenceCentreClient({
                           <td className="px-4 py-3 font-semibold text-[#0F172A]">{row.productName}</td>
                           <td className="px-4 py-3 text-right text-[#64748B]">{money(row.previousCost)}</td>
                           <td className="px-4 py-3 text-right font-medium text-[#334155]">{money(row.currentCost)}</td>
-                          <td className="px-4 py-3 text-right font-bold text-[#7C3AED]">{pct(row.movementPct)}</td>
+                          <td className="px-4 py-3 text-right font-bold text-[#1D6BFF]">{pct(row.movementPct)}</td>
                           <td className="px-4 py-3 text-[#64748B]">{row.impact}</td>
                         </tr>
                       ))}
@@ -403,14 +403,14 @@ export default function CostIntelligenceCentreClient({
                 <Link
                   key={action.id}
                   href={action.href}
-                  className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 transition hover:border-[#7C3AED]/30"
+                  className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 transition hover:border-[#1D6BFF]/30"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <span className="font-bold text-[#0F172A]">{action.title}</span>
                     <ActionSeverityBadge severity={action.severity} />
                   </div>
                   <p className="mt-2 text-sm font-medium text-[#64748B]">{action.detail}</p>
-                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
                     Open <ArrowRight size={14} />
                   </span>
                 </Link>
@@ -432,7 +432,7 @@ export default function CostIntelligenceCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#7C3AED]/30 hover:text-[#7C3AED]"
+                  className="rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
                 >
                   {link.label}
                 </Link>
@@ -461,7 +461,7 @@ function KpiCard({
   return (
     <Link
       href={href}
-      className={`${M.moduleDataSection} block p-5 transition hover:border-[#7C3AED]/30 hover:shadow-md`}
+      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1D6BFF]/30 hover:shadow-md`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -480,7 +480,7 @@ function KpiCard({
 
 function ProductMarginRow({ row }: { row: ProductIntelligenceRow }) {
   const variance = Number(row.gp_gap ?? 0);
-  const varianceClass = variance < 0 ? "text-[#E11D48]" : variance > 0 ? "text-emerald-700" : "text-[#64748B]";
+  const varianceClass = variance < 0 ? "text-[#2563EB]" : variance > 0 ? "text-violet-700" : "text-[#64748B]";
   const productHref = row.product_id ? `/products/${row.product_id}` : "/products";
 
   return (
@@ -496,11 +496,11 @@ function ProductMarginRow({ row }: { row: ProductIntelligenceRow }) {
       <td className="px-4 py-3 text-right font-semibold text-[#334155]">{pct(row.actual_gp)}</td>
       <td className="px-4 py-3 text-right text-[#64748B]">{pct(row.target_gp)}</td>
       <td className={`px-4 py-3 text-right font-bold ${varianceClass}`}>{pct(variance)}</td>
-      <td className="px-4 py-3 text-right font-semibold text-[#7C3AED]">
+      <td className="px-4 py-3 text-right font-semibold text-[#1D6BFF]">
         {Number(row.suggested_price) ? money(Number(row.suggested_price)) : "—"}
       </td>
       <td className="px-4 py-3 text-right">
-        <Link href={productHref} className="text-xs font-bold text-[#7C3AED]">
+        <Link href={productHref} className="text-xs font-bold text-[#1D6BFF]">
           {row.action_required || "Review"} →
         </Link>
       </td>
@@ -514,7 +514,7 @@ function RiskBadge({ level }: { level: string }) {
     lower.includes("critical")
       ? "border-rose-200 bg-rose-50 text-rose-700"
       : lower.includes("high")
-        ? "border-amber-200 bg-amber-50 text-amber-800"
+        ? "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800"
         : "border-[#E2E8F0] bg-[#F6F7FB] text-[#64748B]";
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-bold ${classes}`}>{level}</span>
@@ -524,8 +524,8 @@ function RiskBadge({ level }: { level: string }) {
 function ActionSeverityBadge({ severity }: { severity: SuggestedAction["severity"] }) {
   const classes = {
     critical: "border-rose-200 bg-rose-50 text-rose-700",
-    warning: "border-amber-200 bg-amber-50 text-amber-800",
-    info: "border-[#7C3AED]/25 bg-[#7C3AED]/10 text-[#7C3AED]",
+    warning: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800",
+    info: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
   };
   const labels = { critical: "Critical", warning: "Review", info: "Monitor" };
   return (

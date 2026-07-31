@@ -198,14 +198,14 @@ export default function SupplierInvoiceBuilderClient({
             <b>VAT</b>
             <div className="text-3xl font-black">{formatMoney(totals.vat)}</div>
           </div>
-          <div className="rounded-[2rem] bg-[#A3E635]/10 p-5">
+          <div className="rounded-[2rem] bg-[#A855F7]/10 p-5">
             <b>Total</b>
             <div className="text-3xl font-black text-[#84CC16]">{formatMoney(totals.total)}</div>
           </div>
         </div>
 
         {dup ? <div className="rounded-2xl bg-red-50 p-4 font-bold text-red-700">Duplicate risk detected.</div> : null}
-        {msg ? <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-4 font-bold text-[#65A30D]">{msg}</div> : null}
+        {msg ? <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-4 font-bold text-[#7E22CE]">{msg}</div> : null}
         {err ? <div className="rounded-2xl bg-red-50 p-4 font-bold text-red-700">{err}</div> : null}
 
         <div className="rounded-[2rem] bg-white p-5">

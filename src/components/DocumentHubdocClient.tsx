@@ -124,11 +124,11 @@ type DemoDoc = {
 const starterDocs: DemoDoc[] = [];
 
 function statusClass(status: DocStatus) {
-  if (status === "Matched" || status === "Archived") return "bg-[#A3E635]/10 text-[#65A30D]";
+  if (status === "Matched" || status === "Archived") return "bg-[#A855F7]/10 text-[#7E22CE]";
   if (status === "Error" || status === "Duplicate Risk") return "bg-red-50 text-red-700";
-  if (status === "Needs Review") return "bg-amber-50 text-amber-700";
+  if (status === "Needs Review") return "bg-fuchsia-50 text-fuchsia-700";
   if (status === "Extracting" || status === "Uploading") return "bg-blue-50 text-blue-700";
-  if (status === "Stored" || status === "Uploaded") return "bg-[#A3E635]/10 text-[#65A30D]";
+  if (status === "Stored" || status === "Uploaded") return "bg-[#A855F7]/10 text-[#7E22CE]";
   return "bg-violet-50 text-violet-700";
 }
 
@@ -730,7 +730,7 @@ export default function DocumentHubdocClient({
             </div>
           </div>
 
-          <div className="rounded-[2.2rem] bg-gradient-to-br from-violet-700 via-fuchsia-600 to-indigo-800 p-6 text-white shadow-[0_18px_60px_rgba(168,85,247,0.28)]">
+          <div className="rounded-[2.2rem] bg-gradient-to-br from-violet-700 via-fuchsia-600 to-indigo-800 p-6 text-white shadow-[0_18px_60px_rgba(59,130,246,0.28)]">
             <div className="text-xs font-black uppercase tracking-[0.18em] text-violet-100">What changed</div>
             <h2 className="mt-2 text-2xl font-black">Shows the real extraction error.</h2>
 
@@ -807,7 +807,7 @@ export default function DocumentHubdocClient({
             </button>
           </div>
 
-          {message ? <div className="mt-4 rounded-2xl bg-amber-50 px-5 py-4 text-sm font-black text-amber-700">{message}</div> : null}
+          {message ? <div className="mt-4 rounded-2xl bg-fuchsia-50 px-5 py-4 text-sm font-black text-fuchsia-700">{message}</div> : null}
 
           <div className="mt-5 rounded-3xl bg-slate-950 p-5 text-white">
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-fuchsia-300">
@@ -822,7 +822,7 @@ export default function DocumentHubdocClient({
             </div>
             <a
               href="/email-invoice-inbox"
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#A3E635]/100 px-4 py-2 text-xs font-black text-[#F8FAFC]"
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#A855F7]/100 px-4 py-2 text-xs font-black text-[#F8FAFC]"
             >
               Open email intake queue →
             </a>
@@ -860,7 +860,7 @@ export default function DocumentHubdocClient({
                       type="button"
                       disabled={bulkReviewing}
                       onClick={() => void handleBulkMarkReviewed()}
-                      className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-4 py-2 text-xs font-black text-white disabled:opacity-60"
+                      className="inline-flex items-center gap-1 rounded-full bg-fuchsia-500 px-4 py-2 text-xs font-black text-white disabled:opacity-60"
                     >
                       {bulkReviewing ? "Saving…" : `Mark reviewed (${selectedIds.size})`}
                     </button>
@@ -868,7 +868,7 @@ export default function DocumentHubdocClient({
                       type="button"
                       disabled={bulkApproving}
                       onClick={() => void handleBulkApprove()}
-                      className="inline-flex items-center gap-1 rounded-full border border-[#A3E635]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-white disabled:opacity-60"
+                      className="inline-flex items-center gap-1 rounded-full border border-[#A855F7]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-white disabled:opacity-60"
                     >
                       {bulkApproving ? "Approving…" : `Approve (${selectedIds.size})`}
                     </button>
@@ -889,7 +889,7 @@ export default function DocumentHubdocClient({
                     type="button"
                     disabled={bulkRestoring}
                     onClick={() => void handleBulkRestore()}
-                    className="inline-flex items-center gap-1 rounded-full border border-[#A3E635]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-white disabled:opacity-60"
+                    className="inline-flex items-center gap-1 rounded-full border border-[#A855F7]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-white disabled:opacity-60"
                   >
                     {bulkRestoring ? "Restoring…" : `Restore (${selectedIds.size})`}
                   </button>
@@ -1009,7 +1009,7 @@ export default function DocumentHubdocClient({
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-3 py-1 text-xs font-black ${statusClass(doc.status)}`}>{doc.status}</span>
                   </td>
-                  <td className={`px-4 py-3 font-black ${doc.risk === "High" ? "text-red-600" : doc.risk === "Medium" ? "text-amber-600" : "text-[#84CC16]"}`}>
+                  <td className={`px-4 py-3 font-black ${doc.risk === "High" ? "text-red-600" : doc.risk === "Medium" ? "text-fuchsia-600" : "text-[#84CC16]"}`}>
                     {doc.risk}
                   </td>
                   <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>

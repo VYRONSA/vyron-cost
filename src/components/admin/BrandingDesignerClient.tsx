@@ -23,9 +23,9 @@ const LOGO_SIZES: { value: LogoSizePreset; label: string }[] = [
 ];
 
 const PALETTE_PRESETS: { name: string; primary: string; secondary: string; accent: string; text: string; background: string }[] = [
-  { name: "VYRON Indigo", primary: "#4338CA", secondary: "#0F172A", accent: "#7C3AED", text: "#0F172A", background: "#0F172A" },
+  { name: "VYRON Indigo", primary: "#4338CA", secondary: "#0F172A", accent: "#1D6BFF", text: "#0F172A", background: "#0F172A" },
   { name: "Slate Professional", primary: "#1E293B", secondary: "#334155", accent: "#0EA5E9", text: "#0F172A", background: "#1E293B" },
-  { name: "Emerald Fresh", primary: "#065F46", secondary: "#064E3B", accent: "#10B981", text: "#0F172A", background: "#065F46" },
+  { name: "Emerald Fresh", primary: "#065F46", secondary: "#064E3B", accent: "#8B5CF6", text: "#0F172A", background: "#065F46" },
   { name: "Burgundy Classic", primary: "#7F1D1D", secondary: "#450A0A", accent: "#DC2626", text: "#0F172A", background: "#7F1D1D" },
   { name: "Charcoal & Gold", primary: "#111827", secondary: "#1F2937", accent: "#D97706", text: "#0F172A", background: "#111827" },
 ];
@@ -47,7 +47,7 @@ const emptyBranding: CompanyBranding = {
   palette: {
     primaryColor: "#4338CA",
     secondaryColor: "#0F172A",
-    accentColor: "#7C3AED",
+    accentColor: "#1D6BFF",
     darkTextColor: "#0F172A",
     lightTextColor: "#FFFFFF",
     headerBackground: "#0F172A",
@@ -280,7 +280,7 @@ export default function BrandingDesignerClient() {
     <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
       <div className="space-y-6">
         {!canCompany ? (
-          <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+          <div className="rounded-2xl bg-fuchsia-50 px-4 py-3 text-sm font-bold text-fuchsia-800">
             You have read-only access. Changes cannot be saved.
           </div>
         ) : null}

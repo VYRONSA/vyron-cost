@@ -233,7 +233,7 @@ export default function EnterpriseImportCentreClient({
                 <h2 className="text-lg font-black text-[#0F172A]">{card.name}</h2>
                 <p className="mt-2 text-sm font-medium leading-6 text-[#64748B]">{card.description}</p>
               </div>
-              <Upload size={20} className="text-[#65A30D]" />
+              <Upload size={20} className="text-[#7E22CE]" />
             </div>
 
             <dl className="mt-5 grid gap-2 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm">

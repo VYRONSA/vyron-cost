@@ -160,7 +160,7 @@ export default function BusinessHealthCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#F43F5E]/35 bg-[#F43F5E]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Business Health Centre
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Business Health Centre</h1>
@@ -265,12 +265,12 @@ export default function BusinessHealthCentreClient({
                       snapshot.overallScore == null
                         ? "#CBD5E1"
                         : snapshot.overallScore >= 80
-                          ? "#10B981"
+                          ? "#8B5CF6"
                           : snapshot.overallScore >= 65
-                            ? "#F59E0B"
+                            ? "#C026D3"
                             : snapshot.overallScore >= 45
-                              ? "#F97316"
-                              : "#E11D48",
+                              ? "#A855F7"
+                              : "#2563EB",
                   }}
                 >
                   <div className="text-3xl font-black text-[#0F172A]">
@@ -359,7 +359,7 @@ export default function BusinessHealthCentreClient({
                         </td>
                         <td className="px-4 py-3 text-[#64748B]">{risk.detail}</td>
                         <td className="px-4 py-3 text-right">
-                          <Link href={risk.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+                          <Link href={risk.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
                             Open <ArrowRight size={14} />
                           </Link>
                         </td>
@@ -405,7 +405,7 @@ export default function BusinessHealthCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#7C3AED]/30 hover:text-[#7C3AED]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
                 >
                   <link.icon size={16} />
                   {link.label}
@@ -433,13 +433,13 @@ function CategoryCard({ category }: { category: HealthCategoryCard }) {
   return (
     <Link
       href={category.href}
-      className={`${M.moduleDataSection} block p-5 transition hover:border-[#7C3AED]/30 hover:shadow-md`}
+      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1D6BFF]/30 hover:shadow-md`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <div className={`flex h-9 w-9 shrink-0 items-center justify-center ${M.iconSubtle}`}>
-              <Icon size={18} className="text-[#7C3AED]" />
+              <Icon size={18} className="text-[#1D6BFF]" />
             </div>
             <h3 className="font-bold text-[#0F172A]">{category.label}</h3>
           </div>
@@ -461,7 +461,7 @@ function CategoryCard({ category }: { category: HealthCategoryCard }) {
 function ActionCard({ action }: { action: ExecutiveHealthAction }) {
   const severityClasses = {
     critical: "border-rose-200 bg-rose-50",
-    warning: "border-amber-200 bg-amber-50",
+    warning: "border-fuchsia-200 bg-fuchsia-50",
     info: "border-[#E2E8F0] bg-[#F8FAFC]",
   };
   return (
@@ -473,7 +473,7 @@ function ActionCard({ action }: { action: ExecutiveHealthAction }) {
         </div>
         <ActionSeverityBadge severity={action.severity} />
       </div>
-      <Link href={action.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+      <Link href={action.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
         Open module <ArrowRight size={14} />
       </Link>
     </div>
@@ -484,8 +484,8 @@ function RiskColumn({ level, items }: { level: RiskLevel; items: Array<{ id: str
   const colors: Record<RiskLevel, string> = {
     Critical: "border-rose-200 bg-rose-50",
     High: "border-orange-200 bg-orange-50",
-    Medium: "border-amber-200 bg-amber-50",
-    Low: "border-emerald-200 bg-emerald-50",
+    Medium: "border-fuchsia-200 bg-fuchsia-50",
+    Low: "border-violet-200 bg-violet-50",
   };
   return (
     <div className={`rounded-2xl border p-4 ${colors[level]}`}>
@@ -497,7 +497,7 @@ function RiskColumn({ level, items }: { level: RiskLevel; items: Array<{ id: str
         ) : (
           items.map((item) => (
             <li key={item.id}>
-              <Link href={item.href} className="text-sm font-semibold text-[#334155] hover:text-[#7C3AED]">
+              <Link href={item.href} className="text-sm font-semibold text-[#334155] hover:text-[#1D6BFF]">
                 {item.title}
               </Link>
               <p className="text-xs font-medium text-[#64748B]">{item.detail}</p>
@@ -511,8 +511,8 @@ function RiskColumn({ level, items }: { level: RiskLevel; items: Array<{ id: str
 
 function StatusBadge({ status, large }: { status: HealthStatus; large?: boolean }) {
   const classes: Record<HealthStatus, string> = {
-    Healthy: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    Watch: "border-amber-200 bg-amber-50 text-amber-900",
+    Healthy: "border-violet-200 bg-violet-50 text-violet-800",
+    Watch: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
     Risk: "border-orange-200 bg-orange-50 text-orange-900",
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
     "Insufficient Data": "border-slate-200 bg-slate-50 text-slate-700",
@@ -532,8 +532,8 @@ function RiskLevelBadge({ level }: { level: RiskLevel }) {
   const classes: Record<RiskLevel, string> = {
     Critical: "border-rose-200 bg-rose-50 text-rose-700",
     High: "border-orange-200 bg-orange-50 text-orange-800",
-    Medium: "border-amber-200 bg-amber-50 text-amber-900",
-    Low: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    Medium: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    Low: "border-violet-200 bg-violet-50 text-violet-800",
   };
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes[level]}`}>
@@ -546,7 +546,7 @@ function ActionSeverityBadge({ severity }: { severity: ExecutiveHealthAction["se
   const labels = { critical: "Critical", warning: "Warning", info: "Info" };
   const classes = {
     critical: "text-rose-700",
-    warning: "text-amber-800",
+    warning: "text-fuchsia-800",
     info: "text-[#64748B]",
   };
   return <span className={`text-[10px] font-bold uppercase ${classes[severity]}`}>{labels[severity]}</span>;
@@ -554,8 +554,8 @@ function ActionSeverityBadge({ severity }: { severity: ExecutiveHealthAction["se
 
 function TrendBadge({ trend }: { trend: TrendDirection }) {
   const config: Record<TrendDirection, { className: string; icon: typeof TrendingUp }> = {
-    Improving: { className: "border-emerald-200 bg-emerald-50 text-emerald-800", icon: TrendingUp },
-    Stable: { className: "border-[#7C3AED]/25 bg-[#7C3AED]/10 text-[#7C3AED]", icon: Activity },
+    Improving: { className: "border-violet-200 bg-violet-50 text-violet-800", icon: TrendingUp },
+    Stable: { className: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]", icon: Activity },
     Declining: { className: "border-rose-200 bg-rose-50 text-rose-800", icon: TrendingDown },
     "Insufficient Data": { className: "border-slate-200 bg-slate-50 text-slate-700", icon: AlertTriangle },
   };

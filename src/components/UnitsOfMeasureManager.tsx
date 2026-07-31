@@ -142,7 +142,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
     <section className="grid gap-6 xl:grid-cols-[0.95fr_1.4fr]">
       <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-3 text-[#84CC16]">
+          <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-3 text-[#84CC16]">
             {editingId ? <Edit3 size={20} /> : <Plus size={20} />}
           </div>
           <div>
@@ -228,7 +228,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
               type="button"
               onClick={save}
               disabled={busy}
-              className="inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
             >
               <Save size={18} />
               {editingId ? "Update Unit" : "Save Unit"}
@@ -265,7 +265,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
 
         <div className="mt-4 overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[900px]">
-            <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+            <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
               <div>Code</div>
               <div>Name</div>
               <div>Symbol</div>
@@ -281,13 +281,13 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
                 <div className="text-slate-600">{row.symbol || "-"}</div>
                 <div className="text-slate-600">{row.category}</div>
                 <div className="text-slate-600">{row.decimal_precision}</div>
-                <div className={row.is_active ? "text-green-700" : "text-slate-500"}>{row.is_active ? "Active" : "Inactive"}</div>
+                <div className={row.is_active ? "text-purple-700" : "text-slate-500"}>{row.is_active ? "Active" : "Inactive"}</div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => startEdit(row)}
                     disabled={busy}
-                    className="inline-flex items-center gap-1 rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D] disabled:opacity-60"
+                    className="inline-flex items-center gap-1 rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE] disabled:opacity-60"
                   >
                     <Edit3 size={14} />Edit
                   </button>

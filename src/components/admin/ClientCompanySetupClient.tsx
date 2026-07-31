@@ -63,7 +63,7 @@ export default function ClientCompanySetupClient() {
     palette: {
       primaryColor: "#4338CA",
       secondaryColor: "#0F172A",
-      accentColor: "#7C3AED",
+      accentColor: "#1D6BFF",
       darkTextColor: "#0F172A",
       lightTextColor: "#FFFFFF",
       headerBackground: "#0F172A",
@@ -277,7 +277,7 @@ export default function ClientCompanySetupClient() {
         <div
           role="status"
           className={`fixed right-6 top-6 z-50 rounded-2xl px-5 py-3 text-sm font-bold text-white shadow-xl ${
-            toast.type === "success" ? "bg-emerald-600" : "bg-red-600"
+            toast.type === "success" ? "bg-violet-600" : "bg-red-600"
           }`}
         >
           {toast.message}

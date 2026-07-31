@@ -17,11 +17,11 @@ function formatMoney(value: number) {
 
 function statusClass(status: string) {
   if (status === "ReadyForPurchase") return "bg-violet-100 text-violet-800";
-  if (status === "Approved") return "bg-emerald-100 text-emerald-800";
+  if (status === "Approved") return "bg-violet-100 text-violet-800";
   if (status === "Ordered") return "bg-blue-100 text-blue-800";
   if (status === "Received") return "bg-slate-100 text-slate-700";
   if (status === "Cancelled") return "bg-rose-100 text-rose-800";
-  return "bg-amber-100 text-amber-800";
+  return "bg-fuchsia-100 text-fuchsia-800";
 }
 
 export default function ProcurementRequisitionsClient() {
@@ -129,7 +129,7 @@ export default function ProcurementRequisitionsClient() {
                   type="button"
                   onClick={() => setStatusFilter(status)}
                   className={`rounded-full px-3 py-1.5 text-xs font-bold ${
-                    statusFilter === status ? "bg-[#7C3AED] text-white" : "bg-[#F1F5F9] text-[#64748B]"
+                    statusFilter === status ? "bg-[#1D6BFF] text-white" : "bg-[#F1F5F9] text-[#64748B]"
                   }`}
                 >
                   {status === "All" ? "All" : PROCUREMENT_REQUISITION_STATUS_LABELS[status as keyof typeof PROCUREMENT_REQUISITION_STATUS_LABELS] || status}
@@ -172,7 +172,7 @@ export default function ProcurementRequisitionsClient() {
                   {filtered.map((row) => (
                     <tr key={row.id} className={VYRON_TABLE.row}>
                       <td className="px-4 py-3">
-                        <Link href={`/procurement/${row.id}`} className="font-bold text-[#7C3AED] hover:underline">
+                        <Link href={`/procurement/${row.id}`} className="font-bold text-[#1D6BFF] hover:underline">
                           {row.requisition_number}
                         </Link>
                       </td>

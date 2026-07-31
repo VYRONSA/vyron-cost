@@ -74,7 +74,7 @@ export default function InventoryLedgerClient() {
 
       <div className="overflow-x-auto rounded-[2rem] border border-violet-100 bg-white shadow-sm">
         <table className="min-w-full text-xs">
-          <thead className="bg-slate-900 font-black uppercase text-[#A3E635]">
+          <thead className="bg-slate-900 font-black uppercase text-[#A855F7]">
             <tr>
               <th className="px-2 py-2">Date</th>
               <th>Item</th>

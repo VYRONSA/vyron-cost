@@ -96,7 +96,7 @@ export const demoCompany: VyronCompany = {
   currency_code: "ZAR",
   vat_percent: 15,
   logo_url: null,
-  primary_color: "#10b981",
+  primary_color: "#8b5cf6",
 };
 
 export const demoBranches: VyronBranch[] = [

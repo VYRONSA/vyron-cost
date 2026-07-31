@@ -141,8 +141,8 @@ export default function StockMovementsPageClient() {
             onClick={() => setMode(action)}
             className={`rounded-2xl border px-4 py-5 text-left transition ${
               mode === action
-                ? "border-[#7C3AED] bg-[#F5F3FF] shadow-sm"
-                : "border-[#E2E8F0] bg-white hover:border-[#C4B5FD]"
+                ? "border-[#1D6BFF] bg-[#F5F3FF] shadow-sm"
+                : "border-[#E2E8F0] bg-white hover:border-[#93C5FD]"
             }`}
           >
             <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#64748B]">Action</div>
@@ -240,7 +240,7 @@ export default function StockMovementsPageClient() {
             </div>
           ) : null}
           {message ? (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+            <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800">
               {message}
             </div>
           ) : null}
@@ -249,7 +249,7 @@ export default function StockMovementsPageClient() {
             type="button"
             disabled={submitting}
             onClick={() => void submit()}
-            className="rounded-xl bg-[#7C3AED] px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
+            className="rounded-xl bg-[#1D6BFF] px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
           >
             {submitting ? "Posting…" : "Post Transaction"}
           </button>

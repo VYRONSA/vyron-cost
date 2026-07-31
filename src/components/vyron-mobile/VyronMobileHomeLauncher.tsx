@@ -164,7 +164,7 @@ export default function VyronMobileHomeLauncher({ workspaceName }: { workspaceNa
         <div className="grid gap-3">
           <PremiumMobileCard tone="raised" className="p-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#07111F] text-white">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl vyron-grad-surface text-white">
                 <Bot size={20} />
               </div>
               <div>

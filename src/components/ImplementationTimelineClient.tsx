@@ -21,7 +21,7 @@ export default function ImplementationTimelineClient() {
       <section className="grid gap-5">
             {weeks.map(([week, detail], index) => (
               <div key={week} className="grid gap-4 rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)] md:grid-cols-[90px_1fr]">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 text-2xl font-black text-[#65A30D]">{index + 1}</div>
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 text-2xl font-black text-[#7E22CE]">{index + 1}</div>
                 <div>
                   <h2 className="text-2xl font-black text-[#F8FAFC]">{week}</h2>
                   <p className="mt-2 text-sm font-semibold leading-7 text-slate-600">{detail}</p>

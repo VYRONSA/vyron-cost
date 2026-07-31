@@ -148,7 +148,7 @@ export default function OpeningStockImportClient() {
 
   return (
     <div className="space-y-4">
-      {message ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{message}</div> : null}
+      {message ? <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-2 text-sm text-violet-800">{message}</div> : null}
       {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-800">{error}</div> : null}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -161,7 +161,7 @@ export default function OpeningStockImportClient() {
             Upload CSV/XLSX
             <input type="file" accept=".csv,.xlsx,.xls,text/csv" className="hidden" onChange={(e) => void upload(e.target.files?.[0] || null)} />
           </label>
-          <button type="button" disabled={busy} onClick={() => void importRows()} className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">Import</button>
+          <button type="button" disabled={busy} onClick={() => void importRows()} className="rounded-lg bg-violet-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">Import</button>
         </div>
 
         {fileName ? <div className="mt-2 text-xs font-semibold text-slate-500">File: {fileName}</div> : null}

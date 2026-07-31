@@ -36,7 +36,7 @@ export default function SupplierNegotiationPackClient({ suppliers }: { suppliers
             <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
               <h2 className="text-3xl font-black">Supplier Negotiation Pack</h2>
               <p className="mt-3 text-sm font-semibold text-slate-300">Use this with suppliers to negotiate price movement and recover margin.</p>
-              <button onClick={downloadPack} className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
+              <button onClick={downloadPack} className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
                 <Download size={17} /> Download pack
               </button>
             </div>
@@ -50,7 +50,7 @@ export default function SupplierNegotiationPackClient({ suppliers }: { suppliers
                       <p className="mt-1 text-sm font-bold text-slate-500">{supplier.category} · movement {supplier.price_movement_percent.toFixed(1)}%</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-black text-[#65A30D]">{formatSupplierSpend(supplier.negotiation_opportunity)}</div>
+                      <div className="text-3xl font-black text-[#7E22CE]">{formatSupplierSpend(supplier.negotiation_opportunity)}</div>
                       <div className="text-xs font-bold text-slate-400">negotiation opportunity</div>
                     </div>
                   </div>

@@ -27,8 +27,8 @@ export default function EnterpriseActionCard({
         <div
           className={
             dark
-              ? "rounded-2xl bg-[#A3E635]/12 p-3 text-[#A3E635]"
-              : "rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-3 text-[#65A30D]"
+              ? "rounded-2xl bg-[#A855F7]/12 p-3 text-[#A855F7]"
+              : "rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-3 text-[#7E22CE]"
           }
         >
           <Icon size={24} />
@@ -39,8 +39,8 @@ export default function EnterpriseActionCard({
             priority === "Critical"
               ? "rounded-full bg-red-500/20 px-3 py-1 text-xs font-black text-red-300"
               : priority === "High"
-                ? "rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-700"
-                : "rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-1 text-xs font-black text-[#65A30D]"
+                ? "rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700"
+                : "rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-1 text-xs font-black text-[#7E22CE]"
           }
         >
           {priority}
@@ -53,7 +53,7 @@ export default function EnterpriseActionCard({
         {text}
       </p>
 
-      <div className={dark ? "mt-6 inline-flex items-center gap-2 text-sm font-black text-[#A3E635]" : "mt-6 inline-flex items-center gap-2 text-sm font-black text-[#65A30D]"}>
+      <div className={dark ? "mt-6 inline-flex items-center gap-2 text-sm font-black text-[#A855F7]" : "mt-6 inline-flex items-center gap-2 text-sm font-black text-[#7E22CE]"}>
         Open module
         <ArrowRight size={16} className="transition group-hover:translate-x-1" />
       </div>

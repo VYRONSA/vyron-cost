@@ -24,7 +24,7 @@ export default function ImportCostingsPage() {
           intelligence KPIs for the live demo tenant.
         </p>
 
-        <div className={`mt-6 inline-flex rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.16em] ${ready ? "bg-[#A3E635]/12 text-[#A3E635]" : "bg-amber-400/20 text-amber-200"}`}>
+        <div className={`mt-6 inline-flex rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.16em] ${ready ? "bg-[#A855F7]/12 text-[#A855F7]" : "bg-fuchsia-400/20 text-fuchsia-200"}`}>
           {ready
             ? `Imported ${meta.product_count} products · ${meta.recipe_count} recipes`
             : "Awaiting import — spreadsheets not loaded"}
@@ -38,7 +38,7 @@ export default function ImportCostingsPage() {
           <li>REC211 Recipes for Production.xlsx</li>
           <li>NEW COSTING SHEET.xlsx</li>
         </ol>
-        <pre className="mt-6 overflow-x-auto rounded-2xl bg-slate-900 p-4 text-sm text-[#A3E635]">
+        <pre className="mt-6 overflow-x-auto rounded-2xl bg-slate-900 p-4 text-sm text-[#A855F7]">
           {`cd vyron-cost-web
 # copy files to data/handcrafted-import/
 npm run import:handcrafted`}
@@ -54,7 +54,7 @@ npm run import:handcrafted`}
 
       <section className="mt-6 rounded-[2rem] border border-white bg-white p-7 shadow-[0_10px_40px_rgba(15,23,42,0.07)]">
         <div className="flex items-start gap-4">
-          <div className="rounded-2xl bg-[#A3E635]/10 p-3 text-[#65A30D]">
+          <div className="rounded-2xl bg-[#A855F7]/10 p-3 text-[#7E22CE]">
             <Upload />
           </div>
           <div>

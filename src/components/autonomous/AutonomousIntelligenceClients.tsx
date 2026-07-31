@@ -73,7 +73,7 @@ export function CommandCentreClient({ data }: { data: AutonomousBusinessIntellig
       ]}
     >
       <div className={BI_HERO}>
-        <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A3E635]">Business Health</div>
+        <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A855F7]">Business Health</div>
         <div className="mt-2 text-6xl font-black text-[#F8FAFC]">{data.businessHealth.overallScore}</div>
         <p className="mt-2 text-sm font-semibold text-[#CBD5E1]">Live autonomous score across all VYRON COST domains</p>
       </div>
@@ -86,7 +86,7 @@ export function CommandCentreClient({ data }: { data: AutonomousBusinessIntellig
           >
             <div className="flex justify-between">
               <h3 className="font-black text-[#F8FAFC]">{d.label}</h3>
-              <span className={`text-xs font-black uppercase ${d.status === "healthy" ? "text-[#A3E635]" : d.status === "watch" ? "text-orange-300" : "text-red-300"}`}>{d.status}</span>
+              <span className={`text-xs font-black uppercase ${d.status === "healthy" ? "text-[#A855F7]" : d.status === "watch" ? "text-orange-300" : "text-red-300"}`}>{d.status}</span>
             </div>
             <dl className="mt-4 space-y-2 text-sm">
               {d.metrics.map((m) => (
@@ -236,7 +236,7 @@ export function DecisionsClient({ decisions }: { decisions: AutonomousBusinessIn
           <span className="text-xs font-black uppercase text-[#94A3B8]">{d.decisionType.replace(/_/g, " ")}</span>
           <h3 className="mt-1 font-black text-[#F8FAFC]">{d.title}</h3>
           <p className="mt-2 text-sm text-[#CBD5E1]">{d.rationale}</p>
-          <p className="mt-2 font-black text-[#A3E635]">{money(d.expectedBenefitAnnual)}/yr</p>
+          <p className="mt-2 font-black text-[#A855F7]">{money(d.expectedBenefitAnnual)}/yr</p>
           <ExplainBlock e={d} />
           {d.href ? (
             <Link href={d.href} className="mt-2 inline-block text-xs font-black text-violet-300">
@@ -445,7 +445,7 @@ export function StrategicClient({ s }: { s: AutonomousBusinessIntelligencePayloa
               <li key={o.title} className={`rounded-xl p-4 ${VYRON_STATUS.lime}`}>
                 <span className="font-black">{i + 1}. {o.title}</span>
                 <p className="text-sm opacity-90">{o.detail}</p>
-                <p className="font-black text-[#A3E635]">{money(o.value)}</p>
+                <p className="font-black text-[#A855F7]">{money(o.value)}</p>
               </li>
             ))}
           </ol>

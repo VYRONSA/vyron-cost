@@ -111,7 +111,7 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
                 <option key={category}>{category}</option>
               ))}
             </select>
-            <button type="button" onClick={addPlan} className="inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
+            <button type="button" onClick={addPlan} className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
               <Plus size={16} />
               Create plan
             </button>
@@ -143,7 +143,7 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
                 <div className="font-black text-red-600">{formatMoney(plan.variance)}</div>
                 <div>{formatMoney(plan.suggested_selling_price)}</div>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => startEdit(plan)} className="inline-flex items-center gap-1 rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]">
+                  <button type="button" onClick={() => startEdit(plan)} className="inline-flex items-center gap-1 rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]">
                     <Edit3 size={14} />
                     Edit
                   </button>
@@ -195,7 +195,7 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
               <div className="mt-3"><StatusPill tone={draft.status === "Review" ? "amber" : "emerald"}>{draft.status}</StatusPill></div>
             </div>
             {draft.product_id ? (
-              <Link href={`/products/${draft.product_id}`} className="text-sm font-black text-[#65A30D]">
+              <Link href={`/products/${draft.product_id}`} className="text-sm font-black text-[#7E22CE]">
                 Open affected product →
               </Link>
             ) : null}
@@ -204,7 +204,7 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
             </button>
           </div>
         )}
-        {message ? <div className="mt-4 rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-black text-[#65A30D]">{message}</div> : null}
+        {message ? <div className="mt-4 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-black text-[#7E22CE]">{message}</div> : null}
         </div>
       </section>
     </VyronPremiumPageShell>

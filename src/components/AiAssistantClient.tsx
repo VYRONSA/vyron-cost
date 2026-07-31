@@ -77,7 +77,7 @@ export default function AiAssistantClient() {
                 key={item}
                 type="button"
                 onClick={() => ask(item)}
-                className="rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-4 py-2 text-xs font-black text-[#65A30D] transition hover:bg-[#A3E635]/15"
+                className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-4 py-2 text-xs font-black text-[#7E22CE] transition hover:bg-[#A855F7]/15"
               >
                 {item}
               </button>
@@ -124,8 +124,8 @@ export default function AiAssistantClient() {
                   item.tone === "red"
                     ? "border-red-200 bg-red-50"
                     : item.tone === "amber"
-                      ? "border-amber-200 bg-amber-50"
-                      : "border-[#A3E635]/25 bg-[#A3E635]/10"
+                      ? "border-fuchsia-200 bg-fuchsia-50"
+                      : "border-[#A855F7]/25 bg-[#A855F7]/10"
                 }`}
               >
                 <div className="font-black text-[#F8FAFC]">{item.title}</div>

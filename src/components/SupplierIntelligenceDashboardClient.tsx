@@ -106,7 +106,7 @@ export default function SupplierIntelligenceDashboardClient({ rows }: { rows: Su
             <Link
               key={row.id}
               href={row.href}
-              className="grid grid-cols-12 items-center border-t border-white/10 px-5 py-4 text-sm text-[#CBD5E1] transition hover:bg-[#A3E635]/5"
+              className="grid grid-cols-12 items-center border-t border-white/10 px-5 py-4 text-sm text-[#CBD5E1] transition hover:bg-[#A855F7]/5"
             >
               <div className="col-span-2 font-bold text-[#F8FAFC]">{row.supplier_name}</div>
               <div>{row.category}</div>
@@ -117,7 +117,7 @@ export default function SupplierIntelligenceDashboardClient({ rows }: { rows: Su
               <div>{row.duplicate_invoice_risk}</div>
               <div>{formatSupplierSpend(row.price_variance)}</div>
               <div>{row.reliability_score}</div>
-              <div className="font-bold text-[#A3E635]">{formatSupplierSpend(row.negotiation_opportunity)}</div>
+              <div className="font-bold text-[#A855F7]">{formatSupplierSpend(row.negotiation_opportunity)}</div>
               <div className="font-bold text-orange-300">{row.supplier_risk_score}</div>
               <div className="text-xs font-semibold text-[#94A3B8]">{row.recommended_action}</div>
             </Link>

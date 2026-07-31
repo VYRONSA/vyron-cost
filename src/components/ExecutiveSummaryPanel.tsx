@@ -28,11 +28,11 @@ export default function ExecutiveSummaryPanel({
   const highestOpportunity = opportunityLabels[recovery[0]?.opportunity || ""] || "Price Optimisation";
 
   const rows = [
-    { label: "Profit Protection Score", value: `${score}/100`, tone: score >= 70 ? "text-[#22C55E]" : "text-[#F59E0B]" },
+    { label: "Profit Protection Score", value: `${score}/100`, tone: score >= 70 ? "text-[#9333EA]" : "text-[#C026D3]" },
     { label: "Highest Risk", value: highestRisk, tone: "text-[#EF4444]" },
     { label: "Highest Opportunity", value: highestOpportunity, tone: "text-[#0F172A]" },
-    { label: "Recoverable Value", value: formatCompactAnnual(kpis.recoverableAnnual), tone: "text-[#22C55E]" },
-    { label: "Management Actions Required", value: String(kpis.pendingActions), tone: "text-[#F59E0B]" },
+    { label: "Recoverable Value", value: formatCompactAnnual(kpis.recoverableAnnual), tone: "text-[#9333EA]" },
+    { label: "Management Actions Required", value: String(kpis.pendingActions), tone: "text-[#C026D3]" },
   ];
 
   return (

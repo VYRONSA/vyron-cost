@@ -223,7 +223,7 @@ export default function ExecutionCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#F43F5E]/35 bg-[#F43F5E]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Execution Centre
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Execution Centre</h1>
@@ -260,7 +260,7 @@ export default function ExecutionCentreClient({
           className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${
             persistence.mode === "unavailable"
               ? "border-rose-200 bg-rose-50 text-rose-900"
-              : "border-amber-200 bg-amber-50 text-amber-900"
+              : "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900"
           }`}
         >
           <div className="flex items-start gap-2">
@@ -299,11 +299,11 @@ export default function ExecutionCentreClient({
           ) : null}
 
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <SummaryCard label="Recommended" value={String(summary.recommended)} accent="#7C3AED" />
+            <SummaryCard label="Recommended" value={String(summary.recommended)} accent="#1D6BFF" />
             <SummaryCard label="Approved" value={String(summary.approved)} accent="#6366F1" />
-            <SummaryCard label="In Progress" value={String(summary.inProgress)} accent="#F59E0B" />
-            <SummaryCard label="Completed" value={String(summary.completed)} accent="#10B981" />
-            <SummaryCard label="Overdue" value={String(summary.overdue)} accent="#E11D48" />
+            <SummaryCard label="In Progress" value={String(summary.inProgress)} accent="#C026D3" />
+            <SummaryCard label="Completed" value={String(summary.completed)} accent="#8B5CF6" />
+            <SummaryCard label="Overdue" value={String(summary.overdue)} accent="#2563EB" />
           </section>
 
           <section className={M.moduleDataSection}>
@@ -333,8 +333,8 @@ export default function ExecutionCentreClient({
                   onClick={() => selectTab(tab)}
                   className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
                     activeTab === tab
-                      ? "border-[#7C3AED] bg-[#7C3AED]/10 text-[#7C3AED]"
-                      : "border-[#E2E8F0] bg-white text-[#64748B] hover:border-[#7C3AED]/30"
+                      ? "border-[#1D6BFF] bg-[#1D6BFF]/10 text-[#1D6BFF]"
+                      : "border-[#E2E8F0] bg-white text-[#64748B] hover:border-[#1D6BFF]/30"
                   }`}
                 >
                   {tab}
@@ -651,7 +651,7 @@ export default function ExecutionCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#7C3AED]/30 hover:text-[#7C3AED]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
                 >
                   <link.icon size={16} />
                   {link.label}
@@ -722,7 +722,7 @@ function QueueRow({
   return (
     <tr
       className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover} cursor-pointer ${
-        selected ? "bg-[#7C3AED]/5" : overdue ? "bg-rose-50/80" : ""
+        selected ? "bg-[#1D6BFF]/5" : overdue ? "bg-rose-50/80" : ""
       } ${overdue ? "border-l-4 border-l-rose-500" : ""}`}
       onClick={onSelect}
     >
@@ -737,9 +737,9 @@ function QueueRow({
       <td className={`px-4 py-3 text-sm font-medium ${overdue ? "font-bold text-rose-700" : "text-[#64748B]"}`}>
         {row.due_date || "—"}
       </td>
-      <td className="px-4 py-3 text-sm font-semibold text-[#7C3AED]">{sourceModuleLabel(row.source_module)}</td>
+      <td className="px-4 py-3 text-sm font-semibold text-[#1D6BFF]">{sourceModuleLabel(row.source_module)}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.expected_outcome}</td>
-      <td className="px-4 py-3 text-right text-xs font-bold text-[#7C3AED]">Manage</td>
+      <td className="px-4 py-3 text-right text-xs font-bold text-[#1D6BFF]">Manage</td>
     </tr>
   );
 }
@@ -763,8 +763,8 @@ function PriorityBadge({ priority }: { priority: string }) {
       : priority === "High"
         ? "border-orange-200 bg-orange-50 text-orange-900"
         : priority === "Medium"
-          ? "border-amber-200 bg-amber-50 text-amber-900"
-          : "border-[#7C3AED]/25 bg-[#7C3AED]/10 text-[#7C3AED]";
+          ? "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900"
+          : "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]";
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes}`}>
       {priority}
@@ -774,10 +774,10 @@ function PriorityBadge({ priority }: { priority: string }) {
 
 function StatusBadge({ status, overdue }: { status: ExecutionActionRow["status"]; overdue: boolean }) {
   const classes: Record<ExecutionActionRow["status"], string> = {
-    Recommended: "border-[#7C3AED]/25 bg-[#7C3AED]/10 text-[#7C3AED]",
+    Recommended: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
     Approved: "border-indigo-200 bg-indigo-50 text-indigo-800",
-    "In Progress": "border-amber-200 bg-amber-50 text-amber-900",
-    Completed: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    "In Progress": "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    Completed: "border-violet-200 bg-violet-50 text-violet-800",
     Cancelled: "border-[#E2E8F0] bg-[#F6F7FB] text-[#64748B]",
   };
   return (

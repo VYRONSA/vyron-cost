@@ -122,7 +122,7 @@ export default function ImportsCentreClient() {
                 setErrors([]);
               }}
               className={`block w-full rounded-2xl border px-4 py-3 text-left transition ${
-                selected === item.id ? "border-[#B6D934] bg-[#A3E635]/10" : "border-slate-100 bg-slate-50 hover:bg-white"
+                selected === item.id ? "border-[#B6D934] bg-[#A855F7]/10" : "border-slate-100 bg-slate-50 hover:bg-white"
               }`}
             >
               <div className="font-black text-slate-950">{item.label}</div>
@@ -151,7 +151,7 @@ export default function ImportsCentreClient() {
 
           {canImports ? (
             <label className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-6 py-10 transition hover:border-[#B6D934]">
-              <Upload size={28} className="text-[#65A30D]" />
+              <Upload size={28} className="text-[#7E22CE]" />
               <div className="mt-3 text-sm font-black text-slate-950">Upload CSV</div>
               <div className="mt-1 text-xs text-slate-500">{fileName || "Choose file to validate"}</div>
               <input
@@ -164,7 +164,7 @@ export default function ImportsCentreClient() {
           ) : null}
 
           {validationMessage ? (
-            <div className="mt-4 rounded-xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-black text-[#4D7C0F]">{validationMessage}</div>
+            <div className="mt-4 rounded-xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-black text-[#4D7C0F]">{validationMessage}</div>
           ) : null}
 
           {errors.length ? (
@@ -180,7 +180,7 @@ export default function ImportsCentreClient() {
               <button
                 type="button"
                 onClick={importValidRows}
-                className="rounded-xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]"
+                className="rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]"
               >
                 Import Valid Rows
               </button>

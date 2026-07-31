@@ -60,11 +60,11 @@ export default function ForecastScenarioSimulatorClient({ snapshot }: { snapshot
             </div>
 
             <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Forecast Result</div>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Forecast Result</div>
               <div className="mt-6 grid gap-5 md:grid-cols-2">
                 <div className="rounded-3xl bg-white/10 p-5">
                   <div className="text-xs font-black uppercase text-slate-400">Cost pressure</div>
-                  <div className="mt-2 text-4xl font-black text-[#A3E635]">{scenario.costPressure.toFixed(1)}%</div>
+                  <div className="mt-2 text-4xl font-black text-[#A855F7]">{scenario.costPressure.toFixed(1)}%</div>
                 </div>
                 <div className="rounded-3xl bg-white/10 p-5">
                   <div className="text-xs font-black uppercase text-slate-400">Forecast GP</div>

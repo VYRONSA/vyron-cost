@@ -63,14 +63,14 @@ export default function SalesPriceListBuilderClient({ products }: { products: Pr
               <div className="mt-5 grid gap-4 md:grid-cols-[1fr_220px_220px]">
                 <input value={customerGroup} onChange={(e) => setCustomerGroup(e.target.value)} className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 font-bold outline-none" />
                 <input type="number" value={increase} onChange={(e) => setIncrease(Number(e.target.value))} className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 font-bold outline-none" />
-                <button onClick={downloadCsv} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
+                <button onClick={downloadCsv} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
                   <Download size={17} /> Download CSV
                 </button>
               </div>
             </div>
 
             <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="grid grid-cols-6 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+              <div className="grid grid-cols-6 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
                 <div className="col-span-2">Product</div>
                 <div>Category</div>
                 <div>Current</div>
@@ -82,7 +82,7 @@ export default function SalesPriceListBuilderClient({ products }: { products: Pr
                   <div className="col-span-2 font-black text-[#F8FAFC]">{row.product.product_name}</div>
                   <div>{row.product.category}</div>
                   <div>{money(row.currentPrice)}</div>
-                  <div className="font-black text-[#65A30D]">{money(row.suggestedPrice)}</div>
+                  <div className="font-black text-[#7E22CE]">{money(row.suggestedPrice)}</div>
                   <div className="font-black text-violet-700">{row.increasePercent.toFixed(1)}%</div>
                 </div>
               ))}

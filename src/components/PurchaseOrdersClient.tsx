@@ -84,7 +84,7 @@ export default function PurchaseOrdersClient({
               </div>
               <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Total PO Value</div>
-                <div className="mt-3 text-4xl font-black text-[#65A30D]">
+                <div className="mt-3 text-4xl font-black text-[#7E22CE]">
                   {formatMoney(orders.reduce((sum, po) => sum + Number(po.expected_total || 0), 0))}
                 </div>
               </div>
@@ -94,7 +94,7 @@ export default function PurchaseOrdersClient({
               </div>
               <Link
                 href="/purchase-orders/new"
-                className="flex items-center justify-center gap-2 rounded-[2rem] bg-[#07110d] p-6 text-sm font-black text-[#A3E635] transition hover:bg-[#0d1a12]"
+                className="flex items-center justify-center gap-2 rounded-[2rem] bg-[#07110d] p-6 text-sm font-black text-[#A855F7] transition hover:bg-[#0d1a12]"
               >
                 <Plus size={18} />
                 Create New PO
@@ -141,7 +141,7 @@ export default function PurchaseOrdersClient({
                   {filtered.map((po) => (
                     <div key={po.id} className="grid grid-cols-8 items-center border-t border-slate-100 px-5 py-4 text-sm">
                       <div>
-                        <Link href={`/purchase-orders/${po.id}`} className="font-black text-[#F8FAFC] hover:text-[#65A30D]">
+                        <Link href={`/purchase-orders/${po.id}`} className="font-black text-[#F8FAFC] hover:text-[#7E22CE]">
                           {po.po_number}
                         </Link>
                       </div>
@@ -157,7 +157,7 @@ export default function PurchaseOrdersClient({
                         {formatMoney(Number(po.variance || 0))}
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <Link href={`/purchase-orders/${po.id}`} className="inline-flex items-center gap-1 rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]">
+                        <Link href={`/purchase-orders/${po.id}`} className="inline-flex items-center gap-1 rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]">
                           <Edit3 size={14} />
                           Open
                         </Link>
@@ -181,7 +181,7 @@ export default function PurchaseOrdersClient({
                 </div>
               </div>
 
-              {message ? <div className="mt-4 rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3 text-sm font-black text-[#65A30D]">{message}</div> : null}
+              {message ? <div className="mt-4 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-black text-[#7E22CE]">{message}</div> : null}
             </div>
           </section>
           <ConfirmDeleteDialog

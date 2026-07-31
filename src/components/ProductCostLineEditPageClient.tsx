@@ -220,7 +220,7 @@ export default function ProductCostLineEditPageClient({
 
                 <div className="flex flex-wrap gap-3">
                   {canEditLine ? (
-                    <button type="button" onClick={saveLine} className="inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-6 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
+                    <button type="button" onClick={saveLine} className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-6 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
                       <Save size={18} />
                       Save Cost Line
                     </button>
@@ -234,12 +234,12 @@ export default function ProductCostLineEditPageClient({
                   ) : null}
                 </div>
 
-                {message && <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-4 text-sm font-black text-[#65A30D]">{message}</div>}
+                {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-black text-[#7E22CE]">{message}</div>}
               </div>
             </div>
 
             <aside className="rounded-[2rem] bg-[#07110d] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-              <div className="text-xs font-black uppercase tracking-[0.25em] text-[#A3E635]">
+              <div className="text-xs font-black uppercase tracking-[0.25em] text-[#A855F7]">
                 LINE COST PREVIEW
               </div>
 
@@ -249,8 +249,8 @@ export default function ProductCostLineEditPageClient({
                 Quantity × unit cost plus wastage allowance.
               </div>
 
-              <div className="mt-6 rounded-3xl border border-[#A3E635]/20 bg-white/5 p-5">
-                <div className="text-sm font-black text-[#A3E635]">Product</div>
+              <div className="mt-6 rounded-3xl border border-[#A855F7]/20 bg-white/5 p-5">
+                <div className="text-sm font-black text-[#A855F7]">Product</div>
                 <div className="mt-2 text-xl font-black">{product.product_name}</div>
               </div>
             </aside>

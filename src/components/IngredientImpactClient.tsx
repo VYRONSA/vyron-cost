@@ -62,7 +62,7 @@ export default function IngredientImpactClient({ ingredientId }: { ingredientId:
             </button>
 
             {message && (
-              <div className="mt-4 rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-4 text-sm font-bold text-[#65A30D]">
+              <div className="mt-4 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-bold text-[#7E22CE]">
                 {message}
               </div>
             )}

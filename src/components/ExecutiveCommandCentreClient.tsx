@@ -142,7 +142,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 </div>
                 <div className="mt-4 rounded-2xl bg-white/10 p-4">
                   <div className="text-[10px] font-black uppercase opacity-75">Spend trend (14 days)</div>
-                  <ExecutiveSparkChart data={trends.spendTrend} colour="#c4b5fd" formatValue={(n) => money(n)} />
+                  <ExecutiveSparkChart data={trends.spendTrend} colour="#93c5fd" formatValue={(n) => money(n)} />
                 </div>
               </CommandCentreCard>
 
@@ -174,7 +174,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 </div>
               </CommandCentreCard>
 
-              <CommandCentreCard title="Recovery Command Centre" subtitle="Identify · verify · recover" href="/financial-leakage" accent="bg-gradient-to-br from-amber-800 to-red-950">
+              <CommandCentreCard title="Recovery Command Centre" subtitle="Identify · verify · recover" href="/financial-leakage" accent="bg-gradient-to-br from-fuchsia-800 to-red-950">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <KpiTile label="Potential recovery" value={money(recovery.potentialRecovery)} />
                   <KpiTile label="Verified recovery" value={money(recovery.verifiedRecovery)} />
@@ -227,7 +227,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                         <div className="flex items-center gap-2">
                           <span
                             className={`rounded-lg px-2 py-0.5 text-[10px] font-black uppercase ${
-                              item.severity === "high" ? "bg-red-500/30 text-red-200" : item.severity === "medium" ? "bg-amber-500/30 text-amber-100" : "bg-slate-500/30"
+                              item.severity === "high" ? "bg-red-500/30 text-red-200" : item.severity === "medium" ? "bg-fuchsia-500/30 text-fuchsia-100" : "bg-slate-500/30"
                             }`}
                           >
                             {item.category}

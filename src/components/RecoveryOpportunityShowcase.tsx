@@ -45,7 +45,7 @@ export default function RecoveryOpportunityShowcase({ opportunities }: { opportu
               <h3 className="mt-1 text-sm font-black text-[#0F172A]">{title}</h3>
               <div className="mt-2">
                 <div className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#64748B]">Potential Recovery</div>
-                <div className="text-2xl font-black text-[#22C55E]">{formatCompactAnnual(item.annual_saving)}</div>
+                <div className="text-2xl font-black text-[#9333EA]">{formatCompactAnnual(item.annual_saving)}</div>
               </div>
               <div className="mt-2 flex items-center justify-between rounded-lg bg-[#F8FAFC] px-2 py-1.5 text-[10px]">
                 <span className="font-black text-[#64748B]">Confidence {confidence.label} · {confidence.percent}%</span>

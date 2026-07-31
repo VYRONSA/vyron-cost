@@ -69,7 +69,7 @@ export default async function FinancialLeakageDetailPage({ params }: { params: P
             <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Potential Recoverable</div>
             <div className="mt-3 text-4xl font-black text-violet-700">{formatMoney(detail.potentialRecovery)}</div>
           </div>
-          <div className="rounded-[2rem] border border-violet-100 bg-gradient-to-br from-violet-700 to-fuchsia-700 p-6 text-white shadow-[0_18px_45px_rgba(124,58,237,0.28)]">
+          <div className="rounded-[2rem] border border-violet-100 bg-gradient-to-br from-violet-700 to-fuchsia-700 p-6 text-white shadow-[0_18px_45px_rgba(29,107,255,0.28)]">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-violet-100">Duplicate Count</div>
             <div className="mt-3 text-4xl font-black">{detail.duplicateCount || 1}</div>
             <div className="mt-2 flex items-center gap-2 text-sm font-bold text-violet-100">

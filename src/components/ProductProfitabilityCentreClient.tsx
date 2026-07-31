@@ -60,15 +60,15 @@ export default function ProductProfitabilityCentreClient({ rows }: { rows: Produ
               </div>
               <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Below Target</div>
-                <div className="mt-3 text-4xl font-black text-amber-600">{belowTarget}</div>
+                <div className="mt-3 text-4xl font-black text-fuchsia-600">{belowTarget}</div>
               </div>
               <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Average GP</div>
-                <div className="mt-3 text-4xl font-black text-[#65A30D]">{avgGp.toFixed(1)}%</div>
+                <div className="mt-3 text-4xl font-black text-[#7E22CE]">{avgGp.toFixed(1)}%</div>
               </div>
-              <div className="rounded-[2rem] bg-[#A3E635]/10 p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#65A30D]">Price Headroom</div>
-                <div className="mt-3 text-4xl font-black text-[#65A30D]">{money(suggestedIncrease)}</div>
+              <div className="rounded-[2rem] bg-[#A855F7]/10 p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#7E22CE]">Price Headroom</div>
+                <div className="mt-3 text-4xl font-black text-[#7E22CE]">{money(suggestedIncrease)}</div>
               </div>
             </section>
 
@@ -78,7 +78,7 @@ export default function ProductProfitabilityCentreClient({ rows }: { rows: Produ
 
             <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
               <div className="min-w-[1180px]">
-                <div className="grid grid-cols-10 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+                <div className="grid grid-cols-10 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
                   <div className="col-span-2">Product</div>
                   <div>Price</div>
                   <div>Cost</div>
@@ -94,7 +94,7 @@ export default function ProductProfitabilityCentreClient({ rows }: { rows: Produ
                   <Link
                     key={row.id}
                     href={row.product_id ? `/products/${row.product_id}` : "/products"}
-                    className="grid grid-cols-10 items-center border-t border-slate-100 px-5 py-5 text-sm transition hover:bg-[#A3E635]/10"
+                    className="grid grid-cols-10 items-center border-t border-slate-100 px-5 py-5 text-sm transition hover:bg-[#A855F7]/10"
                   >
                     <div className="col-span-2">
                       <div className="font-black text-[#F8FAFC]">{row.product_name}</div>
@@ -104,10 +104,10 @@ export default function ProductProfitabilityCentreClient({ rows }: { rows: Produ
                     <div>{money(row.total_cost)}</div>
                     <div className="font-black text-[#F8FAFC]">{Number(row.actual_gp || 0).toFixed(1)}%</div>
                     <div>{Number(row.target_gp || 0).toFixed(1)}%</div>
-                    <div className={Number(row.gp_gap || 0) > 0 ? "font-black text-red-700" : "font-black text-[#65A30D]"}>
+                    <div className={Number(row.gp_gap || 0) > 0 ? "font-black text-red-700" : "font-black text-[#7E22CE]"}>
                       {Number(row.gp_gap || 0).toFixed(1)}%
                     </div>
-                    <div className="font-black text-[#65A30D]">{money(row.suggested_price)}</div>
+                    <div className="font-black text-[#7E22CE]">{money(row.suggested_price)}</div>
                     <div><StatusPill tone={tone(row)}>{row.risk_level || "Watch"}</StatusPill></div>
                     <div className="text-xs font-bold text-slate-600">{row.action_required || "Review margin"}</div>
                   </Link>
@@ -118,7 +118,7 @@ export default function ProductProfitabilityCentreClient({ rows }: { rows: Produ
             <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
               <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <div className="flex items-center gap-3 text-[#A3E635]">
+                  <div className="flex items-center gap-3 text-[#A855F7]">
                     <TrendingUp size={24} />
                     <span className="text-xs font-black uppercase tracking-[0.18em]">Client explanation</span>
                   </div>

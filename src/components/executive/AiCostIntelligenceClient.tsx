@@ -134,7 +134,7 @@ export default function AiCostIntelligenceClient({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-[#A3E635]/20 bg-[#252040] p-6 shadow-sm">
+      <section className="rounded-2xl border border-[#A855F7]/20 bg-[#252040] p-6 shadow-sm">
         <h2 className="text-xl font-black text-[#F8FAFC]">Suggested repricing & recovery</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {intelligence.repricingSuggestions.map((row) => (
@@ -143,7 +143,7 @@ export default function AiCostIntelligenceClient({
               <div className="text-sm font-semibold text-[#CBD5E1]">
                 Suggested price {money(row.suggestedPrice)} from {money(row.currentPrice)}
               </div>
-              <div className="mt-1 text-sm font-bold text-[#A3E635]">Recovery {money(row.monthlyRecovery)}/month</div>
+              <div className="mt-1 text-sm font-bold text-[#A855F7]">Recovery {money(row.monthlyRecovery)}/month</div>
             </div>
           ))}
         </div>

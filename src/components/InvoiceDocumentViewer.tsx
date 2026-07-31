@@ -350,7 +350,7 @@ export default function InvoiceDocumentViewer({
           }}
         />
       ) : (
-        <div className="p-6 text-xs font-bold text-amber-700">Unsupported preview type: {mimeType}</div>
+        <div className="p-6 text-xs font-bold text-fuchsia-700">Unsupported preview type: {mimeType}</div>
       )}
       {overlaysForPage.map((o) => (
         <RegionOverlay key={o.id} bbox={o.bbox} active={o.active} label={o.label} />

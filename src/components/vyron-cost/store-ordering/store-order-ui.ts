@@ -6,7 +6,7 @@ export function storeOrderStatusClass(status: string) {
     case "Draft":
       return "bg-slate-100 text-slate-700";
     case "Submitted":
-      return "bg-amber-100 text-amber-800";
+      return "bg-fuchsia-100 text-fuchsia-800";
     case "Approved":
       return "bg-sky-100 text-sky-800";
     case "Picking":
@@ -16,7 +16,7 @@ export function storeOrderStatusClass(status: string) {
     case "Dispatched":
       return "bg-indigo-100 text-indigo-800";
     case "Delivered":
-      return "bg-emerald-100 text-emerald-800";
+      return "bg-violet-100 text-violet-800";
     case "Cancelled":
       return "bg-rose-100 text-rose-800";
     default:

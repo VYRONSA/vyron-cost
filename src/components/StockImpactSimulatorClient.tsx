@@ -40,7 +40,7 @@ export default function StockImpactSimulatorClient({ products }: { products: Pro
             </div>
 
             <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Stock Impact</div>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Stock Impact</div>
               <div className="mt-6 grid gap-5 md:grid-cols-3">
                 <div className="rounded-3xl bg-white/10 p-5">
                   <div className="text-xs font-black uppercase text-slate-400">Monthly Waste Loss</div>
@@ -52,7 +52,7 @@ export default function StockImpactSimulatorClient({ products }: { products: Pro
                 </div>
                 <div className="rounded-3xl bg-white/10 p-5">
                   <div className="text-xs font-black uppercase text-slate-400">Annual Impact</div>
-                  <div className="mt-2 text-3xl font-black text-[#A3E635]">{money(annual)}</div>
+                  <div className="mt-2 text-3xl font-black text-[#A855F7]">{money(annual)}</div>
                 </div>
               </div>
             </div>

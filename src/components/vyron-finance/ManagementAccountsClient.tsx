@@ -46,7 +46,7 @@ export default function ManagementAccountsClient({ data }: { data: ManagementAcc
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-              <div className="rounded-[2rem] bg-[#A3E635]/10 p-6">
+              <div className="rounded-[2rem] bg-[#A855F7]/10 p-6">
                 <h2 className="font-black text-[#4D7C0F]">Recovery analysis</h2>
                 <dl className="mt-4 space-y-2 text-sm">
                   <div className="flex justify-between">

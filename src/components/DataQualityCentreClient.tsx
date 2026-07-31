@@ -39,8 +39,8 @@ export default function DataQualityCentreClient({
         {checks.map(([label, count, href]) => {
         const bad = Number(count) > 0;
         return (
-          <Link key={String(label)} href={String(href)} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)] transition hover:bg-[#A3E635]/10">
-            {bad ? <AlertTriangle className="text-amber-600" size={28} /> : <CheckCircle2 className="text-[#65A30D]" size={28} />}
+          <Link key={String(label)} href={String(href)} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)] transition hover:bg-[#A855F7]/10">
+            {bad ? <AlertTriangle className="text-fuchsia-600" size={28} /> : <CheckCircle2 className="text-[#7E22CE]" size={28} />}
             <div className="mt-5 text-4xl font-black text-[#F8FAFC]">{String(count)}</div>
             <h3 className="mt-2 text-xl font-black text-[#F8FAFC]">{label}</h3>
             <p className="mt-2 text-sm font-semibold text-slate-500">Open linked module to fix or confirm.</p>

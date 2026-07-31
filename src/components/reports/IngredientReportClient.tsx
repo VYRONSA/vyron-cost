@@ -30,7 +30,7 @@ export default function IngredientReportClient({ ingredients }: { ingredients: I
     >
       <div className="overflow-x-auto rounded-3xl border border-slate-100">
         <div className="min-w-[1040px]">
-          <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+          <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
             <div>Ingredient</div><div>Category</div><div>Purchase Unit</div><div>Recipe Unit</div><div>Current</div><div>True Cost</div><div>Movement</div><div>Status</div>
           </div>
           {filtered.map((ingredient) => {
@@ -51,7 +51,7 @@ export default function IngredientReportClient({ ingredients }: { ingredients: I
                       <div>{ingredient.purchase_unit}</div>
                       <div>{ingredient.recipe_unit}</div>
                       <div>{formatMoney(Number(ingredient.purchase_cost))}</div>
-                      <div className="font-black text-[#65A30D]">{formatMoney(Number(ingredient.true_unit_cost))}</div>
+                      <div className="font-black text-[#7E22CE]">{formatMoney(Number(ingredient.true_unit_cost))}</div>
                       <div>{movement.toFixed(1)}%</div>
                       <div><StatusPill tone={tone}>{tone === "red" ? "High" : tone === "amber" ? "Watch" : "Stable"}</StatusPill></div>
                     </div>

@@ -124,8 +124,8 @@ function gpPercent(price: number, cost: number) {
 function statusTone(status: string) {
   const value = String(status || "").toLowerCase();
   if (value.includes("archive")) return "text-slate-700 bg-slate-100 border-slate-200";
-  if (value.includes("review") || value.includes("pending")) return "text-amber-700 bg-amber-50 border-amber-200";
-  if (value.includes("active") || value.includes("approved")) return "text-emerald-700 bg-emerald-50 border-emerald-200";
+  if (value.includes("review") || value.includes("pending")) return "text-fuchsia-700 bg-fuchsia-50 border-fuchsia-200";
+  if (value.includes("active") || value.includes("approved")) return "text-violet-700 bg-violet-50 border-violet-200";
   return "text-blue-700 bg-blue-50 border-blue-200";
 }
 
@@ -426,7 +426,7 @@ export default function VyronMobileFinishedGoodDetailWorkspace({ productId }: { 
         </div>
       </PremiumMobileCard>
 
-      {message ? <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">{message}</div> : null}
+      {message ? <div className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 px-3 py-2 text-xs font-bold text-fuchsia-800">{message}</div> : null}
 
       <div className="grid gap-3 md:grid-cols-2">
         <PremiumMobileCard tone="default" className="p-4">
@@ -442,7 +442,7 @@ export default function VyronMobileFinishedGoodDetailWorkspace({ productId }: { 
           <div className="mt-2 text-sm font-semibold text-slate-600">Suggested Price: <span className="font-black text-slate-950">{money(suggestedPrice)}</span></div>
           <div className="mt-1 text-sm font-semibold text-slate-600">Average Cost: <span className="font-black text-slate-950">{money(Number(inventory?.average_cost || 0))}</span></div>
           <div className="mt-1 text-sm font-semibold text-slate-600">Inventory Value: <span className="font-black text-slate-950">{money(Number(inventory?.inventory_value || 0))}</span></div>
-          <div className="mt-1 text-sm font-semibold text-slate-600">Margin Gap: <span className={`font-black ${marginGap > 0 ? "text-rose-700" : "text-emerald-700"}`}>{marginGap.toFixed(1)}%</span></div>
+          <div className="mt-1 text-sm font-semibold text-slate-600">Margin Gap: <span className={`font-black ${marginGap > 0 ? "text-rose-700" : "text-violet-700"}`}>{marginGap.toFixed(1)}%</span></div>
         </PremiumMobileCard>
       </div>
 

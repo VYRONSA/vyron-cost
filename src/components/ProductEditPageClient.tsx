@@ -254,7 +254,7 @@ export default function ProductEditPageClient({
     <section className="grid gap-8">
       <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-violet-800 via-indigo-900 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(81,63,190,0.28)]">
         <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-fuchsia-500/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-[#A3E635]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-[#A855F7]/10 blur-3xl" />
         <div className="relative grid gap-7 xl:grid-cols-[1.15fr_0.85fr] xl:items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#CBD5E1]">
@@ -276,7 +276,7 @@ export default function ProductEditPageClient({
           </div>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#A3E635]">Margin discipline</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#A855F7]">Margin discipline</div>
               <p className="mt-3 text-lg font-black leading-snug text-white">&ldquo;Revenue is vanity. Margin is sanity.&rdquo;</p>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
@@ -293,8 +293,8 @@ export default function ProductEditPageClient({
         {[
           { label: "Selling Price", value: formatMoney(Number(form.selling_price)), icon: TrendingUp, tone: "bg-white text-slate-950" },
           { label: "Cost Price", value: formatMoney(Number(form.total_cost)), icon: Calculator, tone: "bg-violet-50 text-violet-800" },
-          { label: "Actual GP", value: `${gpPreview.toFixed(1)}%`, icon: LineChart, tone: isBelowTarget ? "bg-red-50 text-red-700" : "bg-[#A3E635]/10 text-[#65A30D]" },
-          { label: "Suggested Price", value: formatMoney(suggestedPrice), icon: Target, tone: "bg-[#A3E635]/10 text-[#4D7C0F]" },
+          { label: "Actual GP", value: `${gpPreview.toFixed(1)}%`, icon: LineChart, tone: isBelowTarget ? "bg-red-50 text-red-700" : "bg-[#A855F7]/10 text-[#7E22CE]" },
+          { label: "Suggested Price", value: formatMoney(suggestedPrice), icon: Target, tone: "bg-[#A855F7]/10 text-[#4D7C0F]" },
         ].map((card) => (
           <div key={card.label} className={`rounded-[2rem] p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)] ${card.tone}`}>
             <div className="flex items-center justify-between gap-3">
@@ -307,7 +307,7 @@ export default function ProductEditPageClient({
       </section>
 
       {isBelowTarget && Number(form.selling_price || 0) > 0 ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-900">
+        <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-5 py-4 text-sm font-semibold text-fuchsia-900">
           Margin warning: actual GP is <span className="font-black">{marginGap.toFixed(1)}%</span> below target. Review price, product cost, packaging, labour or wastage before approving this product.
         </div>
       ) : null}
@@ -376,16 +376,16 @@ export default function ProductEditPageClient({
 
         <aside className="grid gap-6">
           <div className="relative overflow-hidden rounded-[2rem] bg-[#07110d] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-600/20 via-transparent to-[#A3E635]/10" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-600/20 via-transparent to-[#A855F7]/10" />
             <div className="relative">
-              <Calculator size={30} className="text-[#A3E635]" />
-              <div className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-[#A3E635]">Product Intelligence</div>
+              <Calculator size={30} className="text-[#A855F7]" />
+              <div className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-[#A855F7]">Product Intelligence</div>
               <div className="mt-3 text-5xl font-black">{gpPreview.toFixed(1)}%</div>
               <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
                 Current gross profit based on selling price and true cost price.
               </p>
-              <div className="mt-6 rounded-3xl border border-[#A3E635]/20 bg-white/5 p-5">
-                <div className="text-sm font-black text-[#A3E635]">Suggested Selling Price</div>
+              <div className="mt-6 rounded-3xl border border-[#A855F7]/20 bg-white/5 p-5">
+                <div className="text-sm font-black text-[#A855F7]">Suggested Selling Price</div>
                 <div className="mt-2 text-3xl font-black">{formatMoney(suggestedPrice)}</div>
                 <p className="mt-2 text-sm font-semibold leading-7 text-slate-300">Price needed to reach the selected target GP.</p>
               </div>
@@ -403,7 +403,7 @@ export default function ProductEditPageClient({
 
           <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-fuchsia-700 via-violet-800 to-slate-950 p-6 text-white shadow-[0_18px_55px_rgba(81,63,190,0.2)]">
             <div className="pointer-events-none absolute -right-10 top-8 h-36 w-36 rounded-full border border-white/10" />
-            <ShieldCheck size={26} className="text-[#A3E635]" />
+            <ShieldCheck size={26} className="text-[#A855F7]" />
             <div className="mt-4 text-[10px] font-black uppercase tracking-[0.18em] text-fuchsia-200">Cost intelligence tip</div>
             <p className="mt-3 text-lg font-black leading-snug">What gets measured gets protected.</p>
             <p className="mt-3 text-sm font-semibold leading-6 text-violet-100">
@@ -415,7 +415,7 @@ export default function ProductEditPageClient({
 
       <section className="rounded-[2rem] border border-white bg-white p-7 shadow-[0_18px_55px_rgba(81,63,190,0.08)]">
         <div className="mb-6 flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#A3E635]/25 bg-[#A3E635]/12 text-[#65A30D]">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/12 text-[#7E22CE]">
             <TrendingUp size={24} />
           </div>
           <div>
@@ -451,7 +451,7 @@ export default function ProductEditPageClient({
 
         <div className="mt-6 flex flex-wrap gap-3">
           {canEdit ? (
-            <button type="button" onClick={saveProduct} className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(124,58,237,0.28)] transition hover:from-violet-800 hover:to-fuchsia-700">
+            <button type="button" onClick={saveProduct} className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(29,107,255,0.28)] transition hover:from-violet-800 hover:to-fuchsia-700">
               <Save size={18} />
               Save Product
             </button>
@@ -464,7 +464,7 @@ export default function ProductEditPageClient({
           ) : null}
 
           {canDelete ? (
-            <button type="button" onClick={archiveProduct} className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-6 py-4 text-sm font-black text-amber-800 transition hover:bg-amber-100">
+            <button type="button" onClick={archiveProduct} className="inline-flex items-center gap-2 rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-6 py-4 text-sm font-black text-fuchsia-800 transition hover:bg-fuchsia-100">
               Archive Product
             </button>
           ) : null}
@@ -477,7 +477,7 @@ export default function ProductEditPageClient({
           ) : null}
         </div>
 
-        {message && <div className="mt-5 rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-4 text-sm font-black text-[#65A30D]">{message}</div>}
+        {message && <div className="mt-5 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-black text-[#7E22CE]">{message}</div>}
       </section>
 
       <section className="rounded-[2rem] border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-7 shadow-[0_18px_55px_rgba(81,63,190,0.08)]">

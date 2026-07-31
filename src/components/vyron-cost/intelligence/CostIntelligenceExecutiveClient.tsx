@@ -19,7 +19,7 @@ const M = VYRON_MASTER;
 
 function priorityClass(priority: string) {
   if (priority === "Critical") return "border-rose-200 bg-rose-50 text-rose-800";
-  if (priority === "High") return "border-amber-200 bg-amber-50 text-amber-900";
+  if (priority === "High") return "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900";
   if (priority === "Medium") return "border-violet-200 bg-violet-50 text-violet-900";
   return "border-slate-200 bg-slate-50 text-slate-700";
 }
@@ -33,10 +33,10 @@ function typeIcon(type: string) {
 function InsightCard({ insight }: { insight: CostAiInsight }) {
   const Icon = typeIcon(insight.insight_type);
   const body = (
-    <article className="rounded-2xl border border-[#E2E8F0] bg-white p-5 transition hover:border-[#7C3AED]/30 hover:shadow-sm">
+    <article className="rounded-2xl border border-[#E2E8F0] bg-white p-5 transition hover:border-[#1D6BFF]/30 hover:shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#7C3AED]/10 text-[#7C3AED]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1D6BFF]/10 text-[#1D6BFF]">
             <Icon size={18} />
           </div>
           <div className="min-w-0">
@@ -61,13 +61,13 @@ function InsightCard({ insight }: { insight: CostAiInsight }) {
           <dd className="mt-1 font-medium text-[#334155]">{insight.impact}</dd>
         </div>
         <div>
-          <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#7C3AED]">Recommendation</dt>
+          <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#1D6BFF]">Recommendation</dt>
           <dd className="mt-1 font-semibold text-[#0F172A]">{insight.recommendation}</dd>
         </div>
       </dl>
 
       {insight.href ? (
-        <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+        <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
           View detail <ArrowRight size={14} />
         </span>
       ) : null}
@@ -181,7 +181,7 @@ export default function CostIntelligenceExecutiveClient({ companyName }: { compa
             type="button"
             disabled={saving || loading}
             onClick={() => void refreshInsights()}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
           >
             <RefreshCcw size={16} className={saving ? "animate-spin" : ""} />
             {saving ? "Refreshing…" : "Refresh Insights"}
@@ -201,9 +201,9 @@ export default function CostIntelligenceExecutiveClient({ companyName }: { compa
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <KpiCard label="Total Insights" value={loading ? "…" : String(stats?.totalInsights ?? 0)} icon={BrainCircuit} />
-          <KpiCard label="Critical" value={loading ? "…" : String(stats?.criticalCount ?? 0)} accent="#E11D48" icon={AlertTriangle} />
-          <KpiCard label="High" value={loading ? "…" : String(stats?.highCount ?? 0)} accent="#F59E0B" icon={AlertTriangle} />
-          <KpiCard label="Medium" value={loading ? "…" : String(stats?.mediumCount ?? 0)} accent="#7C3AED" icon={Sparkles} />
+          <KpiCard label="Critical" value={loading ? "…" : String(stats?.criticalCount ?? 0)} accent="#2563EB" icon={AlertTriangle} />
+          <KpiCard label="High" value={loading ? "…" : String(stats?.highCount ?? 0)} accent="#C026D3" icon={AlertTriangle} />
+          <KpiCard label="Medium" value={loading ? "…" : String(stats?.mediumCount ?? 0)} accent="#1D6BFF" icon={Sparkles} />
           <KpiCard label="Low" value={loading ? "…" : String(stats?.lowCount ?? 0)} accent="#64748B" icon={Sparkles} />
         </section>
 
@@ -269,7 +269,7 @@ export default function CostIntelligenceExecutiveClient({ companyName }: { compa
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] hover:border-[#7C3AED]/30 hover:text-[#7C3AED]"
+                className="rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
               >
                 {link.label}
               </Link>

@@ -7,8 +7,8 @@ import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPa
 function riskBg(level: string) {
   if (level === "Critical") return "border-red-300 bg-red-50";
   if (level === "High") return "border-orange-300 bg-orange-50";
-  if (level === "Medium") return "border-amber-300 bg-amber-50";
-  return "border-[#A3E635]/30 bg-[#A3E635]/10";
+  if (level === "Medium") return "border-fuchsia-300 bg-fuchsia-50";
+  return "border-[#A855F7]/30 bg-[#A855F7]/10";
 }
 
 export default function RiskCentreClient({ risks }: { risks: RiskItem[] }) {

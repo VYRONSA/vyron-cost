@@ -53,15 +53,15 @@ export default function ProductIntelligenceClient({
     >
       <section className="grid gap-6">
             <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3">
-                <Search size={20} className="text-[#65A30D]" />
+              <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3">
+                <Search size={20} className="text-[#7E22CE]" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search product intelligence..."
                   className="w-full bg-transparent text-sm font-black text-slate-700 outline-none placeholder:text-slate-400"
                 />
-                <div className="rounded-full bg-[#07110d] px-4 py-2 text-xs font-black text-[#A3E635]">
+                <div className="rounded-full bg-[#07110d] px-4 py-2 text-xs font-black text-[#A855F7]">
                   {filtered.length} products
                 </div>
               </div>
@@ -69,7 +69,7 @@ export default function ProductIntelligenceClient({
 
             <div className="overflow-x-auto rounded-[2rem] border border-white bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
               <div className="min-w-[1180px]">
-                <div className="grid grid-cols-10 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+                <div className="grid grid-cols-10 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
                   <div>Product</div>
                   <div>Category</div>
                   <div>Cost</div>
@@ -92,8 +92,8 @@ export default function ProductIntelligenceClient({
                     <div>{formatMoney(Number(row.total_cost || 0))}</div>
                     <div>{formatMoney(Number(row.selling_price || 0))}</div>
                     <div>{Number(row.target_gp || 0).toFixed(1)}%</div>
-                    <div className="font-black text-[#65A30D]">{Number(row.actual_gp || 0).toFixed(1)}%</div>
-                    <div className={Number(row.gp_gap || 0) > 0 ? "font-black text-red-700" : "font-black text-[#65A30D]"}>
+                    <div className="font-black text-[#7E22CE]">{Number(row.actual_gp || 0).toFixed(1)}%</div>
+                    <div className={Number(row.gp_gap || 0) > 0 ? "font-black text-red-700" : "font-black text-[#7E22CE]"}>
                       {Number(row.gp_gap || 0).toFixed(1)}%
                     </div>
                     <div className="font-black">{formatMoney(Number(row.suggested_price || 0))}</div>
@@ -101,7 +101,7 @@ export default function ProductIntelligenceClient({
                     <div>
                       <Link
                         href={row.product_id ? `/products/${row.product_id}/edit` : "/products"}
-                        className="inline-flex items-center gap-2 rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]"
+                        className="inline-flex items-center gap-2 rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]"
                       >
                         <Zap size={14} />
                         {row.action_required || "Monitor"}
@@ -115,11 +115,11 @@ export default function ProductIntelligenceClient({
 
             <section className="grid gap-5 md:grid-cols-2">
               <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_20px_60px_rgba(6,20,14,0.28)]">
-                <div className="rounded-2xl bg-[#A3E635]/12 p-3 text-[#A3E635] w-fit">
+                <div className="rounded-2xl bg-[#A855F7]/12 p-3 text-[#A855F7] w-fit">
                   <ShieldAlert size={24} />
                 </div>
 
-                <div className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#A3E635]">
+                <div className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#A855F7]">
                   AI ACTION
                 </div>
 
@@ -133,7 +133,7 @@ export default function ProductIntelligenceClient({
               </div>
 
               <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <div className="text-xs font-black uppercase tracking-[0.22em] text-[#65A30D]">
+                <div className="text-xs font-black uppercase tracking-[0.22em] text-[#7E22CE]">
                   NEXT ENGINE
                 </div>
 

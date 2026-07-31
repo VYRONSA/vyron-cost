@@ -8,17 +8,17 @@
   --vyron-card-mid: #21163a;
   --vyron-card-elevated: #24183f;
   --vyron-sidebar: #0b0617;
-  --vyron-accent: #f97316;
-  --vyron-purple: #6d28d9;
-  --vyron-violet: #7c3aed;
-  --vyron-orange: #fb923c;
-  --vyron-lime: #a3e635;
+  --vyron-accent: #a855f7;
+  --vyron-purple: #1d4ed8;
+  --vyron-violet: #1d6bff;
+  --vyron-orange: #c084fc;
+  --vyron-lime: #a855f7;
   --vyron-text: #f8fafc;
   --vyron-body: #cbd5e1;
   --vyron-muted: #94a3b8;
   --vyron-border: rgba(255, 255, 255, 0.10);
-  --vyron-success: #a3e635;
-  --vyron-warning: #f59e0b;
+  --vyron-success: #a855f7;
+  --vyron-warning: #c026d3;
   --vyron-danger: #ef4444;
   --background: var(--vyron-bg);
   --foreground: var(--vyron-text);
@@ -35,23 +35,30 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at 88% 6%, rgba(109, 40, 217, 0.18), transparent 34%),
-    radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.12), transparent 30%),
-    radial-gradient(circle at 75% 85%, rgba(251, 146, 60, 0.08), transparent 32%),
+    radial-gradient(circle at 88% 6%, rgba(29, 78, 216, 0.18), transparent 34%),
+    radial-gradient(circle at 10% 20%, rgba(29, 107, 255, 0.12), transparent 30%),
+    radial-gradient(circle at 75% 85%, rgba(168, 85, 247, 0.08), transparent 32%),
     linear-gradient(180deg, #120a1f 0%, #160b2e 48%, #1a1033 100%);
   color: var(--vyron-body);
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
+/* Continuous branded workspace wash — colour distributed across the FULL
+   viewport height (top + centre + bottom blobs), not just the top corners,
+   so no scroll position ever reads as a flat white canvas. Anchored to the
+   viewport (fixed) so the wash is identical at every scroll depth. */
 .vyron-cost-shell.vyron-premium-workspace,
 .vyron-cost-shell.vyron-master-workspace {
   height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(circle at 92% 4%, rgba(124, 58, 237, 0.04), transparent 34%),
-    radial-gradient(circle at 6% 20%, rgba(244, 63, 94, 0.03), transparent 30%),
-    linear-gradient(180deg, #f8fafc 0%, #f6f7fb 50%, #eef2f7 100%);
+    radial-gradient(ellipse 120% 70% at 78% -8%, rgba(79, 70, 229, 0.070), transparent 62%),
+    radial-gradient(ellipse 100% 60% at 12% 30%, rgba(29, 107, 255, 0.045), transparent 64%),
+    radial-gradient(ellipse 130% 80% at 50% 108%, rgba(109, 40, 217, 0.055), transparent 66%),
+    linear-gradient(168deg, #fbfcfe 0%, #f6f8fd 38%, #f4f5fc 68%, #f7f8fd 100%);
+  background-attachment: fixed;
+  background-size: 100% 100vh;
   color: #334155;
 }
 
@@ -61,8 +68,24 @@ body {
   top: 0;
   z-index: 50;
   isolation: isolate;
-  background-color: #ffffff;
-  border-right: 1px solid #e2e8f0;
+  background:
+    radial-gradient(ellipse 90% 40% at 20% -4%, rgba(255, 255, 255, 0.14), transparent 60%),
+    radial-gradient(ellipse 80% 50% at 90% 104%, rgba(168, 85, 247, 0.30), transparent 62%),
+    linear-gradient(170deg, #1d5fe8 0%, #3d3ab8 38%, #4f2a9e 72%, #55208c 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 1px 0 0 rgba(15, 23, 42, 0.04), 8px 0 40px rgba(15, 23, 42, 0.06);
+}
+
+/* Form controls that land inside the blue sidebar need on-blue defaults. */
+.vyron-cost-shell-sidebar input,
+.vyron-cost-shell-sidebar select,
+.vyron-cost-shell-sidebar textarea {
+  color: #ffffff;
+}
+.vyron-cost-shell-sidebar input::placeholder,
+.vyron-cost-shell-sidebar textarea::placeholder {
+  color: rgba(224, 234, 255, 0.7);
+  opacity: 1;
 }
 
 .vyron-cost-shell > .vyron-cost-shell-main {
@@ -81,9 +104,10 @@ body {
   position: relative;
   overflow-x: hidden;
   background:
-    radial-gradient(circle at 100% 0%, rgba(124, 58, 237, 0.04), transparent 36%),
-    radial-gradient(circle at 6% 24%, rgba(244, 63, 94, 0.03), transparent 34%),
-    linear-gradient(180deg, #f8fafc 0%, #f6f7fb 52%, #eef2f7 100%);
+    radial-gradient(ellipse 120% 70% at 78% -8%, rgba(79, 70, 229, 0.070), transparent 62%),
+    radial-gradient(ellipse 100% 60% at 12% 30%, rgba(29, 107, 255, 0.045), transparent 64%),
+    radial-gradient(ellipse 130% 80% at 50% 108%, rgba(109, 40, 217, 0.055), transparent 66%),
+    linear-gradient(168deg, #fbfcfe 0%, #f6f8fd 38%, #f4f5fc 68%, #f7f8fd 100%);
 }
 
 .vyron-premium-workspace::before,
@@ -94,10 +118,8 @@ body {
   inset: 0;
   z-index: 0;
   background:
-    linear-gradient(115deg, transparent 0%, rgba(124, 58, 237, 0.03) 36%, transparent 72%),
-    radial-gradient(circle at 82% 8%, rgba(244, 63, 94, 0.04), transparent 24%),
-    radial-gradient(circle at 24% 92%, rgba(124, 58, 237, 0.03), transparent 32%);
-  opacity: 0.85;
+    linear-gradient(118deg, transparent 0%, rgba(79, 70, 229, 0.022) 42%, transparent 78%);
+  opacity: 1;
 }
 
 @media (min-width: 1280px) {
@@ -113,9 +135,12 @@ html:has(.vyron-master-workspace) {
 
 html:has(.vyron-master-workspace) body {
   background:
-    radial-gradient(circle at 88% 4%, rgba(124, 58, 237, 0.04), transparent 34%),
-    radial-gradient(circle at 8% 18%, rgba(244, 63, 94, 0.03), transparent 30%),
-    linear-gradient(180deg, #f8fafc 0%, #f6f7fb 48%, #eef2f7 100%);
+    radial-gradient(ellipse 120% 70% at 78% -8%, rgba(79, 70, 229, 0.070), transparent 62%),
+    radial-gradient(ellipse 100% 60% at 12% 30%, rgba(29, 107, 255, 0.045), transparent 64%),
+    radial-gradient(ellipse 130% 80% at 50% 108%, rgba(109, 40, 217, 0.055), transparent 66%),
+    linear-gradient(168deg, #fbfcfe 0%, #f6f8fd 38%, #f4f5fc 68%, #f7f8fd 100%);
+  background-attachment: fixed;
+  background-size: 100% 100vh;
   color: #334155;
 }
 
@@ -127,8 +152,8 @@ html:has(.vyron-master-workspace) body {
   z-index: -1;
   border-radius: 2.5rem;
   background:
-    radial-gradient(circle at 92% 4%, rgba(251, 146, 60, 0.14), transparent 38%),
-    radial-gradient(circle at 50% 40%, rgba(109, 40, 217, 0.10), transparent 50%);
+    radial-gradient(circle at 92% 4%, rgba(168, 85, 247, 0.12), transparent 38%),
+    radial-gradient(circle at 50% 40%, rgba(29, 78, 216, 0.10), transparent 50%);
 }
 
 .vyron-executive-snapshot-card {
@@ -154,7 +179,7 @@ button, input, select, textarea { font: inherit; }
 .vyron-text-muted { color: var(--vyron-muted); }
 .vyron-text-lime { color: var(--vyron-lime); }
 .vyron-text-warning { color: var(--vyron-orange); }
-.vyron-text-brand { color: #c4b5fd; }
+.vyron-text-brand { color: #93c5fd; }
 
 .vyron-eyebrow {
   font-size: 0.6875rem;
@@ -165,21 +190,21 @@ button, input, select, textarea { font: inherit; }
 }
 
 .vyron-status-lime {
-  border: 1px solid rgba(163, 230, 53, 0.3);
-  background: rgba(163, 230, 53, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  background: rgba(168, 85, 247, 0.12);
   color: var(--vyron-lime);
 }
 
 .vyron-status-warning {
-  border: 1px solid rgba(251, 146, 60, 0.35);
-  background: rgba(249, 115, 22, 0.15);
+  border: 1px solid rgba(192, 38, 211, 0.35);
+  background: rgba(192, 38, 211, 0.15);
   color: var(--vyron-orange);
 }
 
 .vyron-status-brand {
-  border: 1px solid rgba(167, 139, 250, 0.3);
-  background: rgba(124, 58, 237, 0.15);
-  color: #ddd6fe;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  background: rgba(29, 107, 255, 0.15);
+  color: #dbeafe;
 }
 
 /* ── VYRON Master — public pages (landing, login) ── */
@@ -190,10 +215,10 @@ button, input, select, textarea { font: inherit; }
   --vyron-master-navy: #07111f;
   --vyron-master-navy-mid: #0b1220;
   --vyron-master-navy-panel: #101827;
-  --vyron-master-red: #f43f5e;
-  --vyron-master-red-dark: #e11d48;
-  --vyron-master-purple: #7c3aed;
-  --vyron-master-purple-bright: #9333ea;
+  --vyron-master-blue: #1d6bff;
+  --vyron-master-blue-deep: #2563eb;
+  --vyron-master-blue-light: #3b82f6;
+  --vyron-master-blue-dark: #1d4ed8;
   --vyron-master-text: #0f172a;
   --vyron-master-body: #334155;
   --vyron-master-muted: #64748b;
@@ -207,9 +232,12 @@ html:has(.vyron-public-page) {
 
 html:has(.vyron-public-page) body {
   background:
-    radial-gradient(circle at 88% 4%, rgba(124, 58, 237, 0.05), transparent 34%),
-    radial-gradient(circle at 8% 18%, rgba(244, 63, 94, 0.04), transparent 30%),
-    linear-gradient(180deg, #f8fafc 0%, #f6f7fb 48%, #eef2f7 100%);
+    radial-gradient(ellipse 120% 70% at 78% -8%, rgba(79, 70, 229, 0.070), transparent 62%),
+    radial-gradient(ellipse 100% 60% at 12% 30%, rgba(29, 107, 255, 0.045), transparent 64%),
+    radial-gradient(ellipse 130% 80% at 50% 108%, rgba(109, 40, 217, 0.055), transparent 66%),
+    linear-gradient(168deg, #fbfcfe 0%, #f6f8fd 38%, #f4f5fc 68%, #f7f8fd 100%);
+  background-attachment: fixed;
+  background-size: 100% 100vh;
   color: var(--vyron-master-body);
 }
 
@@ -218,7 +246,7 @@ html:has(.vyron-public-page) body {
 }
 
 .vyron-master-gradient-text {
-  background: linear-gradient(90deg, #e11d48, #9333ea, #7c3aed);
+  background: var(--vyron-grad-text);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -226,17 +254,24 @@ html:has(.vyron-public-page) body {
 
 .vyron-master-primary-btn {
   border-radius: 1rem;
-  background: linear-gradient(90deg, #e11d48, #7c3aed);
+  background: var(--vyron-grad-surface);
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.22);
+  box-shadow: 0 8px 24px rgba(29, 107, 255, 0.22);
 }
 
 .vyron-master-light-card {
   border-radius: 1.5rem;
   border: 1px solid var(--vyron-master-border);
-  background: #fff;
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.vyron-master-light-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 68px rgba(15, 23, 42, 0.11);
 }
 
 .vyron-master-dark-panel {
@@ -247,19 +282,287 @@ html:has(.vyron-public-page) body {
   box-shadow: 0 20px 60px rgba(7, 17, 31, 0.32);
 }
 
+/* ══ VYRON ENTERPRISE DESIGN LANGUAGE ══
+   One authoritative presentation layer. Every shared component reads from these
+   tokens; no page-specific styling. Layout, spacing relationships and card
+   positions are untouched — this file only governs how surfaces look. */
+:root {
+  /* Elevation — layered and low-alpha. Enterprise depth reads as many soft
+     shadows, never one heavy drop; a single dark shadow looks consumer. */
+  --vyron-elev-1: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.03);
+  --vyron-elev-2: 0 2px 4px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.05);
+  --vyron-elev-3: 0 4px 8px rgba(15, 23, 42, 0.04), 0 12px 28px rgba(15, 23, 42, 0.07);
+  --vyron-elev-4: 0 8px 16px rgba(15, 23, 42, 0.05), 0 24px 56px rgba(15, 23, 42, 0.09);
+  --vyron-elev-brand: 0 4px 12px rgba(79, 70, 229, 0.10), 0 16px 40px rgba(79, 70, 229, 0.12);
+
+  /* Hairlines — borders at full slate read as boxes; at 7% they read as edges. */
+  --vyron-hairline: rgba(15, 23, 42, 0.07);
+  --vyron-hairline-strong: rgba(15, 23, 42, 0.11);
+  --vyron-hairline-brand: rgba(79, 70, 229, 0.18);
+
+  /* Glass */
+  --vyron-glass: rgba(255, 255, 255, 0.72);
+  --vyron-glass-strong: rgba(255, 255, 255, 0.86);
+
+  /* Motion — one duration and one curve across the product. */
+  --vyron-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --vyron-dur: 180ms;
+
+  /* Focus — a single visible ring for keyboard users on every control. */
+  --vyron-focus-ring: 0 0 0 3px rgba(29, 107, 255, 0.20);
+}
+
+/* ── Typography hierarchy ──
+   Weight and tracking carry the hierarchy rather than size jumps, so nothing
+   reflows. Metrics use tabular figures — financial columns must align. */
+.vyron-t-display {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.vyron-t-title {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.vyron-t-section {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+}
+
+.vyron-t-label {
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+.vyron-t-metric,
+.vyron-metric-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.vyron-t-body {
+  font-weight: 450;
+  line-height: 1.6;
+}
+
+.vyron-t-caption {
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Numeric table cells align on the decimal across long datasets. */
+.vyron-cost-shell-main table td,
+.vyron-cost-shell-main table th {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Interaction polish ──
+   One focus ring, one transition curve, applied to every control in the shell. */
+.vyron-cost-shell-main :is(button, a, input, select, textarea, [role="button"]):focus-visible,
+.vyron-public-page :is(button, a, input, select, textarea, [role="button"]):focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--vyron-focus-ring);
+  border-radius: 0.6rem;
+}
+
+.vyron-cost-shell-main button,
+.vyron-cost-shell-main a,
+.vyron-public-page button,
+.vyron-public-page a {
+  transition: background-color var(--vyron-dur) var(--vyron-ease),
+    border-color var(--vyron-dur) var(--vyron-ease),
+    box-shadow var(--vyron-dur) var(--vyron-ease),
+    transform var(--vyron-dur) var(--vyron-ease),
+    color var(--vyron-dur) var(--vyron-ease);
+}
+
+/* ── Table comfort ──
+   Enterprise datasets get read for hours: quieter rules, clearer hover, and a
+   selected state that does not rely on colour alone. */
+.vyron-cost-shell-main tbody tr {
+  transition: background-color var(--vyron-dur) var(--vyron-ease);
+}
+
+.vyron-cost-shell-main tbody tr:hover {
+  background-color: rgba(79, 70, 229, 0.045);
+}
+
+.vyron-cost-shell-main tbody tr[aria-selected="true"],
+.vyron-cost-shell-main tbody tr[data-selected="true"] {
+  background-color: rgba(79, 70, 229, 0.08);
+  box-shadow: inset 3px 0 0 #4f46e5;
+}
+
+.vyron-cost-shell-main thead th {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+/* ── Form calm ── */
+.vyron-cost-shell-main input:not([type="checkbox"]):not([type="radio"]),
+.vyron-cost-shell-main select,
+.vyron-cost-shell-main textarea {
+  transition: border-color var(--vyron-dur) var(--vyron-ease),
+    box-shadow var(--vyron-dur) var(--vyron-ease),
+    background-color var(--vyron-dur) var(--vyron-ease);
+}
+
+.vyron-cost-shell-main input:not([type="checkbox"]):not([type="radio"]):hover,
+.vyron-cost-shell-main select:hover,
+.vyron-cost-shell-main textarea:hover {
+  border-color: var(--vyron-hairline-strong);
+}
+
+.vyron-cost-shell-main [aria-invalid="true"] {
+  border-color: rgba(225, 29, 72, 0.55);
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vyron-cost-shell-main *,
+  .vyron-public-page * {
+    transition-duration: 1ms !important;
+  }
+}
+
+/* ── Brand fade ──
+   Three tiers, because one gradient cannot serve every job. `accent` runs the
+   full fade and is only ever used where nothing sits on top of it. `surface`
+   keeps white text above 4:1 across the whole fill. `text` ends in a deep
+   magenta rather than a light one, which would vanish on a white page. */
+:root {
+  --vyron-grad-accent: linear-gradient(135deg, #1d6bff 0%, #a855f7 55%, #d946ef 100%);
+  --vyron-grad-surface: linear-gradient(150deg, #1d6bff 0%, #4f46e5 30%, #6d28d9 68%, #7e22ce 100%);
+  --vyron-grad-text: linear-gradient(100deg, #1d6bff 0%, #6d28d9 55%, #a21caf 100%);
+  --vyron-grad-deep: linear-gradient(155deg, #0a3ba8 0%, #3730a3 32%, #4c1d95 68%, #581c87 100%);
+  /* On-dark headline fade — light stops, since --vyron-grad-text's deep purple
+     disappears against the deep panels. */
+  --vyron-grad-text-on-deep: linear-gradient(100deg, #bfdbfe 0%, #ddd6fe 55%, #f0abfc 100%);
+}
+
+.vyron-grad-text-on-deep {
+  background-image: var(--vyron-grad-text-on-deep);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.vyron-grad-accent {
+  background-image: var(--vyron-grad-accent);
+}
+
+.vyron-grad-surface {
+  background-image: var(--vyron-grad-surface);
+}
+
+/* Hero/module panels — replaces the old #0B1220 navy so no black blocks remain.
+   Darker than --vyron-grad-surface because these carry small body copy: every
+   stop here clears 4:1 against white. */
+.vyron-grad-deep {
+  background-image: var(--vyron-grad-deep);
+}
+
+/* Inner panels that used to be #101827 on navy — now a translucent lift so they
+   read against whatever part of the fade sits behind them. */
+.vyron-grad-deep-inner {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.vyron-grad-text {
+  background-image: var(--vyron-grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Sidebar selected state — deliberately lighter than the sidebar fade behind it,
+   so the active block still reads as "lifted" rather than blending in. */
+.vyron-grad-active {
+  background-image: linear-gradient(120deg, #5590ff 0%, #a78bfa 100%);
+}
+
+/* ── Card system ──
+   Cards float above the workspace on glass and layered elevation rather than a
+   painted fill. Positions, sizes and spacing are untouched. */
+.vyron-metric-card {
+  background: var(--vyron-glass);
+  border-color: var(--vyron-hairline);
+  border-radius: 1rem;
+  box-shadow: var(--vyron-elev-2);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  transition: box-shadow var(--vyron-dur) var(--vyron-ease),
+    border-color var(--vyron-dur) var(--vyron-ease),
+    transform var(--vyron-dur) var(--vyron-ease);
+}
+
+.vyron-metric-card:hover {
+  border-color: var(--vyron-hairline-strong);
+  box-shadow: var(--vyron-elev-3);
+}
+
+.vyron-upgrade-panel {
+  background: var(--vyron-glass);
+  border-color: var(--vyron-hairline);
+  box-shadow: var(--vyron-elev-1);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+}
+
+/* ── Alternating bands, refined ──
+   Previously these were fully saturated purple fills with white text. Per the
+   colour-balance directive they now carry a low-chroma brand wash and a 3px
+   brand edge: the alternating rhythm survives, but the band supports the page
+   instead of competing with it, and body copy returns to full-contrast dark. */
+.vyron-band-blue .vyron-metric-card {
+  background:
+    linear-gradient(150deg, rgba(29, 107, 255, 0.055) 0%, rgba(109, 40, 217, 0.06) 60%, rgba(168, 85, 247, 0.05) 100%),
+    var(--vyron-glass-strong);
+  border-color: var(--vyron-hairline-brand);
+  box-shadow: inset 3px 0 0 rgba(79, 70, 229, 0.55), var(--vyron-elev-2);
+}
+
+.vyron-band-blue .vyron-metric-card:hover {
+  border-color: rgba(79, 70, 229, 0.30);
+  box-shadow: inset 3px 0 0 rgba(79, 70, 229, 0.75), var(--vyron-elev-brand);
+}
+
+.vyron-band-blue .vyron-metric-icon {
+  color: #4f46e5;
+  opacity: 1;
+}
+
+.vyron-band-blue .vyron-upgrade-panel {
+  background:
+    linear-gradient(150deg, rgba(29, 107, 255, 0.05) 0%, rgba(109, 40, 217, 0.055) 100%),
+    var(--vyron-glass-strong);
+  border-color: var(--vyron-hairline-brand);
+  box-shadow: inset 3px 0 0 rgba(79, 70, 229, 0.45), var(--vyron-elev-1);
+}
+
 /* Shared light surface cards (module framework) */
 .vyron-surface-card {
   border-radius: 1.5rem;
   border: 1px solid #e2e8f0;
-  background: #ffffff;
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .vyron-surface-card-elevated {
   border-radius: 1.5rem;
   border: 1px solid #e2e8f0;
-  background: #ffffff;
-  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 22px 65px rgba(15, 23, 42, 0.10);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 .vyron-phone-mode main,
 .vyron-tablet-mode main {
@@ -273,8 +576,8 @@ html:has(.vyron-public-page) body {
 .vyron-tablet-mode {
   position: relative;
   background:
-    radial-gradient(circle at 92% 4%, rgba(124, 58, 237, 0.04), transparent 34%),
-    radial-gradient(circle at 6% 20%, rgba(244, 63, 94, 0.03), transparent 30%),
+    radial-gradient(circle at 92% 4%, rgba(29, 107, 255, 0.04), transparent 34%),
+    radial-gradient(circle at 6% 20%, rgba(59, 130, 246, 0.03), transparent 30%),
     linear-gradient(180deg, #f8fafc 0%, #f6f7fb 50%, #eef2f7 100%);
 }
 .vyron-tablet-bottomnav {

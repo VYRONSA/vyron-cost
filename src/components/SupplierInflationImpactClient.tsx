@@ -87,8 +87,8 @@ export default function SupplierInflationImpactClient({ rows }: { rows: Supplier
       </div>
 
       <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#A3E635]/20 bg-[#A3E635]/10 px-4 py-3">
-          <Search size={20} className="text-[#65A30D]" />
+        <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3">
+          <Search size={20} className="text-[#7E22CE]" />
           <input
             value={search}
             onChange={(e) => {
@@ -103,7 +103,7 @@ export default function SupplierInflationImpactClient({ rows }: { rows: Supplier
 
         <div className="overflow-x-auto rounded-[2rem] border border-white bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="min-w-[1100px]">
-          <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+          <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
             <div>Supplier</div>
             <div>Current</div>
             <div>Previous</div>
@@ -128,7 +128,7 @@ export default function SupplierInflationImpactClient({ rows }: { rows: Supplier
                 </StatusPill>
               </div>
               <div>
-                <Link href="/action-centre" className="inline-flex items-center gap-1 rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]">
+                <Link href="/action-centre" className="inline-flex items-center gap-1 rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]">
                   {row.recommended_action}
                   <ArrowUpRight size={14} />
                 </Link>

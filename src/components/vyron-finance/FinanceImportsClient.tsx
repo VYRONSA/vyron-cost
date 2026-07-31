@@ -89,7 +89,7 @@ export default function FinanceImportsClient() {
                 />
               </label>
               {result ? (
-                <div className="mt-4 rounded-xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-4 text-sm font-bold text-[#4D7C0F]">
+                <div className="mt-4 rounded-xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-4 text-sm font-bold text-[#4D7C0F]">
                   Valid rows: {result.valid} · Rejected: {result.rejected}
                 </div>
               ) : null}

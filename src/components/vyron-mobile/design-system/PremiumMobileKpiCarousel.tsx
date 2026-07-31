@@ -42,7 +42,7 @@ export default function PremiumMobileKpiCarousel({
                   <div className="mt-2 text-[2.15rem] font-black tracking-[-0.05em] text-slate-950">{item.value}</div>
                   <div className="mt-1 text-sm font-semibold text-slate-500">{item.note}</div>
                 </div>
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#07111F] text-white shadow-[0_14px_30px_rgba(7,17,31,0.24)]">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl vyron-grad-surface text-white shadow-[0_14px_30px_rgba(7,17,31,0.24)]">
                   <Icon size={23} />
                 </div>
               </div>

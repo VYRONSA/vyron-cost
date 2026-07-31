@@ -36,7 +36,7 @@ export default function BulkImportCentreClient() {
     >
       <section className="grid gap-6">
             <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-              <FileSpreadsheet size={32} className="text-[#A3E635]" />
+              <FileSpreadsheet size={32} className="text-[#A855F7]" />
               <h2 className="mt-5 text-3xl font-black">Bulk Import Centre</h2>
               <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
                 Download templates, complete them in Excel, then upload. Files are staged for validation before importing into live costing data.
@@ -51,20 +51,20 @@ export default function BulkImportCentreClient() {
                       <h3 className="text-xl font-black text-[#F8FAFC]">{name}</h3>
                       <p className="mt-2 text-xs font-bold leading-6 text-slate-500">{header}</p>
                     </div>
-                    <FileSpreadsheet className="text-[#65A30D]" size={28} />
+                    <FileSpreadsheet className="text-[#7E22CE]" size={28} />
                   </div>
 
                   <div className="mt-5 grid gap-3">
                     <button
                       type="button"
                       onClick={() => downloadTemplate(name, header)}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]"
                     >
                       <Download size={17} />
                       Download template
                     </button>
 
-                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#07110d] px-5 py-3 text-sm font-black text-[#A3E635]">
+                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#07110d] px-5 py-3 text-sm font-black text-[#A855F7]">
                       <UploadCloud size={17} />
                       Upload CSV
                       <input

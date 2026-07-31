@@ -170,9 +170,9 @@ export default function IngredientEditPageClient({ ingredient }: { ingredient: C
                   <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">True Unit Cost</div>
                   <div className="mt-1 text-3xl font-black text-violet-700">{formatMoney(previewTrueCost)}</div>
                 </div>
-                <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 p-4">
+                <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-4">
                   <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Movement</div>
-                  <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-red-600" : "text-[#65A30D]"}`}>
+                  <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-red-600" : "text-[#7E22CE]"}`}>
                     {movement.toFixed(1)}%
                   </div>
                 </div>
@@ -334,7 +334,7 @@ export default function IngredientEditPageClient({ ingredient }: { ingredient: C
                   ) : null}
                 </div>
 
-                {message && <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-4 text-sm font-black text-[#65A30D]">{message}</div>}
+                {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-black text-[#7E22CE]">{message}</div>}
               </div>
             </div>
           </section>

@@ -41,7 +41,7 @@ export default function InventoryLedgerPageClient() {
       }}
       actions={
         <div className="flex flex-wrap gap-2">
-          <Link href="/stock-movements" className="rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-bold text-white">
+          <Link href="/stock-movements" className="rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white">
             Stock Movements
           </Link>
           <Link href="/inventory" className="rounded-xl border border-[#E2E8F0] px-4 py-2.5 text-sm font-bold text-[#334155]">
@@ -80,7 +80,7 @@ export default function InventoryLedgerPageClient() {
                   <td className="px-4 py-3 font-mono text-xs">{row.transaction_number}</td>
                   <td className="px-4 py-3">{row.transaction_type}</td>
                   <td className="px-4 py-3 font-semibold">{row.item_name}</td>
-                  <td className={`px-4 py-3 text-right font-bold ${row.signed_quantity < 0 ? "text-rose-600" : "text-emerald-700"}`}>
+                  <td className={`px-4 py-3 text-right font-bold ${row.signed_quantity < 0 ? "text-rose-600" : "text-violet-700"}`}>
                     {row.signed_quantity > 0 ? "+" : ""}
                     {row.signed_quantity}
                   </td>

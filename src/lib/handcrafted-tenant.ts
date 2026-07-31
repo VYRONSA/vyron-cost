@@ -64,7 +64,7 @@ export const HANDCRAFTED_COMPANY = {
   trading_name: "Metanoia Hospitality Pty Ltd",
   legal_name: "Metanoia Hospitality Pty Ltd",
   logo_url: "/clients/handcrafted/logo.svg",
-  primary_color: "#10b981",
+  primary_color: "#8b5cf6",
 };
 
 export function isHandcraftedTenantEnabled() {

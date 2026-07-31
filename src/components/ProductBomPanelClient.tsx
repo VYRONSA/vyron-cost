@@ -64,7 +64,7 @@ export default function ProductBomPanelClient({
                 <div className="text-xs font-black uppercase text-slate-400">Linked recipe</div>
                 <div className="mt-1 font-black">
                   {summary.linkedRecipe ? (
-                    <Link href={`/recipes/${summary.linkedRecipe.id}`} className="text-[#65A30D]">
+                    <Link href={`/recipes/${summary.linkedRecipe.id}`} className="text-[#7E22CE]">
                       {summary.linkedRecipe.recipe_name}
                     </Link>
                   ) : (
@@ -103,7 +103,7 @@ export default function ProductBomPanelClient({
             </label>
 
             <div className="mt-4 flex flex-wrap gap-3">
-              <button type="button" onClick={updateFromBom} className="rounded-xl border border-[#A3E635]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-[#F8FAFC]">
+              <button type="button" onClick={updateFromBom} className="rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-4 py-2 text-xs font-black text-[#F8FAFC]">
                 Update cost from BOM
               </button>
               {summary.linkedRecipe ? (
@@ -112,7 +112,7 @@ export default function ProductBomPanelClient({
                 </Link>
               ) : null}
             </div>
-            {message ? <div className="mt-3 text-sm font-black text-[#65A30D]">{message}</div> : null}
+            {message ? <div className="mt-3 text-sm font-black text-[#7E22CE]">{message}</div> : null}
           </div>
     </VyronPremiumPageShell>
   );

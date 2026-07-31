@@ -130,7 +130,7 @@ export default function StockLedgerClient() {
                   <td className="px-4 py-3"><span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-black text-purple-800">{movementLabels[movement.movement_type] ?? movement.movement_type}</span></td>
                   <td className="px-4 py-3 font-bold text-slate-950">{movement.item_name}</td>
                   <td className="px-4 py-3"><Link className="font-bold text-purple-700 hover:underline" href={`/inventory-intelligence/traceability?ref=${movement.reference_number}`}>{movement.reference_number}</Link></td>
-                  <td className="px-4 py-3 text-right font-semibold text-[#65A30D]">{movement.quantity_in ? formatNumber(movement.quantity_in) : "—"}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-[#7E22CE]">{movement.quantity_in ? formatNumber(movement.quantity_in) : "—"}</td>
                   <td className="px-4 py-3 text-right font-semibold text-rose-700">{movement.quantity_out ? formatNumber(movement.quantity_out) : "—"}</td>
                   <td className="px-4 py-3 text-right font-semibold">{formatCurrency(movement.unit_cost)}</td>
                   <td className="px-4 py-3 text-right font-black">{formatCurrency(movement.total_value)}</td>

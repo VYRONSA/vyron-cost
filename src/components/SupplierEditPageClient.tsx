@@ -109,7 +109,7 @@ export default function SupplierEditPageClient({ supplier }: { supplier: CostSup
     <>
       <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-violet-800 via-indigo-950 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(81,63,190,0.28)]">
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-fuchsia-500/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-[#A3E635]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-[#A855F7]/10 blur-3xl" />
         <div className="relative grid gap-7 xl:grid-cols-[1.2fr_0.8fr] xl:items-center">
           <div>
             <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#CBD5E1]">Premium Supplier Profile</div>
@@ -226,7 +226,7 @@ export default function SupplierEditPageClient({ supplier }: { supplier: CostSup
 
           <div className="flex flex-wrap gap-3">
             {canEdit ? (
-              <button type="button" onClick={saveSupplier} className="inline-flex items-center gap-2 rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-6 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
+              <button type="button" onClick={saveSupplier} className="inline-flex items-center gap-2 rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-6 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
                 <Save size={18} />
                 Save Supplier
               </button>
@@ -240,12 +240,12 @@ export default function SupplierEditPageClient({ supplier }: { supplier: CostSup
             ) : null}
           </div>
 
-          {message && <div className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-4 text-sm font-black text-[#65A30D]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-black text-[#7E22CE]">{message}</div>}
         </div>
       </div>
 
       <aside className="rounded-[2rem] bg-[#07110d] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-        <div className="text-xs font-black uppercase tracking-[0.25em] text-[#A3E635]">
+        <div className="text-xs font-black uppercase tracking-[0.25em] text-[#A855F7]">
           SUPPLIER RISK INTELLIGENCE
         </div>
 
@@ -255,8 +255,8 @@ export default function SupplierEditPageClient({ supplier }: { supplier: CostSup
           Last recorded supplier price movement. Large movements should be reviewed before new purchase orders, invoice approval or product pricing decisions.
         </div>
 
-        <div className="mt-6 rounded-3xl border border-[#A3E635]/20 bg-white/5 p-5">
-          <div className="text-sm font-black text-[#A3E635]">Invoice Routing</div>
+        <div className="mt-6 rounded-3xl border border-[#A855F7]/20 bg-white/5 p-5">
+          <div className="text-sm font-black text-[#A855F7]">Invoice Routing</div>
           <div className="mt-2 text-sm leading-7 text-slate-300">
             Suppliers can forward invoices to the VYRON COST invoice email for future AI extraction.
           </div>

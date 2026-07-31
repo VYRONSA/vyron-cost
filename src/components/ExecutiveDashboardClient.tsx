@@ -83,9 +83,9 @@ export default function ExecutiveDashboardClient({
 
   const cards: Array<{ label: string; value: string; note: string; Icon: LucideIcon; colour: string }> = [
     { label: "Monthly Leakage", value: money(leakage.estimatedMonthlyLeakage), note: "Detected leakage exposure", Icon: ShieldAlert, colour: "text-red-700" },
-    { label: "Potential Recovery", value: money(recovery), note: "Identify. Action. Recover.", Icon: Banknote, colour: "text-[#65A30D]" },
+    { label: "Potential Recovery", value: money(recovery), note: "Identify. Action. Recover.", Icon: Banknote, colour: "text-[#7E22CE]" },
     { label: "Recovered This Year", value: money(annualRecovery), note: "Tracked recovered value", Icon: TrendingUp, colour: "text-violet-700" },
-    { label: "Open Opportunities", value: String(recoveryStats.openOpportunities), note: "Recovery tracking lifecycle", Icon: Factory, colour: "text-amber-600" },
+    { label: "Open Opportunities", value: String(recoveryStats.openOpportunities), note: "Recovery tracking lifecycle", Icon: Factory, colour: "text-fuchsia-600" },
   ];
 
   const highRiskOpenItems = opportunities.filter(
@@ -399,7 +399,7 @@ export default function ExecutiveDashboardClient({
         >
           Export Recovery CSV
         </button>
-        <Link href="/ai-cost-intelligence" className="rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/20">
+        <Link href="/ai-cost-intelligence" className="rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/20">
           AI Cost Intelligence
         </Link>
       </VyronPremiumHeroBanner>
@@ -477,8 +477,8 @@ export default function ExecutiveDashboardClient({
                 VYRON has detected {money(leakage.estimatedMonthlyLeakage)} monthly leakage exposure and {belowTarget} products below target GP.
               </p>
             </div>
-            <div className="rounded-3xl bg-[#A3E635]/10 p-5">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#65A30D]">Opportunity</div>
+            <div className="rounded-3xl bg-[#A855F7]/10 p-5">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#7E22CE]">Opportunity</div>
               <p className="mt-2 text-sm font-bold leading-7 text-[#4D7C0F]">
                 Potential recovery is {money(recoveryStats.potentialRecovery)} with {money(recoveryStats.recoveredRecovery)} already recovered.
               </p>
@@ -493,7 +493,7 @@ export default function ExecutiveDashboardClient({
         </div>
 
         <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-          <BrainCircuit size={34} className="text-[#A3E635]" />
+          <BrainCircuit size={34} className="text-[#A855F7]" />
           <h2 className="mt-6 text-3xl font-black">Demo Close Path</h2>
           <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
             Show the prospect the Executive Dashboard, then click into Recovery and Product Profitability.
@@ -502,7 +502,7 @@ export default function ExecutiveDashboardClient({
             <Link href="/financial-leakage" className="inline-flex items-center justify-between rounded-2xl bg-white px-5 py-4 text-sm font-black text-[#F8FAFC]">
               Explain recovery <ArrowRight size={17} />
             </Link>
-            <Link href="/product-profitability" className="inline-flex items-center justify-between rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC]">
+            <Link href="/product-profitability" className="inline-flex items-center justify-between rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-4 text-sm font-black text-[#F8FAFC]">
               Open profitability <ArrowRight size={17} />
             </Link>
           </div>
@@ -614,10 +614,10 @@ export default function ExecutiveDashboardClient({
         <section className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Inventory Intelligence</div>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Inventory Intelligence</div>
               <h3 className="mt-2 text-2xl font-black">Weighted average valuation · live ledger</h3>
             </div>
-            <Link href="/inventory" className="rounded-2xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
+            <Link href="/inventory" className="rounded-2xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-black text-[#F8FAFC]">
               Open inventory →
             </Link>
           </div>

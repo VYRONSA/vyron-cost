@@ -276,7 +276,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
               </section>
       
               {!demoMode && unlinkedLines ? (
-                <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+                <p className="mt-4 rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm font-bold text-fuchsia-800">
                   Warning: one or more invoice lines have no stock item linked.
                 </p>
               ) : null}
@@ -304,7 +304,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
                       type="button"
                       disabled={stockBusy}
                       onClick={() => void postStock(true)}
-                      className="rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-black text-amber-800 disabled:opacity-60"
+                      className="rounded-full border border-fuchsia-200 bg-fuchsia-50 px-4 py-2 text-sm font-black text-fuchsia-800 disabled:opacity-60"
                     >
                       Post Stock (Override)
                     </button>
@@ -360,7 +360,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
 function StockStatusPill({ status }: { status: InvoiceStockPostingStatus }) {
   const classes: Record<InvoiceStockPostingStatus, string> = {
     "Not Posted": "bg-slate-100 text-slate-700",
-    Posted: "bg-[#A3E635]/12 text-[#4D7C0F]",
+    Posted: "bg-[#A855F7]/12 text-[#4D7C0F]",
     Reversed: "bg-rose-100 text-rose-700",
   };
   return <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${classes[status]}`}>{status}</span>;

@@ -57,7 +57,7 @@ export default function VyronCoreForecastingClient({ data }: { data: VyronCoreCo
                 <ExecutiveSparkChart
                   data={chartData}
                   height={120}
-                  colour={type === "attrition" ? "#f43f5e" : "#7c3aed"}
+                  colour={type === "attrition" ? "#3b82f6" : "#1d6bff"}
                   variant="line"
                   formatValue={(n) => (isMoney ? money(n) : `${n.toFixed(1)}${type === "productivity" || type === "workforce_health" ? "%" : type === "attrition" ? "%" : ""}`)}
                 />
@@ -83,7 +83,7 @@ export default function VyronCoreForecastingClient({ data }: { data: VyronCoreCo
         <h3 className="text-xl font-black text-slate-950">Attrition forecast curve</h3>
         <p className="mt-1 text-sm font-semibold text-slate-500">6-month attrition probability trend from twin attrition signals</p>
         <div className="mt-6 h-48">
-          <ExecutiveSparkChart data={data.attritionForecast} height={160} colour="#f43f5e" variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
+          <ExecutiveSparkChart data={data.attritionForecast} height={160} colour="#3b82f6" variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
         </div>
       </section>
 

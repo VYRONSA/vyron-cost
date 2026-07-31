@@ -34,17 +34,17 @@ export default function ProductionPlanningClient({ products }: { products: Produ
       <section className="grid gap-6">
             <section className="grid gap-5 md:grid-cols-3">
               <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <Factory className="text-[#65A30D]" size={30} />
+                <Factory className="text-[#7E22CE]" size={30} />
                 <div className="mt-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">Weekly Batches</div>
                 <div className="mt-2 text-4xl font-black text-[#F8FAFC]">{totalBatches}</div>
               </div>
               <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <PackageCheck className="text-[#65A30D]" size={30} />
+                <PackageCheck className="text-[#7E22CE]" size={30} />
                 <div className="mt-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">Ingredient Budget</div>
-                <div className="mt-2 text-4xl font-black text-[#65A30D]">{money(totalBudget)}</div>
+                <div className="mt-2 text-4xl font-black text-[#7E22CE]">{money(totalBudget)}</div>
               </div>
               <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Planning Basis</div>
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Planning Basis</div>
                 <div className="mt-2 text-3xl font-black">BOM × Forecast Demand</div>
                 <p className="mt-2 text-sm font-semibold text-slate-300">Client demo planning model for Handcrafted Foods.</p>
               </div>
@@ -52,7 +52,7 @@ export default function ProductionPlanningClient({ products }: { products: Produ
 
             <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
               <div className="min-w-[980px]">
-                <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+                <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
                   <div className="col-span-2">Product</div>
                   <div>Weekly Units</div>
                   <div>Batch Size</div>
@@ -69,9 +69,9 @@ export default function ProductionPlanningClient({ products }: { products: Produ
                     </div>
                     <div>{row.weeklyUnits}</div>
                     <div>{row.batchSize}</div>
-                    <div className="font-black text-[#65A30D]">{row.batches}</div>
+                    <div className="font-black text-[#7E22CE]">{row.batches}</div>
                     <div className="font-black">{money(row.ingredientBudget)}</div>
-                    <Link href={row.product.product_id ? `/products/${row.product.product_id}` : "/products"} className="inline-flex items-center gap-2 text-sm font-black text-[#65A30D]">
+                    <Link href={row.product.product_id ? `/products/${row.product.product_id}` : "/products"} className="inline-flex items-center gap-2 text-sm font-black text-[#7E22CE]">
                       Product <ArrowRight size={14} />
                     </Link>
                   </div>

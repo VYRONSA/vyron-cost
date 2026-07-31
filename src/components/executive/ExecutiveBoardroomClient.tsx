@@ -316,7 +316,7 @@ export default function ExecutiveBoardroomClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#CBD5E1]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#1D6BFF]/30 bg-[#1D6BFF]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#CBD5E1]">
                 Executive Boardroom
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>{companyName}</h1>
@@ -357,7 +357,7 @@ export default function ExecutiveBoardroomClient({
       </header>
 
       {loadError ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+        <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm font-semibold text-fuchsia-900">
           {loadError}
         </div>
       ) : null}
@@ -395,7 +395,7 @@ export default function ExecutiveBoardroomClient({
               <Link
                 key={kpi.label}
                 href={kpi.href}
-                className={`${M.moduleDataSection} block p-5 transition hover:border-[#7C3AED]/30 hover:shadow-md`}
+                className={`${M.moduleDataSection} block p-5 transition hover:border-[#1D6BFF]/30 hover:shadow-md`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -422,7 +422,7 @@ export default function ExecutiveBoardroomClient({
                 <Link
                   key={signal.id}
                   href={signal.href}
-                  className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 transition hover:border-[#7C3AED]/30"
+                  className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 transition hover:border-[#1D6BFF]/30"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-bold text-[#0F172A]">{signal.label}</span>
@@ -477,13 +477,13 @@ export default function ExecutiveBoardroomClient({
                       <tr key={row.id} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
                         <td className="px-4 py-3 font-semibold text-[#0F172A]">{row.issue}</td>
                         <td className="px-4 py-3 text-[#64748B]">{row.affected}</td>
-                        <td className="px-4 py-3 text-right font-bold text-[#E11D48]">
+                        <td className="px-4 py-3 text-right font-bold text-[#2563EB]">
                           {row.impact > 0 ? `${money(row.impact)}/mo` : "—"}
                         </td>
                         <td className="px-4 py-3 text-[#334155]">{row.confidence}</td>
                         <td className="px-4 py-3 text-[#334155]">{row.action}</td>
                         <td className="px-4 py-3 text-right">
-                          <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+                          <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
                             Open <ArrowRight size={14} />
                           </Link>
                         </td>
@@ -511,10 +511,10 @@ export default function ExecutiveBoardroomClient({
                     <p className="mt-1 text-sm text-[#64748B]">
                       {money(item.currentPrice)} → {money(item.suggestedPrice)} · Target GP {pct(item.targetGp)}
                     </p>
-                    <p className="mt-2 text-sm font-bold text-[#7C3AED]">
+                    <p className="mt-2 text-sm font-bold text-[#1D6BFF]">
                       Recovery potential {money(item.monthlyRecovery)}/month
                     </p>
-                    <Link href="/cost-intelligence" className="mt-2 inline-flex text-xs font-bold text-[#7C3AED]">
+                    <Link href="/cost-intelligence" className="mt-2 inline-flex text-xs font-bold text-[#1D6BFF]">
                       Open Cost Intelligence →
                     </Link>
                   </div>
@@ -545,7 +545,7 @@ export default function ExecutiveBoardroomClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#7C3AED]/30 hover:text-[#7C3AED]"
+                  className="rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
                 >
                   {link.label}
                 </Link>
@@ -561,9 +561,9 @@ export default function ExecutiveBoardroomClient({
 function SeverityBadge({ severity }: { severity: "critical" | "warning" | "info" | "ok" }) {
   const classes = {
     critical: "border-rose-200 bg-rose-50 text-rose-700",
-    warning: "border-amber-200 bg-amber-50 text-amber-800",
-    info: "border-[#7C3AED]/25 bg-[#7C3AED]/10 text-[#7C3AED]",
-    ok: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    warning: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800",
+    info: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
+    ok: "border-violet-200 bg-violet-50 text-violet-700",
   };
   const labels = {
     critical: "Critical",

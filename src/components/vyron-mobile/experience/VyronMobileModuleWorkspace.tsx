@@ -107,7 +107,7 @@ export default function VyronMobileModuleWorkspace({
 
       <PremiumMobileCard tone="default" className="p-4">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#07111F] text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl vyron-grad-surface text-white">
             <Sparkles size={18} />
           </div>
           <div>

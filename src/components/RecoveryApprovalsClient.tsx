@@ -53,21 +53,21 @@ export default function RecoveryApprovalsClient({ findings }: { findings: Leakag
             <section className="grid gap-5 md:grid-cols-3">
               <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Pending Approvals</div>
-                <div className="mt-3 text-4xl font-black text-amber-600">{rows.filter((row) => row.decision === "Pending").length}</div>
+                <div className="mt-3 text-4xl font-black text-fuchsia-600">{rows.filter((row) => row.decision === "Pending").length}</div>
               </div>
-              <div className="rounded-[2rem] bg-[#A3E635]/10 p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#65A30D]">Approved Monthly Recovery</div>
-                <div className="mt-3 text-4xl font-black text-[#65A30D]">{money(approvedMonthly)}</div>
+              <div className="rounded-[2rem] bg-[#A855F7]/10 p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#7E22CE]">Approved Monthly Recovery</div>
+                <div className="mt-3 text-4xl font-black text-[#7E22CE]">{money(approvedMonthly)}</div>
               </div>
               <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">Annualised Approved</div>
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Annualised Approved</div>
                 <div className="mt-3 text-4xl font-black">{money(approvedMonthly * 12)}</div>
               </div>
             </section>
 
             <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
               <div className="min-w-[1100px]">
-                <div className="grid grid-cols-9 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A3E635]">
+                <div className="grid grid-cols-9 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
                   <div>Type</div>
                   <div className="col-span-2">Recovery</div>
                   <div>Monthly</div>
@@ -79,17 +79,17 @@ export default function RecoveryApprovalsClient({ findings }: { findings: Leakag
 
                 {rows.map((row) => (
                   <div key={row.id} className="grid grid-cols-9 items-center border-t border-slate-100 px-5 py-5 text-sm">
-                    <div className="font-black text-[#65A30D]">{row.finding_type}</div>
+                    <div className="font-black text-[#7E22CE]">{row.finding_type}</div>
                     <div className="col-span-2">
                       <div className="font-black text-[#F8FAFC]">{row.title}</div>
                       <div className="text-xs text-slate-500">{row.description}</div>
                     </div>
-                    <div className="font-black text-[#65A30D]">{money(row.recovery)}</div>
+                    <div className="font-black text-[#7E22CE]">{money(row.recovery)}</div>
                     <div>{money(row.annual)}</div>
                     <div>{row.severity}</div>
                     <div><StatusPill tone={row.decision === "Approved" ? "emerald" : row.decision === "Rejected" ? "red" : "amber"}>{row.decision}</StatusPill></div>
                     <div className="col-span-2 flex gap-2">
-                      <button onClick={() => setDecisions((current) => ({ ...current, [row.id]: "Approved" }))} className="inline-flex items-center gap-2 rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]">
+                      <button onClick={() => setDecisions((current) => ({ ...current, [row.id]: "Approved" }))} className="inline-flex items-center gap-2 rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]">
                         <CheckCircle2 size={14} /> Approve
                       </button>
                       <button onClick={() => setDecisions((current) => ({ ...current, [row.id]: "Rejected" }))} className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-2 text-xs font-black text-red-700">

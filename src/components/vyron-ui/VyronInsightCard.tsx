@@ -31,10 +31,10 @@ export function VyronInsightCard({
 }) {
   const statusClass =
     statusTone === "warning"
-      ? "border border-[#F43F5E]/25 bg-[#F43F5E]/8 text-[#E11D48]"
+      ? "border border-[#3B82F6]/25 bg-[#3B82F6]/8 text-[#2563EB]"
       : statusTone === "healthy" || isMonitoringLabel(status)
         ? M.statusBrand
-        : "border border-[#7C3AED]/20 bg-[#7C3AED]/8 text-[#7C3AED]";
+        : "border border-[#1D6BFF]/20 bg-[#1D6BFF]/8 text-[#1D6BFF]";
 
   return (
     <section className={`relative min-h-[360px] min-w-0 max-w-full p-6 md:p-7 ${M.lightCard}`}>
@@ -61,7 +61,7 @@ export function VyronInsightCard({
               >
                 <span className={`min-w-0 break-words font-semibold ${M.muted}`}>{label}</span>
                 <span
-                  className={`min-w-0 shrink-0 text-right break-words font-bold ${isMonitoringLabel(value) ? "text-[#7C3AED]" : "text-[#0F172A]"}`}
+                  className={`min-w-0 shrink-0 text-right break-words font-bold ${isMonitoringLabel(value) ? "text-[#1D6BFF]" : "text-[#0F172A]"}`}
                 >
                   {value}
                 </span>
@@ -70,7 +70,7 @@ export function VyronInsightCard({
           </div>
 
           <div
-            className={`mt-5 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.12em] ${statusTone === "warning" ? "text-[#E11D48]" : "text-[#7C3AED]"}`}
+            className={`mt-5 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.12em] ${statusTone === "warning" ? "text-[#2563EB]" : "text-[#1D6BFF]"}`}
           >
             {footerLabel} <ArrowRight size={14} />
           </div>
@@ -84,7 +84,7 @@ export function VyronInsightCard({
                   <div className="flex items-center gap-3">
                     <div
                       className={`h-2 w-2 shrink-0 rounded-full ${
-                        index === 0 ? "bg-[#F43F5E]" : index === 1 ? "bg-[#7C3AED]" : "bg-[#9333EA]"
+                        index === 0 ? "bg-[#3B82F6]" : index === 1 ? "bg-[#1D6BFF]" : "bg-[#3B82F6]"
                       }`}
                     />
                     <div className={`text-xs font-bold uppercase tracking-[0.1em] ${M.body}`}>{item}</div>

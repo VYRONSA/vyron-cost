@@ -69,7 +69,7 @@ export default function ManufacturingDashboardClient() {
 
   const manufacturingActions = (
     <>
-      <Link href="/manufacturing/runs/new" className="rounded-xl border border-[#A3E635]/30 bg-[#24183F] px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
+      <Link href="/manufacturing/runs/new" className="rounded-xl border border-[#A855F7]/30 bg-[#24183F] px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
         New Production Run
       </Link>
       <Link href="/manufacturing/history" className="rounded-xl border border-white/10 bg-[#21163A] px-5 py-3 text-sm font-semibold text-[#CBD5E1]">
@@ -131,7 +131,7 @@ export default function ManufacturingDashboardClient() {
       {stats ? (
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#1A1230] p-6 text-[#F8FAFC] shadow-[0_4px_28px_rgba(0,0,0,0.2)]">
           <div className="relative flex flex-wrap items-center gap-6">
-            <Package className="text-[#A3E635]" size={32} />
+            <Package className="text-[#A855F7]" size={32} />
             <div className="flex-1">
               <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#94A3B8]">Finished Goods Inventory Value</div>
               <div className="mt-1 text-3xl font-black">{formatMoney(stats.finishedGoodsValue)}</div>

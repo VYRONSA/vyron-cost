@@ -97,7 +97,7 @@ export default function CustomerIntelligenceClient() {
                 <div className="font-black text-slate-950">{customer.name}</div>
                 <div className="text-right font-black">{formatCurrency(customer.revenue)}</div>
                 <div className="text-right font-bold">{formatCurrency(customer.cogs)}</div>
-                <div className="text-right font-black text-[#65A30D]">{formatCurrency(customer.gp)}</div>
+                <div className="text-right font-black text-[#7E22CE]">{formatCurrency(customer.gp)}</div>
                 <div className="text-right font-black">{customer.gpPct}%</div>
                 <div className="font-bold text-purple-700">{customer.topProduct}</div>
               </div>

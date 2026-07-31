@@ -22,7 +22,7 @@ function resolveSignal(item: AiFinancialFeedItem): { emoji: string; signal: Sign
 const signalStyles = {
   critical: "border-[#FECACA] bg-[#FEF2F2]",
   high: "border-[#FDE68A] bg-[#FFFBEB]",
-  recover: "border-[#BBF7D0] bg-[#F0FDF4]",
+  recover: "border-[#DDD6FE] bg-[#F0FDF4]",
   medium: "border-[#E2E8F0] bg-[#F8FAFC]",
 };
 
@@ -52,9 +52,9 @@ export default function AiFinancialIntelligenceFeed({ items }: { items: AiFinanc
                 <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#EF4444]">Exposure</div>
                 <div className="mt-1 text-lg font-black text-[#0F172A]">{formatMoney(totalLoss)}</div>
               </div>
-              <div className="rounded-2xl border border-[#BBF7D0] bg-[#F0FDF4] px-5 py-4">
-                <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#22C55E]">Recoverable</div>
-                <div className="mt-1 text-lg font-black text-[#22C55E]">{formatMoney(totalRecoverable)}</div>
+              <div className="rounded-2xl border border-[#DDD6FE] bg-[#F0FDF4] px-5 py-4">
+                <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#9333EA]">Recoverable</div>
+                <div className="mt-1 text-lg font-black text-[#9333EA]">{formatMoney(totalRecoverable)}</div>
               </div>
             </div>
           </div>
@@ -83,7 +83,7 @@ export default function AiFinancialIntelligenceFeed({ items }: { items: AiFinanc
                       <div className="text-sm font-black text-[#EF4444]">{formatMoney(item.lossAmount)}</div>
                     )}
                     {item.recoverableAmount > 0 && (
-                      <div className="text-sm font-black text-[#22C55E]">{formatMoney(item.recoverableAmount)}</div>
+                      <div className="text-sm font-black text-[#9333EA]">{formatMoney(item.recoverableAmount)}</div>
                     )}
                     <span className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-[0.12em] text-[#64748B] group-hover:text-[#0F172A]">
                       {item.action}

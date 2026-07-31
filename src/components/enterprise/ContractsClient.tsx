@@ -17,12 +17,12 @@ export default function ContractsClient({ contracts }: { contracts: ContractRow[
     >
       <section className="grid gap-6">
             {renewals.length ? (
-              <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6">
-                <h3 className="font-black text-amber-900">Renewal alerts ({renewals.length})</h3>
+              <div className="rounded-[2rem] border border-fuchsia-200 bg-fuchsia-50 p-6">
+                <h3 className="font-black text-fuchsia-900">Renewal alerts ({renewals.length})</h3>
                 <ul className="mt-3 space-y-2">
                   {renewals.map((c) => (
                     <li key={c.id}>
-                      <Link href={c.href} className="text-sm font-bold text-amber-800 hover:underline">
+                      <Link href={c.href} className="text-sm font-bold text-fuchsia-800 hover:underline">
                         {c.supplierName} — {c.title} · {c.daysToExpiry} days
                       </Link>
                     </li>
@@ -33,7 +33,7 @@ export default function ContractsClient({ contracts }: { contracts: ContractRow[
             <div className="overflow-x-auto rounded-[2rem] bg-white shadow-sm">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-900 text-left text-[10px] font-black uppercase text-[#A3E635]">
+                  <tr className="bg-slate-900 text-left text-[10px] font-black uppercase text-[#A855F7]">
                     <th className="p-4">Supplier</th>
                     <th className="p-4">Contract</th>
                     <th className="p-4">Type</th>
@@ -53,7 +53,7 @@ export default function ContractsClient({ contracts }: { contracts: ContractRow[
                       <td className="p-4 capitalize">{c.contractType}</td>
                       <td className="p-4">{c.endDate || "—"}</td>
                       <td className="p-4">
-                        <span className={c.renewalAlert ? "font-black text-amber-700" : ""}>{c.status}</span>
+                        <span className={c.renewalAlert ? "font-black text-fuchsia-700" : ""}>{c.status}</span>
                       </td>
                     </tr>
                   ))}

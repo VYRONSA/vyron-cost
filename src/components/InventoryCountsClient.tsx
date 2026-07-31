@@ -149,7 +149,7 @@ export default function InventoryCountsClient() {
         </div>
       </div>
 
-      {message ? <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-black text-amber-800">{message}</p> : null}
+      {message ? <p className="rounded-2xl bg-fuchsia-50 px-4 py-3 text-sm font-black text-fuchsia-800">{message}</p> : null}
 
       <div className="overflow-hidden rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         {filtered.length === 0 ? (

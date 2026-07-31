@@ -114,7 +114,7 @@ export default function ProductBomLinkClient({
       {!canEdit ? (
         <p className="mt-4 text-sm font-bold text-violet-800">BOM linking is read-only for your role.</p>
       ) : null}
-      {message && <div className="mt-4 rounded-2xl border border-[#A3E635]/25 bg-[#A3E635]/12 px-4 py-3 text-sm font-bold text-[#65A30D]">{message}</div>}
+      {message && <div className="mt-4 rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/12 px-4 py-3 text-sm font-bold text-[#7E22CE]">{message}</div>}
       {errorMessage && <div className="mt-4 rounded-2xl bg-red-100 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div>}
     </div>
   );

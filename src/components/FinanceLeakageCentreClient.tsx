@@ -11,8 +11,8 @@ function money(value: number) {
 function riskClass(level: string) {
   if (level === "Critical") return "border-red-300 bg-red-50 text-red-800";
   if (level === "High") return "border-orange-300 bg-orange-50 text-orange-800";
-  if (level === "Medium") return "border-amber-300 bg-amber-50 text-amber-800";
-  return "border-[#A3E635]/30 bg-[#A3E635]/10 text-[#4D7C0F]";
+  if (level === "Medium") return "border-fuchsia-300 bg-fuchsia-50 text-fuchsia-800";
+  return "border-[#A855F7]/30 bg-[#A855F7]/10 text-[#4D7C0F]";
 }
 
 export default function FinanceLeakageCentreClient({ centre }: { centre: FinanceLeakageCentre }) {

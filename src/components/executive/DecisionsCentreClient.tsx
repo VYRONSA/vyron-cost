@@ -212,7 +212,7 @@ export default function DecisionsCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#F43F5E]/35 bg-[#F43F5E]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Decisions Centre
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Decisions Centre</h1>
@@ -286,8 +286,8 @@ export default function DecisionsCentreClient({
       ) : (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <SummaryCard label="Critical Decisions" value={String(snapshot.summary.criticalDecisions)} accent="#E11D48" />
-            <SummaryCard label="High Impact Decisions" value={String(snapshot.summary.highImpactDecisions)} accent="#F97316" />
+            <SummaryCard label="Critical Decisions" value={String(snapshot.summary.criticalDecisions)} accent="#2563EB" />
+            <SummaryCard label="High Impact Decisions" value={String(snapshot.summary.highImpactDecisions)} accent="#A855F7" />
             <SummaryCard
               label="Estimated Opportunity"
               value={
@@ -295,7 +295,7 @@ export default function DecisionsCentreClient({
                   ? snapshot.summary.opportunityLabel
                   : "Opportunity Not Yet Quantifiable"
               }
-              accent="#7C3AED"
+              accent="#1D6BFF"
               small={snapshot.summary.estimatedOpportunity == null}
             />
             <SummaryCard
@@ -305,19 +305,19 @@ export default function DecisionsCentreClient({
                   ? snapshot.summary.riskReductionLabel
                   : "Opportunity Not Yet Quantifiable"
               }
-              accent="#9333EA"
+              accent="#3B82F6"
               small={snapshot.summary.estimatedRiskReduction == null}
             />
             <SummaryCard label="Confidence Level" value={snapshot.summary.confidenceLevel} accent="#0F172A" />
           </section>
 
           {snapshot.recommendedDecisions.length === 0 ? (
-            <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
+            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-6">
               <div className="flex items-start gap-3">
-                <Gavel size={22} className="mt-0.5 shrink-0 text-emerald-700" />
+                <Gavel size={22} className="mt-0.5 shrink-0 text-violet-700" />
                 <div>
-                  <h2 className="text-lg font-bold text-emerald-950">No significant executive decisions currently required.</h2>
-                  <p className="mt-2 text-sm font-medium leading-6 text-emerald-900">
+                  <h2 className="text-lg font-bold text-violet-950">No significant executive decisions currently required.</h2>
+                  <p className="mt-2 text-sm font-medium leading-6 text-violet-900">
                     Current operational signals do not indicate material decisions requiring executive action.
                   </p>
                 </div>
@@ -416,7 +416,7 @@ export default function DecisionsCentreClient({
                   Competing decisions identified only when supported by simultaneous signals.
                 </p>
                 {snapshot.conflicts.length === 0 ? (
-                  <p className="mt-4 text-sm font-semibold text-emerald-700">No decision conflicts detected on current signals.</p>
+                  <p className="mt-4 text-sm font-semibold text-violet-700">No decision conflicts detected on current signals.</p>
                 ) : (
                   <div className="mt-4 space-y-3">
                     {snapshot.conflicts.map((conflict) => (
@@ -479,7 +479,7 @@ export default function DecisionsCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#7C3AED]/30 hover:text-[#7C3AED]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
                 >
                   <link.icon size={16} />
                   {link.label}
@@ -521,7 +521,7 @@ function DecisionRow({ row }: { row: ExecutiveDecision }) {
   return (
     <tr className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
       <td className="px-4 py-3 font-bold text-[#0F172A]">{row.decision}</td>
-      <td className="px-4 py-3 font-semibold text-[#7C3AED]">{row.category}</td>
+      <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{row.category}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#64748B]">{row.whyRecommended}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.expectedImpact}</td>
       <td className="px-4 py-3">
@@ -533,7 +533,7 @@ function DecisionRow({ row }: { row: ExecutiveDecision }) {
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.riskReduction}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.opportunity}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -546,7 +546,7 @@ function PlaybookCard({ playbook }: { playbook: DecisionPlaybook }) {
     <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7C3AED]">{playbook.category}</div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1D6BFF]">{playbook.category}</div>
           <h3 className="mt-1 font-bold text-[#0F172A]">{playbook.title}</h3>
         </div>
         <ConfidenceBadge confidence={playbook.confidence} />
@@ -565,7 +565,7 @@ function PlaybookCard({ playbook }: { playbook: DecisionPlaybook }) {
           <span className="font-medium text-[#334155]">{playbook.expectedResult}</span>
         </p>
       </div>
-      <Link href={playbook.href} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+      <Link href={playbook.href} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
         Open module <ArrowRight size={14} />
       </Link>
     </div>
@@ -581,9 +581,9 @@ function ImpactMatrixQuadrant({
 }) {
   const accent =
     quadrant === "High Impact / Low Effort"
-      ? "border-emerald-200 bg-emerald-50"
+      ? "border-violet-200 bg-violet-50"
       : quadrant === "High Impact / High Effort"
-        ? "border-amber-200 bg-amber-50"
+        ? "border-fuchsia-200 bg-fuchsia-50"
         : quadrant === "Low Impact / Low Effort"
           ? "border-[#E2E8F0] bg-[#F8FAFC]"
           : "border-rose-100 bg-rose-50";
@@ -591,7 +591,7 @@ function ImpactMatrixQuadrant({
   return (
     <div className={`rounded-2xl border p-4 ${accent}`}>
       <div className="flex items-center gap-2">
-        <Scale size={16} className="text-[#7C3AED]" />
+        <Scale size={16} className="text-[#1D6BFF]" />
         <h3 className="font-bold text-[#0F172A]">{quadrant}</h3>
       </div>
       {decisions.length === 0 ? (
@@ -600,7 +600,7 @@ function ImpactMatrixQuadrant({
         <ul className="mt-3 space-y-2">
           {decisions.map((row) => (
             <li key={row.id}>
-              <Link href={row.href} className="text-sm font-semibold text-[#334155] hover:text-[#7C3AED]">
+              <Link href={row.href} className="text-sm font-semibold text-[#334155] hover:text-[#1D6BFF]">
                 {row.decision}
               </Link>
             </li>
@@ -620,7 +620,7 @@ function OpportunityCard({ item }: { item: OpportunityItem }) {
       </div>
       <p className="mt-2 text-sm font-medium text-[#334155]">{item.estimatedImpact}</p>
       <p className="mt-2 text-xs font-semibold text-[#64748B]">{item.recommendedAction}</p>
-      <Link href={item.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+      <Link href={item.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
         Open <ArrowRight size={14} />
       </Link>
     </div>
@@ -629,7 +629,7 @@ function OpportunityCard({ item }: { item: OpportunityItem }) {
 
 function ConflictCard({ conflict }: { conflict: DecisionConflict }) {
   return (
-    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+    <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-4">
       <h3 className="font-bold text-[#0F172A]">{conflict.title}</h3>
       <div className="mt-3 grid gap-2 text-sm md:grid-cols-2">
         <p>
@@ -657,19 +657,19 @@ function QueueRow({ item }: { item: DecisionQueueItem }) {
   return (
     <tr className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
       <td className="px-4 py-3">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#0B1220] text-[10px] font-bold text-white">
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full vyron-grad-surface text-[10px] font-bold text-white">
           {item.priority}
         </span>
       </td>
       <td className="px-4 py-3 font-bold text-[#0F172A]">{item.decision}</td>
-      <td className="px-4 py-3 font-semibold text-[#7C3AED]">{item.category}</td>
+      <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{item.category}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{item.impact}</td>
       <td className="px-4 py-3">
         <ConfidenceBadge confidence={item.confidence} />
       </td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{item.suggestedOwner}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={item.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#7C3AED]">
+        <Link href={item.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -681,8 +681,8 @@ function UrgencyBadge({ urgency }: { urgency: ExecutiveDecision["urgency"] }) {
   const classes: Record<ExecutiveDecision["urgency"], string> = {
     Immediate: "border-rose-200 bg-rose-50 text-rose-800",
     High: "border-orange-200 bg-orange-50 text-orange-900",
-    Medium: "border-amber-200 bg-amber-50 text-amber-900",
-    Low: "border-[#7C3AED]/25 bg-[#7C3AED]/10 text-[#7C3AED]",
+    Medium: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
   };
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes[urgency]}`}>
@@ -693,8 +693,8 @@ function UrgencyBadge({ urgency }: { urgency: ExecutiveDecision["urgency"] }) {
 
 function ConfidenceBadge({ confidence }: { confidence: ExecutiveDecision["confidence"] }) {
   const classes = {
-    High: "text-emerald-700",
-    Medium: "text-amber-800",
+    High: "text-violet-700",
+    Medium: "text-fuchsia-800",
     Low: "text-[#64748B]",
   };
   return <span className={`text-xs font-bold ${classes[confidence]}`}>{confidence}</span>;

@@ -11,7 +11,7 @@ function money(n: number) {
 function sevClass(s: string) {
   if (s === "critical") return "bg-red-100 text-red-800";
   if (s === "high") return "bg-orange-100 text-orange-800";
-  return "bg-amber-100 text-amber-800";
+  return "bg-fuchsia-100 text-fuchsia-800";
 }
 
 export default function FraudDetectionClient({ alerts }: { alerts: FraudAlert[] }) {

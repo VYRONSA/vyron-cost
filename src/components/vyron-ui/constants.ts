@@ -1,5 +1,5 @@
 /** Shared VYRON COST UI tokens — single source for page layout and colours. */
-export const VYRON_LIME = "#7C3AED";
+export const VYRON_LIME = "#1D6BFF";
 export const VYRON_HEADING = "#0F172A";
 export const VYRON_BODY = "#334155";
 export const VYRON_MUTED = "#64748B";

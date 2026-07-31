@@ -85,7 +85,7 @@ export default function InventoryStockDetailClient({ stockItemId }: { stockItemI
         <div className="overflow-x-auto rounded-2xl border bg-white">
         <h2 className="border-b px-4 py-3 text-sm font-black">Stock Ledger</h2>
         <table className="min-w-full text-xs">
-          <thead className="bg-slate-900 font-black uppercase text-[#A3E635]">
+          <thead className="bg-slate-900 font-black uppercase text-[#A855F7]">
             <tr>
               <th className="px-3 py-2">Date</th>
               <th>Type</th>

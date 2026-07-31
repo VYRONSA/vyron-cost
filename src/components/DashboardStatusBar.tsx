@@ -6,8 +6,8 @@ import { LeakageKpis } from "@/lib/vyron-financial-command-data";
 export default function DashboardStatusBar({ kpis }: { kpis: LeakageKpis }) {
   const items = [
     { label: "Money At Risk", value: formatExecutiveMoney(kpis.moneyAtRisk), tone: "text-[#EF4444]" },
-    { label: "Recoverable / Year", value: formatCompactAnnual(kpis.recoverableAnnual), tone: "text-[#22C55E]" },
-    { label: "Active Actions", value: String(kpis.pendingActions), tone: "text-[#F59E0B]" },
+    { label: "Recoverable / Year", value: formatCompactAnnual(kpis.recoverableAnnual), tone: "text-[#9333EA]" },
+    { label: "Active Actions", value: String(kpis.pendingActions), tone: "text-[#C026D3]" },
     { label: "Recovery Rate", value: `${kpis.recoveryRatePercent}%`, tone: "text-[#0F172A]" },
     { label: "Threat Signals", value: "5", tone: "text-[#EF4444]" },
   ];
@@ -16,7 +16,7 @@ export default function DashboardStatusBar({ kpis }: { kpis: LeakageKpis }) {
     <footer className="sticky bottom-0 z-10 mt-3 border-t border-[#E2E8F0] bg-white/95 backdrop-blur-sm">
       <div className="flex flex-wrap items-center gap-4 px-1 py-3">
         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#64748B]">
-          <Activity size={14} className="text-[#22C55E]" />
+          <Activity size={14} className="text-[#9333EA]" />
           Live Status
         </div>
         {items.map((item) => (

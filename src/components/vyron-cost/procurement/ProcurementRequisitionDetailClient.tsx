@@ -119,7 +119,7 @@ export default function ProcurementRequisitionDetailClient({ requisitionId }: { 
               type="button"
               disabled={generating || updating}
               onClick={() => void generatePurchaseOrders()}
-              className="rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+              className="rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
             >
               {generating ? "Generating…" : "Generate Purchase Orders"}
             </button>
@@ -129,7 +129,7 @@ export default function ProcurementRequisitionDetailClient({ requisitionId }: { 
               type="button"
               disabled={updating}
               onClick={() => void advanceStatus(nextAction.status)}
-              className="rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+              className="rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
             >
               {updating ? "Updating…" : nextAction.label}
             </button>
@@ -152,7 +152,7 @@ export default function ProcurementRequisitionDetailClient({ requisitionId }: { 
     >
       <div className="space-y-6">
         {message ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+          <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800">
             {message}{" "}
             <Link href="/purchase-orders" className="font-bold underline">
               View purchase orders
@@ -222,7 +222,7 @@ export default function ProcurementRequisitionDetailClient({ requisitionId }: { 
                           <td className="px-4 py-3 text-right text-sm">
                             {line.available_qty} {line.unit}
                           </td>
-                          <td className="px-4 py-3 text-right text-sm font-bold text-amber-700">
+                          <td className="px-4 py-3 text-right text-sm font-bold text-fuchsia-700">
                             {line.shortage_qty} {line.unit}
                           </td>
                           <td className="px-4 py-3 text-sm">
@@ -240,7 +240,7 @@ export default function ProcurementRequisitionDetailClient({ requisitionId }: { 
                           <td className="px-4 py-3 text-right font-bold">{formatMoney(line.estimated_cost)}</td>
                           <td className="px-4 py-3">
                             {rec?.warning ? (
-                              <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-amber-800">
+                              <span className="rounded-full bg-fuchsia-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-fuchsia-800">
                                 {rec.warning}
                               </span>
                             ) : (

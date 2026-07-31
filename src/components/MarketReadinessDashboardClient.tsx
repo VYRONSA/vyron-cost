@@ -25,10 +25,10 @@ export default function MarketReadinessDashboardClient({ snapshot }: { snapshot:
       <section className="grid gap-6">
             <div className="grid gap-5 md:grid-cols-3">
               {items.map(([label, value, href]) => (
-                <Link key={label} href={href} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)] transition hover:bg-[#A3E635]/10">
+                <Link key={label} href={href} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)] transition hover:bg-[#A855F7]/10">
                   <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{label}</div>
                   <div className="mt-3 text-4xl font-black text-[#F8FAFC]">{value}</div>
-                  <div className="mt-3 text-sm font-black text-[#65A30D]">Open →</div>
+                  <div className="mt-3 text-sm font-black text-[#7E22CE]">Open →</div>
                 </Link>
               ))}
             </div>

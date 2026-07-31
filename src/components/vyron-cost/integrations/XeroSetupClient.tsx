@@ -176,7 +176,7 @@ export default function XeroSetupClient() {
           Mapping and connection scoped to workspace: <span className="font-black">{active.companyName}</span>
         </div>
       ) : (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+        <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm font-bold text-fuchsia-800">
           No active client workspace — select a workspace before connecting Xero.
         </div>
       )}
@@ -225,7 +225,7 @@ export default function XeroSetupClient() {
             {canView ? (
               <Link
                 href="/integrations/xero/sync-centre"
-                className="inline-flex items-center gap-2 rounded-2xl bg-[#24183F] border border-[#A3E635]/30 px-5 py-3 text-sm font-black text-white"
+                className="inline-flex items-center gap-2 rounded-2xl bg-[#24183F] border border-[#A855F7]/30 px-5 py-3 text-sm font-black text-white"
               >
                 <ExternalLink size={16} />
                 Open Sync Centre
@@ -265,11 +265,11 @@ export default function XeroSetupClient() {
         ) : null}
 
         {oauthReady ? (
-          <p className="mt-4 text-xs font-semibold text-[#65A30D]">
+          <p className="mt-4 text-xs font-semibold text-[#7E22CE]">
             Xero OAuth is configured. Connect Xero redirects to login.xero.com for real authorisation.
           </p>
         ) : (
-          <p className="mt-4 text-xs font-semibold text-amber-700">
+          <p className="mt-4 text-xs font-semibold text-fuchsia-700">
             Set XERO_CLIENT_ID, XERO_CLIENT_SECRET and XERO_REDIRECT_URI to enable live Xero OAuth.
           </p>
         )}
@@ -339,15 +339,15 @@ function InfoTile({
 }) {
   const statusClass =
     status === "Connecting"
-      ? "border-amber-200 bg-amber-50 text-amber-800"
+      ? "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800"
       : highlight
-        ? "border-[#A3E635]/25 bg-[#A3E635]/10 text-[#4D7C0F]"
+        ? "border-[#A855F7]/25 bg-[#A855F7]/10 text-[#4D7C0F]"
         : "border-slate-100 bg-slate-50 text-slate-900";
 
   return (
     <div className={`rounded-2xl border p-4 ${statusClass}`}>
       <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">{label}</div>
-      <div className={`mt-2 text-sm font-black ${status === "Connecting" ? "text-amber-800" : highlight ? "text-[#4D7C0F]" : "text-slate-900"}`}>
+      <div className={`mt-2 text-sm font-black ${status === "Connecting" ? "text-fuchsia-800" : highlight ? "text-[#4D7C0F]" : "text-slate-900"}`}>
         {value}
       </div>
     </div>

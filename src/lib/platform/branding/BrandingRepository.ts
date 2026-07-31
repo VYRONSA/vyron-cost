@@ -77,7 +77,7 @@ function defaultBranding(input: { workspaceId?: string | null; companyId?: strin
     palette: {
       primaryColor: "#4338CA",
       secondaryColor: "#0F172A",
-      accentColor: "#7C3AED",
+      accentColor: "#1D6BFF",
       darkTextColor: "#0F172A",
       lightTextColor: "#FFFFFF",
       headerBackground: "#0F172A",

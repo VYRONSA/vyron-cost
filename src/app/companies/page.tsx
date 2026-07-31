@@ -40,7 +40,7 @@ export default async function CompaniesPage() {
                   <b>VAT:</b> {Number(company.vat_percent || 15).toFixed(2)}%
                 </div>
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <b>Accent:</b> {company.primary_color || "#10b981"}
+                  <b>Accent:</b> {company.primary_color || "#8b5cf6"}
                 </div>
               </div>
             </div>

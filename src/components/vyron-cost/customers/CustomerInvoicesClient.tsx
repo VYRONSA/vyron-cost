@@ -962,7 +962,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                           </button>
                         ))
                       ) : (
-                        <div className="px-4 py-3 text-sm font-bold text-amber-700">
+                        <div className="px-4 py-3 text-sm font-bold text-fuchsia-700">
                           No customers found. Add customers under Customers, or type manually.
                         </div>
                       )}
@@ -1018,9 +1018,9 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                 <p className="text-sm font-semibold text-slate-500">Select finished products. Prices and costs fill automatically when product master data exists.</p>
               </div>
               {finishedGoods.length === 0 ? (
-                <span className="rounded-full bg-amber-50 px-3 py-2 text-xs font-black text-amber-700">No finished goods master found yet</span>
+                <span className="rounded-full bg-fuchsia-50 px-3 py-2 text-xs font-black text-fuchsia-700">No finished goods master found yet</span>
               ) : (
-                <span className="rounded-full border border-[#A3E635]/25 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#65A30D]">{finishedGoods.length} finished goods loaded</span>
+                <span className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]">{finishedGoods.length} finished goods loaded</span>
               )}
             </div>
 
@@ -1064,12 +1064,12 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                                       </span>
                                       <span className="text-right text-xs font-black text-slate-700">
                                         {money(product.sellingPrice)}
-                                        <span className="block text-[#65A30D]">Cost {money(product.unitCost)}</span>
+                                        <span className="block text-[#7E22CE]">Cost {money(product.unitCost)}</span>
                                       </span>
                                     </button>
                                   ))
                                 ) : (
-                                  <div className="px-4 py-3 text-sm font-bold text-amber-700">
+                                  <div className="px-4 py-3 text-sm font-bold text-fuchsia-700">
                                     No finished goods found. Add products/finished goods, or type manually.
                                   </div>
                                 )}
@@ -1099,7 +1099,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                       <div className="flex flex-wrap gap-4 text-sm font-black text-slate-700">
                         <span>Line Total: <b className="text-slate-950">{money(totals.total)}</b></span>
                         <span>COGS: <b className="text-slate-950">{money(totals.cogs)}</b></span>
-                        <span>GP: <b className="text-[#65A30D]">{money(totals.gp)}</b></span>
+                        <span>GP: <b className="text-[#7E22CE]">{money(totals.gp)}</b></span>
                       </div>
                       <button
                         type="button"
@@ -1122,7 +1122,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
               <span>VAT: <b className="text-slate-950">{money(draftTotals.vat)}</b></span>
               <span>Total: <b className="text-slate-950">{money(draftTotals.total)}</b></span>
               <span>COGS: <b className="text-slate-950">{money(draftTotals.cogs)}</b></span>
-              <span>GP: <b className="text-[#65A30D]">{money(draftTotals.gp)}</b></span>
+              <span>GP: <b className="text-[#7E22CE]">{money(draftTotals.gp)}</b></span>
             </div>
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={addLine} className="inline-flex items-center gap-2 rounded-2xl border border-violet-100 bg-white px-5 py-3 text-sm font-black text-violet-800">
@@ -1184,7 +1184,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                             Email
                           </a>
                         ) : null}
-                        {invoice.status === "Sent" && canEdit ? <button onClick={() => updateInvoiceStatus(invoice.id, "Paid")} className="rounded-xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-3 py-2 text-xs font-black text-[#4D7C0F]">Paid</button> : null}
+                        {invoice.status === "Sent" && canEdit ? <button onClick={() => updateInvoiceStatus(invoice.id, "Paid")} className="rounded-xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#4D7C0F]">Paid</button> : null}
                         {invoice.status !== "Paid" && invoice.status !== "Cancelled" && canEdit ? <button onClick={() => updateInvoiceStatus(invoice.id, "Cancelled")} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Cancel</button> : null}
                         {canDelete ? <button onClick={() => deleteInvoice(invoice.id)} className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-black text-rose-700">Delete</button> : null}
                       </div>
@@ -1221,7 +1221,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <StockPostingBadge status={selectedInvoice.stockPostingStatus || "Not Posted"} />
                 {invoiceHasUnlinkedStock(selectedInvoice) ? (
-                  <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">
+                  <span className="rounded-full bg-fuchsia-50 px-3 py-1 text-xs font-black text-fuchsia-700">
                     Warning: one or more lines have no stock item linked
                   </span>
                 ) : null}
@@ -1251,7 +1251,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                     if (!confirm("Post stock with insufficient-stock override?")) return;
                     void postInvoiceStock(selectedInvoice, true);
                   }}
-                  className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-black text-amber-800 disabled:opacity-60"
+                  className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-5 py-3 text-sm font-black text-fuchsia-800 disabled:opacity-60"
                 >
                   Post Stock (Override)
                 </button>
@@ -1282,7 +1282,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                 </a>
               ) : null}
               {selectedInvoice.status === "Sent" && canEdit ? (
-                <button onClick={() => updateInvoiceStatus(selectedInvoice.id, "Paid")} className="rounded-2xl border border-[#A3E635]/20 bg-[#A3E635]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
+                <button onClick={() => updateInvoiceStatus(selectedInvoice.id, "Paid")} className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
                   Mark Paid
                 </button>
               ) : null}
@@ -1408,11 +1408,11 @@ function PickerBox({ children }: { children: React.ReactNode }) {
 
 function StatusBadge({ status }: { status: InvoiceStatus }) {
   const classes: Record<InvoiceStatus, string> = {
-    Draft: "bg-amber-100 text-amber-800",
+    Draft: "bg-fuchsia-100 text-fuchsia-800",
     Approved: "bg-indigo-100 text-indigo-800",
     Posted: "bg-sky-100 text-sky-800",
     Sent: "bg-purple-100 text-purple-800",
-    Paid: "bg-[#A3E635]/12 text-[#4D7C0F]",
+    Paid: "bg-[#A855F7]/12 text-[#4D7C0F]",
     Cancelled: "bg-slate-200 text-slate-700",
   };
 
@@ -1422,7 +1422,7 @@ function StatusBadge({ status }: { status: InvoiceStatus }) {
 function StockPostingBadge({ status }: { status: InvoiceStockPostingStatus }) {
   const classes: Record<InvoiceStockPostingStatus, string> = {
     "Not Posted": "bg-slate-100 text-slate-700",
-    Posted: "bg-[#A3E635]/12 text-[#4D7C0F]",
+    Posted: "bg-[#A855F7]/12 text-[#4D7C0F]",
     Reversed: "bg-rose-100 text-rose-700",
   };
   return <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${classes[status]}`}>{status}</span>;

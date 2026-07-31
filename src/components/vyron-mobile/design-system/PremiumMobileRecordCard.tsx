@@ -34,7 +34,7 @@ export default function PremiumMobileRecordCard({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(7,17,31,0.07),transparent_45%)]" />
 
       <div className="relative flex items-start justify-between gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#07111F] text-white shadow-[0_10px_26px_rgba(7,17,31,0.24)]">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl vyron-grad-surface text-white shadow-[0_10px_26px_rgba(7,17,31,0.24)]">
           <Icon size={20} />
         </div>
         <PremiumMobileStatusBadge label={status} tone={statusTone} />
