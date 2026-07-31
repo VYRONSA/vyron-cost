@@ -140,8 +140,8 @@ export function VyronPremiumFormulaCard({
           <div className={`text-[11px] font-bold uppercase tracking-[0.16em] ${M.mutedOnDark}`}>{eyebrow}</div>
           <h3 className={`mt-2 text-xl md:text-2xl ${M.headingOnDark}`}>{title}</h3>
           <div className={`mt-5 space-y-3 text-sm font-medium leading-7 ${M.bodyOnDark}`}>
-            {formulas.map((line) => (
-              <p key={line.label}>
+            {formulas.map((line, index) => (
+              <p key={`${line.label}-${index}`}>
                 <span className="font-bold text-[#3B82F6]">{line.label}</span> = {line.formula}
               </p>
             ))}
@@ -154,8 +154,8 @@ export function VyronPremiumFormulaCard({
   return (
     <VyronSurfaceCard className={className} title={title} subtitle={eyebrow}>
       <div className={`space-y-3 text-sm font-medium leading-7 ${M.body}`}>
-        {formulas.map((line) => (
-          <p key={line.label}>
+        {formulas.map((line, index) => (
+          <p key={`${line.label}-${index}`}>
             <span className={`font-bold ${M.heading}`}>{line.label}</span> = {line.formula}
           </p>
         ))}

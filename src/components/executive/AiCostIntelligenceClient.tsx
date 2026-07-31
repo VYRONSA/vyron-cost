@@ -134,11 +134,11 @@ export default function AiCostIntelligenceClient({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-[#A855F7]/20 bg-[#252040] p-6 shadow-sm">
+      <section className="rounded-2xl border border-[#A855F7]/20 border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
         <h2 className="text-xl font-black text-[#F8FAFC]">Suggested repricing & recovery</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {intelligence.repricingSuggestions.map((row) => (
-            <div key={row.productName} className="rounded-xl border border-white/12 bg-[#1e1635] px-4 py-3">
+            <div key={row.productName} className="rounded-xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 px-4 py-3">
               <div className="font-black text-[#F8FAFC]">{row.productName}</div>
               <div className="text-sm font-semibold text-[#CBD5E1]">
                 Suggested price {money(row.suggestedPrice)} from {money(row.currentPrice)}

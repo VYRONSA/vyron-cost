@@ -115,7 +115,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                         type="button"
                         onClick={() => setChartPeriod(p)}
                         className={`rounded-xl px-3 py-1 text-xs font-black capitalize ${
-                          chartPeriod === p ? "bg-violet-600 text-white" : "bg-slate-100 text-slate-600"
+                          chartPeriod === p ? "vyron-grad-surface text-white" : "bg-slate-100 text-slate-600"
                         }`}
                       >
                         {p}

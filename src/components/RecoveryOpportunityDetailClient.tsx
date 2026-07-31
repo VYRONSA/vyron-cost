@@ -105,16 +105,16 @@ export default function RecoveryOpportunityDetailClient({
             </div>
 
             <aside className="space-y-5">
-              <div className="rounded-[2rem] bg-[#08111A] p-6 text-white">
-                <div className="text-xs font-black uppercase tracking-[0.2em] text-[#B6D934]">Potential recovery</div>
+              <div className="rounded-[2rem] vyron-grad-deep p-6 text-white">
+                <div className="text-xs font-black uppercase tracking-[0.2em] text-[#DDD6FE]">Potential recovery</div>
                 <div className="mt-3 text-4xl font-black text-[#A855F7]">{formatMoney(detail.annual_saving)}</div>
                 <div className="mt-2 text-sm text-white/60">per year · {detail.confidencePercent}% confidence</div>
                 <div className="mt-4 rounded-xl bg-white/10 p-4 text-sm">
-                  <div className="font-black text-[#B6D934]">Data source</div>
+                  <div className="font-black text-[#DDD6FE]">Data source</div>
                   <div className="mt-2 text-white/80">{detail.dataSource}</div>
                 </div>
                 <div className="mt-4 rounded-xl bg-white/10 p-4 text-sm">
-                  <div className="font-black text-[#B6D934]">Recommended action</div>
+                  <div className="font-black text-[#DDD6FE]">Recommended action</div>
                   <div className="mt-2 text-white/80">{detail.recommendedAction}</div>
                 </div>
                 <div className="mt-4 text-sm font-bold">Status: {detail.status}</div>

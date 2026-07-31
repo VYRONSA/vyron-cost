@@ -406,7 +406,7 @@ export function EnterpriseAiClient({ presets }: { presets: EnterprisePlatformPay
         {answer ? (
           <>
             <p className={`mt-4 leading-8 ${EP_BODY}`}>{answer.answer}</p>
-            <div className="mt-6 rounded-xl border border-white/10 bg-[#252040]/80 p-4 text-xs text-[#94A3B8]">
+            <div className="mt-6 rounded-xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150/80 p-4 text-xs text-[#94A3B8]">
               <div>Formula: {answer.formula}</div>
               <div className="mt-1">Confidence: {answer.confidence}%</div>
             </div>
@@ -438,7 +438,7 @@ export function PerformanceClient({ perf }: { perf: EnterprisePlatformPayload["p
       </div>
       <ul className="space-y-2">
         {perf.strategies.map((s) => (
-          <li key={s} className={`rounded-xl border border-white/10 bg-[#1e1635] px-4 py-3 text-sm font-bold text-[#CBD5E1]`}>
+          <li key={s} className={`rounded-xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 px-4 py-3 text-sm font-bold text-[#334155]`}>
             {s}
           </li>
         ))}

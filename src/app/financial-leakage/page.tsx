@@ -291,7 +291,7 @@ export default async function FinancialLeakagePage() {
             <div className="text-xs font-black uppercase tracking-[0.18em] text-violet-700">Top Recovery Opportunities ☆</div>
             <h2 className="mt-1 text-2xl font-black text-slate-950">Highest value items to fix first</h2>
           </div>
-          <Link href="/recovery-opportunities" className="rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-lg shadow-violet-500/20">
+          <Link href="/recovery-opportunities" className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20">
             View all opportunities
           </Link>
         </div>
@@ -342,7 +342,7 @@ export default async function FinancialLeakagePage() {
             <div className="text-xs font-black uppercase tracking-[0.18em] text-violet-700">Detailed Recovery Opportunities</div>
             <h2 className="mt-1 text-2xl font-black text-slate-950">Full recovery findings table</h2>
           </div>
-          <div className="rounded-full bg-violet-700 px-5 py-2 text-sm font-black text-white">
+          <div className="rounded-full vyron-grad-surface px-5 py-2 text-sm font-semibold text-white">
             {findings.length} findings
           </div>
         </div>

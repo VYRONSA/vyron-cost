@@ -65,7 +65,7 @@ export default function InvoiceForensicsClient({ rows }: { rows: InvoiceRiskFind
                   placeholder="Search invoice forensics..."
                   className="w-full bg-transparent text-sm font-black text-slate-700 outline-none placeholder:text-slate-400"
                 />
-                <div className="rounded-full bg-violet-700 px-4 py-2 text-xs font-black text-white">
+                <div className="rounded-full vyron-grad-surface px-4 py-2 text-xs font-semibold text-white">
                   {filtered.length} flagged
                 </div>
               </div>

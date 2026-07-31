@@ -133,7 +133,7 @@ export default function RecoveryOpportunitiesClient({
               <button
                 type="button"
                 onClick={() => setVerifiedOnly(false)}
-                className={`rounded-xl px-3 py-2 ${!verifiedOnly ? "bg-violet-700 text-white" : "text-slate-600"}`}
+                className={`rounded-xl px-3 py-2 ${!verifiedOnly ? "vyron-grad-surface text-white" : "text-slate-600"}`}
               >
                 All Opportunities
               </button>

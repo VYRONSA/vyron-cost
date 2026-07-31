@@ -678,7 +678,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-100 p-8">
         <p className="text-sm font-bold text-red-600">{errorMessage || "Review data unavailable."}</p>
-        <Link href="/document-intelligence" className="rounded-xl bg-violet-700 px-4 py-2 text-sm font-black text-white">
+        <Link href="/document-intelligence" className="rounded-xl vyron-grad-surface px-4 py-2 text-sm font-semibold text-white">
           Back to Document Intelligence
         </Link>
       </div>
@@ -780,7 +780,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           <button
             type="button"
             onClick={addInvoiceLine}
-            className="inline-flex items-center gap-1 rounded-lg bg-violet-700 px-3 py-1.5 text-[11px] font-black text-white"
+            className="inline-flex items-center gap-1 rounded-lg vyron-grad-surface px-3 py-1.5 text-[11px] font-semibold text-white"
           >
             <Plus size={12} />
             Add Invoice Line

@@ -72,8 +72,8 @@ export default function ReportsLauncherClient() {
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {filtered.map((card) => <ReportOptionCard key={`${card.title}-${card.href}`} {...card} />)}
       </section>
-      <section className="rounded-2xl border border-white/12 bg-[#252040] p-6 print:hidden">
-        <Link href="/dashboard" className="rounded-xl border border-violet-400/30 bg-violet-600/25 px-5 py-3 text-sm font-bold text-[#F8FAFC]">
+      <section className="rounded-2xl border border-[rgba(15,23,42,0.07)] bg-white/72 p-6 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 print:hidden">
+        <Link href="/dashboard" className="inline-flex items-center justify-center gap-2 rounded-xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white shadow-[var(--vyron-elev-brand)] transition hover:brightness-[1.07]">
           Return to command centre
         </Link>
       </section>

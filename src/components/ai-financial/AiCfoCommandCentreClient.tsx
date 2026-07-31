@@ -84,7 +84,7 @@ export default function AiCfoCommandCentreClient({ data }: { data: AiFinancialIn
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Link href="/ai-cfo-command-centre/leakage" className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-black text-white">
+              <Link href="/ai-cfo-command-centre/leakage" className="rounded-xl vyron-grad-surface px-4 py-2 text-sm font-semibold text-white">
                 Profit leakage detail →
               </Link>
               <Link href="/boardroom-insights" className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-black text-white">

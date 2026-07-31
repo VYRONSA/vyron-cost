@@ -26,7 +26,7 @@ export default async function AiCfoCommandCentrePage() {
         <Link href="/ai-cfo-command-centre/benchmarks" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black">
           Benchmarks
         </Link>
-        <Link href="/boardroom-insights" className="rounded-xl bg-violet-600 px-3 py-2 text-xs font-black text-white">
+        <Link href="/boardroom-insights" className="rounded-xl vyron-grad-surface px-3 py-2 text-xs font-semibold text-white">
           Boardroom insights
         </Link>
       </div>

@@ -50,7 +50,7 @@ export default function RecoveryOpportunityShowcase({ opportunities }: { opportu
               <div className="mt-2 flex items-center justify-between rounded-lg bg-[#F8FAFC] px-2 py-1.5 text-[10px]">
                 <span className="font-black text-[#64748B]">Confidence {confidence.label} · {confidence.percent}%</span>
               </div>
-              <Link href={`/recovery-opportunities/${item.id}`} className="mt-2 rounded-lg bg-[#08111A] py-2 text-center text-[11px] font-black text-white">
+              <Link href={`/recovery-opportunities/${item.id}`} className="mt-2 rounded-lg vyron-grad-deep py-2 text-center text-[11px] font-black text-white">
                 {item.action}
               </Link>
             </VyronSurfaceCard>

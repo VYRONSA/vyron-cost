@@ -33,7 +33,7 @@ export default function FinanceStatementsClient({ statements }: { statements: Vy
                   key={key}
                   type="button"
                   onClick={() => setPeriod(key)}
-                  className={`rounded-xl px-4 py-2 text-xs font-black ${period === key ? "bg-violet-600 text-white" : "bg-white text-slate-700"}`}
+                  className={`rounded-xl px-4 py-2 text-xs font-black ${period === key ? "vyron-grad-surface text-white" : "bg-white text-slate-700"}`}
                 >
                   {label}
                 </button>

@@ -30,7 +30,7 @@ export default function ExecutiveTopBar() {
 
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 rounded-2xl border border-[#E2E8F0] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[#0F172A] shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-          <BrainCircuit size={18} className="text-[#B6D934]" />
+          <BrainCircuit size={18} className="text-[#DDD6FE]" />
           {demo ? "Live Intelligence" : "Workspace Active"}
         </div>
         <button

@@ -127,7 +127,7 @@ export default function PurchaseOrdersClient({
 
               <div className="overflow-x-auto rounded-3xl border border-slate-100">
                 <div className="min-w-[1100px]">
-                  <div className="grid grid-cols-8 bg-[#07111A] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#B6D934]">
+                  <div className="grid grid-cols-8 bg-[#07111A] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#DDD6FE]">
                     <div>PO Number</div>
                     <div>Supplier</div>
                     <div>Status</div>

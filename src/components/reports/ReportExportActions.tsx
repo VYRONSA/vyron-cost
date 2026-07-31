@@ -77,7 +77,7 @@ export default function ReportExportActions({ reportKey }: ReportExportActionsPr
       <button
         type="button"
         disabled={!canExport || busy !== null}
-        className="rounded-full bg-violet-700 px-4 py-2 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-full vyron-grad-surface px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         onClick={exportExcel}
       >
         {busy === "excel" ? "Exporting Excel..." : "Export Excel"}

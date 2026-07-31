@@ -282,7 +282,7 @@ export default function ProcurementPoFormClient({
           </button>
         ) : null}
         {(canSaveDraft || canApprove) ? (
-          <button type="button" disabled={saving} onClick={() => void handleSave(true)} className="rounded-xl bg-violet-700 px-4 py-2 text-sm font-black text-white">
+          <button type="button" disabled={saving} onClick={() => void handleSave(true)} className="rounded-xl vyron-grad-surface px-4 py-2 text-sm font-semibold text-white">
             {poId ? "Save Changes" : "Submit for Approval"}
           </button>
         ) : null}

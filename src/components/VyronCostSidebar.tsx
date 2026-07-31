@@ -37,7 +37,7 @@ export default function VyronCostSidebar() {
   }, []);
 
   return (
-    <aside className="relative z-20 hidden min-h-screen w-[272px] shrink-0 flex-col bg-[#08111A] px-4 py-6 lg:flex">
+    <aside className="relative z-20 hidden min-h-screen w-[272px] shrink-0 flex-col vyron-grad-deep px-4 py-6 lg:flex">
       <div className="relative mb-8 px-2">
         <ClientBrandLockupLink variant="dark" href="/dashboard" />
         <div className="mt-3 text-[9px] font-black uppercase tracking-[0.28em] text-white/35">VYRON COST</div>
@@ -102,13 +102,13 @@ export default function VyronCostSidebar() {
                         href={item.href}
                         className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-bold transition-all ${
                           active
-                            ? "bg-[#B6D934] text-[#08111A]"
+                            ? "bg-[#A78BFA] text-[#0F172A]"
                             : "text-white/55 hover:bg-white/[0.06] hover:text-white"
                         }`}
                       >
                         <Icon
                           size={16}
-                          className={active ? "text-[#08111A]" : "text-white/45 group-hover:text-[#B6D934]"}
+                          className={active ? "text-[#0F172A]" : "text-white/45 group-hover:text-[#DDD6FE]"}
                         />
                         {item.label}
                       </Link>

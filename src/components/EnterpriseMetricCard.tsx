@@ -17,7 +17,7 @@ export default function EnterpriseMetricCard({
   return (
     <VyronSurfaceCard elevated={dark} className="p-6">
       <div className="flex items-start justify-between gap-4">
-        <div className={`rounded-2xl p-3 ${dark ? "bg-[#08111A] text-[#B6D934]" : "bg-[#F1F5F9] text-[#64748B]"}`}>
+        <div className={`rounded-2xl p-3 ${dark ? "vyron-grad-deep text-[#DDD6FE]" : "bg-[#F1F5F9] text-[#64748B]"}`}>
           <Icon size={23} />
         </div>
         <div className="rounded-full bg-[#F0FDF4] px-3 py-1 text-[10px] font-black text-[#9333EA]">LIVE</div>

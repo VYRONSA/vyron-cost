@@ -39,11 +39,11 @@ export default function AiAssistantClient() {
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#08111A] text-[#B6D934]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl vyron-grad-deep text-[#DDD6FE]">
             <Sparkles size={22} />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-[#F8FAFC]">VYRON AI Workspace</h2>
+            <h2 className="vyron-t-title text-2xl text-[#0F172A]">VYRON AI Workspace</h2>
             <p className="text-sm text-slate-500">Ask profit, margin, supplier and recipe questions using live costing data.</p>
           </div>
         </div>
@@ -56,13 +56,13 @@ export default function AiAssistantClient() {
               if (event.key === "Enter") ask();
             }}
             placeholder="Ask VYRON anything about margin, suppliers, recipes..."
-            className="flex-1 rounded-2xl border border-slate-200 px-4 py-4 text-sm font-bold outline-none focus:border-[#B6D934]"
+            className="flex-1 rounded-2xl border border-slate-200 px-4 py-4 text-sm font-bold outline-none focus:border-[#A78BFA]"
           />
           <button
             type="button"
             onClick={() => ask()}
             disabled={isPending}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[#08111A] px-5 py-4 text-sm font-black text-[#B6D934] disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-2xl vyron-grad-deep px-5 py-4 text-sm font-black text-[#DDD6FE] disabled:opacity-60"
           >
             <WandSparkles size={18} />
             Ask
@@ -87,15 +87,15 @@ export default function AiAssistantClient() {
       </div>
 
         <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <h3 className="text-xl font-black text-[#F8FAFC]">Answer Panel</h3>
+        <h3 className="vyron-t-title text-xl text-[#0F172A]">Answer Panel</h3>
         {!answer ? (
           <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-8 text-sm font-bold text-slate-500">
             Select a suggested question or type your own to generate recommendations from live Supabase data.
           </p>
         ) : (
           <div className="mt-4 space-y-4">
-            <div className="rounded-2xl bg-[#08111A] p-5 text-white">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#B6D934]">Summary</div>
+            <div className="rounded-2xl vyron-grad-deep p-5 text-white">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#DDD6FE]">Summary</div>
               <div className="mt-2 text-lg font-black">{answer.summary}</div>
             </div>
             <div>
@@ -114,7 +114,7 @@ export default function AiAssistantClient() {
 
         {answer ? (
         <div className="xl:col-span-2 rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-          <h3 className="text-xl font-black text-[#F8FAFC]">Recommendation Cards</h3>
+          <h3 className="vyron-t-title text-xl text-[#0F172A]">Recommendation Cards</h3>
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {answer.recommendations.map((item) => (
               <Link
@@ -128,7 +128,7 @@ export default function AiAssistantClient() {
                       : "border-[#A855F7]/25 bg-[#A855F7]/10"
                 }`}
               >
-                <div className="font-black text-[#F8FAFC]">{item.title}</div>
+                <div className="vyron-t-title text-[#0F172A]">{item.title}</div>
                 <div className="mt-2 text-sm text-slate-600">{item.detail}</div>
                 <div className="mt-3 text-lg font-black text-violet-700">{item.impact}</div>
               </Link>

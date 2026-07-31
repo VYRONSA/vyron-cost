@@ -42,7 +42,7 @@ export default function TrainingManualClient() {
                 </div>
                 <a
                   href="/api/training-manual"
-                  className="rounded-xl bg-[#08111A] px-5 py-3 text-sm font-black text-[#B6D934]"
+                  className="rounded-xl vyron-grad-deep px-5 py-3 text-sm font-black text-[#DDD6FE]"
                 >
                   Download Full Training Manual PDF
                 </a>
@@ -59,8 +59,8 @@ export default function TrainingManualClient() {
               ))}
             </div>
 
-            <div className="rounded-[2rem] bg-[#08111A] p-6 text-white">
-              <h3 className="text-lg font-black text-[#B6D934]">Quick links for training</h3>
+            <div className="rounded-[2rem] vyron-grad-deep p-6 text-white">
+              <h3 className="text-lg font-black text-[#DDD6FE]">Quick links for training</h3>
               <div className="mt-4 flex flex-wrap gap-3 text-sm font-black">
                 <Link href="/products" className="rounded-full bg-white/10 px-4 py-2">Products</Link>
                 <Link href="/recipes" className="rounded-full bg-white/10 px-4 py-2">Recipes & BOM</Link>

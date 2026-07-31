@@ -61,7 +61,7 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
             <svg viewBox="0 0 360 150" className="h-full w-full">
               <polyline
                 fill="none"
-                stroke="#B6D934"
+                stroke="#A78BFA"
                 strokeWidth="4"
                 points={snapshot.gpTrend
                   .map((value, index) => `${index * 72},${150 - value * 1.8}`)

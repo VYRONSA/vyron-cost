@@ -59,7 +59,7 @@ export default function FinanceImportsClient() {
                     setSelected(t.id);
                     setResult(null);
                   }}
-                  className={`block w-full rounded-xl px-4 py-3 text-left text-sm font-black ${selected === t.id ? "bg-violet-600 text-white" : "bg-white text-slate-800"}`}
+                  className={`block w-full rounded-xl px-4 py-3 text-left text-sm font-black ${selected === t.id ? "vyron-grad-surface text-white" : "bg-white text-slate-800"}`}
                 >
                   {t.label}
                 </button>

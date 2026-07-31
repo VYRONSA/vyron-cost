@@ -26,7 +26,7 @@ export default function DeveloperAccessGuard({ children }: { children: React.Rea
         <div className="max-w-md rounded-[2rem] border border-violet-100 bg-white p-8 text-center shadow-lg">
           <h1 className="text-2xl font-black text-slate-950">Access denied</h1>
           <p className="mt-3 text-sm font-semibold text-slate-600">Developer access only.</p>
-          <Link href="/dashboard" className="mt-6 inline-block rounded-xl bg-violet-700 px-5 py-2.5 text-sm font-black text-white">
+          <Link href="/dashboard" className="mt-6 inline-block rounded-xl vyron-grad-surface px-5 py-2.5 text-sm font-semibold text-white">
             Go to Dashboard
           </Link>
         </div>

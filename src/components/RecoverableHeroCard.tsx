@@ -21,7 +21,7 @@ export default function RecoverableHeroCard({ kpis }: { kpis: LeakageKpis }) {
           </p>
         </div>
 
-        <div className="rounded-[2rem] border border-[#b6d934]/40 bg-[#b6d934]/12 p-7">
+        <div className="rounded-[2rem] border border-[#A78BFA]/40 bg-[#A78BFA]/12 p-7">
           <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-[#123524]">
             <TrendingUp size={16} />
             Recoverable With VYRON COST
@@ -32,7 +32,7 @@ export default function RecoverableHeroCard({ kpis }: { kpis: LeakageKpis }) {
           </div>
           <Link
             href="/recovery-opportunities"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#b6d934] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#F8FAFC]"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#A78BFA] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#F8FAFC]"
           >
             View Recovery
             <ArrowUpRight size={16} />

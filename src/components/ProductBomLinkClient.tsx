@@ -64,7 +64,7 @@ export default function ProductBomLinkClient({
   return (
     <div className="mt-5 rounded-3xl bg-violet-50 p-5">
       <div className="mb-4 flex items-start gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-600 text-white">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl vyron-grad-surface text-white">
           <Link2 size={20} />
         </div>
         <div>
@@ -88,7 +88,7 @@ export default function ProductBomLinkClient({
           ))}
         </select>
         {canEdit ? (
-          <button onClick={save} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-violet-700 px-5 py-4 text-sm font-black text-white">
+          <button onClick={save} className="inline-flex items-center justify-center gap-2 rounded-2xl vyron-grad-surface px-5 py-4 text-sm font-semibold text-white">
             <Save size={17} /> Save Link
           </button>
         ) : null}

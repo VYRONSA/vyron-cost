@@ -167,7 +167,7 @@ export default function ClientImportCentreClient() {
                     <Download size={16} /> Download Template
                   </button>
                   {canImports ? (
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-violet-700 px-4 py-3 text-sm font-black text-white">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl vyron-grad-surface px-4 py-3 text-sm font-semibold text-white">
                       <Upload size={16} /> Upload File
                       <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => void handleUpload(e.target.files?.[0] || null)} />
                     </label>

@@ -42,7 +42,7 @@ function TopBar() {
 
         <Link href="/alerts" className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
           <Bell size={20} />
-          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-[10px] font-black text-white">
+          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full vyron-grad-surface text-[10px] font-semibold text-white">
             3
           </span>
         </Link>

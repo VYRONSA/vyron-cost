@@ -259,7 +259,7 @@ export default function EnterpriseImportCentreClient({
               {importEnabled ? (
                 <Link
                   href={card.actions.importHref as string}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#08111A] px-4 py-2.5 text-sm font-black text-[#B6D934]"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl vyron-grad-deep px-4 py-2.5 text-sm font-black text-[#DDD6FE]"
                 >
                   Import
                   <ArrowRight size={14} />

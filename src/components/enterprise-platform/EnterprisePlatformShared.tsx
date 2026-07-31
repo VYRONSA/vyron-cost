@@ -21,14 +21,14 @@ export const EP_TABLE = "w-full text-sm text-[#CBD5E1]";
 export const EP_TABLE_HEAD = VYRON_TABLE.head;
 export const EP_TABLE_ROW = `border-t border-white/10 ${VYRON_TABLE.rowHover}`;
 export const EP_INPUT =
-  "flex-1 rounded-2xl border border-white/12 bg-[#1e1635] px-4 py-3 font-bold text-[#F8FAFC] placeholder:text-[#94A3B8] outline-none focus:border-violet-400/40";
+  "flex-1 rounded-2xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 px-4 py-3 font-bold text-[#0F172A] placeholder:text-[#94A3B8] outline-none focus:border-violet-400/40";
 
 export function InsightCard({ insight }: { insight: ExplainableInsight }) {
   return (
     <article className={EP_CARD}>
       <h3 className="font-black text-[#F8FAFC]">{insight.title}</h3>
       <p className={`mt-2 leading-7 ${EP_BODY}`}>{insight.body}</p>
-      <div className="mt-3 rounded-xl border border-white/10 bg-[#1e1635] p-3 text-xs font-bold text-[#94A3B8]">
+      <div className="mt-3 rounded-xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 p-3 text-xs font-bold text-[#94A3B8]">
         <div>Formula: {insight.formula}</div>
         <div className="mt-1">Confidence: {insight.confidence}%</div>
       </div>

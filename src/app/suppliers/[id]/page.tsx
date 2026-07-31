@@ -26,7 +26,7 @@ export default async function SupplierDetailPage({ params }: { params: Promise<{
     <VyronCostAiShell hidePageHeader title={supplier.supplier_name} subtitle="Supplier detail, price movement and linked ingredients.">
       <Link
         href={`/supplier-intelligence/${id}`}
-        className="mb-5 inline-flex rounded-2xl bg-violet-600 px-5 py-3 text-sm font-black text-white hover:bg-violet-700"
+        className="mb-5 inline-flex rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white hover:vyron-grad-surface"
       >
         Open Supplier Intelligence Profile →
       </Link>

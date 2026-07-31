@@ -366,7 +366,7 @@ export default function RecipeBomBuilder({
           <button type="button" onClick={duplicateBom} className="inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-6 py-4 text-sm font-black text-slate-800">
             Duplicate BOM
           </button>
-          <button type="button" onClick={approveBom} className="inline-flex items-center gap-2 rounded-2xl bg-[#08111A] px-6 py-4 text-sm font-black text-[#B6D934]">
+          <button type="button" onClick={approveBom} className="inline-flex items-center gap-2 rounded-2xl vyron-grad-deep px-6 py-4 text-sm font-black text-[#DDD6FE]">
             Approve BOM
           </button>
           <button type="button" onClick={deleteRecipe} className="inline-flex items-center gap-2 rounded-2xl bg-red-50 px-6 py-4 text-sm font-black text-red-700">
@@ -378,8 +378,8 @@ export default function RecipeBomBuilder({
       </div>
 
       <aside className="space-y-5">
-        <div className="rounded-[2rem] bg-[#08111A] p-6 text-white">
-          <div className="text-xs font-black uppercase tracking-[0.2em] text-[#B6D934]">Live totals</div>
+        <div className="rounded-[2rem] vyron-grad-deep p-6 text-white">
+          <div className="text-xs font-black uppercase tracking-[0.2em] text-[#DDD6FE]">Live totals</div>
           <div className="mt-4 space-y-4">
             <div>
               <div className="text-xs text-white/50">Total cost</div>
@@ -391,10 +391,10 @@ export default function RecipeBomBuilder({
             </div>
             <div>
               <div className="text-xs text-white/50">GP preview</div>
-              <div className="text-3xl font-black text-[#B6D934]">{gpPreview.toFixed(1)}%</div>
+              <div className="text-3xl font-black text-[#DDD6FE]">{gpPreview.toFixed(1)}%</div>
             </div>
             <div className="rounded-2xl bg-white/5 p-4">
-              <div className="text-sm font-black text-[#B6D934]">Suggested selling price</div>
+              <div className="text-sm font-black text-[#DDD6FE]">Suggested selling price</div>
               <div className="mt-2 text-2xl font-black">{formatMoney(suggestedPrice)}</div>
             </div>
           </div>

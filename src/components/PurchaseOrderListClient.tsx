@@ -35,7 +35,7 @@ export default function PurchaseOrderListClient({ initialOrders }: { initialOrde
           <section className="grid gap-6">
             <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)] flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <h2 className="text-2xl font-black">Purchase Orders</h2>
-              <div className="flex gap-3"><div className="flex items-center gap-3 rounded-2xl bg-violet-50 px-4 py-3"><Search size={18}/><input value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Search..." className="bg-transparent outline-none font-bold"/></div><Link href="/purchase-orders/new" className="rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white flex gap-2"><Plus size={18}/> New PO</Link></div>
+              <div className="flex gap-3"><div className="flex items-center gap-3 rounded-2xl bg-violet-50 px-4 py-3"><Search size={18}/><input value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Search..." className="bg-transparent outline-none font-bold"/></div><Link href="/purchase-orders/new" className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white flex gap-2"><Plus size={18}/> New PO</Link></div>
             </div>
             <div className="rounded-[2rem] bg-white overflow-hidden shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
               <div className="grid grid-cols-7 bg-slate-50 px-5 py-4 text-xs font-black uppercase text-slate-500"><div>PO</div><div>Supplier</div><div>Branch</div><div>Date</div><div>Status</div><div>Total</div><div>Actions</div></div>

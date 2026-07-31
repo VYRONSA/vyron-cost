@@ -275,7 +275,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                     <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Supplier Intelligence</div>
                     <h3 className="mt-1 text-2xl font-black text-slate-900">Top suppliers by inflation, risk & savings</h3>
                   </div>
-                  <Link href="/supplier-intelligence" className="rounded-2xl bg-violet-600 px-5 py-3 text-sm font-black text-white">
+                  <Link href="/supplier-intelligence" className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">
                     Open centre →
                   </Link>
                 </div>

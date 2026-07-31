@@ -281,8 +281,8 @@ export default function PurchaseOrderFormClient({
               {message ? <div className="mt-4 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-black text-[#7E22CE]">{message}</div> : null}
             </div>
 
-            <aside className="rounded-[2rem] bg-[#08111A] p-6 text-white">
-              <div className="text-xs font-black uppercase tracking-[0.2em] text-[#B6D934]">PO Summary</div>
+            <aside className="rounded-[2rem] vyron-grad-deep p-6 text-white">
+              <div className="text-xs font-black uppercase tracking-[0.2em] text-[#DDD6FE]">PO Summary</div>
               <div className="mt-4 space-y-4">
                 <div>
                   <div className="text-xs text-white/50">Expected total</div>

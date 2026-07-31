@@ -302,7 +302,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               <div className="mt-2 text-2xl font-black text-violet-950">{bom.bom_name}</div>
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link href={`/recipes/${bom.id}`} className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-700">Open BOM</Link>
-                <Link href={`/recipes/${bom.id}/edit`} className="rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white">Edit BOM</Link>
+                <Link href={`/recipes/${bom.id}/edit`} className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">Edit BOM</Link>
               </div>
             </div>
           ) : (

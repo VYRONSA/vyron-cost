@@ -126,7 +126,7 @@ export default function CustomerStatementsClient() {
 
         <div className="mt-5 flex flex-wrap gap-3">
           <button type="button" onClick={() => window.print()} className="rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-800">Print Statement</button>
-          <a href={emailHref} className="rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white">Email Statement</a>
+          <a href={emailHref} className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">Email Statement</a>
         </div>
       </section>
 

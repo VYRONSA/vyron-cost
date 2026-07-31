@@ -3,45 +3,47 @@
    supplies only its brand hues below; everything else is inherited. */
 @import "../styles/vyron-enterprise-design-language.css";
 
+/* Legacy dark-theme variables. These predate the design language and are kept
+   only for the handful of components still reading them; the page default is
+   now the enterprise light field below. */
 :root {
-  --vyron-bg: #120a1f;
-  --vyron-bg-mid: #160b2e;
-  --vyron-bg-deep: #1a1033;
   --vyron-card: #1a1230;
   --vyron-card-mid: #21163a;
   --vyron-card-elevated: #24183f;
-  --vyron-sidebar: #0b0617;
   --vyron-accent: #a855f7;
   --vyron-purple: #1d4ed8;
   --vyron-violet: #1d6bff;
   --vyron-orange: #c084fc;
   --vyron-lime: #a855f7;
-  --vyron-text: #f8fafc;
-  --vyron-body: #cbd5e1;
-  --vyron-muted: #94a3b8;
-  --vyron-border: rgba(255, 255, 255, 0.10);
-  --vyron-success: #a855f7;
-  --vyron-warning: #c026d3;
-  --vyron-danger: #ef4444;
-  --background: var(--vyron-bg);
-  --foreground: var(--vyron-text);
+  --vyron-text: #0f172a;
+  --vyron-body: #334155;
+  --vyron-muted: #64748b;
+  --vyron-border: rgba(15, 23, 42, 0.07);
+  --vyron-danger: #be123c;
+  --background: #fbfcfe;
+  --foreground: #0f172a;
 }
 
 * { box-sizing: border-box; }
 
+/* Default page ground. Pages outside the workspace/public roots — access
+   guards, error boundaries — previously fell through to the legacy dark theme
+   and rendered near-black. The enterprise field is now the default. */
 html {
   min-height: 100%;
-  background: #120a1f;
+  background: #fbfcfe;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at 88% 6%, rgba(29, 78, 216, 0.18), transparent 34%),
-    radial-gradient(circle at 10% 20%, rgba(29, 107, 255, 0.12), transparent 30%),
-    radial-gradient(circle at 75% 85%, rgba(168, 85, 247, 0.08), transparent 32%),
-    linear-gradient(180deg, #120a1f 0%, #160b2e 48%, #1a1033 100%);
+    radial-gradient(ellipse 120% 70% at 78% -8%, rgba(79, 70, 229, 0.070), transparent 62%),
+    radial-gradient(ellipse 100% 60% at 12% 30%, rgba(29, 107, 255, 0.045), transparent 64%),
+    radial-gradient(ellipse 130% 80% at 50% 108%, rgba(109, 40, 217, 0.055), transparent 66%),
+    linear-gradient(168deg, #fbfcfe 0%, #f6f8fd 38%, #f4f5fc 68%, #f7f8fd 100%);
+  background-attachment: fixed;
+  background-size: 100% 100vh;
   color: var(--vyron-body);
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;

@@ -289,7 +289,7 @@ export default function ClientUserSetupClient() {
               </>
             ) : null}
           </div>
-          <button type="button" onClick={() => void createUser()} className="mt-5 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white">
+          <button type="button" onClick={() => void createUser()} className="mt-5 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">
             Create User
           </button>
         </Modal>
@@ -325,7 +325,7 @@ export default function ClientUserSetupClient() {
                   permissions: normalizePermissionMap(customPermissions),
                 })
               }
-              className="mt-5 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white"
+              className="mt-5 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white"
             >
               Save Rights
             </button>
@@ -339,7 +339,7 @@ export default function ClientUserSetupClient() {
             <Input label="New Password" type="password" value={newPassword} onChange={setNewPassword} />
             <Input label="Confirm Password" type="password" value={confirmPassword} onChange={setConfirmPassword} />
           </div>
-          <button type="button" onClick={() => void resetPassword(resetUserId)} className="mt-5 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white">
+          <button type="button" onClick={() => void resetPassword(resetUserId)} className="mt-5 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">
             Reset Password
           </button>
         </Modal>

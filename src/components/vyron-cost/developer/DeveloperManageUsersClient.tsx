@@ -196,7 +196,7 @@ export default function DeveloperManageUsersClient({
           <button
             type="button"
             onClick={() => setInviteOpen((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white"
+            className="inline-flex items-center gap-2 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white"
           >
             <UserPlus size={16} />
             Invite User
@@ -243,7 +243,7 @@ export default function DeveloperManageUsersClient({
                 </>
               ) : null}
             </div>
-            <button type="button" onClick={() => void inviteUser()} className="mt-4 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white">
+            <button type="button" onClick={() => void inviteUser()} className="mt-4 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">
               Send Invite
             </button>
           </div>
@@ -325,7 +325,7 @@ export default function DeveloperManageUsersClient({
                   {resetUserId === member.userId ? (
                     <div className="col-span-full mt-2 flex flex-wrap items-end gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-3">
                       <Field label="New password" type="password" value={newPassword} onChange={setNewPassword} />
-                      <button type="button" onClick={() => void resetPassword(member.userId)} className="rounded-xl bg-violet-700 px-4 py-3 text-xs font-black text-white">
+                      <button type="button" onClick={() => void resetPassword(member.userId)} className="rounded-xl vyron-grad-surface px-4 py-3 text-xs font-semibold text-white">
                         Save Password
                       </button>
                       <button type="button" onClick={() => setResetUserId(null)} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-black text-slate-700">

@@ -122,7 +122,7 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
 
         <div className="overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[980px]">
-            <div className="grid grid-cols-7 bg-[#08111A] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#B6D934]">
+            <div className="grid grid-cols-7 vyron-grad-deep px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#DDD6FE]">
               <div className="col-span-2">Scenario</div>
               <div>Current</div>
               <div>Planned</div>
@@ -199,7 +199,7 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
                 Open affected product →
               </Link>
             ) : null}
-            <button type="button" onClick={saveEdit} className="rounded-2xl bg-[#08111A] px-5 py-3 text-sm font-black text-[#B6D934]">
+            <button type="button" onClick={saveEdit} className="rounded-2xl vyron-grad-deep px-5 py-3 text-sm font-black text-[#DDD6FE]">
               Save scenario
             </button>
           </div>

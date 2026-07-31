@@ -97,7 +97,7 @@ export default function FinancialLeakageClient({ findings }: { findings: Leakage
           placeholder="Search recovery findings..."
           className="min-w-0 flex-1 bg-transparent text-sm font-black text-slate-700 outline-none placeholder:text-slate-400"
         />
-        <div className="shrink-0 rounded-full bg-violet-700 px-4 py-2 text-xs font-black text-white">
+        <div className="shrink-0 rounded-full vyron-grad-surface px-4 py-2 text-xs font-semibold text-white">
           {filtered.length} findings
         </div>
       </div>

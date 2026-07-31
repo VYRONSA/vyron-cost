@@ -30,7 +30,7 @@ export default function DashboardStatusBar({ kpis }: { kpis: LeakageKpis }) {
             <Bell size={12} />
             Alerts
           </Link>
-          <Link href="/action-centre" className="inline-flex items-center gap-1 rounded-lg bg-[#08111A] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.1em] text-white">
+          <Link href="/action-centre" className="inline-flex items-center gap-1 rounded-lg vyron-grad-deep px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.1em] text-white">
             <ShieldCheck size={12} />
             Actions
           </Link>

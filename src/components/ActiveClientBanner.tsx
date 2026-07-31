@@ -31,7 +31,7 @@ export default function ActiveClientBanner() {
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] border border-violet-200 bg-gradient-to-r from-violet-50 to-fuchsia-50 px-5 py-4 shadow-sm">
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-700 text-white">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl vyron-grad-surface text-white">
           <Building2 size={20} />
         </div>
         <div>
@@ -58,7 +58,7 @@ export default function ActiveClientBanner() {
                 setClient(null);
                 window.location.href = "/developer";
               }}
-              className="inline-flex items-center gap-1 rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-white"
+              className="inline-flex items-center gap-1 rounded-xl vyron-grad-surface px-4 py-2 text-xs font-semibold text-white"
             >
               <LogOut size={14} />
               Return to VYRON DEV

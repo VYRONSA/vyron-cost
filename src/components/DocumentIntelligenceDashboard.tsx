@@ -160,7 +160,7 @@ export default function DocumentIntelligenceDashboard() {
                 setWorkflowTab(item.id);
               }}
               className={`rounded-full px-4 py-2 text-xs font-black ${
-                showWorkflow && workflowTab === item.id ? "bg-violet-700 text-white" : "bg-slate-100 text-slate-700"
+                showWorkflow && workflowTab === item.id ? "vyron-grad-surface text-white" : "bg-slate-100 text-slate-700"
               }`}
             >
               {item.label}
@@ -213,7 +213,7 @@ export default function DocumentIntelligenceDashboard() {
           <div className="lg:col-span-2 flex justify-end">
             <Link
               href="/document-intelligence/supplier-learning"
-              className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-violet-700"
+              className="rounded-xl vyron-grad-surface px-4 py-2 text-xs font-black uppercase tracking-wider text-white hover:vyron-grad-surface"
             >
               Open Supplier Learning page
             </Link>
@@ -303,7 +303,7 @@ export default function DocumentIntelligenceDashboard() {
           <div className="mb-4 flex justify-end">
             <Link
               href="/document-intelligence/settings"
-              className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-white"
+              className="rounded-xl vyron-grad-surface px-4 py-2 text-xs font-semibold text-white"
             >
               Open full supervisor settings
             </Link>

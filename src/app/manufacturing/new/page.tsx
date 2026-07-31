@@ -9,7 +9,7 @@ export default function NewManufacturingBatchPage() {
           <label key={label} className="block"><span className="text-sm font-black text-slate-700">{label}</span><input className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-violet-400" placeholder={label} /></label>
         ))}
         <div className="md:col-span-2 rounded-[24px] bg-violet-50 p-5 text-sm leading-6 text-violet-900"><strong>Demo-safe rule:</strong> saving as Draft does not reduce raw materials. Completing the batch creates Manufacturing Consumption and Manufacturing Output stock movements.</div>
-        <div className="md:col-span-2 flex justify-end gap-3"><button className="rounded-full border border-slate-200 px-5 py-3 text-sm font-black">Save Draft</button><button className="rounded-full bg-violet-700 px-5 py-3 text-sm font-black text-white">Complete Batch</button></div>
+        <div className="md:col-span-2 flex justify-end gap-3"><button className="rounded-full border border-slate-200 px-5 py-3 text-sm font-black">Save Draft</button><button className="rounded-full vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">Complete Batch</button></div>
       </form>
     </ModulePageShell>
   );

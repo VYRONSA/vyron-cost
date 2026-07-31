@@ -238,7 +238,7 @@ export default function BomListClient({
               : "Create your first recipe / BOM to cost ingredients, packaging, labour and yield."}
           </p>
           {!search.trim() && canCreate ? (
-            <Link href="/recipes/new" className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white">
+            <Link href="/recipes/new" className="mt-6 inline-flex items-center gap-2 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">
               <Plus size={18} />
               Create first BOM
             </Link>

@@ -28,7 +28,7 @@ export default function AdminAccessGuard({ children }: { children: React.ReactNo
         <p className="mt-3 text-sm font-semibold text-slate-600">
           Company setup, user management and imports are available to OWNER, ADMIN and SUPERVISOR roles only.
         </p>
-        <Link href="/dashboard" className="mt-6 inline-block rounded-xl bg-violet-700 px-5 py-2.5 text-sm font-black text-white">
+        <Link href="/dashboard" className="mt-6 inline-block rounded-xl vyron-grad-surface px-5 py-2.5 text-sm font-semibold text-white">
           Back to Dashboard
         </Link>
       </div>

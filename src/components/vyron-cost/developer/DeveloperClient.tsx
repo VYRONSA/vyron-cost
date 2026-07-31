@@ -1016,7 +1016,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
           extra={
             <Link
               href="/developer/setup"
-              className="inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white"
+              className="inline-flex items-center gap-2 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white"
             >
               <Plus size={16} />
               New Client
@@ -1189,7 +1189,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
             </button>
             <Link
               href="/developer/setup"
-              className="inline-flex items-center gap-2 self-end rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white"
+              className="inline-flex items-center gap-2 self-end rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white"
             >
               <Plus size={16} />
               Add Client
@@ -1210,7 +1210,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
                 onClick={() => setDirectoryView(value)}
                 className={`rounded-xl px-4 py-2 text-xs font-black ${
                   directoryView === value
-                    ? "bg-violet-700 text-white"
+                    ? "vyron-grad-surface text-white"
                     : "bg-violet-50 text-violet-800"
                 }`}
               >
@@ -1308,7 +1308,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
                   <button
                     type="button"
                     onClick={() => openManageLogin(selectedClient.id)}
-                    className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-white"
+                    className="rounded-xl vyron-grad-surface px-4 py-2 text-xs font-semibold text-white"
                   >
                     Manage Login
                   </button>
@@ -1624,7 +1624,7 @@ function FlashMessage({
       {activeClient && message.startsWith("Logged in as") ? (
         <Link
           href="/dashboard"
-          className="mt-3 inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-white"
+          className="mt-3 inline-flex items-center gap-2 rounded-xl vyron-grad-surface px-4 py-2 text-xs font-semibold text-white"
         >
           <ExternalLink size={14} />
           Open Client Dashboard
@@ -1738,7 +1738,7 @@ function ClientRegisterTable({
               <button
                 type="button"
                 onClick={() => onManageLogin(client.id)}
-                className="inline-flex items-center justify-center gap-1 rounded-xl bg-violet-700 px-3 py-2 text-xs font-black text-white"
+                className="inline-flex items-center justify-center gap-1 rounded-xl vyron-grad-surface px-3 py-2 text-xs font-semibold text-white"
               >
                 <KeyRound size={14} />
                 Manage Login

@@ -27,7 +27,7 @@ export default function BudgetDashboardClient({ dashboard }: { dashboard: Budget
                   key={p}
                   type="button"
                   onClick={() => setPeriod(p)}
-                  className={`rounded-xl px-4 py-2 text-xs font-black capitalize ${period === p ? "bg-violet-600 text-white" : "bg-slate-100"}`}
+                  className={`rounded-xl px-4 py-2 text-xs font-black capitalize ${period === p ? "vyron-grad-surface text-white" : "bg-slate-100"}`}
                 >
                   {p}
                 </button>

@@ -311,7 +311,7 @@ export function AiBenchmarksClient({
           {industries.map((id) => (
             <span
               key={id}
-              className={`rounded-full px-3 py-1 text-xs font-black ${id === "food_manufacturing" ? "bg-violet-600 text-white" : "bg-slate-100 text-slate-600"}`}
+              className={`rounded-full px-3 py-1 text-xs font-black ${id === "food_manufacturing" ? "vyron-grad-surface text-white" : "bg-slate-100 text-slate-600"}`}
             >
               {INDUSTRY_LABELS[id]}
             </span>

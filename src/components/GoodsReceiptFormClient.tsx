@@ -279,7 +279,7 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
                   if (event.key === "Enter") void refreshOpenPos(poSearch);
                 }}
               />
-              <button type="button" onClick={() => void refreshOpenPos(poSearch)} className="rounded-2xl bg-violet-700 px-4 py-3 text-xs font-black text-white">
+              <button type="button" onClick={() => void refreshOpenPos(poSearch)} className="rounded-2xl vyron-grad-surface px-4 py-3 text-xs font-semibold text-white">
                 Search
               </button>
             </div>
@@ -316,10 +316,10 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <button type="button" onClick={() => setMode("full")} className={`rounded-2xl px-4 py-3 text-xs font-black ${receiptType === "full" ? "bg-violet-700 text-white" : "bg-violet-50 text-violet-800"}`}>
+          <button type="button" onClick={() => setMode("full")} className={`rounded-2xl px-4 py-3 text-xs font-black ${receiptType === "full" ? "vyron-grad-surface text-white" : "bg-violet-50 text-violet-800"}`}>
             Full Receipt
           </button>
-          <button type="button" onClick={() => setMode("partial")} className={`rounded-2xl px-4 py-3 text-xs font-black ${receiptType === "partial" ? "bg-violet-700 text-white" : "bg-violet-50 text-violet-800"}`}>
+          <button type="button" onClick={() => setMode("partial")} className={`rounded-2xl px-4 py-3 text-xs font-black ${receiptType === "partial" ? "vyron-grad-surface text-white" : "bg-violet-50 text-violet-800"}`}>
             Partial / Back Order
           </button>
           <button type="button" onClick={() => void loadPo(poId)} disabled={!poId || loadingPo} className="rounded-2xl border border-violet-100 bg-white px-4 py-3 text-xs font-black text-violet-700 disabled:opacity-60">

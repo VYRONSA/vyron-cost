@@ -262,7 +262,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
             <h3 className="text-xl font-black text-slate-950">Workforce Digital Twin</h3>
             <p className="text-sm font-semibold text-slate-500">{twins.length} employee profiles — clocking, field, travel, cost and attrition signals</p>
           </div>
-          <Link href="/vyron-core/simulations" className="rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white">
+          <Link href="/vyron-core/simulations" className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">
             Run simulation →
           </Link>
         </div>

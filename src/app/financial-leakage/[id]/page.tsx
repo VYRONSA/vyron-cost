@@ -24,7 +24,7 @@ export default async function FinancialLeakageDetailPage({ params }: { params: P
           Recovery detail not found.
           <Link
             href="/financial-leakage"
-            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white"
+            className="mt-6 inline-flex items-center gap-2 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white"
           >
             ← Back
           </Link>
@@ -178,7 +178,7 @@ export default async function FinancialLeakageDetailPage({ params }: { params: P
 
           <Link
             href="/financial-leakage"
-            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-lg shadow-violet-500/20"
+            className="mt-6 inline-flex items-center gap-2 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20"
           >
             ← Back
           </Link>

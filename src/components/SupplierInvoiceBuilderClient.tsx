@@ -280,7 +280,7 @@ export default function SupplierInvoiceBuilderClient({
           <button
             type="button"
             onClick={save}
-            className="mt-5 flex gap-2 rounded-2xl bg-violet-700 px-6 py-4 font-black text-white"
+            className="mt-5 flex gap-2 rounded-2xl vyron-grad-surface px-6 py-4 font-semibold text-white"
           >
             <Save size={18} />
             Save Invoice

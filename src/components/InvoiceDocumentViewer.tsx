@@ -311,7 +311,7 @@ export default function InvoiceDocumentViewer({
           Exit Full Screen
         </button>
       ) : (
-        <button type="button" onClick={onOpenFullscreen} className="inline-flex items-center gap-1 rounded-lg bg-violet-700 px-2 py-1 text-[10px] font-black text-white">
+        <button type="button" onClick={onOpenFullscreen} className="inline-flex items-center gap-1 rounded-lg vyron-grad-surface px-2 py-1 text-[10px] font-semibold text-white">
           <Maximize2 size={12} />
           Open Full Screen
         </button>

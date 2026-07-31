@@ -460,7 +460,7 @@ export default function CustomerSalesOrdersClient({
             <button
               type="button"
               onClick={() => setCreateOpen((current) => !current)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white"
+              className="inline-flex items-center gap-2 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white"
             >
               <Plus size={16} /> New Sales Order
             </button>
@@ -539,7 +539,7 @@ export default function CustomerSalesOrdersClient({
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <button type="button" onClick={() => setLines((current) => [...current, emptyLine()])} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700">Add Line</button>
                 <input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Notes" className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm sm:min-w-[280px]" />
-                <button type="button" onClick={() => void saveOrder()} className="rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-black text-white">Save Draft</button>
+                <button type="button" onClick={() => void saveOrder()} className="rounded-xl vyron-grad-surface px-4 py-2.5 text-xs font-semibold text-white">Save Draft</button>
               </div>
 
               <div className="mt-4 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-bold text-slate-700 md:grid-cols-6">
@@ -633,7 +633,7 @@ export default function CustomerSalesOrdersClient({
                   type="button"
                   disabled={busyOrderId === selectedOrder.order.id}
                   onClick={() => void createProductionRun(selectedOrder.order.id)}
-                  className="rounded-lg bg-violet-700 px-3 py-2 text-xs font-black text-white disabled:opacity-60"
+                  className="rounded-lg vyron-grad-surface px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
                 >
                   Create Production Run
                 </button>
@@ -781,7 +781,7 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
 
 function ActionButton({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="inline-flex items-center gap-1.5 rounded-lg bg-violet-700 px-3 py-1.5 text-xs font-black text-white">
+    <button type="button" onClick={onClick} className="inline-flex items-center gap-1.5 rounded-lg vyron-grad-surface px-3 py-1.5 text-xs font-semibold text-white">
       {icon}
       {label}
     </button>

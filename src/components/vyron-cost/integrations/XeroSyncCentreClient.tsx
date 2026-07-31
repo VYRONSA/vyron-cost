@@ -175,7 +175,7 @@ export default function XeroSyncCentreClient() {
               <RefreshCcw size={14} />
               Refresh
             </button>
-            <Link href="/integrations/xero/setup" className="rounded-2xl bg-violet-700 px-4 py-2 text-xs font-black text-white">
+            <Link href="/integrations/xero/setup" className="rounded-2xl vyron-grad-surface px-4 py-2 text-xs font-semibold text-white">
               Xero Setup
             </Link>
           </div>
@@ -207,7 +207,7 @@ export default function XeroSyncCentreClient() {
                     <button
                       type="button"
                       onClick={() => void syncRow(row.id)}
-                      className="inline-flex items-center gap-1 rounded-xl bg-violet-700 px-3 py-1.5 text-xs font-black text-white"
+                      className="inline-flex items-center gap-1 rounded-xl vyron-grad-surface px-3 py-1.5 text-xs font-semibold text-white"
                     >
                       <UploadCloud size={14} />
                       Sync

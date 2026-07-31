@@ -255,7 +255,7 @@ export default function XeroSetupClient() {
                   key={org.tenantId}
                   type="button"
                   onClick={() => void selectOrganisation(org.tenantId)}
-                  className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-white"
+                  className="rounded-xl vyron-grad-surface px-4 py-2 text-xs font-semibold text-white"
                 >
                   {org.tenantName}
                 </button>
@@ -288,7 +288,7 @@ export default function XeroSetupClient() {
             <button
               type="button"
               onClick={() => void saveMapping()}
-              className="inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white"
+              className="inline-flex items-center gap-2 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white"
             >
               Save Mapping
             </button>

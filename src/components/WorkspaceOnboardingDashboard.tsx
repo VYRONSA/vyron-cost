@@ -70,7 +70,7 @@ export default function WorkspaceOnboardingDashboard({
             href={href}
             className="flex items-start gap-4 rounded-3xl border border-violet-100 bg-violet-50/50 p-5"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-700 text-white">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl vyron-grad-surface text-white">
               <Icon size={22} />
             </div>
             <div>

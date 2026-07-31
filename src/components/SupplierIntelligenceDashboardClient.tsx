@@ -86,7 +86,7 @@ export default function SupplierIntelligenceDashboardClient({ rows }: { rows: Su
         />
       ) : null}
 
-      <div className="overflow-x-auto rounded-2xl border border-white/12 bg-[#252040] shadow-[0_2px_16px_rgba(0,0,0,0.14)]">
+      <div className="overflow-x-auto rounded-2xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 shadow-[0_2px_16px_rgba(0,0,0,0.14)]">
         <div className="min-w-[1400px]">
           <div className="grid grid-cols-12 bg-[#2a2448] px-5 py-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">
             <div className="col-span-2">Supplier</div>

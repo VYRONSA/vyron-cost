@@ -11,7 +11,7 @@ export default async function FinanceIntelligencePage() {
       subtitle="CFO VIEW · SPEND · RECOVERY · INFLATION · PROJECTED IMPACT"
     >
       <div className="mb-6 flex flex-wrap gap-3">
-        <Link href="/executive-reporting" className="rounded-2xl bg-violet-600 px-4 py-2 text-sm font-black text-white">
+        <Link href="/executive-reporting" className="rounded-2xl vyron-grad-surface px-4 py-2 text-sm font-semibold text-white">
           Executive Reporting →
         </Link>
         <Link href="/board-pack-centre" className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-black text-white">

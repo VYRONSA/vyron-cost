@@ -197,7 +197,7 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
       <div className="flex flex-wrap gap-2 print:hidden">
         {editable && canCreateCount ? <button type="button" onClick={() => void action("start")} className="rounded-xl bg-slate-200 px-3 py-2 text-xs font-black">Start Count</button> : null}
         {editable && canCreateCount ? <button type="button" onClick={() => void action("submit")} className="rounded-xl bg-fuchsia-500 px-3 py-2 text-xs font-black text-white">Submit</button> : null}
-        {status === "Submitted" && canApproveCount ? <button type="button" onClick={() => void action("approve", { approvedBy: "supervisor" })} className="rounded-xl bg-violet-700 px-3 py-2 text-xs font-black text-white">Approve Variances</button> : null}
+        {status === "Submitted" && canApproveCount ? <button type="button" onClick={() => void action("approve", { approvedBy: "supervisor" })} className="rounded-xl vyron-grad-surface px-3 py-2 text-xs font-semibold text-white">Approve Variances</button> : null}
         {status === "Approved" && canPostAdjustment ? <button type="button" onClick={() => void action("post", { actor: "supervisor" })} className="rounded-xl bg-fuchsia-600 px-3 py-2 text-xs font-black text-white">Post to Ledger</button> : null}
       </div>
 

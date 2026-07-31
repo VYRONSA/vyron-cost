@@ -255,7 +255,7 @@ export default function ProcurementRecommendationDetailClient({
                     type="button"
                     onClick={() => persist(s)}
                     className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.1em] ${
-                      status === s ? "bg-violet-700 text-white" : "bg-slate-100 text-slate-700"
+                      status === s ? "vyron-grad-surface text-white" : "bg-slate-100 text-slate-700"
                     }`}
                   >
                     {s}
@@ -345,7 +345,7 @@ export default function ProcurementRecommendationDetailClient({
               <button
                 type="button"
                 onClick={() => persist(status)}
-                className="mt-4 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white"
+                className="mt-4 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white"
               >
                 Save tracking
               </button>

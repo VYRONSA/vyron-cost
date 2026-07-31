@@ -65,7 +65,7 @@ export default function BackOrdersClient() {
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-4 py-2 text-xs font-black text-violet-800"><Printer size={14} /> Print</button>
           <button type="button" onClick={exportCsv} className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-4 py-2 text-xs font-black text-violet-800"><Download size={14} /> Export CSV</button>
-          <Link href="/goods-receipts/new" className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-white">Receive Goods</Link>
+          <Link href="/goods-receipts/new" className="rounded-xl vyron-grad-surface px-4 py-2 text-xs font-semibold text-white">Receive Goods</Link>
         </div>
       </div>
 

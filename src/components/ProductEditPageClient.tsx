@@ -483,7 +483,7 @@ export default function ProductEditPageClient({
       <section className="rounded-[2rem] border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-7 shadow-[0_18px_55px_rgba(81,63,190,0.08)]">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-700 text-white">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl vyron-grad-surface text-white">
               <LineChart size={24} />
             </div>
             <div>

@@ -36,7 +36,7 @@ export default function AiFinancialIntelligenceFeed({ items }: { items: AiFinanc
         <div className="border-b border-[#E2E8F0] px-8 py-6">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] text-[#08111A]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] text-[#0F172A]">
                 <BrainCircuit size={24} />
               </div>
               <div>

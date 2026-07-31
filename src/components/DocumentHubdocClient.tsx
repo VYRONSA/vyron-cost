@@ -840,7 +840,7 @@ export default function DocumentHubdocClient({
             <button
               type="button"
               onClick={() => void openNextReview()}
-              className="inline-flex items-center gap-1 rounded-full bg-violet-700 px-4 py-2 text-xs font-black text-white"
+              className="inline-flex items-center gap-1 rounded-full vyron-grad-surface px-4 py-2 text-xs font-semibold text-white"
             >
               Open next review
             </button>

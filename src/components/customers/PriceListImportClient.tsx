@@ -205,7 +205,7 @@ export default function PriceListImportClient() {
             Upload CSV/XLSX
             <input type="file" accept=".csv,.xlsx,.xls,text/csv" className="hidden" onChange={(e) => void onUpload(e.target.files?.[0] || null)} />
           </label>
-          <button type="button" disabled={busy} onClick={() => void runImport()} className="rounded-lg bg-violet-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">Import</button>
+          <button type="button" disabled={busy} onClick={() => void runImport()} className="rounded-lg vyron-grad-surface px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">Import</button>
         </div>
 
         <label className="mt-3 flex items-center gap-2 text-sm text-slate-700">

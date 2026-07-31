@@ -359,7 +359,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
 
       <div className="flex flex-wrap gap-3">
         {run.status === "Planned" && canComplete ? (
-          <button type="button" disabled={loading} onClick={() => void action(`/api/production/runs/${runId}/approve`)} className="rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white">
+          <button type="button" disabled={loading} onClick={() => void action(`/api/production/runs/${runId}/approve`)} className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">
             Approve
           </button>
         ) : null}

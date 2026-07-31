@@ -50,7 +50,7 @@ export default function VyronLandingPage() {
       <header className="sticky top-0 z-20 border-b border-[#E2E8F0] bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-10">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#08111A] text-xs font-black text-[#B6D934]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl vyron-grad-deep text-xs font-black text-[#DDD6FE]">
               VC
             </div>
             <div>
@@ -73,7 +73,7 @@ export default function VyronLandingPage() {
             </Link>
             <Link
               href="/api/demo-access?redirect=/dashboard"
-              className="rounded-xl bg-[#B6D934] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[#08111A]"
+              className="rounded-xl bg-[#A78BFA] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[#0F172A]"
             >
               View Demo
             </Link>
@@ -86,13 +86,13 @@ export default function VyronLandingPage() {
         <div className="relative mx-auto grid max-w-7xl gap-12 px-6 pb-12 pt-16 lg:grid-cols-2 lg:items-center lg:px-10 lg:pt-24">
           <div>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E2E8F0] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#64748B]">
-              <TrendingUp size={14} className="text-[#B6D934]" />
+              <TrendingUp size={14} className="text-[#DDD6FE]" />
               Enterprise Costing & Profit Protection
             </div>
             <h1 className="text-5xl font-black leading-[1.02] tracking-tight md:text-6xl lg:text-7xl">
               VYRON COST
               <br />
-              <span className="text-[#08111A]">PROTECTS MARGIN</span>
+              <span className="text-[#0F172A]">PROTECTS MARGIN</span>
             </h1>
             <p className="mt-8 max-w-xl text-lg leading-8 text-[#64748B]">
               VYRON COST is built for food manufacturers, multi-site producers and finance teams who need live BOM
@@ -101,7 +101,7 @@ export default function VyronLandingPage() {
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#08111A] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-white"
+                className="inline-flex items-center justify-center gap-2 rounded-xl vyron-grad-deep px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-white"
               >
                 Login
                 <ArrowRight size={18} />
@@ -114,7 +114,7 @@ export default function VyronLandingPage() {
               </Link>
               <Link
                 href="/api/demo-access?redirect=/dashboard"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#B6D934] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#08111A]"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#A78BFA] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#0F172A]"
               >
                 View Demo
                 <LayoutDashboard size={18} />
@@ -166,7 +166,7 @@ export default function VyronLandingPage() {
         <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {features.map((feature) => (
             <div key={feature.title} className="vyron-surface-card-elevated p-6">
-              <h3 className="font-black text-[#08111A]">{feature.title}</h3>
+              <h3 className="font-black text-[#0F172A]">{feature.title}</h3>
               <p className="mt-3 text-sm leading-7 text-[#64748B]">{feature.body}</p>
             </div>
           ))}
@@ -185,7 +185,7 @@ export default function VyronLandingPage() {
       </section>
 
       <section id="cta" className="mx-auto max-w-7xl px-6 pb-24 lg:px-10">
-        <div className="rounded-[2rem] bg-[#08111A] p-12 text-center text-white">
+        <div className="rounded-[2rem] vyron-grad-deep p-12 text-center text-white">
           <h2 className="text-3xl font-black md:text-4xl">This software finds money — and shows the formula.</h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm text-white/70">
             Email invoices and purchase orders directly to VYRON COST and let AI extract, match and flag risks.
@@ -193,7 +193,7 @@ export default function VyronLandingPage() {
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#B6D934] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#08111A]"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#A78BFA] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#0F172A]"
             >
               Login
             </Link>

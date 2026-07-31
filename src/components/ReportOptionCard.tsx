@@ -19,26 +19,38 @@ export default function ReportOptionCard({
   return (
     <Link
       href={href}
-      className={`group block rounded-2xl border p-6 shadow-[0_2px_16px_rgba(0,0,0,0.16)] transition hover:border-violet-400/25 ${
+      className={`group block rounded-2xl border p-6 transition ${
         dark
-          ? "border-violet-400/25 bg-gradient-to-br from-[#1e1635] via-[#252040] to-[#1a1033] text-[#F8FAFC]"
-          : "border-white/12 bg-[#252040] text-[#F8FAFC]"
+          ? "border-white/10 vyron-grad-deep text-[#F8FAFC] shadow-[var(--vyron-elev-3)]"
+          : "border-[rgba(15,23,42,0.07)] bg-white/72 text-[#0F172A] shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 hover:-translate-y-0.5 hover:border-[rgba(15,23,42,0.11)] hover:shadow-[var(--vyron-elev-3)]"
       }`}
     >
       <div className="flex items-start justify-between gap-4">
-        <div className="rounded-xl border border-violet-400/25 bg-violet-600/20 p-3 text-violet-200">
+        <div
+          className={`rounded-xl p-3 ${
+            dark
+              ? "border border-white/15 bg-white/10 text-[#DDD6FE]"
+              : "border border-[rgba(15,23,42,0.06)] bg-[rgba(79,70,229,0.06)] text-[#4F46E5]"
+          }`}
+        >
           <Icon size={24} />
         </div>
 
-        <div className="rounded-full border border-violet-400/25 bg-violet-600/15 px-3 py-1 text-xs font-bold text-violet-200">
+        <div
+          className={`rounded-full px-3 py-1 vyron-t-label text-[10px] ${
+            dark
+              ? "border border-white/15 bg-white/10 text-[#DDD6FE]"
+              : "border border-[rgba(79,70,229,0.18)] bg-[rgba(79,70,229,0.06)] text-[#4F46E5]"
+          }`}
+        >
           {badge}
         </div>
       </div>
 
-      <h3 className="mt-5 text-xl font-black text-[#F8FAFC]">{title}</h3>
-      <p className="mt-3 text-sm font-medium leading-7 text-[#CBD5E1]">{description}</p>
+      <h3 className={`mt-5 vyron-t-title text-xl ${dark ? "text-[#F8FAFC]" : "text-[#0F172A]"}`}>{title}</h3>
+      <p className={`mt-3 vyron-t-body text-sm ${dark ? "text-[#CBD5E1]" : "text-[#334155]"}`}>{description}</p>
 
-      <div className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-[#A855F7]">
+      <div className={`mt-6 inline-flex items-center gap-2 text-sm font-semibold ${dark ? "text-[#DDD6FE]" : "text-[#4F46E5]"}`}>
         Open report
         <ArrowRight className="transition group-hover:translate-x-1" size={16} />
       </div>

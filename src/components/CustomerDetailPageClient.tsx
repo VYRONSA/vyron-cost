@@ -179,7 +179,7 @@ export default function CustomerDetailPageClient({ customer }: { customer: Custo
           Create Sales Order
         </Link>
         {canEdit ? (
-          <button type="button" onClick={saveCustomer} className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-black text-white">
+          <button type="button" onClick={saveCustomer} className="inline-flex items-center gap-2 rounded-xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">
             <Save size={16} /> Save Customer
           </button>
         ) : null}

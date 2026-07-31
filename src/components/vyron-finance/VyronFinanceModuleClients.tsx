@@ -106,7 +106,7 @@ export function CashFlowClient({ cash }: { cash: VyronFinanceIntelligencePayload
   return (
     <section className="grid gap-8">
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl bg-violet-600 p-6 text-white">
+        <div className="rounded-2xl vyron-grad-surface p-6 text-white">
           <div className="text-xs font-black uppercase opacity-80">30 day cash requirement</div>
           <div className="mt-2 text-3xl font-black">{money(cash.horizon30)}</div>
         </div>
@@ -214,7 +214,7 @@ export function BoardReportingClient({ packs }: { packs: VyronFinanceIntelligenc
             key={p.type}
             type="button"
             onClick={() => setIdx(i)}
-            className={`rounded-xl px-4 py-2 text-xs font-black ${i === idx ? "bg-violet-600 text-white" : "bg-white text-slate-700"}`}
+            className={`rounded-xl px-4 py-2 text-xs font-black ${i === idx ? "vyron-grad-surface text-white" : "bg-white text-slate-700"}`}
           >
             {p.label}
           </button>

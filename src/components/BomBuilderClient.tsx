@@ -702,19 +702,19 @@ export default function BomBuilderClient({
             <h2 className="mt-2 text-xl font-black text-slate-900">Guided BOM workflow</h2>
             <ol className="mt-5 space-y-4 text-sm font-semibold leading-6 text-slate-700">
               <li className="flex gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-700 text-xs font-black text-white">1</span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full vyron-grad-surface text-xs font-semibold text-white">1</span>
                 <span>Name the BOM and set yield — this defines cost per finished unit.</span>
               </li>
               <li className="flex gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-700 text-xs font-black text-white">2</span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full vyron-grad-surface text-xs font-semibold text-white">2</span>
                 <span>Add cost lines from ingredients, packaging, labour, overhead and wastage.</span>
               </li>
               <li className="flex gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-700 text-xs font-black text-white">3</span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full vyron-grad-surface text-xs font-semibold text-white">3</span>
                 <span>Set selling price and target GP — compare actual GP to your goal.</span>
               </li>
               <li className="flex gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-700 text-xs font-black text-white">4</span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full vyron-grad-surface text-xs font-semibold text-white">4</span>
                 <span>Save — linked products inherit updated costs automatically.</span>
               </li>
             </ol>

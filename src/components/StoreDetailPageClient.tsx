@@ -135,7 +135,7 @@ export default function StoreDetailPageClient({ store }: { store: StoreRow }) {
 
       <div className="mt-6 flex flex-wrap gap-3">
         {canEdit ? (
-          <button type="button" onClick={saveStore} className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-black text-white">
+          <button type="button" onClick={saveStore} className="inline-flex items-center gap-2 rounded-xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">
             <Save size={16} /> Save Store
           </button>
         ) : null}

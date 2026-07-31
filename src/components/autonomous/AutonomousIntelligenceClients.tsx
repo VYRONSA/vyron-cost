@@ -22,7 +22,7 @@ export function money(n: number) {
 
 export function ExplainBlock({ e }: { e: Explainable }) {
   return (
-    <div className="mt-3 rounded-xl border border-white/10 bg-[#1e1635] p-3 text-xs font-bold text-[#94A3B8]">
+    <div className="mt-3 rounded-xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 p-3 text-xs font-bold text-[#94A3B8]">
       <div>Formula: {e.formula}</div>
       <div className="mt-1">Confidence: {e.confidence}%</div>
     </div>
@@ -133,7 +133,7 @@ export function BusinessHealthClient({ health }: { health: AutonomousBusinessInt
           <div key={String(l)} className={BI_CARD}>
             <div className="text-xs font-black uppercase tracking-[0.12em] text-violet-300">{l}</div>
             <div className="mt-2 text-3xl font-black text-[#F8FAFC]">{v}</div>
-            <div className="mt-2 h-2 rounded-full bg-[#1e1635]">
+            <div className="mt-2 h-2 rounded-full border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150">
               <div className="h-full rounded-full bg-violet-500" style={{ width: `${v}%` }} />
             </div>
           </div>
@@ -505,7 +505,7 @@ export function CopilotClient({ presets }: { presets: CopilotAnswer[] }) {
         {answer ? (
           <>
             <p className="mt-4 text-sm leading-8 text-[#CBD5E1]">{answer.answer}</p>
-            <div className="mt-6 rounded-xl border border-white/10 bg-[#252040]/80 p-4 text-xs text-[#94A3B8]">
+            <div className="mt-6 rounded-xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150/80 p-4 text-xs text-[#94A3B8]">
               <div>Formula: {answer.formula}</div>
               <div className="mt-1">Confidence: {answer.confidence}%</div>
             </div>

@@ -107,7 +107,7 @@ export default function ProductBomPanelClient({
                 Update cost from BOM
               </button>
               {summary.linkedRecipe ? (
-                <Link href={`/recipes/${summary.linkedRecipe.id}/edit`} className="rounded-xl bg-[#08111A] px-4 py-2 text-xs font-black text-[#B6D934]">
+                <Link href={`/recipes/${summary.linkedRecipe.id}/edit`} className="rounded-xl vyron-grad-deep px-4 py-2 text-xs font-black text-[#DDD6FE]">
                   Edit BOM
                 </Link>
               ) : null}

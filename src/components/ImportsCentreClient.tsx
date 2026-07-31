@@ -122,7 +122,7 @@ export default function ImportsCentreClient() {
                 setErrors([]);
               }}
               className={`block w-full rounded-2xl border px-4 py-3 text-left transition ${
-                selected === item.id ? "border-[#B6D934] bg-[#A855F7]/10" : "border-slate-100 bg-slate-50 hover:bg-white"
+                selected === item.id ? "border-[#A78BFA] bg-[#A855F7]/10" : "border-slate-100 bg-slate-50 hover:bg-white"
               }`}
             >
               <div className="font-black text-slate-950">{item.label}</div>
@@ -142,7 +142,7 @@ export default function ImportsCentreClient() {
             <button
               type="button"
               onClick={downloadTemplate}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#08111A] px-4 py-3 text-xs font-black text-[#B6D934]"
+              className="inline-flex items-center gap-2 rounded-xl vyron-grad-deep px-4 py-3 text-xs font-black text-[#DDD6FE]"
             >
               <Download size={16} />
               Download CSV Template
@@ -150,7 +150,7 @@ export default function ImportsCentreClient() {
           </div>
 
           {canImports ? (
-            <label className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-6 py-10 transition hover:border-[#B6D934]">
+            <label className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-6 py-10 transition hover:border-[#A78BFA]">
               <Upload size={28} className="text-[#7E22CE]" />
               <div className="mt-3 text-sm font-black text-slate-950">Upload CSV</div>
               <div className="mt-1 text-xs text-slate-500">{fileName || "Choose file to validate"}</div>

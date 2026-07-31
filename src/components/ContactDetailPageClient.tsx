@@ -82,7 +82,7 @@ export default function ContactDetailPageClient({ contact }: { contact: VyronCon
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <button type="button" onClick={saveContact} className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-black text-white">
+        <button type="button" onClick={saveContact} className="inline-flex items-center gap-2 rounded-xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">
           <Save size={16} /> Save Contact
         </button>
         <button type="button" onClick={requestDelete} className="inline-flex items-center gap-2 rounded-xl bg-red-50 px-5 py-3 text-sm font-black text-red-700">

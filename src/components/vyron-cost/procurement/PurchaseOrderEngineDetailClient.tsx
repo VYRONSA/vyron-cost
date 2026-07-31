@@ -127,7 +127,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
                 type="button"
                 disabled={receiving}
                 onClick={() => void receive("full")}
-                className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+                className="rounded-xl vyron-grad-surface px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
               >
                 Receive Full
               </button>

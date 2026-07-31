@@ -147,7 +147,7 @@ export default function RecipeDetailClient({
                 ← Recipes & BOM
               </Link>
               {canEdit ? (
-                <Link href={`/recipes/${bom.id}/edit`} className="rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-white">
+                <Link href={`/recipes/${bom.id}/edit`} className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">
                   Edit BOM
                 </Link>
               ) : null}
