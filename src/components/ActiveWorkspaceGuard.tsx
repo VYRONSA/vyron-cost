@@ -20,21 +20,21 @@ export default function ActiveWorkspaceGuard() {
       {hasClient ? (
         <ActiveClientBanner />
       ) : (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] border border-fuchsia-200 bg-fuchsia-50 px-5 py-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-5 py-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="text-fuchsia-700" size={22} />
+            <AlertTriangle className="text-[var(--vyron-warning-fg)]" size={22} />
             <div>
               <div className="text-sm font-black text-fuchsia-950">
                 Select a client workspace before processing transactions.
               </div>
-              <div className="text-xs font-semibold text-fuchsia-800">
+              <div className="text-xs font-semibold text-[var(--vyron-warning-fg)]">
                 Use Developer Centre → Login As Client, then return to the app.
               </div>
             </div>
           </div>
           <Link
             href="/developer/clients"
-            className="rounded-xl bg-fuchsia-700 px-4 py-2 text-xs font-black text-white"
+            className="rounded-xl bg-[var(--vyron-warning-solid)] px-4 py-2 text-xs font-black text-white"
           >
             Client Directory
           </Link>

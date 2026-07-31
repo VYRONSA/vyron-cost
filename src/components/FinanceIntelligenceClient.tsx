@@ -11,7 +11,7 @@ function money(value: number) {
 function riskClass(level: string) {
   if (level === "Critical") return "bg-red-100 text-red-800 border-red-200";
   if (level === "High") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)] border-[var(--vyron-warning-border)]";
-  if (level === "Medium") return "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200";
+  if (level === "Medium") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)] border-[var(--vyron-warning-border)]";
   return "bg-[#A855F7]/12 text-[#4D7C0F] border-[#A855F7]/25";
 }
 

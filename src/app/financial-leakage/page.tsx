@@ -232,7 +232,7 @@ export default async function FinancialLeakagePage() {
               [CircleDollarSign, "Detected", detected, "Total leakage identified", "bg-violet-100 text-violet-700"],
               [ShieldAlert, "Recoverable", recoverable, "High confidence recovery", "bg-[#A855F7]/12 text-[#7E22CE]"],
               [ClipboardCheck, "Approved", approved, "Approved recovery actions", "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
-              [Banknote, "Recovered", recovered, "Value already recovered", "bg-fuchsia-100 text-fuchsia-700"],
+              [Banknote, "Recovered", recovered, "Value already recovered", "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
             ].map(([Icon, label, value, detail, tone]: any) => (
               <div key={label} className="rounded-2xl bg-slate-50/60 p-4 text-center">
                 <div className={`mx-auto flex h-24 w-24 items-center justify-center rounded-full ${tone} shadow-[0_12px_30px_rgba(76,29,149,0.08)]`}>

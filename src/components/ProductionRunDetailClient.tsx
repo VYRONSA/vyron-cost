@@ -180,7 +180,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
             {run.product_name_snapshot ? ` → ${run.product_name_snapshot}` : ""}
           </p>
         </div>
-        <span className="rounded-2xl bg-violet-100 px-4 py-2 text-sm font-black text-violet-800">{run.status}</span>
+        <span className="rounded-2xl bg-[var(--vyron-success-bg)] px-4 py-2 text-sm font-black text-[var(--vyron-success-fg)]">{run.status}</span>
       </div>
 
       {message ? <p className="rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-800">{message}</p> : null}
@@ -364,7 +364,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
           </button>
         ) : null}
         {run.status === "Approved" && canStart ? (
-          <button type="button" disabled={loading} onClick={() => void action(`/api/production/runs/${runId}/start`)} className="rounded-2xl bg-fuchsia-600 px-5 py-3 text-sm font-black text-white">
+          <button type="button" disabled={loading} onClick={() => void action(`/api/production/runs/${runId}/start`)} className="rounded-2xl bg-[var(--vyron-warning-solid)] px-5 py-3 text-sm font-black text-white">
             Start production
           </button>
         ) : null}

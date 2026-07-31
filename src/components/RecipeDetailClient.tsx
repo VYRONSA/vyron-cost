@@ -213,7 +213,7 @@ export default function RecipeDetailClient({
             </section>
       
             {demoMode ? (
-              <p className="text-xs font-bold text-fuchsia-700">Demo workspace — sample BOM data only.</p>
+              <p className="text-xs font-bold text-[var(--vyron-warning-fg)]">Demo workspace — sample BOM data only.</p>
             ) : null}
           </section>
     </VyronPremiumPageShell>

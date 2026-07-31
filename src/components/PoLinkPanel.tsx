@@ -124,7 +124,7 @@ export default function PoLinkPanel({
               <div className="mt-1">PO R{match.poTotal.toFixed(2)} vs Invoice R{match.invoiceTotal.toFixed(2)}</div>
               <div>Total variance: R{match.totalVariance.toFixed(2)}</div>
               <div>Qty variance: {match.qtyVariance}</div>
-              {match.missingGrn ? <div className="mt-1 font-bold text-fuchsia-700">GRN not yet received</div> : null}
+              {match.missingGrn ? <div className="mt-1 font-bold text-[var(--vyron-warning-fg)]">GRN not yet received</div> : null}
             </div>
           ) : null}
         </div>
@@ -159,7 +159,7 @@ export default function PoLinkPanel({
           </button>
         </div>
       )}
-      {message ? <p className="mt-2 text-[11px] font-bold text-violet-800">{message}</p> : null}
+      {message ? <p className="mt-2 text-[11px] font-bold text-[var(--vyron-success-fg)]">{message}</p> : null}
     </section>
   );
 }

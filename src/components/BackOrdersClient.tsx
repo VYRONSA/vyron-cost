@@ -83,7 +83,7 @@ export default function BackOrdersClient() {
         </div>
       </div>
 
-      {message ? <p className="rounded-xl bg-fuchsia-50 px-4 py-3 text-sm font-black text-fuchsia-800">{message}</p> : null}
+      {message ? <p className="rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-warning-fg)]">{message}</p> : null}
 
       <div className="overflow-x-auto rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         <table className="min-w-[1050px] w-full text-left text-sm">
@@ -110,11 +110,11 @@ export default function BackOrdersClient() {
                         <td className="px-4 py-3 font-bold">{String(row.item_name || "—")}</td>
                         <td className="px-4 py-3 font-black text-red-600">{num(row.outstanding_qty).toFixed(2)} {String(row.unit || "")}</td>
                         <td className="px-4 py-3">{String(row.expected_date || "—")}</td>
-                        <td className="px-4 py-3"><span className="rounded-full bg-fuchsia-100 px-3 py-1 text-[10px] font-black uppercase text-fuchsia-800">{String(row.status || "Open")}</span></td>
+                        <td className="px-4 py-3"><span className="rounded-full bg-[var(--vyron-warning-bg)] px-3 py-1 text-[10px] font-black uppercase text-[var(--vyron-warning-fg)]">{String(row.status || "Open")}</span></td>
                         <td className="px-4 py-3 print:hidden">
                           <div className="flex flex-wrap gap-2">
                             {poId ? <Link href={`/purchase-orders/${poId}`} className="rounded-full bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">Open PO</Link> : null}
-                            {poId ? <Link href={`/goods-receipts/new?po=${poId}`} className="rounded-full bg-fuchsia-50 px-3 py-2 text-xs font-black text-fuchsia-700">Receive Balance</Link> : null}
+                            {poId ? <Link href={`/goods-receipts/new?po=${poId}`} className="rounded-full bg-[var(--vyron-warning-bg)] px-3 py-2 text-xs font-black text-[var(--vyron-warning-fg)]">Receive Balance</Link> : null}
                           </div>
                         </td>
                       </tr>

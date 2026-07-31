@@ -136,7 +136,7 @@ export default function InventoryDashboardClient() {
       actions={inventoryActions}
     >
       {message ? (
-        <div className="rounded-xl border border-violet-400/25 bg-violet-500/15 px-5 py-4 text-sm font-semibold text-violet-200">
+        <div className="rounded-xl border border-violet-400/25 bg-[var(--vyron-warning-solid)]/15 px-5 py-4 text-sm font-semibold text-violet-200">
           {message}
         </div>
       ) : null}

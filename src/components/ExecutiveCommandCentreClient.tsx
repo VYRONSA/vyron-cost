@@ -227,7 +227,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                         <div className="flex items-center gap-2">
                           <span
                             className={`rounded-lg px-2 py-0.5 text-[10px] font-black uppercase ${
-                              item.severity === "high" ? "bg-red-500/30 text-red-200" : item.severity === "medium" ? "bg-fuchsia-500/30 text-fuchsia-100" : "bg-slate-500/30"
+                              item.severity === "high" ? "bg-red-500/30 text-red-200" : item.severity === "medium" ? "bg-[var(--vyron-warning-solid)]/30 text-[var(--vyron-warning-on-deep)]" : "bg-slate-500/30"
                             }`}
                           >
                             {item.category}

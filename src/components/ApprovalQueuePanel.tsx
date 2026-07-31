@@ -37,7 +37,7 @@ export default async function ApprovalQueuePanel() {
                   approval.risk === "CRITICAL"
                     ? "bg-red-100 text-red-700"
                     : approval.risk === "HIGH"
-                      ? "bg-fuchsia-100 text-fuchsia-700"
+                      ? "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
                       : "bg-[#A855F7]/12 text-[#7E22CE]"
                 }`}
               >

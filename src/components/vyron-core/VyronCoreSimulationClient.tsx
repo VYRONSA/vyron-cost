@@ -81,7 +81,7 @@ export default function VyronCoreSimulationClient({ initialSimulations }: { init
       </div>
 
       {message ? (
-        <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">{message}</div>
+        <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</div>
       ) : null}
 
       <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">

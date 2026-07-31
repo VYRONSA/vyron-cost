@@ -85,7 +85,7 @@ export default function ExecutiveDashboardClient({
     { label: "Monthly Leakage", value: money(leakage.estimatedMonthlyLeakage), note: "Detected leakage exposure", Icon: ShieldAlert, colour: "text-red-700" },
     { label: "Potential Recovery", value: money(recovery), note: "Identify. Action. Recover.", Icon: Banknote, colour: "text-[#7E22CE]" },
     { label: "Recovered This Year", value: money(annualRecovery), note: "Tracked recovered value", Icon: TrendingUp, colour: "text-violet-700" },
-    { label: "Open Opportunities", value: String(recoveryStats.openOpportunities), note: "Recovery tracking lifecycle", Icon: Factory, colour: "text-fuchsia-600" },
+    { label: "Open Opportunities", value: String(recoveryStats.openOpportunities), note: "Recovery tracking lifecycle", Icon: Factory, colour: "text-[var(--vyron-warning-fg)]" },
   ];
 
   const highRiskOpenItems = opportunities.filter(

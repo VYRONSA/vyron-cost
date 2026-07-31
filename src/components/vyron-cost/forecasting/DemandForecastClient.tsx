@@ -105,7 +105,7 @@ export default function DemandForecastClient() {
               {warnings.slice(0, 8).map((warning) => (
                 <div
                   key={`${warning.code}-${warning.product_id}`}
-                  className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm font-semibold text-fuchsia-900"
+                  className="rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-semibold text-[var(--vyron-warning-fg)]"
                 >
                   {warning.message}
                 </div>

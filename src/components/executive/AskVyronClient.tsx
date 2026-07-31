@@ -391,7 +391,7 @@ export default function AskVyronClient({
                 <h2 className="text-xl font-bold text-[#0F172A]">Answer</h2>
                 <ConfidenceBadge confidence={currentAnswer.confidence} />
                 {currentAnswer.insufficientData ? (
-                  <span className="rounded-full border border-fuchsia-200 bg-fuchsia-50 px-2.5 py-0.5 text-[10px] font-bold uppercase text-fuchsia-900">
+                  <span className="rounded-full border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-2.5 py-0.5 text-[10px] font-bold uppercase text-[var(--vyron-warning-fg)]">
                     Needs data
                   </span>
                 ) : null}
@@ -610,7 +610,7 @@ function SourceCard({ source }: { source: IntelligenceSourceStatus }) {
 function ConfidenceBadge({ confidence }: { confidence: DecisionConfidence }) {
   const classes = {
     High: "border-violet-200 bg-violet-50 text-violet-800",
-    Medium: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Low: "border-[#E2E8F0] bg-[#F6F7FB] text-[#64748B]",
   };
   return (

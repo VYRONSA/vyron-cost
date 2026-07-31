@@ -176,13 +176,13 @@ export default function XeroSetupClient() {
           Mapping and connection scoped to workspace: <span className="font-black">{active.companyName}</span>
         </div>
       ) : (
-        <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm font-bold text-fuchsia-800">
+        <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-warning-fg)]">
           No active client workspace — select a workspace before connecting Xero.
         </div>
       )}
 
       {message ? (
-        <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">{message}</div>
+        <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</div>
       ) : null}
 
       <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
@@ -269,7 +269,7 @@ export default function XeroSetupClient() {
             Xero OAuth is configured. Connect Xero redirects to login.xero.com for real authorisation.
           </p>
         ) : (
-          <p className="mt-4 text-xs font-semibold text-fuchsia-700">
+          <p className="mt-4 text-xs font-semibold text-[var(--vyron-warning-fg)]">
             Set XERO_CLIENT_ID, XERO_CLIENT_SECRET and XERO_REDIRECT_URI to enable live Xero OAuth.
           </p>
         )}
@@ -339,7 +339,7 @@ function InfoTile({
 }) {
   const statusClass =
     status === "Connecting"
-      ? "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800"
+      ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
       : highlight
         ? "border-[#A855F7]/25 bg-[#A855F7]/10 text-[#4D7C0F]"
         : "border-slate-100 bg-slate-50 text-slate-900";
@@ -347,7 +347,7 @@ function InfoTile({
   return (
     <div className={`rounded-2xl border p-4 ${statusClass}`}>
       <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">{label}</div>
-      <div className={`mt-2 text-sm font-black ${status === "Connecting" ? "text-fuchsia-800" : highlight ? "text-[#4D7C0F]" : "text-slate-900"}`}>
+      <div className={`mt-2 text-sm font-black ${status === "Connecting" ? "text-[var(--vyron-warning-fg)]" : highlight ? "text-[#4D7C0F]" : "text-slate-900"}`}>
         {value}
       </div>
     </div>

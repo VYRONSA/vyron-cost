@@ -240,10 +240,10 @@ export default function ReportDetailClient({ reportId }: { reportId: string }) {
     >
       <section className="grid gap-6">
         <div className="print:hidden">
-        <Link href="/reports" className="inline-flex rounded-2xl border border-violet-100 bg-white px-4 py-2 text-sm font-black text-violet-700">← Back</Link>
+        <Link href="/reports" className="inline-flex rounded-2xl border border-[var(--vyron-success-border)] bg-white px-4 py-2 text-sm font-black text-[var(--vyron-success-fg)]">← Back</Link>
         </div>
         <ReportTableShell title={config.title} subtitle={config.subtitle} search={search} onSearch={setSearch} resultCount={filtered.length} exportFileName={`vyron-cost-${reportId}.csv`}>
-        {message ? <p className="rounded-xl bg-fuchsia-50 px-4 py-3 text-sm font-black text-fuchsia-700">{message}</p> : null}
+        {message ? <p className="rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-warning-fg)]">{message}</p> : null}
         {loading ? <p className="py-8 text-sm font-bold text-slate-500">Loading report…</p> : (
           <div className="mt-5 overflow-x-auto rounded-2xl border border-violet-100">
             <table data-report-table className="min-w-[1050px] w-full text-left text-sm">

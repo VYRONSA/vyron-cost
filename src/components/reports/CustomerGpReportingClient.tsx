@@ -463,7 +463,7 @@ function DualBars({ data }: { data: Array<{ month: string; revenue: number; cost
           <div className="text-[11px] text-slate-500">Revenue {money(row.revenue)} · Cost {money(row.cost)}</div>
           <div className="mt-1 grid gap-1">
             <div className="h-2 rounded bg-slate-100"><div className="h-2 rounded bg-indigo-500" style={{ width: `${Math.min(100, (row.revenue / max) * 100)}%` }} /></div>
-            <div className="h-2 rounded bg-slate-100"><div className="h-2 rounded bg-fuchsia-500" style={{ width: `${Math.min(100, (row.cost / max) * 100)}%` }} /></div>
+            <div className="h-2 rounded bg-slate-100"><div className="h-2 rounded bg-[var(--vyron-warning-solid)]" style={{ width: `${Math.min(100, (row.cost / max) * 100)}%` }} /></div>
           </div>
         </div>
       ))}

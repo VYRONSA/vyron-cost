@@ -155,14 +155,14 @@ export default function DeploymentReadinessClient() {
         <>
           <section
             className={`rounded-2xl border px-5 py-4 ${
-              overallReady ? "border-violet-200 bg-violet-50" : "border-fuchsia-200 bg-fuchsia-50"
+              overallReady ? "border-violet-200 bg-violet-50" : "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]"
             }`}
           >
             <div className="flex items-start gap-3">
               {overallReady ? (
                 <CheckCircle2 size={22} className="mt-0.5 shrink-0 text-violet-700" />
               ) : (
-                <AlertTriangle size={22} className="mt-0.5 shrink-0 text-fuchsia-700" />
+                <AlertTriangle size={22} className="mt-0.5 shrink-0 text-[var(--vyron-warning-fg)]" />
               )}
               <div>
                 <h2 className="text-lg font-bold text-[#0F172A]">

@@ -962,7 +962,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                           </button>
                         ))
                       ) : (
-                        <div className="px-4 py-3 text-sm font-bold text-fuchsia-700">
+                        <div className="px-4 py-3 text-sm font-bold text-[var(--vyron-warning-fg)]">
                           No customers found. Add customers under Customers, or type manually.
                         </div>
                       )}
@@ -1018,7 +1018,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                 <p className="text-sm font-semibold text-slate-500">Select finished products. Prices and costs fill automatically when product master data exists.</p>
               </div>
               {finishedGoods.length === 0 ? (
-                <span className="rounded-full bg-fuchsia-50 px-3 py-2 text-xs font-black text-fuchsia-700">No finished goods master found yet</span>
+                <span className="rounded-full bg-[var(--vyron-warning-bg)] px-3 py-2 text-xs font-black text-[var(--vyron-warning-fg)]">No finished goods master found yet</span>
               ) : (
                 <span className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]">{finishedGoods.length} finished goods loaded</span>
               )}
@@ -1069,7 +1069,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                                     </button>
                                   ))
                                 ) : (
-                                  <div className="px-4 py-3 text-sm font-bold text-fuchsia-700">
+                                  <div className="px-4 py-3 text-sm font-bold text-[var(--vyron-warning-fg)]">
                                     No finished goods found. Add products/finished goods, or type manually.
                                   </div>
                                 )}
@@ -1221,7 +1221,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <StockPostingBadge status={selectedInvoice.stockPostingStatus || "Not Posted"} />
                 {invoiceHasUnlinkedStock(selectedInvoice) ? (
-                  <span className="rounded-full bg-fuchsia-50 px-3 py-1 text-xs font-black text-fuchsia-700">
+                  <span className="rounded-full bg-[var(--vyron-warning-bg)] px-3 py-1 text-xs font-black text-[var(--vyron-warning-fg)]">
                     Warning: one or more lines have no stock item linked
                   </span>
                 ) : null}
@@ -1251,7 +1251,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                     if (!confirm("Post stock with insufficient-stock override?")) return;
                     void postInvoiceStock(selectedInvoice, true);
                   }}
-                  className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-5 py-3 text-sm font-black text-fuchsia-800 disabled:opacity-60"
+                  className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-5 py-3 text-sm font-black text-[var(--vyron-warning-fg)] disabled:opacity-60"
                 >
                   Post Stock (Override)
                 </button>
@@ -1408,7 +1408,7 @@ function PickerBox({ children }: { children: React.ReactNode }) {
 
 function StatusBadge({ status }: { status: InvoiceStatus }) {
   const classes: Record<InvoiceStatus, string> = {
-    Draft: "bg-fuchsia-100 text-fuchsia-800",
+    Draft: "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Approved: "bg-indigo-100 text-indigo-800",
     Posted: "bg-sky-100 text-sky-800",
     Sent: "bg-purple-100 text-purple-800",

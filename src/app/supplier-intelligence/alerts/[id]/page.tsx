@@ -56,9 +56,9 @@ export default async function SupplierRiskAlertPage({
           <div className="text-xs font-black uppercase tracking-[0.14em] text-red-700">Previous Price</div>
           <div className="mt-2 text-2xl font-black text-red-800">{money(risk.previous_price)}</div>
         </div>
-        <div className="rounded-[2rem] bg-fuchsia-50 p-6 shadow-sm">
-          <div className="text-xs font-black uppercase tracking-[0.14em] text-fuchsia-700">New Price</div>
-          <div className="mt-2 text-2xl font-black text-fuchsia-800">{money(risk.new_price)}</div>
+        <div className="rounded-[2rem] bg-[var(--vyron-warning-bg)] p-6 shadow-sm">
+          <div className="text-xs font-black uppercase tracking-[0.14em] text-[var(--vyron-warning-fg)]">New Price</div>
+          <div className="mt-2 text-2xl font-black text-[var(--vyron-warning-fg)]">{money(risk.new_price)}</div>
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">% Change</div>

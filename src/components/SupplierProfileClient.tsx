@@ -13,7 +13,7 @@ function money(value: number) {
 function riskColour(level: string) {
   if (level === "Critical") return "text-red-800 bg-red-50 border-red-200";
   if (level === "High") return "text-[var(--vyron-warning-fg)] bg-[var(--vyron-warning-bg)] border-[var(--vyron-warning-border)]";
-  if (level === "Medium") return "text-fuchsia-800 bg-fuchsia-50 border-fuchsia-200";
+  if (level === "Medium") return "text-[var(--vyron-warning-fg)] bg-[var(--vyron-warning-bg)] border-[var(--vyron-warning-border)]";
   return "text-[#4D7C0F] bg-[#A855F7]/10 border-[#A855F7]/25";
 }
 
@@ -161,9 +161,9 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                         : "None detected"}
                     </div>
                   </div>
-                  <div className="rounded-xl bg-fuchsia-50 p-4">
-                    <div className="text-xs font-black uppercase text-fuchsia-700">Most Frequent Increase</div>
-                    <div className="mt-1 font-black text-fuchsia-900">
+                  <div className="rounded-xl bg-[var(--vyron-warning-bg)] p-4">
+                    <div className="text-xs font-black uppercase text-[var(--vyron-warning-fg)]">Most Frequent Increase</div>
+                    <div className="mt-1 font-black text-[var(--vyron-warning-fg)]">
                       {profile.inflation.mostFrequentIncrease
                         ? `${profile.inflation.mostFrequentIncrease.itemName} · ${profile.inflation.mostFrequentIncrease.count}×`
                         : "—"}

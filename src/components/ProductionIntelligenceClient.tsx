@@ -4,7 +4,7 @@ import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPa
 
 const toneClass = {
   red: "text-red-700",
-  amber: "text-fuchsia-700",
+  amber: "text-[var(--vyron-warning-fg)]",
   emerald: "text-[#7E22CE]",
 };
 

@@ -139,14 +139,14 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
           className="min-w-[200px] flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm"
         />
         {canReverse ? (
-          <label className="flex items-center gap-2 rounded-xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-2 text-xs font-black text-fuchsia-900">
+          <label className="flex items-center gap-2 rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-2 text-xs font-black text-[var(--vyron-warning-fg)]">
             <input type="checkbox" checked={supervisorMode} onChange={(e) => setSupervisorMode(e.target.checked)} />
             Supervisor mode
           </label>
         ) : null}
       </div>
 
-      {message ? <p className="rounded-xl bg-violet-50 px-4 py-3 text-sm font-bold text-violet-800">{message}</p> : null}
+      {message ? <p className="rounded-xl bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</p> : null}
 
       <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="min-w-[1100px]">
@@ -216,7 +216,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
                     {canAdjust ? (
                       <Link
                         href={`/manufacturing/runs/${run.id}?adjust=1`}
-                        className="rounded-lg bg-fuchsia-50 px-3 py-1.5 text-xs font-black text-fuchsia-800 hover:bg-fuchsia-100"
+                        className="rounded-lg bg-[var(--vyron-warning-bg)] px-3 py-1.5 text-xs font-black text-[var(--vyron-warning-fg)] hover:bg-[var(--vyron-warning-bg)]"
                       >
                         Adjust
                       </Link>

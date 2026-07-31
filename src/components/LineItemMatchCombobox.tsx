@@ -345,7 +345,7 @@ export default function LineItemMatchCombobox({
               closeDropdown();
               onCreatePackaging();
             }}
-            className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-black text-fuchsia-700 hover:bg-fuchsia-100"
+            className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-black text-[var(--vyron-warning-fg)] hover:bg-[var(--vyron-warning-bg)]"
           >
             <Package size={13} />
             Create New Packaging

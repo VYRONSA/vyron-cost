@@ -20,7 +20,7 @@ export default async function AlertsPage() {
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">High</div>
-          <div className="mt-3 text-4xl font-black text-fuchsia-600">
+          <div className="mt-3 text-4xl font-black text-[var(--vyron-warning-fg)]">
             {rows.filter((r) => /high/i.test(r.severity)).length}
           </div>
         </div>

@@ -673,21 +673,21 @@ function ReadinessCard({
 
 function BlockerCard({ blocker }: { blocker: AggregatedBlocker }) {
   return (
-    <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-4">
+    <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-4">
       <div className="flex flex-wrap items-center gap-2">
         <PriorityBadge priority={blocker.severity} />
-        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-fuchsia-800">{blocker.source}</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--vyron-warning-fg)]">{blocker.source}</span>
       </div>
       <h3 className="mt-2 font-bold text-fuchsia-950">{blocker.blocker}</h3>
-      <p className="mt-2 text-sm font-medium text-fuchsia-900">{blocker.resolutionPath}</p>
+      <p className="mt-2 text-sm font-medium text-[var(--vyron-warning-fg)]">{blocker.resolutionPath}</p>
       {blocker.affectedItems.length > 0 ? (
-        <ul className="mt-3 space-y-1 text-xs font-medium text-fuchsia-900">
+        <ul className="mt-3 space-y-1 text-xs font-medium text-[var(--vyron-warning-fg)]">
           {blocker.affectedItems.slice(0, 4).map((item) => (
             <li key={item}>· {item}</li>
           ))}
         </ul>
       ) : null}
-      <Link href={blocker.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-fuchsia-900">
+      <Link href={blocker.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[var(--vyron-warning-fg)]">
         Resolve <ArrowRight size={14} />
       </Link>
     </div>
@@ -731,7 +731,7 @@ function PriorityBadge({ priority }: { priority: CommandPriority }) {
   const classes: Record<CommandPriority, string> = {
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    Medium: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
   };
   return (
@@ -744,7 +744,7 @@ function PriorityBadge({ priority }: { priority: CommandPriority }) {
 function ConfidenceBadge({ confidence }: { confidence: DecisionConfidence }) {
   const classes = {
     High: "text-violet-700",
-    Medium: "text-fuchsia-800",
+    Medium: "text-[var(--vyron-warning-fg)]",
     Low: "text-[#64748B]",
   };
   return <span className={`text-xs font-bold ${classes[confidence]}`}>{confidence}</span>;

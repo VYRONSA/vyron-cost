@@ -280,7 +280,7 @@ export default function BrandingDesignerClient() {
     <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
       <div className="space-y-6">
         {!canCompany ? (
-          <div className="rounded-2xl bg-fuchsia-50 px-4 py-3 text-sm font-bold text-fuchsia-800">
+          <div className="rounded-2xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-warning-fg)]">
             You have read-only access. Changes cannot be saved.
           </div>
         ) : null}

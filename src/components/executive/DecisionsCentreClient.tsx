@@ -583,7 +583,7 @@ function ImpactMatrixQuadrant({
     quadrant === "High Impact / Low Effort"
       ? "border-violet-200 bg-violet-50"
       : quadrant === "High Impact / High Effort"
-        ? "border-fuchsia-200 bg-fuchsia-50"
+        ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]"
         : quadrant === "Low Impact / Low Effort"
           ? "border-[#E2E8F0] bg-[#F8FAFC]"
           : "border-rose-100 bg-rose-50";
@@ -629,7 +629,7 @@ function OpportunityCard({ item }: { item: OpportunityItem }) {
 
 function ConflictCard({ conflict }: { conflict: DecisionConflict }) {
   return (
-    <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-4">
+    <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-4">
       <h3 className="font-bold text-[#0F172A]">{conflict.title}</h3>
       <div className="mt-3 grid gap-2 text-sm md:grid-cols-2">
         <p>
@@ -681,7 +681,7 @@ function UrgencyBadge({ urgency }: { urgency: ExecutiveDecision["urgency"] }) {
   const classes: Record<ExecutiveDecision["urgency"], string> = {
     Immediate: "border-rose-200 bg-rose-50 text-rose-800",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    Medium: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
   };
   return (
@@ -694,7 +694,7 @@ function UrgencyBadge({ urgency }: { urgency: ExecutiveDecision["urgency"] }) {
 function ConfidenceBadge({ confidence }: { confidence: ExecutiveDecision["confidence"] }) {
   const classes = {
     High: "text-violet-700",
-    Medium: "text-fuchsia-800",
+    Medium: "text-[var(--vyron-warning-fg)]",
     Low: "text-[#64748B]",
   };
   return <span className={`text-xs font-bold ${classes[confidence]}`}>{confidence}</span>;

@@ -72,7 +72,7 @@ export default function InvoiceAiManager({
                   <button type="button" onClick={() => updateInvoiceStatus(invoice.id, "Approved")} className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 p-2 text-[#7E22CE]">
                     <CheckCircle2 size={16} />
                   </button>
-                  <button type="button" onClick={() => updateInvoiceStatus(invoice.id, "Review")} className="rounded-full bg-fuchsia-50 p-2 text-fuchsia-700">
+                  <button type="button" onClick={() => updateInvoiceStatus(invoice.id, "Review")} className="rounded-full bg-[var(--vyron-warning-bg)] p-2 text-[var(--vyron-warning-fg)]">
                     <RefreshCw size={16} />
                   </button>
                   <button type="button" onClick={() => updateInvoiceStatus(invoice.id, "Rejected")} className="rounded-full bg-red-50 p-2 text-red-700">
@@ -114,7 +114,7 @@ export default function InvoiceAiManager({
                   <button type="button" onClick={() => updateLineStatus(line.id, "Approved")} className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 p-2 text-[#7E22CE]">
                     <CheckCircle2 size={16} />
                   </button>
-                  <button type="button" onClick={() => updateLineStatus(line.id, "Review")} className="rounded-full bg-fuchsia-50 p-2 text-fuchsia-700">
+                  <button type="button" onClick={() => updateLineStatus(line.id, "Review")} className="rounded-full bg-[var(--vyron-warning-bg)] p-2 text-[var(--vyron-warning-fg)]">
                     <RefreshCw size={16} />
                   </button>
                   <button type="button" onClick={() => updateLineStatus(line.id, "Rejected")} className="rounded-full bg-red-50 p-2 text-red-700">

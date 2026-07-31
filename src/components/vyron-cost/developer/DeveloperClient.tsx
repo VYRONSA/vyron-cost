@@ -191,7 +191,7 @@ async function fetchWorkspaceClient(clientId: string): Promise<ClientWorkspace |
 function clientLoginDisplayClass(status: ClientLoginDisplayStatus) {
   if (status === "active_login") return "rounded-full bg-[#A855F7]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]";
   if (status === "disabled_login") return "rounded-full bg-rose-100 px-3 py-1 text-xs font-black text-rose-800";
-  return "rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-800";
+  return "rounded-full bg-[var(--vyron-warning-bg)] px-3 py-1 text-xs font-black text-[var(--vyron-warning-fg)]";
 }
 
 function readStoredClients(): ClientWorkspace[] {
@@ -278,7 +278,7 @@ function buildLocalClient(
 function statusClass(status: ClientStatus) {
   if (status === "Active") return "bg-[#A855F7]/12 text-[#4D7C0F]";
   if (status === "Demo") return "bg-violet-100 text-violet-800";
-  if (status === "Suspended") return "bg-fuchsia-100 text-fuchsia-800";
+  if (status === "Suspended") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   if (status === "Archived") return "bg-slate-200 text-slate-700";
   return "bg-slate-100 text-slate-700";
 }
@@ -309,7 +309,7 @@ function validateAdminForm(admin: typeof emptyAdminForm, requirePassword = false
 
 function xeroClass(status: XeroStatus) {
   if (status === "Connected") return "rounded-full bg-[#A855F7]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]";
-  if (status === "Setup Required") return "rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-800";
+  if (status === "Setup Required") return "rounded-full bg-[var(--vyron-warning-bg)] px-3 py-1 text-xs font-black text-[var(--vyron-warning-fg)]";
   return "rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700";
 }
 
@@ -1031,9 +1031,9 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
           {[
             ["Active Clients", statusCounts.total, "bg-violet-50 text-violet-800"],
             ["Live", statusCounts.active, "bg-[#A855F7]/10 text-[#4D7C0F]"],
-            ["Demo", statusCounts.demo, "bg-fuchsia-50 text-fuchsia-800"],
+            ["Demo", statusCounts.demo, "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
             ["In Setup", statusCounts.setup, "bg-slate-50 text-slate-800"],
-            ["Suspended", statusCounts.suspended, "bg-fuchsia-50 text-fuchsia-800"],
+            ["Suspended", statusCounts.suspended, "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
             ["Archived", statusCounts.archived, "bg-slate-100 text-slate-700"],
           ].map(([label, value, tone]) => (
             <div key={label} className={`rounded-[1.75rem] p-5 ${tone}`}>
@@ -1494,7 +1494,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
               </li>
             ))}
           </ul>
-          <div className="mt-5 rounded-2xl border border-fuchsia-100 bg-fuchsia-50 px-4 py-3 text-xs font-semibold text-fuchsia-900">
+          <div className="mt-5 rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-3 text-xs font-semibold text-[var(--vyron-warning-fg)]">
             Save Client creates the workspace, auth user, profile, OWNER membership and login credentials. Then connect Xero from Integrations when the tenant goes live.
           </div>
         </section>
@@ -1619,7 +1619,7 @@ function FlashMessage({
 }) {
   if (!message) return null;
   return (
-    <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">
+    <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">
       <div>{message}</div>
       {activeClient && message.startsWith("Logged in as") ? (
         <Link
@@ -1747,7 +1747,7 @@ function ClientRegisterTable({
                 <button
                   type="button"
                   onClick={() => onArchive(client.id)}
-                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-fuchsia-100 px-3 py-2 text-xs font-black text-fuchsia-800"
+                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--vyron-warning-bg)] px-3 py-2 text-xs font-black text-[var(--vyron-warning-fg)]"
                 >
                   <Archive size={14} />
                   Archive

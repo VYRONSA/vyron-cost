@@ -20,7 +20,7 @@ export default function ConfirmDeleteDialog({
       <div
         role="dialog"
         aria-modal="true"
-        className="w-full max-w-md rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_24px_70px_rgba(76,29,149,0.18)]"
+        className="w-full max-w-md rounded-[2rem] border border-[var(--vyron-success-border)] bg-white p-6 shadow-[0_24px_70px_rgba(76,29,149,0.18)]"
       >
         <h3 className="text-lg font-black text-slate-950">Confirm delete</h3>
         <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">{message}</p>

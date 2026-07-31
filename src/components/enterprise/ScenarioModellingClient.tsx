@@ -92,8 +92,8 @@ export default function ScenarioModellingClient({ initial }: { initial: Scenario
                 <div className="text-xs font-black uppercase text-[#7E22CE]">Recovery</div>
                 <div className="mt-2 text-2xl font-black">{money(impact.recoveryImpact)}/mo</div>
               </div>
-              <div className="rounded-2xl bg-fuchsia-50 p-5">
-                <div className="text-xs font-black uppercase text-fuchsia-700">Inventory</div>
+              <div className="rounded-2xl bg-[var(--vyron-warning-bg)] p-5">
+                <div className="text-xs font-black uppercase text-[var(--vyron-warning-fg)]">Inventory</div>
                 <div className="mt-2 text-2xl font-black">{money(impact.inventoryImpact)}</div>
               </div>
               <div className="rounded-2xl bg-violet-50 p-5">

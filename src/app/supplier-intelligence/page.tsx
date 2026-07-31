@@ -22,7 +22,7 @@ export default async function SupplierIntelligencePage() {
           ["Total Suppliers", centreStats.totalSuppliers, "bg-white"],
           ["Active Suppliers", centreStats.activeSuppliers, "bg-[#A855F7]/10"],
           ["High Risk Suppliers", centreStats.highRiskSuppliers, "bg-red-50"],
-          ["Inflation Alerts", centreStats.inflationAlerts, "bg-fuchsia-50"],
+          ["Inflation Alerts", centreStats.inflationAlerts, "bg-[var(--vyron-warning-bg)]"],
           ["Open Variances", centreStats.openVariances, "bg-[var(--vyron-warning-bg)]"],
           ["Savings Opportunities", formatSupplierSpend(centreStats.savingsOpportunities), "bg-violet-50"],
         ].map(([label, value, bg]) => (

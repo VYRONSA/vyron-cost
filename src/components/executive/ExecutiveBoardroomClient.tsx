@@ -357,7 +357,7 @@ export default function ExecutiveBoardroomClient({
       </header>
 
       {loadError ? (
-        <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm font-semibold text-fuchsia-900">
+        <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-semibold text-[var(--vyron-warning-fg)]">
           {loadError}
         </div>
       ) : null}
@@ -561,7 +561,7 @@ export default function ExecutiveBoardroomClient({
 function SeverityBadge({ severity }: { severity: "critical" | "warning" | "info" | "ok" }) {
   const classes = {
     critical: "border-rose-200 bg-rose-50 text-rose-700",
-    warning: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800",
+    warning: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     info: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
     ok: "border-violet-200 bg-violet-50 text-violet-700",
   };

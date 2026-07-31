@@ -92,7 +92,7 @@ export default function PurchaseOrderSettingsClient({
       <section className="max-w-xl rounded-[2rem] border border-violet-100 bg-white p-6">
             <h2 className="text-xl font-black">PO & Invoice Approval Thresholds</h2>
             {!companyResolved ? (
-              <p className="mt-3 rounded-xl bg-fuchsia-50 px-4 py-3 text-sm font-bold text-fuchsia-900">
+              <p className="mt-3 rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-warning-fg)]">
                 No active workspace company. Select a client workspace to load and save PO approval settings.
               </p>
             ) : null}
@@ -129,7 +129,7 @@ export default function PurchaseOrderSettingsClient({
               />
               Require PO linked before invoice approval
             </label>
-            {message ? <p className="mt-3 text-xs font-bold text-violet-700">{message}</p> : null}
+            {message ? <p className="mt-3 text-xs font-bold text-[var(--vyron-success-fg)]">{message}</p> : null}
             {error ? <p className="mt-3 text-xs font-bold text-red-600">{error}</p> : null}
             {canEdit && companyResolved ? (
               <button

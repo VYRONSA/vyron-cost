@@ -124,7 +124,7 @@ export default function DocumentIntelligenceDashboard() {
         <p className="mt-1 text-sm font-semibold text-slate-500">
           Uploaded → Extracting → Captured → Needs Review → Approved → Archived
         </p>
-        {message ? <div className="mt-3 rounded-xl bg-fuchsia-50 px-4 py-2 text-xs font-bold text-fuchsia-800">{message}</div> : null}
+        {message ? <div className="mt-3 rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-2 text-xs font-bold text-[var(--vyron-warning-fg)]">{message}</div> : null}
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
           {[
             ["Uploaded today", stats?.uploadedToday ?? "—", "New in queue"],
@@ -178,7 +178,7 @@ export default function DocumentIntelligenceDashboard() {
               type="button"
               onClick={() => setUtilityTab(item.id)}
               className={`rounded-full px-4 py-2 text-xs font-black ${
-                utilityTab === item.id ? "bg-fuchsia-600 text-white" : "bg-slate-100 text-slate-700"
+                utilityTab === item.id ? "bg-[var(--vyron-warning-solid)] text-white" : "bg-slate-100 text-slate-700"
               }`}
             >
               {item.label}

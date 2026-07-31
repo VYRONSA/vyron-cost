@@ -18,7 +18,7 @@ function ActionGroup({
     tone === "red"
       ? "bg-red-50 text-red-800"
       : tone === "amber"
-        ? "bg-fuchsia-50 text-fuchsia-800"
+        ? "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
         : "bg-[#A855F7]/10 text-[#4D7C0F]";
 
   return (

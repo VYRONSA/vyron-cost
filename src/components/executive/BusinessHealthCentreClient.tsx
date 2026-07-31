@@ -461,7 +461,7 @@ function CategoryCard({ category }: { category: HealthCategoryCard }) {
 function ActionCard({ action }: { action: ExecutiveHealthAction }) {
   const severityClasses = {
     critical: "border-rose-200 bg-rose-50",
-    warning: "border-fuchsia-200 bg-fuchsia-50",
+    warning: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]",
     info: "border-[#E2E8F0] bg-[#F8FAFC]",
   };
   return (
@@ -484,7 +484,7 @@ function RiskColumn({ level, items }: { level: RiskLevel; items: Array<{ id: str
   const colors: Record<RiskLevel, string> = {
     Critical: "border-rose-200 bg-rose-50",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]",
-    Medium: "border-fuchsia-200 bg-fuchsia-50",
+    Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]",
     Low: "border-violet-200 bg-violet-50",
   };
   return (
@@ -512,7 +512,7 @@ function RiskColumn({ level, items }: { level: RiskLevel; items: Array<{ id: str
 function StatusBadge({ status, large }: { status: HealthStatus; large?: boolean }) {
   const classes: Record<HealthStatus, string> = {
     Healthy: "border-violet-200 bg-violet-50 text-violet-800",
-    Watch: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    Watch: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Risk: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
     "Insufficient Data": "border-slate-200 bg-slate-50 text-slate-700",
@@ -532,7 +532,7 @@ function RiskLevelBadge({ level }: { level: RiskLevel }) {
   const classes: Record<RiskLevel, string> = {
     Critical: "border-rose-200 bg-rose-50 text-rose-700",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    Medium: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Low: "border-violet-200 bg-violet-50 text-violet-800",
   };
   return (
@@ -546,7 +546,7 @@ function ActionSeverityBadge({ severity }: { severity: ExecutiveHealthAction["se
   const labels = { critical: "Critical", warning: "Warning", info: "Info" };
   const classes = {
     critical: "text-rose-700",
-    warning: "text-fuchsia-800",
+    warning: "text-[var(--vyron-warning-fg)]",
     info: "text-[#64748B]",
   };
   return <span className={`text-[10px] font-bold uppercase ${classes[severity]}`}>{labels[severity]}</span>;

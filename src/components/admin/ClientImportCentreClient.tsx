@@ -173,7 +173,7 @@ export default function ClientImportCentreClient() {
                     </label>
                   ) : null}
                 </div>
-                {validationMessage ? <p className="mt-4 text-sm font-bold text-violet-800">{validationMessage}</p> : null}
+                {validationMessage ? <p className="mt-4 text-sm font-bold text-[var(--vyron-success-fg)]">{validationMessage}</p> : null}
                 {errors.length ? (
                   <div className="mt-4 max-h-40 overflow-y-auto rounded-xl border border-red-100 bg-red-50 p-3 text-xs font-semibold text-red-800">
                     {errors.map((error) => <div key={error}>{error}</div>)}

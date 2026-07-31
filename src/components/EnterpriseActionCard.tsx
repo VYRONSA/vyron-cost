@@ -39,7 +39,7 @@ export default function EnterpriseActionCard({
             priority === "Critical"
               ? "rounded-full bg-red-500/20 px-3 py-1 text-xs font-black text-red-300"
               : priority === "High"
-                ? "rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-700"
+                ? "rounded-full bg-[var(--vyron-warning-bg)] px-3 py-1 text-xs font-black text-[var(--vyron-warning-fg)]"
                 : "rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-1 text-xs font-black text-[#7E22CE]"
           }
         >

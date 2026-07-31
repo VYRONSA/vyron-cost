@@ -201,7 +201,7 @@ export default function ProcurementRecommendationDetailClient({
                   {JSON.stringify(recommendation.data_used, null, 2)}
                 </pre>
                 {recommendation.missing_inputs.length > 0 && (
-                  <div className="mt-4 rounded-xl bg-fuchsia-50 p-4 text-xs font-bold text-fuchsia-900">
+                  <div className="mt-4 rounded-xl bg-[var(--vyron-warning-bg)] p-4 text-xs font-bold text-[var(--vyron-warning-fg)]">
                     Assumptions / missing inputs: {recommendation.missing_inputs.join("; ")}
                   </div>
                 )}

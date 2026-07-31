@@ -253,7 +253,7 @@ export default function ProductEditPageClient({
   return (
     <section className="grid gap-8">
       <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-violet-800 via-indigo-900 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(81,63,190,0.28)]">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-fuchsia-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#A855F7]/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-[#A855F7]/10 blur-3xl" />
         <div className="relative grid gap-7 xl:grid-cols-[1.15fr_0.85fr] xl:items-center">
           <div>
@@ -307,7 +307,7 @@ export default function ProductEditPageClient({
       </section>
 
       {isBelowTarget && Number(form.selling_price || 0) > 0 ? (
-        <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-5 py-4 text-sm font-semibold text-fuchsia-900">
+        <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-5 py-4 text-sm font-semibold text-[var(--vyron-warning-fg)]">
           Margin warning: actual GP is <span className="font-black">{marginGap.toFixed(1)}%</span> below target. Review price, product cost, packaging, labour or wastage before approving this product.
         </div>
       ) : null}
@@ -464,7 +464,7 @@ export default function ProductEditPageClient({
           ) : null}
 
           {canDelete ? (
-            <button type="button" onClick={archiveProduct} className="inline-flex items-center gap-2 rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-6 py-4 text-sm font-black text-fuchsia-800 transition hover:bg-fuchsia-100">
+            <button type="button" onClick={archiveProduct} className="inline-flex items-center gap-2 rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-6 py-4 text-sm font-black text-[var(--vyron-warning-fg)] transition hover:bg-[var(--vyron-warning-bg)]">
               Archive Product
             </button>
           ) : null}

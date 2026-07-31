@@ -94,9 +94,9 @@ export default async function RecoveryOpportunityDetailPage({
             </div>
           ) : null}
 
-          <div className="mt-5 rounded-3xl bg-fuchsia-50 p-5">
-            <div className="text-xs font-black uppercase tracking-[0.14em] text-fuchsia-700">Missing Inputs</div>
-            <div className="mt-2 text-sm font-bold text-fuchsia-900">
+          <div className="mt-5 rounded-3xl bg-[var(--vyron-warning-bg)] p-5">
+            <div className="text-xs font-black uppercase tracking-[0.14em] text-[var(--vyron-warning-fg)]">Missing Inputs</div>
+            <div className="mt-2 text-sm font-bold text-[var(--vyron-warning-fg)]">
               {opportunity.missing_inputs?.length
                 ? opportunity.missing_inputs.join(", ")
                 : "No missing inputs. Formula inputs are complete."}

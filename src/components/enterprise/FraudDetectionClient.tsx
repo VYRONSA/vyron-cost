@@ -11,7 +11,7 @@ function money(n: number) {
 function sevClass(s: string) {
   if (s === "critical") return "bg-red-100 text-red-800";
   if (s === "high") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
-  return "bg-fuchsia-100 text-fuchsia-800";
+  return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
 }
 
 export default function FraudDetectionClient({ alerts }: { alerts: FraudAlert[] }) {

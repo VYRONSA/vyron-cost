@@ -752,5 +752,5 @@ function statusClass(status: BatchStatus) {
   if (status === "In Production") return "bg-indigo-100 text-indigo-800";
   if (status === "Reversed") return "bg-rose-100 text-rose-800";
   if (status === "Cancelled") return "bg-slate-200 text-slate-700";
-  return "bg-fuchsia-100 text-fuchsia-800";
+  return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
 }

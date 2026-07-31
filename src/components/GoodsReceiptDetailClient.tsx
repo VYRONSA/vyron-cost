@@ -179,7 +179,7 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
         </div>
         <div className="flex flex-wrap gap-2">
           {po?.id ? <Link href={`/purchase-orders/${po.id}`} className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-800">Open PO</Link> : null}
-          {po?.id && canCreate ? <Link href={`/goods-receipts/new?po=${po.id}`} className="rounded-xl bg-fuchsia-50 px-3 py-2 text-xs font-black text-fuchsia-700">Receive Balance</Link> : null}
+          {po?.id && canCreate ? <Link href={`/goods-receipts/new?po=${po.id}`} className="rounded-xl bg-[var(--vyron-warning-bg)] px-3 py-2 text-xs font-black text-[var(--vyron-warning-fg)]">Receive Balance</Link> : null}
           {canEdit ? (
             <button type="button" onClick={() => setEditing((value) => !value)} className="inline-flex items-center gap-1 rounded-xl vyron-grad-surface px-3 py-2 text-xs font-semibold text-white"><Pencil size={14} />{editing ? "Cancel Edit" : stockPosted ? "Edit Notes" : "Edit GRN"}</button>
           ) : null}
@@ -193,7 +193,7 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
         </div>
       </div>
 
-      {message ? <p className="rounded-xl bg-fuchsia-50 px-4 py-2 text-sm font-bold text-fuchsia-800 print:hidden">{message}</p> : null}
+      {message ? <p className="rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-2 text-sm font-bold text-[var(--vyron-warning-fg)] print:hidden">{message}</p> : null}
 
       <div className="grid gap-4 lg:grid-cols-2 print:hidden">
         <VyronPremiumFormulaCard

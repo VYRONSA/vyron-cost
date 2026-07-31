@@ -155,7 +155,7 @@ export default function XeroSyncCentreClient() {
       </div>
 
       {message ? (
-        <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">{message}</div>
+        <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</div>
       ) : null}
 
       <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
@@ -214,7 +214,7 @@ export default function XeroSyncCentreClient() {
                     </button>
                   ) : null}
                   {row.status === "Needs Review" ? (
-                    <Link href="/integrations/xero/setup" className="rounded-xl bg-fuchsia-100 px-3 py-1.5 text-xs font-black text-fuchsia-900">
+                    <Link href="/integrations/xero/setup" className="rounded-xl bg-[var(--vyron-warning-bg)] px-3 py-1.5 text-xs font-black text-[var(--vyron-warning-fg)]">
                       Review
                     </Link>
                   ) : null}
@@ -233,7 +233,7 @@ export default function XeroSyncCentreClient() {
 
 function Metric({ title, value, tone = "default" }: { title: string; value: string; tone?: "default" | "good" | "warn" | "bad" }) {
   const toneClass =
-    tone === "good" ? "text-[#7E22CE]" : tone === "warn" ? "text-fuchsia-700" : tone === "bad" ? "text-rose-700" : "text-slate-950";
+    tone === "good" ? "text-[#7E22CE]" : tone === "warn" ? "text-[var(--vyron-warning-fg)]" : tone === "bad" ? "text-rose-700" : "text-slate-950";
   return (
     <div className="rounded-[1.75rem] border border-violet-100 bg-white p-5 shadow-sm">
       <div className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-600">{title}</div>
@@ -247,7 +247,7 @@ function StatusBadge({ status }: { status: XeroSyncStatus }) {
     Ready: "bg-violet-100 text-violet-800",
     Synced: "bg-violet-100 text-violet-800",
     Failed: "bg-rose-100 text-rose-800",
-    "Needs Review": "bg-fuchsia-100 text-fuchsia-800",
+    "Needs Review": "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Processing: "bg-blue-100 text-blue-800",
     Cancelled: "bg-slate-100 text-slate-600",
   };

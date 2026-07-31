@@ -188,7 +188,7 @@ export default function ProductBOMManager({
   return (
     <section className="mt-6 grid gap-8">
       <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-violet-950 to-[#07110d] p-7 text-white shadow-[0_22px_65px_rgba(15,23,42,0.24)]">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-fuchsia-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#A855F7]/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 left-1/4 h-52 w-52 rounded-full bg-[#A855F7]/10 blur-3xl" />
         <div className="relative grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
           <div>
@@ -213,7 +213,7 @@ export default function ProductBOMManager({
           { label: "Ingredients", value: formatMoney(totals.Ingredient), tone: "bg-white text-slate-950", icon: Layers },
           { label: "Packaging", value: formatMoney(totals.Packaging), tone: "bg-violet-50 text-violet-800", icon: Layers },
           { label: "Salaries", value: formatMoney(totals.Salary), tone: "bg-white text-slate-950", icon: Layers },
-          { label: "Wastage", value: formatMoney(totals.Wastage), tone: "bg-fuchsia-50 text-fuchsia-800", icon: ShieldCheck },
+          { label: "Wastage", value: formatMoney(totals.Wastage), tone: "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]", icon: ShieldCheck },
           { label: "Cost Price", value: formatMoney(totals.costPrice), tone: "bg-[#07110d] text-white", icon: Calculator },
           { label: "Margin", value: `${totals.gp.toFixed(1)}%`, tone: isBelowTarget ? "bg-red-50 text-red-700" : "bg-[#A855F7]/10 text-[#7E22CE]", icon: TrendingUp },
         ].map((card) => (

@@ -548,7 +548,7 @@ export default function CustomerSalesOrdersClient({
                 <div><span className="text-slate-500">Total</span><div className="mt-1 text-sm text-slate-900">{money(liveTotals.total)}</div></div>
                 <div><span className="text-slate-500">Cost</span><div className="mt-1 text-sm text-slate-900">{money(liveTotals.cost)}</div></div>
                 <div><span className="text-slate-500">Gross Profit</span><div className="mt-1 text-sm text-slate-900">{money(liveTotals.gp)}</div></div>
-                <div><span className="text-slate-500">Margin %</span><div className={`mt-1 text-sm ${liveTotals.gpPct < 30 ? "text-fuchsia-700" : "text-violet-700"}`}>{liveTotals.gpPct.toFixed(2)}%</div></div>
+                <div><span className="text-slate-500">Margin %</span><div className={`mt-1 text-sm ${liveTotals.gpPct < 30 ? "text-[var(--vyron-warning-fg)]" : "text-violet-700"}`}>{liveTotals.gpPct.toFixed(2)}%</div></div>
               </div>
             </div>
           </div>
@@ -572,7 +572,7 @@ export default function CustomerSalesOrdersClient({
                 <div><StatusPill status={order.status} /></div>
                 <div className="font-bold text-slate-900">{money(order.total)}</div>
                 <div className="font-semibold text-slate-600">{order.requested_delivery_date || "-"}</div>
-                <div className={`font-bold ${Number(order.gp_percentage || 0) < 30 ? "text-fuchsia-700" : "text-violet-700"}`}>{Number(order.gp_percentage || 0).toFixed(1)}%</div>
+                <div className={`font-bold ${Number(order.gp_percentage || 0) < 30 ? "text-[var(--vyron-warning-fg)]" : "text-violet-700"}`}>{Number(order.gp_percentage || 0).toFixed(1)}%</div>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={() => void loadInsight(order.id)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700">Detail</button>
                   {order.status === "Draft" ? <ActionButton icon={<ClipboardCheck size={14} />} label="Submit" onClick={() => void runAction(order.id, "submit")} /> : null}
@@ -608,11 +608,11 @@ export default function CustomerSalesOrdersClient({
             </div>
 
             {selectedOrder.approval_rules.length ? (
-              <div className="mt-3 rounded-xl border border-fuchsia-200 bg-fuchsia-50 p-3">
-                <div className="text-xs font-black uppercase tracking-[0.12em] text-fuchsia-800">Automatic Approval Rules</div>
+              <div className="mt-3 rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-3">
+                <div className="text-xs font-black uppercase tracking-[0.12em] text-[var(--vyron-warning-fg)]">Automatic Approval Rules</div>
                 <div className="mt-2 grid gap-2">
                   {selectedOrder.approval_rules.map((rule, index) => (
-                    <div key={`${rule.code}-${index}`} className="text-sm font-semibold text-fuchsia-900">{rule.code}: {rule.message}</div>
+                    <div key={`${rule.code}-${index}`} className="text-sm font-semibold text-[var(--vyron-warning-fg)]">{rule.code}: {rule.message}</div>
                   ))}
                 </div>
               </div>
@@ -795,7 +795,7 @@ function StatusPill({ status }: { status: SalesOrderStatus }) {
       : status === "Cancelled"
         ? "bg-rose-100 text-rose-800"
         : status === "Awaiting Approval"
-          ? "bg-fuchsia-100 text-fuchsia-800"
+          ? "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
           : status === "Dispatched"
             ? "bg-sky-100 text-sky-800"
             : "bg-violet-100 text-violet-800";

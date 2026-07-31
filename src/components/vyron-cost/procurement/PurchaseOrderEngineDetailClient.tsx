@@ -154,7 +154,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
           </div>
         ) : null}
         {message ? (
-          <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800">
+          <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-semibold text-[var(--vyron-success-fg)]">
             {message}
           </div>
         ) : null}
@@ -194,7 +194,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
                   <div>Purchase value: <strong>{formatMoney(supplierPerformance.purchase_value)}</strong></div>
                 </div>
                 {supplierPerformance.warning ? (
-                  <div className="mt-3 rounded-xl bg-fuchsia-50 px-4 py-3 text-sm font-semibold text-fuchsia-800">
+                  <div className="mt-3 rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-semibold text-[var(--vyron-warning-fg)]">
                     {supplierPerformance.warning}
                   </div>
                 ) : null}
@@ -221,7 +221,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
                         <td className="px-4 py-3 font-semibold">{line.ingredient_name}</td>
                         <td className="px-4 py-3 text-right text-sm">{line.quantity} {line.unit}</td>
                         <td className="px-4 py-3 text-right text-sm">{line.received_qty} {line.unit}</td>
-                        <td className="px-4 py-3 text-right text-sm font-bold text-fuchsia-700">
+                        <td className="px-4 py-3 text-right text-sm font-bold text-[var(--vyron-warning-fg)]">
                           {line.outstanding_qty} {line.unit}
                         </td>
                         <td className="px-4 py-3 text-right font-bold">{formatMoney(line.line_total)}</td>

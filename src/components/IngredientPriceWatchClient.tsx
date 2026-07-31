@@ -62,7 +62,7 @@ export default function IngredientPriceWatchClient({ products }: { products: Pro
                 <div key={row.id} className="grid grid-cols-6 items-center border-t border-slate-100 px-5 py-5 text-sm">
                   <div className="col-span-2 font-black text-[#F8FAFC]">{row.item}</div>
                   <div>{row.category}</div>
-                  <div className={row.movement > 8 ? "font-black text-red-700" : "font-black text-fuchsia-600"}>{row.movement.toFixed(1)}%</div>
+                  <div className={row.movement > 8 ? "font-black text-red-700" : "font-black text-[var(--vyron-warning-fg)]"}>{row.movement.toFixed(1)}%</div>
                   <div className="font-black">{money(row.exposure)}</div>
                   <Link href={row.href} className="font-black text-[#7E22CE]">Open →</Link>
                 </div>

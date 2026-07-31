@@ -134,7 +134,7 @@ export default function RecoveryOpportunityDetailClient({
                   <button
                     type="button"
                     onClick={() => setStatus("Investigating")}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-fuchsia-100 px-4 py-3 text-sm font-black text-fuchsia-900"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-warning-fg)]"
                   >
                     <Search size={16} />
                     Mark as Investigating

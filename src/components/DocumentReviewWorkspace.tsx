@@ -46,7 +46,7 @@ const InvoiceDocumentViewer = dynamic(() => import("@/components/InvoiceDocument
 function confidenceTone(score: number | null) {
   if (score === null) return "bg-slate-200 text-slate-600";
   if (score >= 85) return "bg-[#A855F7]/12 text-[#7E22CE]";
-  if (score >= 70) return "bg-fuchsia-100 text-fuchsia-700";
+  if (score >= 70) return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   return "bg-red-100 text-red-700";
 }
 
@@ -989,7 +989,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           </div>
         ) : null}
         {overrideAudit.length > 0 ? (
-          <div className="mt-1 rounded bg-fuchsia-50 px-2 py-1 text-[10px] font-semibold text-fuchsia-800">
+          <div className="mt-1 rounded bg-[var(--vyron-warning-bg)] px-2 py-1 text-[10px] font-semibold text-[var(--vyron-warning-fg)]">
             Supervisor override recorded · {String(overrideAudit[0]?.overridden_at || "").slice(0, 16)}
           </div>
         ) : null}
@@ -1161,7 +1161,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
                 type="button"
                 disabled={approving}
                 onClick={() => void submitSupervisorOverride()}
-                className="rounded-xl bg-fuchsia-600 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
+                className="rounded-xl bg-[var(--vyron-warning-solid)] px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
               >
                 {approving ? "Approving…" : "Supervisor override & approve"}
               </button>

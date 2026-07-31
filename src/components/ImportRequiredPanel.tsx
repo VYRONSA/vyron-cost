@@ -3,9 +3,9 @@ import { Upload } from "lucide-react";
 
 export default function ImportRequiredPanel() {
   return (
-    <section className="mb-6 rounded-[2rem] border-2 border-dashed border-fuchsia-300 bg-fuchsia-50 p-8">
+    <section className="mb-6 rounded-[2rem] border-2 border-dashed border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-8">
       <div className="flex items-start gap-4">
-        <div className="rounded-2xl bg-fuchsia-100 p-3 text-fuchsia-800">
+        <div className="rounded-2xl bg-[var(--vyron-warning-bg)] p-3 text-[var(--vyron-warning-fg)]">
           <Upload size={28} />
         </div>
         <div>

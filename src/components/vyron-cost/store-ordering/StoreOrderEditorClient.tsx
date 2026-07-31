@@ -272,7 +272,7 @@ export default function StoreOrderEditorClient({ orderId }: { orderId?: string }
     >
       <div className="space-y-6">
         {message ? (
-          <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800">
+          <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-semibold text-[var(--vyron-success-fg)]">
             {message}
           </div>
         ) : null}
@@ -311,7 +311,7 @@ export default function StoreOrderEditorClient({ orderId }: { orderId?: string }
             {warnings.length ? (
               <div className="md:col-span-4">
                 <StoreOrderWarningBadges warnings={warnings} />
-                <ul className="mt-2 space-y-1 text-sm text-fuchsia-800">
+                <ul className="mt-2 space-y-1 text-sm text-[var(--vyron-warning-fg)]">
                   {warnings.map((warning) => (
                     <li key={`${warning.code}-${warning.message}`}>{warning.message}</li>
                   ))}

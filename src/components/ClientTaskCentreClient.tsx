@@ -51,7 +51,7 @@ export default function ClientTaskCentreClient() {
                       <div className="font-black text-[#F8FAFC]">{task}</div>
                       <div className="text-xs font-bold text-slate-500">{area}</div>
                     </div>
-                    <div className="font-black text-fuchsia-700">{priority}</div>
+                    <div className="font-black text-[var(--vyron-warning-fg)]">{priority}</div>
                     <div className={checked ? "font-black text-[#7E22CE]" : "font-black text-slate-500"}>{checked ? "Done" : "Open"}</div>
                   </div>
     </VyronPremiumPageShell>

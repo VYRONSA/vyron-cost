@@ -99,7 +99,7 @@ export default function ApprovalQueueClient() {
     >
       <div className="space-y-6">
         {message ? (
-          <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800">
+          <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-semibold text-[var(--vyron-success-fg)]">
             {message}
           </div>
         ) : null}
@@ -143,7 +143,7 @@ export default function ApprovalQueueClient() {
                       type="button"
                       disabled={busyId === order.id}
                       onClick={() => void handleAction(order.id, "request_change")}
-                      className="rounded-lg border border-fuchsia-200 px-3 py-1.5 text-xs font-bold text-fuchsia-800 disabled:opacity-60"
+                      className="rounded-lg border border-[var(--vyron-warning-border)] px-3 py-1.5 text-xs font-bold text-[var(--vyron-warning-fg)] disabled:opacity-60"
                     >
                       Request Change
                     </button>

@@ -138,7 +138,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
         <button
           type="button"
           onClick={() => setRollbackOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl border border-fuchsia-300 bg-fuchsia-50 px-4 py-2 text-xs font-black uppercase text-fuchsia-900"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-2 text-xs font-black uppercase text-[var(--vyron-warning-fg)]"
         >
           <RotateCcw size={14} />
           Rollback cost update
@@ -304,20 +304,20 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
             </div>
           ))}
           {detail.rollbacks.map((row) => (
-            <div key={String(row.id)} className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 p-3 text-xs">
+            <div key={String(row.id)} className="rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-3 text-xs">
               Rollback by {String(row.rolled_back_by)} · {String(row.rolled_back_at || "").slice(0, 16)} ·{" "}
               {Number(row.reversal_count || 0)} reversal(s)
             </div>
           ))}
           {detail.overrideAudit.map((row) => (
-            <div key={String(row.id)} className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 p-3 text-xs">
-              <div className="font-black text-fuchsia-900">
+            <div key={String(row.id)} className="rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-3 text-xs">
+              <div className="font-black text-[var(--vyron-warning-fg)]">
                 Supervisor override · {String(row.overridden_by || "supervisor")} ·{" "}
                 {String(row.overridden_at || "").slice(0, 16)}
               </div>
-              <div className="mt-1 text-fuchsia-800">{String(row.override_reason || "Policy override")}</div>
+              <div className="mt-1 text-[var(--vyron-warning-fg)]">{String(row.override_reason || "Policy override")}</div>
               {row.violations_snapshot ? (
-                <div className="mt-1 text-[11px] text-fuchsia-700">{JSON.stringify(row.violations_snapshot)}</div>
+                <div className="mt-1 text-[11px] text-[var(--vyron-warning-fg)]">{JSON.stringify(row.violations_snapshot)}</div>
               ) : null}
             </div>
           ))}
@@ -379,7 +379,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
                 type="button"
                 disabled={rollingBack}
                 onClick={() => void handleRollback()}
-                className="rounded-xl bg-fuchsia-600 px-4 py-2 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+                className="rounded-xl bg-[var(--vyron-warning-solid)] px-4 py-2 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
               >
                 {rollingBack ? "Rolling back…" : "Confirm rollback"}
               </button>

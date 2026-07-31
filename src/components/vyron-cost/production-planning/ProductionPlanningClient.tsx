@@ -107,7 +107,7 @@ export default function ProductionPlanningClient() {
     >
       <div className="space-y-6">
         {message ? (
-          <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800">
+          <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-semibold text-[var(--vyron-success-fg)]">
             {message}
           </div>
         ) : null}
@@ -202,7 +202,7 @@ export default function ProductionPlanningClient() {
                       <td className="px-4 py-3 text-right text-sm">{row.shortfall} {row.unit}</td>
                       <td className="px-4 py-3">
                         {row.has_shortage ? (
-                          <span className="rounded-full bg-fuchsia-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-fuchsia-800">
+                          <span className="rounded-full bg-[var(--vyron-warning-bg)] px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--vyron-warning-fg)]">
                             Shortage Warning
                           </span>
                         ) : (

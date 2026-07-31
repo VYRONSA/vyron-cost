@@ -165,7 +165,7 @@ export default function StoreProductionRunDetailClient({ runId }: { runId: strin
                         <td className="px-4 py-3 text-right text-sm">{row.shortfall} {row.unit}</td>
                         <td className="px-4 py-3">
                           {row.has_shortage ? (
-                            <span className="rounded-full bg-fuchsia-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-fuchsia-800">
+                            <span className="rounded-full bg-[var(--vyron-warning-bg)] px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-[var(--vyron-warning-fg)]">
                               Shortage Warning
                             </span>
                           ) : (

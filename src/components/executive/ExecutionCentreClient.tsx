@@ -260,7 +260,7 @@ export default function ExecutionCentreClient({
           className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${
             persistence.mode === "unavailable"
               ? "border-rose-200 bg-rose-50 text-rose-900"
-              : "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900"
+              : "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
           }`}
         >
           <div className="flex items-start gap-2">
@@ -763,7 +763,7 @@ function PriorityBadge({ priority }: { priority: string }) {
       : priority === "High"
         ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
         : priority === "Medium"
-          ? "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900"
+          ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
           : "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]";
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes}`}>
@@ -776,7 +776,7 @@ function StatusBadge({ status, overdue }: { status: ExecutionActionRow["status"]
   const classes: Record<ExecutionActionRow["status"], string> = {
     Recommended: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
     Approved: "border-indigo-200 bg-indigo-50 text-indigo-800",
-    "In Progress": "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    "In Progress": "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Completed: "border-violet-200 bg-violet-50 text-violet-800",
     Cancelled: "border-[#E2E8F0] bg-[#F6F7FB] text-[#64748B]",
   };

@@ -318,9 +318,9 @@ export default function VyronMobilePurchaseOrdersWorkspace() {
           <div className="mt-3 space-y-2">
             {supplierAlerts.length ? (
               supplierAlerts.map((alert) => (
-                <div key={alert.supplier} className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 px-3 py-2">
+                <div key={alert.supplier} className="rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-3 py-2">
                   <div className="text-sm font-black text-slate-950">{alert.supplier}</div>
-                  <div className="text-xs font-semibold text-fuchsia-800">Late deliveries: {alert.late} · Outstanding orders: {alert.open}</div>
+                  <div className="text-xs font-semibold text-[var(--vyron-warning-fg)]">Late deliveries: {alert.late} · Outstanding orders: {alert.open}</div>
                 </div>
               ))
             ) : (

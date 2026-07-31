@@ -8,7 +8,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Supplier Change": "bg-violet-100 text-violet-900",
   Recovery: "bg-[#A855F7]/12 text-[#4D7C0F]",
   "Risk Alert": "bg-red-100 text-red-900",
-  Approval: "bg-fuchsia-100 text-fuchsia-900",
+  Approval: "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
 };
 
 export default function ExecutiveTimelineClient({ events }: { events: ExecutiveTimelineEvent[] }) {

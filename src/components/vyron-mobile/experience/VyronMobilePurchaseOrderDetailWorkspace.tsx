@@ -129,7 +129,7 @@ function statusTone(status: string) {
   if (value.includes("cancel")) return "text-rose-700 bg-rose-50 border-rose-200";
   if (value.includes("received") || value.includes("closed")) return "text-violet-700 bg-violet-50 border-violet-200";
   if (value.includes("approved") || value.includes("sent")) return "text-blue-700 bg-blue-50 border-blue-200";
-  if (value.includes("submit") || value.includes("partial")) return "text-fuchsia-700 bg-fuchsia-50 border-fuchsia-200";
+  if (value.includes("submit") || value.includes("partial")) return "text-[var(--vyron-warning-fg)] bg-[var(--vyron-warning-bg)] border-[var(--vyron-warning-border)]";
   return "text-slate-700 bg-slate-50 border-slate-200";
 }
 
@@ -512,7 +512,7 @@ export default function VyronMobilePurchaseOrderDetailWorkspace({ poId }: { poId
         </div>
       </PremiumMobileCard>
 
-      {message ? <div className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 px-3 py-2 text-xs font-bold text-fuchsia-800">{message}</div> : null}
+      {message ? <div className="rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-3 py-2 text-xs font-bold text-[var(--vyron-warning-fg)]">{message}</div> : null}
 
       <div className="grid gap-3 md:grid-cols-3">
         <PremiumMobileCard tone="default" className="p-4">

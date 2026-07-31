@@ -514,7 +514,7 @@ function RiskBadge({ level }: { level: string }) {
     lower.includes("critical")
       ? "border-rose-200 bg-rose-50 text-rose-700"
       : lower.includes("high")
-        ? "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800"
+        ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
         : "border-[#E2E8F0] bg-[#F6F7FB] text-[#64748B]";
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-bold ${classes}`}>{level}</span>
@@ -524,7 +524,7 @@ function RiskBadge({ level }: { level: string }) {
 function ActionSeverityBadge({ severity }: { severity: SuggestedAction["severity"] }) {
   const classes = {
     critical: "border-rose-200 bg-rose-50 text-rose-700",
-    warning: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800",
+    warning: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     info: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
   };
   const labels = { critical: "Critical", warning: "Review", info: "Monitor" };

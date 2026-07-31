@@ -169,13 +169,13 @@ export default function ClientUserSetupClient() {
       </div>
 
       {!canCreateUser ? (
-        <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm font-bold text-fuchsia-900">
+        <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-warning-fg)]">
           User limit reached for this package. Upgrade package to add more users.
         </div>
       ) : null}
 
       {message ? (
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">
+        <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">
           {message}
         </div>
       ) : null}

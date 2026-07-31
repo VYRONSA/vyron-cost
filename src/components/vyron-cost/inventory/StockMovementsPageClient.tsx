@@ -240,7 +240,7 @@ export default function StockMovementsPageClient() {
             </div>
           ) : null}
           {message ? (
-            <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800">
+            <div className="rounded-xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-semibold text-[var(--vyron-success-fg)]">
               {message}
             </div>
           ) : null}

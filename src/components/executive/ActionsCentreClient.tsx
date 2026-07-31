@@ -592,7 +592,7 @@ function ImpactMatrixQuadrant({
     quadrant === "High Impact / Low Effort"
       ? "border-violet-200 bg-violet-50"
       : quadrant === "High Impact / High Effort"
-        ? "border-fuchsia-200 bg-fuchsia-50"
+        ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]"
         : quadrant === "Low Impact / Low Effort"
           ? "border-[#E2E8F0] bg-[#F8FAFC]"
           : "border-rose-100 bg-rose-50";
@@ -649,7 +649,7 @@ function OwnerGroupCard({ group }: { group: OwnerGroup }) {
 
 function BlockerCard({ blocker }: { blocker: ActionBlocker }) {
   return (
-    <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-4">
+    <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-4">
       <div className="flex flex-wrap items-center gap-2">
         <PriorityBadge priority={blocker.severity} />
         <h3 className="font-bold text-[#0F172A]">{blocker.blocker}</h3>
@@ -712,7 +712,7 @@ function PriorityBadge({ priority }: { priority: ExecutionAction["priority"] }) 
   const classes: Record<ExecutionAction["priority"], string> = {
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    Medium: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
   };
   return (
@@ -726,7 +726,7 @@ function StatusBadge({ status }: { status: ExecutionAction["status"] }) {
   const classes: Record<ExecutionAction["status"], string> = {
     Ready: "border-violet-200 bg-violet-50 text-violet-800",
     Recommended: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
-    Waiting: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    Waiting: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Blocked: "border-rose-200 bg-rose-50 text-rose-800",
   };
   return (
@@ -739,7 +739,7 @@ function StatusBadge({ status }: { status: ExecutionAction["status"] }) {
 function ConfidenceBadge({ confidence }: { confidence: ExecutionAction["confidence"] }) {
   const classes = {
     High: "text-violet-700",
-    Medium: "text-fuchsia-800",
+    Medium: "text-[var(--vyron-warning-fg)]",
     Low: "text-[#64748B]",
   };
   return <span className={`text-xs font-bold ${classes[confidence]}`}>{confidence}</span>;

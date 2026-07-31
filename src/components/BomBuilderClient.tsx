@@ -297,14 +297,14 @@ export default function BomBuilderClient({
   return (
     <section className="grid gap-8">
       {readOnly ? (
-        <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-5 py-4 text-sm font-bold text-fuchsia-900">
+        <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-5 py-4 text-sm font-bold text-[var(--vyron-warning-fg)]">
           Read-only access — you do not have permission to create or edit recipes / BOMs.
         </div>
       ) : null}
 
       {/* Premium hero + quote strip */}
       <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-violet-700 via-indigo-800 to-[#07110d] p-8 text-white shadow-[0_24px_60px_rgba(81,63,190,0.28)]">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-fuchsia-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#A855F7]/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 left-1/3 h-48 w-48 rounded-full bg-[#A855F7]/10 blur-3xl" />
         <div className="relative grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div>
@@ -351,7 +351,7 @@ export default function BomBuilderClient({
       </div>
 
       {gpGap > 0 && numericSelling > 0 ? (
-        <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-5 py-4 text-sm font-semibold text-fuchsia-900">
+        <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-5 py-4 text-sm font-semibold text-[var(--vyron-warning-fg)]">
           GP is <span className="font-black">{gpGap.toFixed(1)}%</span> below your target. Review ingredient costs, yield or selling price before approving this BOM.
         </div>
       ) : null}
@@ -519,7 +519,7 @@ export default function BomBuilderClient({
           <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)] md:p-8">
             <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-fuchsia-100 text-fuchsia-700">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]">
                   <Layers size={24} />
                 </div>
                 <div>

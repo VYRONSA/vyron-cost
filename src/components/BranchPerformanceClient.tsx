@@ -43,7 +43,7 @@ export default function BranchPerformanceClient({ branches }: { branches: Branch
                   <div className="font-black text-red-700">{money(branch.wastage_estimate)}</div>
                   <div>{Number(branch.gp_erosion_percent || 0).toFixed(1)}%</div>
                   <div>{Number(branch.procurement_efficiency || 0).toFixed(0)}%</div>
-                  <div className="font-black text-fuchsia-700">{branch.risk_level}</div>
+                  <div className="font-black text-[var(--vyron-warning-fg)]">{branch.risk_level}</div>
                 </div>
               ))}
             </div>

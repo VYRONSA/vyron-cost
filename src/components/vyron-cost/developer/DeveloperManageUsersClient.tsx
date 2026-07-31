@@ -187,7 +187,7 @@ export default function DeveloperManageUsersClient({
       </section>
 
       {message ? (
-        <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">{message}</div>
+        <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</div>
       ) : null}
 
       <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
@@ -307,7 +307,7 @@ export default function DeveloperManageUsersClient({
                         Enable
                       </button>
                     ) : member.role !== "OWNER" ? (
-                      <button type="button" onClick={() => void disableUser(member.userId)} className="rounded-xl bg-fuchsia-100 px-3 py-2 text-xs font-black text-fuchsia-800">
+                      <button type="button" onClick={() => void disableUser(member.userId)} className="rounded-xl bg-[var(--vyron-warning-bg)] px-3 py-2 text-xs font-black text-[var(--vyron-warning-fg)]">
                         Disable
                       </button>
                     ) : null}

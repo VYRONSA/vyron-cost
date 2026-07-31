@@ -285,7 +285,7 @@ export default function ClientCompanySetupClient() {
       ) : null}
 
       {message ? (
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">
+        <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">
           {message}
         </div>
       ) : null}

@@ -238,7 +238,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
               <div key={item.id} className="rounded-xl bg-white/10 p-3">
                 <span
                   className={`rounded-lg px-2 py-0.5 text-[10px] font-black uppercase ${
-                    item.severity === "high" ? "bg-red-500/30 text-red-200" : item.severity === "medium" ? "bg-fuchsia-500/30 text-fuchsia-100" : "bg-slate-500/30"
+                    item.severity === "high" ? "bg-red-500/30 text-red-200" : item.severity === "medium" ? "bg-[var(--vyron-warning-solid)]/30 text-[var(--vyron-warning-on-deep)]" : "bg-slate-500/30"
                   }`}
                 >
                   {item.category}
@@ -291,7 +291,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
               <div className="font-black text-[#7E22CE]">{t.productivityIndex}%</div>
               <div className="font-black">{t.healthScore}</div>
               <div className={`font-black ${t.riskScore >= 40 ? "text-red-600" : "text-slate-700"}`}>{t.riskScore}</div>
-              <div className={`font-black ${t.attritionProbability >= 0.2 ? "text-fuchsia-600" : "text-slate-700"}`}>
+              <div className={`font-black ${t.attritionProbability >= 0.2 ? "text-[var(--vyron-warning-fg)]" : "text-slate-700"}`}>
                 {(t.attritionProbability * 100).toFixed(0)}%
               </div>
               <div className="font-black text-slate-700">{money(t.costPerHour)}</div>

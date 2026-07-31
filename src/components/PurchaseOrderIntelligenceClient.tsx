@@ -30,7 +30,7 @@ export default function PurchaseOrderIntelligenceClient({ risks }: { risks: Proc
               </div>
               <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">High Risk Items</div>
-                <div className="mt-2 text-4xl font-black text-fuchsia-600">{high}</div>
+                <div className="mt-2 text-4xl font-black text-[var(--vyron-warning-fg)]">{high}</div>
               </div>
               <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Control Rule</div>

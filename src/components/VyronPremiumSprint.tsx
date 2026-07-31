@@ -291,7 +291,7 @@ export function VyronPremiumIntelligencePanel({
 
 export function VyronPremiumInsightCard({ category, message, href }: { category: string; message: string; href?: string }) {
   const body = href ? (
-    <Link href={href} className="text-violet-700 hover:underline">
+    <Link href={href} className="text-[var(--vyron-success-fg)] hover:underline">
       {message}
     </Link>
   ) : (
@@ -328,7 +328,7 @@ export function VyronPremiumMetricCard({ label, value, href, icon, note, tone = 
     tone === "danger"
       ? "border-red-200 bg-gradient-to-br from-red-50/80 to-white"
       : tone === "warning"
-        ? "border-fuchsia-200 bg-gradient-to-br from-fuchsia-50/90 to-white"
+        ? "border-[var(--vyron-warning-border)] bg-gradient-to-br from-fuchsia-50/90 to-white"
         : "border-violet-100/80 bg-gradient-to-br from-white via-violet-50/30 to-[var(--vyron-warning-bg)]";
   return (
     <Link href={href} className={`rounded-[2rem] border p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)] transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-[0_26px_70px_rgba(76,29,149,0.14)] ${toneClass}`}>

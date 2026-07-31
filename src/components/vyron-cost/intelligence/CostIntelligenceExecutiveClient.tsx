@@ -19,7 +19,7 @@ const M = VYRON_MASTER;
 
 function priorityClass(priority: string) {
   if (priority === "Critical") return "border-rose-200 bg-rose-50 text-rose-800";
-  if (priority === "High") return "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900";
+  if (priority === "High") return "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   if (priority === "Medium") return "border-violet-200 bg-violet-50 text-violet-900";
   return "border-slate-200 bg-slate-50 text-slate-700";
 }

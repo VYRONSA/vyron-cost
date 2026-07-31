@@ -54,7 +54,7 @@ export default function RecipeCostDrilldownClient({ products }: { products: Prod
                     {[
                       ["Ingredients", ingredient, "bg-[#A855F7]/10 text-[#4D7C0F]"],
                       ["Packaging", packaging, "bg-violet-50 text-violet-800"],
-                      ["Labour", labour, "bg-fuchsia-50 text-fuchsia-800"],
+                      ["Labour", labour, "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
                       ["Overheads", overhead, "bg-slate-50 text-slate-800"],
                     ].map(([label, value, cls]) => (
                       <div key={String(label)} className={`rounded-2xl p-4 ${cls}`}>

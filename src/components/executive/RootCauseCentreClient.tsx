@@ -647,7 +647,7 @@ function SeverityBadge({ severity }: { severity: RootCauseInvestigation["severit
   const classes: Record<RootCauseInvestigation["severity"], string> = {
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    Medium: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
   };
   return (
@@ -660,7 +660,7 @@ function SeverityBadge({ severity }: { severity: RootCauseInvestigation["severit
 function ConfidenceBadge({ confidence }: { confidence: RootCauseInvestigation["confidence"] }) {
   const classes = {
     High: "text-violet-700",
-    Medium: "text-fuchsia-800",
+    Medium: "text-[var(--vyron-warning-fg)]",
     Low: "text-[#64748B]",
   };
   return <span className={`text-xs font-bold ${classes[confidence]}`}>{confidence}</span>;

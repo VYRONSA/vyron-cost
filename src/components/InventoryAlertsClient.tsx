@@ -71,11 +71,11 @@ export default function InventoryAlertsClient() {
       }}
     >
       <section className="grid gap-8">
-        {message ? <p className="rounded-xl bg-violet-50 px-4 py-3 text-sm font-bold text-violet-800">{message}</p> : null}
+        {message ? <p className="rounded-xl bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</p> : null}
         <div className="grid gap-8 lg:grid-cols-3">
-        <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50/50 p-5">
-          <h2 className="text-lg font-black text-fuchsia-900">Low Stock Alerts</h2>
-          <p className="mt-1 text-xs font-semibold text-fuchsia-800">Create a purchase order with supplier, last cost and suggested quantity prefilled.</p>
+        <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-5">
+          <h2 className="text-lg font-black text-[var(--vyron-warning-fg)]">Low Stock Alerts</h2>
+          <p className="mt-1 text-xs font-semibold text-[var(--vyron-warning-fg)]">Create a purchase order with supplier, last cost and suggested quantity prefilled.</p>
           <div className="mt-3 space-y-2">
             {data.lowStockAlerts.map((a) => {
               const item = a.vyron_cost_stock_items as Record<string, unknown>;

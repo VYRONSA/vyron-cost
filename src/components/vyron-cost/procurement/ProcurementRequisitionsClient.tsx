@@ -21,7 +21,7 @@ function statusClass(status: string) {
   if (status === "Ordered") return "bg-blue-100 text-blue-800";
   if (status === "Received") return "bg-slate-100 text-slate-700";
   if (status === "Cancelled") return "bg-rose-100 text-rose-800";
-  return "bg-fuchsia-100 text-fuchsia-800";
+  return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
 }
 
 export default function ProcurementRequisitionsClient() {

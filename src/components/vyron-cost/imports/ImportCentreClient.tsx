@@ -251,7 +251,7 @@ export default function ImportCentreClient() {
         </section>
 
         {message ? (
-          <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800">
+          <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-semibold text-[var(--vyron-success-fg)]">
             {message}
           </div>
         ) : null}
@@ -321,7 +321,7 @@ export default function ImportCentreClient() {
             ) : null}
 
             {selected === "boms" && validation.missingIngredients?.length ? (
-              <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm text-fuchsia-900">
+              <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm text-[var(--vyron-warning-fg)]">
                 <div className="font-black">Missing raw materials</div>
                 <div className="mt-2 font-semibold">{validation.missingIngredients.join(", ")}</div>
                 {canImport ? (

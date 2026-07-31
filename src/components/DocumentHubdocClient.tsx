@@ -126,7 +126,7 @@ const starterDocs: DemoDoc[] = [];
 function statusClass(status: DocStatus) {
   if (status === "Matched" || status === "Archived") return "bg-[#A855F7]/10 text-[#7E22CE]";
   if (status === "Error" || status === "Duplicate Risk") return "bg-red-50 text-red-700";
-  if (status === "Needs Review") return "bg-fuchsia-50 text-fuchsia-700";
+  if (status === "Needs Review") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   if (status === "Extracting" || status === "Uploading") return "bg-blue-50 text-blue-700";
   if (status === "Stored" || status === "Uploaded") return "bg-[#A855F7]/10 text-[#7E22CE]";
   return "bg-violet-50 text-violet-700";
@@ -790,7 +790,7 @@ export default function DocumentHubdocClient({
           <div
             onDrop={handleDrop}
             onDragOver={(event) => event.preventDefault()}
-            className="mt-6 rounded-[2rem] border-2 border-dashed border-violet-200 bg-violet-50/60 p-8 text-center transition hover:border-fuchsia-300 hover:bg-fuchsia-50/50"
+            className="mt-6 rounded-[2rem] border-2 border-dashed border-violet-200 bg-violet-50/60 p-8 text-center transition hover:border-[var(--vyron-warning-border)] hover:bg-[var(--vyron-warning-bg)]"
           >
             <UploadCloud className="mx-auto text-violet-700" size={46} />
             <div className="mt-4 text-xl font-black text-slate-950">Drop invoice here</div>
@@ -807,7 +807,7 @@ export default function DocumentHubdocClient({
             </button>
           </div>
 
-          {message ? <div className="mt-4 rounded-2xl bg-fuchsia-50 px-5 py-4 text-sm font-black text-fuchsia-700">{message}</div> : null}
+          {message ? <div className="mt-4 rounded-2xl bg-[var(--vyron-warning-bg)] px-5 py-4 text-sm font-black text-[var(--vyron-warning-fg)]">{message}</div> : null}
 
           <div className="mt-5 rounded-3xl bg-slate-950 p-5 text-white">
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-fuchsia-300">
@@ -860,7 +860,7 @@ export default function DocumentHubdocClient({
                       type="button"
                       disabled={bulkReviewing}
                       onClick={() => void handleBulkMarkReviewed()}
-                      className="inline-flex items-center gap-1 rounded-full bg-fuchsia-500 px-4 py-2 text-xs font-black text-white disabled:opacity-60"
+                      className="inline-flex items-center gap-1 rounded-full bg-[var(--vyron-warning-solid)] px-4 py-2 text-xs font-black text-white disabled:opacity-60"
                     >
                       {bulkReviewing ? "Saving…" : `Mark reviewed (${selectedIds.size})`}
                     </button>
@@ -954,7 +954,7 @@ export default function DocumentHubdocClient({
                     checked={allSelected}
                     onChange={toggleSelectAll}
                     aria-label="Select all documents"
-                    className="h-4 w-4 rounded border-fuchsia-300"
+                    className="h-4 w-4 rounded border-[var(--vyron-warning-border)]"
                   />
                 </th>
                 <th className="px-4 py-3">Document</th>
@@ -980,7 +980,7 @@ export default function DocumentHubdocClient({
                   key={doc.storageDocumentId || `${doc.id}-${doc.fileName || ""}`}
                   className={`border-t border-slate-100 hover:bg-violet-50/50 ${
                     doc.storageDocumentId && doc.storageDocumentId === activeHighlightId
-                      ? "bg-fuchsia-100 ring-2 ring-fuchsia-400 ring-inset"
+                      ? "bg-[var(--vyron-warning-bg)] ring-2 ring-fuchsia-400 ring-inset"
                       : ""
                   } ${doc.storageDocumentId ? "cursor-pointer" : ""}`}
                   onClick={() => {
@@ -1009,7 +1009,7 @@ export default function DocumentHubdocClient({
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-3 py-1 text-xs font-black ${statusClass(doc.status)}`}>{doc.status}</span>
                   </td>
-                  <td className={`px-4 py-3 font-black ${doc.risk === "High" ? "text-red-600" : doc.risk === "Medium" ? "text-fuchsia-600" : "text-[#84CC16]"}`}>
+                  <td className={`px-4 py-3 font-black ${doc.risk === "High" ? "text-red-600" : doc.risk === "Medium" ? "text-[var(--vyron-warning-fg)]" : "text-[#84CC16]"}`}>
                     {doc.risk}
                   </td>
                   <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>

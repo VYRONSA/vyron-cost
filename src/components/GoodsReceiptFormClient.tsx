@@ -382,8 +382,8 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
         </table>
       </div>
 
-      <textarea className="w-full rounded-2xl border border-violet-100 bg-white px-4 py-3 text-sm font-semibold" rows={3} placeholder="GRN notes" value={notes} onChange={(event) => setNotes(event.target.value)} />
-      {message ? <p className="rounded-2xl bg-violet-50 px-4 py-3 text-sm font-black text-violet-700">{message}</p> : null}
+      <textarea className="w-full rounded-2xl border border-[var(--vyron-success-border)] bg-white px-4 py-3 text-sm font-semibold" rows={3} placeholder="GRN notes" value={notes} onChange={(event) => setNotes(event.target.value)} />
+      {message ? <p className="rounded-2xl bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-success-fg)]">{message}</p> : null}
       {errorMessage ? <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-black text-red-700">{errorMessage}</p> : null}
       <div className="flex flex-wrap gap-3">
         {canCreate ? (

@@ -91,7 +91,7 @@ export default async function FinancialLeakageDetailPage({ params }: { params: P
           {detail.annualRecovery != null ? (
             <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
               <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Annual Recovery</div>
-              <div className="mt-3 text-4xl font-black text-fuchsia-700">{formatMoney(detail.annualRecovery)}</div>
+              <div className="mt-3 text-4xl font-black text-[var(--vyron-warning-fg)]">{formatMoney(detail.annualRecovery)}</div>
             </div>
           ) : (
             <div className="rounded-[2rem] border border-violet-100 bg-slate-50 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">

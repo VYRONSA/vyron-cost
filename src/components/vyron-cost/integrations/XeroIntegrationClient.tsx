@@ -707,20 +707,20 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
           </div>
         </header>
 
-        <section className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-6">
+        <section className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-6">
           <div className="flex items-start gap-3">
-            <AlertTriangle size={22} className="mt-0.5 shrink-0 text-fuchsia-700" />
+            <AlertTriangle size={22} className="mt-0.5 shrink-0 text-[var(--vyron-warning-fg)]" />
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.12em] text-fuchsia-800">
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--vyron-warning-fg)]">
                 Workspace session fix v3 active
               </p>
               <h2 className="mt-2 text-lg font-bold text-fuchsia-950">No active workspace selected</h2>
-              <p className="mt-2 text-sm font-medium leading-6 text-fuchsia-900">
+              <p className="mt-2 text-sm font-medium leading-6 text-[var(--vyron-warning-fg)]">
                 Xero integration is scoped to your active company workspace. The server could not find a workspace
                 cookie — local browser storage alone is not used for security.
               </p>
-              <p className="mt-3 text-sm font-medium text-fuchsia-900">To fix this:</p>
-              <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm font-medium text-fuchsia-900">
+              <p className="mt-3 text-sm font-medium text-[var(--vyron-warning-fg)]">To fix this:</p>
+              <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm font-medium text-[var(--vyron-warning-fg)]">
                 <li>Log in to your company workspace, or</li>
                 <li>Open Developer → Clients and enter a client workspace (platform admin), or</li>
                 <li>Return to the Dashboard and confirm the workspace switcher shows your company.</li>
@@ -830,8 +830,8 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
         <div
           className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${
             syncErrors.length > 0
-              ? "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900"
-              : "border-violet-200 bg-violet-50 text-violet-800"
+              ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
+              : "border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] text-[var(--vyron-success-fg)]"
           }`}
         >
           {message}
@@ -862,12 +862,12 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       ) : null}
 
       {!oauthReady ? (
-        <section className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-4">
-          <div className="flex items-center gap-2 font-bold text-fuchsia-900">
+        <section className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-4">
+          <div className="flex items-center gap-2 font-bold text-[var(--vyron-warning-fg)]">
             <AlertTriangle size={18} />
             Xero OAuth not configured
           </div>
-          <p className="mt-2 text-sm font-medium text-fuchsia-900">
+          <p className="mt-2 text-sm font-medium text-[var(--vyron-warning-fg)]">
             Set the following environment variables on the server before users can connect to Xero:
           </p>
           <ul className="mt-2 space-y-1 text-sm font-bold text-fuchsia-950">
@@ -878,19 +878,19 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-xs font-medium text-fuchsia-800">
+          <p className="mt-2 text-xs font-medium text-[var(--vyron-warning-fg)]">
             Connect to Xero is disabled until all variables are present. Reconnect and sync actions require OAuth.
           </p>
         </section>
       ) : null}
 
       {setupWarnings.length > 0 ? (
-        <section className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50 p-4">
-          <div className="flex items-center gap-2 font-bold text-fuchsia-900">
+        <section className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-4">
+          <div className="flex items-center gap-2 font-bold text-[var(--vyron-warning-fg)]">
             <AlertTriangle size={18} />
             Setup notes
           </div>
-          <ul className="mt-2 space-y-1 text-sm font-medium text-fuchsia-900">
+          <ul className="mt-2 space-y-1 text-sm font-medium text-[var(--vyron-warning-fg)]">
             {setupWarnings.map((item) => (
               <li key={item}>· {item}</li>
             ))}
@@ -909,7 +909,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
                   Company linked
                 </span>
               ) : (
-                <span className="ml-2 rounded-full bg-fuchsia-100 px-2 py-0.5 text-xs font-bold text-fuchsia-800">
+                <span className="ml-2 rounded-full bg-[var(--vyron-warning-bg)] px-2 py-0.5 text-xs font-bold text-[var(--vyron-warning-fg)]">
                   Company not linked
                 </span>
               )}
@@ -1108,7 +1108,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
           </div>
         </div>
         {!orgSelected && connection.connected ? (
-          <p className="mt-3 text-sm font-medium text-fuchsia-800">
+          <p className="mt-3 text-sm font-medium text-[var(--vyron-warning-fg)]">
             Sync actions are disabled until a Xero organisation is selected.
           </p>
         ) : null}
@@ -1256,7 +1256,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
                 className="flex items-center justify-between rounded-lg border border-[#E2E8F0] px-3 py-2 text-sm"
               >
                 <span className="font-medium text-[#334155]">{item.label}</span>
-                <span className={`font-bold ${item.ok ? "text-violet-700" : "text-fuchsia-700"}`}>
+                <span className={`font-bold ${item.ok ? "text-violet-700" : "text-[var(--vyron-warning-fg)]"}`}>
                   {item.ok ? "Ready" : "Required"}
                 </span>
               </div>
@@ -1414,7 +1414,7 @@ function StatusBadge({ status }: { status: XeroSyncStatus }) {
     Ready: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
     Synced: "border-violet-200 bg-violet-50 text-violet-700",
     Failed: "border-rose-200 bg-rose-50 text-rose-700",
-    "Needs Review": "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800",
+    "Needs Review": "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Processing: "border-blue-200 bg-blue-50 text-blue-700",
     Cancelled: "border-slate-200 bg-slate-50 text-slate-600",
   };

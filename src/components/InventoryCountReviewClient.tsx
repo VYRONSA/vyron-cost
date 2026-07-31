@@ -185,7 +185,7 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
         </div>
       </div>
 
-      {message ? <p className="rounded-xl bg-fuchsia-50 px-4 py-3 text-sm font-black text-fuchsia-800 print:hidden">{message}</p> : null}
+      {message ? <p className="rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-warning-fg)] print:hidden">{message}</p> : null}
 
       <div className="grid gap-4 sm:grid-cols-4">
         <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">System Qty</div><div className="mt-1 text-2xl font-black text-slate-950">{totals.system.toFixed(2)}</div></div>
@@ -196,9 +196,9 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
 
       <div className="flex flex-wrap gap-2 print:hidden">
         {editable && canCreateCount ? <button type="button" onClick={() => void action("start")} className="rounded-xl bg-slate-200 px-3 py-2 text-xs font-black">Start Count</button> : null}
-        {editable && canCreateCount ? <button type="button" onClick={() => void action("submit")} className="rounded-xl bg-fuchsia-500 px-3 py-2 text-xs font-black text-white">Submit</button> : null}
+        {editable && canCreateCount ? <button type="button" onClick={() => void action("submit")} className="rounded-xl bg-[var(--vyron-warning-solid)] px-3 py-2 text-xs font-black text-white">Submit</button> : null}
         {status === "Submitted" && canApproveCount ? <button type="button" onClick={() => void action("approve", { approvedBy: "supervisor" })} className="rounded-xl vyron-grad-surface px-3 py-2 text-xs font-semibold text-white">Approve Variances</button> : null}
-        {status === "Approved" && canPostAdjustment ? <button type="button" onClick={() => void action("post", { actor: "supervisor" })} className="rounded-xl bg-fuchsia-600 px-3 py-2 text-xs font-black text-white">Post to Ledger</button> : null}
+        {status === "Approved" && canPostAdjustment ? <button type="button" onClick={() => void action("post", { actor: "supervisor" })} className="rounded-xl bg-[var(--vyron-warning-solid)] px-3 py-2 text-xs font-black text-white">Post to Ledger</button> : null}
       </div>
 
       <div className="rounded-[2rem] border border-violet-100 bg-white p-4 print:hidden">
@@ -231,7 +231,7 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
                   <td className={varianceQty !== 0 ? "px-4 py-3 font-black text-red-600" : "px-4 py-3 font-bold text-slate-700"}>{varianceQty.toFixed(2)}</td>
                   <td className="px-4 py-3">{variancePct.toFixed(1)}%</td>
                   <td className="px-4 py-3 font-black">{formatMoney(varianceValue)}</td>
-                  <td className="px-4 py-3"><span className={varianceClass === "major" ? "rounded-full bg-red-100 px-3 py-1 text-[10px] font-black uppercase text-red-800" : "rounded-full bg-fuchsia-100 px-3 py-1 text-[10px] font-black uppercase text-fuchsia-800"}>{varianceClass}</span></td>
+                  <td className="px-4 py-3"><span className={varianceClass === "major" ? "rounded-full bg-red-100 px-3 py-1 text-[10px] font-black uppercase text-red-800" : "rounded-full bg-[var(--vyron-warning-bg)] px-3 py-1 text-[10px] font-black uppercase text-[var(--vyron-warning-fg)]"}>{varianceClass}</span></td>
                   <td className="px-4 py-3">{stockUnit(line)}</td>
                 </tr>
               );

@@ -143,10 +143,10 @@ export function AiForecastClient({ forecast }: { forecast: AiFinancialIntelligen
           </tbody>
         </table>
       </div>
-        <div className="rounded-2xl bg-fuchsia-50 p-5">
-        <div className="text-xs font-black uppercase text-fuchsia-800">Cost inflation (annual projection)</div>
+        <div className="rounded-2xl bg-[var(--vyron-warning-bg)] p-5">
+        <div className="text-xs font-black uppercase text-[var(--vyron-warning-fg)]">Cost inflation (annual projection)</div>
         <div className="mt-2 text-2xl font-black text-fuchsia-950">{money(forecast.costInflationAnnual)}</div>
-        <p className="mt-2 text-xs text-fuchsia-900">
+        <p className="mt-2 text-xs text-[var(--vyron-warning-fg)]">
           Supplier inflation driver: {forecast.supplierInflationPct.toFixed(1)}% · Recovery opportunity:{" "}
           {money(forecast.recoveryOpportunityAnnual)}
         </p>
@@ -296,7 +296,7 @@ export function AiBenchmarksClient({
                           ? "font-black text-[#84CC16]"
                           : b.comparison === "worse"
                             ? "font-black text-red-600"
-                            : "font-black text-fuchsia-600"
+                            : "font-black text-[var(--vyron-warning-fg)]"
                       }
                     >
                       {b.comparison}

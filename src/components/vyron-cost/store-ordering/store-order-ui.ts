@@ -6,7 +6,7 @@ export function storeOrderStatusClass(status: string) {
     case "Draft":
       return "bg-slate-100 text-slate-700";
     case "Submitted":
-      return "bg-fuchsia-100 text-fuchsia-800";
+      return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
     case "Approved":
       return "bg-sky-100 text-sky-800";
     case "Picking":

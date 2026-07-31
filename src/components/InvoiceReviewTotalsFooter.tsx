@@ -25,7 +25,7 @@ function DiffCell({
   const abs = Math.abs(diff);
   const isRounding = rounding ?? abs <= 1;
   return (
-    <div className={`text-xs ${isRounding ? "font-semibold text-slate-600" : "font-black text-fuchsia-800"}`}>
+    <div className={`text-xs ${isRounding ? "font-semibold text-slate-600" : "font-black text-[var(--vyron-warning-fg)]"}`}>
       {label}: {diff > 0 ? "+" : ""}
       {formatMoney(diff, "")}
     </div>
@@ -45,7 +45,7 @@ export function InvoiceTotalsWarningBanner({ summary }: { summary: InvoiceTotals
   return (
     <div
       className={`shrink-0 border-b px-3 py-2 ${
-        rounding ? "border-slate-200 bg-slate-50" : "border-fuchsia-300 bg-fuchsia-50"
+        rounding ? "border-slate-200 bg-slate-50" : "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]"
       }`}
     >
       <button
@@ -53,7 +53,7 @@ export function InvoiceTotalsWarningBanner({ summary }: { summary: InvoiceTotals
         onClick={() => setOpen((value) => !value)}
         className="flex w-full items-center justify-between gap-2 text-left"
       >
-        <span className={`text-xs font-black ${rounding ? "text-slate-700" : "text-fuchsia-900"}`}>{message}</span>
+        <span className={`text-xs font-black ${rounding ? "text-slate-700" : "text-[var(--vyron-warning-fg)]"}`}>{message}</span>
         <ChevronDown size={14} className={`shrink-0 transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open ? (
@@ -95,7 +95,7 @@ export default function InvoiceReviewTotalsFooter({
         </span>
         {diffSummary ? (
           <span
-            className={`text-[10px] font-black ${rounding ? "text-slate-600" : summary.hasMajorMismatch ? "text-fuchsia-800" : "text-slate-500"}`}
+            className={`text-[10px] font-black ${rounding ? "text-slate-600" : summary.hasMajorMismatch ? "text-[var(--vyron-warning-fg)]" : "text-slate-500"}`}
           >
             {rounding ? `Rounding ${diffSummary}` : diffSummary}
           </span>
@@ -157,7 +157,7 @@ export default function InvoiceReviewTotalsFooter({
           {summary.hasTotalsDifference ? (
             <div
               className={`mt-3 rounded-lg border px-3 py-2 ${
-                rounding ? "border-slate-200 bg-white" : "border-fuchsia-200 bg-fuchsia-50"
+                rounding ? "border-slate-200 bg-white" : "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]"
               }`}
             >
               <div className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">

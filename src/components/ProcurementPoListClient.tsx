@@ -147,7 +147,7 @@ export default function ProcurementPoListClient({ initialStatus = "" }: { initia
                   </td>
                   <td>
                     {canReceiveGoods ? (
-                      <Link href={`/goods-receipts/new?po=${po.id}`} className="rounded-full bg-fuchsia-50 px-3 py-2 text-xs font-black text-fuchsia-700">
+                      <Link href={`/goods-receipts/new?po=${po.id}`} className="rounded-full bg-[var(--vyron-warning-bg)] px-3 py-2 text-xs font-black text-[var(--vyron-warning-fg)]">
                         Receive Goods
                       </Link>
                     ) : (

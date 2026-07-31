@@ -108,7 +108,7 @@ export default function SupplierEditPageClient({ supplier }: { supplier: CostSup
   return (
     <>
       <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-violet-800 via-indigo-950 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(81,63,190,0.28)]">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-fuchsia-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#A855F7]/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-[#A855F7]/10 blur-3xl" />
         <div className="relative grid gap-7 xl:grid-cols-[1.2fr_0.8fr] xl:items-center">
           <div>

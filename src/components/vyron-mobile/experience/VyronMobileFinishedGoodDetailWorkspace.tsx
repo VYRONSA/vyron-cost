@@ -124,7 +124,7 @@ function gpPercent(price: number, cost: number) {
 function statusTone(status: string) {
   const value = String(status || "").toLowerCase();
   if (value.includes("archive")) return "text-slate-700 bg-slate-100 border-slate-200";
-  if (value.includes("review") || value.includes("pending")) return "text-fuchsia-700 bg-fuchsia-50 border-fuchsia-200";
+  if (value.includes("review") || value.includes("pending")) return "text-[var(--vyron-warning-fg)] bg-[var(--vyron-warning-bg)] border-[var(--vyron-warning-border)]";
   if (value.includes("active") || value.includes("approved")) return "text-violet-700 bg-violet-50 border-violet-200";
   return "text-blue-700 bg-blue-50 border-blue-200";
 }
@@ -426,7 +426,7 @@ export default function VyronMobileFinishedGoodDetailWorkspace({ productId }: { 
         </div>
       </PremiumMobileCard>
 
-      {message ? <div className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 px-3 py-2 text-xs font-bold text-fuchsia-800">{message}</div> : null}
+      {message ? <div className="rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-3 py-2 text-xs font-bold text-[var(--vyron-warning-fg)]">{message}</div> : null}
 
       <div className="grid gap-3 md:grid-cols-2">
         <PremiumMobileCard tone="default" className="p-4">

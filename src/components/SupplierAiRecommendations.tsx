@@ -50,7 +50,7 @@ export default function SupplierAiRecommendations({
           Open command centre →
         </Link>
       </div>
-      {inflationNote ? <p className="mt-3 text-sm font-bold text-fuchsia-800">{inflationNote}</p> : null}
+      {inflationNote ? <p className="mt-3 text-sm font-bold text-[var(--vyron-warning-fg)]">{inflationNote}</p> : null}
       {savings > 0 ? (
         <p className="mt-2 text-sm font-bold text-[#7E22CE]">Potential savings: {procurementMoney(savings)}/year</p>
       ) : null}

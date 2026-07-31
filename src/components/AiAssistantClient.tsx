@@ -124,7 +124,7 @@ export default function AiAssistantClient() {
                   item.tone === "red"
                     ? "border-red-200 bg-red-50"
                     : item.tone === "amber"
-                      ? "border-fuchsia-200 bg-fuchsia-50"
+                      ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]"
                       : "border-[#A855F7]/25 bg-[#A855F7]/10"
                 }`}
               >

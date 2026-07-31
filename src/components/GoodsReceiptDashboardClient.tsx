@@ -147,7 +147,7 @@ export default function GoodsReceiptDashboardClient() {
         </div>
       </div>
 
-      {message ? <p className="rounded-2xl bg-fuchsia-50 px-4 py-3 text-sm font-black text-fuchsia-800">{message}</p> : null}
+      {message ? <p className="rounded-2xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-warning-fg)]">{message}</p> : null}
 
       <div className="overflow-x-auto rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         <table className="min-w-[980px] w-full text-left text-sm">
@@ -197,7 +197,7 @@ export default function GoodsReceiptDashboardClient() {
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
                       <Link href={`/goods-receipts/${id}`} className="rounded-full bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">Open →</Link>
-                      {poId && canCreate ? <Link href={`/goods-receipts/new?po=${poId}`} className="rounded-full bg-fuchsia-50 px-3 py-2 text-xs font-black text-fuchsia-700">Receive balance</Link> : null}
+                      {poId && canCreate ? <Link href={`/goods-receipts/new?po=${poId}`} className="rounded-full bg-[var(--vyron-warning-bg)] px-3 py-2 text-xs font-black text-[var(--vyron-warning-fg)]">Receive balance</Link> : null}
                     </div>
                   </td>
                 </tr>

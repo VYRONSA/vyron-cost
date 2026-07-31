@@ -276,7 +276,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
               </section>
       
               {!demoMode && unlinkedLines ? (
-                <p className="mt-4 rounded-2xl border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm font-bold text-fuchsia-800">
+                <p className="mt-4 rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-warning-fg)]">
                   Warning: one or more invoice lines have no stock item linked.
                 </p>
               ) : null}
@@ -304,7 +304,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
                       type="button"
                       disabled={stockBusy}
                       onClick={() => void postStock(true)}
-                      className="rounded-full border border-fuchsia-200 bg-fuchsia-50 px-4 py-2 text-sm font-black text-fuchsia-800 disabled:opacity-60"
+                      className="rounded-full border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-2 text-sm font-black text-[var(--vyron-warning-fg)] disabled:opacity-60"
                     >
                       Post Stock (Override)
                     </button>
