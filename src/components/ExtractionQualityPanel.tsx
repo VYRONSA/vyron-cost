@@ -69,11 +69,18 @@ export default function ExtractionQualityPanel({ record }: { record: ExtractionQ
 
   const tone = CLASSIFICATION_TONE[record.classification];
 
-  // Row counts read as a fraction only when the document told us what to expect.
-  const rowsValue =
-    record.declaredLineCount === null
-      ? String(record.extractedLineCount)
-      : `${record.extractedLineCount} / ${record.declaredLineCount}`;
+  /*
+   * Operators see the number of rows read, not a fraction against the model's
+   * own declared count.
+   *
+   * "9 / 10" invited the reading that a specific known row is missing, which is
+   * not what it meant — the denominator is the model's own estimate and is
+   * sometimes the wrong half of the comparison. Whether rows are actually
+   * missing is already stated, in words, by completeness and the review notes.
+   * The declared count remains in the developer diagnostics, where the person
+   * reading it knows what it is.
+   */
+  const rowsValue = String(record.extractedLineCount);
   const rowsTone: Tone | undefined =
     record.declaredLineCount === null
       ? undefined
@@ -98,16 +105,14 @@ export default function ExtractionQualityPanel({ record }: { record: ExtractionQ
         : "warning";
 
   /*
-   * Warnings and retry reasons are NOT the same thing and must not be merged.
+   * What the operator is asked to check describes THIS extraction only.
    *
-   * Warnings describe the extraction the operator is looking at. Retry reasons
-   * describe attempts that were thrown away. Showing both under one heading put
-   * "fewer rows were returned" next to a panel reading 40/40 rows and 100%
-   * complete — the retry had already fixed it, and the note read as a live
-   * problem that did not exist.
+   * Retry reasons describe attempts that were discarded and are no longer shown
+   * here at all — merging them put "fewer rows were returned" beside a panel
+   * reading 40 rows and 100% complete, because the retry had already fixed it,
+   * and the note read as a live problem that did not exist.
    */
   const toCheck = record.warnings;
-  const retryTone: Tone = toCheck.length ? tone : "success";
 
   return (
     <section
@@ -135,7 +140,13 @@ export default function ExtractionQualityPanel({ record }: { record: ExtractionQ
         <div className="border-t border-slate-100 px-4 py-3">
           <p className="vyron-t-body mb-3 text-xs text-slate-600">{CLASSIFICATION_SUMMARY[record.classification]}</p>
 
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+          {/*
+            Three operator-facing measures. How many attempts the engine needed
+            is an engineering fact about the extraction, not something the person
+            checking the invoice can act on, so it lives in the developer
+            diagnostics instead.
+          */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
             <Metric label="Rows read" value={rowsValue} tone={rowsTone} />
             <Metric
               label="Completeness"
@@ -143,19 +154,7 @@ export default function ExtractionQualityPanel({ record }: { record: ExtractionQ
               tone={completenessTone}
             />
             <Metric label="Totals" value={record.reconciliationStatus} tone={reconciliationTone} />
-            <Metric
-              label="Retries"
-              value={record.retryCount === 0 ? "None" : String(record.retryCount)}
-              tone={record.retryCount === 0 ? "success" : "warning"}
-            />
           </div>
-
-          {record.declaredLineCount !== null ? (
-            <p className="vyron-t-caption mt-2 text-[11px] text-slate-500">
-              The document appeared to contain {record.declaredLineCount}{" "}
-              {record.declaredLineCount === 1 ? "invoice line" : "invoice lines"}.
-            </p>
-          ) : null}
 
           {toCheck.length ? (
             <div className={`vyron-alert vyron-alert-${tone === "success" ? "info" : tone} mt-3`}>
@@ -168,24 +167,12 @@ export default function ExtractionQualityPanel({ record }: { record: ExtractionQ
             </div>
           ) : null}
 
-          {record.retryCount > 0 ? (
-            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <div className="vyron-t-label text-[10px] text-slate-500">
-                Re-read {record.retryCount === 1 ? "once" : `${record.retryCount} times`}
-                {toCheck.length ? "" : " — resolved"}
-              </div>
-              <ul className="vyron-t-body mt-1 list-disc space-y-1 pl-4 text-[11px] text-slate-600">
-                {record.retryReasons.map((reason) => (
-                  <li key={reason}>{reason}</li>
-                ))}
-              </ul>
-              <p className={`vyron-t-caption mt-1 text-[11px] ${`vyron-metric-${retryTone}`}`}>
-                {toCheck.length
-                  ? "The final attempt is the one shown above."
-                  : "The final attempt read the invoice in full."}
-              </p>
-            </div>
-          ) : null}
+          {/*
+            The retry history that used to sit here — attempt counts and the
+            reasons earlier attempts were rejected — described work the operator
+            never saw and cannot act on. It is retained in full by evidence
+            capture and shown on the developer diagnostics page.
+          */}
 
           {record.confidence !== null ? (
             <p className="vyron-t-caption mt-3 text-[11px] text-slate-400">

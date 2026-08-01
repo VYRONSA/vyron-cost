@@ -18,6 +18,24 @@ import { getServerWorkspaceSession } from "@/lib/vyron-workspace-admin-server";
 import { AiUsageService, resolveProviderForModel } from "@/lib/platform/ai";
 import { computeDocumentHash, runDuplicateInvoiceDetection } from "@/lib/vyron-duplicate-invoice-detection";
 import { captureExtractionEvidence } from "@/lib/vyron-extraction-evidence";
+import { runDocumentExtractionV2 } from "@/lib/vyron-invoice-extraction-v2";
+
+/**
+ * Which extraction engine runs.
+ *
+ * `DOCUMENT_EXTRACTION_ENGINE=v1` rolls back to the previous engine without a
+ * code deployment — that is the whole reason this is an environment variable and
+ * not a constant. v2 is the default: it matches v1's accuracy on the reference
+ * invoice at roughly a sixth of the wall clock and a tenth of the tokens, and
+ * carries none of the retry machinery.
+ *
+ * Both engines return the same shape, so everything downstream — persistence,
+ * duplicate detection, usage accounting, evidence capture, the review workspace
+ * — is identical either way.
+ */
+function resolveExtractionEngine(): "v1" | "v2" {
+  return process.env.DOCUMENT_EXTRACTION_ENGINE === "v1" ? "v1" : "v2";
+}
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -337,8 +355,12 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     let evidence: Awaited<ReturnType<typeof runDocumentExtraction>>["evidence"] | null = null;
     let extractionDurationMs = 0;
     let extractionUsage: Awaited<ReturnType<typeof runDocumentExtraction>>["usage"] = null;
+    const engine = resolveExtractionEngine();
+    trace.log("Extraction engine selected", { documentId }, { engine, source: "DOCUMENT_EXTRACTION_ENGINE" }, 0);
+
     try {
-      const result = await runDocumentExtraction(
+      const runExtraction = engine === "v2" ? runDocumentExtractionV2 : runDocumentExtraction;
+      const result = await runExtraction(
         { fileName, mime, bytes },
         {
           context: runtimeContext,

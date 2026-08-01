@@ -587,7 +587,7 @@ const CONSTANT_COLUMN_DOMINANCE = 0.6;
 /** Rows must reconcile at this rate before the table is trusted as a whole. */
 const ARITHMETIC_COHERENCE_THRESHOLD = 0.6;
 
-function assessLineArithmetic(extraction: ExtractedInvoice): LineArithmeticAssessment {
+export function assessLineArithmetic(extraction: ExtractedInvoice): LineArithmeticAssessment {
   const rows = extraction.lineItems.map((line) => ({
     quantity: numberFromMoney(line.quantity),
     unitPrice: numberFromMoney(line.unitPrice),
@@ -647,15 +647,23 @@ function assessLineArithmetic(extraction: ExtractedInvoice): LineArithmeticAsses
   const invoiceVat = numberFromMoney(extraction.vat);
   const vatVariance = lineVatSum !== null && invoiceVat !== null ? round2(Math.abs(lineVatSum - invoiceVat)) : null;
 
+  /*
+   * Phrased for the operator who has to act on it.
+   *
+   * These strings reach the review screen. "Constant money column across N rows
+   * with M distinct line totals" is the reason the check fired, not something a
+   * person checking an invoice can use — the underlying numbers stay on the
+   * assessment object for the diagnostics page and the evidence record.
+   */
   const reasons: string[] = [];
   for (const column of constantColumns) {
     reasons.push(
-      `Every line reports the same ${column.field === "vatAmount" ? "VAT amount" : "unit price"} (${column.value}) across ${column.rows} rows with ${column.distinctLineTotals} different line totals. That column was read from a rate, code, weight or pack-size column rather than a money column.`
+      `Every line shows the same ${column.field === "vatAmount" ? "VAT amount" : "unit price"} (${column.value}), which is unlikely to be correct. Check the ${column.field === "vatAmount" ? "VAT" : "unit price"} column against the document.`
     );
   }
   if (checkable.length && coherent.length / checkable.length < ARITHMETIC_COHERENCE_THRESHOLD) {
     reasons.push(
-      `Only ${coherent.length} of ${checkable.length} lines satisfy quantity x unit price = line total (with or without VAT). The line columns do not agree with each other.`
+      `Most lines do not add up: quantity multiplied by unit price does not match the line total. Check the line figures against the document.`
     );
   }
   if (vatVariance !== null && invoiceVat !== null) {
@@ -701,7 +709,10 @@ function describeIncompleteness(completeness: ExtractionCompleteness): string[] 
       return "No line items were extracted from a priced invoice. Review the line items against the source document.";
     }
     if (reason === "column-mapping-failed") {
-      return "COLUMN_MAPPING_FAILED — the extracted line columns do not agree with each other. Quantity, unit price, VAT or line total was read from the wrong column on the document. Do not approve without checking every line against the source.";
+      // Operator-facing. The machine-readable code stays in
+      // `completeness.reasons` for the diagnostics page and the monitoring
+      // record; an operator needs to know what to do, not what it is called.
+      return "The figures on each line do not add up against the invoice. Check the quantity, unit price and VAT on every line against the document before approving.";
     }
     return `Extracted line totals (${money(completeness.lineTotalSum)}) do not sum to the invoice ${completeness.reconciliationBasis === "subtotal" ? "subtotal" : "net amount"} (${money(completeness.reconciliationBase)}). Line items may be missing.`;
   });
@@ -783,6 +794,105 @@ function validateExtraction(extraction: ExtractedInvoice): ExtractedInvoice {
       missingFields,
     },
   };
+}
+
+/**
+ * Strict normalisation — canonical keys only, no alias chain.
+ *
+ * `normaliseExtraction` below reads several spellings per field
+ * (`unitPrice` or `price` or `rate`) because its prompt does not hard-constrain
+ * key names. That tolerance is a repair: it rescues output from a model that
+ * ignored the requested shape, and in doing so hides the fact that it did.
+ *
+ * The v2 pipeline states the shape exactly and holds the model to it. A missing
+ * `unitPrice` is a failed extraction to be flagged, not a `price` field to be
+ * quietly promoted in its place. `"UNKNOWN"` — which v2 asks for by name when a
+ * cell cannot be read — is treated as absent rather than as a value.
+ */
+export function normaliseExtractionStrict(raw: Record<string, unknown>, rawText: string): ExtractedInvoice {
+  const strict = (value: unknown) => {
+    const text = fieldString(value);
+    return text === "UNKNOWN" ? MISSING : text;
+  };
+  const strictMoney = (value: unknown) => {
+    const text = fieldString(value);
+    return text === "UNKNOWN" ? null : numberFromMoney(value);
+  };
+
+  const lineItems: ExtractedLineItem[] = Array.isArray(raw.lineItems)
+    ? (raw.lineItems as Array<Record<string, unknown>>).map((row) => {
+        const confidence = (value: unknown) => (strict(value) === MISSING ? 0 : 90);
+        return {
+          description: strict(row.description),
+          quantity: strict(row.quantity),
+          unit: strict(row.unit),
+          unitPrice: strict(row.unitPrice),
+          vatAmount: strict(row.vatAmount),
+          lineTotal: strict(row.lineTotal),
+          skuOrProductCode: strict(row.skuOrProductCode),
+          confidenceScore: 90,
+          fieldConfidence: {
+            description: confidence(row.description),
+            quantity: confidence(row.quantity),
+            unit: confidence(row.unit),
+            unitPrice: confidence(row.unitPrice),
+            vatAmount: confidence(row.vatAmount),
+            lineTotal: confidence(row.lineTotal),
+            skuOrProductCode: confidence(row.skuOrProductCode),
+          },
+        };
+      })
+    : [];
+
+  const confidenceForField = (value: unknown) => (strict(value) === MISSING ? 0 : 90);
+
+  const extraction: ExtractedInvoice = {
+    supplier: strict(raw.supplier),
+    invoiceNo: strict(raw.invoiceNo),
+    invoiceDate: parseDate(strict(raw.invoiceDate) === MISSING ? null : raw.invoiceDate),
+    customerName: strict(raw.customerName),
+    customerVatNo: strict(raw.customerVatNo),
+    supplierVatNo: strict(raw.supplierVatNo),
+    orderNo: strict(raw.orderNo),
+    accountNumber: strict(raw.accountNumber),
+    customerReference: strict(raw.customerReference),
+    salesRepresentative: strict(raw.salesRepresentative),
+    subtotal: strictMoney(raw.subtotal),
+    vat: strictMoney(raw.vat),
+    total: strictMoney(raw.total),
+    currency: strict(raw.currency) === MISSING ? "ZAR" : strict(raw.currency),
+    confidence: 90,
+    fieldConfidence: {
+      supplier: confidenceForField(raw.supplier),
+      invoiceNo: confidenceForField(raw.invoiceNo),
+      invoiceDate: confidenceForField(raw.invoiceDate),
+      customerName: confidenceForField(raw.customerName),
+      customerVatNo: confidenceForField(raw.customerVatNo),
+      supplierVatNo: confidenceForField(raw.supplierVatNo),
+      accountNumber: confidenceForField(raw.accountNumber),
+      orderNo: confidenceForField(raw.orderNo),
+      customerReference: confidenceForField(raw.customerReference),
+      salesRepresentative: confidenceForField(raw.salesRepresentative),
+      subtotal: confidenceForField(raw.subtotal),
+      vat: confidenceForField(raw.vat),
+      total: confidenceForField(raw.total),
+    },
+    documentType: strict(raw.documentType) === MISSING ? "Supplier Invoice" : strict(raw.documentType),
+    declaredLineItemCount: countFromRaw(raw.visibleLineItemCount),
+    lineItems,
+    completeness: UNASSESSED_COMPLETENESS,
+    lineArithmetic: UNASSESSED_ARITHMETIC,
+    warnings: [],
+    validation: {
+      subtotalVatTotalCheck: "Needs Review",
+      lineItemsTotalCheck: "Needs Review",
+      duplicateRisk: "Low",
+      missingFields: [],
+    },
+    rawDetectedText: rawText,
+  };
+
+  return validateExtraction(extraction);
 }
 
 /** Never uses filename or document id as invoice number. */
