@@ -1,6 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isAllowedDocumentMime, VYRON_DOCUMENTS_BUCKET } from "@/lib/vyron-documents";
 import {
+  assessDocumentForVision,
+  type DocumentVisionAssessment,
+  type DocumentVisionClass,
+} from "@/lib/vyron-document-page-images";
+import {
+  readInvoiceTableFromImage,
+  type TableColumnMapping,
+  type TableVisionRow,
+} from "@/lib/vyron-invoice-table-vision";
+import {
   buildExtractionQualityRecord,
   expectsLineItems,
   type ExtractionQualityRecord,
@@ -67,6 +77,11 @@ export type ExtractedInvoice = {
   declaredLineItemCount: number | null;
   lineItems: ExtractedLineItem[];
   completeness: ExtractionCompleteness;
+  /**
+   * Whether the extracted line columns agree with each other. Separate from
+   * `completeness`, which only asks whether every row came back.
+   */
+  lineArithmetic: LineArithmeticAssessment;
   warnings: string[];
   validation: {
     subtotalVatTotalCheck: "Pass" | "Fail" | "Needs Review";
@@ -105,7 +120,69 @@ export type ExtractionCompleteness = {
 export type ExtractionIncompletenessReason =
   | "row-count-mismatch"
   | "no-line-items"
-  | "totals-do-not-reconcile";
+  | "totals-do-not-reconcile"
+  | "column-mapping-failed";
+
+/**
+ * Does the extracted table agree with its own arithmetic?
+ *
+ * Completeness asks whether every row came back. This asks whether the values in
+ * the rows that did come back were read from the right columns — a question the
+ * row count and the invoice totals cannot answer, because a model that reads the
+ * wrong column still returns the right NUMBER of rows.
+ *
+ * Measured on the Gourmet Foods invoice 02252489: every row carried
+ * `vatAmount = unitPrice x 0.14`, a figure that appears nowhere on the document
+ * and uses South Africa's pre-2018 VAT rate. The row count matched, the header
+ * totals were correct, and every existing check passed.
+ */
+export type LineArithmeticAssessment = {
+  status: "Pass" | "Fail" | "Unverified";
+  /** Rows where quantity x unitPrice reconciles to the line total, either way. */
+  coherentRows: number;
+  /** Rows carrying enough numbers to be checked at all. */
+  checkableRows: number;
+  /**
+   * A value repeated down a money column while the line totals differ. A per-line
+   * VAT or unit price is a function of its line; one that is constant was read
+   * from a rate, code, weight or pack-size column.
+   */
+  constantColumns: Array<{ field: "unitPrice" | "vatAmount"; value: number; rows: number; distinctLineTotals: number }>;
+  /** Sum of extracted line VAT against the invoice's own VAT figure. */
+  lineVatSum: number | null;
+  vatVariance: number | null;
+  /**
+   * 1-based positions of individual rows whose own numbers do not reconcile,
+   * even when the table as a whole passes.
+   *
+   * The aggregate gate tolerates a minority of odd rows so that occasional OCR
+   * noise does not reject an otherwise sound extraction. That tolerance would
+   * otherwise hide the noise completely: a single misread quantity — measured on
+   * the reference invoice, where "Selati White Sugar 25kg" came back as 2 rather
+   * than 1 — leaves 15 of 16 rows coherent, clears the gate, and reaches the
+   * operator looking exactly like the 15 rows that are right. Naming the row
+   * sends the operator to the one line worth checking.
+   */
+  incoherentRows: number[];
+  reasons: string[];
+};
+
+/**
+ * Material too large or too binary to return in an API response, retained for
+ * the run so a failed extraction can be reconstructed afterwards.
+ *
+ * Kept separate from `ExtractionRunLog` deliberately: the run log is serialised
+ * into the extract route's JSON response, and page crops would bloat it by
+ * megabytes. This travels alongside it and is consumed only by evidence capture.
+ */
+export type ExtractionEvidence = {
+  /** Untruncated model output for every attempt, in attempt order. */
+  rawResponses: Array<{ model: string; prompt: "standard" | "reinforced"; outputText: string }>;
+  /** The cropped table images actually read, when the vision path ran. */
+  crops: Array<{ pageNumber: number; mime: string; bytes: Buffer }>;
+  /** Raw JSON returned by each table-vision read, in page order. */
+  tableVisionResponses: Array<{ pageNumber: number; locate: unknown; read: unknown }>;
+};
 
 export type ExtractionAttemptLog = {
   model: string;
@@ -136,6 +213,20 @@ export type ExtractionRunLog = {
    * structured fields already hold.
    */
   rawOpenAiResponseFull: string | null;
+  /** How the engine decided to show the document to the model, and why. */
+  visionClass: DocumentVisionClass | null;
+  visionReason: string | null;
+  /** One entry per page re-read through the cropped-table path. Empty when unused. */
+  tableVision: Array<{
+    pageNumber: number;
+    printedColumns: string[];
+    columnMapping: TableColumnMapping;
+    declaredRowCount: number | null;
+    returnedRowCount: number;
+    cropBox: { top: number; left: number; width: number; height: number } | null;
+  }>;
+  /** Why the table re-read did or did not run, and what it changed. */
+  tableVisionOutcome: string | null;
   declaredLineItemCount: number | null;
   lineItemCount: number | null;
   completeness: ExtractionCompleteness | null;
@@ -164,7 +255,7 @@ type ExtractionRuntimeContext = {
   companyId?: string | null;
 };
 
-type ExtractionRuntimeOptions = {
+export type ExtractionRuntimeOptions = {
   onTrace?: ExtractionTraceHook;
   context?: ExtractionRuntimeContext;
 };
@@ -238,6 +329,10 @@ export function numberFromMoney(value: unknown) {
   const normalised = parts.length > 2 ? `${parts.slice(0, -1).join("")}.${parts.at(-1)}` : cleaned;
   const num = Number(normalised);
   return Number.isFinite(num) ? num : null;
+}
+
+function round2(value: number) {
+  return Math.round(value * 100) / 100;
 }
 
 function parseDate(value: unknown) {
@@ -340,6 +435,18 @@ const UNASSESSED_COMPLETENESS: ExtractionCompleteness = {
   tolerance: null,
 };
 
+/** Seeded so the object is never partially constructed. Replaced by validateExtraction. */
+const UNASSESSED_ARITHMETIC: LineArithmeticAssessment = {
+  status: "Unverified",
+  coherentRows: 0,
+  checkableRows: 0,
+  constantColumns: [],
+  lineVatSum: null,
+  vatVariance: null,
+  incoherentRows: [],
+  reasons: [],
+};
+
 /** A declared row count is only meaningful as a non-negative whole number. */
 function countFromRaw(value: unknown): number | null {
   if (value === null || value === undefined || value === "" || value === MISSING) return null;
@@ -360,7 +467,10 @@ function countFromRaw(value: unknown): number | null {
  * rows before extracting them, so a mismatch is self-evident truncation and does
  * not depend on any amount parsing correctly.
  */
-function assessExtractionCompleteness(extraction: ExtractedInvoice): ExtractionCompleteness {
+function assessExtractionCompleteness(
+  extraction: ExtractedInvoice,
+  lineArithmetic?: LineArithmeticAssessment
+): ExtractionCompleteness {
   const subtotal = numberFromMoney(extraction.subtotal);
   const vat = numberFromMoney(extraction.vat);
   const total = numberFromMoney(extraction.total);
@@ -409,16 +519,44 @@ function assessExtractionCompleteness(extraction: ExtractedInvoice): ExtractionC
     reasons.push("no-line-items");
   }
 
+  /*
+   * Reconcile against whichever invoice figure the line column actually
+   * represents.
+   *
+   * Suppliers differ. Gourmet Foods prints a VAT-INCLUSIVE "NETT PRICE", so its
+   * line totals sum to the invoice total; others print an exclusive "Amount"
+   * that sums to the subtotal. Reconciling only against the subtotal rejected a
+   * verified-correct extraction of invoice 02252489 — its 16 line totals sum to
+   * 26766.19 against a total of 26766.18 and a subtotal of 23307.81 — and sent
+   * the engine into a retry loop chasing rows that were never missing.
+   *
+   * Both readings are tried and the closer one is reported.
+   */
   let variance: number | null = null;
   let tolerance: number | null = null;
-  if (lineTotalSum !== null && reconciliationBase !== null) {
-    variance = Math.abs(lineTotalSum - reconciliationBase);
-    tolerance = Math.max(
-      RECONCILIATION_TOLERANCE_FLOOR,
-      Math.abs(reconciliationBase) * RECONCILIATION_TOLERANCE_RATIO
-    );
-    if (variance > tolerance) reasons.push("totals-do-not-reconcile");
+  if (lineTotalSum !== null) {
+    const candidates: Array<{ base: number; basis: ExtractionCompleteness["reconciliationBasis"] }> = [];
+    if (reconciliationBase !== null) candidates.push({ base: reconciliationBase, basis: reconciliationBasis });
+    if (total !== null && reconciliationBasis !== "total") candidates.push({ base: total, basis: "total" });
+
+    let best: { base: number; basis: ExtractionCompleteness["reconciliationBasis"]; variance: number } | null = null;
+    for (const candidate of candidates) {
+      const candidateVariance = Math.abs(lineTotalSum - candidate.base);
+      if (!best || candidateVariance < best.variance) {
+        best = { ...candidate, variance: candidateVariance };
+      }
+    }
+
+    if (best) {
+      reconciliationBase = best.base;
+      reconciliationBasis = best.basis;
+      variance = best.variance;
+      tolerance = Math.max(RECONCILIATION_TOLERANCE_FLOOR, Math.abs(best.base) * RECONCILIATION_TOLERANCE_RATIO);
+      if (variance > tolerance) reasons.push("totals-do-not-reconcile");
+    }
   }
+
+  if (lineArithmetic?.status === "Fail") reasons.push("column-mapping-failed");
 
   // "Unverified" is not "Complete". With no declared count and nothing to
   // reconcile against, there is no evidence either way, and the caller must not
@@ -438,6 +576,121 @@ function assessExtractionCompleteness(extraction: ExtractedInvoice): ExtractionC
   };
 }
 
+/**
+ * Rows needed before a repeated value counts as evidence of a mis-read column.
+ *
+ * Below this, repetition is ordinary: three single-unit lines on a small invoice
+ * legitimately share a quantity, and two rows of the same product share a price.
+ */
+const CONSTANT_COLUMN_MIN_ROWS = 5;
+const CONSTANT_COLUMN_DOMINANCE = 0.6;
+/** Rows must reconcile at this rate before the table is trusted as a whole. */
+const ARITHMETIC_COHERENCE_THRESHOLD = 0.6;
+
+function assessLineArithmetic(extraction: ExtractedInvoice): LineArithmeticAssessment {
+  const rows = extraction.lineItems.map((line) => ({
+    quantity: numberFromMoney(line.quantity),
+    unitPrice: numberFromMoney(line.unitPrice),
+    vatAmount: numberFromMoney(line.vatAmount),
+    lineTotal: numberFromMoney(line.lineTotal),
+  }));
+
+  const checkable = rows.filter(
+    (row) => row.quantity !== null && row.unitPrice !== null && row.lineTotal !== null
+  );
+
+  /*
+   * Both readings of the line total are accepted. Suppliers differ on whether the
+   * final column is exclusive or inclusive of VAT — Gourmet Foods prints an
+   * inclusive "NETT PRICE", others print an exclusive "Amount" — and a row that
+   * satisfies either is internally consistent. Only a row that satisfies neither
+   * indicates the numbers did not come from the columns they were labelled with.
+   */
+  const rowIsCoherent = (row: (typeof rows)[number]) => {
+    const product = round2(row.quantity! * row.unitPrice!);
+    const withVat = round2(product + (row.vatAmount ?? 0));
+    const tolerance = Math.max(0.05, Math.abs(row.lineTotal!) * 0.005);
+    return Math.abs(product - row.lineTotal!) <= tolerance || Math.abs(withVat - row.lineTotal!) <= tolerance;
+  };
+
+  const coherent = checkable.filter(rowIsCoherent);
+
+  const incoherentRows = rows
+    .map((row, index) => ({ row, position: index + 1 }))
+    .filter(
+      ({ row }) =>
+        row.quantity !== null && row.unitPrice !== null && row.lineTotal !== null && !rowIsCoherent(row)
+    )
+    .map(({ position }) => position);
+
+  const constantColumns: LineArithmeticAssessment["constantColumns"] = [];
+  const distinctLineTotals = new Set(
+    rows.map((row) => row.lineTotal).filter((value): value is number => value !== null)
+  ).size;
+
+  if (rows.length >= CONSTANT_COLUMN_MIN_ROWS && distinctLineTotals >= 3) {
+    for (const field of ["unitPrice", "vatAmount"] as const) {
+      const values = rows.map((row) => row[field]).filter((value): value is number => value !== null);
+      if (values.length < CONSTANT_COLUMN_MIN_ROWS) continue;
+      const counts = new Map<number, number>();
+      for (const value of values) counts.set(value, (counts.get(value) || 0) + 1);
+      const [dominant, occurrences] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+      // A column of zeros is a legitimate zero-rated invoice, not a mis-read.
+      if (dominant !== 0 && occurrences / values.length >= CONSTANT_COLUMN_DOMINANCE) {
+        constantColumns.push({ field, value: dominant, rows: occurrences, distinctLineTotals });
+      }
+    }
+  }
+
+  const lineVats = rows.map((row) => row.vatAmount).filter((value): value is number => value !== null);
+  const lineVatSum = lineVats.length ? round2(lineVats.reduce((acc, value) => acc + value, 0)) : null;
+  const invoiceVat = numberFromMoney(extraction.vat);
+  const vatVariance = lineVatSum !== null && invoiceVat !== null ? round2(Math.abs(lineVatSum - invoiceVat)) : null;
+
+  const reasons: string[] = [];
+  for (const column of constantColumns) {
+    reasons.push(
+      `Every line reports the same ${column.field === "vatAmount" ? "VAT amount" : "unit price"} (${column.value}) across ${column.rows} rows with ${column.distinctLineTotals} different line totals. That column was read from a rate, code, weight or pack-size column rather than a money column.`
+    );
+  }
+  if (checkable.length && coherent.length / checkable.length < ARITHMETIC_COHERENCE_THRESHOLD) {
+    reasons.push(
+      `Only ${coherent.length} of ${checkable.length} lines satisfy quantity x unit price = line total (with or without VAT). The line columns do not agree with each other.`
+    );
+  }
+  if (vatVariance !== null && invoiceVat !== null) {
+    const vatTolerance = Math.max(1, Math.abs(invoiceVat) * 0.02);
+    if (vatVariance > vatTolerance) {
+      reasons.push(
+        `Extracted line VAT sums to ${lineVatSum?.toFixed(2)} but the invoice declares ${invoiceVat.toFixed(2)}.`
+      );
+    }
+  }
+
+  /*
+   * Named as a warning, not a rejection. These rows are individually suspect
+   * while the table as a whole is sound, so failing the extraction over them
+   * would discard 15 good rows to re-read 1 — and the re-read is not reliably
+   * better. Pointing the operator at the row is the proportionate response.
+   */
+  const rowWarnings = incoherentRows.length
+    ? [
+        `Line ${incoherentRows.join(", ")} ${incoherentRows.length === 1 ? "does" : "do"} not reconcile: quantity x unit price does not agree with the line total. Check ${incoherentRows.length === 1 ? "this line" : "these lines"} against the document before approving.`,
+      ]
+    : [];
+
+  return {
+    status: reasons.length ? "Fail" : checkable.length ? "Pass" : "Unverified",
+    coherentRows: coherent.length,
+    checkableRows: checkable.length,
+    constantColumns,
+    lineVatSum,
+    vatVariance,
+    incoherentRows,
+    reasons: [...reasons, ...rowWarnings],
+  };
+}
+
 function describeIncompleteness(completeness: ExtractionCompleteness): string[] {
   const money = (value: number | null) => (value === null ? "unknown" : value.toFixed(2));
   return completeness.reasons.map((reason) => {
@@ -446,6 +699,9 @@ function describeIncompleteness(completeness: ExtractionCompleteness): string[] 
     }
     if (reason === "no-line-items") {
       return "No line items were extracted from a priced invoice. Review the line items against the source document.";
+    }
+    if (reason === "column-mapping-failed") {
+      return "COLUMN_MAPPING_FAILED — the extracted line columns do not agree with each other. Quantity, unit price, VAT or line total was read from the wrong column on the document. Do not approve without checking every line against the source.";
     }
     return `Extracted line totals (${money(completeness.lineTotalSum)}) do not sum to the invoice ${completeness.reconciliationBasis === "subtotal" ? "subtotal" : "net amount"} (${money(completeness.reconciliationBase)}). Line items may be missing.`;
   });
@@ -480,13 +736,21 @@ function validateExtraction(extraction: ExtractedInvoice): ExtractedInvoice {
     .filter(([, value]) => value === MISSING || value === null || value === "")
     .map(([field]) => field as string);
 
-  const completeness = assessExtractionCompleteness(extraction);
+  /*
+   * Arithmetic is assessed first, then folded into completeness as its own
+   * reason. A table whose columns disagree is not a usable extraction, so it has
+   * to reach the same gate that truncation does — otherwise it is accepted,
+   * persisted and shown to an operator as though it were correct.
+   */
+  const lineArithmetic = assessLineArithmetic(extraction);
+  const completeness = assessExtractionCompleteness(extraction, lineArithmetic);
 
   const warnings = [...(extraction.warnings || [])];
   if (subtotalVatTotalCheck === "Fail") warnings.push("Subtotal + VAT does not match invoice total.");
   if (lineItemsTotalCheck === "Fail") warnings.push("Line item totals do not match subtotal.");
   if (missingFields.length) warnings.push(`Missing required fields: ${missingFields.join(", ")}.`);
   warnings.push(...describeIncompleteness(completeness));
+  warnings.push(...lineArithmetic.reasons);
 
   let confidence = Number(extraction.confidence || 0);
   if (confidence > 0) {
@@ -510,6 +774,7 @@ function validateExtraction(extraction: ExtractedInvoice): ExtractedInvoice {
     ...extraction,
     confidence,
     completeness,
+    lineArithmetic,
     warnings: Array.from(new Set(warnings)),
     validation: {
       subtotalVatTotalCheck,
@@ -589,6 +854,7 @@ export function normaliseExtraction(raw: Record<string, unknown>, rawText: strin
     // Replaced by validateExtraction, which is the only place completeness is
     // computed. Seeded here so the object is never partially constructed.
     completeness: UNASSESSED_COMPLETENESS,
+    lineArithmetic: UNASSESSED_ARITHMETIC,
     warnings: Array.isArray(raw.warnings) ? raw.warnings.map((warning) => String(warning)) : [],
     validation: {
       subtotalVatTotalCheck: "Needs Review",
@@ -628,6 +894,64 @@ function extractionHasCoreFields(extraction: ExtractedInvoice) {
  */
 function extractionIsUsable(extraction: ExtractedInvoice) {
   return extractionHasCoreFields(extraction) && extraction.completeness.status !== "Incomplete";
+}
+
+/**
+ * Should the table-vision path be used to replace this extraction's line items?
+ *
+ * Only when deterministic validation says the current lines cannot be trusted —
+ * never because the model reported low confidence. On the Gourmet Foods
+ * fabrications the model reported `confidenceScore: 95` on every invented row,
+ * so confidence is not evidence of anything.
+ *
+ * A scanned document whose lines reconcile and whose columns agree is left
+ * alone. Fabricated columns do not reconcile — both observed failure patterns
+ * were caught by `assessLineArithmetic` — so this escalates on the documents
+ * that need it and keeps the healthy path at one API call.
+ */
+function shouldEscalateToTableVision(
+  extraction: ExtractedInvoice,
+  visionClass: DocumentVisionClass
+): { escalate: boolean; reason: string } {
+  if (visionClass !== "scanned-pdf" && visionClass !== "image") {
+    return { escalate: false, reason: `Document is ${visionClass}; the text-exact path applies.` };
+  }
+  if (!expectsLineItems(extraction.documentType)) {
+    return { escalate: false, reason: `${extraction.documentType} does not carry priced rows.` };
+  }
+  if (extraction.lineArithmetic.status === "Fail") {
+    return { escalate: true, reason: `Line columns failed arithmetic validation: ${extraction.lineArithmetic.reasons[0]}` };
+  }
+  if (extraction.completeness.status === "Incomplete") {
+    return { escalate: true, reason: `Extraction incomplete: ${extraction.completeness.reasons.join(", ")}.` };
+  }
+  return { escalate: false, reason: "Line items reconcile and the columns agree; no table re-read needed." };
+}
+
+function lineItemsFromTableVision(rows: TableVisionRow[]): ExtractedLineItem[] {
+  const confidence = (value: string) => (value && value !== "UNKNOWN" ? 90 : 0);
+  return rows.map((row) => {
+    const field = (value: string) => (!value || value === "UNKNOWN" ? MISSING : value);
+    return {
+      description: field(row.description),
+      quantity: field(row.quantity),
+      unit: field(row.unit),
+      unitPrice: field(row.unitPrice),
+      vatAmount: field(row.vatAmount),
+      lineTotal: field(row.lineTotal),
+      skuOrProductCode: field(row.skuOrProductCode),
+      confidenceScore: 90,
+      fieldConfidence: {
+        description: confidence(row.description),
+        quantity: confidence(row.quantity),
+        unit: confidence(row.unit),
+        unitPrice: confidence(row.unitPrice),
+        vatAmount: confidence(row.vatAmount),
+        lineTotal: confidence(row.lineTotal),
+        skuOrProductCode: confidence(row.skuOrProductCode),
+      },
+    };
+  });
 }
 
 /** Feedback for a retry prompt, naming exactly what the previous attempt got wrong. */
@@ -980,6 +1304,8 @@ export async function runDocumentExtraction(input: {
   executionTimeMs: number;
   /** Authoritative review classification for this run. See vyron-extraction-quality.ts. */
   quality: ExtractionQualityRecord;
+  /** Bulk diagnostics for evidence capture. Never returned in an API response. */
+  evidence: ExtractionEvidence;
 }> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || apiKey.includes("PASTE_YOUR")) {
@@ -987,6 +1313,9 @@ export async function runDocumentExtraction(input: {
       "OPENAI_API_KEY is missing or still contains the placeholder. Add your real OpenAI API key to .env.local and restart Next.js."
     );
   }
+
+  /** Narrowed once here; the async closures below would otherwise re-widen it. */
+  const openAiKey: string = apiKey;
 
   if (!isAllowedDocumentMime(input.mime)) {
     throw new Error(`Unsupported MIME type for extraction: ${input.mime}`);
@@ -1051,6 +1380,7 @@ export async function runDocumentExtraction(input: {
   );
 
   const errors: string[] = [];
+  const evidence: ExtractionEvidence = { rawResponses: [], crops: [], tableVisionResponses: [] };
   const log: ExtractionRunLog = {
     fileName: input.fileName,
     mime: input.mime,
@@ -1059,6 +1389,10 @@ export async function runDocumentExtraction(input: {
     modelsAttempted: [],
     rawOpenAiResponsePreview: null,
     rawOpenAiResponseFull: null,
+    visionClass: null,
+    visionReason: null,
+    tableVision: [],
+    tableVisionOutcome: null,
     declaredLineItemCount: null,
     lineItemCount: null,
     completeness: null,
@@ -1086,6 +1420,37 @@ export async function runDocumentExtraction(input: {
     { model: models[0], reinforced: true, sameModelRetry: true },
     ...(models[1] ? [{ model: models[1], reinforced: true, sameModelRetry: false }] : []),
   ];
+
+  /*
+   * Classify the document before any model call.
+   *
+   * This decides how the model should see it: a searchable PDF has an exact text
+   * layer and needs nothing special, while a scanned one has to be read as an
+   * image or its dense table is downsampled into guesswork. Failure here is
+   * never fatal — an unclassifiable document simply takes the existing path.
+   */
+  let visionAssessment: DocumentVisionAssessment | null = null;
+  try {
+    visionAssessment = await assessDocumentForVision({ bytes: input.bytes, mime: input.mime });
+    log.visionClass = visionAssessment.visionClass;
+    log.visionReason = visionAssessment.reason;
+    emitTrace(
+      options,
+      "Document vision class resolved",
+      { fileName: input.fileName, mime: input.mime },
+      {
+        visionClass: visionAssessment.visionClass,
+        pageCount: visionAssessment.pageCount,
+        textLayerChars: visionAssessment.textLayerChars,
+        pageImages: visionAssessment.pageImages.length,
+        reason: visionAssessment.reason,
+      },
+      0
+    );
+  } catch (error) {
+    log.visionReason = `Document classification failed: ${error instanceof Error ? error.message : String(error)}`;
+    console.warn("[document-extraction] vision classification failed", log.visionReason);
+  }
 
   // Every attempt is billable, so token usage is accumulated across all of them
   // rather than reporting only the attempt that happened to be accepted.
@@ -1122,6 +1487,203 @@ export async function runDocumentExtraction(input: {
     return false;
   }
 
+  /**
+   * Re-read the line-item table from a cropped, full-resolution page image.
+   *
+   * Header fields are left exactly as the whole-document pass read them — those
+   * were never the problem, and on the measured invoice the supplier, invoice
+   * number and all three totals were already correct. Only the rows are
+   * replaced, and only when the re-read is demonstrably better than what it
+   * would replace.
+   */
+  async function escalateToTableVision(
+    extraction: ExtractedInvoice,
+    model: string
+  ): Promise<{ extraction: ExtractedInvoice; applied: boolean; note: string }> {
+    if (!visionAssessment?.pageImages.length) {
+      return { extraction, applied: false, note: "No page image was recoverable for a table re-read." };
+    }
+
+    const rows: TableVisionRow[] = [];
+    const columnMappings: TableColumnMapping[] = [];
+    const printedColumns: string[][] = [];
+
+    const accountUsage = (usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null) => {
+      if (!usage) return;
+      sawUsage = true;
+      promptTokens += usage.promptTokens;
+      completionTokens += usage.completionTokens;
+      totalTokens += usage.totalTokens;
+    };
+
+    for (const page of visionAssessment.pageImages) {
+      let table = await readInvoiceTableFromImage({
+        apiKey: openAiKey,
+        model,
+        imageBytes: page.bytes,
+        mime: page.mime,
+        pageNumber: page.pageNumber,
+        runtime: options,
+      });
+      accountUsage(table.usage);
+
+      /*
+       * One re-read against the identical crop, when the page's own numbers say
+       * rows are missing.
+       *
+       * Two deterministic signals drive it: the model returning fewer rows than
+       * it declared, and the returned line totals falling short of the invoice
+       * total. Both were observed — a read of this invoice returned 14 of 16
+       * rows and stopped — and neither depends on the model's self-reported
+       * confidence, which was 95 on every fabricated row.
+       *
+       * Single page only: on a multi-page invoice the rows on one page are not
+       * expected to reach the invoice total, so the shortfall signal does not
+       * apply and only the declared-count signal is used.
+       */
+      const singlePage = visionAssessment.pageImages.length === 1;
+      const declaredShort = table.rowCount !== null && table.lineItems.length < table.rowCount;
+      const invoiceTotal = numberFromMoney(extraction.total);
+      const pageSum = table.lineItems
+        .map((row) => numberFromMoney(row.lineTotal))
+        .filter((value): value is number => value !== null)
+        .reduce((acc, value) => acc + value, 0);
+      const shortOfTotal =
+        singlePage &&
+        invoiceTotal !== null &&
+        Math.abs(invoiceTotal) > 0 &&
+        pageSum < Math.abs(invoiceTotal) * 0.98;
+
+      if (declaredShort || shortOfTotal) {
+        const notes: string[] = [];
+        if (declaredShort) notes.push(`you reported ${table.rowCount} product rows but returned only ${table.lineItems.length}`);
+        if (shortOfTotal) {
+          notes.push(
+            `the line totals you returned sum to ${pageSum.toFixed(2)} but this invoice totals ${invoiceTotal?.toFixed(2)} — rows are missing, most likely at the bottom of the table`
+          );
+        }
+        const retry = await readInvoiceTableFromImage({
+          apiKey: openAiKey,
+          model,
+          imageBytes: page.bytes,
+          mime: page.mime,
+          pageNumber: page.pageNumber,
+          runtime: options,
+          crop: table.cropBytes ? { bytes: table.cropBytes, mime: table.cropMime, box: table.cropBox } : undefined,
+          reinforcement: `RETRY — THE PREVIOUS READ OF THIS TABLE WAS REJECTED because ${notes.join("; and ")}.
+Work down the table one row at a time, from the first product row to the very
+last one, and return every one of them. Do not stop early. Still copy the values
+exactly as printed — do not calculate anything to make the total agree.`,
+        });
+        accountUsage(retry.usage);
+        // Keep the re-read only when it actually recovered rows.
+        if (retry.lineItems.length > table.lineItems.length) table = retry;
+      }
+
+      rows.push(...table.lineItems);
+      columnMappings.push(table.columnMapping);
+      printedColumns.push(table.printedColumns);
+      if (table.cropBytes) {
+        evidence.crops.push({ pageNumber: page.pageNumber, mime: table.cropMime, bytes: table.cropBytes });
+      }
+      evidence.tableVisionResponses.push({
+        pageNumber: page.pageNumber,
+        locate: table.rawLocateJson,
+        read: table.rawReadJson,
+      });
+      log.tableVision.push({
+        pageNumber: page.pageNumber,
+        printedColumns: table.printedColumns,
+        columnMapping: table.columnMapping,
+        declaredRowCount: table.rowCount,
+        returnedRowCount: table.lineItems.length,
+        cropBox: table.cropBox,
+      });
+    }
+
+    if (!rows.length) {
+      return { extraction, applied: false, note: "The table re-read returned no rows." };
+    }
+
+    const candidate = validateExtraction({
+      ...extraction,
+      lineItems: lineItemsFromTableVision(rows),
+      declaredLineItemCount: rows.length,
+      warnings: [],
+    });
+
+    /*
+     * The re-read only wins on evidence. A replacement that still fails
+     * arithmetic is not an improvement, and silently swapping one unreliable
+     * table for another would destroy the audit trail without helping anyone.
+     */
+    const before = extraction.lineArithmetic;
+    const after = candidate.lineArithmetic;
+    const improved =
+      after.status === "Pass" ||
+      (before.status === "Fail" && after.coherentRows > before.coherentRows) ||
+      (extraction.lineItems.length === 0 && candidate.lineItems.length > 0);
+
+    if (!improved) {
+      return {
+        extraction,
+        applied: false,
+        note: `Table re-read returned ${rows.length} rows but did not improve arithmetic coherence (${before.coherentRows}/${before.checkableRows} -> ${after.coherentRows}/${after.checkableRows}); the original rows were kept.`,
+      };
+    }
+
+    const mappingNote = columnMappings[0]
+      ? ` Columns read as quantity=${columnMappings[0].quantity}, unitPrice=${columnMappings[0].unitPrice}, vatAmount=${columnMappings[0].vatAmount}, lineTotal=${columnMappings[0].lineTotal}.`
+      : "";
+
+    return {
+      extraction: candidate,
+      applied: true,
+      note: `Line items re-read from the cropped table image: ${rows.length} rows, arithmetic ${after.status} (${after.coherentRows}/${after.checkableRows} coherent).${mappingNote} Printed columns: ${printedColumns[0]?.join(" | ") || "unknown"}.`,
+    };
+  }
+
+  /**
+   * The single exit point. Every accepted extraction passes the table-vision
+   * gate here, so no return path can skip it.
+   */
+  async function finaliseWithVision(extraction: ExtractedInvoice, model: string, outputText: string) {
+    let final = extraction;
+    const decision = shouldEscalateToTableVision(extraction, visionAssessment?.visionClass ?? "unreadable-pdf");
+
+    if (decision.escalate) {
+      try {
+        const escalated = await escalateToTableVision(extraction, model);
+        final = escalated.extraction;
+        log.tableVisionOutcome = `${decision.reason} ${escalated.note}`;
+      } catch (error) {
+        // A failed re-read must never lose the extraction that already exists.
+        log.tableVisionOutcome = `${decision.reason} Table re-read failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`;
+        console.warn("[document-extraction] table vision failed", log.tableVisionOutcome);
+      }
+    } else {
+      log.tableVisionOutcome = decision.reason;
+    }
+
+    emitTrace(
+      options,
+      "Table vision gate",
+      { model, visionClass: visionAssessment?.visionClass ?? null },
+      {
+        escalated: decision.escalate,
+        outcome: log.tableVisionOutcome,
+        lineItemsBefore: extraction.lineItems.length,
+        lineItemsAfter: final.lineItems.length,
+        arithmetic: final.lineArithmetic.status,
+      },
+      0
+    );
+
+    return finalise(final, model, outputText);
+  }
+
   function finalise(extraction: ExtractedInvoice, model: string, outputText: string) {
     log.modelUsed = model;
     log.rawOpenAiResponsePreview = outputText.slice(0, 2000);
@@ -1142,6 +1704,7 @@ export async function runDocumentExtraction(input: {
       // Built here, after the attempt log is final, so the retry count and
       // reasons reflect the whole run rather than the accepted attempt alone.
       quality: buildExtractionQualityRecord(extraction, log),
+      evidence,
     };
   }
 
@@ -1180,6 +1743,12 @@ export async function runDocumentExtraction(input: {
         best = { extraction, model: attempt.model, outputText: result.outputText };
       }
 
+      evidence.rawResponses.push({
+        model: attempt.model,
+        prompt: attempt.reinforced ? "reinforced" : "standard",
+        outputText: result.outputText,
+      });
+
       log.attempts.push({
         model: attempt.model,
         prompt: attempt.reinforced ? "reinforced" : "standard",
@@ -1197,7 +1766,25 @@ export async function runDocumentExtraction(input: {
         durationMs: Date.now() - attemptStartedAt,
       });
 
-      if (usable) return finalise(extraction, attempt.model, result.outputText);
+      if (usable) return await finaliseWithVision(extraction, attempt.model, result.outputText);
+
+      /*
+       * MEASURED AND REJECTED — do not reintroduce without re-running the corpus.
+       *
+       * Escalating to the table re-read straight after the first whole-page
+       * attempt looked like an obvious saving: on a scanned document the
+       * remaining whole-page attempts never fix column identity, and skipping
+       * them cut the reference invoice from 119.7s to 45.3s.
+       *
+       * It also dropped accuracy from 64/64 to 47/64 with arithmetic failing.
+       * The whole-page attempts are not wasted work — the best-of-three
+       * extraction they produce is what the table re-read is layered onto and
+       * validated against, and starting the re-read from a single weaker attempt
+       * degrades the result. The saving is real and the cost is unacceptable.
+       *
+       * The 119.7s figure sits inside the route's 120s ceiling with almost no
+       * margin. That is tracked as a deployment risk, not paid for in accuracy.
+       */
 
       if (!extractionHasCoreFields(extraction)) {
         errors.push(`${attempt.model} returned insufficient fields.`);
@@ -1264,7 +1851,7 @@ export async function runDocumentExtraction(input: {
       workspaceId: options?.context?.workspaceId || null,
       companyId: options?.context?.companyId || null,
     });
-    return finalise(best.extraction, best.model, best.outputText);
+    return await finaliseWithVision(best.extraction, best.model, best.outputText);
   }
 
   throw new Error(`Extraction failed. ${errors.join(" | ")}`);

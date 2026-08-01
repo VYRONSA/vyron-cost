@@ -5,7 +5,7 @@ import {
   estimateLineBBox,
   parseSourceBBox,
 } from "@/lib/vyron-document-viewer-types";
-import { computeLineAmounts, withLineAmounts } from "@/lib/vyron-invoice-line-math";
+import { computeLineAmounts, withDerivedLineAmounts } from "@/lib/vyron-invoice-line-math";
 import { hydrateReviewDraft } from "@/lib/vyron-review-draft-hydrate";
 import { parseExtractionQualityRecord, type ExtractionQualityRecord } from "@/lib/vyron-extraction-quality";
 
@@ -190,40 +190,7 @@ export async function loadReviewDraft(
         total: asNullableConfidence(fc.total ?? fallbackExtraction?.fieldConfidence?.total),
       },
     },
-    lines: (payload.lines || []).map((line) => {
-      const base: ReviewDraftLine = {
-      id: String(line.id),
-      description: String(line.description || ""),
-      quantity: (line.quantity as number | null) ?? null,
-      unit: String(line.unit || ""),
-      unitPrice: (line.unit_price as number | null) ?? null,
-      vat: (line.vat as number | null) ?? null,
-      lineTotal: (line.line_total as number | null) ?? null,
-      skuOrProductCode: String(line.sku_product_code || ""),
-      confidenceScore: asNullableConfidence(line.confidence_score),
-      fieldConfidence: {
-        description: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.description ?? line.confidence_score),
-        quantity: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.quantity ?? line.confidence_score),
-        unit: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.unit ?? line.confidence_score),
-        unitPrice: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.unitPrice ?? line.confidence_score),
-        vatAmount: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.vatAmount ?? line.confidence_score),
-        lineTotal: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.lineTotal ?? line.confidence_score),
-        skuOrProductCode: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.skuOrProductCode ?? line.confidence_score),
-      },
-      matchedEntityType: (line.matched_entity_type as ReviewDraftLine["matchedEntityType"]) ?? null,
-      matchedEntityId: (line.matched_entity_id as string | null) ?? null,
-      matchedEntityName: (line.matched_entity_name as string | null) ?? null,
-      ignored: Boolean(line.ignored),
-      suggestedMatch: (line.suggested_match as ReviewDraftLine["suggestedMatch"]) ?? null,
-      sourcePage: (line.source_page as number | null) ?? null,
-      sourceBbox: parseSourceBBox(line.source_bbox),
-      };
-      const qty = base.quantity ?? 0;
-      const price = base.unitPrice ?? 0;
-      base.lineExclVat =
-        qty && price ? Math.round(qty * price * 100) / 100 : base.lineTotal !== null && base.vat !== null ? Math.round((base.lineTotal - base.vat) * 100) / 100 : null;
-      return withLineAmounts(base);
-    }),
+    lines: (payload.lines || []).map(mapLineRowToDraftLine),
     matchOptions: payload.matchOptions || [],
     viewerRegions: buildViewerRegionsFromPayload(payload.document, payload.lines || []),
     reconciliationNote: (payload.document.reconciliation_note as string | null) ?? null,
@@ -231,6 +198,44 @@ export async function loadReviewDraft(
   };
 
   return hydrateReviewDraft(draft);
+}
+
+/**
+ * One `vyron_document_line_items` row as the review workspace holds it.
+ *
+ * Lifted out of `loadReviewDraft` unchanged so the line-mapping diagnostic can
+ * measure this function rather than a copy of it. A replica would drift from
+ * the shipped path, and the comparison would stop being evidence.
+ */
+export function mapLineRowToDraftLine(line: Record<string, unknown>): ReviewDraftLine {
+  const base: ReviewDraftLine = {
+    id: String(line.id),
+    description: String(line.description || ""),
+    quantity: (line.quantity as number | null) ?? null,
+    unit: String(line.unit || ""),
+    unitPrice: (line.unit_price as number | null) ?? null,
+    vat: (line.vat as number | null) ?? null,
+    lineTotal: (line.line_total as number | null) ?? null,
+    skuOrProductCode: String(line.sku_product_code || ""),
+    confidenceScore: asNullableConfidence(line.confidence_score),
+    fieldConfidence: {
+      description: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.description ?? line.confidence_score),
+      quantity: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.quantity ?? line.confidence_score),
+      unit: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.unit ?? line.confidence_score),
+      unitPrice: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.unitPrice ?? line.confidence_score),
+      vatAmount: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.vatAmount ?? line.confidence_score),
+      lineTotal: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.lineTotal ?? line.confidence_score),
+      skuOrProductCode: asNullableConfidence((line.field_confidence as Record<string, unknown>)?.skuOrProductCode ?? line.confidence_score),
+    },
+    matchedEntityType: (line.matched_entity_type as ReviewDraftLine["matchedEntityType"]) ?? null,
+    matchedEntityId: (line.matched_entity_id as string | null) ?? null,
+    matchedEntityName: (line.matched_entity_name as string | null) ?? null,
+    ignored: Boolean(line.ignored),
+    suggestedMatch: (line.suggested_match as ReviewDraftLine["suggestedMatch"]) ?? null,
+    sourcePage: (line.source_page as number | null) ?? null,
+    sourceBbox: parseSourceBBox(line.source_bbox),
+  };
+  return withDerivedLineAmounts(base);
 }
 
 function buildViewerRegionsFromPayload(

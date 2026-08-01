@@ -1,0 +1,947 @@
+{
+  "documentId": "f9967375-3eec-41ac-86f4-1eccc2568339",
+  "mode": "--document --reextract",
+  "capturedAt": "2026-08-01T18:45:27.060Z",
+  "stagesMeasured": [
+    "raw GPT",
+    "normalized",
+    "database",
+    "UI"
+  ],
+  "header": {
+    "id": "f9967375-3eec-41ac-86f4-1eccc2568339",
+    "original_filename": "doc00190220260721125543.pdf",
+    "invoice_number": "02252489",
+    "supplier_name": "Gourmet Foods on the Go",
+    "subtotal": 23307.81,
+    "vat": 3458.37,
+    "total": 26766.18,
+    "storage_bucket": "vyron-documents",
+    "storage_path": "9c8b7dd4-178e-4459-a028-d053ac9ebae2/f9967375-3eec-41ac-86f4-1eccc2568339/doc00190220260721125543.pdf",
+    "file_mime": "application/pdf"
+  },
+  "comparison": {
+    "rows": [
+      {
+        "index": 0,
+        "description": "Grat Tomato and Onion Mix A10",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              "12.00",
+              "12.00",
+              2,
+              2
+            ],
+            "brokeAt": 2
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              "R97.14",
+              "109.50",
+              88,
+              88
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              "R13.57",
+              "30.00",
+              30,
+              30
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              "R1,165.68",
+              "R974.14",
+              201.76,
+              201.76
+            ],
+            "brokeAt": 1
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "description": "Cater Rubbed Rosemary 1kg",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              "12.00",
+              "2.00",
+              2,
+              2
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              "R132.00",
+              "66.00",
+              88,
+              88
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              "R18.48",
+              "30.00",
+              30,
+              30
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              "R1,584.00",
+              "R132.00",
+              201.76,
+              201.76
+            ],
+            "brokeAt": 1
+          }
+        ]
+      },
+      {
+        "index": 2,
+        "description": "Cater Beef Stock 1kg",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              "12.00",
+              "2.00",
+              2,
+              2
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              "R132.00",
+              "60.00",
+              126,
+              126
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              "R18.48",
+              "30.00",
+              0,
+              0
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              "R1,584.00",
+              "R120.00",
+              252,
+              252
+            ],
+            "brokeAt": 1
+          }
+        ]
+      },
+      {
+        "index": 3,
+        "description": "Cater Chicken Stock 1kg",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              "6.00",
+              "2.00",
+              12,
+              12
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              "R203.11",
+              "60.00",
+              109.5,
+              109.5
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              "R28.43",
+              "30.00",
+              30,
+              30
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              "R1,217.66",
+              "R120.00",
+              974.14,
+              974.14
+            ],
+            "brokeAt": 1
+          }
+        ]
+      },
+      {
+        "index": 4,
+        "description": "Cater White Pepper 1kg",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              "6.00",
+              "2.00",
+              1,
+              1
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              "R0.00",
+              "88.38",
+              452.61,
+              452.61
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              "R0.00",
+              "30.00",
+              30,
+              30
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              "R0.00",
+              "R176.76",
+              518.35,
+              518.35
+            ],
+            "brokeAt": 1
+          }
+        ]
+      },
+      {
+        "index": 5,
+        "description": "Cater Mixed Herbs 1kg",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              "2.00",
+              "2.00",
+              2,
+              2
+            ],
+            "brokeAt": null
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              "R187.35",
+              "88.38",
+              187.35,
+              187.35
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              "R26.20",
+              "30.00",
+              30,
+              30
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              "R432.91",
+              "R176.76",
+              430.91,
+              430.91
+            ],
+            "brokeAt": 1
+          }
+        ]
+      },
+      {
+        "index": 6,
+        "description": "Heavy Duty Foil 440mm x 70m",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              "2.00",
+              "6.00",
+              2,
+              2
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              "R32.92",
+              "225.68",
+              66,
+              66
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              "R4.61",
+              "30.00",
+              30,
+              30
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              "R74.46",
+              "R1,557.19",
+              132,
+              132
+            ],
+            "brokeAt": 1
+          }
+        ]
+      },
+      {
+        "index": 7,
+        "description": "Faircape Low Fat 2% UHT Milk 6x1L",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              "1.00",
+              "2.00",
+              2,
+              2
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              "R27.91",
+              "126.00",
+              88,
+              88
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              "R3.91",
+              "0.00",
+              30,
+              30
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              "R31.82",
+              "R252.00",
+              201.76,
+              201.76
+            ],
+            "brokeAt": 1
+          }
+        ]
+      },
+      {
+        "index": 8,
+        "description": "Robertsons Veggie Seasoning 1kg",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              "1.00",
+              "2.00",
+              2,
+              2
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              "R52.64",
+              "187.35",
+              175.47,
+              175.47
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              "R7.37",
+              "30.00",
+              30,
+              30
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              "R60.01",
+              "R430.91",
+              402.64,
+              402.64
+            ],
+            "brokeAt": 1
+          }
+        ]
+      },
+      {
+        "index": 9,
+        "description": "Cater Spice Peri Peri 1kg",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              "2.00",
+              "2.00",
+              6,
+              6
+            ],
+            "brokeAt": 2
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              "R175.47",
+              "123.00",
+              225.68,
+              225.68
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              "R24.57",
+              "30.00",
+              30,
+              30
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              "R399.51",
+              "R247.71",
+              1557.19,
+              1557.19
+            ],
+            "brokeAt": 1
+          }
+        ]
+      },
+      {
+        "index": 10,
+        "description": "Cider Mild Curry Powder 1kg",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              "2.00",
+              "1.00",
+              20,
+              20
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              "R2,153.01",
+              "27.91",
+              752.64,
+              752.64
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              "R301.42",
+              "30.00",
+              30,
+              30
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              "R4,706.44",
+              "R32.10",
+              16506.41,
+              16506.41
+            ],
+            "brokeAt": 1
+          }
+        ]
+      },
+      {
+        "index": 11,
+        "description": "Snackwrap Clingwrap 330mm x 1400m",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              "60.00",
+              "1.00",
+              1,
+              1
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              "R88.33",
+              "452.64",
+              27.91,
+              27.91
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              "R12.33",
+              "30.00",
+              30,
+              30
+            ],
+            "brokeAt": 1
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              "R5,300.00",
+              "R518.35",
+              32.1,
+              32.1
+            ],
+            "brokeAt": 1
+          }
+        ]
+      },
+      {
+        "index": 12,
+        "description": "Crushed Garlic 5kg",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              null,
+              "2.00",
+              60,
+              60
+            ],
+            "brokeAt": 2
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              null,
+              "175.47",
+              65.37,
+              65.37
+            ],
+            "brokeAt": 2
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              null,
+              "30.00",
+              30,
+              30
+            ],
+            "brokeAt": null
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              null,
+              "R402.64",
+              4510.53,
+              4510.53
+            ],
+            "brokeAt": 2
+          }
+        ]
+      },
+      {
+        "index": 13,
+        "description": "Pastryking Margarine 22-25kg",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              null,
+              "20.00",
+              2,
+              2
+            ],
+            "brokeAt": 2
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              null,
+              "87.13",
+              108,
+              108
+            ],
+            "brokeAt": 2
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              null,
+              "30.00",
+              30,
+              30
+            ],
+            "brokeAt": null
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              null,
+              "R16,506.41",
+              247.71,
+              247.71
+            ],
+            "brokeAt": 2
+          }
+        ]
+      },
+      {
+        "index": 14,
+        "description": "Ladismith Unsalted Butter 500g",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              null,
+              "60.00",
+              1,
+              1
+            ],
+            "brokeAt": 2
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              null,
+              "65.37",
+              27.91,
+              27.91
+            ],
+            "brokeAt": 2
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              null,
+              "30.00",
+              30,
+              30
+            ],
+            "brokeAt": null
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              null,
+              "R4,510.53",
+              32.1,
+              32.1
+            ],
+            "brokeAt": 2
+          }
+        ]
+      }
+    ],
+    "labels": [
+      "1 RAW GPT",
+      "2 NORMALIZED",
+      "3 DATABASE",
+      "4 UI"
+    ]
+  },
+  "analysis": {
+    "rows": [
+      {
+        "index": 0,
+        "description": "Cater Chicken Stock 1kg",
+        "qty": 2,
+        "price": 88,
+        "vat": 30,
+        "total": 201.76,
+        "product": 176,
+        "matchesExcl": false,
+        "matchesIncl": false,
+        "impliedUnitPriceExcl": 87.72,
+        "impliedVat": 25.76
+      },
+      {
+        "index": 1,
+        "description": "Cater Beef Stock 1kg",
+        "qty": 2,
+        "price": 88,
+        "vat": 30,
+        "total": 201.76,
+        "product": 176,
+        "matchesExcl": false,
+        "matchesIncl": false,
+        "impliedUnitPriceExcl": 87.72,
+        "impliedVat": 25.76
+      },
+      {
+        "index": 2,
+        "description": "Faircape Low Fat 2% UHT Milk 6x1L",
+        "qty": 2,
+        "price": 126,
+        "vat": 0,
+        "total": 252,
+        "product": 252,
+        "matchesExcl": true,
+        "matchesIncl": false,
+        "impliedUnitPriceExcl": 109.57,
+        "impliedVat": 0
+      },
+      {
+        "index": 3,
+        "description": "Grat Tomato and Onion Mix A10",
+        "qty": 12,
+        "price": 109.5,
+        "vat": 30,
+        "total": 974.14,
+        "product": 1314,
+        "matchesExcl": false,
+        "matchesIncl": false,
+        "impliedUnitPriceExcl": 70.59,
+        "impliedVat": -339.86
+      },
+      {
+        "index": 4,
+        "description": "Snackwrap Clingwrap 330mm x 1400m",
+        "qty": 1,
+        "price": 452.61,
+        "vat": 30,
+        "total": 518.35,
+        "product": 452.61,
+        "matchesExcl": false,
+        "matchesIncl": false,
+        "impliedUnitPriceExcl": 450.74,
+        "impliedVat": 65.74
+      },
+      {
+        "index": 5,
+        "description": "Robertsons Veggie Seasoning 1kg",
+        "qty": 2,
+        "price": 187.35,
+        "vat": 30,
+        "total": 430.91,
+        "product": 374.7,
+        "matchesExcl": false,
+        "matchesIncl": true,
+        "impliedUnitPriceExcl": 187.35,
+        "impliedVat": 56.21
+      },
+      {
+        "index": 6,
+        "description": "Cater Rubbed Rosemary 1kg",
+        "qty": 2,
+        "price": 66,
+        "vat": 30,
+        "total": 132,
+        "product": 132,
+        "matchesExcl": true,
+        "matchesIncl": false,
+        "impliedUnitPriceExcl": 57.39,
+        "impliedVat": 0
+      },
+      {
+        "index": 7,
+        "description": "Cater White Pepper 1kg",
+        "qty": 2,
+        "price": 88,
+        "vat": 30,
+        "total": 201.76,
+        "product": 176,
+        "matchesExcl": false,
+        "matchesIncl": false,
+        "impliedUnitPriceExcl": 87.72,
+        "impliedVat": 25.76
+      },
+      {
+        "index": 8,
+        "description": "Crushed Garlic 5kg",
+        "qty": 2,
+        "price": 175.47,
+        "vat": 30,
+        "total": 402.64,
+        "product": 350.94,
+        "matchesExcl": false,
+        "matchesIncl": false,
+        "impliedUnitPriceExcl": 175.06,
+        "impliedVat": 51.7
+      },
+      {
+        "index": 9,
+        "description": "Heavy Duty Foil 440mm x 70m",
+        "qty": 6,
+        "price": 225.68,
+        "vat": 30,
+        "total": 1557.19,
+        "product": 1354.08,
+        "matchesExcl": false,
+        "matchesIncl": true,
+        "impliedUnitPriceExcl": 225.68,
+        "impliedVat": 203.11
+      },
+      {
+        "index": 10,
+        "description": "Pastryking Margarine 22-25kg",
+        "qty": 20,
+        "price": 752.64,
+        "vat": 30,
+        "total": 16506.41,
+        "product": 15052.8,
+        "matchesExcl": false,
+        "matchesIncl": false,
+        "impliedUnitPriceExcl": 717.67,
+        "impliedVat": 1453.61
+      },
+      {
+        "index": 11,
+        "description": "Heavy Medium Curry Powder 1kg",
+        "qty": 1,
+        "price": 27.91,
+        "vat": 30,
+        "total": 32.1,
+        "product": 27.91,
+        "matchesExcl": false,
+        "matchesIncl": true,
+        "impliedUnitPriceExcl": 27.91,
+        "impliedVat": 4.19
+      },
+      {
+        "index": 12,
+        "description": "Ladismith Unsalted Butter 500g",
+        "qty": 60,
+        "price": 65.37,
+        "vat": 30,
+        "total": 4510.53,
+        "product": 3922.2,
+        "matchesExcl": false,
+        "matchesIncl": true,
+        "impliedUnitPriceExcl": 65.37,
+        "impliedVat": 588.33
+      },
+      {
+        "index": 13,
+        "description": "Cater Spice Peri Peri 1kg",
+        "qty": 2,
+        "price": 108,
+        "vat": 30,
+        "total": 247.71,
+        "product": 216,
+        "matchesExcl": false,
+        "matchesIncl": false,
+        "impliedUnitPriceExcl": 107.7,
+        "impliedVat": 31.71
+      },
+      {
+        "index": 14,
+        "description": "Cider Mild Curry Powder 1kg",
+        "qty": 1,
+        "price": 27.91,
+        "vat": 30,
+        "total": 32.1,
+        "product": 27.91,
+        "matchesExcl": false,
+        "matchesIncl": true,
+        "impliedUnitPriceExcl": 27.91,
+        "impliedVat": 4.19
+      }
+    ],
+    "constants": [
+      {
+        "field": "VAT",
+        "value": 30,
+        "occurrences": 14,
+        "of": 15,
+        "distinctTotals": 12
+      }
+    ],
+    "reconciliation": {
+      "sumLineTotals": 26201.36,
+      "sumVat": 420,
+      "headerSubtotal": 23307.81,
+      "headerVat": 3458.37,
+      "headerTotal": 26766.18,
+      "lineTotalsVsHeaderTotal": -564.82,
+      "lineTotalsVsHeaderSubtotal": 2893.55,
+      "lineVatVsHeaderVat": -3038.37
+    },
+    "coherent": {
+      "excl": 2,
+      "incl": 5,
+      "neither": 8,
+      "total": 15
+    }
+  }
+}

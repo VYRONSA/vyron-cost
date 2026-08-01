@@ -17,6 +17,7 @@ import { getServerActiveWorkspace, getWorkspaceCompanyResolution } from "@/lib/v
 import { getServerWorkspaceSession } from "@/lib/vyron-workspace-admin-server";
 import { AiUsageService, resolveProviderForModel } from "@/lib/platform/ai";
 import { computeDocumentHash, runDuplicateInvoiceDetection } from "@/lib/vyron-duplicate-invoice-detection";
+import { captureExtractionEvidence } from "@/lib/vyron-extraction-evidence";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -333,6 +334,9 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     let modelUsed: string;
     let log: Awaited<ReturnType<typeof runDocumentExtraction>>["log"];
     let quality: Awaited<ReturnType<typeof runDocumentExtraction>>["quality"];
+    let evidence: Awaited<ReturnType<typeof runDocumentExtraction>>["evidence"] | null = null;
+    let extractionDurationMs = 0;
+    let extractionUsage: Awaited<ReturnType<typeof runDocumentExtraction>>["usage"] = null;
     try {
       const result = await runDocumentExtraction(
         { fileName, mime, bytes },
@@ -345,6 +349,9 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       modelUsed = result.modelUsed;
       log = result.log;
       quality = result.quality;
+      evidence = result.evidence;
+      extractionDurationMs = result.executionTimeMs;
+      extractionUsage = result.usage;
 
       await AiUsageService.recordUsage({
         companyId: tenantId,
@@ -414,6 +421,34 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       },
       quality
     );
+
+    /*
+     * Evidence and monitoring.
+     *
+     * Runs after persistence and never blocks it: a run that failed a validator
+     * is exactly the run an engineer will need to explain later, and losing the
+     * extraction because the diagnostics could not be written would be the wrong
+     * trade. Healthy runs record metrics only.
+     */
+    let evidenceResult: Awaited<ReturnType<typeof captureExtractionEvidence>> | null = null;
+    if (evidence) {
+      evidenceResult = await captureExtractionEvidence({
+        supabase,
+        documentId,
+        extraction,
+        log,
+        evidence,
+        modelUsed,
+        durationMs: extractionDurationMs,
+        usage: extractionUsage,
+      });
+      trace.log(
+        "Extraction evidence capture",
+        { documentId, triggers: evidenceResult.triggers },
+        { captured: evidenceResult.captured, cropPaths: evidenceResult.cropPaths.length },
+        0
+      );
+    }
 
     // Deterministic duplicate detection. Runs AFTER persistence so the header
     // fields it compares are the ones stored. No model output influences the
@@ -494,7 +529,13 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       documentId,
       modelUsed,
       extraction,
+      // `evidence` is deliberately not returned: it carries megabytes of page
+      // crops and full model transcripts, which belong in storage, not in an
+      // API response the review screen has to download.
       log,
+      evidenceCaptured: evidenceResult
+        ? { captured: evidenceResult.captured, triggers: evidenceResult.triggers }
+        : null,
       // Authoritative review state. Additive; existing consumers ignore it.
       extractionQuality: quality,
       // Additive. Existing consumers ignore it; the document inbox reads the

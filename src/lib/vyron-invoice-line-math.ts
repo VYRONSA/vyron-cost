@@ -27,6 +27,41 @@ export function withLineAmounts(line: ReviewDraftLine): ReviewDraftLine {
   return { ...line, ...computeLineAmounts(line) };
 }
 
+/**
+ * Load-path amounts: keep what was extracted, derive only what is absent.
+ *
+ * `computeLineAmounts` above is the EDIT path — the operator changed quantity,
+ * unit price or VAT, so the derived amounts must follow. Running it on load
+ * instead overwrote the extracted line total with `quantity × unitPrice + VAT`,
+ * and because both operands coerce a missing value to 0, any row whose quantity
+ * or unit price could not be read showed 0.00 under Excl VAT and its VAT amount
+ * under Incl VAT. The extracted figure never reached the screen.
+ *
+ * Precedence for the exclusive amount is the one the review-draft loader always
+ * intended, before the result was discarded by the recompute: quantity × unit
+ * price when both were extracted, otherwise line total less VAT.
+ */
+export function deriveLineAmounts(line: ReviewDraftLine): Pick<ReviewDraftLine, "lineExclVat" | "vat" | "lineTotal"> {
+  const fromQuantity =
+    line.quantity !== null && line.unitPrice !== null && Number.isFinite(line.quantity) && Number.isFinite(line.unitPrice)
+      ? roundMoney(line.quantity * line.unitPrice)
+      : null;
+  const fromTotal =
+    line.lineTotal !== null && Number.isFinite(line.lineTotal) ? roundMoney(line.lineTotal - (line.vat ?? 0)) : null;
+
+  return {
+    lineExclVat: fromQuantity ?? fromTotal,
+    // Preserved rather than defaulted to 0. A VAT amount that was never
+    // extracted is unknown, and must not be presented as a measured zero.
+    vat: line.vat,
+    lineTotal: line.lineTotal ?? (fromQuantity !== null ? roundMoney(fromQuantity + (line.vat ?? 0)) : null),
+  };
+}
+
+export function withDerivedLineAmounts(line: ReviewDraftLine): ReviewDraftLine {
+  return { ...line, ...deriveLineAmounts(line) };
+}
+
 /** Differences at or below this are treated as an exact match (e.g. R0.04). */
 export const TOTALS_MATCH_TOLERANCE = 0.05;
 

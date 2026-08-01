@@ -1,5 +1,5 @@
 import type { MatchOption, ReviewDraft, ReviewDraftLine } from "@/lib/vyron-document-review-client";
-import { computeLineAmounts, withLineAmounts } from "@/lib/vyron-invoice-line-math";
+import { withDerivedLineAmounts, withLineAmounts } from "@/lib/vyron-invoice-line-math";
 import { matchQualityFromSuggestion } from "@/lib/vyron-line-match-search";
 import type { MatchQuality } from "@/lib/vyron-line-match-search";
 
@@ -13,7 +13,10 @@ export function hydrateReviewDraft(draft: ReviewDraft): ReviewDraft {
   const optionByKey = new Map(matchOptions.map((option) => [optionKey(option), option]));
 
   const lines = draft.lines.map((line) => {
-    let next: ReviewDraftLine = { ...withLineAmounts(line) };
+    // Load path: hydration restores match labels, it does not re-derive money.
+    // See deriveLineAmounts — recomputing here discarded the extracted totals a
+    // second time, after loadReviewDraft had already mapped them.
+    let next: ReviewDraftLine = { ...withDerivedLineAmounts(line) };
 
     if (next.matchedEntityId && next.matchedEntityType) {
       const key = optionKey({ entityType: next.matchedEntityType, id: next.matchedEntityId });

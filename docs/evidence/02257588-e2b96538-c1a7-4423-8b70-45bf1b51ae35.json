@@ -1,0 +1,229 @@
+{
+  "documentId": "e2b96538-c1a7-4423-8b70-45bf1b51ae35",
+  "mode": "--document",
+  "capturedAt": "2026-08-01T18:35:56.794Z",
+  "stagesMeasured": [
+    "database",
+    "UI"
+  ],
+  "header": {
+    "id": "e2b96538-c1a7-4423-8b70-45bf1b51ae35",
+    "original_filename": "doc00190820260721125836.pdf",
+    "invoice_number": "02257588",
+    "supplier_name": "GOURMET FOODS ON THE GO",
+    "subtotal": 22146.23,
+    "vat": 3152.18,
+    "total": 25298.41,
+    "storage_bucket": "vyron-documents",
+    "storage_path": "9c8b7dd4-178e-4459-a028-d053ac9ebae2/e2b96538-c1a7-4423-8b70-45bf1b51ae35/doc00190820260721125836.pdf",
+    "file_mime": "application/pdf"
+  },
+  "comparison": {
+    "rows": [
+      {
+        "index": 0,
+        "description": "Ladismith Unsalted Butter 500g",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              null,
+              null,
+              60,
+              60
+            ],
+            "brokeAt": null
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              null,
+              null,
+              65.37,
+              65.37
+            ],
+            "brokeAt": null
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              null,
+              null,
+              9.15,
+              9.15
+            ],
+            "brokeAt": null
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              null,
+              null,
+              788.33,
+              788.33
+            ],
+            "brokeAt": null
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "description": "Sunfoil Palm Oil 750ml",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              null,
+              null,
+              1,
+              1
+            ],
+            "brokeAt": null
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              null,
+              null,
+              30,
+              30
+            ],
+            "brokeAt": null
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              null,
+              null,
+              4.2,
+              4.2
+            ],
+            "brokeAt": null
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              null,
+              null,
+              34.2,
+              34.2
+            ],
+            "brokeAt": null
+          }
+        ]
+      },
+      {
+        "index": 2,
+        "description": "Cereal White Sugar 25kg",
+        "fields": [
+          {
+            "label": "Quantity",
+            "cells": [
+              null,
+              null,
+              1,
+              1
+            ],
+            "brokeAt": null
+          },
+          {
+            "label": "Unit Price",
+            "cells": [
+              null,
+              null,
+              522.47,
+              522.47
+            ],
+            "brokeAt": null
+          },
+          {
+            "label": "VAT",
+            "cells": [
+              null,
+              null,
+              78.37,
+              78.37
+            ],
+            "brokeAt": null
+          },
+          {
+            "label": "Line Total",
+            "cells": [
+              null,
+              null,
+              600.84,
+              600.84
+            ],
+            "brokeAt": null
+          }
+        ]
+      }
+    ],
+    "labels": [
+      "1 RAW GPT",
+      "2 NORMALIZED",
+      "3 DATABASE",
+      "4 UI"
+    ]
+  },
+  "analysis": {
+    "rows": [
+      {
+        "index": 0,
+        "description": "Ladismith Unsalted Butter 500g",
+        "qty": 60,
+        "price": 65.37,
+        "vat": 9.15,
+        "total": 788.33,
+        "product": 3922.2,
+        "matchesExcl": false,
+        "matchesIncl": false,
+        "impliedUnitPriceExcl": 11.43,
+        "impliedVat": -3133.87
+      },
+      {
+        "index": 1,
+        "description": "Sunfoil Palm Oil 750ml",
+        "qty": 1,
+        "price": 30,
+        "vat": 4.2,
+        "total": 34.2,
+        "product": 30,
+        "matchesExcl": false,
+        "matchesIncl": false,
+        "impliedUnitPriceExcl": 29.74,
+        "impliedVat": 4.2
+      },
+      {
+        "index": 2,
+        "description": "Cereal White Sugar 25kg",
+        "qty": 1,
+        "price": 522.47,
+        "vat": 78.37,
+        "total": 600.84,
+        "product": 522.47,
+        "matchesExcl": false,
+        "matchesIncl": true,
+        "impliedUnitPriceExcl": 522.47,
+        "impliedVat": 78.37
+      }
+    ],
+    "constants": [],
+    "reconciliation": {
+      "sumLineTotals": 1423.37,
+      "sumVat": 91.72,
+      "headerSubtotal": 22146.23,
+      "headerVat": 3152.18,
+      "headerTotal": 25298.41,
+      "lineTotalsVsHeaderTotal": -23875.04,
+      "lineTotalsVsHeaderSubtotal": -20722.86,
+      "lineVatVsHeaderVat": -3060.46
+    },
+    "coherent": {
+      "excl": 0,
+      "incl": 1,
+      "neither": 2,
+      "total": 3
+    }
+  }
+}

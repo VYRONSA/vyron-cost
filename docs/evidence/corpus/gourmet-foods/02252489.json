@@ -1,0 +1,38 @@
+{
+  "supplier": "Gourmet Foods on the Go",
+  "invoiceNumber": "02252489",
+  "documentId": "f9967375-3eec-41ac-86f4-1eccc2568339",
+  "sourceFile": "doc00190220260721125543.pdf",
+  "characteristics": ["scanned", "single-page", "mixed-vat", "zero-rated-row", "weight-column", "pack-pricing"],
+  "groundTruthSource": "Read from the 200 DPI embedded scan by a human reviewer. No value taken from any extractor output.",
+  "verification": "The 16 line totals sum to 26766.19 against a printed invoice total of 26766.18; the VAT column sums to 3458.38 against a printed VAT of 3458.37. Both reconcile within rounding, independently of the model.",
+  "notes": "The reference failure for the whole programme. The engine previously read the WEIGHT column as V.A.T., returning 30 on nearly every row. Rows 8 and 16 both carry a printed weight of 30.00, which is where the repeated value came from.",
+  "header": {
+    "subtotal": 23307.81,
+    "vat": 3458.37,
+    "total": 26766.18,
+    "currency": "ZAR",
+    "invoiceDate": "2026-07-02"
+  },
+  "printedColumns": ["CODE", "PRODUCT DESCRIPTION", "QUANTITY", "UNIT", "UNIT PRICE", "WEIGHT", "V.A.T.", "NETT PRICE"],
+  "lineTotalBasis": "inclusive",
+  "expectedLineItemCount": 16,
+  "lineItems": [
+    { "code": "TOMONION", "description": "Craft Tomato and Onion Mix A10", "quantity": 12, "unit": "3kg", "unitPrice": 70.59, "weight": 36.0, "vatAmount": 127.06, "lineTotal": 974.14 },
+    { "code": "ROSEMARY", "description": "Cater Rubbed Rosemary 1kg", "quantity": 1, "unit": "1kg", "unitPrice": 114.8, "weight": 1.0, "vatAmount": 17.22, "lineTotal": 132.02 },
+    { "code": "SPBEEFST", "description": "Cater Beef Stock 1kg", "quantity": 5, "unit": "1kg", "unitPrice": 27.33, "weight": 5.0, "vatAmount": 20.5, "lineTotal": 157.15 },
+    { "code": "SUGAR25", "description": "Selati White Sugar 25kg", "quantity": 1, "unit": "25kg", "unitPrice": 522.47, "weight": 25.0, "vatAmount": 78.37, "lineTotal": 600.84 },
+    { "code": "SPTUMERICE", "description": "Cater Borrie 1kg", "quantity": 1, "unit": "1kg", "unitPrice": 41.9, "weight": 1.0, "vatAmount": 6.29, "lineTotal": 48.19 },
+    { "code": "SPMIXHERB", "description": "Cater Mixed Herbs 1kg", "quantity": 1, "unit": "1kg", "unitPrice": 85.83, "weight": 1.0, "vatAmount": 12.87, "lineTotal": 98.7 },
+    { "code": "SPCURRAJMED", "description": "Rajah Medium Curry Powder 800g", "quantity": 2, "unit": "800g", "unitPrice": 128.83, "weight": 1.6, "vatAmount": 38.65, "lineTotal": 296.31 },
+    { "code": "AFOIL", "description": "Heavy Duty Foil 440mm x 70m", "quantity": 6, "unit": "70m", "unitPrice": 225.68, "weight": 30.0, "vatAmount": 203.11, "lineTotal": 1557.19 },
+    { "code": "MILKLOWFAIR", "description": "Faircape Low Fat 2% UHT Milk 6x1L", "quantity": 2, "unit": "CASE", "unitPrice": 126.0, "weight": 12.0, "vatAmount": 0.0, "lineTotal": 252.0 },
+    { "code": "VEGSEASON", "description": "Robertsons Veggie Seasoning 1kg", "quantity": 2, "unit": "1kg", "unitPrice": 187.35, "weight": 2.0, "vatAmount": 56.21, "lineTotal": 430.91 },
+    { "code": "PERISPICE", "description": "Cater Spice Peri Peri 1kg", "quantity": 5, "unit": "1kg", "unitPrice": 43.09, "weight": 5.0, "vatAmount": 32.32, "lineTotal": 247.77 },
+    { "code": "SPCURRYPOWMED", "description": "Cater Mild Curry Powder 1kg", "quantity": 1, "unit": "1kg", "unitPrice": 27.91, "weight": 1.0, "vatAmount": 4.19, "lineTotal": 32.1 },
+    { "code": "SNACKWRAP330", "description": "Snackwrap Clingwrap 330mm x 1400m", "quantity": 1, "unit": "EA", "unitPrice": 450.74, "weight": 3.1, "vatAmount": 67.61, "lineTotal": 518.35 },
+    { "code": "GARLIC5", "description": "Crushed Garlic 5kg", "quantity": 2, "unit": "5kg", "unitPrice": 175.47, "weight": 10.0, "vatAmount": 52.64, "lineTotal": 403.58 },
+    { "code": "FATP02", "description": "Pastryking Margarine 22-25kg", "quantity": 20, "unit": "25kg", "unitPrice": 717.67, "weight": 500.0, "vatAmount": 2153.01, "lineTotal": 16506.41 },
+    { "code": "DBUTTERUNSALT", "description": "Ladismith Unsalted Butter 500g", "quantity": 60, "unit": "500g", "unitPrice": 65.37, "weight": 30.0, "vatAmount": 588.33, "lineTotal": 4510.53 }
+  ]
+}
