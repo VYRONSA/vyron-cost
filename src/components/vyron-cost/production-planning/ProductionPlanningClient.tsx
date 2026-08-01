@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -119,7 +121,7 @@ export default function ProductionPlanningClient() {
 
         <section className={VYRON_MASTER.moduleDataSection}>
           <h2 className="mb-4 text-lg font-black text-[#0F172A]">Consolidated Product Demand</h2>
-          <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0]">
+          <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
             <table className="min-w-full">
               <thead className={VYRON_TABLE.head}>
                 <tr>
@@ -160,12 +162,12 @@ export default function ProductionPlanningClient() {
                 )}
               </tbody>
             </table>
-          </div>
+          </EnterpriseScrollContainer>
         </section>
 
         <section className={VYRON_MASTER.moduleDataSection}>
           <h2 className="mb-4 text-lg font-black text-[#0F172A]">Required Ingredients (BOM)</h2>
-          <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0]">
+          <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
             <table className="min-w-full">
               <thead className={VYRON_TABLE.head}>
                 <tr>
@@ -214,7 +216,7 @@ export default function ProductionPlanningClient() {
                 )}
               </tbody>
             </table>
-          </div>
+          </EnterpriseScrollContainer>
         </section>
 
         <p className="text-sm text-[#64748B]">

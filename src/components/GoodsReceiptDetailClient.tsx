@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { Download, Pencil, Save, ShieldCheck, Truck } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -228,7 +230,7 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
         <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Status</div>{editing && !stockPosted ? <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-2 w-full rounded-xl border px-3 py-2 font-bold"><option>Posted</option><option>Draft</option><option>Corrected</option><option>Cancelled</option></select> : <div className="mt-2 text-lg font-black">{String(receipt.status || "Posted")}{stockPosted ? <span className="mt-1 block text-xs font-bold text-[#7E22CE]">Stock posted</span> : null}</div>}</div>
       </div>
 
-      <div className="min-w-0 overflow-x-auto rounded-[2rem] border border-violet-100 bg-white">
+      <EnterpriseScrollContainer className="min-w-0 rounded-[2rem] border border-violet-100 bg-white">
         <table className="min-w-[900px] w-full text-left text-sm">
           <thead className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100"><tr><th className="px-4 py-3">Item</th><th className="px-4 py-3">Ordered</th><th className="px-4 py-3">Received</th><th className="px-4 py-3">Damaged</th><th className="px-4 py-3">Rejected</th><th className="px-4 py-3">Outstanding</th><th className="px-4 py-3">Unit</th></tr></thead>
           <tbody>
@@ -239,7 +241,7 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
             })}
           </tbody>
         </table>
-      </div>
+      </EnterpriseScrollContainer>
 
       <label className="grid gap-2 text-xs font-black uppercase tracking-[0.12em] text-slate-500 print:hidden">GRN Notes<textarea disabled={!editing} className="min-h-24 rounded-2xl border border-violet-100 bg-white px-4 py-3 text-sm font-semibold normal-case tracking-normal text-slate-800 disabled:bg-slate-50" value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
     </section>

@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { formatCurrency, formatNumber, type StockMovement } from "@/lib/vyron-cost/stock-engine";
@@ -108,7 +110,7 @@ export default function StockLedgerClient() {
           />
         ) : null}
 
-        <div className="overflow-x-auto rounded-3xl border border-slate-100">
+        <EnterpriseScrollContainer className="rounded-3xl border border-slate-100">
           <table className="min-w-[1100px] w-full text-left text-sm">
             <thead className="bg-slate-950 text-white">
               <tr>
@@ -139,7 +141,7 @@ export default function StockLedgerClient() {
               ))}
             </tbody>
           </table>
-        </div>
+        </EnterpriseScrollContainer>
       </div>
     </div>
   );

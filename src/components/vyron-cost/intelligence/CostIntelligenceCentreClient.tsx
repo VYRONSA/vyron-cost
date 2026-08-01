@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
@@ -253,7 +255,7 @@ export default function CostIntelligenceCentreClient({
             </div>
 
             <div className={`mt-4 ${M.tableSurface}`}>
-              <div className="overflow-x-auto">
+              <EnterpriseScrollContainer>
                 <table className="min-w-[960px] w-full text-sm">
                   <thead>
                     <tr className={VYRON_TABLE.head}>
@@ -281,7 +283,7 @@ export default function CostIntelligenceCentreClient({
                     )}
                   </tbody>
                 </table>
-              </div>
+              </EnterpriseScrollContainer>
             </div>
           </section>
 

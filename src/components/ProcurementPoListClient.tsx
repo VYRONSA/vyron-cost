@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -120,7 +122,7 @@ export default function ProcurementPoListClient({ initialStatus = "" }: { initia
       {loading ? (
         <p className="text-sm font-bold text-slate-500">Loading…</p>
       ) : (
-        <div className="overflow-x-auto">
+        <EnterpriseScrollContainer>
           <table className="min-w-full text-left text-sm">
             <thead className="text-xs font-black uppercase text-slate-500">
               <tr>
@@ -163,7 +165,7 @@ export default function ProcurementPoListClient({ initialStatus = "" }: { initia
               ))}
             </tbody>
           </table>
-        </div>
+        </EnterpriseScrollContainer>
       )}
       </div>
     </section>

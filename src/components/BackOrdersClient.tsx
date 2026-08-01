@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { Download, Printer, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -85,7 +87,7 @@ export default function BackOrdersClient() {
 
       {message ? <p className="rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-warning-fg)]">{message}</p> : null}
 
-      <div className="overflow-x-auto rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <EnterpriseScrollContainer className="rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         <table className="min-w-[1050px] w-full text-left text-sm">
           <thead className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100">
             <tr><th className="px-4 py-3">Supplier</th><th className="px-4 py-3">PO</th><th className="px-4 py-3">Item</th><th className="px-4 py-3">Outstanding</th><th className="px-4 py-3">Expected</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 print:hidden">Actions</th></tr>
@@ -123,7 +125,7 @@ export default function BackOrdersClient() {
             })}
           </tbody>
         </table>
-      </div>
+      </EnterpriseScrollContainer>
     </section>
   );
 }

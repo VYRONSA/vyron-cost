@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { Download, Save, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -209,7 +211,7 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
         </div>
       </div>
 
-        <div className="overflow-x-auto rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+        <EnterpriseScrollContainer className="rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         <table className="min-w-[980px] w-full text-left text-sm">
           <thead className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100">
             <tr><th className="px-4 py-3">Item</th><th className="px-4 py-3">System</th><th className="px-4 py-3">Counted</th><th className="px-4 py-3">Variance</th><th className="px-4 py-3">%</th><th className="px-4 py-3">Value</th><th className="px-4 py-3">Class</th><th className="px-4 py-3">Unit</th></tr>
@@ -238,7 +240,7 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
             })}
           </tbody>
         </table>
-        </div>
+        </EnterpriseScrollContainer>
       </section>
     </VyronPremiumPageShell>
   );

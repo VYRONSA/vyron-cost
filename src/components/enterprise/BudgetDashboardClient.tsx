@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useState } from "react";
 import type { BudgetDashboard, BudgetPeriod } from "@/lib/vyron-enterprise-budget";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
@@ -49,7 +51,7 @@ export default function BudgetDashboardClient({ dashboard }: { dashboard: Budget
                 </div>
               </div>
             </div>
-            <div className="overflow-x-auto rounded-[2rem] bg-white shadow-sm">
+            <EnterpriseScrollContainer className="rounded-[2rem] bg-white shadow-sm">
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="bg-slate-900 text-left text-[10px] font-black uppercase text-[#A855F7]">
@@ -74,7 +76,7 @@ export default function BudgetDashboardClient({ dashboard }: { dashboard: Budget
                   ))}
                 </tbody>
               </table>
-            </div>
+            </EnterpriseScrollContainer>
           </section>
     </VyronPremiumPageShell>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { Mail, Printer, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -149,7 +151,7 @@ export default function GoodsReceiptDashboardClient() {
 
       {message ? <p className="rounded-2xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-warning-fg)]">{message}</p> : null}
 
-      <div className="overflow-x-auto rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <EnterpriseScrollContainer className="rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         <table className="min-w-[980px] w-full text-left text-sm">
           <thead className="bg-[#2a2448] text-xs font-bold uppercase tracking-[0.12em] text-[#94A3B8]">
             <tr>
@@ -205,7 +207,7 @@ export default function GoodsReceiptDashboardClient() {
             })}
           </tbody>
         </table>
-      </div>
+      </EnterpriseScrollContainer>
     </VyronPremiumPageShell>
   );
 }

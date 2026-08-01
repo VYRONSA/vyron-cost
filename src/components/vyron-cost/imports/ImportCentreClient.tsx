@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, FileSpreadsheet, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
@@ -345,7 +347,7 @@ export default function ImportCentreClient() {
             ) : null}
 
             {validation.preview.length ? (
-              <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0]">
+              <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
                 <table className="min-w-full">
                   <thead className={VYRON_TABLE.head}>
                     <tr>
@@ -368,7 +370,7 @@ export default function ImportCentreClient() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </EnterpriseScrollContainer>
             ) : null}
 
             {validation.invalidRows.length ? (

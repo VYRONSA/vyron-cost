@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -349,7 +351,7 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <EnterpriseScrollContainer className="rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
         <table className="min-w-[940px] w-full text-left text-sm">
           <thead className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100">
             <tr>
@@ -380,7 +382,7 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
             ))}
           </tbody>
         </table>
-      </div>
+      </EnterpriseScrollContainer>
 
       <textarea className="w-full rounded-2xl border border-[var(--vyron-success-border)] bg-white px-4 py-3 text-sm font-semibold" rows={3} placeholder="GRN notes" value={notes} onChange={(event) => setNotes(event.target.value)} />
       {message ? <p className="rounded-2xl bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-success-fg)]">{message}</p> : null}

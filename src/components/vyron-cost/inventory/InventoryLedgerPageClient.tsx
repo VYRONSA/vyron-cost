@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
@@ -59,7 +61,7 @@ export default function InventoryLedgerPageClient() {
           No inventory transactions yet. Post a stock movement to begin the ledger.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0] bg-white">
+        <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0] bg-white">
           <table className="min-w-full text-sm">
             <thead className={VYRON_TABLE.head}>
               <tr>
@@ -91,7 +93,7 @@ export default function InventoryLedgerPageClient() {
               ))}
             </tbody>
           </table>
-        </div>
+        </EnterpriseScrollContainer>
       )}
     </VyronPremiumPageShell>
   );

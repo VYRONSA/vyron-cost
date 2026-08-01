@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -327,7 +329,7 @@ export default function PredictiveRiskCentreClient({
                   Forward-looking risks derived from current warnings, health scores and operational signals.
                 </p>
                 <div className={`mt-4 ${M.tableSurface}`}>
-                  <div className="overflow-x-auto">
+                  <EnterpriseScrollContainer>
                     <table className="min-w-[1200px] w-full text-sm">
                       <thead>
                         <tr className={VYRON_TABLE.head}>
@@ -354,7 +356,7 @@ export default function PredictiveRiskCentreClient({
                         )}
                       </tbody>
                     </table>
-                  </div>
+                  </EnterpriseScrollContainer>
                 </div>
               </section>
 
@@ -382,7 +384,7 @@ export default function PredictiveRiskCentreClient({
                   Top 10 future risks sorted Critical → High → Medium → Low.
                 </p>
                 <div className={`mt-4 ${M.tableSurface}`}>
-                  <div className="overflow-x-auto">
+                  <EnterpriseScrollContainer>
                     <table className="min-w-[900px] w-full text-sm">
                       <thead>
                         <tr className={VYRON_TABLE.head}>
@@ -401,7 +403,7 @@ export default function PredictiveRiskCentreClient({
                         ))}
                       </tbody>
                     </table>
-                  </div>
+                  </EnterpriseScrollContainer>
                 </div>
               </section>
 

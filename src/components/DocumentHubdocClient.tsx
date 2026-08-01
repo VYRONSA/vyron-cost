@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import {
   ArrowRight,
   Trash2,
@@ -944,7 +945,7 @@ export default function DocumentHubdocClient({
           </div>
         ) : null}
 
-        <div className="overflow-x-auto rounded-3xl border border-slate-100">
+        <EnterpriseScrollContainer className="rounded-3xl border border-slate-100">
           <table className="min-w-[960px] w-full text-left text-sm">
             <thead className="bg-slate-950 text-xs font-black uppercase tracking-[0.14em] text-fuchsia-200">
               <tr>
@@ -1040,7 +1041,7 @@ export default function DocumentHubdocClient({
               ))}
             </tbody>
           </table>
-        </div>
+        </EnterpriseScrollContainer>
       </section>
     </section>
   );

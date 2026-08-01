@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useEffect, useMemo, useState } from "react";
 import ReportExportActions from "@/components/reports/ReportExportActions";
 
@@ -316,7 +318,7 @@ export default function CustomerGpReportingClient() {
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <h3 className="text-sm font-bold text-slate-900">Customer Breakdown</h3>
-        <div className="mt-2 overflow-x-auto">
+        <EnterpriseScrollContainer className="mt-2">
           <table className="min-w-full text-xs">
             <thead className="bg-slate-50 text-left uppercase text-slate-500">
               <tr>
@@ -343,13 +345,13 @@ export default function CustomerGpReportingClient() {
               ))}
             </tbody>
           </table>
-        </div>
+        </EnterpriseScrollContainer>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <h3 className="text-sm font-bold text-slate-900">Drill-down: Invoices</h3>
-          <div className="mt-2 overflow-x-auto">
+          <EnterpriseScrollContainer className="mt-2">
             <table className="min-w-full text-xs">
               <thead className="bg-slate-50 text-left uppercase text-slate-500">
                 <tr>
@@ -374,12 +376,12 @@ export default function CustomerGpReportingClient() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </EnterpriseScrollContainer>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <h3 className="text-sm font-bold text-slate-900">Drill-down: Products</h3>
-          <div className="mt-2 overflow-x-auto">
+          <EnterpriseScrollContainer className="mt-2">
             <table className="min-w-full text-xs">
               <thead className="bg-slate-50 text-left uppercase text-slate-500">
                 <tr>
@@ -404,7 +406,7 @@ export default function CustomerGpReportingClient() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </EnterpriseScrollContainer>
         </div>
       </section>
 

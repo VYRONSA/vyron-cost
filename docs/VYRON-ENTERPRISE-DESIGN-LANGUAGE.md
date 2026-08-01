@@ -172,6 +172,108 @@ colour is not communicating state, it must come from the brand palette.
 
 ---
 
+## 10. Enterprise scroll containers
+
+Every major data grid uses one implementation:
+**`@/components/vyron-ui/EnterpriseScrollContainer`**.
+
+### The defect this replaced
+
+A scroll container with `overflow-x-auto` and no height constraint grows to the
+full height of its table. Its horizontal scrollbar is therefore painted at the
+bottom of the *table*, not the bottom of the *viewport*. Measured against the
+real shell chain, the legacy pattern put the scrollbar **up to 6,343px below the
+fold** — the user had to scroll the whole page down before horizontal scrolling
+became possible, and the column headers had scrolled away by the time they got
+there. 110 hand-written wrappers shared this defect; exactly one grid in the
+codebase did not.
+
+### Approved implementation
+
+```tsx
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
+
+<EnterpriseScrollContainer className="rounded-3xl border border-slate-100">
+  <table className="min-w-[960px] w-full text-left text-sm">
+    <thead className="bg-slate-950 ...">…</thead>
+    <tbody>…</tbody>
+  </table>
+</EnterpriseScrollContainer>
+```
+
+Sticky headers come from `globals.css` and require no change to any `<thead>`:
+
+```css
+.vyron-enterprise-grid > table > thead { position: sticky; top: 0; z-index: 10; }
+.vyron-enterprise-grid > table > thead:not([class*="bg-"]) { background-color: #f8fafc; }
+.vyron-enterprise-grid { scrollbar-gutter: stable; }
+```
+
+The `:not([class*="bg-"])` guard gives a background only to heads that lack one —
+a sticky head with no background lets rows bleed through, but overriding an
+existing background would change the design.
+
+### Two modes — prefer `fill`
+
+| Mode | Cost | Use |
+|---|---|---|
+| **`fill`** | **Pure CSS. Zero runtime.** | The page is already a full-height flex column. The layout algorithm computes remaining space; nothing is measured. |
+| `auto` *(default)* | One shared observer per document | Normal content-flow pages, where the chrome above the grid is not knowable at author time. |
+
+**Use `fill` wherever the page can be a full-height workspace.** Reach for `auto`
+only when converting the page would change it from scrolling to non-scrolling.
+
+### Why `auto` is not pure CSS
+
+CSS has no function returning "the distance from this element's top edge to the
+bottom of the viewport". `calc()` cannot reference layout positions, and
+container queries report a container's *size*, not its *position*. Fixed offsets
+were measured across three viewports and three page-chrome heights and rejected:
+
+| Strategy | Worst overflow | Avg wasted space |
+|---|---|---|
+| legacy (no constraint) | 6,343px | — |
+| `calc(100dvh - 12rem)` | 416px | 28px |
+| `calc(100dvh - 18rem)` | 320px | 124px |
+| `calc(100dvh - 30rem)` | 128px | 194px |
+| **`fill` (pure CSS)** | **0px** | **20px** |
+| **`auto` (measured)** | **0px** | **24px** |
+
+No single offset is correct, because chrome above a grid ranges from a bare
+filter bar to a 420px KPI hero. An offset safe for the tallest page wastes about
+a fifth of the viewport on the shortest.
+
+### Prohibited
+
+- A bare `overflow-x-auto` wrapper around an enterprise `<table>`.
+- Hand-written height chains that duplicate the container's behaviour.
+- Adding `sticky top-0` to individual `<thead>` elements — the container's CSS
+  already does it; a second declaration will drift.
+- A fixed `max-h-[…vh]` on a grid as a substitute for the container.
+- `overflow: visible` on any ancestor between the container and the table.
+
+### Not in scope
+
+`overflow-x-auto` remains correct for **decorative and media containers**: `<pre>`
+code blocks, KPI carousels, chip rows, mobile card strips, and any horizontally
+scrolling strip that is not a data grid. Do not migrate those.
+
+### Migration guidance
+
+1. Confirm the wrapper directly wraps a `<table>` and is a genuine data grid.
+2. Replace the wrapper element with `<EnterpriseScrollContainer>`, keeping the
+   original `className` **minus** `overflow-x-auto`.
+3. Do not touch the `<thead>` — sticky is applied by the shared CSS.
+4. If the page is (or can be) a full-height flex column, pass `mode="fill"` and
+   remove the runtime cost entirely.
+5. Verify: horizontal scrollbar reachable without scrolling the page; header
+   sticks; a short grid still hugs its content rather than padding to a minimum.
+
+Migrations are reviewed individually. Cases where the wrapper does not directly
+wrap the table are left alone rather than transformed automatically.
+
+---
+
 ## Component consistency rule
 
 Every shared component reads from these tokens. **No page-specific styling

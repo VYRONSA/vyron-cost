@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useEffect, useMemo, useState } from "react";
 import { Mail, Plus, Printer, Save, Trash2 } from "lucide-react";
 import { readActiveClient } from "@/lib/vyron-developer-client";
@@ -1146,7 +1148,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-[24px] border border-violet-100">
+        <EnterpriseScrollContainer className="rounded-[24px] border border-violet-100">
           <table className="min-w-[900px] w-full text-left text-sm">
             <thead className="bg-slate-950 text-xs font-black uppercase tracking-[0.12em] text-white">
               <tr>
@@ -1208,7 +1210,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
               ) : null}
             </tbody>
           </table>
-        </div>
+        </EnterpriseScrollContainer>
       </section>
 
       {selectedInvoice ? (

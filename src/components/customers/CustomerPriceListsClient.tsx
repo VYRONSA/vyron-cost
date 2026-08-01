@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useEffect, useMemo, useState } from "react";
 
 type PriceList = {
@@ -251,7 +253,7 @@ export default function CustomerPriceListsClient() {
         </div>
         <button type="button" onClick={() => void saveAssignment()} disabled={busy} className="mt-3 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">Save Assignment</button>
 
-        <div className="mt-4 overflow-x-auto">
+        <EnterpriseScrollContainer className="mt-4">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
               <tr>
@@ -272,7 +274,7 @@ export default function CustomerPriceListsClient() {
               ))}
             </tbody>
           </table>
-        </div>
+        </EnterpriseScrollContainer>
       </section>
     </div>
   );

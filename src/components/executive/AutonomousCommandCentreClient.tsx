@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -345,7 +347,7 @@ export default function AutonomousCommandCentreClient({
               Stage counts, status and severity with drilldown to each intelligence centre.
             </p>
             <div className={`mt-4 ${M.tableSurface}`}>
-              <div className="overflow-x-auto">
+              <EnterpriseScrollContainer>
                 <table className="min-w-[900px] w-full text-sm">
                   <thead>
                     <tr className={VYRON_TABLE.head}>
@@ -368,7 +370,7 @@ export default function AutonomousCommandCentreClient({
                     )}
                   </tbody>
                 </table>
-              </div>
+              </EnterpriseScrollContainer>
             </div>
           </section>
 
@@ -381,7 +383,7 @@ export default function AutonomousCommandCentreClient({
               <p className="mt-4 text-sm font-medium text-[#64748B]">No critical executive priorities identified.</p>
             ) : (
               <div className={`mt-4 ${M.tableSurface}`}>
-                <div className="overflow-x-auto">
+                <EnterpriseScrollContainer>
                   <table className="min-w-[1100px] w-full text-sm">
                     <thead>
                       <tr className={VYRON_TABLE.head}>
@@ -399,7 +401,7 @@ export default function AutonomousCommandCentreClient({
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </EnterpriseScrollContainer>
               </div>
             )}
           </section>
@@ -475,7 +477,7 @@ export default function AutonomousCommandCentreClient({
               <p className="mt-4 text-sm font-medium text-[#64748B]">No items in the command queue.</p>
             ) : (
               <div className={`mt-4 ${M.tableSurface}`}>
-                <div className="overflow-x-auto">
+                <EnterpriseScrollContainer>
                   <table className="min-w-[1000px] w-full text-sm">
                     <thead>
                       <tr className={VYRON_TABLE.head}>
@@ -495,7 +497,7 @@ export default function AutonomousCommandCentreClient({
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </EnterpriseScrollContainer>
               </div>
             )}
           </section>

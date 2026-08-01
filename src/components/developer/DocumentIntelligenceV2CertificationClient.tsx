@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useState } from "react";
 
 type InvoiceReport = {
@@ -283,7 +285,7 @@ export default function DocumentIntelligenceV2CertificationClient() {
                 <FieldRow label="Model Used" value={report.debug.modelUsed} />
               </div>
 
-              <div className="mt-5 overflow-x-auto">
+              <EnterpriseScrollContainer className="mt-5">
                 <table className="w-full min-w-[720px] border-collapse text-sm">
                   <thead>
                     <tr className="bg-slate-100 text-left text-slate-700">
@@ -314,7 +316,7 @@ export default function DocumentIntelligenceV2CertificationClient() {
                     )}
                   </tbody>
                 </table>
-              </div>
+              </EnterpriseScrollContainer>
             </div>
           ))}
         </div>

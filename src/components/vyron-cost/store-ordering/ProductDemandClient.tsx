@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useEffect, useState } from "react";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { VYRON_MASTER, VYRON_TABLE } from "@/components/vyron-ui";
@@ -38,7 +40,7 @@ export default function ProductDemandClient() {
 
   function renderTable(rows: ProductDemandRow[], emptyMessage: string) {
     return (
-      <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0]">
+      <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
         <table className="min-w-full">
           <thead className={VYRON_TABLE.head}>
             <tr>
@@ -73,7 +75,7 @@ export default function ProductDemandClient() {
             )}
           </tbody>
         </table>
-      </div>
+      </EnterpriseScrollContainer>
     );
   }
 

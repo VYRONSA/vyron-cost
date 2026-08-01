@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -225,7 +227,7 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
         <div className="mt-1 whitespace-pre-wrap text-slate-600">{String(po.notes || "No notes")}</div>
       </div>
 
-      <div className="min-w-0 overflow-x-auto rounded-[2rem] border border-violet-100 bg-white">
+      <EnterpriseScrollContainer className="min-w-0 rounded-[2rem] border border-violet-100 bg-white">
         <table className="min-w-[880px] w-full text-left text-sm">
           <thead className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100">
             <tr>
@@ -258,7 +260,7 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
             ))}
           </tbody>
         </table>
-      </div>
+      </EnterpriseScrollContainer>
 
       <div className="grid gap-6 lg:grid-cols-2 print:hidden">
         <div className="rounded-[2rem] border border-violet-100 bg-white p-5">

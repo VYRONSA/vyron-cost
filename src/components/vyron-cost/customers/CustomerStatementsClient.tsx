@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useEffect, useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/vyron-cost/stock-engine";
 import { buildMailtoLink } from "@/lib/vyron-cost/customer-invoice-flow";
@@ -143,7 +145,7 @@ export default function CustomerStatementsClient() {
 
       <section className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
         <VyronPremiumSectionHeading eyebrow="History" title="Invoice history" />
-        <div className="mt-4 overflow-x-auto rounded-3xl border border-slate-100">
+        <EnterpriseScrollContainer className="mt-4 rounded-3xl border border-slate-100">
           <table className="min-w-[720px] w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
               <tr>
@@ -177,7 +179,7 @@ export default function CustomerStatementsClient() {
               )}
             </tbody>
           </table>
-        </div>
+        </EnterpriseScrollContainer>
       </section>
     </VyronPremiumPageShell>
   );

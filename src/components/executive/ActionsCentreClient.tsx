@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -333,7 +335,7 @@ export default function ActionsCentreClient({
                   Execution actions traceable to decisions, root causes, warnings and predictive risks.
                 </p>
                 <div className={`mt-4 ${M.tableSurface}`}>
-                  <div className="overflow-x-auto">
+                  <EnterpriseScrollContainer>
                     <table className="min-w-[1400px] w-full text-sm">
                       <thead>
                         <tr className={VYRON_TABLE.head}>
@@ -361,7 +363,7 @@ export default function ActionsCentreClient({
                         )}
                       </tbody>
                     </table>
-                  </div>
+                  </EnterpriseScrollContainer>
                 </div>
               </section>
 
@@ -432,7 +434,7 @@ export default function ActionsCentreClient({
                   Top 20 actions ranked Critical → High → Medium → Low.
                 </p>
                 <div className={`mt-4 ${M.tableSurface}`}>
-                  <div className="overflow-x-auto">
+                  <EnterpriseScrollContainer>
                     <table className="min-w-[900px] w-full text-sm">
                       <thead>
                         <tr className={VYRON_TABLE.head}>
@@ -451,7 +453,7 @@ export default function ActionsCentreClient({
                         ))}
                       </tbody>
                     </table>
-                  </div>
+                  </EnterpriseScrollContainer>
                 </div>
               </section>
 

@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -102,7 +104,7 @@ export default function FinancialLeakageClient({ findings }: { findings: Leakage
         </div>
       </div>
 
-      <div className="min-w-0 overflow-x-auto rounded-2xl border border-violet-100">
+      <EnterpriseScrollContainer className="min-w-0 rounded-2xl border border-violet-100">
         <table className="w-full min-w-[960px] border-collapse text-left text-sm">
           <thead>
             <tr className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100">
@@ -159,7 +161,7 @@ export default function FinancialLeakageClient({ findings }: { findings: Leakage
             })}
           </tbody>
         </table>
-      </div>
+      </EnterpriseScrollContainer>
 
         <PaginatedTableControls page={page} pageCount={pageCount} setPage={setPage} total={filtered.length} />
       </div>

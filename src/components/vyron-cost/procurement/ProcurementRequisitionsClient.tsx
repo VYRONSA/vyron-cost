@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { Plus, Search, ShoppingCart } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -157,7 +159,7 @@ export default function ProcurementRequisitionsClient() {
               <p className="mt-1 text-xs text-[#94A3B8]">Generate from production planning or inventory shortages.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0]">
+            <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
               <table className="min-w-full">
                 <thead className={VYRON_TABLE.head}>
                   <tr>
@@ -188,7 +190,7 @@ export default function ProcurementRequisitionsClient() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </EnterpriseScrollContainer>
           )}
         </section>
       </div>

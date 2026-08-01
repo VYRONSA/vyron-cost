@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
@@ -72,7 +74,7 @@ export default function InventoryLedgerClient() {
         />
       ) : null}
 
-      <div className="overflow-x-auto rounded-[2rem] border border-violet-100 bg-white shadow-sm">
+      <EnterpriseScrollContainer className="rounded-[2rem] border border-violet-100 bg-white shadow-sm">
         <table className="min-w-full text-xs">
           <thead className="bg-slate-900 font-black uppercase text-[#A855F7]">
             <tr>
@@ -108,7 +110,7 @@ export default function InventoryLedgerClient() {
             })}
           </tbody>
         </table>
-      </div>
+      </EnterpriseScrollContainer>
     </section>
   );
 }

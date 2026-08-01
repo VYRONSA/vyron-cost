@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useEffect, useState } from "react";
 import EditRouteGuard from "@/components/EditRouteGuard";
 import ModulePageShell from "@/components/vyron-cost/ModulePageShell";
@@ -324,7 +326,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
       
               <section className="mt-6 rounded-[30px] bg-white/90 p-6 shadow-xl shadow-violet-100">
                 <h2 className="text-xl font-black">Invoice lines</h2>
-                <div className="mt-4 overflow-x-auto">
+                <EnterpriseScrollContainer className="mt-4">
                   <table className="w-full min-w-[760px] text-left text-sm">
                     <thead className="text-xs uppercase text-slate-500">
                       <tr>
@@ -349,7 +351,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </EnterpriseScrollContainer>
               </section>
             </ModulePageShell>
           </EditRouteGuard>

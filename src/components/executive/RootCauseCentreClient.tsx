@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -320,7 +322,7 @@ export default function RootCauseCentreClient({
                   Problems traced to underlying causes with supporting evidence — no invented causes.
                 </p>
                 <div className={`mt-4 ${M.tableSurface}`}>
-                  <div className="overflow-x-auto">
+                  <EnterpriseScrollContainer>
                     <table className="min-w-[1200px] w-full text-sm">
                       <thead>
                         <tr className={VYRON_TABLE.head}>
@@ -346,7 +348,7 @@ export default function RootCauseCentreClient({
                         )}
                       </tbody>
                     </table>
-                  </div>
+                  </EnterpriseScrollContainer>
                 </div>
               </section>
 
@@ -416,7 +418,7 @@ export default function RootCauseCentreClient({
                   <p className="mt-4 text-sm font-semibold text-[#64748B]">No recurring causes identified yet.</p>
                 ) : (
                   <div className={`mt-4 ${M.tableSurface}`}>
-                    <div className="overflow-x-auto">
+                    <EnterpriseScrollContainer>
                       <table className="min-w-[700px] w-full text-sm">
                         <thead>
                           <tr className={VYRON_TABLE.head}>
@@ -433,7 +435,7 @@ export default function RootCauseCentreClient({
                           ))}
                         </tbody>
                       </table>
-                    </div>
+                    </EnterpriseScrollContainer>
                   </div>
                 )}
               </section>

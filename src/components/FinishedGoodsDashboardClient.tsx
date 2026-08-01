@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatMoney } from "@/lib/vyron-cost-data";
@@ -84,7 +86,7 @@ export default function FinishedGoodsDashboardClient() {
           ]}
         />
       ) : (
-        <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <EnterpriseScrollContainer className="rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
           <table className="w-full min-w-[700px] text-sm">
             <thead>
               <tr className="bg-violet-50 text-left text-xs font-black uppercase text-violet-800">
@@ -123,7 +125,7 @@ export default function FinishedGoodsDashboardClient() {
               ))}
             </tbody>
           </table>
-        </div>
+        </EnterpriseScrollContainer>
       )}
     </section>
   );

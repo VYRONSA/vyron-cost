@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useEffect, useState } from "react";
 import { formatCurrency } from "@/lib/vyron-cost/stock-engine";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
@@ -76,7 +78,7 @@ export default function SalesIntelligenceClient() {
 
       <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
         <h3 className="text-xl font-black text-slate-900">Invoice Trends</h3>
-        <div className="mt-4 overflow-x-auto rounded-3xl border border-slate-100">
+        <EnterpriseScrollContainer className="mt-4 rounded-3xl border border-slate-100">
           <table className="min-w-[720px] w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
               <tr><th className="px-4 py-3">Invoice</th><th className="px-4 py-3">Date</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Sales</th></tr>
@@ -92,7 +94,7 @@ export default function SalesIntelligenceClient() {
               ))}
             </tbody>
           </table>
-        </div>
+        </EnterpriseScrollContainer>
       </section>
     </VyronPremiumPageShell>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useEffect, useState } from "react";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { VYRON_MASTER, VYRON_TABLE } from "@/components/vyron-ui";
@@ -55,7 +57,7 @@ export default function StorePerformanceClient() {
 
         <section className={VYRON_MASTER.moduleDataSection}>
           <h2 className="mb-4 text-lg font-black text-[#0F172A]">Store Rankings — This Month</h2>
-          <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0]">
+          <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
             <table className="min-w-full">
               <thead className={VYRON_TABLE.head}>
                 <tr>
@@ -105,12 +107,12 @@ export default function StorePerformanceClient() {
                 )}
               </tbody>
             </table>
-          </div>
+          </EnterpriseScrollContainer>
         </section>
 
         <section className={VYRON_MASTER.moduleDataSection}>
           <h2 className="mb-4 text-lg font-black text-[#0F172A]">Store Scorecards — 90 Days</h2>
-          <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0]">
+          <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
             <table className="min-w-full">
               <thead className={VYRON_TABLE.head}>
                 <tr>
@@ -154,7 +156,7 @@ export default function StorePerformanceClient() {
                 )}
               </tbody>
             </table>
-          </div>
+          </EnterpriseScrollContainer>
         </section>
       </div>
     </VyronPremiumPageShell>

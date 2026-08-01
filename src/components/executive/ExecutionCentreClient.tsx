@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -407,7 +409,7 @@ export default function ExecutionCentreClient({
               </div>
             ) : (
               <div className={`mt-4 ${M.tableSurface}`}>
-                <div className="overflow-x-auto">
+                <EnterpriseScrollContainer>
                   <table className="min-w-[1100px] w-full text-sm">
                     <thead>
                       <tr className={VYRON_TABLE.head}>
@@ -446,7 +448,7 @@ export default function ExecutionCentreClient({
                       )}
                     </tbody>
                   </table>
-                </div>
+                </EnterpriseScrollContainer>
               </div>
             )}
           </section>

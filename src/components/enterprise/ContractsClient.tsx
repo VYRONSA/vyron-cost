@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import type { ContractRow } from "@/lib/vyron-enterprise-platform";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
@@ -30,7 +32,7 @@ export default function ContractsClient({ contracts }: { contracts: ContractRow[
                 </ul>
               </div>
             ) : null}
-            <div className="overflow-x-auto rounded-[2rem] bg-white shadow-sm">
+            <EnterpriseScrollContainer className="rounded-[2rem] bg-white shadow-sm">
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="bg-slate-900 text-left text-[10px] font-black uppercase text-[#A855F7]">
@@ -59,7 +61,7 @@ export default function ContractsClient({ contracts }: { contracts: ContractRow[
                   ))}
                 </tbody>
               </table>
-            </div>
+            </EnterpriseScrollContainer>
           </section>
     </VyronPremiumPageShell>
   );

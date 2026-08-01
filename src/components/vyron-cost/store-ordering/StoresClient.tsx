@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { Plus, Search, Store, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -244,7 +246,7 @@ export default function StoresClient() {
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0]">
+          <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
             <table className="min-w-full">
               <thead className={VYRON_TABLE.head}>
                 <tr>
@@ -323,7 +325,7 @@ export default function StoresClient() {
                 )}
               </tbody>
             </table>
-          </div>
+          </EnterpriseScrollContainer>
         </section>
       </div>
 

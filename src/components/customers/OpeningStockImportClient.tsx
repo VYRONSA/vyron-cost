@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 
@@ -170,7 +172,7 @@ export default function OpeningStockImportClient() {
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <h3 className="text-sm font-bold text-slate-900">Preview</h3>
         <div className="mt-2 text-xs text-slate-600">Rows loaded: {rows.length} · Invalid: {invalidCount}</div>
-        <div className="mt-3 overflow-x-auto">
+        <EnterpriseScrollContainer className="mt-3">
           <table className="min-w-full text-xs">
             <thead className="bg-slate-50 text-left uppercase text-slate-500">
               <tr>
@@ -201,7 +203,7 @@ export default function OpeningStockImportClient() {
               ))}
             </tbody>
           </table>
-        </div>
+        </EnterpriseScrollContainer>
       </section>
     </div>
   );

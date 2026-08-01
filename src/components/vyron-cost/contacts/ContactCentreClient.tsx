@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { BookUser, Mail, Phone, RefreshCcw, Search, X } from "lucide-react";
@@ -508,7 +510,7 @@ export default function ContactCentreClient() {
             </div>
           ) : null}
 
-          <div className="mt-5 overflow-x-auto rounded-2xl border border-[#E2E8F0]">
+          <EnterpriseScrollContainer className="mt-5 rounded-2xl border border-[#E2E8F0]">
             <table className="min-w-full">
               <thead className={VYRON_TABLE.head}>
                 <tr>
@@ -605,7 +607,7 @@ export default function ContactCentreClient() {
                 )}
               </tbody>
             </table>
-          </div>
+          </EnterpriseScrollContainer>
         </section>
       </div>
 

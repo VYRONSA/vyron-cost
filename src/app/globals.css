@@ -309,6 +309,30 @@ html:has(.vyron-public-page) body {
   letter-spacing: 0.08em;
 }
 
+/* ── Enterprise Scroll Container ──
+   Sticky column headers for every grid inside EnterpriseScrollContainer.
+   Applied once here rather than added to each <thead>, so migrating a screen
+   is a container swap only and each grid keeps its own header styling.
+
+   `:not([class*="bg-"])` supplies a background ONLY to heads that do not
+   already declare one — a sticky head with no background lets rows show
+   through, but overriding an existing background would change the design. */
+.vyron-enterprise-grid > table > thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.vyron-enterprise-grid > table > thead:not([class*="bg-"]) {
+  background-color: #f8fafc;
+}
+
+/* Keep the horizontal scrollbar visible rather than overlaid, so users can see
+   that horizontal scrolling is available without discovering it by accident. */
+.vyron-enterprise-grid {
+  scrollbar-gutter: stable;
+}
+
 /* ── Brand fade ──
    Three tiers, because one gradient cannot serve every job. `accent` runs the
    full fade and is only ever used where nothing sits on top of it. `surface`

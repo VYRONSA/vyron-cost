@@ -1,5 +1,7 @@
 "use client";
 
+
+import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import ReportTableShell from "@/components/ReportTableShell";
@@ -245,7 +247,7 @@ export default function ReportDetailClient({ reportId }: { reportId: string }) {
         <ReportTableShell title={config.title} subtitle={config.subtitle} search={search} onSearch={setSearch} resultCount={filtered.length} exportFileName={`vyron-cost-${reportId}.csv`}>
         {message ? <p className="rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-warning-fg)]">{message}</p> : null}
         {loading ? <p className="py-8 text-sm font-bold text-slate-500">Loading report…</p> : (
-          <div className="mt-5 overflow-x-auto rounded-2xl border border-violet-100">
+          <EnterpriseScrollContainer className="mt-5 rounded-2xl border border-violet-100">
             <table data-report-table className="min-w-[1050px] w-full text-left text-sm">
               <thead className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100"><tr><th className="px-4 py-3">Reference</th><th className="px-4 py-3">Supplier / Name</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Date</th><th className="px-4 py-3">Value</th><th className="px-4 py-3 print:hidden">Action</th></tr></thead>
               <tbody>
@@ -263,7 +265,7 @@ export default function ReportDetailClient({ reportId }: { reportId: string }) {
                 })}
               </tbody>
             </table>
-          </div>
+          </EnterpriseScrollContainer>
         )}
         </ReportTableShell>
       </section>
