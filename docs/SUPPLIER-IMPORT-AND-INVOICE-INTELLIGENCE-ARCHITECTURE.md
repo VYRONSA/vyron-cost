@@ -266,6 +266,101 @@ confidence = confidence
 own, and the arithmetic checks are objective. Anchoring the score to verifiable facts is exactly
 right.
 
+### 2.2.2a Line-item completeness (implemented 2026-08-01)
+
+**[VERIFIED]** `src/lib/vyron-document-extraction.ts`. Regression test:
+`scripts/verify-line-item-extraction.mjs` — 80 checks, no OpenAI call, no database.
+
+**The defect.** Headers extracted reliably; only some line items came back. Nothing downstream lost
+rows — normalisation (`:288-310`) and persistence (`:854-868`) are both pure 1:1 maps with no
+filter, slice or dedup, and `parseJsonBlock` throws rather than silently shortening a truncated
+response. The cause was the prompt: it asked for supplier invoice *fields*, showed a single-element
+`lineItems` example, and contained no exhaustiveness instruction. The acceptance gate then checked
+only supplier / invoice number / date / total, so 3 of 12 rows was accepted and never retried.
+
+**Two independent gates now reject a partial extraction.**
+
+| Signal | How | Why it is trusted |
+|---|---|---|
+| **Declared row count** | The model reports `visibleLineItemCount` *before* extracting; a mismatch against `lineItems.length` is rejected | Deterministic. Self-evident truncation that does not depend on any amount parsing correctly |
+| **Reconciliation** | Extracted line totals must sum to the subtotal (or total − VAT) within **1%** | Catches truncation even when the model reports no count, or reports one that matches its own short output |
+
+The 1% retry tolerance is deliberately tighter than the 2% used by the operator-facing
+`validation.lineItemsTotalCheck`. That check is a signal shown *after* the extraction is accepted;
+this one decides whether to accept it, so it must fire first. A missing row on a real invoice is
+almost never inside 1%.
+
+An extraction that can be checked by neither signal is recorded `Unverified`, never `Complete` —
+absence of evidence is not evidence of completeness.
+
+**The attempt plan.** Maximum three calls, against the two the previous fallback already allowed,
+and only on documents that are already failing:
+
+1. primary model, standard prompt — the only pass a healthy extraction ever needs
+2. **same** model, prompt reinforced with what was missing (`"it reported 11 visible invoice lines
+   but returned only 3"`) — truncation is a compliance failure, not a capability failure
+3. fallback model, also reinforced
+
+Pass 2 is skipped when there is no concrete feedback to give. Pass 3 is never skipped, so the
+pre-existing fallback behaviour is preserved.
+
+**Degrade, never fail.** When retries are exhausted the best attempt is returned — ranked by core
+fields, then completeness, then row count, then confidence — carrying the warnings and a −25
+confidence penalty that drops it below the 75 threshold `DocumentHubdocClient.tsx:645` uses to file
+a document as *Captured*. The operator gets a correctable invoice flagged for review rather than
+nothing at all. **No document that extracted before can now fail to extract.**
+
+**Output ceiling.** `max_output_tokens: 16000` is now sent explicitly. The request previously relied
+on the API default; demanding every row without raising the ceiling would convert a partial
+extraction into a *total* one, because a response cut off mid-array is unparseable and
+`parseJsonBlock` throws on it. 16,000 is inside the 16,384 limit of both models, and is a ceiling
+rather than a reservation — a one-line invoice costs exactly what it did before.
+
+**Accounting.** Every attempt is billable, so token usage is summed across all attempts rather than
+reporting only the accepted one. This corrects a pre-existing under-count in the fallback path.
+
+**Diagnostics.** `ExtractionRunLog` now carries `lineItemCount`, `declaredLineItemCount`,
+`completeness` and a per-attempt array (model, prompt variant, outcome, response length, whether the
+JSON parsed, duration). The **untruncated** model output is retained **only** when the accepted
+extraction is incomplete — that is the case an engineer must reconstruct, and the only one where the
+extra storage and retained document content are justified. The healthy path keeps the existing
+2,000-character preview.
+
+### 2.2.2b Classification, visibility and reporting (implemented 2026-08-01)
+
+**[VERIFIED]** Full detail and certification results:
+[`EXTRACTION-ENGINE-CERTIFICATION.md`](EXTRACTION-ENGINE-CERTIFICATION.md).
+
+> **Status: Architecture Certified — Awaiting Production Dataset Certification.**
+> The Kingdom Foods dataset is not present in this repository, so the live run has never executed.
+> This subsystem is **not** yet v1.0 Production Certified. No further architectural work on it is
+> authorised.
+
+- **Classification is authoritative, confidence is informative.** `src/lib/vyron-extraction-quality.ts`
+  computes `Verified` / `Needs Review` / `Incomplete` from objective facts, evaluated in that
+  precedence order. Review state no longer derives from `confidence >= 75`.
+- **Operator visibility.** `ExtractionQualityPanel` sits directly above the line table in the review
+  workspace — "3 of 11 rows read" has to be adjacent to the rows it describes. Retry history is
+  shown separately from current problems, in the past tense, so a recovered invoice does not read as
+  a broken one. No raw JSON, model names, token counts or reason codes.
+- **Audit record.** Persisted to `vyron_document_extraction_logs.metadata.extractionQuality` — an
+  existing `jsonb` column, so **no schema change was required** and there is no window in which
+  deployed code expects a column the database lacks.
+- **Executive reporting.** Six KPIs on the Executive Dashboard: first-pass success, retry rate,
+  average quality, average completeness, manual review and incomplete rates, over the 500 most
+  recent documents.
+
+Two further defects were found and fixed during this work:
+
+- **Zero was discarded as absent.** `raw.vat || raw.tax` treats a legitimate `0` as missing. Since
+  most basic South African foodstuffs are zero-rated, every zero-VAT invoice would have failed
+  `subtotal + VAT = total` and been permanently incapable of reaching Verified. Fixed with
+  `firstPresent`, which distinguishes a value of zero from an absent one.
+- **Retries chased rows that never existed.** A supplier statement lists invoices, not products, and
+  the completeness gate demanded line items from it — costing three billable calls per statement
+  instead of one. Document classes that carry no priced lines are now exempt, via a deny-list so
+  unrecognised types still fail closed.
+
 ### 2.2.3 Item matching and learning
 
 **[VERIFIED]** `src/lib/vyron-supplier-line-learning.ts` (18.4KB) is a real learning system.

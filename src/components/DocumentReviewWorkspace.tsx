@@ -8,6 +8,7 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import PoLinkPanel from "@/components/PoLinkPanel";
+import ExtractionQualityPanel from "@/components/ExtractionQualityPanel";
 import InvoiceReviewTotalsFooter, { InvoiceTotalsWarningBanner } from "@/components/InvoiceReviewTotalsFooter";
 import LineItemMatchCombobox from "@/components/LineItemMatchCombobox";
 import ReviewWorkspaceLayoutControls, {
@@ -767,6 +768,15 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
             />
           </div>
         ) : null}
+      </div>
+
+      {/*
+        Directly above the line table on purpose: "3 of 11 rows read" has to sit
+        next to the rows it is describing, or the operator reads the table as
+        complete before reaching the caveat.
+      */}
+      <div className="shrink-0">
+        <ExtractionQualityPanel record={draft.extractionQuality} />
       </div>
 
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

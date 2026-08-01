@@ -1,6 +1,8 @@
 import ExecutiveCommandCentreClient from "@/components/ExecutiveCommandCentreClient";
 import ExecutiveDashboardClient from "@/components/ExecutiveDashboardClient";
+import ExtractionQualityKpis from "@/components/ExtractionQualityKpis";
 import VyronCostShell from "@/components/VyronCostShell";
+import { getExtractionQualityReport } from "@/lib/vyron-extraction-quality-data";
 import { getExecutiveCommandCentreData } from "@/lib/vyron-executive-command-centre";
 import { getForecastSnapshot } from "@/lib/vyron-forecasting-data";
 import { getFinancialLeakageDashboard } from "@/lib/vyron-leakage-intelligence-data";
@@ -59,6 +61,7 @@ export default async function ExecutiveDashboardPage() {
     procurementStats,
     inventoryStats,
     manufacturingStats,
+    extractionQuality,
   ] = await Promise.all([
     commandCentrePromise,
     getProductIntelligence(),
@@ -72,6 +75,8 @@ export default async function ExecutiveDashboardPage() {
     getProcurementExecutiveStats(),
     inventoryPromise,
     manufacturingPromise,
+    // Never throws — a reporting tile must not be able to fail the dashboard.
+    getExtractionQualityReport(supabase, companyId),
   ]);
 
   return (
@@ -80,6 +85,7 @@ export default async function ExecutiveDashboardPage() {
     >
       <div className="grid gap-10">
         {commandCentre ? <ExecutiveCommandCentreClient data={commandCentre} /> : null}
+        <ExtractionQualityKpis report={extractionQuality} />
         <details className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm">
           <summary className="cursor-pointer px-4 py-3 text-sm font-black text-slate-700">Board pack & recovery drill-down</summary>
           <div className="mt-4 border-t border-slate-100 pt-6">

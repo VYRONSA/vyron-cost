@@ -7,6 +7,7 @@ import {
 } from "@/lib/vyron-document-viewer-types";
 import { computeLineAmounts, withLineAmounts } from "@/lib/vyron-invoice-line-math";
 import { hydrateReviewDraft } from "@/lib/vyron-review-draft-hydrate";
+import { parseExtractionQualityRecord, type ExtractionQualityRecord } from "@/lib/vyron-extraction-quality";
 
 export type Extraction = {
   supplier: string;
@@ -103,6 +104,12 @@ export type ReviewDraft = {
   lines: ReviewDraftLine[];
   matchOptions: MatchOption[];
   reconciliationNote?: string | null;
+  /**
+   * Authoritative review classification from the extraction run.
+   * `null` for documents extracted before extraction quality shipped — the
+   * panel hides itself rather than asserting a state that was never measured.
+   */
+  extractionQuality: ExtractionQualityRecord | null;
 };
 
 export function parseMoneyNumber(value: string) {
@@ -144,6 +151,7 @@ export async function loadReviewDraft(
     document: Record<string, unknown>;
     lines: Array<Record<string, unknown>>;
     matchOptions: MatchOption[];
+    extractionQuality?: unknown;
   };
 
   const fc = (payload.document.field_confidence || {}) as Record<string, unknown>;
@@ -219,6 +227,7 @@ export async function loadReviewDraft(
     matchOptions: payload.matchOptions || [],
     viewerRegions: buildViewerRegionsFromPayload(payload.document, payload.lines || []),
     reconciliationNote: (payload.document.reconciliation_note as string | null) ?? null,
+    extractionQuality: parseExtractionQualityRecord(payload.extractionQuality),
   };
 
   return hydrateReviewDraft(draft);

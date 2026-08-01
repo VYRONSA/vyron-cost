@@ -240,6 +240,57 @@ const REGISTER = [
       "Guards the AI Entitlement Architecture v2 fix. Imports src/lib/platform/entitlement/EntitlementService.ts with an injected Supabase stand-in — no database, no credentials, no network. Asserts DB beats cookie across all 16 tier pairs, plus canonical-source precedence, divergence reporting, the fallback ladder and fail-open behaviour. 38 checks.",
   },
   {
+    id: "verify-line-item-extraction",
+    file: "scripts/verify-line-item-extraction.mjs",
+    family: A,
+    purpose:
+      "Regression test proving a partially extracted supplier invoice is detected and retried rather than filed as captured.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "restores globalThis.fetch and the console in a finally block; asserted afterwards",
+    evidence:
+      "Guards the line-item completeness fix. Imports src/lib/vyron-document-extraction.ts via scripts/support/ts-alias-hook.mjs and replaces globalThis.fetch with a scripted stub — no OpenAI request, no AI allowance consumed, no database, no storage, no network. Asserts the row-count and reconciliation gates, the prompt contract, the three-attempt retry plan, cross-attempt token accounting, and that exhausted retries degrade rather than fail, plus deterministic Verified/Needs Review/Incomplete classification, the persisted audit record, KPI aggregation and the certification measurement helpers. 169 checks.",
+  },
+  {
+    id: "certify-extraction-engine",
+    file: "scripts/certify-extraction-engine.mjs",
+    family: A,
+    purpose:
+      "Certification suite running seven supplier document profiles through the extraction engine and reporting quality, completeness, retry behaviour and classification.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "restores globalThis.fetch and the console in a finally block",
+    evidence:
+      "Default (synthetic) mode replaces globalThis.fetch with a scripted stub — no OpenAI request, no AI allowance consumed, no database, no storage, no network; Family A. The --documents flag runs the same suite against real files and IS Family D (external, billable, irreversible): it refuses to start without VYRON_ACKNOWLEDGE_EXTERNAL=1. Certifies decision logic, not OCR accuracy.",
+  },
+  {
+    id: "certification-measurements",
+    file: "scripts/support/certification-measurements.mjs",
+    family: A,
+    purpose:
+      "Measurement helpers for the live certification report: page count, OCR accuracy against an answer key, manual-correction count.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a",
+    evidence:
+      "Support library, not directly executable. Pure computation plus existsSync/readFileSync on a caller-supplied directory — no network, no database, no writes. Extracted from the certification harness so it can be tested directly; the alternative, a flag making the harness run its live path against fake data, would allow a fabricated certification report. Reports 'undetermined' rather than guessing when a page count cannot be read, and returns null accuracy when no answer key exists.",
+  },
+  {
+    id: "ts-alias-hook",
+    file: "scripts/support/ts-alias-hook.mjs",
+    family: A,
+    purpose: "Node module resolution hook mapping the tsconfig `@/*` alias to `src/*` for verification scripts.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a",
+    evidence:
+      "Support library, not directly executable. Pure resolution with existsSync only — no network, no database, no writes. Exists so verification scripts import the shipped modules rather than copies, without rewriting production imports to suit a test.",
+  },
+  {
     id: "visual-capture",
     file: "scripts/visual-capture.mjs",
     family: A,

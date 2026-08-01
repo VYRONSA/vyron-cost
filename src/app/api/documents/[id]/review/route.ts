@@ -37,6 +37,29 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     .order("created_at", { ascending: true });
   if (lineError) return NextResponse.json({ ok: false, error: lineError.message }, { status: 500 });
 
+  /*
+   * The extraction quality record, read from the audit log rather than a
+   * denormalised column. Newest successful extraction wins: a re-extraction
+   * writes a new row, and the operator must see the run that produced the
+   * fields currently on screen. Never allowed to fail the review load —
+   * documents extracted before this feature shipped simply have no record.
+   */
+  let extractionQuality: unknown = null;
+  const { data: qualityRow, error: qualityError } = await supabase
+    .from("vyron_document_extraction_logs")
+    .select("metadata, created_at")
+    .eq("document_id", documentId)
+    .eq("stage", "extraction")
+    .eq("status", "success")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (qualityError) {
+    console.warn("[documents/review] could not read extraction quality", qualityError.message);
+  } else if (qualityRow?.metadata && typeof qualityRow.metadata === "object") {
+    extractionQuality = (qualityRow.metadata as Record<string, unknown>).extractionQuality ?? null;
+  }
+
   const matchOptions = await getMatchOptions(supabase, tenantId);
   const supplierMappings = await loadSupplierLineMappings(
     supabase,
@@ -59,6 +82,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       document,
       lines: enrichedLines,
       matchOptions,
+      extractionQuality,
     },
   });
   } catch (error) {

@@ -175,8 +175,8 @@ check("unregistered asset is blocked, not defaulted to safe", unregistered.verdi
 // ── 5. Register integrity ──────────────────────────────────────────────────
 const counts = familyCounts();
 const all = listAssets();
-check("register holds 56 assets", all.length === 56, String(all.length));
-check("52 validation assets", counts.A + counts.B + counts.C + counts.D === 52, String(counts.A + counts.B + counts.C + counts.D));
+check("register holds 60 assets", all.length === 60, String(all.length));
+check("56 validation assets", counts.A + counts.B + counts.C + counts.D === 56, String(counts.A + counts.B + counts.C + counts.D));
 check("4 non-validation tooling assets", counts.tooling === 4, String(counts.tooling));
 check("every asset has a purpose", all.every((a) => a.purpose && a.purpose.length > 10));
 check("every asset has evidence", all.every((a) => a.evidence && a.evidence.length > 10));

@@ -332,6 +332,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     let extraction: Awaited<ReturnType<typeof runDocumentExtraction>>["extraction"];
     let modelUsed: string;
     let log: Awaited<ReturnType<typeof runDocumentExtraction>>["log"];
+    let quality: Awaited<ReturnType<typeof runDocumentExtraction>>["quality"];
     try {
       const result = await runDocumentExtraction(
         { fileName, mime, bytes },
@@ -343,6 +344,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       extraction = result.extraction;
       modelUsed = result.modelUsed;
       log = result.log;
+      quality = result.quality;
 
       await AiUsageService.recordUsage({
         companyId: tenantId,
@@ -401,10 +403,17 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       console.warn("[documents/extract] could not persist file_hash", hashPersistError.message);
     }
 
-    await persistExtractionToDocument(supabase, documentId, extraction, modelUsed, {
-      context: runtimeContext,
-      onTrace: (event) => trace.log(event.step, event.input, event.output, event.durationMs),
-    });
+    await persistExtractionToDocument(
+      supabase,
+      documentId,
+      extraction,
+      modelUsed,
+      {
+        context: runtimeContext,
+        onTrace: (event) => trace.log(event.step, event.input, event.output, event.durationMs),
+      },
+      quality
+    );
 
     // Deterministic duplicate detection. Runs AFTER persistence so the header
     // fields it compares are the ones stored. No model output influences the
@@ -474,6 +483,8 @@ export async function POST(_request: NextRequest, context: RouteContext) {
         ok: true,
         modelUsed,
         lineItems: extraction.lineItems.length,
+        classification: quality.classification,
+        extractionQuality: quality.quality,
       },
       0
     );
@@ -484,6 +495,8 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       modelUsed,
       extraction,
       log,
+      // Authoritative review state. Additive; existing consumers ignore it.
+      extractionQuality: quality,
       // Additive. Existing consumers ignore it; the document inbox reads the
       // persisted risk alert rather than this field.
       duplicateDetection: duplicateResult,
