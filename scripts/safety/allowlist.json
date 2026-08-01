@@ -1,0 +1,59 @@
+{
+  "$comment": [
+    "VYRON Repository Safety Programme — environment allowlist.",
+    "",
+    "This file is the authority for Signal 2 (database identity) and Signal 3",
+    "(application target identity) of the environment verification model.",
+    "See docs/REPOSITORY-SAFETY-HARDENING-PLAN.md Part 4.",
+    "",
+    "IMPORTANT — this file deliberately does NOT resolve the open question recorded",
+    "as Unknown 13.1 in the Hardening Plan. Both Supabase project references below",
+    "are mapped to 'unknown' because the repository does not establish which one",
+    "carries live customer data. That is not an oversight: until an authorised",
+    "person resolves it, 'unknown' is the only evidence-based value, and Rule 4",
+    "('Unknown is treated as Production') is what keeps execution fail-closed.",
+    "",
+    "TO RESOLVE: change the 'environment' field of the correct entry to",
+    "'production' and the other to 'development', set 'unresolved' to false on",
+    "both, and record who confirmed it and when in 'confirmedBy'/'confirmedAt'.",
+    "This is a reviewed change: it moves the repository from fail-closed to",
+    "operational, and it should be approved like a permission change."
+  ],
+  "version": 1,
+  "supabaseProjects": {
+    "bzzlhzgfvnnwxjxvpzdk": {
+      "environment": "unknown",
+      "unresolved": true,
+      "confirmedBy": null,
+      "confirmedAt": null,
+      "evidence": "Value of NEXT_PUBLIC_SUPABASE_URL in .env.local (the file all 47 database-touching assets parse). Also recorded as 'connectedDb' in deployment-gap-report.json:26, generated 2026-07-09."
+    },
+    "ldnrmgafsquzfitcuvxq": {
+      "environment": "unknown",
+      "unresolved": true,
+      "confirmedBy": null,
+      "confirmedAt": null,
+      "evidence": "Documented as the production project in .env.example:13-14 and corroborated by src/supabase/deploy/xero_deployment_baseline.sql:2."
+    }
+  },
+  "applicationHosts": {
+    "localhost:3007": {
+      "environment": "development",
+      "unresolved": false,
+      "evidence": "Default of NEXT_PUBLIC_APP_URL in 33 assets; `npm run dev` binds port 3007 per package.json.",
+      "caveat": "Identifies the APPLICATION tier only. A local dev server can be pointed at any database, so this must never be read as evidence about the data tier. This is precisely why Signals 2 and 3 must agree independently."
+    },
+    "127.0.0.1:3007": {
+      "environment": "development",
+      "unresolved": false,
+      "evidence": "Loopback equivalent of the above.",
+      "caveat": "Identifies the APPLICATION tier only. See localhost:3007."
+    }
+  },
+  "externalTargets": {
+    "$comment": "Signal for the External Integration Gate (Plan Part 5 / Gate 4). An empty list means NO external target is permitted anywhere. Xero demo-company tenant ids are added here in Phase 3, never before.",
+    "xeroTenantIds": [],
+    "emailSinkHosts": [],
+    "aiMode": "none"
+  }
+}

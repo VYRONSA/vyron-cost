@@ -1,5 +1,5 @@
-/**
- * VYRON Platform — public API
+﻿/**
+ * VYRON Platform â€” public API
  * Reusable infrastructure for all VYRON products.
  */
 
@@ -8,7 +8,6 @@ export * from "@/platform/types";
 export * from "@/platform/managers/package-manager";
 export * from "@/platform/managers/tenant-manager";
 export * from "@/platform/managers/subscription-manager";
-export * from "@/platform/managers/licensing-manager";
 export * from "@/platform/managers/feature-flag-manager";
 export * from "@/platform/managers/feature-manager";
 export * from "@/platform/managers/permission-manager";

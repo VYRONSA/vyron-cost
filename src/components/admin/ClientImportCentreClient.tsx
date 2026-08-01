@@ -13,7 +13,18 @@ import {
 import { useAdminPermissions } from "@/hooks/useModulePermissions";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
+/**
+ * Entities offered by the Client Import Centre.
+ *
+ * DATA INTEGRITY: this list maps one-to-one onto `importTemplates` ids, and each
+ * id is the entity `persistImportRows` writes. A label must never be attached to
+ * a different entity's id — customers previously appeared here backed by the
+ * "suppliers" id, which wrote customer records into `vyron_cost_suppliers`.
+ * `customers` is a first-class entity with its own template and its own
+ * persistence branch; it is listed here directly.
+ */
 const CLIENT_IMPORT_TYPES: ImportEntityType[] = [
+  "customers",
   "suppliers",
   "ingredients",
   "products",
@@ -35,22 +46,19 @@ export default function ClientImportCentreClient() {
   const [validRows, setValidRows] = useState<Record<string, string>[]>([]);
   const [history, setHistory] = useState<ImportHistoryEntry[]>(defaultImportHistory());
 
-  const availableTemplates = useMemo(
-    () => importTemplates.filter((item) => CLIENT_IMPORT_TYPES.includes(item.id) || item.id === "products"),
+  /**
+   * Templates are taken verbatim from the shared registry, preserving each
+   * template's own id. No template is re-labelled onto another entity's id —
+   * the label a user reads and the table the rows are written to must always
+   * agree. Ordered so Customers and Suppliers lead, as before.
+   */
+  const templates = useMemo(
+    () =>
+      CLIENT_IMPORT_TYPES.map((id) => importTemplates.find((item) => item.id === id)).filter(
+        (item): item is (typeof importTemplates)[number] => Boolean(item)
+      ),
     []
   );
-
-  const customerTemplate = importTemplates.find((item) => item.id === "suppliers");
-  const templates = useMemo(() => {
-    const base = availableTemplates;
-    if (!base.some((item) => item.label.toLowerCase().includes("customer")) && customerTemplate) {
-      return [
-        { ...customerTemplate, id: "suppliers" as ImportEntityType, label: "Customers", description: "Customer master import" },
-        ...base,
-      ];
-    }
-    return base;
-  }, [availableTemplates, customerTemplate]);
 
   const template = templates.find((item) => item.id === selected) || templates[0];
 
@@ -118,12 +126,37 @@ export default function ClientImportCentreClient() {
       },
       ...current,
     ]);
-    setValidationMessage(
-      data.errors?.length
-        ? `Imported ${data.imported} rows · ${data.skipped} skipped · ${data.errors.length} errors`
-        : `Imported ${data.imported} valid rows into ${template.label}.`
-    );
-    if (data.errors?.length) setErrors(data.errors);
+    // Per-outcome counters are present for entities that report them (suppliers
+    // today). Fall back to the original summary for entities that do not, so no
+    // existing behaviour changes.
+    const hasOutcomes = typeof data.inserted === "number" || typeof data.updated === "number";
+    if (hasOutcomes) {
+      const parts = [
+        `${data.inserted ?? 0} inserted`,
+        `${data.updated ?? 0} updated`,
+        `${data.duplicate ?? 0} duplicate`,
+        `${data.skippedRows ?? 0} skipped`,
+        `${data.failed ?? 0} failed`,
+      ];
+      setValidationMessage(`${template.label}: ${parts.join(" · ")}`);
+    } else {
+      setValidationMessage(
+        data.errors?.length
+          ? `Imported ${data.imported} rows · ${data.skipped} skipped · ${data.errors.length} errors`
+          : `Imported ${data.imported} valid rows into ${template.label}.`
+      );
+    }
+
+    const messages: string[] = [...(data.errors || [])];
+    // Fuzzy near-matches are never merged automatically — surface them for a decision.
+    for (const item of data.review || []) {
+      const best = item.candidates?.[0];
+      if (!best) continue;
+      messages.push(
+        `Row ${item.row}: "${item.name}" created, but ${Math.round(best.similarity * 100)}% similar to existing "${best.supplierName}" — review for a possible duplicate.`
+      );
+    }
+    if (messages.length) setErrors(messages);
   }
 
   return (

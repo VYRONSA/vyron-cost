@@ -4,6 +4,14 @@ import { assignSupplierRole, upsertVyronContact } from "@/lib/vyron-contact-mast
 import { calculateTrueUnitCost } from "@/lib/vyron-cost-core-data";
 import { createRecipe, type RecipeLineInput } from "@/lib/vyron-cost-recipes-data";
 import { parseCsvText, type ImportTemplate, type ParsedImportResult } from "@/lib/vyron-import-centre";
+import {
+  exactNameKey,
+  loadSupplierIndex,
+  matchSupplierInIndex,
+  normalisedNameKey,
+  resolveSupplier,
+  type SupplierIndex,
+} from "@/lib/vyron-supplier-resolution";
 
 export type ImportCentreModule = "raw-materials" | "finished-goods" | "boms";
 
@@ -174,24 +182,33 @@ async function ensureCategory(
   return true;
 }
 
+/**
+ * Resolve a supplier for a raw-materials import row.
+ *
+ * Matching is delegated to the shared Supplier Resolution Service so this
+ * pipeline, the Admin supplier import and invoice review all decide supplier
+ * identity the same way. Previously this function implemented its own `ilike`
+ * exact match, which was one of three divergent behaviours writing to the same
+ * master table.
+ *
+ * Contact Master registration is retained: a supplier created from an import
+ * must still exist as a contact with the supplier role, exactly as before.
+ */
 async function resolveSupplierIdViaContactMaster(
   supabase: SupabaseClient,
   companyId: string,
-  supplierName: string
+  supplierName: string,
+  supplierIndex?: SupplierIndex
 ): Promise<{ supplierId: string | null; created: boolean }> {
   const name = supplierName.trim();
   if (!name) return { supplierId: null, created: false };
 
-  const { data: existingSupplier, error: supplierError } = await supabase
-    .from("vyron_cost_suppliers")
-    .select("id")
-    .eq("company_id", companyId)
-    .ilike("supplier_name", name)
-    .maybeSingle();
+  const index = supplierIndex || (await loadSupplierIndex(supabase, companyId));
+  const match = matchSupplierInIndex(index, { supplierName: name });
+  if (match.row) return { supplierId: match.row.id, created: false };
 
-  if (supplierError) throw new Error(supplierError.message);
-  if (existingSupplier?.id) return { supplierId: String(existingSupplier.id), created: false };
-
+  // Not an existing supplier — register in Contact Master first so the contact
+  // record and supplier role are created by the canonical path.
   await upsertVyronContact(supabase, companyId, {
     contact_name: name,
     is_supplier: true,
@@ -206,21 +223,34 @@ async function resolveSupplierIdViaContactMaster(
 
   if (contactRowError) throw new Error(contactRowError.message);
   const contactId = contactRow?.id ? String(contactRow.id) : null;
-  if (!contactId) return { supplierId: null, created: false };
 
-  await assignSupplierRole(supabase, companyId, contactId);
+  if (contactId) {
+    await assignSupplierRole(supabase, companyId, contactId);
 
-  const { data: supplierAfterAssign, error: afterAssignError } = await supabase
-    .from("vyron_cost_suppliers")
-    .select("id")
-    .eq("company_id", companyId)
-    .ilike("supplier_name", name)
-    .maybeSingle();
+    // Contact Master may have created the supplier row as a side effect.
+    const { data: supplierAfterAssign, error: afterAssignError } = await supabase
+      .from("vyron_cost_suppliers")
+      .select("id, supplier_name")
+      .eq("company_id", companyId)
+      .ilike("supplier_name", name)
+      .maybeSingle();
 
-  if (afterAssignError) throw new Error(afterAssignError.message);
+    if (afterAssignError) throw new Error(afterAssignError.message);
+    if (supplierAfterAssign?.id) {
+      const created = { id: String(supplierAfterAssign.id), supplier_name: name, vat_number: null };
+      index.all.push(created);
+      index.byExactName.set(exactNameKey(name), created);
+      index.byNormalisedName.set(normalisedNameKey(name), created);
+      return { supplierId: created.id, created: true };
+    }
+  }
+
+  // Contact Master did not produce a supplier row — create through the shared
+  // service so the index stays consistent for the remaining rows.
+  const resolution = await resolveSupplier(supabase, companyId, { supplierName: name }, { source: "import" }, index);
   return {
-    supplierId: supplierAfterAssign?.id ? String(supplierAfterAssign.id) : null,
-    created: Boolean(supplierAfterAssign?.id),
+    supplierId: resolution.supplierId,
+    created: resolution.outcome === "created",
   };
 }
 
@@ -359,6 +389,11 @@ export async function importRawMaterials(
     (existingRows || []).map((row) => normalizeName(String(row.ingredient_name || "")))
   );
 
+  // Load the supplier master once for the whole import. Previously each row
+  // performed up to four supplier round trips; at the reference tenant's volume
+  // that dominated import duration.
+  const supplierIndex = await loadSupplierIndex(supabase, companyId);
+
   for (const row of rows) {
     const name = row.ingredient_name?.trim();
     if (!name) {
@@ -382,7 +417,8 @@ export async function importRawMaterials(
         const supplierResult = await resolveSupplierIdViaContactMaster(
           supabase,
           companyId,
-          row.supplier_name
+          row.supplier_name,
+          supplierIndex
         );
         supplierId = supplierResult.supplierId;
         if (supplierResult.created) createdSuppliers += 1;

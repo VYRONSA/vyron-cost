@@ -20,6 +20,10 @@ function mapClientToTenant(client: ActiveClient | null): PlatformTenant {
     packageName,
     status: client?.status || "Setup",
     demoMode: Boolean(client?.demoMode),
+    // ⚠ DISPLAY ONLY. These flags are derived from the cookie's packageName and
+    // must never gate access. For an entitlement decision use
+    // `companyHasFeature(companyId, feature)` from "@/lib/platform/entitlement".
+    // See docs/ARCHITECTURE/ENTITLEMENT-SERVICE.md.
     multiCompany: hasFeature(packageName, "multi_company"),
     multiStore: hasMultiStorePackage(packageName) || hasFeature(packageName, "multi_store"),
   };

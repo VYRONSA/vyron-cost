@@ -2,11 +2,38 @@ import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ImportEntityType } from "@/lib/vyron-import-centre";
 import { findOrCreateStockItem, postStockMovement, type StockEntityType } from "@/lib/vyron-inventory";
+import { loadSupplierIndex, matchSupplierInIndex, resolveSupplier } from "@/lib/vyron-supplier-resolution";
 
+/**
+ * Import outcome.
+ *
+ * `imported`, `skipped` and `errors` are retained unchanged so every existing
+ * caller — the `/api/workspace/admin/import` route and its UIs — continues to
+ * work exactly as before. The per-outcome counters are additive.
+ *
+ * `imported` = inserted + updated, preserving its original meaning of
+ * "rows that resulted in a write".
+ */
 export type ImportPersistResult = {
   imported: number;
   skipped: number;
   errors: string[];
+  /** Rows that created a new record. */
+  inserted?: number;
+  /** Rows that updated an existing record. */
+  updated?: number;
+  /** Rows matching an existing record where nothing needed changing. */
+  duplicate?: number;
+  /** Rows deliberately not processed (blank key, unsupported). */
+  skippedRows?: number;
+  /** Rows that raised an error. */
+  failed?: number;
+  /** Possible duplicates requiring a human decision. Never auto-merged. */
+  review?: {
+    row: number;
+    name: string;
+    candidates: { id: string; supplierName: string; similarity: number }[];
+  }[];
 };
 
 function entityTypeFromRow(value: string): StockEntityType {
@@ -14,6 +41,132 @@ function entityTypeFromRow(value: string): StockEntityType {
   if (normalized.includes("finish") || normalized.includes("product")) return "finished_goods";
   if (normalized.includes("pack")) return "packaging";
   return "ingredient";
+}
+
+/**
+ * Supplier import with deterministic duplicate protection.
+ *
+ * Every row is resolved through the shared Supplier Resolution Service BEFORE
+ * any write. The previous implementation inserted unconditionally, so
+ * re-importing a file duplicated every supplier in it.
+ *
+ * Matching hierarchy is owned by `@/lib/vyron-supplier-resolution`:
+ *   VAT number -> exact name -> normalised name -> fuzzy (proposal only) -> create
+ *
+ * No AI is involved. Tier 4 never merges automatically: a fuzzy candidate is
+ * reported for human decision and the row is inserted as new, because creating
+ * a duplicate is recoverable and merging two real suppliers is not.
+ */
+async function persistSuppliers(
+  supabase: SupabaseClient,
+  companyId: string,
+  rows: Record<string, string>[]
+): Promise<ImportPersistResult> {
+  const errors: string[] = [];
+  const review: NonNullable<ImportPersistResult["review"]> = [];
+  let inserted = 0;
+  let updated = 0;
+  let duplicate = 0;
+  let skippedRows = 0;
+  let failed = 0;
+
+  const index = await loadSupplierIndex(supabase, companyId);
+
+  for (let i = 0; i < rows.length; i += 1) {
+    const row = rows[i];
+    const rowNumber = i + 2; // +1 for zero-index, +1 for the header line
+    const name = row.supplier_name?.trim();
+
+    if (!name) {
+      errors.push(`Row ${rowNumber}: missing supplier_name`);
+      skippedRows += 1;
+      continue;
+    }
+
+    const input = {
+      supplierName: name,
+      vatNumber: row.vat_number || row.supplier_vat_number || null,
+      contactEmail: row.contact_email || null,
+      invoiceEmail: row.invoice_email || null,
+      category: row.category || null,
+      paymentTerms: row.payment_terms || row.terms || null,
+      riskStatus: row.risk_status || null,
+    };
+
+    const match = matchSupplierInIndex(index, input);
+
+    if (match.row) {
+      // Existing supplier — apply only the fields the file actually supplies.
+      const patch: Record<string, unknown> = {};
+      if (row.category?.trim()) patch.category = row.category.trim();
+      if (row.contact_email?.trim()) patch.contact_email = row.contact_email.trim();
+      if (row.risk_status?.trim()) patch.risk_status = row.risk_status.trim();
+      if (row.last_price_movement?.trim() && !Number.isNaN(Number(row.last_price_movement))) {
+        patch.last_price_movement = Number(row.last_price_movement);
+      }
+
+      if (!Object.keys(patch).length) {
+        duplicate += 1;
+        continue;
+      }
+
+      const { error } = await supabase
+        .from("vyron_cost_suppliers")
+        .update(patch)
+        .eq("id", match.row.id)
+        .eq("company_id", companyId);
+
+      if (error) {
+        errors.push(`Row ${rowNumber} — ${name}: ${error.message}`);
+        failed += 1;
+      } else {
+        updated += 1;
+      }
+      continue;
+    }
+
+    // No deterministic match. Record any fuzzy near-matches for human review,
+    // then create — proposals never block an import and never auto-merge.
+    if (match.candidates.length) {
+      review.push({
+        row: rowNumber,
+        name,
+        candidates: match.candidates.map((candidate) => ({
+          id: candidate.id,
+          supplierName: candidate.supplierName,
+          similarity: candidate.similarity,
+        })),
+      });
+    }
+
+    const resolution = await resolveSupplier(supabase, companyId, input, { source: "import" }, index);
+
+    if (resolution.outcome === "created") {
+      if (row.last_price_movement?.trim() && !Number.isNaN(Number(row.last_price_movement))) {
+        await supabase
+          .from("vyron_cost_suppliers")
+          .update({ last_price_movement: Number(row.last_price_movement) })
+          .eq("id", resolution.supplierId as string)
+          .eq("company_id", companyId);
+      }
+      inserted += 1;
+    } else {
+      errors.push(`Row ${rowNumber} — ${name}: ${resolution.error || "Could not create supplier."}`);
+      failed += 1;
+    }
+  }
+
+  return {
+    imported: inserted + updated,
+    skipped: duplicate + skippedRows + failed,
+    errors,
+    inserted,
+    updated,
+    duplicate,
+    skippedRows,
+    failed,
+    review: review.length ? review : undefined,
+  };
 }
 
 export async function persistImportRows(
@@ -29,27 +182,7 @@ export async function persistImportRows(
   }
 
   if (entity === "suppliers") {
-    let imported = 0;
-    const errors: string[] = [];
-    for (const row of rows) {
-      const name = row.supplier_name?.trim();
-      if (!name) {
-        errors.push("Missing supplier_name");
-        continue;
-      }
-      const { error } = await supabase.from("vyron_cost_suppliers").insert({
-        id: randomUUID(),
-        company_id: companyId,
-        supplier_name: name,
-        category: row.category || "General",
-        contact_email: row.contact_email || null,
-        risk_status: row.risk_status || "Monitor",
-        last_price_movement: Number(row.last_price_movement || 0),
-      });
-      if (error) errors.push(`${name}: ${error.message}`);
-      else imported += 1;
-    }
-    return { imported, skipped: rows.length - imported, errors };
+    return persistSuppliers(supabase, companyId, rows);
   }
 
   if (entity === "ingredients") {

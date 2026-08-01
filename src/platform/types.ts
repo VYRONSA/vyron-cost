@@ -23,20 +23,18 @@ export type PlatformSubscription = {
   userLimit: number | null;
 };
 
-export type PlatformLicense = {
-  valid: boolean;
-  productId: VyronProductId;
-  packageName: string;
-  reason: string | null;
-};
-
-export type PlatformAccessContext = {
-  productId: VyronProductId;
-  tenant: PlatformTenant;
-  subscription: PlatformSubscription;
-  license: PlatformLicense;
-  session: WorkspaceSession | null;
-};
+/**
+ * Product licensing moved to the Platform Entitlement Service.
+ *
+ * `PlatformLicense` and `PlatformAccessContext` were removed with
+ * `platform/managers/licensing-manager.ts`. Both were unused, and
+ * `PlatformAccessContext` carried `tenant` and `subscription` — objects built
+ * from the browser cookie — which is the pattern this architecture eliminates.
+ *
+ * Use `resolveProductLicence(companyId, productId)` from
+ * `@/lib/platform/entitlement`, which returns `ProductLicence` and resolves
+ * everything from the database. See docs/ARCHITECTURE/ENTITLEMENT-SERVICE.md.
+ */
 
 export type PlatformNavItemState = {
   id: string;

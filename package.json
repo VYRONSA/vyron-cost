@@ -12,7 +12,13 @@
     "typecheck": "npm run typecheck:web && npm run typecheck:mobile",
     "validate:schema": "node scripts/validate-schema-drift.mjs",
     "import:handcrafted": "node scripts/import-handcrafted.mjs",
-    "generate:pwa-icons": "node scripts/generate-pwa-icons.mjs"
+    "generate:pwa-icons": "node scripts/generate-pwa-icons.mjs",
+    "safety:run": "node scripts/safety/run.mjs",
+    "safety:preflight": "node scripts/safety/preflight.mjs",
+    "safety:env": "node scripts/safety/preflight.mjs --env",
+    "safety:register": "node scripts/safety/preflight.mjs --register",
+    "safety:verify-register": "node scripts/safety/preflight.mjs --verify-register",
+    "safety:self-test": "node scripts/safety/self-test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",

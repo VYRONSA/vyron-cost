@@ -30,6 +30,22 @@ export function resolveSubscriptionFromClient(client: ActiveClient | null): Plat
   };
 }
 
+/**
+ * ⚠ DISPLAY ONLY — NEVER AUTHORITATIVE FOR ENTITLEMENT.
+ *
+ * Reads the `vyron_cost_active_client` browser cookie. This function was the
+ * source of the AI_ALLOWANCE_EXCEEDED outage: a stale cookie resolved a
+ * customer to the zero-limit Starter tier while their database record said
+ * Professional. It currently has ZERO callers and must stay that way for any
+ * licensing, entitlement, limit or feature decision.
+ *
+ * For entitlement use:
+ *   import { resolveCompanyPackage } from "@/lib/platform/entitlement";
+ *
+ * See docs/ARCHITECTURE/ENTITLEMENT-SERVICE.md.
+ *
+ * @deprecated for entitlement. Permitted only for rendering a package label.
+ */
 export async function resolveSubscription(): Promise<PlatformSubscription> {
   const client = await getServerActiveWorkspace();
   return resolveSubscriptionFromClient(client);

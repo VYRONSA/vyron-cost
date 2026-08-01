@@ -24,7 +24,12 @@ export type AiUsageRecordInput = {
   companyId: string;
   workspaceId: string | null;
   userId: string | null;
-  packageName: string;
+  /**
+   * @deprecated Entitlement is resolved from the database by
+   * the Platform Entitlement Service. Retained optional for compatibility;
+   * callers should stop supplying it. Never authoritative.
+   */
+  packageName?: string;
   productId: AiProductId;
   featureId: AiFeatureId;
   provider: AiProviderId;
@@ -69,6 +74,14 @@ export type AiAllowanceCheckResult = {
   requestsUsed: number;
   requestsLimit: number;
   percentOfLimitUsed: number;
+  /** The package name entitlement was resolved to. Additive. */
+  packageName?: string;
+  /** Which record decided the entitlement — never a cookie. Additive. */
+  packageSource?: string;
+  /** Workspace whose package_name was used, when applicable. Additive. */
+  workspaceId?: string | null;
+  /** Set when workspace.package_name and company.subscription_plan disagree. Additive. */
+  packageDivergence?: { workspacePackage: string; companyPlan: string } | null;
 };
 
 export type AiAllowanceExceededError = {

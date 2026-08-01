@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerWorkspaceSession } from "@/lib/vyron-workspace-admin-server";
-import { getServerActiveWorkspace } from "@/lib/vyron-workspace-server";
+import { getServerActiveWorkspace, getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
+import { resolveCompanyPackage } from "@/lib/platform/entitlement";
 import {
   hasFeature,
   getModulePrimaryFeature,
@@ -85,10 +86,35 @@ export async function requireWorkspacePermission(
   return session;
 }
 
+/**
+ * Server-side package feature gate.
+ *
+ * ENTITLEMENT IS RESOLVED FROM THE DATABASE, NEVER FROM THE REQUEST.
+ * This previously read `getServerActiveWorkspace()?.packageName`, i.e. the
+ * `vyron_cost_active_client` cookie — client-controlled state deciding
+ * licensing across every route that calls this. Editing that cookie granted
+ * access to any gated feature.
+ *
+ * The package now comes from `resolveCompanyPackage` — the same single
+ * authoritative resolver used by AI entitlement — so licensing is decided by
+ * the business record in `vyron_workspaces.package_name`.
+ *
+ * The cookie value is passed only as a last-resort fallback, preserving the
+ * previous behaviour when no company can be resolved at all (the resolver's own
+ * default is likewise "Professional", so a lookup failure never newly denies a
+ * paying customer).
+ */
 export async function requirePackageFeature(feature: FeatureKey): Promise<WorkspaceSession> {
   const session = await requireWorkspacePermission("dashboard.view");
-  const workspace = await getServerActiveWorkspace();
-  const packageName = workspace?.packageName || "Professional";
+
+  const [companyId, workspace] = await Promise.all([getWorkspaceCompanyId(), getServerActiveWorkspace()]);
+
+  let packageName = workspace?.packageName || "Professional";
+  if (companyId) {
+    const resolved = await resolveCompanyPackage(companyId, { fallbackPackageName: workspace?.packageName ?? null });
+    packageName = resolved.packageName;
+  }
+
   if (!hasFeature(packageName, feature)) {
     throw new WorkspaceAccessError("Feature not included in current package.", 403);
   }

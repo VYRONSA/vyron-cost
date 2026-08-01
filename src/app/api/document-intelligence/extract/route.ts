@@ -1,10 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { isAllowedDocumentMime } from "@/lib/vyron-documents";
 import { runDocumentExtraction } from "@/lib/vyron-document-extraction";
 import { requireDocumentTenantId } from "@/lib/vyron-document-tenant-access";
 import { getServerActiveWorkspace, getWorkspaceCompanyResolution } from "@/lib/vyron-workspace-server";
 import { getServerWorkspaceSession } from "@/lib/vyron-workspace-admin-server";
-import { resolveSubscription } from "@/platform/managers/subscription-manager";
 import { AiUsageService, resolveProviderForModel } from "@/lib/platform/ai";
 
 export const runtime = "nodejs";
@@ -17,18 +16,19 @@ export const maxDuration = 120;
 // requiring auth on a route that has never required it.
 async function resolveBestEffortAiContext() {
   try {
-    const [workspace, companyResolution, tenantId, subscription] = await Promise.all([
+    const [workspace, companyResolution, tenantId] = await Promise.all([
       getServerActiveWorkspace(),
       getWorkspaceCompanyResolution(),
       requireDocumentTenantId(),
-      resolveSubscription(),
     ]);
     const session = await getServerWorkspaceSession();
+    // NOTE: the workspace/session lookups here establish the COMPANY, not the
+    // package. AI entitlement is resolved from the database inside
+    // AiUsageService.checkAllowance; the cookie's packageName is not read.
     return {
       companyId: tenantId,
       workspaceId: companyResolution.workspaceId || workspace?.id || null,
       userId: session?.userId || null,
-      packageName: subscription.packageName,
     };
   } catch {
     return null;
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const aiContext = await resolveBestEffortAiContext();
 
     if (aiContext) {
-      const allowanceCheck = await AiUsageService.checkAllowance({ companyId: aiContext.companyId, packageName: aiContext.packageName });
+      const allowanceCheck = await AiUsageService.checkAllowance({ companyId: aiContext.companyId });
       if (!allowanceCheck.allowed) {
         return NextResponse.json(
           {
@@ -91,7 +91,6 @@ export async function POST(request: NextRequest) {
           companyId: aiContext.companyId,
           workspaceId: aiContext.workspaceId,
           userId: aiContext.userId,
-          packageName: aiContext.packageName,
           productId: "vyron_cost",
           featureId: "document_intelligence",
           provider: "openai",
@@ -114,7 +113,6 @@ export async function POST(request: NextRequest) {
         companyId: aiContext.companyId,
         workspaceId: aiContext.workspaceId,
         userId: aiContext.userId,
-        packageName: aiContext.packageName,
         productId: "vyron_cost",
         featureId: "document_intelligence",
         provider: resolveProviderForModel(modelUsed),

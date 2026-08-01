@@ -1,3 +1,5 @@
+import { buildHeaderIndex, parseDelimitedTable } from "@/lib/vyron-csv-parser";
+
 export type ImportEntityType =
   | "products"
   | "finished-products"
@@ -160,17 +162,31 @@ export type ParsedImportResult = {
   invalidRows: { rowNumber: number; row: Record<string, string>; errors: string[] }[];
 };
 
+/**
+ * Parse an uploaded file against a template.
+ *
+ * Delegates all lexing to `@/lib/vyron-csv-parser` — the single parsing
+ * implementation. This function owns only template mapping and validation.
+ *
+ * Signature and result shape are unchanged. Behaviour changes only where the
+ * previous naive `split(",")` was wrong: quoted fields containing commas or
+ * newlines now parse correctly, a UTF-8 BOM no longer corrupts the first header
+ * name, header matching is case- and whitespace-insensitive, blank rows are
+ * reported rather than silently discarded, and values that a spreadsheet would
+ * evaluate as a formula are neutralised.
+ */
 export function parseCsvText(text: string, template: ImportTemplate): ParsedImportResult {
-  const lines = text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  if (lines.length < 2) {
-    return { validRows: [], invalidRows: [{ rowNumber: 1, row: {}, errors: ["File must include header and at least one data row"] }] };
+  const { header, rows } = parseDelimitedTable(text);
+
+  if (!header.length || !rows.some((row) => !row.isBlank)) {
+    return {
+      validRows: [],
+      invalidRows: [{ rowNumber: 1, row: {}, errors: ["File must include header and at least one data row"] }],
+    };
   }
 
-  const header = lines[0].split(",").map((cell) => cell.trim());
-  const missing = template.columns.filter((col) => !header.includes(col));
+  const headerIndex = buildHeaderIndex(header);
+  const missing = template.columns.filter((col) => !headerIndex.has(col.trim().toLowerCase()));
   if (missing.length) {
     return {
       validRows: [],
@@ -181,12 +197,18 @@ export function parseCsvText(text: string, template: ImportTemplate): ParsedImpo
   const validRows: Record<string, string>[] = [];
   const invalidRows: ParsedImportResult["invalidRows"] = [];
 
-  lines.slice(1).forEach((line, index) => {
-    const cells = line.split(",").map((cell) => cell.trim());
+  for (const { record, lineNumber, isBlank } of rows) {
+    if (isBlank) {
+      invalidRows.push({ rowNumber: lineNumber, row: {}, errors: ["Row is empty"] });
+      continue;
+    }
+
     const row: Record<string, string> = {};
-    template.columns.forEach((col) => {
-      row[col] = cells[header.indexOf(col)] ?? "";
-    });
+    for (const col of template.columns) {
+      const position = headerIndex.get(col.trim().toLowerCase());
+      row[col] = position === undefined ? "" : record[position] ?? "";
+    }
+
     const errors: string[] = [];
     if (!row[template.columns[0]]) errors.push(`${template.columns[0]} is required`);
     for (const col of template.columns) {
@@ -194,9 +216,10 @@ export function parseCsvText(text: string, template: ImportTemplate): ParsedImpo
         errors.push(`${col} must be numeric`);
       }
     }
-    if (errors.length) invalidRows.push({ rowNumber: index + 2, row, errors });
+
+    if (errors.length) invalidRows.push({ rowNumber: lineNumber, row, errors });
     else validRows.push(row);
-  });
+  }
 
   return { validRows, invalidRows };
 }

@@ -1,6 +1,7 @@
 import { AiUsageRepository } from "@/lib/platform/ai/AiUsageRepository";
 import { computeCostInCompanyCurrency, computeCostUsd, usdToCredits } from "@/lib/platform/ai/AiUsageCalculator";
 import { evaluateAllowanceStatus, resolveTierAllowance } from "@/lib/platform/ai/AiTierEnforcement";
+import { resolveCompanyPackage } from "@/lib/platform/entitlement";
 import type {
   AiAllowanceCheckResult,
   AiUsageEvent,
@@ -32,11 +33,30 @@ function isAllowanceExemptCompany(companyId: string): boolean {
 }
 
 export class AiUsageService {
-  static async checkAllowance(input: { companyId: string; packageName: string }): Promise<AiAllowanceCheckResult> {
+  /**
+   * Evaluate a company's AI allowance for the current period.
+   *
+   * ENTITLEMENT IS RESOLVED FROM THE DATABASE, NEVER FROM THE REQUEST.
+   * `packageName` is retained for signature compatibility but is now only a
+   * fallback used when the database yields no package at all. It is no longer
+   * authoritative, because callers derived it from the client-controlled
+   * `vyron_cost_active_client` cookie.
+   *
+   * Package resolution order:
+   *   1. company package from the database (workspace.package_name, then
+   *      company.subscription_plan)
+   *   2. `package_id_override` from `vyron_ai_company_allowances`, if present
+   *   3. numeric overrides (credits / spend / requests), if present
+   *
+   * Allowance maths, threshold notification, usage recording and exemption
+   * logic are unchanged.
+   */
+  static async checkAllowance(input: { companyId: string; packageName?: string }): Promise<AiAllowanceCheckResult> {
     const { periodStart, periodEnd } = currentPeriod();
-    const [rollup, override] = await Promise.all([
+    const [rollup, override, resolvedPackage] = await Promise.all([
       AiUsageRepository.getMonthlyRollup(input.companyId, periodStart.toISOString(), periodEnd.toISOString()),
       AiUsageRepository.getAllowanceOverride(input.companyId),
+      resolveCompanyPackage(input.companyId, { fallbackPackageName: input.packageName ?? null }),
     ]);
 
     // Self-heal: guarantee a row exists for this company so future admin
@@ -44,7 +64,13 @@ export class AiUsageService {
     // blocks enforcement on this succeeding.
     void AiUsageRepository.ensureAllowanceRow(input.companyId).catch(() => {});
 
-    const allowance = resolveTierAllowance(input.packageName, {
+    // Step 2 — an explicit package override replaces the resolved package.
+    // Previously read from the database and then discarded, so an administrator
+    // setting it saw no effect.
+    const effectivePackageName = override?.packageIdOverride?.trim() || resolvedPackage.packageName;
+
+    // Step 3 — numeric overrides still layer on top of the tier defaults.
+    const allowance = resolveTierAllowance(effectivePackageName, {
       monthlyCredits: override?.monthlyCreditsOverride ?? undefined,
       maxSpendUsd: override?.monthlySpendUsdOverride ?? undefined,
       maxRequests: override?.monthlyRequestsOverride ?? undefined,
@@ -72,6 +98,13 @@ export class AiUsageService {
       requestsUsed: rollup.requestsUsed,
       requestsLimit: allowance.maxRequests,
       percentOfLimitUsed,
+      // Provenance — makes it visible in every response and log which record
+      // decided the entitlement, so a wrong package is diagnosable without a
+      // database session.
+      packageName: effectivePackageName,
+      packageSource: override?.packageIdOverride?.trim() ? "allowance.package_id_override" : resolvedPackage.source,
+      workspaceId: resolvedPackage.workspaceId,
+      packageDivergence: resolvedPackage.divergence,
     };
   }
 
@@ -83,7 +116,10 @@ export class AiUsageService {
     );
     const companyCurrency = await AiUsageRepository.getCompanyCurrency(input.companyId);
     const costCompanyCurrency = computeCostInCompanyCurrency(costUsd, companyCurrency);
+    // packageName is deliberately discarded: it is never persisted and never
+    // authoritative. Entitlement is resolved from the database.
     const { packageName, ...eventInput } = input;
+    void packageName;
 
     const event = await AiUsageRepository.insertUsageEvent({
       ...eventInput,
@@ -94,17 +130,17 @@ export class AiUsageService {
       companyCurrency,
     });
 
-    void this.maybeNotifyThresholds(input.companyId, input.packageName);
+    void this.maybeNotifyThresholds(input.companyId);
 
     return event;
   }
 
-  private static async maybeNotifyThresholds(companyId: string, packageName: string): Promise<void> {
+  private static async maybeNotifyThresholds(companyId: string): Promise<void> {
     try {
       const { periodKey } = currentPeriod();
       const [override, check] = await Promise.all([
         AiUsageRepository.getAllowanceOverride(companyId),
-        this.checkAllowance({ companyId, packageName }),
+        this.checkAllowance({ companyId }),
       ]);
 
       if (check.percentOfLimitUsed >= 95 && override?.lastNotified95Period !== periodKey) {
@@ -117,7 +153,8 @@ export class AiUsageService {
     }
   }
 
-  static async getUsageSummary(companyId: string, packageName: string): Promise<AiUsageSummary> {
+  /** `packageName` is a fallback only — entitlement resolves from the database. */
+  static async getUsageSummary(companyId: string, packageName?: string): Promise<AiUsageSummary> {
     const { periodStart, periodEnd } = currentPeriod();
     const startIso = periodStart.toISOString();
     const endIso = periodEnd.toISOString();
@@ -155,8 +192,7 @@ export class AiUsageService {
     const companyId = await AiUsageRepository.resolveCompanyIdForWorkspace(workspaceId);
     if (!companyId) throw new Error("No company resolved for this workspace.");
 
-    const { resolveSubscription } = await import("@/platform/managers/subscription-manager");
-    const subscription = await resolveSubscription();
-    return this.getUsageSummary(companyId, subscription.packageName);
+    // No cookie lookup: the package is resolved from the database by companyId.
+    return this.getUsageSummary(companyId);
   }
 }
