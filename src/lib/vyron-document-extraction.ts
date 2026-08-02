@@ -217,6 +217,18 @@ export type ExtractionRunLog = {
   /** How the engine decided to show the document to the model, and why. */
   visionClass: DocumentVisionClass | null;
   visionReason: string | null;
+  /**
+   * Which engine the route asked for, which one actually ran, and why they
+   * differ.
+   *
+   * A silent fallback is indistinguishable from a v2 success in every record
+   * downstream — the run log, the monitoring row and the diagnostics page all
+   * looked identical whether v2 read the document or quietly handed it to v1.
+   * Recording all three makes the substitution auditable after the fact.
+   */
+  engineRequested: "v1" | "v2" | null;
+  engineExecuted: "v1" | "v2" | null;
+  engineFallbackReason: string | null;
   /** One entry per page re-read through the cropped-table path. Empty when unused. */
   tableVision: Array<{
     pageNumber: number;
@@ -1514,6 +1526,9 @@ export async function runDocumentExtraction(input: {
     rawOpenAiResponseFull: null,
     visionClass: null,
     visionReason: null,
+    engineRequested: null,
+    engineExecuted: "v1",
+    engineFallbackReason: null,
     tableVision: [],
     tableVisionOutcome: null,
     declaredLineItemCount: null,

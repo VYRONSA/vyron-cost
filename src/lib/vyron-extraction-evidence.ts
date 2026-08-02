@@ -48,6 +48,10 @@ export type ExtractionEvidenceTrigger =
 
 export type ExtractionMonitoringRecord = {
   visionClass: string | null;
+  /** Engine asked for, engine that ran, and why they differ. Null on old records. */
+  engineRequested: string | null;
+  engineExecuted: string | null;
+  engineFallbackReason: string | null;
   modelUsed: string | null;
   modelsAttempted: string[];
   attemptCount: number;
@@ -101,6 +105,9 @@ export function buildMonitoringRecord(input: {
   const { extraction, log } = input;
   return {
     visionClass: log.visionClass,
+    engineRequested: log.engineRequested,
+    engineExecuted: log.engineExecuted,
+    engineFallbackReason: log.engineFallbackReason,
     modelUsed: log.modelUsed,
     modelsAttempted: log.modelsAttempted,
     attemptCount: log.attempts.length,

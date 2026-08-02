@@ -37,6 +37,7 @@ import {
 import {
   assessLineArithmetic,
   normaliseExtractionStrict,
+  runDocumentExtraction,
   type ExtractedInvoice,
   type ExtractionEvidence,
   type ExtractionRunLog,
@@ -498,6 +499,41 @@ export async function runDocumentExtractionV2(
     throw new Error("OPENAI_API_KEY is missing or still contains the placeholder.");
   }
 
+  /*
+   * Documents v2 cannot read are handed to v1 rather than failed.
+   *
+   * `extractSupplierInvoiceV2` refuses a document it has no page image for, and
+   * says so deliberately — it reads pictures of pages, and the classifier's
+   * contract is that "the caller must fall back to sending the PDF whole".
+   * Nothing implemented that fallback, so as the default engine v2 returned
+   * HTTP 500 and no extraction at all for two whole classes of document:
+   *
+   *   searchable-pdf   the classifier returns no page image on purpose, because
+   *                    the text layer is exact and the vision path is not needed
+   *   unreadable-pdf   no text layer and no self-describing embedded image
+   *
+   * Every digital supplier invoice falls in the first of those. v1 handles both
+   * by sending the PDF whole, which is what it has always done.
+   */
+  const assessment = await assessDocumentForVision({ bytes: input.bytes, mime: input.mime });
+  if (!assessment.pageImages.length) {
+    options?.onTrace?.({
+      timestamp: new Date().toISOString(),
+      step: "Extraction engine v2 deferred to v1",
+      input: { fileName: input.fileName, mime: input.mime },
+      output: { visionClass: assessment.visionClass, reason: assessment.reason },
+      durationMs: 0,
+    });
+    const fallback = await runDocumentExtraction(input, options);
+    // Stamped on the record v1 produced, so the substitution is visible in the
+    // run log, the monitoring row and the diagnostics page rather than only in
+    // a trace line that nothing persists.
+    fallback.log.engineRequested = "v2";
+    fallback.log.engineExecuted = "v1";
+    fallback.log.engineFallbackReason = `${assessment.visionClass}: ${assessment.reason}`;
+    return fallback;
+  }
+
   const result = await extractSupplierInvoiceV2({
     apiKey,
     fileName: input.fileName,
@@ -522,6 +558,9 @@ export async function runDocumentExtractionV2(
     rawOpenAiResponseFull: result.status === "manual-review" ? rawText : null,
     visionClass: result.visionClass,
     visionReason: `Extraction engine v2: ${result.pagesRead} page image(s) read.`,
+    engineRequested: "v2",
+    engineExecuted: "v2",
+    engineFallbackReason: null,
     tableVision: [
       {
         pageNumber: 1,

@@ -375,6 +375,21 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       extractionDurationMs = result.executionTimeMs;
       extractionUsage = result.usage;
 
+      // v1 selected directly records no requested engine of its own; the flag
+      // is the only place that answer exists.
+      if (!log.engineRequested) log.engineRequested = engine;
+      trace.log(
+        "Engine execution recorded",
+        { documentId, requested: log.engineRequested },
+        {
+          engineRequested: log.engineRequested,
+          engineExecuted: log.engineExecuted,
+          engineFallbackReason: log.engineFallbackReason,
+          visionClass: log.visionClass,
+        },
+        0
+      );
+
       await AiUsageService.recordUsage({
         companyId: tenantId,
         workspaceId: runtimeContext.workspaceId,
