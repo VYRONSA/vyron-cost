@@ -1,8 +1,11 @@
 import type { ReviewDraft, ReviewDraftLine } from "@/lib/vyron-document-review-client";
+import {
+  reconcileInvoiceTotals,
+  roundMoney,
+  type ReconciliationBasis,
+} from "@/lib/vyron-invoice-reconciliation";
 
-export function roundMoney(value: number) {
-  return Math.round(value * 100) / 100;
-}
+export { roundMoney };
 
 export function computeLineExclVat(line: Pick<ReviewDraftLine, "quantity" | "unitPrice">) {
   const qty = Number(line.quantity ?? 0);
@@ -62,13 +65,15 @@ export function withDerivedLineAmounts(line: ReviewDraftLine): ReviewDraftLine {
   return { ...line, ...deriveLineAmounts(line) };
 }
 
-/** Differences at or below this are treated as an exact match (e.g. R0.04). */
-export const TOTALS_MATCH_TOLERANCE = 0.05;
-
-/** Differences at or below R1.00 (but above tolerance) are rounding only — not a major mismatch. */
-export const ROUNDING_DIFFERENCE_LIMIT = 1.0;
+// Tolerances live with the calculation that applies them. Re-exported so the
+// existing importers of this module keep resolving.
+export { TOTALS_MATCH_TOLERANCE, ROUNDING_DIFFERENCE_LIMIT } from "@/lib/vyron-invoice-reconciliation";
 
 export type InvoiceTotalsSummary = {
+  /** Which reading of the line total column the figures below are stated on. */
+  basis: ReconciliationBasis;
+  /** True when every comparable figure agrees within the match tolerance. */
+  reconciled: boolean;
   sumExcl: number;
   sumVat: number;
   sumIncl: number;
@@ -89,53 +94,58 @@ export type InvoiceTotalsSummary = {
   ignoredCount: number;
 };
 
-export function classifyTotalsDiffs(diffs: Array<number | null>) {
-  const magnitudes = diffs.filter((value): value is number => value !== null).map((value) => Math.abs(value));
-  const maxAbsDiff = magnitudes.length ? Math.max(...magnitudes) : 0;
-  const hasTotalsDifference = magnitudes.some((value) => value > TOTALS_MATCH_TOLERANCE);
-  const hasRoundingDifference = hasTotalsDifference && maxAbsDiff <= ROUNDING_DIFFERENCE_LIMIT;
-  const hasMajorMismatch = hasTotalsDifference && maxAbsDiff > ROUNDING_DIFFERENCE_LIMIT;
-  return { maxAbsDiff, hasTotalsDifference, hasRoundingDifference, hasMajorMismatch };
-}
+/*
+ * `classifyTotalsDiffs` was removed.
+ *
+ * It classified a set of differences without knowing how they were produced,
+ * which let four callers compute the differences four different ways and then
+ * agree on how to describe them — the appearance of shared logic without the
+ * substance. Callers now use `reconcileInvoiceTotals`, which produces the
+ * differences and their classification together.
+ */
 
+/**
+ * Totals for the review screen.
+ *
+ * Every figure here comes from `reconcileInvoiceTotals`, which is also what the
+ * extraction engine and the Extraction Quality summary read. That shared source
+ * is the point: this function previously did its own arithmetic and assumed the
+ * line total column always included VAT, so on an exclusive-basis invoice it
+ * reported a difference equal to the VAT while the quality panel — which knew
+ * better — reported "Reconciled" alongside it.
+ */
 export function summarizeInvoiceTotals(draft: ReviewDraft): InvoiceTotalsSummary {
   const active = draft.lines.filter((line) => !line.ignored);
-  const sumExcl = roundMoney(active.reduce((sum, line) => sum + (line.lineExclVat ?? computeLineExclVat(line) ?? 0), 0));
-  const sumVat = roundMoney(active.reduce((sum, line) => sum + (line.vat ?? 0), 0));
-  const sumIncl = roundMoney(active.reduce((sum, line) => sum + (line.lineTotal ?? 0), 0));
 
-  const extractedSubtotal = draft.fields.subtotal;
-  const extractedVat = draft.fields.vat;
-  const extractedTotal = draft.fields.total;
-
-  const diffExcl =
-    extractedSubtotal !== null ? roundMoney(sumExcl - extractedSubtotal) : null;
-  const diffVat = extractedVat !== null ? roundMoney(sumVat - extractedVat) : null;
-  const diffIncl = extractedTotal !== null ? roundMoney(sumIncl - extractedTotal) : null;
-
-  const { maxAbsDiff, hasTotalsDifference, hasRoundingDifference, hasMajorMismatch } = classifyTotalsDiffs([
-    diffExcl,
-    diffVat,
-    diffIncl,
-  ]);
+  const reconciliation = reconcileInvoiceTotals({
+    lineExclSum: roundMoney(active.reduce((sum, line) => sum + (line.lineExclVat ?? computeLineExclVat(line) ?? 0), 0)),
+    lineVatSum: roundMoney(active.reduce((sum, line) => sum + (line.vat ?? 0), 0)),
+    lineTotalSum: roundMoney(active.reduce((sum, line) => sum + (line.lineTotal ?? 0), 0)),
+    extractedSubtotal: draft.fields.subtotal,
+    extractedVat: draft.fields.vat,
+    extractedTotal: draft.fields.total,
+  });
 
   const unmappedCount = active.filter((line) => !line.matchedEntityId || !line.matchedEntityType).length;
+  const hasTotalsDifference = reconciliation.isRoundingDifference || reconciliation.isMajorMismatch;
 
   return {
-    sumExcl,
-    sumVat,
-    sumIncl,
-    extractedSubtotal,
-    extractedVat,
-    extractedTotal,
-    diffExcl,
-    diffVat,
-    diffIncl,
-    maxAbsDiff,
+    basis: reconciliation.basis,
+    sumExcl: reconciliation.lineExcl,
+    sumVat: reconciliation.lineVat,
+    sumIncl: reconciliation.lineIncl,
+    extractedSubtotal: reconciliation.extractedSubtotal,
+    extractedVat: reconciliation.extractedVat,
+    extractedTotal: reconciliation.extractedTotal,
+    diffExcl: reconciliation.diffExcl,
+    diffVat: reconciliation.diffVat,
+    diffIncl: reconciliation.diffIncl,
+    maxAbsDiff: reconciliation.maxAbsDiff,
+    reconciled: reconciliation.reconciled,
     hasTotalsDifference,
     hasMismatch: hasTotalsDifference,
-    hasRoundingDifference,
-    hasMajorMismatch,
+    hasRoundingDifference: reconciliation.isRoundingDifference,
+    hasMajorMismatch: reconciliation.isMajorMismatch,
     unmappedCount,
     ignoredCount: draft.lines.filter((line) => line.ignored).length,
   };

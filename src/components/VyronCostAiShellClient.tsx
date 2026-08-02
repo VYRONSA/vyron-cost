@@ -141,12 +141,22 @@ export default function VyronCostAiShellClient({
   children,
   hidePageHeader = false,
   fullWidthMain = false,
+  fullHeightWorkspace = false,
 }: {
   title: string;
   subtitle?: string;
   children: ReactNode;
   hidePageHeader?: boolean;
   fullWidthMain?: boolean;
+  /**
+   * Fill the viewport instead of scrolling the page.
+   *
+   * The top bar stays fixed and the main column becomes a bounded flex frame,
+   * so a workspace child can give each pane its own scrollbar. Without it a
+   * long line-item table pushes the whole page down and the operator loses the
+   * invoice preview off the top of the screen.
+   */
+  fullHeightWorkspace?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -499,8 +509,18 @@ export default function VyronCostAiShellClient({
         </div>
       </aside>
 
-      <div className="vyron-cost-shell-main relative z-0 ml-[330px] min-w-0 h-screen overflow-y-auto overflow-x-hidden">
-        <header className={M.shellTopbar}>
+      {/*
+        Workspace mode turns the main column into a fixed-height flex frame:
+        the top bar stays put and the page itself never scrolls, leaving the
+        child to scroll its own panes. Ordinary pages keep the scrolling
+        container they have always had.
+      */}
+      <div
+        className={`vyron-cost-shell-main relative z-0 ml-[330px] min-w-0 h-screen overflow-x-hidden ${
+          fullHeightWorkspace ? "vyron-workspace-frame" : "overflow-y-auto"
+        }`}
+      >
+        <header className={`${M.shellTopbar} ${fullHeightWorkspace ? "shrink-0" : ""}`}>
           <div className={`mx-auto flex h-14 w-full ${VYRON_MAX_WIDTH} items-center gap-3 ${VYRON_PAGE_PADDING} md:gap-4`}>
             <button type="button" onClick={() => router.back()} className={M.shellTopbarBtn}>
               ← Back
@@ -556,8 +576,16 @@ export default function VyronCostAiShellClient({
           </div>
         </header>
 
-        <main className={`min-w-0 w-full max-w-full flex-1 overflow-x-hidden ${fullWidthMain ? "px-0 py-0" : "py-5"}`}>
-          <div className={`mx-auto min-w-0 w-full max-w-full ${fullWidthMain ? "" : `${VYRON_MAX_WIDTH} ${VYRON_PAGE_PADDING}`}`}>
+        <main
+          className={`min-w-0 w-full max-w-full flex-1 overflow-x-hidden ${fullWidthMain ? "px-0 py-0" : "py-5"} ${
+            fullHeightWorkspace ? "min-h-0 overflow-y-hidden" : ""
+          }`}
+        >
+          <div
+            className={`mx-auto min-w-0 w-full max-w-full ${
+              fullWidthMain ? "" : `${VYRON_MAX_WIDTH} ${VYRON_PAGE_PADDING}`
+            } ${fullHeightWorkspace ? "h-full" : ""}`}
+          >
             {!hidePageHeader ? (
               <section className={M.shellPageHeader}>
                 <h1 className={`relative break-words text-3xl text-balance md:text-4xl ${M.heading}`}>{title}</h1>
@@ -568,7 +596,11 @@ export default function VyronCostAiShellClient({
                 )}
               </section>
             ) : null}
-            <div className={`flex min-w-0 w-full max-w-full flex-col ${fullWidthMain ? "" : "gap-4"}`}>
+            <div
+              className={`flex min-w-0 w-full max-w-full flex-col ${fullWidthMain ? "" : "gap-4"} ${
+                fullHeightWorkspace ? "h-full min-h-0" : ""
+              }`}
+            >
               {shellContent}
             </div>
           </div>

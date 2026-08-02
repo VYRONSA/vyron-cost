@@ -18,7 +18,9 @@
     "safety:env": "node scripts/safety/preflight.mjs --env",
     "safety:register": "node scripts/safety/preflight.mjs --register",
     "safety:verify-register": "node scripts/safety/preflight.mjs --verify-register",
-    "safety:self-test": "node scripts/safety/self-test.mjs"
+    "safety:self-test": "node scripts/safety/self-test.mjs",
+    "test:reconciliation": "node scripts/test-reconciliation-consistency.mjs",
+    "test:workspace-scroll": "node scripts/test-review-workspace-scrolling.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",

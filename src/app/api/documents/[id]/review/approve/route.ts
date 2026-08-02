@@ -11,7 +11,8 @@ import { getPoApprovalRules, writeProcurementAudit } from "@/lib/vyron-procureme
 import { computeThreeWayMatch, upsertThreeWayMatch } from "@/lib/vyron-three-way-match";
 import { isSupervisorAuthorized } from "@/lib/vyron-document-approval-audit";
 import { insertDocumentCostAudit } from "@/lib/vyron-document-cost-audit";
-import { classifyTotalsDiffs, roundMoney } from "@/lib/vyron-invoice-line-math";
+import { roundMoney } from "@/lib/vyron-invoice-line-math";
+import { reconcileInvoiceTotals } from "@/lib/vyron-invoice-reconciliation";
 import { recomputeRecoveryIntelligenceV2 } from "@/lib/vyron-recovery-intelligence-v2";
 import { insertDocumentApprovalAudit } from "@/lib/vyron-document-approval-audit";
 import { buildPriceHistoryRecord, changePercent, insertPriceHistoryRows } from "@/lib/vyron-price-history";
@@ -156,10 +157,21 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const extractedSubtotal = document.subtotal !== null ? Number(document.subtotal) : null;
   const extractedVat = document.vat !== null ? Number(document.vat) : null;
   const extractedTotal = document.total !== null ? Number(document.total) : null;
-  const diffExcl = extractedSubtotal !== null ? roundMoney(sumExcl - extractedSubtotal) : null;
-  const diffVat = extractedVat !== null ? roundMoney(sumVat - extractedVat) : null;
-  const diffIncl = extractedTotal !== null ? roundMoney(sumIncl - extractedTotal) : null;
-  const totalsClass = classifyTotalsDiffs([diffExcl, diffVat, diffIncl]);
+
+  // Same reconciliation the review screen and the validator use, so approval
+  // cannot disagree with the panel the operator approved from.
+  const reconciliation = reconcileInvoiceTotals({
+    lineExclSum: sumExcl,
+    lineVatSum: sumVat,
+    lineTotalSum: sumIncl,
+    extractedSubtotal,
+    extractedVat,
+    extractedTotal,
+  });
+  const totalsClass = {
+    maxAbsDiff: reconciliation.maxAbsDiff,
+    hasTotalsDifference: reconciliation.isRoundingDifference || reconciliation.isMajorMismatch,
+  };
   const hasMajorMismatch =
     totalsClass.hasTotalsDifference && totalsClass.maxAbsDiff > rules.majorMismatchThreshold;
   const hasRoundingDifference =

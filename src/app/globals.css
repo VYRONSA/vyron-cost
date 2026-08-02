@@ -105,6 +105,22 @@ body {
   color: #334155;
 }
 
+/*
+ * Full-height workspace frame (the invoice review screen).
+ *
+ * This has to live here rather than as a utility class on the element. The rule
+ * above is two classes deep, so it outranks a single Tailwind utility no matter
+ * what order they load in: `overflow-y-hidden` on the element was silently
+ * losing to `overflow-y: auto` and the page kept scrolling behind panes that
+ * were supposed to own their own scrollbars. Matching the selector's specificity
+ * is what makes the override actually apply.
+ */
+.vyron-cost-shell > .vyron-cost-shell-main.vyron-workspace-frame {
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
+}
+
 .vyron-premium-workspace {
   position: relative;
   overflow-x: hidden;

@@ -8,12 +8,14 @@ export default function VyronCostAiShell({
   children,
   hidePageHeader = false,
   fullWidthMain = false,
+  fullHeightWorkspace = false,
 }: {
   title: string;
   subtitle?: string;
   children: ReactNode;
   hidePageHeader?: boolean;
   fullWidthMain?: boolean;
+  fullHeightWorkspace?: boolean;
 }) {
   enforceAuthenticatedDashboardDynamicRendering();
 
@@ -23,6 +25,7 @@ export default function VyronCostAiShell({
       subtitle={subtitle}
       hidePageHeader={hidePageHeader}
       fullWidthMain={fullWidthMain}
+      fullHeightWorkspace={fullHeightWorkspace}
     >
       {children}
     </VyronCostAiShellClient>

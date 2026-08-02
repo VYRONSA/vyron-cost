@@ -704,7 +704,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
         onCloseFullscreen={() => setPreviewFullscreen(false)}
       />
     ) : (
-      <div className="flex h-full min-h-[360px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm font-bold text-slate-500">
+      <div className="flex h-full min-h-[160px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm font-bold text-slate-500">
         {previewError || "No preview available"}
       </div>
     );
@@ -712,10 +712,15 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
   const headerCompact = workspaceLayout === "focus-review";
 
   const extractionPanel = (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+      {/*
+        The header block is capped and scrolls itself in every layout, not only
+        the compact one. Uncapped it grew with the field count and squeezed the
+        line-item table — the part of the screen the review is actually about.
+      */}
       <div
-        className={`shrink-0 rounded-2xl border border-slate-200 bg-white shadow-sm ${
-          headerCompact ? "max-h-[28vh] overflow-y-auto overscroll-contain p-3" : "p-4"
+        className={`shrink-0 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-sm ${
+          headerCompact ? "max-h-[24vh] p-3" : "max-h-[30vh] p-3"
         }`}
       >
         <div className={`font-black text-slate-900 ${headerCompact ? "mb-2 text-xs" : "mb-3 text-sm"}`}>Invoice Header</div>
@@ -797,7 +802,14 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           </button>
         </div>
         {totalsSummary ? <InvoiceTotalsWarningBanner summary={totalsSummary} /> : null}
-        <div className="min-h-[280px] flex-1 basis-0 overflow-auto overscroll-contain">
+        {/*
+          A 280px floor here could exceed the space left after the header block,
+          banner and totals footer on a short laptop screen. Every ancestor is
+          overflow-hidden, so the excess was not scrollable — it was clipped, and
+          the last rows became unreachable. A smaller floor keeps the table from
+          collapsing without ever outgrowing its frame.
+        */}
+        <div className="min-h-[140px] flex-1 basis-0 overflow-auto overscroll-contain">
           <table className="min-w-[2100px] w-full text-left text-xs">
             <thead className="sticky top-0 z-10 bg-slate-50 text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 shadow-sm">
               <tr>
@@ -929,8 +941,16 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
 
   const reviewBody = (
     <div
+      /*
+        Bounded height, not a minimum.
+        `min-h-[calc(100dvh-5rem)]` let the workspace grow past the viewport, so
+        a long line-item table scrolled the whole page and carried the invoice
+        preview off the top of the screen — exactly when the operator needs to
+        compare the two. Filling the shell's frame instead keeps both panes on
+        screen and gives each its own scrollbar.
+      */
       className={`flex flex-col overflow-hidden bg-slate-100 ${
-        embedded ? "min-h-[calc(100dvh-5rem)]" : "h-screen"
+        embedded ? "h-full min-h-0" : "h-screen"
       } ${previewFullscreen ? "fixed inset-0 z-[70]" : ""}`}
     >
       <header className="sticky top-0 z-30 shrink-0 border-b border-slate-200 bg-white/95 px-3 py-1.5 shadow-sm backdrop-blur lg:px-4">
@@ -1005,7 +1025,9 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
         ) : null}
       </header>
 
-      <main className="flex min-h-0 flex-1 overflow-hidden p-3 lg:flex-row lg:gap-3 lg:p-4">
+      {/* Tightened from p-3/p-4: every millimetre of padding here is a
+          millimetre of invoice the operator cannot see. */}
+      <main className="flex min-h-0 flex-1 overflow-hidden p-2 lg:flex-row lg:gap-2.5 lg:p-2.5">
         <div
           className={`flex min-h-0 flex-col overflow-hidden transition-[width] duration-200 ${
             previewFullscreen ? "w-[58%] shrink-0" : `shrink-0 ${layoutColumnClass(workspaceLayout, "invoice")}`

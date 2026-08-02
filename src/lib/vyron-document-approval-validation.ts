@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DocumentApprovalRules } from "@/lib/vyron-document-approval-rules";
-import { classifyTotalsDiffs, roundMoney } from "@/lib/vyron-invoice-line-math";
+import { roundMoney } from "@/lib/vyron-invoice-line-math";
+import { reconcileInvoiceTotals } from "@/lib/vyron-invoice-reconciliation";
 
 export type ApprovalViolation = {
   rule: string;
@@ -107,18 +108,35 @@ export function validateDocumentApproval(input: ApprovalValidationInput): Approv
     });
   }
 
-  const sumExcl = roundMoney(
-    activeLines.reduce((sum, line) => sum + Number(line.quantity || 0) * Number(line.unit_price || 0), 0)
-  );
-  const sumVat = roundMoney(activeLines.reduce((sum, line) => sum + Number(line.vat || 0), 0));
-  const sumIncl = roundMoney(activeLines.reduce((sum, line) => sum + Number(line.line_total || 0), 0));
+  /*
+   * Approval reads the same reconciliation as the review screen.
+   *
+   * This previously summed the line total column and compared it straight to
+   * the invoice total, which on an exclusive-basis invoice differs by exactly
+   * the VAT. The operator was then blocked from approving, and required to
+   * write a reconciliation note explaining a discrepancy that did not exist,
+   * while the panel above showed Excl and VAT agreeing to the cent.
+   */
   const extractedSubtotal = document.subtotal !== null && document.subtotal !== undefined ? Number(document.subtotal) : null;
   const extractedVat = document.vat !== null && document.vat !== undefined ? Number(document.vat) : null;
   const extractedTotal = document.total !== null && document.total !== undefined ? Number(document.total) : null;
-  const diffExcl = extractedSubtotal !== null ? roundMoney(sumExcl - extractedSubtotal) : null;
-  const diffVat = extractedVat !== null ? roundMoney(sumVat - extractedVat) : null;
-  const diffIncl = extractedTotal !== null ? roundMoney(sumIncl - extractedTotal) : null;
-  const totalsClass = classifyTotalsDiffs([diffExcl, diffVat, diffIncl]);
+
+  const reconciliation = reconcileInvoiceTotals({
+    lineExclSum: roundMoney(
+      activeLines.reduce((sum, line) => sum + Number(line.quantity || 0) * Number(line.unit_price || 0), 0)
+    ),
+    lineVatSum: roundMoney(activeLines.reduce((sum, line) => sum + Number(line.vat || 0), 0)),
+    lineTotalSum: roundMoney(activeLines.reduce((sum, line) => sum + Number(line.line_total || 0), 0)),
+    extractedSubtotal,
+    extractedVat,
+    extractedTotal,
+  });
+
+  const diffIncl = reconciliation.diffIncl;
+  const totalsClass = {
+    maxAbsDiff: reconciliation.maxAbsDiff,
+    hasTotalsDifference: reconciliation.isRoundingDifference || reconciliation.isMajorMismatch,
+  };
   const hasMajorMismatch =
     totalsClass.hasTotalsDifference && totalsClass.maxAbsDiff > rules.majorMismatchThreshold;
   const hasRoundingDifference =

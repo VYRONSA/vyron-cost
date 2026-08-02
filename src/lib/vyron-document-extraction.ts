@@ -10,6 +10,7 @@ import {
   type TableColumnMapping,
   type TableVisionRow,
 } from "@/lib/vyron-invoice-table-vision";
+import { reconcileInvoiceTotals } from "@/lib/vyron-invoice-reconciliation";
 import {
   buildExtractionQualityRecord,
   expectsLineItems,
@@ -520,38 +521,50 @@ function assessExtractionCompleteness(
   }
 
   /*
-   * Reconcile against whichever invoice figure the line column actually
-   * represents.
+   * Reconciliation is delegated to the shared calculation.
    *
-   * Suppliers differ. Gourmet Foods prints a VAT-INCLUSIVE "NETT PRICE", so its
-   * line totals sum to the invoice total; others print an exclusive "Amount"
-   * that sums to the subtotal. Reconciling only against the subtotal rejected a
-   * verified-correct extraction of invoice 02252489 — its 16 line totals sum to
-   * 26766.19 against a total of 26766.18 and a subtotal of 23307.81 — and sent
-   * the engine into a retry loop chasing rows that were never missing.
-   *
-   * Both readings are tried and the closer one is reported.
+   * The engine, the Extraction Quality summary, the totals banner, the
+   * difference panel and approval all read `reconcileInvoiceTotals`. When each
+   * had its own arithmetic they disagreed in front of the operator — the banner
+   * reported a difference equal to the VAT on suppliers whose line column
+   * excludes it, while this gate, which inferred the basis correctly, reported
+   * the same invoice as reconciled.
    */
   let variance: number | null = null;
   let tolerance: number | null = null;
   if (lineTotalSum !== null) {
-    const candidates: Array<{ base: number; basis: ExtractionCompleteness["reconciliationBasis"] }> = [];
-    if (reconciliationBase !== null) candidates.push({ base: reconciliationBase, basis: reconciliationBasis });
-    if (total !== null && reconciliationBasis !== "total") candidates.push({ base: total, basis: "total" });
+    const lineExclSum = extraction.lineItems.reduce((sum, line) => {
+      const quantity = numberFromMoney(line.quantity);
+      const unitPrice = numberFromMoney(line.unitPrice);
+      return quantity !== null && unitPrice !== null ? sum + quantity * unitPrice : sum;
+    }, 0);
+    const lineVatSum = extraction.lineItems.reduce((sum, line) => {
+      const lineVat = numberFromMoney(line.vatAmount);
+      return lineVat !== null ? sum + lineVat : sum;
+    }, 0);
 
-    let best: { base: number; basis: ExtractionCompleteness["reconciliationBasis"]; variance: number } | null = null;
-    for (const candidate of candidates) {
-      const candidateVariance = Math.abs(lineTotalSum - candidate.base);
-      if (!best || candidateVariance < best.variance) {
-        best = { ...candidate, variance: candidateVariance };
-      }
-    }
+    const reconciliation = reconcileInvoiceTotals({
+      lineExclSum: round2(lineExclSum),
+      lineVatSum: round2(lineVatSum),
+      lineTotalSum: round2(lineTotalSum),
+      extractedSubtotal: subtotal,
+      extractedVat: vat,
+      extractedTotal: total,
+    });
 
-    if (best) {
-      reconciliationBase = best.base;
-      reconciliationBasis = best.basis;
-      variance = best.variance;
-      tolerance = Math.max(RECONCILIATION_TOLERANCE_FLOOR, Math.abs(best.base) * RECONCILIATION_TOLERANCE_RATIO);
+    if (reconciliation.verifiable) {
+      reconciliationBasis = reconciliation.basis === "exclusive" ? "subtotal" : "total";
+      reconciliationBase = reconciliation.basis === "exclusive" ? subtotal : total;
+      variance = reconciliation.maxAbsDiff;
+      /*
+       * The engine keeps its own, wider tolerance: 1% of the invoice floored at
+       * R1. It decides whether to ACCEPT an extraction and burn another billable
+       * attempt, where the review screen only decides what to show an operator
+       * who is already looking at the document. Retrying a whole invoice over
+       * four cents would be the wrong trade.
+       */
+      const base = reconciliationBase ?? total ?? subtotal ?? 0;
+      tolerance = Math.max(RECONCILIATION_TOLERANCE_FLOOR, Math.abs(base) * RECONCILIATION_TOLERANCE_RATIO);
       if (variance > tolerance) reasons.push("totals-do-not-reconcile");
     }
   }
