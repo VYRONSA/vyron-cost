@@ -24,6 +24,7 @@
  */
 
 import type { ExtractionRuntimeOptions } from "@/lib/vyron-document-extraction";
+import { cropImageToPng, imageSize } from "@/lib/vyron-image-raster";
 
 export type TableColumnMapping = {
   description: string;
@@ -60,8 +61,7 @@ export type TableVisionResult = {
   usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null;
 };
 
-/** Widest edge sent to the locate pass. The box only needs to be roughly right. */
-const LOCATE_MAX_WIDTH = 1100;
+// The locate pass no longer downscales its input — see the note where it runs.
 /**
  * Padding around the located box, as a fraction of the page.
  *
@@ -296,28 +296,31 @@ export async function readInvoiceTableFromImage(input: {
     });
   }
 
-  const sharp = (await import("sharp")).default;
   const startedAt = Date.now();
 
-  const source = sharp(input.imageBytes, { failOn: "none" });
-  const metadata = await source.metadata();
-  const pageWidth = metadata.width || 0;
-  const pageHeight = metadata.height || 0;
+  const { width: pageWidth, height: pageHeight } = await imageSize(input.imageBytes, input.mime);
   if (!pageWidth || !pageHeight) {
     throw new Error("Table vision could not read the page image dimensions.");
   }
 
-  const locateBytes = await sharp(input.imageBytes, { failOn: "none" })
-    .resize({ width: Math.min(LOCATE_MAX_WIDTH, pageWidth), withoutEnlargement: true })
-    .png()
-    .toBuffer();
+  /*
+   * The locate pass gets the page as-is rather than a downscaled copy.
+   *
+   * Downscaling was a sharp operation, and sharp is no longer a runtime
+   * dependency — it could not be loaded on Vercel. Sending the original costs
+   * some input tokens on a call that only has to return a bounding box, and
+   * removes a native binary from the deployment. The model downsamples large
+   * images itself in any case, which is the very behaviour the crop exists to
+   * work around on the read pass.
+   */
+  const locateBytes = input.imageBytes;
 
   const locate = await callVision({
     apiKey: input.apiKey,
     model: input.model,
     prompt: LOCATE_PROMPT,
     imageBytes: locateBytes,
-    mime: "image/png",
+    mime: input.mime,
     maxOutputTokens: 1200,
   });
 
@@ -353,19 +356,19 @@ export async function readInvoiceTableFromImage(input: {
     // Falling back to the whole page still beats sending the raw PDF.
     if (pixelWidth > 80 && pixelHeight > 80) {
       cropBox = { top: paddedTop, left: paddedLeft, width: paddedWidth, height: paddedHeight };
-      let pipeline = sharp(input.imageBytes, { failOn: "none" }).extract({
-        left: Math.round(paddedLeft * pageWidth),
-        top: Math.round(paddedTop * pageHeight),
-        width: pixelWidth,
-        height: pixelHeight,
+      const cropped = await cropImageToPng({
+        bytes: input.imageBytes,
+        mime: input.mime,
+        region: {
+          left: paddedLeft * pageWidth,
+          top: paddedTop * pageHeight,
+          width: pixelWidth,
+          height: pixelHeight,
+        },
+        minWidth: READ_MIN_WIDTH,
       });
-
-      if (pixelWidth < READ_MIN_WIDTH) {
-        pipeline = pipeline.resize({ width: READ_MIN_WIDTH, kernel: "lanczos3" });
-      }
-
-      cropBytes = await pipeline.png().toBuffer();
-      cropMime = "image/png";
+      cropBytes = cropped.bytes;
+      cropMime = cropped.mime;
     }
   }
 

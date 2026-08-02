@@ -32,7 +32,6 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-pdf": "^10.4.1",
-    "sharp": "^0.35.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -43,6 +42,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.5",
     "playwright": "^1.62.1",
+    "sharp": "^0.35.1",
     "tailwindcss": "^4",
     "to-ico": "^1.1.5",
     "typescript": "^5"

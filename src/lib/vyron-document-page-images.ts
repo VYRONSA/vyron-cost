@@ -144,10 +144,18 @@ async function readTextLayer(pdfBytes: Buffer): Promise<{ pageCount: number; cha
   const loadingTask = pdfjs.getDocument({
     data: new Uint8Array(pdfBytes),
     useSystemFonts: false,
-    // Digital PDFs reference the 14 standard fonts by name. Without this pdfjs
-    // raises on the first such page and the document reads as having no text —
-    // which would send a perfectly searchable invoice down the vision path.
-    standardFontDataUrl: standardFontDataUrl(),
+    /*
+     * `standardFontDataUrl` is deliberately not set.
+     *
+     * Pointing it at `node_modules/pdfjs-dist/standard_fonts/` through
+     * `import.meta.url` made the bundler try to resolve a filesystem path that
+     * does not exist inside a deployed serverless function — the same class of
+     * problem as the native binary this module's crop path was rewritten to
+     * avoid. Font data is only needed to RENDER glyphs; extracting text
+     * positions does not touch it, and the character counts this function
+     * returns are unchanged without it. pdfjs logs a warning for a missing
+     * standard font and carries on.
+     */
   });
 
   const pdf = await loadingTask.promise;
@@ -181,15 +189,6 @@ async function readTextLayer(pdfBytes: Buffer): Promise<{ pageCount: number; cha
   }
 }
 
-/** Filesystem location of pdfjs's standard font data, when resolvable. */
-function standardFontDataUrl(): string | undefined {
-  try {
-    const url = new URL("../../node_modules/pdfjs-dist/standard_fonts/", import.meta.url);
-    return url.href;
-  } catch {
-    return undefined;
-  }
-}
 
 export async function assessDocumentForVision(input: {
   bytes: Buffer;

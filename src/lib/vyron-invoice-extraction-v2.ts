@@ -45,6 +45,7 @@ import {
   type LineArithmeticAssessment,
 } from "@/lib/vyron-document-extraction";
 import { buildExtractionQualityRecord, type ExtractionQualityRecord } from "@/lib/vyron-extraction-quality";
+import { cropImageToPng, imageSize } from "@/lib/vyron-image-raster";
 
 export type InvoiceExtractionV2Status = "accepted" | "manual-review";
 
@@ -241,16 +242,11 @@ async function callModel(input: {
  * a full-page read is a weaker result, not a failed one, and the validators
  * downstream will say so.
  */
-type SharpFactory = (typeof import("sharp"))["default"];
-
 async function cropTable(
-  sharp: SharpFactory,
   page: DocumentPageImage,
   located: Record<string, unknown>
 ): Promise<{ bytes: Buffer; mime: string }> {
-  const metadata = await sharp(page.bytes, { failOn: "none" }).metadata();
-  const pageWidth = metadata.width || 0;
-  const pageHeight = metadata.height || 0;
+  const { width: pageWidth, height: pageHeight } = await imageSize(page.bytes, page.mime);
   if (!pageWidth || !pageHeight || located.tableFound === false) {
     return { bytes: page.bytes, mime: page.mime };
   }
@@ -272,17 +268,19 @@ async function cropTable(
     return { bytes: page.bytes, mime: page.mime };
   }
 
-  let pipeline = sharp(page.bytes, { failOn: "none" }).extract({
-    left: Math.round(left * pageWidth),
-    top: Math.round(top * pageHeight),
-    width: pixelWidth,
-    height: pixelHeight,
+  const cropped = await cropImageToPng({
+    bytes: page.bytes,
+    mime: page.mime,
+    region: {
+      left: left * pageWidth,
+      top: top * pageHeight,
+      width: pixelWidth,
+      height: pixelHeight,
+    },
+    minWidth: READ_MIN_WIDTH,
   });
-  if (pixelWidth < READ_MIN_WIDTH) {
-    pipeline = pipeline.resize({ width: READ_MIN_WIDTH, kernel: "lanczos3" });
-  }
 
-  return { bytes: await pipeline.png().toBuffer(), mime: "image/png" };
+  return { bytes: cropped.bytes, mime: cropped.mime };
 }
 
 /**
@@ -326,7 +324,6 @@ export async function extractSupplierInvoiceV2(input: {
   let totalTokens = 0;
   let sawUsage = false;
 
-  const sharp = (await import("sharp")).default;
   const account = (usage: Record<string, unknown> | undefined) => {
     if (!usage) return;
     sawUsage = true;
@@ -362,7 +359,7 @@ export async function extractSupplierInvoiceV2(input: {
       printedColumns = pageRead.parsed.printedColumns.map((column) => String(column));
     }
 
-    const cropped = await cropTable(sharp, page, pageRead.parsed);
+    const cropped = await cropTable(page, pageRead.parsed);
     const tableRead = await callModel({
       apiKey: input.apiKey,
       model,
@@ -404,6 +401,29 @@ export async function extractSupplierInvoiceV2(input: {
    * confidence of 95.
    */
   const reasons: string[] = [];
+
+  /*
+   * An empty result is never an acceptable one.
+   *
+   * Found by the v1/v2 benchmark: a document that yielded no line items came
+   * back "accepted", because with no rows there is nothing for the arithmetic
+   * check to disagree with, and with no invoice total on the page the
+   * completeness gate had no figure to reconcile against. Both validators
+   * abstained, and abstention was read as approval. v1 flagged the same
+   * document for review, so this was v2 doing worse than the engine it replaces.
+   *
+   * Silence from the validators is not evidence of correctness.
+   */
+  const expectsRows = !/statement/i.test(extraction.documentType);
+  if (expectsRows && extraction.lineItems.length === 0) {
+    reasons.push(
+      "No invoice lines could be read from this document. It needs to be captured by hand, or re-uploaded at a higher quality."
+    );
+  } else if (expectsRows && arithmetic.status === "Unverified") {
+    reasons.push(
+      "The line figures could not be checked against each other. Confirm the quantity, unit price and totals against the document."
+    );
+  }
 
   if (arithmetic.status === "Fail") {
     reasons.push(...arithmetic.reasons);
