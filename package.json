@@ -11,6 +11,11 @@
     "typecheck:mobile": "npm --prefix apps/vyron-ops-mobile run typecheck",
     "typecheck": "npm run typecheck:web && npm run typecheck:mobile",
     "validate:schema": "node scripts/validate-schema-drift.mjs",
+    "reset:introspect": "node scripts/introspect-schema.mjs",
+    "reset:plan": "node scripts/generate-reset-plan.mjs",
+    "reset:sql": "node scripts/introspect-schema.mjs && node scripts/generate-reset-plan.mjs && node scripts/generate-reset-sql.mjs",
+    "reset:password-hash": "node scripts/generate-dev-reset-password-hash.mjs",
+    "reset:restore": "node scripts/restore-developer-backup.mjs",
     "import:handcrafted": "node scripts/import-handcrafted.mjs",
     "generate:pwa-icons": "node scripts/generate-pwa-icons.mjs",
     "safety:run": "node scripts/safety/run.mjs",
@@ -20,7 +25,12 @@
     "safety:verify-register": "node scripts/safety/preflight.mjs --verify-register",
     "safety:self-test": "node scripts/safety/self-test.mjs",
     "test:reconciliation": "node scripts/test-reconciliation-consistency.mjs",
-    "test:workspace-scroll": "node scripts/test-review-workspace-scrolling.mjs"
+    "test:workspace-scroll": "node scripts/test-review-workspace-scrolling.mjs",
+    "test:ai-availability": "node scripts/test-ai-service-availability.mjs",
+    "measure:workspace-density": "node scripts/measure-review-workspace-density.mjs",
+    "certify:workflow": "node scripts/certify-production-workflow.mjs",
+    "test:approval-safety": "node scripts/test-approval-safety.mjs",
+    "test:crop-fidelity": "node scripts/test-crop-fidelity.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",

@@ -47,6 +47,11 @@ import {
 } from "@/lib/vyron-document-extraction";
 import { buildExtractionQualityRecord, type ExtractionQualityRecord } from "@/lib/vyron-extraction-quality";
 import { cropImageToPng, imageSize } from "@/lib/vyron-image-raster";
+import { classifyAiProviderFailure } from "@/lib/vyron-ai-service-errors";
+import { traceStart, traceComplete, traceFailed, traceRows } from "@/lib/vyron-workflow-trace";
+
+/** Call counter for the workflow trace; per-process, only used for log labels. */
+let openAiCallCounter = 0;
 
 export type InvoiceExtractionV2Status = "accepted" | "manual-review";
 
@@ -205,6 +210,9 @@ async function callModel(input: {
 }): Promise<{ parsed: Record<string, unknown>; outputText: string; usage: Record<string, unknown> | undefined }> {
   const dataUrl = `data:${input.mime};base64,${input.imageBytes.toString("base64")}`;
 
+  const openAiCallIndex = ++openAiCallCounter;
+  traceStart(`OPENAI REQUEST ${openAiCallIndex}`, null, { engine: "v2", model: input.model, mime: input.mime });
+
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: { Authorization: `Bearer ${input.apiKey}`, "Content-Type": "application/json" },
@@ -225,8 +233,22 @@ async function callModel(input: {
   });
 
   const data = (await response.json()) as Record<string, unknown>;
+  if (response.ok) {
+    traceComplete(`OPENAI REQUEST ${openAiCallIndex}`, null, {
+      httpStatus: response.status,
+      tokens: (data as { usage?: { total_tokens?: number } }).usage?.total_tokens ?? null,
+    });
+  } else {
+    const providerError = (data as { error?: { message?: string; code?: string } }).error;
+    traceFailed(`OPENAI REQUEST ${openAiCallIndex}`, null, {
+      httpStatus: response.status,
+      reason: providerError?.code || providerError?.message || `HTTP ${response.status}`,
+    });
+  }
   if (!response.ok) {
     const error = data.error as { message?: string } | undefined;
+    const availability = classifyAiProviderFailure({ status: response.status, body: data });
+    if (availability) throw availability;
     throw new Error(`Extraction v2 ${input.model} failed: ${error?.message || JSON.stringify(data).slice(0, 400)}`);
   }
 
@@ -387,12 +409,18 @@ export async function extractSupplierInvoiceV2(input: {
     }
   }
 
+  traceRows("1-openai-json", null, lineItems.length, { engine: "v2", pages: assessment.pageImages.length });
+  traceStart("NORMALISATION", null, { engine: "v2" });
   const extraction = normaliseExtractionStrict(
     { ...header, lineItems, visibleLineItemCount: lineItems.length },
     rawResponses.map((entry) => entry.outputText).join("\n")
   );
 
+  traceRows("2-normalised", null, extraction.lineItems.length, { engine: "v2" });
+  traceComplete("NORMALISATION", null, { rows: extraction.lineItems.length });
+  traceStart("VALIDATION", null, { engine: "v2" });
   const arithmetic = assessLineArithmetic(extraction);
+  traceComplete("VALIDATION", null, { completeness: extraction.completeness.status, arithmetic: arithmetic.status });
 
   /*
    * Acceptance.

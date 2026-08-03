@@ -4,6 +4,8 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import ClientBrandLockup from "@/components/ClientBrandLockup";
+import { exitClientWorkspace } from "@/lib/vyron-developer-client";
+import { clearWorkspaceSession } from "@/lib/vyron-workspace-session";
 
 export default function DeveloperLoginClient() {
   const searchParams = useSearchParams();
@@ -35,6 +37,13 @@ export default function DeveloperLoginClient() {
         setLoading(false);
         return;
       }
+
+      // The login response clears the workspace cookies, but localStorage and
+      // sessionStorage are browser-only. DeveloperAccessGuard reads them
+      // directly, so they must be cleared here or the Developer Centre stays
+      // blocked behind "Access denied" despite a valid platform session.
+      exitClientWorkspace();
+      clearWorkspaceSession();
 
       window.location.href = next;
     } catch {

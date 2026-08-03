@@ -1,0 +1,992 @@
+{
+  "modules": {
+    "supplier_invoices": {
+      "roots": [
+        "vyron_documents",
+        "vyron_cost_invoice_headers",
+        "vyron_cost_supplier_invoices",
+        "vyron_supplier_invoice_learning",
+        "vyron_supplier_line_item_mappings",
+        "vyron_cost_invoice_risk_findings",
+        "vyron_supplier_price_history"
+      ],
+      "tables": [
+        {
+          "table": "vyron_cost_supplier_invoice_lines",
+          "scope": {
+            "kind": "parent",
+            "column": "invoice_id",
+            "parent": "vyron_cost_supplier_invoices",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "parent",
+              "column": "supplier_id",
+              "parent": "vyron_cost_suppliers",
+              "undeclared": false,
+              "parentScope": {
+                "kind": "column",
+                "column": "company_id"
+              }
+            }
+          }
+        },
+        {
+          "table": "vyron_cost_invoice_lines",
+          "scope": {
+            "kind": "parent",
+            "column": "invoice_id",
+            "parent": "vyron_cost_invoice_headers",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "company_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_document_field_corrections",
+          "scope": {
+            "kind": "parent",
+            "column": "document_id",
+            "parent": "vyron_documents",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "tenant_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_procurement_three_way_matches",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_procurement_risk_alerts",
+          "scope": {
+            "kind": "column",
+            "column": "tenant_id"
+          }
+        },
+        {
+          "table": "vyron_document_cost_audit",
+          "scope": {
+            "kind": "column",
+            "column": "tenant_id"
+          }
+        },
+        {
+          "table": "vyron_supplier_contracts",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_document_extraction_logs",
+          "scope": {
+            "kind": "parent",
+            "column": "document_id",
+            "parent": "vyron_documents",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "tenant_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_supplier_price_history",
+          "scope": {
+            "kind": "column",
+            "column": "tenant_id"
+          }
+        },
+        {
+          "table": "vyron_document_line_items",
+          "scope": {
+            "kind": "parent",
+            "column": "document_id",
+            "parent": "vyron_documents",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "tenant_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_cost_invoice_risk_findings",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_supplier_line_item_mappings",
+          "scope": {
+            "kind": "column",
+            "column": "tenant_id"
+          }
+        },
+        {
+          "table": "vyron_supplier_invoice_learning",
+          "scope": {
+            "kind": "column",
+            "column": "tenant_id"
+          }
+        },
+        {
+          "table": "vyron_cost_supplier_invoices",
+          "scope": {
+            "kind": "parent",
+            "column": "supplier_id",
+            "parent": "vyron_cost_suppliers",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "company_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_cost_invoice_headers",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_documents",
+          "scope": {
+            "kind": "column",
+            "column": "tenant_id"
+          }
+        }
+      ],
+      "cycleBreakers": [],
+      "cycles": []
+    },
+    "raw_materials": {
+      "roots": [
+        "vyron_cost_ingredients",
+        "vyron_cost_stock_items"
+      ],
+      "tables": [
+        {
+          "table": "vyron_cost_back_orders",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_goods_receipt_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_stock_count_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_low_stock_alerts",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_inventory_audit_log",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_stock_ledger",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_inventory_transactions",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_run_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_supplier_invoice_lines",
+          "scope": {
+            "kind": "parent",
+            "column": "invoice_id",
+            "parent": "vyron_cost_supplier_invoices",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "parent",
+              "column": "supplier_id",
+              "parent": "vyron_cost_suppliers",
+              "undeclared": false,
+              "parentScope": {
+                "kind": "column",
+                "column": "company_id"
+              }
+            }
+          }
+        },
+        {
+          "table": "vyron_cost_recovery_opportunities",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_wastage",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_purchase_order_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_price_history",
+          "scope": {
+            "kind": "parent",
+            "column": "supplier_id",
+            "parent": "vyron_cost_suppliers",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "company_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_cost_stock_items",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_ingredients",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        }
+      ],
+      "cycleBreakers": [],
+      "cycles": []
+    },
+    "finished_goods": {
+      "roots": [
+        "vyron_cost_products",
+        "vyron_finished_goods"
+      ],
+      "tables": [
+        {
+          "table": "vyron_manufacturing_batch_lines",
+          "scope": {
+            "kind": "parent",
+            "column": "batch_id",
+            "parent": "vyron_manufacturing_batches",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "company_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_customer_price_list_audit_log",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_bom_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_run_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_labour",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_customer_sales_order_production_links",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_overhead",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_wastage",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_audit_log",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_manufacturing_batches",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_customer_invoice_lines",
+          "scope": {
+            "kind": "parent",
+            "column": "invoice_id",
+            "parent": "vyron_customer_invoices",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "company_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_customer_price_list_items",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_recovery_opportunities",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_customer_sales_order_allocations",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_customer_sales_order_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_runs",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_product_recipe_links",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_customer_sales_order_items",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_finished_goods",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_products",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_boms",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        }
+      ],
+      "cycleBreakers": [
+        {
+          "table": "vyron_cost_products",
+          "column": "linked_bom_id",
+          "reason": "products.linked_bom_id <-> boms.product_id"
+        }
+      ],
+      "cycles": [
+        "vyron_cost_products"
+      ]
+    },
+    "boms": {
+      "roots": [
+        "vyron_cost_boms",
+        "vyron_cost_recipes"
+      ],
+      "tables": [
+        {
+          "table": "vyron_customer_price_list_audit_log",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_customer_invoice_lines",
+          "scope": {
+            "kind": "parent",
+            "column": "invoice_id",
+            "parent": "vyron_customer_invoices",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "company_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_customer_price_list_items",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_recovery_opportunities",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_customer_sales_order_allocations",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_customer_sales_order_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_customer_sales_order_items",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_run_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_labour",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_customer_sales_order_production_links",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_overhead",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_wastage",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_audit_log",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_batch_runs",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_product_recipe_links",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_bom_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_runs",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_recipes",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_boms",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_products",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        }
+      ],
+      "cycleBreakers": [
+        {
+          "table": "vyron_cost_products",
+          "column": "linked_bom_id",
+          "reason": "products.linked_bom_id <-> boms.product_id"
+        }
+      ],
+      "cycles": [
+        "vyron_cost_boms"
+      ]
+    },
+    "production_history": {
+      "roots": [
+        "vyron_cost_production_runs",
+        "vyron_cost_store_production_runs"
+      ],
+      "tables": [
+        {
+          "table": "vyron_cost_store_production_run_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_run_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_labour",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_customer_sales_order_production_links",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_overhead",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_wastage",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_audit_log",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_store_production_runs",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_runs",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        }
+      ],
+      "cycleBreakers": [],
+      "cycles": []
+    },
+    "suppliers": {
+      "roots": [
+        "vyron_cost_suppliers",
+        "vyron_supplier_profiles",
+        "vyron_supplier_contracts"
+      ],
+      "tables": [
+        {
+          "table": "vyron_document_field_corrections",
+          "scope": {
+            "kind": "parent",
+            "column": "document_id",
+            "parent": "vyron_documents",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "tenant_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_cost_invoice_risk_findings",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_document_cost_audit",
+          "scope": {
+            "kind": "column",
+            "column": "tenant_id"
+          }
+        },
+        {
+          "table": "vyron_document_extraction_logs",
+          "scope": {
+            "kind": "parent",
+            "column": "document_id",
+            "parent": "vyron_documents",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "tenant_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_supplier_line_item_mappings",
+          "scope": {
+            "kind": "column",
+            "column": "tenant_id"
+          }
+        },
+        {
+          "table": "vyron_cost_goods_receipt_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_stock_count_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_inventory_audit_log",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_stock_ledger",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_inventory_transactions",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_production_run_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_supplier_invoice_lines",
+          "scope": {
+            "kind": "parent",
+            "column": "invoice_id",
+            "parent": "vyron_cost_supplier_invoices",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "parent",
+              "column": "supplier_id",
+              "parent": "vyron_cost_suppliers",
+              "undeclared": false,
+              "parentScope": {
+                "kind": "column",
+                "column": "company_id"
+              }
+            }
+          }
+        },
+        {
+          "table": "vyron_cost_production_wastage",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_procurement_three_way_matches",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_supplier_invoices",
+          "scope": {
+            "kind": "parent",
+            "column": "supplier_id",
+            "parent": "vyron_cost_suppliers",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "company_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_cost_goods_receipts",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_back_orders",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_purchase_order_lines",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_recovery_opportunities",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_low_stock_alerts",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_cost_stock_items",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_supplier_price_history",
+          "scope": {
+            "kind": "column",
+            "column": "tenant_id"
+          }
+        },
+        {
+          "table": "vyron_procurement_risk_alerts",
+          "scope": {
+            "kind": "column",
+            "column": "tenant_id"
+          }
+        },
+        {
+          "table": "vyron_document_line_items",
+          "scope": {
+            "kind": "parent",
+            "column": "document_id",
+            "parent": "vyron_documents",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "tenant_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_cost_price_history",
+          "scope": {
+            "kind": "parent",
+            "column": "supplier_id",
+            "parent": "vyron_cost_suppliers",
+            "undeclared": false,
+            "parentScope": {
+              "kind": "column",
+              "column": "company_id"
+            }
+          }
+        },
+        {
+          "table": "vyron_cost_ingredients",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_supplier_contracts",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_documents",
+          "scope": {
+            "kind": "column",
+            "column": "tenant_id"
+          }
+        },
+        {
+          "table": "vyron_cost_purchase_orders",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        },
+        {
+          "table": "vyron_supplier_profiles",
+          "scope": {
+            "kind": "column",
+            "column": "tenant_id"
+          }
+        },
+        {
+          "table": "vyron_cost_suppliers",
+          "scope": {
+            "kind": "column",
+            "column": "company_id"
+          }
+        }
+      ],
+      "cycleBreakers": [],
+      "cycles": []
+    }
+  },
+  "protectedSkipped": [],
+  "unscopableSkipped": []
+}

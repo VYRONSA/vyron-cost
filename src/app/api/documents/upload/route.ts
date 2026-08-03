@@ -1,3 +1,4 @@
+import { traceStart, traceComplete } from "@/lib/vyron-workflow-trace";
 import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { lookupTenantById } from "@/lib/vyron-document-tenant";
@@ -33,6 +34,7 @@ async function logDocumentEvent(
 }
 
 export async function POST(request: NextRequest) {
+  traceStart("UPLOAD", null);
   const contentTypeHeader = request.headers.get("content-type") || "";
   const contentLengthHeader = request.headers.get("content-length");
   const boundaryMatch = contentTypeHeader.match(/boundary=([^;]+)/i);
@@ -314,6 +316,8 @@ export async function POST(request: NextRequest) {
       storagePath,
       storageBucket: VYRON_DOCUMENTS_BUCKET,
     });
+
+    traceComplete("UPLOAD", documentId, { bytes: file.size, mime, storagePath });
 
     return NextResponse.json({
       ok: true,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { traceStart, traceComplete, traceEvent, traceReset } from "@/lib/vyron-workflow-trace";
 import { getDocumentApprovalRules } from "@/lib/vyron-document-approval-rules";
 import {
   recordApprovalOverride,
@@ -24,6 +25,8 @@ import {
   verifyDocumentTenantAccess,
 } from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import { parseExtractionQualityRecord } from "@/lib/vyron-extraction-quality";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
@@ -38,8 +41,42 @@ function movementType(previousValue: number, pct: number | null, hadPriorItem: b
   return "first_purchase";
 }
 
+/**
+ * The extraction quality record for a document's most recent successful run.
+ *
+ * Approval consults it so a failed extraction cannot become inventory cost.
+ * Returns null when no record exists — documents extracted before extraction
+ * quality shipped are validated on their fields alone, as they always were.
+ */
+async function loadExtractionQuality(supabase: SupabaseClient, documentId: string) {
+  const { data, error } = await supabase
+    .from('vyron_document_extraction_logs')
+    .select('metadata')
+    .eq('document_id', documentId)
+    .eq('stage', 'extraction')
+    .eq('status', 'success')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error || !data?.metadata || typeof data.metadata !== 'object') {
+    traceEvent("QUALITY RECEIVED", documentId, { found: false, reason: error?.message ?? "no successful extraction log" });
+    return null;
+  }
+  const record = parseExtractionQualityRecord((data.metadata as Record<string, unknown>).extractionQuality);
+  traceEvent("QUALITY RECEIVED", documentId, {
+    found: Boolean(record),
+    completenessStatus: record?.completenessStatus ?? null,
+    reconciliationStatus: record?.reconciliationStatus ?? null,
+    columnMappingFailed: record?.columnMappingFailed ?? null,
+    classification: record?.classification ?? null,
+    extractedLineCount: record?.extractedLineCount ?? null,
+  });
+  return record;
+}
+
 export async function POST(request: NextRequest, context: RouteContext) {
   const { id: documentId } = await context.params;
+  traceStart("APPROVAL", documentId);
   const body = await request.json().catch(() => ({}));
   const forceApproval = Boolean(body?.force);
   const forceTotalsMismatch = Boolean(body?.forceTotalsMismatch);
@@ -85,8 +122,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
   if (linesError) return NextResponse.json({ ok: false, error: linesError.message }, { status: 500 });
 
   const policyRules = { ...rules, blockUnmappedLines: rules.requireMatchedLineItems };
+  traceStart("APPROVAL VALIDATION", documentId);
   const validation = validateDocumentApproval({
     document,
+    extractionQuality: await loadExtractionQuality(supabase, documentId),
     lines: lines || [],
     rules: policyRules,
     options: {
@@ -96,6 +135,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     },
   });
 
+  traceComplete("APPROVAL VALIDATION", documentId, { blocked: validation.blocked, violations: validation.violations.length, qualityRules: validation.violations.filter((v) => v.rule.startsWith("extraction_")).length, businessRules: validation.violations.filter((v) => !v.rule.startsWith("extraction_")).length });
   const poLinkViolation = validatePoLinkRequired(
     document.purchase_order_id as string | null,
     poRules.requirePoBeforeInvoiceApproval,
@@ -109,6 +149,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   if (validation.blocked) {
+    traceEvent("APPROVAL BLOCKED", documentId, { rules: validation.violations.map((v) => v.rule).join("|") });
     return NextResponse.json(
       {
         ok: false,
@@ -645,6 +686,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
     console.warn("[approve] Xero supplier bill queue failed", xeroQueueError);
   }
 
+  traceEvent("APPROVAL INVENTORY", documentId, { costUpdates: updatesApplied.length, priceHistory: historyRows.length });
+  traceComplete("APPROVAL", documentId, { updated: updatesApplied.length });
+  traceEvent("FINISHED", documentId, { status: "approved" });
+  traceReset(documentId);
   return NextResponse.json({
     ok: true,
     updatedCount: updatesApplied.length,

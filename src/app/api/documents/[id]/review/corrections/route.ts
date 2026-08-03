@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { traceStart, traceComplete } from "@/lib/vyron-workflow-trace";
 import { deriveDateFormat, deriveInvoicePattern } from "@/lib/vyron-document-review";
 import { persistSupplierLineMappings } from "@/lib/vyron-supplier-line-learning";
 import {
@@ -53,6 +54,7 @@ type CorrectionsPayload = {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   const { id: documentId } = await context.params;
+  traceStart("CORRECTION SAVE", documentId);
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
   }
@@ -163,14 +165,34 @@ export async function POST(request: NextRequest, context: RouteContext) {
       mapping_confidence: line.matchedEntityId ? 90 : 0,
     };
 
-    if (existingLineIds.has(line.id)) {
-      await supabase.from("vyron_document_line_items").update(row).eq("id", line.id).eq("document_id", documentId);
-    } else {
-      await supabase.from("vyron_document_line_items").insert({
-        ...row,
-        id: line.id,
-        document_id: documentId,
+    /*
+     * Write failures are reported, not swallowed.
+     *
+     * These calls previously discarded their error. A rejected row — a bad id,
+     * a constraint, a policy — vanished silently while the response still said
+     * `ok: true`, so an operator who had just typed a line by hand was told it
+     * was saved and it was not. Losing a clerk's work is bad; telling them it
+     * was kept is worse, because they have no reason to check.
+     */
+    const { error: lineError } = existingLineIds.has(line.id)
+      ? await supabase.from("vyron_document_line_items").update(row).eq("id", line.id).eq("document_id", documentId)
+      : await supabase.from("vyron_document_line_items").insert({ ...row, id: line.id, document_id: documentId });
+
+    if (lineError) {
+      console.error("[documents/review/corrections] line write failed", {
+        documentId,
+        lineId: line.id,
+        message: lineError.message,
       });
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "LINE_SAVE_FAILED",
+          message: `Line "${line.description || line.id}" could not be saved. Your other changes were not applied either — please retry.`,
+          detail: lineError.message,
+        },
+        { status: 500 }
+      );
     }
   }
 
@@ -214,6 +236,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     (line) => line.matchedEntityType && line.matchedEntityId && !line.ignored
   ).length;
 
+  traceComplete("CORRECTION SAVE", documentId, { lines: body.lines.length });
   return NextResponse.json({
     ok: true,
     correctedFieldCount: correctedFields.length,

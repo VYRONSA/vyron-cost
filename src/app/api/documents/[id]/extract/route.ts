@@ -18,6 +18,8 @@ import { getServerWorkspaceSession } from "@/lib/vyron-workspace-admin-server";
 import { AiUsageService, resolveProviderForModel } from "@/lib/platform/ai";
 import { computeDocumentHash, runDuplicateInvoiceDetection } from "@/lib/vyron-duplicate-invoice-detection";
 import { captureExtractionEvidence } from "@/lib/vyron-extraction-evidence";
+import { isAiServiceUnavailable } from "@/lib/vyron-ai-service-errors";
+import { traceStart, traceComplete, traceEvent } from "@/lib/vyron-workflow-trace";
 import { runDocumentExtractionV2 } from "@/lib/vyron-invoice-extraction-v2";
 
 /**
@@ -359,6 +361,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     trace.log("Extraction engine selected", { documentId }, { engine, source: "DOCUMENT_EXTRACTION_ENGINE" }, 0);
 
     try {
+      traceStart("EXTRACTION", documentId, { engine });
       const runExtraction = engine === "v2" ? runDocumentExtractionV2 : runDocumentExtraction;
       const result = await runExtraction(
         { fileName, mime, bytes },
@@ -375,6 +378,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       extractionDurationMs = result.executionTimeMs;
       extractionUsage = result.usage;
 
+      traceComplete("EXTRACTION", documentId, { engineExecuted: log.engineExecuted, rows: extraction.lineItems.length, attempts: log.attempts.length });
       // v1 selected directly records no requested engine of its own; the flag
       // is the only place that answer exists.
       if (!log.engineRequested) log.engineRequested = engine;
@@ -447,6 +451,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       console.warn("[documents/extract] could not persist file_hash", hashPersistError.message);
     }
 
+    traceStart("SAVE", documentId, { rows: extraction.lineItems.length });
     await persistExtractionToDocument(
       supabase,
       documentId,
@@ -486,6 +491,15 @@ export async function POST(_request: NextRequest, context: RouteContext) {
         0
       );
     }
+
+    traceComplete("SAVE", documentId);
+    traceEvent("QUALITY SAVED", documentId, {
+      completenessStatus: quality.completenessStatus,
+      reconciliationStatus: quality.reconciliationStatus,
+      columnMappingFailed: quality.columnMappingFailed,
+      classification: quality.classification,
+      extractedLineCount: quality.extractedLineCount,
+    });
 
     // Deterministic duplicate detection. Runs AFTER persistence so the header
     // fields it compares are the ones stored. No model output influences the
@@ -580,6 +594,50 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       duplicateDetection: duplicateResult,
     });
   } catch (error) {
+    /*
+     * A provider that is unavailable is not a server error.
+     *
+     * When the OpenAI account ran out of credit the provider returned 429, this
+     * catch-all turned it into HTTP 500, and the operator was shown "Internal
+     * Server Error" for a billing condition — a message that says "file a bug"
+     * about something only a top-up can fix. 503 with a plain-language reason
+     * tells the truth and keeps the document available for manual capture.
+     */
+    /*
+     * Release the "extracting" lock on every failure path.
+     *
+     * The route marks the document "extracting" before calling the model and
+     * only ever cleared it on success. A failed run therefore left the document
+     * pinned in that state permanently — the review screen polls it, finds it
+     * never finishes, and the operator has no way back out through the UI.
+     * Measured on document 03314feb after its quota failure: status was still
+     * "extracting" long after the request had returned.
+     */
+    try {
+      await supabase.from("vyron_documents").update({ status: "uploaded" }).eq("id", documentId).eq("status", "extracting");
+    } catch (statusError) {
+      console.warn("[documents/extract] could not release extracting status", statusError);
+    }
+
+    if (isAiServiceUnavailable(error)) {
+      trace.log(
+        "AI service unavailable",
+        { documentId, reason: error.reason },
+        { providerStatus: error.providerStatus, detail: error.message },
+        0
+      );
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "AI_SERVICE_UNAVAILABLE",
+          reason: error.reason,
+          message: error.operatorMessage,
+          providerStatus: error.providerStatus,
+        },
+        { status: 503 }
+      );
+    }
+
     trace.error("Unhandled exception", error, { documentId });
     return documentTenantAccessErrorResponse(error, "Extraction failed.");
   }

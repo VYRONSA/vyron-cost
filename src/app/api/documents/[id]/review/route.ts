@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { traceStart, traceComplete, traceRows } from "@/lib/vyron-workflow-trace";
 import {
   documentTenantAccessErrorResponse,
   loadDocumentForTenant,
@@ -14,6 +15,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(_request: NextRequest, context: RouteContext) {
   const { id: documentId } = await context.params;
+  traceStart("REVIEW LOAD", documentId);
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
   }
@@ -76,6 +78,8 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     ),
   }));
 
+  traceRows("4-review-draft", documentId, (lines || []).length);
+  traceComplete("REVIEW LOAD", documentId, { lines: (lines || []).length });
   return NextResponse.json({
     ok: true,
     payload: {

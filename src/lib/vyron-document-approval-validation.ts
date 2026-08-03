@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DocumentApprovalRules } from "@/lib/vyron-document-approval-rules";
 import { roundMoney } from "@/lib/vyron-invoice-line-math";
 import { reconcileInvoiceTotals } from "@/lib/vyron-invoice-reconciliation";
+import type { ExtractionQualityRecord } from "@/lib/vyron-extraction-quality";
 
 export type ApprovalViolation = {
   rule: string;
@@ -22,6 +23,12 @@ export type ApprovalValidationInput = {
     total?: number | null;
     field_confidence?: Record<string, number> | null;
   };
+  /**
+   * The extraction's verdict on itself, from the run that produced these lines.
+   * Null for documents extracted before extraction quality shipped — those are
+   * validated on their fields alone, exactly as before.
+   */
+  extractionQuality?: ExtractionQualityRecord | null;
   lines: Array<{
     ignored?: boolean;
     matched_entity_id?: string | null;
@@ -60,6 +67,48 @@ export function validateDocumentApproval(input: ApprovalValidationInput): Approv
   const violations: ApprovalViolation[] = [];
   const activeLines = (lines || []).filter((line) => !line.ignored);
   const ignoredCount = (lines || []).filter((line) => line.ignored).length;
+
+  /*
+   * The extraction must be sound before its numbers can become cost.
+   *
+   * MEASURED GAP: this validator consulted the document's fields and lines but
+   * never the extraction's own verdict on itself. A scanned invoice returning
+   * `arithmetic = Fail`, `completeness = Incomplete [column-mapping-failed]` —
+   * the precise failure this programme exists to catch, where VAT was read from
+   * a WEIGHT column — passed approval with zero violations. Approving that
+   * writes wrong unit costs into inventory and costing, where the error stops
+   * being visible and starts compounding.
+   *
+   * Operators are told what to do; the machine-readable reason is carried in
+   * `rule` for the developer diagnostics page and never shown as prose.
+   */
+  const quality = input.extractionQuality ?? null;
+  if (quality) {
+    if (quality.completenessStatus === "Incomplete") {
+      violations.push({
+        rule: "extraction_incomplete",
+        message:
+          "Not all invoice lines could be read from this document. Check every line against the invoice and add anything missing before approving.",
+        severity: "error",
+      });
+    }
+    if (quality.reconciliationStatus === "Not reconciled") {
+      violations.push({
+        rule: "extraction_totals_not_reconciled",
+        message:
+          "The line totals do not add up to the invoice total. Correct the lines or the invoice totals before approving.",
+        severity: "error",
+      });
+    }
+    if (quality.columnMappingFailed) {
+      violations.push({
+        rule: "extraction_column_mapping_failed",
+        message:
+          "The figures on each line do not agree with each other, which usually means a column was read incorrectly. Check the quantity, unit price and VAT on every line against the document before approving.",
+        severity: "error",
+      });
+    }
+  }
 
   if (rules.requirePurchaseOrder && !hasText(document.purchase_order_number) && !document.purchase_order_id) {
     violations.push({

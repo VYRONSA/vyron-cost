@@ -47,6 +47,8 @@ export type ExtractionQualityRecord = {
   retryCount: number;
   retryReasons: string[];
   reconciliationStatus: ExtractionReconciliationStatus;
+  /** The extraction judged its own line columns inconsistent. Approval blocks on this. */
+  columnMappingFailed: boolean;
   reconciliationVariance: number | null;
   missingFields: string[];
   warnings: string[];
@@ -272,6 +274,7 @@ export function buildExtractionQualityRecord(
     retryCount,
     retryReasons,
     reconciliationStatus: reconciliationStatusFor(extraction),
+    columnMappingFailed: extraction.completeness.reasons.includes("column-mapping-failed"),
     reconciliationVariance: extraction.completeness.variance,
     missingFields: extraction.validation.missingFields,
     warnings: extraction.warnings,
@@ -336,6 +339,10 @@ export function parseExtractionQualityRecord(value: unknown): ExtractionQualityR
     retryCount: finiteOrNull(raw.retryCount) ?? 0,
     retryReasons: stringArray(raw.retryReasons),
     reconciliationStatus,
+    // Absent on records written before approval consulted extraction quality.
+    // Defaulting to false keeps historic documents approvable rather than
+    // retroactively blocking work that was already reviewed by a person.
+    columnMappingFailed: raw.columnMappingFailed === true,
     reconciliationVariance: finiteOrNull(raw.reconciliationVariance),
     missingFields: stringArray(raw.missingFields),
     warnings: stringArray(raw.warnings),

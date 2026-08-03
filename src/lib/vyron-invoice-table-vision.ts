@@ -25,6 +25,11 @@
 
 import type { ExtractionRuntimeOptions } from "@/lib/vyron-document-extraction";
 import { cropImageToPng, imageSize } from "@/lib/vyron-image-raster";
+import { classifyAiProviderFailure } from "@/lib/vyron-ai-service-errors";
+import { traceStart, traceComplete, traceFailed } from "@/lib/vyron-workflow-trace";
+
+/** Call counter for the workflow trace; per-process, only used for log labels. */
+let openAiCallCounter = 0;
 
 export type TableColumnMapping = {
   description: string;
@@ -135,6 +140,8 @@ async function callVision(input: {
   maxOutputTokens: number;
 }) {
   const dataUrl = `data:${input.mime};base64,${input.imageBytes.toString("base64")}`;
+  const openAiCallIndex = ++openAiCallCounter;
+  traceStart(`OPENAI REQUEST ${openAiCallIndex}`, null, { model: input.model });
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: { Authorization: `Bearer ${input.apiKey}`, "Content-Type": "application/json" },
@@ -155,8 +162,22 @@ async function callVision(input: {
   });
 
   const data = (await response.json()) as Record<string, unknown>;
+  if (response.ok) {
+    traceComplete(`OPENAI REQUEST ${openAiCallIndex}`, null, {
+      httpStatus: response.status,
+      tokens: (data as { usage?: { total_tokens?: number } }).usage?.total_tokens ?? null,
+    });
+  } else {
+    const providerError = (data as { error?: { message?: string; code?: string } }).error;
+    traceFailed(`OPENAI REQUEST ${openAiCallIndex}`, null, {
+      httpStatus: response.status,
+      reason: providerError?.code || providerError?.message || `HTTP ${response.status}`,
+    });
+  }
   if (!response.ok) {
     const error = data.error as { message?: string } | undefined;
+    const availability = classifyAiProviderFailure({ status: response.status, body: data });
+    if (availability) throw availability;
     throw new Error(`Table vision ${input.model} failed: ${error?.message || JSON.stringify(data).slice(0, 400)}`);
   }
 

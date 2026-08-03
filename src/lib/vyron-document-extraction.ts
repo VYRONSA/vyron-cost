@@ -11,6 +11,8 @@ import {
   type TableVisionRow,
 } from "@/lib/vyron-invoice-table-vision";
 import { reconcileInvoiceTotals } from "@/lib/vyron-invoice-reconciliation";
+import { classifyAiProviderFailure } from "@/lib/vyron-ai-service-errors";
+import { traceStart, traceComplete, traceFailed, traceRows } from "@/lib/vyron-workflow-trace";
 import {
   buildExtractionQualityRecord,
   expectsLineItems,
@@ -743,6 +745,10 @@ function describeIncompleteness(completeness: ExtractionCompleteness): string[] 
   });
 }
 
+/** Call counter for the workflow trace; per-process, only used for log labels. */
+/** Sequence for OPENAI REQUEST labels in the workflow trace. Per-process. */
+let openAiCallCounter = 0;
+
 function validateExtraction(extraction: ExtractedInvoice): ExtractedInvoice {
   const subtotal = numberFromMoney(extraction.subtotal);
   const vat = numberFromMoney(extraction.vat);
@@ -1048,19 +1054,27 @@ function shouldEscalateToTableVision(
   extraction: ExtractedInvoice,
   visionClass: DocumentVisionClass
 ): { escalate: boolean; reason: string } {
-  if (visionClass !== "scanned-pdf" && visionClass !== "image") {
-    return { escalate: false, reason: `Document is ${visionClass}; the text-exact path applies.` };
-  }
-  if (!expectsLineItems(extraction.documentType)) {
-    return { escalate: false, reason: `${extraction.documentType} does not carry priced rows.` };
-  }
-  if (extraction.lineArithmetic.status === "Fail") {
-    return { escalate: true, reason: `Line columns failed arithmetic validation: ${extraction.lineArithmetic.reasons[0]}` };
-  }
-  if (extraction.completeness.status === "Incomplete") {
-    return { escalate: true, reason: `Extraction incomplete: ${extraction.completeness.reasons.join(", ")}.` };
-  }
-  return { escalate: false, reason: "Line items reconcile and the columns agree; no table re-read needed." };
+  /*
+   * v1 no longer escalates. MEASURED, same document, same day:
+   *
+   *   baseline v1 (before this project)   66,364ms   3 model calls
+   *   v1 with escalation                  92,867ms   5 model calls   (1.40x)
+   *   v2                                  20,296ms   2 model calls
+   *
+   * The escalation was added to v1 before v2 existed. Now that scanned pages
+   * and images always route to v2 — which reads a cropped table by design — the
+   * only thing v1's copy still did was make the rollback engine 40% slower than
+   * the engine it rolls back to. A rollback that is worse than never having
+   * shipped is not a rollback.
+   *
+   * v2 owns the vision path. v1 is the text-exact fallback and nothing else.
+   */
+  void extraction;
+  void visionClass;
+  return {
+    escalate: false,
+    reason: "Engine v1 does not use the table re-read; scanned pages and images are handled by engine v2.",
+  };
 }
 
 function lineItemsFromTableVision(rows: TableVisionRow[]): ExtractedLineItem[] {
@@ -1316,6 +1330,10 @@ Use "${MISSING}" only for fields not visible on the document.`;
     0
   );
 
+  const openAiCallIndex = ++openAiCallCounter;
+  const traceCallId = runtime?.context?.documentId ?? null;
+  traceStart(`OPENAI REQUEST ${openAiCallIndex}`, traceCallId, { model, mime, promptChars: prompt.length });
+
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -1328,6 +1346,19 @@ Use "${MISSING}" only for fields not visible on the document.`;
   });
 
   const data = (await response.json()) as Record<string, unknown>;
+
+  if (response.ok) {
+    traceComplete(`OPENAI REQUEST ${openAiCallIndex}`, traceCallId, {
+      httpStatus: response.status,
+      tokens: (data as { usage?: { total_tokens?: number } }).usage?.total_tokens ?? null,
+    });
+  } else {
+    const providerError = (data as { error?: { message?: string; code?: string } }).error;
+    traceFailed(`OPENAI REQUEST ${openAiCallIndex}`, traceCallId, {
+      httpStatus: response.status,
+      reason: providerError?.code || providerError?.message || `HTTP ${response.status}`,
+    });
+  }
 
   emitTrace(
     runtime,
@@ -1355,6 +1386,11 @@ Use "${MISSING}" only for fields not visible on the document.`;
       workspaceId: runtime?.context?.workspaceId || null,
       companyId: runtime?.context?.companyId || null,
     });
+    // Availability problems are a fact about the provider, not about us, and
+    // must not reach the operator as a server error.
+    const availability = classifyAiProviderFailure({ status: response.status, body: data });
+    if (availability) throw availability;
+
     const err = data.error as { message?: string } | undefined;
     throw new Error(`${model} failed: ${err?.message || JSON.stringify(data).slice(0, 800)}`);
   }
@@ -1393,8 +1429,14 @@ Use "${MISSING}" only for fields not visible on the document.`;
     Date.now() - parsedStartedAt
   );
 
+  traceRows("1-openai-json", runtime?.context?.documentId ?? null, Array.isArray((parsedJson as { lineItems?: unknown[] }).lineItems) ? (parsedJson as { lineItems: unknown[] }).lineItems.length : 0, { declared: (parsedJson as { visibleLineItemCount?: number }).visibleLineItemCount ?? null });
   const validationStartedAt = Date.now();
+  traceStart("NORMALISATION", runtime?.context?.documentId ?? null);
   const extraction = normaliseExtraction(parsedJson, outputText);
+  traceComplete("NORMALISATION", runtime?.context?.documentId ?? null, { rows: extraction.lineItems.length });
+  traceStart("VALIDATION", runtime?.context?.documentId ?? null);
+  traceComplete("VALIDATION", runtime?.context?.documentId ?? null, { completeness: extraction.completeness.status, arithmetic: extraction.lineArithmetic.status, reasons: extraction.completeness.reasons.join("|") || "none" });
+  traceRows("2-normalised", runtime?.context?.documentId ?? null, extraction.lineItems.length);
   emitTrace(
     runtime,
     "Validation completed",
@@ -1568,8 +1610,15 @@ export async function runDocumentExtraction(input: {
    * never fatal — an unclassifiable document simply takes the existing path.
    */
   let visionAssessment: DocumentVisionAssessment | null = null;
+  const traceDocId = options?.context?.documentId ?? null;
   try {
+    traceStart("CLASSIFICATION", traceDocId, { mime: input.mime, bytes: input.bytes.length });
     visionAssessment = await assessDocumentForVision({ bytes: input.bytes, mime: input.mime });
+    traceComplete("CLASSIFICATION", traceDocId, {
+      visionClass: visionAssessment.visionClass,
+      textChars: visionAssessment.textLayerChars,
+      pageImages: visionAssessment.pageImages.length,
+    });
     log.visionClass = visionAssessment.visionClass;
     log.visionReason = visionAssessment.reason;
     emitTrace(
@@ -1586,6 +1635,7 @@ export async function runDocumentExtraction(input: {
       0
     );
   } catch (error) {
+    traceFailed("CLASSIFICATION", traceDocId, { reason: error instanceof Error ? error.message : String(error) });
     log.visionReason = `Document classification failed: ${error instanceof Error ? error.message : String(error)}`;
     console.warn("[document-extraction] vision classification failed", log.visionReason);
   }
@@ -2104,6 +2154,7 @@ export async function persistExtractionToDocument(
       field_confidence: line.fieldConfidence,
     }));
 
+    traceRows("3-database-insert", documentId, rows.length);
     const { error: insertLinesError } = await supabase.from("vyron_document_line_items").insert(rows);
     if (insertLinesError) {
       throw new Error(`Could not persist extracted line items: ${insertLinesError.message}`);

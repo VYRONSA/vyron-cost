@@ -1,0 +1,4258 @@
+{
+  "vyron_enterprise_knowledge_entries": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "behaviour_domain": "text",
+      "summary": "text",
+      "signals": "jsonb",
+      "data_used": "jsonb",
+      "formula": "text",
+      "confidence": "numeric",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "staging_vyron_cost_product_cost_lines_full_import": {
+    "columns": {
+      "product_name": "text",
+      "line_type": "text",
+      "line_name": "text",
+      "quantity": "numeric",
+      "unit": "text",
+      "unit_cost": "numeric",
+      "wastage_percent": "numeric",
+      "line_cost_imported": "numeric",
+      "source_sheet": "text",
+      "source_row": "integer",
+      "raw_row": "text"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_branches": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "branch_name": "text",
+      "branch_code": "text",
+      "city": "text",
+      "region": "text",
+      "contact_email": "text",
+      "contact_phone": "text",
+      "is_active": "boolean",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_procurement_recommendations": {
+    "columns": {
+      "id": "uuid [pk]",
+      "tenant_id": "uuid",
+      "recommendation_key": "text",
+      "category": "text",
+      "title": "text",
+      "summary": "text",
+      "recommended_action": "text",
+      "why_exists": "text",
+      "data_used": "jsonb",
+      "formula_expression": "text",
+      "confidence_score": "numeric",
+      "confidence_level": "text",
+      "is_estimated": "boolean",
+      "missing_inputs": "jsonb",
+      "affected_products": "jsonb",
+      "affected_suppliers": "jsonb",
+      "expected_result": "text",
+      "potential_benefit_monthly": "numeric",
+      "potential_benefit_annual": "numeric",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "source_type": "text",
+      "source_recovery_key": "text",
+      "problem_statement": "text",
+      "cause_statement": "text",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "tenant_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_users": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "full_name": "text",
+      "email": "text",
+      "role": "text",
+      "status": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_enterprise_roles": {
+    "columns": {
+      "role_key": "text [pk]",
+      "role_name": "text",
+      "description": "text",
+      "is_system": "boolean",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_predictive_risk_models": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "model_key": "text",
+      "title": "text",
+      "probability_pct": "numeric",
+      "horizon_days": "integer",
+      "projected_impact": "numeric",
+      "data_used": "jsonb",
+      "formula": "text",
+      "confidence": "numeric",
+      "href": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_price_history": {
+    "columns": {
+      "id": "uuid [pk]",
+      "supplier_id": "uuid",
+      "ingredient_id": "uuid",
+      "source_type": "text",
+      "source_id": "uuid",
+      "source_number": "text",
+      "price_date": "date",
+      "unit_cost": "numeric",
+      "quantity": "numeric",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "supplier_id",
+        "refTable": "vyron_cost_suppliers",
+        "refColumn": "id"
+      },
+      {
+        "column": "ingredient_id",
+        "refTable": "vyron_cost_ingredients",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_stock_counts": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "text",
+      "count_number": "text",
+      "count_date": "date",
+      "status": "text",
+      "location": "text",
+      "notes": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "count_type": "text",
+      "variance_value_total": "numeric",
+      "created_by": "uuid",
+      "approved_by": "text",
+      "approved_at": "timestamp with time zone",
+      "submitted_at": "timestamp with time zone",
+      "posted_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_cost_recovery_actions": {
+    "columns": {
+      "id": "uuid [pk]",
+      "finding_id": "text",
+      "action_title": "text",
+      "action_status": "text",
+      "monthly_value": "numeric",
+      "annual_value": "numeric",
+      "explanation": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_cost_inventory_transactions": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "transaction_number": "text",
+      "transaction_type": "text",
+      "entity_type": "text",
+      "entity_id": "uuid",
+      "stock_item_id": "uuid",
+      "quantity": "numeric",
+      "unit_cost": "numeric",
+      "total_cost": "numeric",
+      "reference_type": "text",
+      "reference_id": "uuid",
+      "notes": "text",
+      "created_by": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "stock_item_id",
+        "refTable": "vyron_cost_stock_items",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_customer_sales_order_requisition_links": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "sales_order_id": "uuid",
+      "requisition_id": "uuid",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "sales_order_id",
+        "refTable": "vyron_customer_sales_orders",
+        "refColumn": "id"
+      },
+      {
+        "column": "requisition_id",
+        "refTable": "vyron_cost_procurement_requisitions",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "staging_vyron_cost_ingredients_full_import": {
+    "columns": {
+      "ingredient_name": "text",
+      "category": "text",
+      "purchase_unit": "text",
+      "recipe_unit": "text",
+      "purchase_cost": "numeric",
+      "previous_cost": "numeric",
+      "yield_type": "text",
+      "yield_percent": "numeric",
+      "true_unit_cost": "numeric",
+      "current_alert": "text"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_cost_alerts": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "branch_id": "uuid",
+      "severity": "text",
+      "alert_type": "text",
+      "alert_title": "text",
+      "alert_message": "text",
+      "is_read": "boolean",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "branch_id",
+        "refTable": "vyron_branches",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_workspaces": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "company_name": "text",
+      "trading_name": "text",
+      "package_name": "text",
+      "status": "text",
+      "user_limit": "integer",
+      "contact_email": "text",
+      "phone": "text",
+      "owner_user_id": "uuid",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "owner_first_name": "text",
+      "owner_surname": "text",
+      "owner_email": "text",
+      "owner_mobile": "text",
+      "owner_login_method": "text",
+      "owner_login_status": "text",
+      "vat_number": "text",
+      "registration_number": "text",
+      "physical_address": "text",
+      "postal_address": "text",
+      "default_vat_rate": "numeric",
+      "xero_status": "text",
+      "enabled_modules": "jsonb",
+      "is_group_primary": "boolean",
+      "archived_at": "timestamp with time zone",
+      "archived_by": "text"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_leakage_findings": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "finding_type": "text",
+      "title": "text",
+      "description": "text",
+      "estimated_monthly_loss": "numeric",
+      "severity": "text",
+      "status": "text",
+      "branch_name": "text",
+      "category_name": "text",
+      "supplier_name": "text",
+      "created_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_customer_sales_order_invoice_links": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "sales_order_id": "uuid",
+      "invoice_id": "uuid",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "sales_order_id",
+        "refTable": "vyron_customer_sales_orders",
+        "refColumn": "id"
+      },
+      {
+        "column": "invoice_id",
+        "refTable": "vyron_customer_invoices",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_reports": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "report_name": "text",
+      "report_type": "text",
+      "status": "text",
+      "estimated_value": "numeric",
+      "created_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_executive_actions": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "recommendation": "text",
+      "owner_role": "text",
+      "due_date": "date",
+      "status": "text",
+      "expected_benefit": "numeric",
+      "actual_benefit": "numeric",
+      "completion_pct": "numeric",
+      "decision_id": "uuid",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "decision_id",
+        "refTable": "vyron_decision_recommendations",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_customer_price_list_audit_log": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "price_list_id": "uuid",
+      "price_list_item_id": "uuid",
+      "event_type": "text",
+      "actor": "text",
+      "detail": "text",
+      "metadata": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "price_list_id",
+        "refTable": "vyron_customer_price_lists",
+        "refColumn": "id"
+      },
+      {
+        "column": "price_list_item_id",
+        "refTable": "vyron_customer_price_list_items",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_customer_sales_order_items": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "sales_order_id": "uuid",
+      "product_id": "uuid",
+      "description": "text",
+      "quantity": "numeric",
+      "unit": "text",
+      "selling_price": "numeric",
+      "discount_pct": "numeric",
+      "tax_rate": "numeric",
+      "line_total": "numeric",
+      "cost_per_unit": "numeric",
+      "invoiced_qty": "numeric",
+      "sort_order": "integer",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "sales_order_id",
+        "refTable": "vyron_customer_sales_orders",
+        "refColumn": "id"
+      },
+      {
+        "column": "product_id",
+        "refTable": "vyron_cost_products",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_recipes": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "recipe_name": "text",
+      "recipe_type": "text",
+      "category": "text",
+      "yield_qty": "numeric",
+      "total_cost": "numeric",
+      "selling_price": "numeric",
+      "target_gp": "numeric",
+      "status": "text",
+      "version_note": "text",
+      "created_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_cost_procurement_requisition_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "requisition_id": "uuid",
+      "ingredient_id": "uuid",
+      "ingredient_name": "text",
+      "required_qty": "numeric",
+      "available_qty": "numeric",
+      "shortage_qty": "numeric",
+      "unit": "text",
+      "estimated_cost": "numeric",
+      "preferred_supplier_id": "uuid",
+      "sort_order": "integer",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "requisition_id",
+        "refTable": "vyron_cost_procurement_requisitions",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_opening_stock_import_runs": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "file_name": "text",
+      "status": "text",
+      "total_rows": "integer",
+      "imported_rows": "integer",
+      "rejected_rows": "integer",
+      "error_report": "jsonb",
+      "created_by": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_store_orders": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "store_id": "uuid",
+      "order_number": "text",
+      "status": "text",
+      "order_date": "date",
+      "required_date": "date",
+      "notes": "text",
+      "subtotal": "numeric",
+      "vat_amount": "numeric",
+      "total": "numeric",
+      "submitted_at": "timestamp with time zone",
+      "approved_at": "timestamp with time zone",
+      "approved_by": "text",
+      "picking_at": "timestamp with time zone",
+      "dispatched_at": "timestamp with time zone",
+      "delivered_at": "timestamp with time zone",
+      "cancelled_at": "timestamp with time zone",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "rejection_reason": "text",
+      "change_request_note": "text",
+      "rejected_at": "timestamp with time zone",
+      "picking_completed_at": "timestamp with time zone",
+      "ready_to_dispatch_at": "timestamp with time zone",
+      "order_value": "numeric",
+      "estimated_cost": "numeric",
+      "gross_margin": "numeric",
+      "margin_pct": "numeric"
+    },
+    "fks": [
+      {
+        "column": "store_id",
+        "refTable": "vyron_cost_stores",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_activity_logs": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "user_name": "text",
+      "action_type": "text",
+      "entity_type": "text",
+      "entity_id": "text",
+      "old_value": "jsonb",
+      "new_value": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_po_approval_rules": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "auto_approve_below": "numeric",
+      "supervisor_approve_below": "numeric",
+      "require_po_before_invoice_approval": "boolean",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_manufacturing_batch_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "batch_id": "uuid",
+      "item_type": "text",
+      "item_id": "text",
+      "item_name": "text",
+      "expected_quantity": "numeric",
+      "actual_quantity": "numeric",
+      "unit": "text",
+      "unit_cost": "numeric",
+      "line_value": "numeric"
+    },
+    "fks": [
+      {
+        "column": "batch_id",
+        "refTable": "vyron_manufacturing_batches",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_supplier_line_item_mappings": {
+    "columns": {
+      "id": "uuid [pk]",
+      "tenant_id": "uuid",
+      "supplier_name": "text",
+      "source_description": "text",
+      "source_description_normalized": "text",
+      "entity_type": "text",
+      "entity_id": "uuid",
+      "entity_name": "text",
+      "usage_count": "integer",
+      "confidence_score": "numeric",
+      "last_seen_at": "timestamp with time zone",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "disabled": "boolean",
+      "supplier_vat_number": "text",
+      "source_sku": "text",
+      "source_sku_normalized": "text",
+      "unit": "text",
+      "last_approved_price": "numeric",
+      "approved_by": "text",
+      "approved_at": "timestamp with time zone",
+      "last_document_id": "uuid",
+      "match_source": "text"
+    },
+    "fks": [
+      {
+        "column": "tenant_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "last_document_id",
+        "refTable": "vyron_documents",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_customers": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "customer_name": "text",
+      "contact_person": "text",
+      "email": "text",
+      "phone": "text",
+      "active": "boolean",
+      "created_at": "timestamp with time zone",
+      "xero_contact_id": "text",
+      "xero_contact_status": "text",
+      "updated_at": "timestamp with time zone",
+      "category": "text",
+      "invoice_email": "text",
+      "terms": "text",
+      "vat_number": "text",
+      "status": "text",
+      "credit_limit": "numeric",
+      "on_hold": "boolean",
+      "total_sales": "numeric",
+      "last_invoice_date": "date",
+      "invoice_count": "integer",
+      "average_invoice_value": "numeric",
+      "registration_number": "text",
+      "billing_address": "text",
+      "website": "text"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_manufacturing_batches": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "batch_number": "text",
+      "product_id": "uuid",
+      "product_name": "text",
+      "bom_name": "text",
+      "batch_date": "date",
+      "status": "text",
+      "planned_quantity": "numeric",
+      "actual_quantity_produced": "numeric",
+      "wastage_quantity": "numeric",
+      "labour_cost": "numeric",
+      "overhead_cost": "numeric",
+      "material_cost": "numeric",
+      "total_batch_cost": "numeric",
+      "actual_cost_per_unit": "numeric",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "product_id",
+        "refTable": "vyron_finished_goods",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_stock_ledger": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "stock_item_id": "uuid",
+      "movement_date": "timestamp with time zone",
+      "movement_type": "text",
+      "quantity_in": "numeric",
+      "quantity_out": "numeric",
+      "balance_after": "numeric",
+      "unit_cost": "numeric",
+      "value": "numeric",
+      "reference_type": "text",
+      "reference_id": "uuid",
+      "reference_label": "text",
+      "actor": "text",
+      "metadata": "jsonb",
+      "created_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "stock_item_id",
+        "refTable": "vyron_cost_stock_items",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_company_financial_settings": {
+    "columns": {
+      "id": "uuid [pk]",
+      "workspace_id": "text",
+      "company_id": "uuid",
+      "integration_type": "text",
+      "default_sales_account_id": "uuid",
+      "default_cost_of_sales_account_id": "uuid",
+      "default_inventory_asset_account_id": "uuid",
+      "default_wip_account_id": "uuid",
+      "default_manufacturing_variance_account_id": "uuid",
+      "default_stock_adjustment_account_id": "uuid",
+      "default_freight_income_account_id": "uuid",
+      "default_freight_expense_account_id": "uuid",
+      "default_vat_tax_type": "text",
+      "tracking_categories": "jsonb",
+      "updated_at": "timestamp with time zone",
+      "last_synced": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "default_sales_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "default_cost_of_sales_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "default_inventory_asset_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "default_wip_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "default_manufacturing_variance_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "default_stock_adjustment_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "default_freight_income_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "default_freight_expense_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_document_extraction_logs": {
+    "columns": {
+      "id": "uuid [pk]",
+      "document_id": "uuid",
+      "stage": "text",
+      "status": "text",
+      "model": "text",
+      "message": "text",
+      "metadata": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "document_id",
+        "refTable": "vyron_documents",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_procurement_risk_findings": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "supplier_name": "text",
+      "category_name": "text",
+      "risk_type": "text",
+      "risk_score": "numeric",
+      "price_change_percent": "numeric",
+      "spend_amount": "numeric",
+      "action_required": "text",
+      "detected_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_goods_receipt_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "goods_receipt_id": "uuid",
+      "purchase_order_line_id": "uuid",
+      "item_name": "text",
+      "ordered_qty": "numeric",
+      "received_qty": "numeric",
+      "damaged_qty": "numeric",
+      "rejected_qty": "numeric",
+      "outstanding_qty": "numeric",
+      "unit": "text",
+      "created_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean",
+      "sort_order": "integer",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "goods_receipt_id",
+        "refTable": "vyron_cost_goods_receipts",
+        "refColumn": "id"
+      },
+      {
+        "column": "purchase_order_line_id",
+        "refTable": "vyron_cost_purchase_order_lines",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_workspace_memberships": {
+    "columns": {
+      "id": "uuid [pk]",
+      "workspace_id": "uuid",
+      "user_id": "uuid",
+      "role": "text",
+      "status": "text",
+      "invited_at": "timestamp with time zone",
+      "joined_at": "timestamp with time zone",
+      "created_at": "timestamp with time zone",
+      "permissions": "jsonb"
+    },
+    "fks": [
+      {
+        "column": "workspace_id",
+        "refTable": "vyron_workspaces",
+        "refColumn": "id"
+      },
+      {
+        "column": "user_id",
+        "refTable": "vyron_user_profiles",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_inventory_audit_log": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "stock_item_id": "uuid",
+      "event_type": "text",
+      "actor": "text",
+      "field_name": "text",
+      "old_value": "text",
+      "new_value": "text",
+      "detail": "text",
+      "reference_type": "text",
+      "reference_id": "uuid",
+      "metadata": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "stock_item_id",
+        "refTable": "vyron_cost_stock_items",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_sales_price_list_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "price_list_id": "uuid",
+      "product_name": "text",
+      "current_price": "numeric",
+      "new_price": "numeric",
+      "increase_percent": "numeric",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "price_list_id",
+        "refTable": "vyron_cost_sales_price_lists",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_stores": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "store_code": "text",
+      "store_name": "text",
+      "address": "text",
+      "contact_name": "text",
+      "contact_email": "text",
+      "contact_phone": "text",
+      "status": "text",
+      "notes": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "workforce_simulations": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "scenario_name": "text",
+      "scenario_type": "text",
+      "input_params": "jsonb",
+      "output_results": "jsonb",
+      "status": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_cost_product_recipe_links": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "product_id": "uuid",
+      "recipe_id": "uuid",
+      "recipe_name_snapshot": "text",
+      "portion_qty": "numeric",
+      "portion_cost": "numeric",
+      "created_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "product_id",
+        "refTable": "vyron_cost_products",
+        "refColumn": "id"
+      },
+      {
+        "column": "recipe_id",
+        "refTable": "vyron_cost_recipes",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_store_order_events": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "store_order_id": "uuid",
+      "action": "text",
+      "from_status": "text",
+      "to_status": "text",
+      "note": "text",
+      "actor": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "store_order_id",
+        "refTable": "vyron_cost_store_orders",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_import_runs": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "entity_type": "text",
+      "file_name": "text",
+      "valid_rows": "integer",
+      "rejected_rows": "integer",
+      "status": "text",
+      "error_report": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_store_order_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "store_order_id": "uuid",
+      "product_id": "uuid",
+      "product_name_snapshot": "text",
+      "quantity": "numeric",
+      "unit": "text",
+      "unit_price": "numeric",
+      "vat_rate": "numeric",
+      "vat_amount": "numeric",
+      "line_total": "numeric",
+      "sort_order": "integer",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "unit_cost": "numeric",
+      "line_estimated_cost": "numeric",
+      "line_gross_margin": "numeric",
+      "line_margin_pct": "numeric"
+    },
+    "fks": [
+      {
+        "column": "store_order_id",
+        "refTable": "vyron_cost_store_orders",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_supplier_contracts": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "supplier_id": "uuid",
+      "supplier_name": "text",
+      "contract_type": "text",
+      "title": "text",
+      "start_date": "date",
+      "end_date": "date",
+      "discount_pct": "numeric",
+      "terms_summary": "text",
+      "document_id": "uuid",
+      "status": "text",
+      "renewal_alert_days": "integer",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "supplier_id",
+        "refTable": "vyron_cost_suppliers",
+        "refColumn": "id"
+      },
+      {
+        "column": "document_id",
+        "refTable": "vyron_documents",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_customer_sales_order_audit": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "sales_order_id": "uuid",
+      "event_type": "text",
+      "actor": "text",
+      "from_status": "text",
+      "to_status": "text",
+      "detail": "text",
+      "metadata": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "sales_order_id",
+        "refTable": "vyron_customer_sales_orders",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_ai_usage_events": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "workspace_id": "text",
+      "user_id": "text",
+      "product_id": "text",
+      "feature_id": "text",
+      "provider": "text",
+      "model": "text",
+      "prompt_tokens": "integer",
+      "completion_tokens": "integer",
+      "total_tokens": "integer",
+      "estimated_cost_usd": "numeric",
+      "estimated_cost_company_currency": "numeric",
+      "company_currency": "text",
+      "execution_time_ms": "integer",
+      "success": "boolean",
+      "error_message": "text",
+      "metadata": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_production_audit_log": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "production_run_id": "uuid",
+      "event_type": "text",
+      "actor": "text",
+      "field_name": "text",
+      "old_value": "text",
+      "new_value": "text",
+      "detail": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "production_run_id",
+        "refTable": "vyron_cost_production_runs",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_fraud_alerts": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "alert_type": "text",
+      "severity": "text",
+      "title": "text",
+      "description": "text",
+      "entity_type": "text",
+      "entity_id": "text",
+      "estimated_exposure": "numeric",
+      "status": "text",
+      "metadata": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_production_runs": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "run_number": "text",
+      "bom_id": "uuid",
+      "recipe_id": "uuid",
+      "product_id": "uuid",
+      "bom_name_snapshot": "text",
+      "product_name_snapshot": "text",
+      "status": "text",
+      "batch_multiplier": "numeric",
+      "planned_qty": "numeric",
+      "actual_qty": "numeric",
+      "yield_pct": "numeric",
+      "yield_status": "text",
+      "wastage_pct": "numeric",
+      "ingredient_cost": "numeric",
+      "packaging_cost": "numeric",
+      "labour_cost": "numeric",
+      "overhead_cost": "numeric",
+      "ingredient_waste_value": "numeric",
+      "packaging_waste_value": "numeric",
+      "total_production_cost": "numeric",
+      "cost_per_unit": "numeric",
+      "planned_cost": "numeric",
+      "actual_cost": "numeric",
+      "cost_variance_pct": "numeric",
+      "planned_usage_value": "numeric",
+      "actual_usage_value": "numeric",
+      "usage_variance_pct": "numeric",
+      "production_efficiency_pct": "numeric",
+      "stock_override": "boolean",
+      "stock_override_by": "text",
+      "stock_override_reason": "text",
+      "notes": "text",
+      "created_by": "text",
+      "approved_by": "text",
+      "started_by": "text",
+      "completed_by": "text",
+      "approved_at": "timestamp with time zone",
+      "started_at": "timestamp with time zone",
+      "completed_at": "timestamp with time zone",
+      "cancelled_at": "timestamp with time zone",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "bom_id",
+        "refTable": "vyron_cost_boms",
+        "refColumn": "id"
+      },
+      {
+        "column": "recipe_id",
+        "refTable": "vyron_cost_recipes",
+        "refColumn": "id"
+      },
+      {
+        "column": "product_id",
+        "refTable": "vyron_cost_products",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_batch_runs": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "recipe_id": "uuid",
+      "batch_number": "text",
+      "recipe_name_snapshot": "text",
+      "planned_yield": "numeric",
+      "actual_yield": "numeric",
+      "planned_cost": "numeric",
+      "actual_cost": "numeric",
+      "variance": "numeric",
+      "status": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "recipe_id",
+        "refTable": "vyron_cost_recipes",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_audit_logs": {
+    "columns": {
+      "id": "uuid [pk]",
+      "module_name": "text",
+      "action_type": "text",
+      "entity_name": "text",
+      "old_value": "jsonb",
+      "new_value": "jsonb",
+      "user_name": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_customer_sales_order_allocations": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "sales_order_id": "uuid",
+      "sales_order_line_id": "uuid",
+      "product_id": "uuid",
+      "reserved_qty": "numeric",
+      "available_qty_snapshot": "numeric",
+      "status": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "sales_order_id",
+        "refTable": "vyron_customer_sales_orders",
+        "refColumn": "id"
+      },
+      {
+        "column": "sales_order_line_id",
+        "refTable": "vyron_customer_sales_order_lines",
+        "refColumn": "id"
+      },
+      {
+        "column": "product_id",
+        "refTable": "vyron_cost_products",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_customer_price_list_versions": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "price_list_id": "uuid",
+      "version": "integer",
+      "change_type": "text",
+      "payload": "jsonb",
+      "created_by": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "price_list_id",
+        "refTable": "vyron_customer_price_lists",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_purchase_order_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "purchase_order_id": "uuid",
+      "ingredient_id": "uuid",
+      "item_name": "text",
+      "category": "text",
+      "quantity": "numeric",
+      "unit": "text",
+      "unit_cost": "numeric",
+      "vat_rate": "numeric",
+      "line_excl": "numeric",
+      "line_vat": "numeric",
+      "line_total": "numeric",
+      "sort_order": "integer",
+      "created_at": "timestamp with time zone",
+      "company_id": "uuid",
+      "item_type": "text",
+      "item_id": "uuid",
+      "unit_price": "numeric",
+      "vat_amount": "numeric",
+      "ordered_qty": "numeric",
+      "received_qty": "numeric",
+      "damaged_qty": "numeric",
+      "rejected_qty": "numeric",
+      "outstanding_qty": "numeric",
+      "demo_seed_key": "text",
+      "is_demo": "boolean",
+      "expected_delivery_date": "date",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "purchase_order_id",
+        "refTable": "vyron_cost_purchase_orders",
+        "refColumn": "id"
+      },
+      {
+        "column": "ingredient_id",
+        "refTable": "vyron_cost_ingredients",
+        "refColumn": "id"
+      },
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_customer_price_list_import_runs": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "file_name": "text",
+      "status": "text",
+      "total_rows": "integer",
+      "imported_rows": "integer",
+      "rejected_rows": "integer",
+      "create_missing_products": "boolean",
+      "error_report": "jsonb",
+      "created_by": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_production_wastage": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "production_run_id": "uuid",
+      "waste_category": "text",
+      "line_name": "text",
+      "ingredient_id": "uuid",
+      "waste_qty": "numeric",
+      "waste_value": "numeric",
+      "waste_reason": "text"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "production_run_id",
+        "refTable": "vyron_cost_production_runs",
+        "refColumn": "id"
+      },
+      {
+        "column": "ingredient_id",
+        "refTable": "vyron_cost_ingredients",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_document_cost_audit": {
+    "columns": {
+      "id": "uuid [pk]",
+      "tenant_id": "uuid",
+      "document_id": "uuid",
+      "line_item_id": "uuid",
+      "supplier_name": "text",
+      "invoice_number": "text",
+      "entity_type": "text",
+      "entity_id": "uuid",
+      "entity_name": "text",
+      "previous_cost": "numeric",
+      "new_cost": "numeric",
+      "change_amount": "numeric",
+      "change_percent": "numeric",
+      "currency": "text",
+      "approved_by": "text",
+      "metadata": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "tenant_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "document_id",
+        "refTable": "vyron_documents",
+        "refColumn": "id"
+      },
+      {
+        "column": "line_item_id",
+        "refTable": "vyron_document_line_items",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_invoice_risk_findings": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "invoice_number": "text",
+      "supplier_name": "text",
+      "invoice_amount": "numeric",
+      "risk_type": "text",
+      "risk_score": "numeric",
+      "ai_confidence": "numeric",
+      "duplicate_of": "text",
+      "review_status": "text",
+      "detected_at": "timestamp with time zone",
+      "document_id": "uuid",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "document_id",
+        "refTable": "vyron_documents",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_customer_invoices": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "customer_id": "uuid",
+      "customer_name": "text",
+      "invoice_number": "text",
+      "invoice_date": "date",
+      "due_date": "date",
+      "status": "text",
+      "sales_value": "numeric",
+      "cost_value": "numeric",
+      "gross_profit": "numeric",
+      "gp_percentage": "numeric",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "stock_posted": "boolean",
+      "posted_at": "timestamp with time zone",
+      "stock_reversed": "boolean",
+      "stock_reversed_at": "timestamp with time zone",
+      "notes": "text"
+    },
+    "fks": [
+      {
+        "column": "customer_id",
+        "refTable": "vyron_customers",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_customer_sales_order_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "sales_order_id": "uuid",
+      "product_id": "uuid",
+      "description": "text",
+      "quantity": "numeric",
+      "unit": "text",
+      "selling_price": "numeric",
+      "discount_pct": "numeric",
+      "tax_rate": "numeric",
+      "line_total": "numeric",
+      "cost_per_unit": "numeric",
+      "invoiced_qty": "numeric",
+      "sort_order": "integer",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "sales_order_id",
+        "refTable": "vyron_customer_sales_orders",
+        "refColumn": "id"
+      },
+      {
+        "column": "product_id",
+        "refTable": "vyron_cost_products",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_price_movements": {
+    "columns": {
+      "id": "uuid [pk]",
+      "ingredient_id": "uuid",
+      "supplier_name": "text",
+      "old_price": "numeric",
+      "new_price": "numeric",
+      "movement_percent": "numeric",
+      "movement_type": "text",
+      "detected_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_platform_sessions": {
+    "columns": {
+      "token": "text [pk]",
+      "user_id": "uuid",
+      "email": "text",
+      "role": "text",
+      "created_at": "timestamp with time zone",
+      "last_activity_at": "timestamp with time zone",
+      "expires_at": "timestamp with time zone",
+      "revoked_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_stock_movements": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "movement_date": "date",
+      "item_type": "text",
+      "item_id": "text",
+      "item_name": "text",
+      "movement_type": "text",
+      "reference_number": "text",
+      "quantity_in": "numeric",
+      "quantity_out": "numeric",
+      "unit_cost": "numeric",
+      "total_value": "numeric",
+      "related_document_id": "uuid",
+      "notes": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_cost_procurement_requisitions": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "requisition_number": "text",
+      "status": "text",
+      "required_date": "date",
+      "notes": "text",
+      "created_by": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_procurement_risk_alerts": {
+    "columns": {
+      "id": "uuid [pk]",
+      "tenant_id": "uuid",
+      "supplier_id": "uuid",
+      "supplier_name": "text",
+      "document_id": "uuid",
+      "line_item_id": "uuid",
+      "risk_type": "text",
+      "severity": "text",
+      "title": "text",
+      "description": "text",
+      "previous_price": "numeric",
+      "new_price": "numeric",
+      "percentage_change": "numeric",
+      "status": "text",
+      "metadata": "jsonb",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "tenant_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "supplier_id",
+        "refTable": "vyron_cost_suppliers",
+        "refColumn": "id"
+      },
+      {
+        "column": "document_id",
+        "refTable": "vyron_documents",
+        "refColumn": "id"
+      },
+      {
+        "column": "line_item_id",
+        "refTable": "vyron_document_line_items",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_purchase_orders": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "supplier_id": "uuid",
+      "po_number": "text",
+      "supplier_name_snapshot": "text",
+      "status": "text",
+      "expected_total": "numeric",
+      "invoice_total": "numeric",
+      "variance": "numeric",
+      "created_at": "timestamp with time zone",
+      "order_date": "date",
+      "notes": "text",
+      "subtotal": "numeric",
+      "vat_amount": "numeric",
+      "total": "numeric",
+      "outstanding_amount": "numeric",
+      "approved_by": "text",
+      "approved_at": "timestamp with time zone",
+      "approval_notes": "text",
+      "sent_at": "timestamp with time zone",
+      "closed_at": "timestamp with time zone",
+      "submitted_at": "timestamp with time zone",
+      "match_status": "text",
+      "updated_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean",
+      "expected_date": "date",
+      "procurement_requisition_id": "uuid",
+      "created_by": "text"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "supplier_id",
+        "refTable": "vyron_cost_suppliers",
+        "refColumn": "id"
+      },
+      {
+        "column": "procurement_requisition_id",
+        "refTable": "vyron_cost_procurement_requisitions",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_users": {
+    "columns": {
+      "id": "uuid [pk]",
+      "auth_user_id": "uuid",
+      "company_id": "uuid",
+      "branch_id": "uuid",
+      "full_name": "text",
+      "email": "text",
+      "role": "text",
+      "is_active": "boolean",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "branch_id",
+        "refTable": "vyron_branches",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_ai_company_allowances": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "package_id_override": "text",
+      "monthly_credits_override": "numeric",
+      "monthly_spend_usd_override": "numeric",
+      "monthly_requests_override": "integer",
+      "reset_anchor_day": "integer",
+      "last_notified_80_period": "text",
+      "last_notified_80_at": "timestamp with time zone",
+      "last_notified_95_period": "text",
+      "last_notified_95_at": "timestamp with time zone",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_categories": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "category_name": "text",
+      "category_type": "text",
+      "description": "text",
+      "status": "text",
+      "created_at": "timestamp with time zone",
+      "financial_sales_account_id": "uuid",
+      "financial_cost_of_sales_account_id": "uuid",
+      "financial_inventory_asset_account_id": "uuid",
+      "financial_wip_account_id": "uuid",
+      "financial_manufacturing_variance_account_id": "uuid",
+      "financial_stock_adjustment_account_id": "uuid",
+      "financial_freight_income_account_id": "uuid",
+      "financial_freight_expense_account_id": "uuid",
+      "financial_vat_tax_type": "text",
+      "financial_tracking_categories": "jsonb"
+    },
+    "fks": [
+      {
+        "column": "financial_sales_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_cost_of_sales_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_inventory_asset_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_wip_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_manufacturing_variance_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_stock_adjustment_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_freight_income_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_freight_expense_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_supplier_price_history": {
+    "columns": {
+      "id": "uuid [pk]",
+      "tenant_id": "uuid",
+      "supplier_name": "text",
+      "document_id": "uuid",
+      "line_item_id": "uuid",
+      "entity_type": "text",
+      "entity_id": "uuid",
+      "entity_name": "text",
+      "item_description": "text",
+      "previous_price": "numeric",
+      "new_price": "numeric",
+      "change_percent": "numeric",
+      "currency": "text",
+      "potential_costing_impact": "numeric",
+      "created_at": "timestamp with time zone",
+      "supplier_id": "uuid",
+      "invoice_date": "date",
+      "quantity": "numeric",
+      "unit": "text",
+      "price_difference": "numeric",
+      "percentage_change": "numeric",
+      "movement_type": "text",
+      "movement_reason": "text",
+      "item_kind": "text",
+      "price_movement": "text",
+      "approved_at": "timestamp with time zone",
+      "approved_by": "text",
+      "demo_seed_key": "text",
+      "is_demo": "boolean",
+      "invoice_number": "text"
+    },
+    "fks": [
+      {
+        "column": "tenant_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "document_id",
+        "refTable": "vyron_documents",
+        "refColumn": "id"
+      },
+      {
+        "column": "line_item_id",
+        "refTable": "vyron_document_line_items",
+        "refColumn": "id"
+      },
+      {
+        "column": "supplier_id",
+        "refTable": "vyron_cost_suppliers",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_procurement_three_way_matches": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "document_id": "uuid",
+      "purchase_order_id": "uuid",
+      "goods_receipt_id": "uuid",
+      "match_status": "text",
+      "po_qty": "numeric",
+      "invoice_qty": "numeric",
+      "grn_qty": "numeric",
+      "qty_variance": "numeric",
+      "po_unit_price": "numeric",
+      "invoice_unit_price": "numeric",
+      "price_variance": "numeric",
+      "po_total": "numeric",
+      "invoice_total": "numeric",
+      "grn_total": "numeric",
+      "total_variance": "numeric",
+      "missing_po": "boolean",
+      "missing_grn": "boolean",
+      "details": "jsonb",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "document_id",
+        "refTable": "vyron_documents",
+        "refColumn": "id"
+      },
+      {
+        "column": "purchase_order_id",
+        "refTable": "vyron_cost_purchase_orders",
+        "refColumn": "id"
+      },
+      {
+        "column": "goods_receipt_id",
+        "refTable": "vyron_cost_goods_receipts",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_supplier_profiles": {
+    "columns": {
+      "id": "uuid [pk]",
+      "tenant_id": "uuid",
+      "supplier_name": "text",
+      "supplier_vat_number": "text",
+      "invoice_format_notes": "text",
+      "common_products": "jsonb",
+      "confidence_score": "numeric",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "tenant_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_company_group_links": {
+    "columns": {
+      "id": "uuid [pk]",
+      "parent_company_id": "uuid",
+      "child_company_id": "uuid",
+      "relationship_type": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "parent_company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "child_company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_store_production_run_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "production_run_id": "uuid",
+      "product_id": "uuid",
+      "product_name": "text",
+      "required_qty": "numeric",
+      "planned_qty": "numeric",
+      "produced_qty": "numeric",
+      "unit_cost": "numeric",
+      "total_cost": "numeric",
+      "store_contributions": "jsonb",
+      "sort_order": "integer",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "production_run_id",
+        "refTable": "vyron_cost_store_production_runs",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_enterprise_budgets": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "budget_category": "text",
+      "period_type": "text",
+      "period_start": "date",
+      "period_end": "date",
+      "budget_amount": "numeric",
+      "notes": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_recovery_calculations": {
+    "columns": {
+      "id": "uuid [pk]",
+      "tenant_id": "uuid",
+      "opportunity_key": "text",
+      "category": "text",
+      "title": "text",
+      "confidence_level": "text",
+      "confidence_score": "numeric",
+      "is_estimated": "boolean",
+      "formula_expression": "text",
+      "formula_inputs": "jsonb",
+      "products_affected": "jsonb",
+      "recommended_action": "text",
+      "monthly_recovery": "numeric",
+      "annual_recovery": "numeric",
+      "estimated_recovery": "numeric",
+      "verified_recovery": "numeric",
+      "potential_recovery": "numeric",
+      "recovered_to_date": "numeric",
+      "status": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "missing_inputs": "jsonb",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "tenant_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "workforce_forecasts": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "forecast_type": "text",
+      "period_label": "text",
+      "forecast_value": "numeric",
+      "confidence": "numeric",
+      "model_version": "text",
+      "payload": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_cost_demo_notes": {
+    "columns": {
+      "id": "uuid [pk]",
+      "note_type": "text",
+      "title": "text",
+      "description": "text",
+      "status": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_cost_pricing_decisions": {
+    "columns": {
+      "id": "uuid [pk]",
+      "product_name": "text",
+      "current_price": "numeric",
+      "suggested_price": "numeric",
+      "approved_price": "numeric",
+      "target_gp": "numeric",
+      "status": "text",
+      "decision_note": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_customer_sales_orders": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "order_number": "text",
+      "customer_id": "uuid",
+      "customer_name": "text",
+      "delivery_address": "text",
+      "contact_name": "text",
+      "salesperson": "text",
+      "warehouse": "text",
+      "status": "text",
+      "requested_delivery_date": "date",
+      "notes": "text",
+      "subtotal": "numeric",
+      "vat_amount": "numeric",
+      "total": "numeric",
+      "cost_value": "numeric",
+      "gross_profit": "numeric",
+      "gp_percentage": "numeric",
+      "approved_at": "timestamp with time zone",
+      "approved_by": "text",
+      "picked_at": "timestamp with time zone",
+      "packed_at": "timestamp with time zone",
+      "dispatched_at": "timestamp with time zone",
+      "cancelled_at": "timestamp with time zone",
+      "requires_approval": "boolean",
+      "approval_flags": "jsonb",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "customer_id",
+        "refTable": "vyron_customers",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_financial_accounts": {
+    "columns": {
+      "id": "uuid [pk]",
+      "workspace_id": "text",
+      "company_id": "uuid",
+      "integration_type": "text",
+      "external_account_id": "text",
+      "account_code": "text",
+      "account_name": "text",
+      "account_type": "text",
+      "tax_type": "text",
+      "status": "text",
+      "enable_payments": "boolean",
+      "show_in_expense_claims": "boolean",
+      "updated_date": "timestamp with time zone",
+      "last_synced": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_cost_email_invoice_queue": {
+    "columns": {
+      "id": "uuid [pk]",
+      "sender_email": "text",
+      "subject": "text",
+      "file_name": "text",
+      "supplier_name": "text",
+      "invoice_number": "text",
+      "queue_status": "text",
+      "ai_confidence": "numeric",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_cost_low_stock_alerts": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "stock_item_id": "uuid",
+      "required_qty": "numeric",
+      "estimated_cost": "numeric",
+      "preferred_supplier_id": "uuid",
+      "preferred_supplier_name": "text",
+      "status": "text",
+      "created_at": "timestamp with time zone",
+      "resolved_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "stock_item_id",
+        "refTable": "vyron_cost_stock_items",
+        "refColumn": "id"
+      },
+      {
+        "column": "preferred_supplier_id",
+        "refTable": "vyron_cost_suppliers",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_boms": {
+    "columns": {
+      "id": "uuid [pk]",
+      "recipe_id": "uuid",
+      "finished_product_id": "uuid",
+      "bom_name": "text",
+      "category": "text",
+      "yield_qty": "numeric",
+      "yield_unit": "text",
+      "target_gp": "numeric",
+      "markup_percent": "numeric",
+      "selling_price": "numeric",
+      "total_cost": "numeric",
+      "cost_per_unit": "numeric",
+      "calculated_gp": "numeric",
+      "suggested_selling_price": "numeric",
+      "status": "text",
+      "notes": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "company_id": "uuid",
+      "product_id": "uuid"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "product_id",
+        "refTable": "vyron_cost_products",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_ingredients": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "supplier_id": "uuid",
+      "ingredient_name": "text",
+      "category": "text",
+      "purchase_unit": "text",
+      "recipe_unit": "text",
+      "purchase_cost": "numeric",
+      "yield_type": "text",
+      "yield_percent": "numeric",
+      "true_unit_cost": "numeric",
+      "current_alert": "text",
+      "created_at": "timestamp with time zone",
+      "raw_data": "text",
+      "previous_cost": "numeric",
+      "raw_weight": "numeric",
+      "cooked_weight": "numeric",
+      "yield_mode": "text",
+      "prep_loss_percent": "numeric",
+      "shrinkage_percent": "numeric",
+      "evaporation_percent": "numeric",
+      "updated_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "supplier_id",
+        "refTable": "vyron_cost_suppliers",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_product_intelligence": {
+    "columns": {
+      "id": "uuid [pk]",
+      "product_id": "uuid",
+      "product_name": "text",
+      "category": "text",
+      "selling_price": "numeric",
+      "total_cost": "numeric",
+      "target_gp": "numeric",
+      "actual_gp": "numeric",
+      "gp_gap": "numeric",
+      "suggested_price": "numeric",
+      "monthly_units_estimate": "numeric",
+      "monthly_risk_value": "numeric",
+      "risk_level": "text",
+      "action_required": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_platform_users": {
+    "columns": {
+      "user_id": "uuid [pk]",
+      "email": "text",
+      "role": "text",
+      "is_active": "boolean",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_cost_stock_count_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "stock_count_id": "uuid",
+      "item_type": "text",
+      "item_id": "text",
+      "item_name": "text",
+      "expected_qty": "numeric",
+      "counted_qty": "numeric",
+      "variance_qty": "numeric",
+      "unit_cost": "numeric",
+      "variance_value": "numeric",
+      "notes": "text",
+      "created_at": "timestamp with time zone",
+      "stock_item_id": "uuid",
+      "system_qty": "numeric",
+      "variance_pct": "numeric",
+      "company_id": "uuid",
+      "variance_class": "text",
+      "approved": "boolean",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "stock_count_id",
+        "refTable": "vyron_cost_stock_counts",
+        "refColumn": "id"
+      },
+      {
+        "column": "stock_item_id",
+        "refTable": "vyron_cost_stock_items",
+        "refColumn": "id"
+      },
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_org_performance_snapshots": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "role_area": "text",
+      "score": "numeric",
+      "metrics": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_recovery_evidence": {
+    "columns": {
+      "id": "uuid [pk]",
+      "tenant_id": "uuid",
+      "opportunity_key": "text",
+      "evidence_type": "text",
+      "title": "text",
+      "content": "text",
+      "document_url": "text",
+      "created_by": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "tenant_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_recovery_opportunities": {
+    "columns": {
+      "id": "uuid [pk]",
+      "opportunity_type": "text",
+      "title": "text",
+      "description": "text",
+      "formula": "text",
+      "monthly_value": "numeric",
+      "annual_value": "numeric",
+      "confidence": "numeric",
+      "status": "text",
+      "product_id": "uuid",
+      "product_name": "text",
+      "supplier_id": "uuid",
+      "supplier_name": "text",
+      "ingredient_id": "uuid",
+      "ingredient_name": "text",
+      "recommended_action": "text",
+      "data_source": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "company_id": "uuid",
+      "opportunity": "text",
+      "category": "text",
+      "monthly_saving": "numeric",
+      "annual_saving": "numeric",
+      "difficulty": "text",
+      "action": "text",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "product_id",
+        "refTable": "vyron_cost_products",
+        "refColumn": "id"
+      },
+      {
+        "column": "supplier_id",
+        "refTable": "vyron_cost_suppliers",
+        "refColumn": "id"
+      },
+      {
+        "column": "ingredient_id",
+        "refTable": "vyron_cost_ingredients",
+        "refColumn": "id"
+      },
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_customer_price_list_assignments": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "customer_id": "uuid",
+      "default_price_list_id": "uuid",
+      "contract_price_list_id": "uuid",
+      "status": "text",
+      "notes": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "customer_id",
+        "refTable": "vyron_customers",
+        "refColumn": "id"
+      },
+      {
+        "column": "default_price_list_id",
+        "refTable": "vyron_customer_price_lists",
+        "refColumn": "id"
+      },
+      {
+        "column": "contract_price_list_id",
+        "refTable": "vyron_customer_price_lists",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_platform_auth_audit": {
+    "columns": {
+      "id": "bigint [pk]",
+      "event_type": "text",
+      "success": "boolean",
+      "user_id": "uuid",
+      "email": "text",
+      "role": "text",
+      "detail": "text",
+      "ip_address": "text",
+      "user_agent": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_cost_invoice_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "invoice_id": "uuid",
+      "ingredient_name": "text",
+      "supplier_product_name": "text",
+      "quantity": "numeric",
+      "unit": "text",
+      "unit_price": "numeric",
+      "line_total": "numeric",
+      "mapped_ingredient_id": "uuid",
+      "ai_confidence": "numeric",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "invoice_id",
+        "refTable": "vyron_cost_invoice_headers",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "workforce_health_scores": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "department": "text",
+      "score": "numeric",
+      "labour_cost_score": "numeric",
+      "productivity_score": "numeric",
+      "clocking_score": "numeric",
+      "field_ops_score": "numeric",
+      "travel_score": "numeric",
+      "risk_score": "numeric",
+      "recorded_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_cost_back_orders": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "purchase_order_id": "uuid",
+      "purchase_order_line_id": "uuid",
+      "supplier_id": "uuid",
+      "supplier_name_snapshot": "text",
+      "item_name": "text",
+      "outstanding_qty": "numeric",
+      "expected_date": "date",
+      "status": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "purchase_order_id",
+        "refTable": "vyron_cost_purchase_orders",
+        "refColumn": "id"
+      },
+      {
+        "column": "purchase_order_line_id",
+        "refTable": "vyron_cost_purchase_order_lines",
+        "refColumn": "id"
+      },
+      {
+        "column": "supplier_id",
+        "refTable": "vyron_cost_suppliers",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "workforce_digital_twin": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "employee_id": "text",
+      "employee_name": "text",
+      "department": "text",
+      "role": "text",
+      "shift_pattern": "jsonb",
+      "clock_in_rate": "numeric",
+      "productivity_index": "numeric",
+      "travel_km_month": "numeric",
+      "field_visits_month": "integer",
+      "cost_per_hour": "numeric",
+      "risk_score": "numeric",
+      "health_score": "numeric",
+      "attrition_probability": "numeric",
+      "twin_state": "jsonb",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_cost_bom_versions": {
+    "columns": {
+      "id": "uuid [pk]",
+      "bom_id": "uuid",
+      "version_number": "integer",
+      "bom_name": "text",
+      "total_cost": "numeric",
+      "cost_per_unit": "numeric",
+      "suggested_selling_price": "numeric",
+      "snapshot": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_cost_recipe_items": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "recipe_id": "uuid",
+      "ingredient_id": "uuid",
+      "ingredient_name_snapshot": "text",
+      "quantity": "numeric",
+      "unit": "text",
+      "true_unit_cost": "numeric",
+      "line_cost": "numeric",
+      "created_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_customer_price_lists": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "list_name": "text",
+      "list_type": "text",
+      "status": "text",
+      "effective_from": "date",
+      "effective_to": "date",
+      "version": "integer",
+      "notes": "text",
+      "created_by": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_procurement_audit_log": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "event_type": "text",
+      "entity_type": "text",
+      "entity_id": "uuid",
+      "entity_label": "text",
+      "detail": "text",
+      "actor": "text",
+      "metadata": "jsonb",
+      "created_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_invoice_headers": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "supplier_name": "text",
+      "invoice_number": "text",
+      "invoice_date": "date",
+      "invoice_total": "numeric",
+      "vat_total": "numeric",
+      "invoice_status": "text",
+      "pdf_url": "text",
+      "ai_processed": "boolean",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_ai_insights": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "insight_key": "text",
+      "insight_type": "text",
+      "category": "text",
+      "priority": "text",
+      "title": "text",
+      "problem": "text",
+      "impact": "text",
+      "recommendation": "text",
+      "href": "text",
+      "entity_type": "text",
+      "entity_id": "uuid",
+      "entity_label": "text",
+      "data_used": "jsonb",
+      "status": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_recovery_audit_trail": {
+    "columns": {
+      "id": "uuid [pk]",
+      "tenant_id": "uuid",
+      "opportunity_key": "text",
+      "changed_by": "text",
+      "changed_at": "timestamp with time zone",
+      "field_name": "text",
+      "old_value": "text",
+      "new_value": "text"
+    },
+    "fks": [
+      {
+        "column": "tenant_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_import_batches": {
+    "columns": {
+      "id": "uuid [pk]",
+      "import_type": "text",
+      "file_name": "text",
+      "status": "text",
+      "total_rows": "integer",
+      "valid_rows": "integer",
+      "error_rows": "integer",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_cost_suppliers": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "supplier_name": "text",
+      "contact_email": "text",
+      "created_at": "timestamp with time zone",
+      "category": "text",
+      "last_price_movement": "numeric",
+      "invoice_email": "text",
+      "risk_status": "text",
+      "reliability_score": "numeric",
+      "payment_terms": "text",
+      "lead_time_days": "numeric",
+      "notes": "text",
+      "phone": "text",
+      "updated_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean",
+      "xero_contact_id": "text",
+      "xero_contact_status": "text",
+      "active": "boolean",
+      "vat_number": "text",
+      "registration_number": "text",
+      "physical_address": "text",
+      "postal_address": "text",
+      "website": "text"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_documents": {
+    "columns": {
+      "id": "uuid [pk]",
+      "tenant_id": "uuid",
+      "document_type": "text",
+      "supplier_name": "text",
+      "supplier_vat_number": "text",
+      "customer_name": "text",
+      "customer_vat_number": "text",
+      "invoice_number": "text",
+      "invoice_date": "date",
+      "purchase_order_number": "text",
+      "subtotal": "numeric",
+      "vat": "numeric",
+      "total": "numeric",
+      "currency": "text",
+      "confidence": "numeric",
+      "status": "text",
+      "storage_bucket": "text",
+      "storage_path": "text",
+      "original_filename": "text",
+      "file_mime": "text",
+      "file_size_bytes": "bigint",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "account_number": "text",
+      "customer_reference": "text",
+      "sales_representative": "text",
+      "approved_at": "timestamp with time zone",
+      "approved_by": "text",
+      "processed_at": "timestamp with time zone",
+      "processing_notes": "text",
+      "field_confidence": "jsonb",
+      "deleted_at": "timestamp with time zone",
+      "deleted_by": "text",
+      "delete_reason": "text",
+      "field_regions": "jsonb",
+      "page_count": "integer",
+      "reconciliation_note": "text",
+      "archived_at": "timestamp with time zone",
+      "purchase_order_id": "uuid",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "tenant_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "purchase_order_id",
+        "refTable": "vyron_cost_purchase_orders",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_bom_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "bom_id": "uuid",
+      "line_type": "text",
+      "ingredient_id": "uuid",
+      "line_name": "text",
+      "quantity": "numeric",
+      "unit": "text",
+      "unit_cost": "numeric",
+      "wastage_percent": "numeric",
+      "line_cost": "numeric",
+      "sort_order": "integer",
+      "created_at": "timestamp with time zone",
+      "company_id": "uuid"
+    },
+    "fks": [
+      {
+        "column": "bom_id",
+        "refTable": "vyron_cost_boms",
+        "refColumn": "id"
+      },
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_audit_log": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "event_type": "text",
+      "entity_name": "text",
+      "event_detail": "text",
+      "risk_level": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_enterprise_role_permissions": {
+    "columns": {
+      "id": "uuid [pk]",
+      "role_key": "text",
+      "module_key": "text",
+      "can_view": "boolean",
+      "can_create": "boolean",
+      "can_edit": "boolean",
+      "can_approve": "boolean",
+      "can_delete": "boolean",
+      "can_export": "boolean",
+      "can_override": "boolean"
+    },
+    "fks": [
+      {
+        "column": "role_key",
+        "refTable": "vyron_enterprise_roles",
+        "refColumn": "role_key"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_production_overhead": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "production_run_id": "uuid",
+      "overhead_type": "text",
+      "allocation_method": "text",
+      "amount": "numeric",
+      "percent_value": "numeric",
+      "allocated_cost": "numeric"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "production_run_id",
+        "refTable": "vyron_cost_production_runs",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_document_field_corrections": {
+    "columns": {
+      "id": "uuid [pk]",
+      "document_id": "uuid",
+      "field_name": "text",
+      "original_value": "text",
+      "corrected_value": "text",
+      "corrected_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "document_id",
+        "refTable": "vyron_documents",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_inventory_settings": {
+    "columns": {
+      "company_id": "uuid [pk]",
+      "minor_variance_pct": "numeric",
+      "major_variance_pct": "numeric",
+      "slow_moving_days_30": "integer",
+      "slow_moving_days_60": "integer",
+      "slow_moving_days_90": "integer",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_recovery_approval_items": {
+    "columns": {
+      "id": "uuid [pk]",
+      "recovery_title": "text",
+      "recovery_type": "text",
+      "monthly_value": "numeric",
+      "annual_value": "numeric",
+      "status": "text",
+      "decision_note": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_customer_price_list_items": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "price_list_id": "uuid",
+      "product_id": "uuid",
+      "base_price": "numeric",
+      "markup_pct": "numeric",
+      "discount_pct": "numeric",
+      "gp_pct": "numeric",
+      "override_price": "numeric",
+      "final_price": "numeric",
+      "status": "text",
+      "effective_from": "date",
+      "effective_to": "date",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "price_list_id",
+        "refTable": "vyron_customer_price_lists",
+        "refColumn": "id"
+      },
+      {
+        "column": "product_id",
+        "refTable": "vyron_cost_products",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_customer_sales_order_production_links": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "sales_order_id": "uuid",
+      "production_run_id": "uuid",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "sales_order_id",
+        "refTable": "vyron_customer_sales_orders",
+        "refColumn": "id"
+      },
+      {
+        "column": "production_run_id",
+        "refTable": "vyron_cost_production_runs",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_xero_sync_queue": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "entity_type": "text",
+      "entity_id": "uuid",
+      "reference_number": "text",
+      "destination": "text",
+      "status": "text",
+      "payload": "jsonb",
+      "xero_id": "text",
+      "error_message": "text",
+      "synced_at": "timestamp with time zone",
+      "last_attempt_at": "timestamp with time zone",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_cost_supplier_benchmarks": {
+    "columns": {
+      "id": "uuid [pk]",
+      "category_name": "text",
+      "benchmark_supplier": "text",
+      "benchmark_price": "numeric",
+      "current_supplier": "text",
+      "current_price": "numeric",
+      "saving_opportunity": "numeric",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_cost_stock_items": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "item_code": "text",
+      "description": "text",
+      "category": "text",
+      "entity_type": "text",
+      "entity_id": "uuid",
+      "unit": "text",
+      "supplier_id": "uuid",
+      "supplier_name_snapshot": "text",
+      "current_cost": "numeric",
+      "average_cost": "numeric",
+      "qty_on_hand": "numeric",
+      "inventory_value": "numeric",
+      "reorder_level": "numeric",
+      "min_level": "numeric",
+      "max_level": "numeric",
+      "valuation_method": "text",
+      "stock_status": "text",
+      "last_movement_at": "timestamp with time zone",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean",
+      "barcode": "text",
+      "supplier_item_code": "text",
+      "customer_item_code": "text",
+      "aliases": "text[]",
+      "is_active": "boolean",
+      "default_warehouse": "text"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "supplier_id",
+        "refTable": "vyron_cost_suppliers",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_go_live_checks": {
+    "columns": {
+      "id": "uuid [pk]",
+      "check_title": "text",
+      "check_area": "text",
+      "check_status": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_companies": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_name": "text",
+      "trading_name": "text",
+      "subscription_plan": "text",
+      "subscription_status": "text",
+      "currency_code": "text",
+      "vat_percent": "numeric",
+      "logo_url": "text",
+      "primary_color": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_document_approval_rules": {
+    "columns": {
+      "id": "uuid [pk]",
+      "tenant_id": "uuid",
+      "min_header_confidence": "numeric",
+      "block_unmapped_lines": "boolean",
+      "rounding_tolerance": "numeric",
+      "major_mismatch_threshold": "numeric",
+      "max_manual_overrides_before_alert": "integer",
+      "require_reconciliation_note_above": "numeric",
+      "updated_at": "timestamp with time zone",
+      "require_purchase_order": "boolean",
+      "require_supplier": "boolean",
+      "require_invoice_number": "boolean",
+      "require_invoice_date": "boolean",
+      "require_vat": "boolean",
+      "require_matched_line_items": "boolean",
+      "allow_ignored_lines": "boolean",
+      "allow_rounding_difference": "boolean",
+      "max_variance_percent": "numeric",
+      "supervisor_override_required_above_variance": "boolean"
+    },
+    "fks": [
+      {
+        "column": "tenant_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "execution_actions": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "workspace_id": "text",
+      "source_module": "text",
+      "source_key": "text",
+      "title": "text",
+      "category": "text",
+      "priority": "text",
+      "owner": "text",
+      "status": "text",
+      "due_date": "date",
+      "expected_outcome": "text",
+      "expected_benefit": "numeric",
+      "actual_benefit": "numeric",
+      "completion_notes": "text",
+      "notes": "text",
+      "href": "text",
+      "source_trace": "jsonb",
+      "approved_at": "timestamp with time zone",
+      "completed_at": "timestamp with time zone",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "action_events": "jsonb"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_board_pack_audit": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "format": "text",
+      "date_range_label": "text",
+      "generated_by": "text",
+      "detail": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_business_health_snapshots": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "financial_health": "numeric",
+      "inventory_health": "numeric",
+      "procurement_health": "numeric",
+      "supplier_health": "numeric",
+      "production_health": "numeric",
+      "recovery_health": "numeric",
+      "compliance_health": "numeric",
+      "overall_score": "numeric",
+      "payload": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_compliance_snapshots": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "domain": "text",
+      "compliance_pct": "numeric",
+      "open_issues": "integer",
+      "detail": "jsonb",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_goods_receipts": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "purchase_order_id": "uuid",
+      "grn_number": "text",
+      "supplier_id": "uuid",
+      "supplier_name_snapshot": "text",
+      "receipt_type": "text",
+      "status": "text",
+      "received_at": "timestamp with time zone",
+      "received_by": "text",
+      "notes": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "purchase_order_id",
+        "refTable": "vyron_cost_purchase_orders",
+        "refColumn": "id"
+      },
+      {
+        "column": "supplier_id",
+        "refTable": "vyron_cost_suppliers",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_user_profiles": {
+    "columns": {
+      "id": "uuid [pk]",
+      "email": "text",
+      "first_name": "text",
+      "surname": "text",
+      "mobile": "text",
+      "status": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_store_order_approval_rules": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "max_order_value": "numeric",
+      "min_margin_pct": "numeric",
+      "max_qty_variance_pct": "numeric",
+      "warn_inactive_products": "boolean",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_cost_product_cost_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "product_name": "text",
+      "line_type": "text",
+      "line_name": "text",
+      "quantity": "numeric",
+      "unit": "text",
+      "unit_cost": "numeric",
+      "wastage_percent": "numeric",
+      "line_cost_imported": "numeric",
+      "source_sheet": "text",
+      "source_row": "integer",
+      "raw_row": "text",
+      "company_id": "uuid",
+      "product_id": "uuid",
+      "line_cost": "numeric",
+      "created_at": "timestamp with time zone",
+      "cost_group": "text",
+      "labour_cost": "numeric",
+      "overhead_cost": "numeric",
+      "packaging_cost": "numeric",
+      "wastage_cost": "numeric",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_cost_supplier_intelligence": {
+    "columns": {
+      "id": "uuid [pk]",
+      "supplier_name": "text",
+      "category": "text",
+      "invoice_count": "integer",
+      "invoice_value": "numeric",
+      "avg_price_movement": "numeric",
+      "high_risk_movements": "integer",
+      "unmatched_invoice_lines": "integer",
+      "ai_confidence_avg": "numeric",
+      "risk_score": "numeric",
+      "risk_level": "text",
+      "action_required": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_executive_early_warnings": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "risk_category": "text",
+      "horizon_days": "integer",
+      "severity": "text",
+      "title": "text",
+      "message": "text",
+      "projected_impact": "numeric",
+      "data_used": "jsonb",
+      "formula": "text",
+      "confidence": "numeric",
+      "href": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_root_cause_analyses": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "kpi_key": "text",
+      "what_changed": "text",
+      "why_changed": "text",
+      "where_changed": "text",
+      "financial_impact": "numeric",
+      "recommended_action": "text",
+      "data_used": "jsonb",
+      "formula": "text",
+      "confidence": "numeric",
+      "href": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_demand_forecasts": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "forecast_date": "date",
+      "product_id": "uuid",
+      "product_name": "text",
+      "period_type": "text",
+      "forecast_qty": "numeric",
+      "confidence_level": "numeric",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_cost_supplier_invoice_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "invoice_id": "uuid",
+      "ingredient_id": "uuid",
+      "purchase_order_line_id": "uuid",
+      "item_name": "text",
+      "category": "text",
+      "quantity": "numeric",
+      "unit": "text",
+      "unit_cost": "numeric",
+      "expected_unit_cost": "numeric",
+      "variance_percent": "numeric",
+      "vat_rate": "numeric",
+      "line_excl": "numeric",
+      "line_vat": "numeric",
+      "line_total": "numeric",
+      "sort_order": "integer",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "invoice_id",
+        "refTable": "vyron_cost_supplier_invoices",
+        "refColumn": "id"
+      },
+      {
+        "column": "ingredient_id",
+        "refTable": "vyron_cost_ingredients",
+        "refColumn": "id"
+      },
+      {
+        "column": "purchase_order_line_id",
+        "refTable": "vyron_cost_purchase_order_lines",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_units_of_measure": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "code": "text",
+      "name": "text",
+      "symbol": "text",
+      "category": "text",
+      "decimal_precision": "integer",
+      "is_active": "boolean",
+      "notes": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_xero_workspace_settings": {
+    "columns": {
+      "workspace_id": "text [pk]",
+      "connection": "jsonb",
+      "account_mapping": "jsonb",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_cost_client_tasks": {
+    "columns": {
+      "id": "uuid [pk]",
+      "task_title": "text",
+      "task_area": "text",
+      "task_status": "text",
+      "task_priority": "text",
+      "due_date": "date",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_cost_companies": {
+    "columns": {
+      "id": "uuid [pk]",
+      "name": "text",
+      "created_at": "timestamp with time zone",
+      "trading_name": "text",
+      "contact_email": "text",
+      "phone": "text",
+      "subscription_plan": "text",
+      "subscription_status": "text",
+      "group_parent_id": "uuid",
+      "currency_code": "text",
+      "logo_url": "text",
+      "website": "text",
+      "vat_number": "text",
+      "registration_number": "text",
+      "physical_address": "text",
+      "postal_address": "text"
+    },
+    "fks": [
+      {
+        "column": "group_parent_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_production_labour": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "production_run_id": "uuid",
+      "description": "text",
+      "hours": "numeric",
+      "rate": "numeric",
+      "labour_cost": "numeric"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "production_run_id",
+        "refTable": "vyron_cost_production_runs",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "staging_vyron_cost_products_full_import": {
+    "columns": {
+      "product_name": "text",
+      "category": "text",
+      "status": "text",
+      "selling_price": "numeric",
+      "total_cost": "numeric",
+      "target_gp": "numeric",
+      "salary_cost": "numeric",
+      "packaging_cost": "numeric",
+      "overhead_cost": "numeric",
+      "wastage_percent": "numeric",
+      "extracted_line_count": "integer"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_cost_store_production_runs": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "run_number": "text",
+      "production_date": "date",
+      "status": "text",
+      "notes": "text",
+      "created_by": "text",
+      "total_cost": "numeric",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_cost_production_run_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "production_run_id": "uuid",
+      "line_type": "text",
+      "ingredient_id": "uuid",
+      "stock_item_id": "uuid",
+      "line_name": "text",
+      "unit": "text",
+      "planned_qty": "numeric",
+      "actual_qty": "numeric",
+      "unit_cost": "numeric",
+      "planned_value": "numeric",
+      "actual_value": "numeric",
+      "sort_order": "integer"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      },
+      {
+        "column": "production_run_id",
+        "refTable": "vyron_cost_production_runs",
+        "refColumn": "id"
+      },
+      {
+        "column": "ingredient_id",
+        "refTable": "vyron_cost_ingredients",
+        "refColumn": "id"
+      },
+      {
+        "column": "stock_item_id",
+        "refTable": "vyron_cost_stock_items",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_enterprise_approval_rules": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "entity_type": "text",
+      "rule_name": "text",
+      "threshold_type": "text",
+      "threshold_value": "numeric",
+      "approval_level": "integer",
+      "approver_role": "text",
+      "is_active": "boolean",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_enterprise_scorecard_snapshots": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "scorecard_type": "text",
+      "entity_label": "text",
+      "overall_score": "numeric",
+      "metrics": "jsonb",
+      "href": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_supplier_invoice_learning": {
+    "columns": {
+      "id": "uuid [pk]",
+      "tenant_id": "uuid",
+      "supplier_name": "text",
+      "supplier_name_variations": "jsonb",
+      "invoice_number_pattern": "text",
+      "date_format_hint": "text",
+      "common_line_item_descriptions": "jsonb",
+      "default_currency": "text",
+      "confidence_score": "numeric",
+      "last_used_at": "timestamp with time zone",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "tenant_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_cost_sales_price_lists": {
+    "columns": {
+      "id": "uuid [pk]",
+      "price_list_name": "text",
+      "customer_group": "text",
+      "status": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": false
+  },
+  "vyron_cost_products": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "product_name": "text",
+      "category": "text",
+      "status": "text",
+      "selling_price": "numeric",
+      "total_cost": "numeric",
+      "target_gp": "numeric",
+      "salary_cost": "numeric",
+      "packaging_cost": "numeric",
+      "overhead_cost": "numeric",
+      "wastage_percent": "numeric",
+      "created_at": "timestamp with time zone",
+      "extracted_line_count": "integer",
+      "linked_bom_id": "uuid",
+      "product_category": "text",
+      "calculated_gp": "numeric",
+      "suggested_selling_price": "numeric",
+      "product_status": "text",
+      "demo_seed_key": "text",
+      "is_demo": "boolean",
+      "actual_gp": "numeric",
+      "updated_at": "timestamp with time zone",
+      "sku": "text",
+      "financial_sales_account_id": "uuid",
+      "financial_cost_of_sales_account_id": "uuid",
+      "financial_inventory_asset_account_id": "uuid",
+      "financial_wip_account_id": "uuid",
+      "financial_manufacturing_variance_account_id": "uuid",
+      "financial_stock_adjustment_account_id": "uuid",
+      "financial_freight_income_account_id": "uuid",
+      "financial_freight_expense_account_id": "uuid",
+      "financial_vat_tax_type": "text"
+    },
+    "fks": [
+      {
+        "column": "linked_bom_id",
+        "refTable": "vyron_cost_boms",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_sales_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_cost_of_sales_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_inventory_asset_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_wip_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_manufacturing_variance_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_stock_adjustment_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_freight_income_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      },
+      {
+        "column": "financial_freight_expense_account_id",
+        "refTable": "vyron_financial_accounts",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_cost_supplier_invoices": {
+    "columns": {
+      "id": "uuid [pk]",
+      "invoice_number": "text",
+      "supplier_id": "uuid",
+      "supplier_name": "text",
+      "invoice_date": "date",
+      "status": "text",
+      "source_type": "text",
+      "file_name": "text",
+      "duplicate_risk": "boolean",
+      "matched_po_id": "uuid",
+      "subtotal": "numeric",
+      "vat": "numeric",
+      "total": "numeric",
+      "notes": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "supplier_id",
+        "refTable": "vyron_cost_suppliers",
+        "refColumn": "id"
+      },
+      {
+        "column": "matched_po_id",
+        "refTable": "vyron_cost_purchase_orders",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_finished_goods": {
+    "columns": {
+      "id": "uuid [pk]",
+      "product_name": "text",
+      "sku": "text",
+      "current_stock": "numeric",
+      "average_unit_cost": "numeric",
+      "stock_value": "numeric",
+      "days_cover": "integer",
+      "sales_velocity_30_days": "numeric",
+      "status": "text",
+      "last_manufactured_at": "timestamp with time zone",
+      "created_at": "timestamp with time zone",
+      "company_id": "uuid",
+      "category": "text",
+      "standard_cost": "numeric",
+      "latest_actual_cost": "numeric",
+      "active": "boolean",
+      "updated_at": "timestamp with time zone",
+      "product_code": "text",
+      "selling_price": "numeric"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_contacts": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "contact_name": "text",
+      "email": "text",
+      "phone": "text",
+      "xero_contact_id": "text",
+      "is_customer": "boolean",
+      "is_supplier": "boolean",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone"
+    },
+    "fks": [],
+    "hasCompanyId": true
+  },
+  "vyron_decision_recommendations": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "decision_type": "text",
+      "title": "text",
+      "rationale": "text",
+      "expected_benefit_annual": "numeric",
+      "data_used": "jsonb",
+      "formula": "text",
+      "confidence": "numeric",
+      "href": "text",
+      "status": "text",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_customer_invoice_lines": {
+    "columns": {
+      "id": "uuid [pk]",
+      "invoice_id": "uuid",
+      "product_id": "uuid",
+      "product_name": "text",
+      "quantity": "numeric",
+      "selling_price": "numeric",
+      "cost_per_unit": "numeric",
+      "line_total": "numeric",
+      "line_cost": "numeric",
+      "line_gp": "numeric",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "invoice_id",
+        "refTable": "vyron_customer_invoices",
+        "refColumn": "id"
+      },
+      {
+        "column": "product_id",
+        "refTable": "vyron_cost_products",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_recovery_tracking": {
+    "columns": {
+      "id": "uuid [pk]",
+      "tenant_id": "uuid",
+      "opportunity_key": "text",
+      "status": "text",
+      "owner_name": "text",
+      "owner_email": "text",
+      "due_date": "date",
+      "action_taken": "boolean",
+      "action_taken_at": "timestamp with time zone",
+      "notes": "text",
+      "potential_recovery": "numeric",
+      "actual_recovery": "numeric",
+      "recovery_date": "date",
+      "recovery_method": "text",
+      "recovery_evidence": "text",
+      "created_at": "timestamp with time zone",
+      "updated_at": "timestamp with time zone",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "tenant_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  },
+  "vyron_finance_leakage_snapshots": {
+    "columns": {
+      "id": "uuid [pk]",
+      "company_id": "uuid",
+      "leakage_risk_score": "numeric",
+      "risk_level": "text",
+      "category_scores": "jsonb",
+      "total_monthly_exposure": "numeric",
+      "projected_annual_impact": "numeric",
+      "created_at": "timestamp with time zone"
+    },
+    "fks": [
+      {
+        "column": "company_id",
+        "refTable": "vyron_cost_companies",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": true
+  },
+  "vyron_document_line_items": {
+    "columns": {
+      "id": "uuid [pk]",
+      "document_id": "uuid",
+      "description": "text",
+      "quantity": "numeric",
+      "unit_price": "numeric",
+      "vat": "numeric",
+      "line_total": "numeric",
+      "created_at": "timestamp with time zone",
+      "matched_entity_type": "text",
+      "matched_entity_id": "uuid",
+      "matched_entity_name": "text",
+      "ignored": "boolean",
+      "mapping_confidence": "numeric",
+      "unit": "text",
+      "sku_product_code": "text",
+      "confidence_score": "numeric",
+      "field_confidence": "jsonb",
+      "source_page": "integer",
+      "source_bbox": "jsonb",
+      "demo_seed_key": "text",
+      "is_demo": "boolean"
+    },
+    "fks": [
+      {
+        "column": "document_id",
+        "refTable": "vyron_documents",
+        "refColumn": "id"
+      }
+    ],
+    "hasCompanyId": false
+  }
+}
