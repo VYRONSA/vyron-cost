@@ -4,7 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import PoLinkPanel from "@/components/PoLinkPanel";
@@ -106,6 +106,9 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [retryingExtraction, setRetryingExtraction] = useState(false);
+  /** null = follow the layout default; true/false = the operator's own choice. */
+  const [headerOverride, setHeaderOverride] = useState<boolean | null>(null);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
@@ -717,6 +720,51 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     }
   }
 
+  /*
+    The operator's way out of a stuck extraction.
+
+    MEASURED on document f547d4df: it sat in status "extracting" for two days
+    after a run died server-side. The screen polled, hit the timeout, printed
+    "Extraction is taking longer than expected." and stopped — with no control
+    of any kind. The document was unrecoverable from the UI even though a
+    single re-run extracted it correctly in 24.6s (4 lines, reconciled to the
+    invoice subtotal with zero variance). Nothing was wrong with the extractor;
+    the screen simply had no retry.
+
+    The button is offered for the whole of the "extracting" state rather than
+    only after the timeout. The draft carries no run timestamp, so the screen
+    cannot tell a live run from an abandoned one, and making the operator wait
+    150 seconds to find out is the behaviour that produced this defect.
+
+    Declared above the early returns below — it is a hook, and hooks cannot sit
+    behind a conditional return.
+  */
+  const retryExtraction = useCallback(async () => {
+    setRetryingExtraction(true);
+    setErrorMessage("");
+    setMessage("Restarting extraction…");
+    try {
+      const res = await fetch(`/api/documents/${documentId}/extract`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ force: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || (!data.ok && !data.partial)) {
+        throw new Error(data.error || "Extraction failed.");
+      }
+      const refreshed = await loadReviewDraft(documentId);
+      setDraft(refreshed);
+      setLineMatchQuality(buildInitialLineMatchQuality(refreshed));
+      setMessage(`Extraction complete — ${refreshed.lines.length} line item(s) read.`);
+    } catch (error) {
+      setMessage("");
+      setErrorMessage(error instanceof Error ? error.message : "Extraction failed.");
+    } finally {
+      setRetryingExtraction(false);
+    }
+  }, [documentId]);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-100">
@@ -763,14 +811,22 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     );
 
   /*
-    The invoice header block is hidden in both focus modes, not just Focus
-    Review. MEASURED at 1366x768: in Focus Invoice the review column is a 221px
-    strip, where the 11-field header grid stacks to 1056px of content and its
-    capped window still took 257px of the 559px panel — leaving the line grid
-    9px and zero visible rows. A focus mode that shows no lines at all is not a
-    focus mode. Split View keeps the header, since that is where the operator
-    reconciles header fields against the preview.
+    The invoice header COLLAPSES in the focus modes. It is never removed.
+
+    An earlier revision hid it outright, which left the operator with no way to
+    read or edit the supplier, invoice number or dates and — worse — nothing to
+    click to bring it back. A control the operator cannot reach is a defect, not
+    a layout. The collapsed state is a 30px bar that is always present and
+    always clickable, so the header costs almost nothing while remaining one
+    click away in every mode.
+
+    The default is open in Split View and closed in the focus modes, because
+    MEASURED at 1366x768 the 11-field grid stacks to 1056px in the 221px Focus
+    Invoice strip and its capped window still took 257px of the 559px panel,
+    leaving the line grid 9px and zero visible rows. Once the operator toggles
+    it, their choice wins over the default.
   */
+  const headerOpen = headerOverride ?? workspaceLayout === "split";
   const headerCompact = workspaceLayout !== "split";
 
   /*
@@ -792,6 +848,24 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
         ? { invoice: 22, review: 78 }
         : { invoice: 50, review: 50 };
 
+  /*
+    The operator's way out of a stuck extraction.
+
+    MEASURED on document f547d4df: it sat in status "extracting" for two days
+    after a run died server-side. The screen polled, hit the timeout, printed
+    "Extraction is taking longer than expected." and stopped — with no control
+    of any kind. The document was unrecoverable from the UI even though a
+    single re-run extracted it correctly in 24.6s (4 lines, reconciled to the
+    invoice subtotal with zero variance). Nothing was wrong with the extractor;
+    the screen simply had no retry.
+
+    The button is offered for the whole of the "extracting" state rather than
+    only after the timeout. The draft carries no run timestamp, so the screen
+    cannot tell a live run from an abandoned one, and making the operator wait
+    150 seconds to find out is the behaviour that produced this defect.
+  */
+  const extractionInProgress = (draft?.status || "").toLowerCase() === "extracting";
+
   const extractionPanel = (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
       {/*
@@ -803,9 +877,27 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
         zero visible, and no page scroll to reach them. Capping this block is
         what guarantees the table the remaining height in every mode.
       */}
+      {/* Always rendered, in every layout mode — this is the way back. */}
+      <button
+        type="button"
+        onClick={() => setHeaderOverride(!headerOpen)}
+        aria-expanded={headerOpen}
+        className="flex shrink-0 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-left shadow-sm hover:bg-slate-50"
+      >
+        <span className="min-w-0 truncate text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
+          Invoice Header
+          {!headerOpen && (draft.fields.supplierName || draft.fields.invoiceNumber) ? (
+            <span className="ml-2 normal-case tracking-normal text-slate-400">
+              {[draft.fields.supplierName, draft.fields.invoiceNumber].filter(Boolean).join(" · ")}
+            </span>
+          ) : null}
+        </span>
+        <ChevronDown size={14} className={`shrink-0 text-slate-500 transition ${headerOpen ? "rotate-180" : ""}`} />
+      </button>
+
       <div
         className={`flex min-h-0 shrink flex-col gap-2 overflow-y-auto overscroll-contain ${
-          headerCompact ? "hidden" : "max-h-[40%]"
+          headerOpen ? "max-h-[40%]" : "hidden"
         }`}
       >
       {/*
@@ -820,7 +912,6 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
         field stays on screen AND the grid keeps its height. Nothing is hidden.
       */}
       <div className="shrink-0 rounded-2xl border border-slate-200 bg-white shadow-sm p-3">
-        <div className={`font-black text-slate-900 ${headerCompact ? "mb-2 text-xs" : "mb-2 text-sm"}`}>Invoice Header</div>
         <div className="grid gap-2 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[
             ["supplierName", "Supplier", "text"],
@@ -1103,7 +1194,21 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
             </button>
           </div>
         </div>
-        {message ? <div className="mt-1 rounded bg-[#A855F7]/10 px-2 py-1 text-[10px] font-bold text-[#4D7C0F]">{message}</div> : null}
+        {message || extractionInProgress ? (
+          <div className="mt-1 flex flex-wrap items-center gap-2 rounded bg-[#A855F7]/10 px-2 py-1 text-[10px] font-bold text-[#4D7C0F]">
+            <span>{message || "Extraction in progress…"}</span>
+            {extractionInProgress ? (
+              <button
+                type="button"
+                onClick={() => void retryExtraction()}
+                disabled={retryingExtraction}
+                className="rounded-md border border-violet-300 bg-white px-2 py-0.5 text-[10px] font-black text-violet-700 hover:bg-violet-50 disabled:opacity-50"
+              >
+                {retryingExtraction ? "Retrying…" : "Retry extraction"}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
         {errorMessage ? <div className="mt-1 rounded bg-red-50 px-2 py-1 text-[10px] font-bold text-red-700">{errorMessage}</div> : null}
         {costAuditRows.length > 0 ? (
           <div className="mt-1 rounded bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">
