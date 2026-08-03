@@ -247,8 +247,10 @@ export default function LineItemMatchCombobox({
         className="fixed flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl"
         style={{
           top: dropdownRect.top,
-          left: dropdownRect.left,
-          width: dropdownRect.width,
+          /* Keep the list readable when the trigger cell is narrow, without
+             letting it run off the right edge of the window. */
+          left: Math.max(8, Math.min(dropdownRect.left, window.innerWidth - Math.max(dropdownRect.width, 340) - 8)),
+          width: Math.max(dropdownRect.width, 340),
           zIndex: 10000,
         }}
         onWheel={(e) => e.stopPropagation()}
@@ -381,12 +383,22 @@ export default function LineItemMatchCombobox({
     ) : null;
 
   return (
-    <div ref={rootRef} className="relative min-w-[260px]">
+    /*
+      The trigger no longer carries a 260px floor.
+
+      MEASURED at 1366x768: inside the review grid this column is 172px wide, so
+      a min-w-[260px] trigger pushed the table past its pane and put a horizontal
+      scrollbar under all sixteen rows — the clerk had to scroll sideways to
+      reach the mapping on every line. The trigger only ever needed to be as wide
+      as its cell; the list is portaled to the body and sizes itself (see
+      dropdownRect below), so it stays readable at any trigger width.
+    */
+    <div ref={rootRef} className="relative min-w-0">
       <button
         type="button"
         disabled={disabled || line.ignored}
         onClick={() => (open ? closeDropdown() : openDropdown())}
-        className={`flex w-full items-center gap-1 rounded-lg border bg-white px-2 py-1.5 text-left ${
+        className={`flex w-full items-center gap-1 rounded-lg border bg-white px-1.5 py-0.5 text-left ${
           disabled || line.ignored
             ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-60"
             : open

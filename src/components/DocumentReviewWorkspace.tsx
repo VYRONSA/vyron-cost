@@ -789,6 +789,19 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
 
   const inputClass = "w-full rounded-lg border px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:border-violet-400";
 
+  /*
+    The grid input, sized for scanning rather than for form-filling.
+
+    MEASURED at 1366x768: at px-3 py-2 with a py-1.5 text-sm input, a row is
+    47px, so a 16-line invoice needs 752px of a 460px grid and the clerk scrolls
+    to see the rest. The printed invoice shows all sixteen lines at once. If the
+    extracted table cannot, every line costs a scroll on one side and a hunt on
+    the other. At px-2 py-0.5 with a text-xs input a row is ~30px, so sixteen
+    lines fit in ~480px and both lists are fully visible together.
+  */
+  const cellInput = "w-full rounded-md border px-1.5 py-0.5 text-xs font-bold text-slate-900 outline-none focus:border-violet-400";
+  const cellPad = "px-1.5 py-0.5";
+
   const previewPanel =
     previewUrl && !previewError ? (
       <InvoiceDocumentViewer
@@ -826,7 +839,16 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     leaving the line grid 9px and zero visible rows. Once the operator toggles
     it, their choice wins over the default.
   */
-  const headerOpen = headerOverride ?? workspaceLayout === "split";
+  /*
+    Collapsed by default in every mode, including Split View.
+
+    MEASURED at 1366x768 on the 16-line Gourmet invoice: with the header open,
+    Split View showed 3 of 16 lines. The header block took 224px of a 559px
+    panel to display eleven fields the operator checks once, while the lines
+    they check sixteen times were pushed off screen. The bar is always there and
+    one click away, and the operator's own toggle still wins.
+  */
+  const headerOpen = headerOverride ?? false;
   const headerCompact = workspaceLayout !== "split";
 
   /*
@@ -865,6 +887,284 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     150 seconds to find out is the behaviour that produced this defect.
   */
   const extractionInProgress = (draft?.status || "").toLowerCase() === "extracting";
+
+  /*
+    One declarative column list, two column sets.
+
+    This replaces twelve hand-written <td> blocks that had to be edited in
+    lockstep with the twelve <th> blocks above them. That duplication is why the
+    table could only ever have one shape: `min-w-[2100px]`, twelve columns, in a
+    785px pane. To read a line total the clerk scrolled roughly 1300px right and
+    back again — sixteen times per invoice, three hundred invoices a day.
+
+    `compare` is the six columns actually printed on a supplier invoice, in the
+    order they are printed (code first, then description). Nothing else earns
+    its width while the operator is checking paper against screen.
+
+    `edit` adds the columns that exist only on our side — VAT, confidence, and
+    the master-data mapping — because that work has no counterpart on the page.
+
+    Both sets are table-fixed and sum to 100%, so neither scrolls sideways.
+  */
+  /*
+    Two width scales, because the same six columns live in a 501px pane when
+    comparing and a 783px pane when editing.
+
+    MEASURED with one scale: in Split View the six printed columns summed to
+    50%, so Description absorbed the other half and the numbers were starved —
+    codes rendered "TOM" for TOMONION, units "3l" for 3kg, line totals "1650("
+    for 1650,09. A truncated figure cannot be checked against paper, so it is
+    worse than the scroll it was meant to remove. `compareWidth` sums to 100
+    across the compare set and spends it on the numbers, which are the values
+    actually being verified; Description keeps enough to identify the item and
+    carries its full text in a tooltip.
+  */
+  type LineColumn = {
+    key: string;
+    label: string;
+    width: string;
+    compareWidth?: string;
+    compare: boolean;
+    cell: (line: ReviewDraftLine) => React.ReactNode;
+  };
+
+  const lineColumns: LineColumn[] = [
+    {
+      key: "sku", label: "Code", width: "w-[10%]", compareWidth: "w-[14%]", compare: true,
+      cell: (line) => (
+        <input title={line.skuOrProductCode} className={`${cellInput} ${fieldClass(line.fieldConfidence?.skuOrProductCode ?? null)}`} value={line.skuOrProductCode}
+          onChange={(e) => updateLine(line.id, { skuOrProductCode: e.target.value })} />
+      ),
+    },
+    {
+      key: "description", label: "Description", width: "w-[19%]", compareWidth: "w-[29%]", compare: true,
+      cell: (line) => (
+        <input title={line.description} className={`${cellInput} ${fieldClass(line.fieldConfidence?.description ?? null)}`} value={line.description}
+          onChange={(e) => updateLine(line.id, { description: e.target.value })} />
+      ),
+    },
+    {
+      key: "qty", label: "Qty", width: "w-[6%]", compareWidth: "w-[8%]", compare: true,
+      cell: (line) => (
+        <input className={`${cellInput} text-right`} value={String(line.quantity ?? "")}
+          onChange={(e) => updateLine(line.id, { quantity: parseMoneyNumber(e.target.value) })} />
+      ),
+    },
+    {
+      key: "unit", label: "Unit", width: "w-[8%]", compareWidth: "w-[12%]", compare: true,
+      cell: (line) => (
+        <input className={cellInput} value={line.unit}
+          onChange={(e) => updateLine(line.id, { unit: e.target.value })} />
+      ),
+    },
+    {
+      key: "unitPrice", label: "Unit Price", width: "w-[9%]", compareWidth: "w-[16%]", compare: true,
+      cell: (line) => (
+        <input className={`${cellInput} text-right`} value={String(line.unitPrice ?? "")}
+          onChange={(e) => updateLine(line.id, { unitPrice: parseMoneyNumber(e.target.value) })} />
+      ),
+    },
+    {
+      key: "lineTotal", label: "Line Total", width: "w-[10%]", compareWidth: "w-[17%]", compare: true,
+      cell: (line) => (
+        <input className={`${cellInput} text-right`} value={String(line.lineTotal ?? "")}
+          onChange={(e) => updateLine(line.id, { lineTotal: parseMoneyNumber(e.target.value) })} />
+      ),
+    },
+    {
+      key: "vat", label: "VAT", width: "w-[9%]", compare: false,
+      cell: (line) => (
+        <input className={`${cellInput} text-right`} value={String(line.vat ?? "")}
+          onChange={(e) => updateLine(line.id, { vat: parseMoneyNumber(e.target.value) })} />
+      ),
+    },
+    /*
+      Excl VAT and the confidence badge used to be columns here. Both were
+      dropped so the editing set fits 783px without sideways scrolling, and
+      neither took measured evidence with it: Excl VAT is derived from quantity
+      x unit price and its sum is on the totals bar, and the per-line confidence
+      now tints the row-number cell and is readable exactly on hover. A column
+      that costs a horizontal scroll on every one of sixteen rows has to earn
+      its width against the only job here, which is comparing to paper.
+    */
+    {
+      key: "matchType", label: "Type", width: "w-[8%]", compare: false,
+      cell: (line) => (
+        <select
+          className={cellInput}
+          value={line.ignored ? "ignore" : line.matchedEntityType || ""}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === "ignore") {
+              updateLine(line.id, { ignored: true, matchedEntityType: null, matchedEntityId: null, matchedEntityName: null });
+              return;
+            }
+            const newType = v as ReviewDraftLine["matchedEntityType"];
+            if (newType === line.matchedEntityType) {
+              updateLine(line.id, { ignored: false, matchedEntityType: newType });
+              return;
+            }
+            updateLine(line.id, { ignored: false, matchedEntityType: newType, matchedEntityId: null, matchedEntityName: null });
+          }}
+        >
+          <option value="">—</option>
+          <option value="ingredient">Ingredient</option>
+          <option value="packaging">Packaging</option>
+          <option value="product">Product</option>
+          <option value="ignore">Ignore</option>
+        </select>
+      ),
+    },
+    {
+      key: "matchedItem", label: "Mapped To", width: "w-[13%]", compare: false,
+      cell: (line) => (
+        <LineItemMatchCombobox
+          line={line}
+          matchOptions={draft.matchOptions}
+          disabled={line.ignored}
+          selectedQuality={lineMatchQuality[line.id] ?? null}
+          onSelect={(option, quality) => applyMatchOption(line.id, option, quality)}
+          onClear={() => clearLineMatch(line.id)}
+          onCreateIngredient={() => openCreateModal(line, "ingredient")}
+          onCreatePackaging={() => openCreateModal(line, "packaging")}
+          onEditIngredient={() => openEditIngredient(line)}
+        />
+      ),
+    },
+    {
+      key: "ignore", label: "Skip", width: "w-[4%]", compare: false,
+      cell: (line) => (
+        <input type="checkbox" className="mx-auto block" checked={line.ignored}
+          onChange={(e) => updateLine(line.id, { ignored: e.target.checked })} />
+      ),
+    },
+  ];
+
+  /* Split View is the comparison mode, so it carries only the printed columns. */
+  const comparing = workspaceLayout === "split";
+  const visibleColumns = comparing ? lineColumns.filter((c) => c.compare) : lineColumns;
+
+  /*
+    Down-column navigation — the mechanic that removes the mouse from the loop.
+
+    A clerk checking sixteen lines against paper does not read a row and then a
+    different row; they read one COLUMN down the page — all the quantities, then
+    all the unit prices — because that is how the eye compares numbers. Arrow
+    Down moves to the same field one row lower and keeps the caret in it, so a
+    column of sixteen values is checked with sixteen keystrokes and no clicks
+    and no pointing. The active row band follows, so the operator never loses
+    their place after glancing at the invoice.
+
+    Selects are left alone: arrow keys already mean something inside them.
+  */
+  function handleGridKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    const target = event.target as HTMLElement;
+    if (target.tagName === "SELECT") return;
+    /* Declared with the other functions, so TS cannot narrow `draft` from the
+       early return above — guard here instead. */
+    const lines = draft?.lines ?? [];
+    if (!lines.length) return;
+
+    const currentIndex = lines.findIndex((l) => l.id === activeLineId);
+    if (currentIndex === -1) {
+      event.preventDefault();
+      focusLine(lines[0], 0);
+      return;
+    }
+    const nextIndex = event.key === "ArrowDown"
+      ? Math.min(lines.length - 1, currentIndex + 1)
+      : Math.max(0, currentIndex - 1);
+    if (nextIndex === currentIndex) return;
+    event.preventDefault();
+
+    const cell = target.closest("td");
+    const row = target.closest("tr");
+    const columnIndex = cell && row ? Array.from(row.children).indexOf(cell) : -1;
+
+    const nextLine = lines[nextIndex];
+    focusLine(nextLine, nextIndex);
+
+    requestAnimationFrame(() => {
+      const nextRow = document.querySelector(`[data-line-row="${nextLine.id}"]`);
+      nextRow?.scrollIntoView({ block: "nearest" });
+      if (columnIndex >= 0) {
+        const field = nextRow?.children[columnIndex]?.querySelector("input, select") as HTMLElement | null;
+        field?.focus();
+      }
+    });
+  }
+
+  /*
+    Focus Invoice gets a fact card, not a squeezed copy of the grid.
+
+    MEASURED at 1366x768: the review column in Focus Invoice is a 221px strip.
+    A twelve-column editing grid rendered there is unreadable and unusable — it
+    was the same component as the other two modes at a different width, which is
+    precisely what makes the three modes feel like one. Focus Invoice exists so
+    the operator can READ the page, so the side panel answers only the questions
+    a reader asks — who sent it, which invoice, do the totals agree, how many
+    lines, is anything unmapped — and stays out of the way otherwise.
+  */
+  const unmappedCount = draft.lines.filter((l) => !l.ignored && !l.matchedEntityId).length;
+  const factCard = (
+    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain">
+      <div className="shrink-0 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Supplier</div>
+        <div className="mt-0.5 text-sm font-black leading-tight text-slate-900">{draft.fields.supplierName || "—"}</div>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Invoice</div>
+            <div className="text-xs font-black text-slate-900">{draft.fields.invoiceNumber || "—"}</div>
+          </div>
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Date</div>
+            <div className="text-xs font-black text-slate-900">{draft.fields.invoiceDate || "—"}</div>
+          </div>
+        </div>
+      </div>
+
+      {totalsSummary ? (
+        <div className="shrink-0 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Totals</div>
+          <dl className="mt-1 space-y-0.5 text-xs font-bold text-slate-700">
+            <div className="flex justify-between gap-2"><dt>Excl VAT</dt><dd className="font-black text-slate-900">{formatMoney(totalsSummary.sumExcl, draft.fields.currency || "ZAR")}</dd></div>
+            <div className="flex justify-between gap-2"><dt>VAT</dt><dd className="font-black text-slate-900">{formatMoney(totalsSummary.sumVat, draft.fields.currency || "ZAR")}</dd></div>
+            <div className="flex justify-between gap-2"><dt>Incl VAT</dt><dd className="font-black text-slate-900">{formatMoney(totalsSummary.sumIncl, draft.fields.currency || "ZAR")}</dd></div>
+          </dl>
+          <div
+            className={`mt-2 rounded-lg px-2 py-1 text-[10px] font-black ${
+              totalsSummary.hasMajorMismatch
+                ? "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
+                : "bg-emerald-50 text-emerald-700"
+            }`}
+          >
+            {totalsSummary.hasMajorMismatch ? "Totals do not agree" : "Totals agree with the invoice"}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="shrink-0 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Lines</span>
+          <span className="text-sm font-black text-slate-900">{draft.lines.length}</span>
+        </div>
+        <div className="mt-1 flex items-baseline justify-between gap-2">
+          <span className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Unmapped</span>
+          <span className={`text-sm font-black ${unmappedCount ? "text-[var(--vyron-warning-fg)]" : "text-emerald-700"}`}>
+            {unmappedCount}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setWorkspaceLayout("focus-review")}
+          className="mt-2 w-full rounded-lg vyron-grad-surface px-2 py-1.5 text-[10px] font-black text-white"
+        >
+          Edit these lines
+        </button>
+      </div>
+    </div>
+  );
 
   const extractionPanel = (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
@@ -974,23 +1274,49 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
       </div>
 
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-100 px-4 py-2">
-          <div>
-            <div className="text-sm font-black text-slate-900">Line Items</div>
-            <p className="text-[11px] font-semibold text-slate-500">
-              {draft.lines.length} line{draft.lines.length === 1 ? "" : "s"} · click a row to focus the invoice preview
-            </p>
-          </div>
+        {/*
+          One line in the comparison mode, two when editing.
+          The title, the count and the hint stack to 40px, which is a line row
+          and a half taken from the thing the operator is here to look at. When
+          comparing, they sit on one 24px line instead.
+
+          "click a row to focus the invoice preview" used to be here. Nothing
+          writes source_page or source_bbox — the insert payload in
+          vyron-document-extraction.ts omits both — so the viewer never had a
+          region to focus and the promise was never kept. It now describes the
+          navigation that does work.
+        */}
+        <div className={`flex shrink-0 items-center justify-between gap-2 border-b border-slate-100 px-3 ${comparing ? "py-1" : "py-2"}`}>
+          {comparing ? (
+            <div className="min-w-0 truncate text-[11px] font-black text-slate-900">
+              Line Items · {draft.lines.length} · as printed on the invoice
+            </div>
+          ) : (
+            <div>
+              <div className="text-sm font-black text-slate-900">Line Items</div>
+              <p className="text-[11px] font-semibold text-slate-500">
+                {draft.lines.length} line{draft.lines.length === 1 ? "" : "s"} · ↑↓ moves down a column
+              </p>
+            </div>
+          )}
           <button
             type="button"
             onClick={addInvoiceLine}
-            className="inline-flex items-center gap-1 rounded-lg vyron-grad-surface px-3 py-1.5 text-[11px] font-semibold text-white"
+            className={`inline-flex shrink-0 items-center gap-1 rounded-lg vyron-grad-surface font-semibold text-white ${
+              comparing ? "px-2 py-0.5 text-[10px]" : "px-3 py-1.5 text-[11px]"
+            }`}
           >
             <Plus size={12} />
-            Add Invoice Line
+            {comparing ? "Add" : "Add Invoice Line"}
           </button>
         </div>
-        {totalsSummary ? <InvoiceTotalsWarningBanner summary={totalsSummary} /> : null}
+        {/*
+          Suppressed while comparing — not because the warning stops mattering,
+          but because the totals bar pinned to the bottom of this same section
+          already carries the difference and is always on screen. Two statements
+          of one fact cost a line row each in the mode with the fewest.
+        */}
+        {totalsSummary && !comparing ? <InvoiceTotalsWarningBanner summary={totalsSummary} /> : null}
         {/*
           A 280px floor here could exceed the space left after the header block,
           banner and totals footer on a short laptop screen. Every ancestor is
@@ -998,117 +1324,87 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           the last rows became unreachable. A smaller floor keeps the table from
           collapsing without ever outgrowing its frame.
         */}
-        <div className="min-h-0 flex-1 basis-0 overflow-auto overscroll-contain">
-          <table className="min-w-[2100px] w-full text-left text-xs">
+        <div className="min-h-0 flex-1 basis-0 overflow-auto overscroll-contain" onKeyDown={handleGridKeyDown}>
+          {/*
+            table-fixed with percentage widths, never min-w. The clerk compares
+            paper to screen; a table wider than its pane turns every line into a
+            horizontal round trip.
+          */}
+          <table className="w-full table-fixed text-left text-xs">
             <thead className="sticky top-0 z-10 bg-slate-50 text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 shadow-sm">
               <tr>
-                <th className="min-w-[200px] px-3 py-2">Description</th>
-                <th className="min-w-[100px] px-3 py-2">SKU</th>
-                <th className="px-3 py-2">Qty</th>
-                <th className="px-3 py-2">Unit</th>
-                <th className="px-3 py-2">Unit Price</th>
-                <th className="px-3 py-2">Excl VAT</th>
-                <th className="px-3 py-2">VAT</th>
-                <th className="px-3 py-2">Incl VAT</th>
-                <th className="px-3 py-2">Conf.</th>
-                <th className="min-w-[110px] px-3 py-2">Match Type</th>
-                <th className="min-w-[300px] px-3 py-2">Matched Item</th>
-                <th className="px-3 py-2">Ignore</th>
+                <th className="w-[4%] px-1.5 py-1 text-center">#</th>
+                {visibleColumns.map((col) => (
+                  <th key={col.key} className={`${(comparing && col.compareWidth) || col.width} px-1.5 py-1`}>
+                    {col.label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {draft.lines.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-4 py-8 text-center text-sm font-bold text-slate-500">
+                  <td colSpan={visibleColumns.length + 1} className="px-4 py-8 text-center text-sm font-bold text-slate-500">
                     No line items yet. Use &ldquo;Add Invoice Line&rdquo; to create one.
                   </td>
                 </tr>
               ) : null}
-              {draft.lines.length > 0
-                ? draft.lines.map((line, lineIndex) => (
+              {draft.lines.map((line, lineIndex) => (
                 <tr
                   key={line.id}
-                  className={`cursor-pointer border-t border-slate-100 align-top transition hover:bg-violet-50/40 ${
-                    activeLineId === line.id ? "bg-violet-50 ring-1 ring-inset ring-violet-300" : ""
+                  data-line-row={line.id}
+                  /*
+                    The row number and the zebra stripe are both eye-tracking
+                    aids, not decoration. The operator counts position against
+                    the printed invoice to know they are on the same line, and
+                    the stripe keeps the eye on one row while it crosses six
+                    columns. The active row is banded hard enough to find again
+                    after a glance away at the page.
+                  */
+                  className={`cursor-pointer border-t border-slate-100 transition ${
+                    activeLineId === line.id
+                      ? "bg-violet-100 ring-2 ring-inset ring-violet-400"
+                      : lineIndex % 2 === 1
+                        ? "bg-slate-50/70 hover:bg-violet-50/50"
+                        : "hover:bg-violet-50/50"
                   }`}
                   onClick={() => focusLine(line, lineIndex)}
+                  /*
+                    Every cell stops click propagation so that clicking an input
+                    does not re-trigger the row handler — which also meant
+                    clicking a field never made its row active, and the first
+                    ArrowDown was spent selecting the row the operator was
+                    already in. Focus is the honest signal: whatever field the
+                    operator lands in, by mouse or by Tab, that row is active.
+                  */
+                  onFocusCapture={() => setActiveLineId(line.id)}
                 >
-                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                    <input className={inputClass} value={line.description} onChange={(e) => updateLine(line.id, { description: e.target.value })} />
+                  {/*
+                    The row number doubles as the confidence indicator. A low
+                    score is the one thing that tells the operator "look at this
+                    line harder", so it belongs where the eye already is when it
+                    counts position against the paper — not in a twelfth column.
+                    The exact measured score stays available on hover.
+                  */}
+                  <td
+                    title={line.confidenceScore !== null ? `Extraction confidence ${line.confidenceScore}%` : "Confidence not measured"}
+                    className={`${cellPad} text-center text-[10px] font-black ${
+                      line.confidenceScore !== null && line.confidenceScore < 70
+                        ? "bg-red-100 text-red-700"
+                        : activeLineId === line.id
+                          ? "text-violet-700"
+                          : "text-slate-400"
+                    }`}
+                  >
+                    {lineIndex + 1}
                   </td>
-                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                    <input className={inputClass} value={line.skuOrProductCode} onChange={(e) => updateLine(line.id, { skuOrProductCode: e.target.value })} />
-                  </td>
-                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                    <input className={`${inputClass} w-20`} value={String(line.quantity ?? "")} onChange={(e) => updateLine(line.id, { quantity: parseMoneyNumber(e.target.value) })} />
-                  </td>
-                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                    <input className={`${inputClass} w-20`} value={line.unit} onChange={(e) => updateLine(line.id, { unit: e.target.value })} />
-                  </td>
-                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                    <input className={`${inputClass} w-24`} value={String(line.unitPrice ?? "")} onChange={(e) => updateLine(line.id, { unitPrice: parseMoneyNumber(e.target.value) })} />
-                  </td>
-                  <td className="px-3 py-2 text-right font-bold text-slate-700" onClick={(e) => e.stopPropagation()}>
-                    {line.lineExclVat ?? computeLineAmounts(line).lineExclVat ?? "—"}
-                  </td>
-                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                    <input className={`${inputClass} w-20`} value={String(line.vat ?? "")} onChange={(e) => updateLine(line.id, { vat: parseMoneyNumber(e.target.value) })} />
-                  </td>
-                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                    <input className={`${inputClass} w-24`} value={String(line.lineTotal ?? "")} onChange={(e) => updateLine(line.id, { lineTotal: parseMoneyNumber(e.target.value) })} />
-                  </td>
-                  <td className="px-3 py-2">
-                    <ConfidenceBadge score={line.confidenceScore} />
-                  </td>
-                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                    <select
-                      className={inputClass}
-                      value={line.ignored ? "ignore" : line.matchedEntityType || ""}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        if (v === "ignore") {
-                          updateLine(line.id, { ignored: true, matchedEntityType: null, matchedEntityId: null, matchedEntityName: null });
-                          return;
-                        }
-                        const newType = v as ReviewDraftLine["matchedEntityType"];
-                        if (newType === line.matchedEntityType) {
-                          updateLine(line.id, { ignored: false, matchedEntityType: newType });
-                          return;
-                        }
-                        updateLine(line.id, {
-                          ignored: false,
-                          matchedEntityType: newType,
-                          matchedEntityId: null,
-                          matchedEntityName: null,
-                        });
-                      }}
-                    >
-                      <option value="">—</option>
-                      <option value="ingredient">Ingredient</option>
-                      <option value="packaging">Packaging</option>
-                      <option value="product">Product</option>
-                      <option value="ignore">Ignore</option>
-                    </select>
-                  </td>
-                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                    <LineItemMatchCombobox
-                      line={line}
-                      matchOptions={draft.matchOptions}
-                      disabled={line.ignored}
-                      selectedQuality={lineMatchQuality[line.id] ?? null}
-                      onSelect={(option, quality) => applyMatchOption(line.id, option, quality)}
-                      onClear={() => clearLineMatch(line.id)}
-                      onCreateIngredient={() => openCreateModal(line, "ingredient")}
-                      onCreatePackaging={() => openCreateModal(line, "packaging")}
-                      onEditIngredient={() => openEditIngredient(line)}
-                    />
-                  </td>
-                  <td className="px-3 py-2 text-center" onClick={(e) => e.stopPropagation()}>
-                    <input type="checkbox" checked={line.ignored} onChange={(e) => updateLine(line.id, { ignored: e.target.checked })} />
-                  </td>
+                  {visibleColumns.map((col) => (
+                    <td key={col.key} className={cellPad} onClick={(e) => e.stopPropagation()}>
+                      {col.cell(line)}
+                    </td>
+                  ))}
                 </tr>
-                  ))
-                : null}
+              ))}
             </tbody>
           </table>
         </div>
@@ -1261,19 +1557,12 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           onPointerDown={() => setWorkspaceLayout("focus-review")}
           role="presentation"
         >
-          {workspaceLayout !== "focus-review" && !previewFullscreen ? (
-            <div className="mb-1 flex shrink-0 justify-end">
-              <button
-                type="button"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => setWorkspaceLayout("focus-review")}
-                className="rounded-lg bg-violet-100 px-3 py-1.5 text-[10px] font-black text-violet-800"
-              >
-                Focus Review
-              </button>
-            </div>
-          ) : null}
-          {extractionPanel}
+          {/*
+            The in-column "Focus Review" shortcut is gone. It duplicated the mode
+            switch already in the toolbar and cost 28px of the panel — one whole
+            line row — in exactly the mode where rows are scarcest.
+          */}
+          {workspaceLayout === "focus-invoice" && !previewFullscreen ? factCard : extractionPanel}
         </div>
       </main>
 

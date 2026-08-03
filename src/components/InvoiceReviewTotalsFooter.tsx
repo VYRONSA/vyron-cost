@@ -48,21 +48,32 @@ export function InvoiceTotalsWarningBanner({ summary }: { summary: InvoiceTotals
         rounding ? "border-slate-200 bg-slate-50" : "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]"
       }`}
     >
+      {/*
+        One row, not two. MEASURED at 1366x768: the message on one line with the
+        three differences wrapped beneath it made this banner 53px of the space
+        the sixteen line rows were competing for. The differences sit inline and
+        the message truncates — it is a pointer to a problem, not the report of
+        it, and the totals bar below carries the same numbers.
+      */}
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center justify-between gap-2 text-left"
+        className="flex w-full items-center gap-3 text-left"
       >
-        <span className={`text-xs font-black ${rounding ? "text-slate-700" : "text-[var(--vyron-warning-fg)]"}`}>{message}</span>
+        <span className={`shrink-0 text-[11px] font-black ${rounding ? "text-slate-700" : "text-[var(--vyron-warning-fg)]"}`}>
+          {rounding ? "Rounding difference" : "Totals do not agree"}
+        </span>
+        {open ? (
+          <span className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
+            <DiffCell label="Δ Excl" diff={summary.diffExcl} rounding={rounding} />
+            <DiffCell label="Δ VAT" diff={summary.diffVat} rounding={rounding} />
+            <DiffCell label="Δ Incl" diff={summary.diffIncl} rounding={rounding} />
+          </span>
+        ) : (
+          <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-slate-500">{message}</span>
+        )}
         <ChevronDown size={14} className={`shrink-0 transition ${open ? "rotate-180" : ""}`} />
       </button>
-      {open ? (
-        <div className="mt-1 flex flex-wrap gap-3">
-          <DiffCell label="Δ Excl" diff={summary.diffExcl} rounding={rounding} />
-          <DiffCell label="Δ VAT" diff={summary.diffVat} rounding={rounding} />
-          <DiffCell label="Δ Incl" diff={summary.diffIncl} rounding={rounding} />
-        </div>
-      ) : null}
     </div>
   );
 }
