@@ -75,7 +75,15 @@ export default function InvoiceReviewTotalsFooter({
 }: Props) {
   const currency = draft.fields.currency || "ZAR";
   const rounding = summary.hasRoundingDifference;
-  const [expanded, setExpanded] = useState(summary.hasTotalsDifference);
+  /*
+    Collapsed until the operator asks for it.
+    MEASURED at 1366x768: auto-expanding on a difference made this footer 216px
+    of a 435px section, leaving the line grid 140px — two visible rows. The
+    operator spends the review in the grid, not in the totals; the collapsed bar
+    already carries Excl, VAT, Incl and the difference, which is enough to know
+    whether opening it is worth the space.
+  */
+  const [expanded, setExpanded] = useState(false);
 
   const diffSummary =
     summary.diffIncl !== null

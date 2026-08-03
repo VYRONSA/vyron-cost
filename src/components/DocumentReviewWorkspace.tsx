@@ -12,7 +12,6 @@ import ExtractionQualityPanel from "@/components/ExtractionQualityPanel";
 import InvoiceReviewTotalsFooter, { InvoiceTotalsWarningBanner } from "@/components/InvoiceReviewTotalsFooter";
 import LineItemMatchCombobox from "@/components/LineItemMatchCombobox";
 import ReviewWorkspaceLayoutControls, {
-  layoutColumnClass,
   type ReviewWorkspaceLayout,
 } from "@/components/ReviewWorkspaceLayoutControls";
 import type { MatchQuality } from "@/lib/vyron-line-match-search";
@@ -36,6 +35,7 @@ import {
 import { computeLineAmounts, formatMoney, roundMoney, summarizeInvoiceTotals } from "@/lib/vyron-invoice-line-math";
 import { buildInitialLineMatchQuality, createEmptyLine, mergeMatchOption } from "@/lib/vyron-review-draft-hydrate";
 import { matchQualityFromSuggestion } from "@/lib/vyron-line-match-search";
+import { traceStart, traceComplete, traceEvent, traceRows } from "@/lib/vyron-workflow-trace";
 import {
   type DocumentViewerRegions,
   type ViewerFocusTarget,
@@ -63,6 +63,22 @@ function fieldClass(score: number | null) {
   return score !== null && score < 70 ? "border-red-300 bg-red-50" : "border-slate-200 bg-white";
 }
 
+/**
+ * How long the review screen waits for an extraction to appear.
+ *
+ * Was 60,000ms. Worst measured extraction was 92,867ms (V1, scanned invoice),
+ * so the screen gave up while the server was still working and told the
+ * operator "taking longer than expected" on a run that then succeeded
+ * unseen — a guaranteed stall, not a rare one.
+ *
+ * The bound that matters is the route's own ceiling: `maxDuration = 120`
+ * seconds in app/api/documents/[id]/extract/route.ts. No extraction can outlive
+ * it, so waiting past that plus a margin for the final persistence and reload
+ * cannot time out on a run that is still viable. If this ever fires now, the
+ * request is genuinely dead rather than merely slow.
+ */
+const EXTRACTION_POLL_TIMEOUT_MS = 150_000;
+
 type CreateEntityModal = {
   lineId: string;
   entityType: "ingredient" | "packaging";
@@ -84,6 +100,8 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
   const activeLoadRef = useRef<{ id: number; controller: AbortController } | null>(null);
   const pollingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollingStartedAtRef = useRef<number | null>(null);
+  /** Poll tick sequence for the workflow trace. Reset when polling restarts. */
+  const pollTickRef = useRef(0);
   const [draft, setDraft] = useState<ReviewDraft | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -157,9 +175,19 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
 
   const shouldPollForExtraction = useCallback((next: ReviewDraft | null) => {
     if (!next) return false;
-    if (hasExtractedContent(next)) return false;
     const status = next.status.toLowerCase();
-    return status === "uploaded" || status === "uploading" || status === "stored" || status === "extracting";
+    /*
+     * A run in progress is polled even when the draft already has content.
+     *
+     * `hasExtractedContent` is true for any previously extracted document, so
+     * re-extracting one used to disable polling entirely: the server replaced
+     * the rows while the screen kept showing the PREVIOUS run's, with no refresh
+     * and no indication anything had changed. Status "extracting" is a fact
+     * about right now and outranks the presence of older content.
+     */
+    if (status === "extracting") return true;
+    if (hasExtractedContent(next)) return false;
+    return status === "uploaded" || status === "uploading" || status === "stored";
   }, [hasExtractedContent]);
 
   const shouldAutoExtract = useCallback((next: ReviewDraft) => {
@@ -200,6 +228,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
       const controller = new AbortController();
       activeLoadRef.current = { id: requestId, controller };
 
+      traceStart("UI REVIEW LOAD", documentId, { reason: "mount or refresh" });
       setLoading(true);
       setErrorMessage("");
       try {
@@ -210,6 +239,8 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           fetch(`/api/documents/${documentId}/audit-trail`, { signal: controller.signal }).then((r) => r.json()).catch(() => ({ ok: false })),
         ]);
         if (activeLoadRef.current?.id !== requestId) return;
+        traceComplete("UI REVIEW LOAD", documentId, { status: next.status, lines: next.lines.length });
+        traceRows("5-react-grid", documentId, next.lines.length, { ignored: next.lines.filter((l) => l.ignored).length, rendered: next.lines.filter((l) => !l.ignored).length });
         setDraft(next);
         setLineMatchQuality(buildInitialLineMatchQuality(next));
         if (auditRes?.ok) setCostAuditRows(auditRes.rows || []);
@@ -228,6 +259,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
 
         if (!extractionTriggeredRef.current && shouldAutoExtract(next)) {
           extractionTriggeredRef.current = true;
+          traceStart("UI AUTO EXTRACT", documentId);
           setMessage("Starting automatic extraction…");
           const extractRes = await fetch(`/api/documents/${documentId}/extract`, {
             method: "POST",
@@ -237,6 +269,8 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           if (!extractRes.ok || (!extractData.ok && !extractData.partial)) {
             throw new Error(extractData.error || "Automatic extraction failed.");
           }
+          traceComplete("UI AUTO EXTRACT", documentId, { ok: extractData.ok, partial: Boolean(extractData.partial) });
+          traceEvent("UI REFRESH AFTER EXTRACT", documentId);
           const refreshed = await loadReviewDraft(documentId, undefined, { signal: controller.signal });
           if (activeLoadRef.current?.id !== requestId) return;
           setDraft(refreshed);
@@ -281,18 +315,24 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     }
 
     const startedAt = pollingStartedAtRef.current ?? Date.now();
+    if (pollingStartedAtRef.current === null) pollTickRef.current = 0;
     pollingStartedAtRef.current = startedAt;
 
     const poll = async () => {
       try {
+        pollTickRef.current += 1;
+        const tickNumber = pollTickRef.current;
         const next = await loadReviewDraft(documentId);
+        traceEvent("UI POLL TICK", documentId, { tick: tickNumber, pollElapsedMs: Date.now() - startedAt, documentStatus: next.status, rowsSeen: next.lines.length, refreshTriggered: hasExtractedContent(next), completed: hasExtractedContent(next) });
         if (hasExtractedContent(next)) {
+          traceEvent("UI POLL RESOLVED", documentId, { status: next.status, lines: next.lines.length });
           setDraft(next);
           setLineMatchQuality(buildInitialLineMatchQuality(next));
           pollingStartedAtRef.current = null;
           return;
         }
-        if (Date.now() - startedAt >= 60000) {
+        if (Date.now() - startedAt >= EXTRACTION_POLL_TIMEOUT_MS) {
+          traceEvent("UI POLL TIMEOUT", documentId, { afterMs: Date.now() - startedAt });
           setMessage("Extraction is taking longer than expected.");
           pollingStartedAtRef.current = null;
           return;
@@ -301,7 +341,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           void poll();
         }, 1000);
       } catch {
-        if (Date.now() - startedAt >= 60000) {
+        if (Date.now() - startedAt >= EXTRACTION_POLL_TIMEOUT_MS) {
           setMessage("Extraction is taking longer than expected.");
           pollingStartedAtRef.current = null;
           return;
@@ -376,7 +416,16 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
   }
 
   function addInvoiceLine() {
-    setDraft((current) => (current ? { ...current, lines: [...current.lines, createEmptyLine()] } : current));
+    traceEvent("ADD LINE CLICK", documentId, { before: draft?.lines.length ?? 0 });
+    setDraft((current) => {
+      if (!current) {
+        traceEvent("ADD LINE STATE", documentId, { applied: false, reason: "no draft loaded" });
+        return current;
+      }
+      const next = { ...current, lines: [...current.lines, createEmptyLine()] };
+      traceEvent("ADD LINE STATE", documentId, { applied: true, after: next.lines.length });
+      return next;
+    });
   }
 
   function openEditIngredient(line: ReviewDraftLine) {
@@ -432,8 +481,12 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     setMessage("");
     setErrorMessage("");
     try {
+      traceStart("UI SAVE DRAFT", documentId, { linesSent: draft.lines.length });
       const result = await saveReviewCorrections(draft);
+      traceComplete("UI SAVE DRAFT", documentId, { correctedFieldCount: result?.correctedFieldCount ?? null, mappedLines: result?.mappedLines ?? null });
+      traceEvent("UI RELOAD AFTER SAVE", documentId);
       const refreshed = await refreshDraft();
+      traceRows("6-persisted-after-save", documentId, refreshed.lines.length, { sent: draft.lines.length });
       setDraft(refreshed);
       setLineMatchQuality((current) => {
         const next = { ...buildInitialLineMatchQuality(refreshed), ...current };
@@ -709,22 +762,66 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
       </div>
     );
 
-  const headerCompact = workspaceLayout === "focus-review";
+  /*
+    The invoice header block is hidden in both focus modes, not just Focus
+    Review. MEASURED at 1366x768: in Focus Invoice the review column is a 221px
+    strip, where the 11-field header grid stacks to 1056px of content and its
+    capped window still took 257px of the 559px panel — leaving the line grid
+    9px and zero visible rows. A focus mode that shows no lines at all is not a
+    focus mode. Split View keeps the header, since that is where the operator
+    reconciles header fields against the preview.
+  */
+  const headerCompact = workspaceLayout !== "split";
+
+  /*
+    Column widths are driven by flex-grow weights, not width classes.
+    MEASURED at 1366x768: the arbitrary-percentage classes `w-[72%]`/`w-[28%]`
+    were never emitted into the stylesheet, so both focus modes fell back to
+    `width: auto`; the `shrink-0` invoice column then pinned itself to its
+    intrinsic 871px and left the review column 135px wide. At 135px the line
+    grid's own title bar, warning banner and totals bar wrapped into 460px of
+    chrome, which is why the grid only ever showed two rows.
+    Grow weights need no generated class, and because every column has
+    flex-basis 0 they divide the row exactly — the gap is subtracted first.
+  */
+  const columnWeights = previewFullscreen
+    ? { invoice: 58, review: 42 }
+    : workspaceLayout === "focus-invoice"
+      ? { invoice: 78, review: 22 }
+      : workspaceLayout === "focus-review"
+        ? { invoice: 22, review: 78 }
+        : { invoice: 50, review: 50 };
 
   const extractionPanel = (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
       {/*
-        The header block is capped and scrolls itself in every layout, not only
-        the compact one. Uncapped it grew with the field count and squeezed the
-        line-item table — the part of the screen the review is actually about.
+        Everything above the line table is bounded as one block.
+        MEASURED in the browser at 1366x768: the header, the 3-way match panel
+        and the extraction quality panel were each `shrink-0` and unbounded, so
+        together they took the whole column. The line table collapsed to its
+        140px floor and rendered entirely below the fold — 16 rows in the DOM,
+        zero visible, and no page scroll to reach them. Capping this block is
+        what guarantees the table the remaining height in every mode.
       */}
       <div
-        className={`shrink-0 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-sm ${
-          headerCompact ? "max-h-[24vh] p-3" : "max-h-[30vh] p-3"
+        className={`flex min-h-0 shrink flex-col gap-2 overflow-y-auto overscroll-contain ${
+          headerCompact ? "hidden" : "max-h-[40%]"
         }`}
       >
-        <div className={`font-black text-slate-900 ${headerCompact ? "mb-2 text-xs" : "mb-3 text-sm"}`}>Invoice Header</div>
-        <div className={`grid gap-2 ${headerCompact ? "sm:grid-cols-2 lg:grid-cols-3" : "gap-3 sm:grid-cols-2"}`}>
+      {/*
+        The header sizes to its content. It is not capped and does not scroll.
+        MEASURED, both directions:
+          two-column, uncapped   650px tall, 0px hidden, and at 1366x768 it left
+                                 the line grid 0px — no rows visible at all
+          capped at 30vh         324px visible with 318px of content HIDDEN
+                                 behind a scrollbar the operator never asked for
+        Neither is acceptable. Density is the fix rather than truncation: eleven
+        fields across four columns occupy three rows instead of six, so every
+        field stays on screen AND the grid keeps its height. Nothing is hidden.
+      */}
+      <div className="shrink-0 rounded-2xl border border-slate-200 bg-white shadow-sm p-3">
+        <div className={`font-black text-slate-900 ${headerCompact ? "mb-2 text-xs" : "mb-2 text-sm"}`}>Invoice Header</div>
+        <div className="grid gap-2 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[
             ["supplierName", "Supplier", "text"],
             ["invoiceNumber", "Invoice Number", "text"],
@@ -743,7 +840,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
             const score = draft.fields.fieldConfidence[confKey] ?? null;
             const value = draft.fields[fieldKey];
             return (
-              <label key={key} className={`rounded-xl border ${headerCompact ? "p-2" : "p-3"} ${fieldClass(score)}`}>
+              <label key={key} className={`rounded-xl border p-2 ${fieldClass(score)}`}>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">{label}</span>
                   <ConfidenceBadge score={score} />
@@ -783,6 +880,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
       <div className="shrink-0">
         <ExtractionQualityPanel record={draft.extractionQuality} />
       </div>
+      </div>
 
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-100 px-4 py-2">
@@ -809,7 +907,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           the last rows became unreachable. A smaller floor keeps the table from
           collapsing without ever outgrowing its frame.
         */}
-        <div className="min-h-[140px] flex-1 basis-0 overflow-auto overscroll-contain">
+        <div className="min-h-0 flex-1 basis-0 overflow-auto overscroll-contain">
           <table className="min-w-[2100px] w-full text-left text-xs">
             <thead className="sticky top-0 z-10 bg-slate-50 text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 shadow-sm">
               <tr>
@@ -1029,9 +1127,8 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           millimetre of invoice the operator cannot see. */}
       <main className="flex min-h-0 flex-1 overflow-hidden p-2 lg:flex-row lg:gap-2.5 lg:p-2.5">
         <div
-          className={`flex min-h-0 flex-col overflow-hidden transition-[width] duration-200 ${
-            previewFullscreen ? "w-[58%] shrink-0" : `shrink-0 ${layoutColumnClass(workspaceLayout, "invoice")}`
-          }`}
+          className="flex min-w-0 min-h-0 flex-col overflow-hidden transition-[flex-grow] duration-200"
+          style={{ flexGrow: columnWeights.invoice, flexShrink: 1, flexBasis: 0 }}
           onPointerDown={() => setWorkspaceLayout("focus-invoice")}
           role="presentation"
         >
@@ -1052,9 +1149,10 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
         </div>
 
         <div
-          className={`flex min-h-0 flex-col overflow-hidden transition-[width] duration-200 ${
-            previewFullscreen ? "min-w-0 flex-1 pr-1" : `min-w-0 flex-1 ${layoutColumnClass(workspaceLayout, "review")}`
+          className={`flex min-w-0 min-h-0 flex-col overflow-hidden transition-[flex-grow] duration-200 ${
+            previewFullscreen ? "pr-1" : ""
           }`}
+          style={{ flexGrow: columnWeights.review, flexShrink: 1, flexBasis: 0 }}
           onPointerDown={() => setWorkspaceLayout("focus-review")}
           role="presentation"
         >
