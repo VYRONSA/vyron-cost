@@ -111,6 +111,32 @@ export function parsePlatformSessionCookie(raw: string | null | undefined): Plat
   return parseCookieJsonValue<PlatformSessionCookie>(raw);
 }
 
+/**
+ * Roll the browser cookie forward to match a refreshed session.
+ *
+ * refreshPlatformSession() extends expires_at in vyron_platform_sessions on
+ * every request, but the cookie's Max-Age was fixed at login. Without this the
+ * browser drops the cookie 30 minutes after login however active the operator
+ * is; the next request arrives with no cookie at all and the API returns 401.
+ *
+ * Cookies may only be written from a Route Handler or Server Function. During
+ * Server Component rendering the write throws, which is ignored: the database
+ * session is still rolled forward and the next API call re-issues the cookie.
+ */
+async function reissuePlatformSessionCookie(session: PlatformSessionCookie) {
+  try {
+    const { cookies } = await import("next/headers");
+    const store = await cookies();
+    store.set(
+      PLATFORM_SESSION_COOKIE,
+      encodeURIComponent(JSON.stringify(session)),
+      platformCookieOptions(cookieMaxAgeSeconds(session.expiresAt))
+    );
+  } catch {
+    // Server Component render — cookies are read-only here.
+  }
+}
+
 export function readPlatformSessionFromRequest(request: NextRequest) {
   return parsePlatformSessionCookie(request.cookies.get(PLATFORM_SESSION_COOKIE)?.value || null);
 }
@@ -365,6 +391,9 @@ export async function requirePlatformSessionFromRequest(
     throw new Error("Insufficient platform role.");
   }
 
+  // Keep the cookie's lifetime in step with the rolling server-side session.
+  await reissuePlatformSessionCookie(refreshed);
+
   return refreshed;
 }
 
@@ -385,11 +414,17 @@ export async function requirePlatformSessionServer(
     throw new Error("Insufficient platform role.");
   }
 
+  // No-op during Server Component rendering; the DB session is still rolled forward.
+  await reissuePlatformSessionCookie(refreshed);
+
   return refreshed;
 }
 
 export function developerApiUnauthorized(message: string) {
-  return NextResponse.json({ ok: false, error: message }, { status: 401 });
+  // An authenticated operator whose role is insufficient is a 403, not a 401:
+  // the client must show "no permission" rather than bounce them to sign in.
+  const forbidden = /insufficient platform role/i.test(message);
+  return NextResponse.json({ ok: false, error: message }, { status: forbidden ? 403 : 401 });
 }
 
 export async function revokePlatformSession(token: string, request?: NextRequest) {

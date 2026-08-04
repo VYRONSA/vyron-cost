@@ -335,6 +335,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
   const [usesApiRegistry, setUsesApiRegistry] = useState(false);
   const [directoryActionId, setDirectoryActionId] = useState<string | null>(null);
   const [serverWorkspaceStatus, setServerWorkspaceStatus] = useState<ServerWorkspaceStatus | null>(null);
+  const [directoryError, setDirectoryError] = useState<string | null>(null);
 
   const selectedClient = clients.find((client) => client.id === selectedClientId) ?? null;
   const manageLoginClient = clients.find((client) => client.id === manageLoginClientId) ?? null;
@@ -410,10 +411,33 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
   }, [clients, statusCounts.setup, activeClient]);
 
   async function reloadClientsFromApi() {
-    const response = await fetch("/api/developer/clients");
-    const data = await response.json();
+    const response = await fetch("/api/developer/clients", {
+      cache: "no-store",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => null);
+
+    // A lapsed platform session returns 401 {ok:false}. Treating that as "no
+    // clients" renders an empty directory that is indistinguishable from real
+    // data — send the operator back to sign in instead of showing 0.
+    if (response.status === 401) {
+      window.location.href = `/developer-login?next=${encodeURIComponent(
+        "/developer/clients"
+      )}&error=${encodeURIComponent("Developer session expired. Please sign in again.")}`;
+      return true;
+    }
+
+    if (response.status === 403) {
+      throw new Error("You do not have permission to access Developer Centre.");
+    }
+
+    // Any other failure must surface, not silently collapse to an empty list.
+    if (!response.ok || !data?.ok) {
+      throw new Error(data?.error || `Client directory request failed (HTTP ${response.status}).`);
+    }
 
     if (data.ok && Array.isArray(data.workspaces)) {
+      setDirectoryError(null);
       const mapped = data.workspaces.map((ws: Record<string, unknown>) => mapWorkspaceToClient(ws));
 
       setClients(mapped);
@@ -440,9 +464,16 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
           setClients(stored);
           setUsesApiRegistry(false);
         }
-      } catch {
-        setClients(stored);
-        setUsesApiRegistry(false);
+      } catch (error) {
+        // Never let a transport or server failure masquerade as an empty
+        // directory. Surface it and keep whatever list we last held.
+        setDirectoryError(
+          error instanceof Error ? error.message : "Could not load the client directory."
+        );
+        if (stored.length) {
+          setClients(stored);
+          setUsesApiRegistry(false);
+        }
       }
 
       setActiveClient(readActiveClient());
@@ -1137,6 +1168,16 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
           title="Client Directory"
           subtitle="Search and manage existing VYRON COST client workspaces."
         />
+
+        {directoryError ? (
+          <div className="w-full rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4">
+            <p className="text-sm font-black text-rose-900">Client directory could not be refreshed</p>
+            <p className="mt-1 text-sm font-semibold text-rose-700">{directoryError}</p>
+            <p className="mt-1 text-xs font-semibold text-rose-600">
+              Showing the last known list. This is not an empty directory.
+            </p>
+          </div>
+        ) : null}
 
         <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="flex flex-wrap items-center gap-3">
