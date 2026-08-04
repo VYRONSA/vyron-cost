@@ -1,0 +1,20 @@
+{
+  "comment": "Single source of truth for tenants that may never be deleted. Consumed by src/lib/vyron-protected-tenants.ts (UI + API) and scripts/cleanup-test-tenants.mjs (CLI). Company IDs, not workspace IDs.",
+  "protectedCompanyIds": [
+    {
+      "companyId": "9c8b7dd4-178e-4459-a028-d053ac9ebae2",
+      "name": "Metanoia Hospitality (Pty) Ltd",
+      "reason": "Live client — trading as Handcrafted Food Products"
+    },
+    {
+      "companyId": "48002864-8800-4000-9000-000000000001",
+      "name": "Handcrafted Food Products",
+      "reason": "Handcrafted demo import tenant"
+    },
+    {
+      "companyId": "30df5bad-5dff-495c-9923-8484fab7ad37",
+      "name": "Northwood Management Investment",
+      "reason": "Client workspace — trading as Cutting Edge Cuisine"
+    }
+  ]
+}

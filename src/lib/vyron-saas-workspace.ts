@@ -1617,6 +1617,68 @@ export async function deleteClientWorkspace(workspaceId: string) {
   return { ok: true as const, workspaceId, companyId };
 }
 
+/**
+ * Permanently deletes a client workspace **and its operational data**.
+ *
+ * deleteClientWorkspace() refuses when costing data exists and the caller falls
+ * back to archiving. This is the deliberate override: operational data is
+ * cleared first through the PCP-045 reset function — one transaction, correct
+ * foreign-key order — and the workspace, memberships and company row then go.
+ *
+ * Irreversible. Callers must gate this on the supervisor password.
+ */
+export async function forceDeleteClientWorkspace(workspaceId: string, actorEmail: string | null) {
+  const supabase = isSupabaseServiceRoleConfigured() ? getSupabaseAdmin() : null;
+  if (!supabase) throw new Error("Supabase service role is required to delete workspaces.");
+
+  const workspace = await getWorkspace(workspaceId);
+  if (!workspace) throw new Error("Workspace not found.");
+
+  const companyId = workspace.companyId;
+  let rowsCleared = 0;
+
+  if (companyId) {
+    const reset = await supabase.rpc("vyron_dev_reset_execute", {
+      p_company_id: companyId,
+      p_module: "factory",
+      p_actor_user_id: null,
+      p_actor_email: actorEmail,
+      p_reason: "Force delete client workspace",
+      p_backup_created: false,
+      p_backup_location: null,
+      p_backup_acknowledged_without: true,
+    });
+    // A company with no reset functions installed, or none of its tables
+    // present, still deletes — the FK checks below remain authoritative.
+    if (!reset.error && reset.data) {
+      rowsCleared = Number((reset.data as { total_rows_deleted?: number }).total_rows_deleted || 0);
+    }
+  }
+
+  await supabase.from("vyron_workspace_memberships").delete().eq("workspace_id", workspaceId);
+
+  const { error } = await supabase.from("vyron_workspaces").delete().eq("id", workspaceId);
+  if (error) throw new Error(error.message);
+
+  let companyDeleted = false;
+  if (companyId) {
+    const { count } = await supabase
+      .from("vyron_workspaces")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", companyId);
+    if (!count) {
+      const del = await supabase.from("vyron_cost_companies").delete().eq("id", companyId);
+      if (del.error) throw new Error(del.error.message);
+      companyDeleted = true;
+    }
+  }
+
+  memoryWorkspaces.delete(workspaceId);
+  memoryCompanyProfiles.delete(workspaceId);
+
+  return { ok: true as const, workspaceId, companyId, rowsCleared, companyDeleted };
+}
+
 export async function deleteWorkspaceMember(workspaceId: string, userId: string) {
   const supabase = isSupabaseServiceRoleConfigured() ? getSupabaseAdmin() : null;
 

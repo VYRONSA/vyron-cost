@@ -32,6 +32,7 @@ import {
 } from "@/lib/vyron-developer-client";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { bootstrapWorkspaceSession, writeWorkspaceSession } from "@/lib/vyron-workspace-session";
+import { isProtectedCompany, protectedReason } from "@/lib/vyron-protected-tenants";
 
 type ClientStatus = "Active" | "Setup" | "Demo" | "Suspended" | "Archived";
 type XeroStatus = "Connected" | "Not Connected" | "Setup Required";
@@ -336,6 +337,125 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
   const [directoryActionId, setDirectoryActionId] = useState<string | null>(null);
   const [serverWorkspaceStatus, setServerWorkspaceStatus] = useState<ServerWorkspaceStatus | null>(null);
   const [directoryError, setDirectoryError] = useState<string | null>(null);
+  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
+  const [bulkPassword, setBulkPassword] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkResult, setBulkResult] = useState<string | null>(null);
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkConfirmText, setBulkConfirmText] = useState("");
+  const [bulkImpact, setBulkImpact] = useState<{
+    impact: Record<string, number>;
+    blocked: Array<{ workspaceId: string; companyName: string; reason: string }>;
+    deletableCount: number;
+  } | null>(null);
+  const [bulkImpactLoading, setBulkImpactLoading] = useState(false);
+
+  /** A workspace is undeletable if it is protected, or is the active session. */
+  function bulkBlockReason(client: ClientWorkspace): string | null {
+    if (isProtectedCompany(client.companyId)) {
+      return protectedReason(client.companyId) || "Protected tenant";
+    }
+    if (activeClient && client.id === activeClient.id) return "Currently active workspace";
+    if (activeClient?.companyId && client.companyId === activeClient.companyId) {
+      return "Belongs to the active workspace";
+    }
+    return null;
+  }
+
+  function toggleBulk(id: string) {
+    const client = clients.find((c) => c.id === id);
+    if (client && bulkBlockReason(client)) return;
+    setBulkSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleBulkAll(ids: string[], select: boolean) {
+    setBulkSelected((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) {
+        const client = clients.find((c) => c.id === id);
+        if (client && bulkBlockReason(client)) continue;
+        if (select) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  }
+
+  /** Entity counts for the confirmation dialog, measured server-side. */
+  async function loadBulkImpact() {
+    setBulkImpactLoading(true);
+    setBulkImpact(null);
+    try {
+      const response = await fetch("/api/developer/clients/bulk-delete/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ workspaceIds: Array.from(bulkSelected) }),
+      });
+      const data = await response.json().catch(() => null);
+      if (data?.ok) {
+        setBulkImpact({
+          impact: data.impact,
+          blocked: data.blocked || [],
+          deletableCount: data.deletableCount || 0,
+        });
+      } else {
+        setBulkResult(data?.error || "Could not measure deletion impact.");
+      }
+    } catch {
+      setBulkResult("Could not measure deletion impact.");
+    } finally {
+      setBulkImpactLoading(false);
+    }
+  }
+
+  /** Permanent, data and all. Gated on the supervisor password server-side. */
+  async function runBulkDelete() {
+    setBulkBusy(true);
+    setBulkResult(null);
+    try {
+      const response = await fetch("/api/developer/clients/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          workspaceIds: Array.from(bulkSelected),
+          password: bulkPassword,
+          confirmation: bulkConfirmText.trim(),
+        }),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.ok) {
+        const detail = data?.failed?.length
+          ? ` First failure: ${data.failed[0].error}`
+          : "";
+        setBulkResult(
+          `${data?.error || `Delete failed (HTTP ${response.status}).`}${detail}` +
+            (data?.deletedCount ? ` ${data.deletedCount} deleted before the failure.` : "")
+        );
+      } else {
+        setBulkResult(
+          `Deleted ${data.deletedCount} client workspace(s); ${data.rowsCleared} operational row(s) cleared.`
+        );
+        setBulkSelected(new Set());
+        setBulkPassword("");
+      }
+      await reloadClientsFromApi();
+    } catch {
+      setBulkResult("Bulk delete request failed.");
+    } finally {
+      setBulkBusy(false);
+      setBulkConfirmOpen(false);
+      setBulkConfirmText("");
+      setBulkImpact(null);
+    }
+  }
 
   const selectedClient = clients.find((client) => client.id === selectedClientId) ?? null;
   const manageLoginClient = clients.find((client) => client.id === manageLoginClientId) ?? null;
@@ -1273,6 +1393,60 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
             </span>
           </div>
 
+          {bulkSelected.size ? (
+            <div className="mb-4 rounded-2xl border-2 border-rose-300 bg-rose-50 p-4">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-black text-rose-900">
+                    {bulkSelected.size} client workspace{bulkSelected.size === 1 ? "" : "s"} selected for permanent
+                    deletion
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-rose-700">
+                    Deletes the workspace, its members and all operational costing data. Cannot be undone.
+                  </p>
+                </div>
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase tracking-[0.12em] text-rose-700">
+                    Supervisor password
+                  </span>
+                  <input
+                    type="password"
+                    value={bulkPassword}
+                    onChange={(event) => setBulkPassword(event.target.value)}
+                    autoComplete="off"
+                    className="mt-1 w-64 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-semibold"
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={!bulkPassword || bulkBusy}
+                  onClick={() => {
+                    setBulkConfirmText("");
+                    setBulkConfirmOpen(true);
+                    void loadBulkImpact();
+                  }}
+                  className="rounded-xl bg-rose-600 px-6 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  {bulkBusy ? "Deleting…" : `Review & delete ${bulkSelected.size}`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBulkSelected(new Set())}
+                  disabled={bulkBusy}
+                  className="rounded-xl border border-rose-200 px-4 py-2.5 text-xs font-black text-rose-700"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {bulkResult ? (
+            <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+              {bulkResult}
+            </div>
+          ) : null}
+
           <ClientRegisterTable
             clients={filteredClients}
             selectedClientId={selectedClientId}
@@ -1282,7 +1456,99 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
             onManageLogin={openManageLogin}
             onArchive={archiveClient}
             onDelete={deleteClient}
+            bulkSelected={bulkSelected}
+            onToggleBulk={toggleBulk}
+            onToggleBulkAll={toggleBulkAll}
+            blockReason={bulkBlockReason}
           />
+
+          {bulkConfirmOpen ? (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
+              <div className="w-full max-w-lg rounded-[2rem] bg-white p-6 shadow-2xl">
+                <h3 className="text-xl font-black text-slate-900">
+                  Permanently delete {bulkSelected.size} client workspace
+                  {bulkSelected.size === 1 ? "" : "s"}?
+                </h3>
+                <p className="mt-2 text-sm font-semibold text-slate-600">
+                  All operational costing data for these tenants is deleted with them. There is no undo.
+                </p>
+
+                {bulkImpactLoading ? (
+                  <p className="mt-4 text-sm font-semibold text-slate-500">Measuring impact…</p>
+                ) : bulkImpact ? (
+                  <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-rose-700">
+                      Will be deleted
+                    </p>
+                    <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm font-semibold text-rose-900">
+                      <div className="flex justify-between"><span>Workspaces</span><span className="font-black tabular-nums">{bulkImpact.impact.workspaces}</span></div>
+                      <div className="flex justify-between"><span>Products</span><span className="font-black tabular-nums">{bulkImpact.impact.products}</span></div>
+                      <div className="flex justify-between"><span>Suppliers</span><span className="font-black tabular-nums">{bulkImpact.impact.suppliers}</span></div>
+                      <div className="flex justify-between"><span>BOMs</span><span className="font-black tabular-nums">{bulkImpact.impact.boms}</span></div>
+                      <div className="flex justify-between"><span>Ingredients</span><span className="font-black tabular-nums">{bulkImpact.impact.ingredients}</span></div>
+                      <div className="flex justify-between"><span>Invoices</span><span className="font-black tabular-nums">{bulkImpact.impact.invoices}</span></div>
+                    </div>
+                    <div className="mt-2 flex justify-between border-t border-rose-200 pt-2 text-sm font-black text-rose-900">
+                      <span>Total rows</span>
+                      <span className="tabular-nums">{(bulkImpact.impact.totalRows || 0).toLocaleString()}</span>
+                    </div>
+                    {bulkImpact.blocked.length ? (
+                      <p className="mt-3 text-xs font-bold text-amber-800">
+                        {bulkImpact.blocked.length} protected tenant(s) in this selection will be skipped.
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <div className="mt-4 max-h-32 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50 p-3">
+                  {clients
+                    .filter((c) => bulkSelected.has(c.id))
+                    .map((c) => (
+                      <div key={c.id} className="text-xs font-semibold text-slate-700">
+                        {c.companyName}
+                      </div>
+                    ))}
+                </div>
+
+                <label className="mt-4 block">
+                  <span className="text-[10px] font-black uppercase tracking-[0.12em] text-rose-700">
+                    Type DELETE {bulkSelected.size} to enable
+                  </span>
+                  <input
+                    type="text"
+                    value={bulkConfirmText}
+                    onChange={(event) => setBulkConfirmText(event.target.value)}
+                    autoComplete="off"
+                    placeholder={`DELETE ${bulkSelected.size}`}
+                    className="mt-1 w-full rounded-xl border-2 border-rose-200 bg-rose-50/50 px-4 py-3 font-black tracking-[0.14em] text-rose-900"
+                  />
+                </label>
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBulkConfirmOpen(false);
+                      setBulkConfirmText("");
+                      setBulkImpact(null);
+                    }}
+                    disabled={bulkBusy}
+                    className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={runBulkDelete}
+                    disabled={bulkBusy || bulkConfirmText.trim() !== `DELETE ${bulkSelected.size}`}
+                    className="rounded-xl bg-rose-600 px-6 py-3 text-sm font-black uppercase tracking-[0.1em] text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    {bulkBusy ? "Deleting…" : "Delete permanently"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {selectedClient ? (
             <div className="mt-5 rounded-2xl border border-violet-100 bg-violet-50/40 p-5">
@@ -1684,6 +1950,10 @@ function ClientRegisterTable({
   onManageLogin,
   onArchive,
   onDelete,
+  bulkSelected,
+  onToggleBulk,
+  onToggleBulkAll,
+  blockReason,
 }: {
   clients: ClientWorkspace[];
   selectedClientId: string | null;
@@ -1693,10 +1963,25 @@ function ClientRegisterTable({
   onManageLogin: (id: string) => void;
   onArchive: (id: string) => void;
   onDelete: (id: string) => void;
+  bulkSelected: Set<string>;
+  onToggleBulk: (id: string) => void;
+  onToggleBulkAll: (ids: string[], select: boolean) => void;
+  blockReason: (client: ClientWorkspace) => string | null;
 }) {
+  const selectable = clients.filter((c) => !blockReason(c));
+  const allSelected = selectable.length > 0 && selectable.every((c) => bulkSelected.has(c.id));
   return (
     <div className="w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden rounded-3xl border border-slate-100">
-      <div className="grid min-w-[1180px] grid-cols-[1fr_1fr_0.75fr_0.7fr_0.55fr_0.75fr_420px] gap-3 bg-slate-50 px-5 py-4 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+      <div className="grid min-w-[1220px] grid-cols-[40px_1fr_1fr_0.75fr_0.7fr_0.55fr_0.75fr_420px] gap-3 bg-slate-50 px-5 py-4 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+        <div>
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={(e) => onToggleBulkAll(clients.map((c) => c.id), e.target.checked)}
+            className="h-4 w-4 accent-rose-600"
+            title="Select all shown"
+          />
+        </div>
         <div>Company</div>
         <div>Primary Admin</div>
         <div>Package</div>
@@ -1710,10 +1995,24 @@ function ClientRegisterTable({
         clients.map((client) => (
           <div
             key={client.id}
-            className={`grid min-w-[1180px] grid-cols-[1fr_1fr_0.75fr_0.7fr_0.55fr_0.75fr_420px] items-center gap-3 border-t border-slate-100 px-5 py-4 text-sm ${
-              selectedClientId === client.id ? "bg-violet-50/70" : "bg-white"
+            className={`grid min-w-[1220px] grid-cols-[40px_1fr_1fr_0.75fr_0.7fr_0.55fr_0.75fr_420px] items-center gap-3 border-t border-slate-100 px-5 py-4 text-sm ${
+              bulkSelected.has(client.id)
+                ? "bg-rose-50"
+                : selectedClientId === client.id
+                  ? "bg-violet-50/70"
+                  : "bg-white"
             }`}
           >
+            <div>
+              <input
+                type="checkbox"
+                checked={bulkSelected.has(client.id)}
+                disabled={Boolean(blockReason(client))}
+                title={blockReason(client) || undefined}
+                onChange={() => onToggleBulk(client.id)}
+                className="h-4 w-4 accent-rose-600 disabled:cursor-not-allowed disabled:opacity-30"
+              />
+            </div>
             <div>
               <div className="font-black text-violet-700">{client.companyName}</div>
               <div className="text-xs font-bold text-slate-500">

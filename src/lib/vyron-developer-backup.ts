@@ -217,6 +217,53 @@ export async function verifyBackup(location: string, companyId: string) {
   }
 }
 
+/**
+ * Restore dry-run: proves every backup file is readable, parseable and complete
+ * without writing anything. A backup that cannot be replayed is not a backup,
+ * so this gates deletion rather than merely reporting.
+ */
+export async function dryRunRestore(location: string, companyId: string) {
+  const verified = await verifyBackup(location, companyId);
+  if (!verified.ok || !verified.manifest) {
+    return { ok: false as const, reason: verified.reason || "Backup could not be verified.", rows: 0 };
+  }
+
+  const manifest = verified.manifest;
+  const root = path.resolve(backupRoot());
+  const absolute = path.resolve(root, location.replace(/^backups\//, ""));
+
+  let rows = 0;
+  for (const entry of manifest.perTable) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(await fs.readFile(path.join(absolute, `${entry.table}.json`), "utf8"));
+    } catch (error) {
+      return {
+        ok: false as const,
+        reason: `${entry.table}.json is unreadable: ${error instanceof Error ? error.message : "parse failed"}`,
+        rows: 0,
+      };
+    }
+    if (!Array.isArray(parsed)) {
+      return { ok: false as const, reason: `${entry.table}.json is not an array.`, rows: 0 };
+    }
+    if (parsed.length !== entry.rows) {
+      return {
+        ok: false as const,
+        reason: `${entry.table}.json holds ${parsed.length} rows, manifest claims ${entry.rows}.`,
+        rows: 0,
+      };
+    }
+    rows += parsed.length;
+  }
+
+  if (rows !== manifest.rows) {
+    return { ok: false as const, reason: `Backup totals ${rows} rows, manifest claims ${manifest.rows}.`, rows };
+  }
+
+  return { ok: true as const, reason: "Restore dry-run passed.", rows, manifest };
+}
+
 /* ------------------------------------------------------- preview freshness */
 
 const PREVIEW_TTL_MS = 5 * 60 * 1000;
