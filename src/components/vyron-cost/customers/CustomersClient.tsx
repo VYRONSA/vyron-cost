@@ -476,7 +476,7 @@ export default function CustomersClient() {
           </div>
         </div>
 
-        <Guide icon={<Users size={17} />} title="Customer Name" text="The trading or account name used for customer invoices and reports." example="Example: Local Café Group" />
+        <Guide icon={<Users size={17} />} title="Customer Name" text="The trading or account name used for customer invoices and reports." example="Example: Corner Deli & Bakery" />
         <Guide icon={<FileText size={17} />} title="Category" text="Group customers by sector or buying behaviour." example="Example: Hospitality, Retail, Schools" />
         <Guide icon={<Mail size={17} />} title="Invoice Email" text="The email address used when sending customer invoices." example="Example: accounts@customer.co.za" />
         <Guide icon={<Phone size={17} />} title="Contact Details" text="Operational contact information for orders and follow-ups." example="Example: buyer@customer.co.za" />

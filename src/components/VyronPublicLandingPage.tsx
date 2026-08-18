@@ -273,12 +273,12 @@ export default function VyronPublicLandingPage() {
             {[
               ["68%", "Avg GP visibility", true],
               ["24/7", "Cost monitoring", false],
-              ["PO→GRN", "Procurement chain", false],
+              ["PO → GRN", "Procurement chain", false],
               ["Xero", "Ledger ready", false],
             ].map(([value, label, accent]) => (
               <LightCard key={String(label)} className="p-3 sm:p-4">
                 <div
-                  className={`whitespace-nowrap text-xl sm:text-2xl ${accent ? M.accentKpiGradient : "font-black text-[#0F172A]"}`}
+                  className={`break-words leading-tight text-xl sm:text-2xl ${accent ? M.accentKpiGradient : "font-black text-[#0F172A]"}`}
                 >
                   {value}
                 </div>

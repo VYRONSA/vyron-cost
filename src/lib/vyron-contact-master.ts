@@ -937,6 +937,19 @@ export async function listCustomerContactsAsCustomers(
     }
   }
 
+  /**
+   * vyron_customers is the canonical customer master — CSV imports write there
+   * directly and may never have a matching contact row. Previously this function
+   * iterated contacts only, so imported customers were silently invisible.
+   * Both queries are already scoped by company_id, so company isolation holds.
+   */
+  for (const customer of customers || []) {
+    if (!seenIds.has(String(customer.id))) {
+      seenIds.add(String(customer.id));
+      result.push(customer);
+    }
+  }
+
   result.sort((a, b) => String(a.customer_name).localeCompare(String(b.customer_name)));
   return result;
 }

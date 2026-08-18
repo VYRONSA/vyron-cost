@@ -1,12 +1,9 @@
-import BulkImportCentreClient from "@/components/BulkImportCentreClient";
-import VyronCostShell from "@/components/VyronCostShell";
+import { redirect } from "next/navigation";
 
-export default function BulkImportCentrePage() {
-  return (
-    <VyronCostShell hidePageHeader title="Bulk Import Centre"
-      subtitle="TEMPLATES · UPLOADS · VALIDATION · IMPORT STAGING"
-    >
-      <BulkImportCentreClient />
-    </VyronCostShell>
-  );
+/**
+ * Consolidated into the single canonical Import Centre.
+ * Kept as a redirect so existing bookmarks and links continue to work.
+ */
+export default function Page() {
+  redirect("/admin/imports");
 }

@@ -249,8 +249,7 @@ export async function persistImportRows(
         errors.push("Missing customer_name");
         continue;
       }
-      const { error } = await supabase.from("vyron_customers").insert({
-        id: randomUUID(),
+      const payload = {
         company_id: companyId,
         customer_name: name,
         category: row.category || "Customer",
@@ -261,7 +260,41 @@ export async function persistImportRows(
         vat_number: row.vat_number || null,
         status: row.status || "Active",
         active: row.status !== "Inactive",
-      });
+      };
+
+      /**
+       * Re-importing the same customer master must not create a second copy.
+       * A customer is identified within its company by Xero contact id when the
+       * row carries one, otherwise by case-insensitive customer_name. The lookup
+       * is always scoped by company_id so company isolation is preserved.
+       */
+      const xeroId = (row.xero_contact_id || "").trim();
+      let existingId: string | null = null;
+
+      if (xeroId) {
+        const { data: byXero } = await supabase
+          .from("vyron_customers")
+          .select("id")
+          .eq("company_id", companyId)
+          .eq("xero_contact_id", xeroId)
+          .maybeSingle();
+        if (byXero?.id) existingId = String(byXero.id);
+      }
+
+      if (!existingId) {
+        const { data: byName } = await supabase
+          .from("vyron_customers")
+          .select("id")
+          .eq("company_id", companyId)
+          .ilike("customer_name", name)
+          .limit(1);
+        if (byName?.length) existingId = String(byName[0].id);
+      }
+
+      const { error } = existingId
+        ? await supabase.from("vyron_customers").update(payload).eq("id", existingId)
+        : await supabase.from("vyron_customers").insert({ id: randomUUID(), ...payload });
+
       if (error) errors.push(`${name}: ${error.message}`);
       else imported += 1;
     }

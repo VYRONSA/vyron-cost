@@ -1,10 +1,9 @@
-import ImportsCentreClient from "@/components/ImportsCentreClient";
-import VyronCostShell from "@/components/VyronCostShell";
+import { redirect } from "next/navigation";
 
-export default function ImportsPage() {
-  return (
-    <VyronCostShell hidePageHeader title="Bulk Import Centre" subtitle="Download templates, validate CSV uploads and import master data at scale.">
-      <ImportsCentreClient />
-    </VyronCostShell>
-  );
+/**
+ * Consolidated into the single canonical Import Centre.
+ * Kept as a redirect so existing bookmarks and links continue to work.
+ */
+export default function Page() {
+  redirect("/admin/imports");
 }

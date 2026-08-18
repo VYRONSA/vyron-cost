@@ -26,8 +26,12 @@ export function isDemoWorkspace(client: ActiveClient | null | undefined): boolea
   if (client.demoMode === false) return false;
   if (client.status === "Demo") return true;
   if (HANDCRAFTED_DEMO_WORKSPACE_IDS.has(client.id)) return true;
-  const name = client.companyName.toLowerCase();
-  if (name.includes("handcrafted food")) return true;
+  /**
+   * Demo status is decided by explicit signals only — never by company name.
+   * A live customer whose trading name happens to contain a demo-sounding word
+   * (e.g. "Handcrafted Food Products (Pty) Ltd") is a production workspace and
+   * must read its real persisted data.
+   */
   const pkg = (client.packageName || "").toLowerCase();
   if (pkg.includes("demo")) return true;
   return false;
