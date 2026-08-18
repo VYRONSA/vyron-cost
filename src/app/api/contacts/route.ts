@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listVyronContacts, type ContactFilter } from "@/lib/vyron-contact-master";
+import { ensureContactsForMasterRecords, listVyronContacts, type ContactFilter } from "@/lib/vyron-contact-master";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveAndAlignApiCompanyId } from "@/lib/vyron-api-workspace";
 import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
     if (!companyId) return NextResponse.json({ ok: true, contacts: [] });
 
     const filter = parseFilter(request.nextUrl.searchParams.get("filter"));
+    await ensureContactsForMasterRecords(supabase, companyId);
     const contacts = await listVyronContacts(supabase, companyId, filter);
     return NextResponse.json({ ok: true, contacts, filter });
   } catch (error) {

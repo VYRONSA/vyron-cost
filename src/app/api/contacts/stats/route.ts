@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getContactStatistics } from "@/lib/vyron-contact-master";
+import { ensureContactsForMasterRecords, getContactStatistics } from "@/lib/vyron-contact-master";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveAndAlignApiCompanyId } from "@/lib/vyron-api-workspace";
 import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
@@ -26,6 +26,7 @@ export async function GET() {
       });
     }
 
+    await ensureContactsForMasterRecords(supabase, companyId);
     const stats = await getContactStatistics(supabase, companyId);
     return NextResponse.json({ ok: true, stats });
   } catch (error) {

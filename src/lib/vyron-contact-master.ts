@@ -258,6 +258,73 @@ export async function migrateExistingContactsToMaster(
   return { customers, suppliers };
 }
 
+/**
+ * Contacts is the master-data classification layer, so every customer and
+ * supplier master record must be represented there. This backfills only the
+ * records that have no contact yet — existing contacts (and their Customer /
+ * Supplier / Customer+Supplier classification) are never touched, so it is
+ * safe to call on every read and writes nothing once the company is in sync.
+ * All queries are scoped by company_id, preserving company isolation.
+ */
+export async function ensureContactsForMasterRecords(
+  supabase: SupabaseClient,
+  companyId: string
+): Promise<{ created: number }> {
+  const [{ data: contacts }, { data: customers }, { data: suppliers }] = await Promise.all([
+    supabase.from("vyron_contacts").select("contact_name, xero_contact_id").eq("company_id", companyId),
+    supabase.from("vyron_customers").select("customer_name, email, phone, xero_contact_id").eq("company_id", companyId),
+    supabase.from("vyron_cost_suppliers").select("supplier_name, contact_email, xero_contact_id").eq("company_id", companyId),
+  ]);
+
+  const nameKeys = new Set<string>();
+  const xeroKeys = new Set<string>();
+  for (const contact of contacts || []) {
+    const key = String(contact.contact_name || "").trim().toLowerCase();
+    if (key) nameKeys.add(key);
+    if (contact.xero_contact_id) xeroKeys.add(String(contact.xero_contact_id));
+  }
+
+  const missing: ContactUpsertInput[] = [];
+
+  const isMissing = (name: string, xeroId: unknown) => {
+    const key = name.trim().toLowerCase();
+    if (!key) return false;
+    if (xeroId && xeroKeys.has(String(xeroId))) return false;
+    return !nameKeys.has(key);
+  };
+
+  for (const customer of customers || []) {
+    const name = String(customer.customer_name || "").trim();
+    if (!isMissing(name, customer.xero_contact_id)) continue;
+    nameKeys.add(name.toLowerCase());
+    missing.push({
+      contact_name: name,
+      email: customer.email,
+      phone: customer.phone,
+      xero_contact_id: customer.xero_contact_id,
+      is_customer: true,
+    });
+  }
+
+  for (const supplier of suppliers || []) {
+    const name = String(supplier.supplier_name || "").trim();
+    if (!isMissing(name, supplier.xero_contact_id)) continue;
+    nameKeys.add(name.toLowerCase());
+    missing.push({
+      contact_name: name,
+      email: supplier.contact_email,
+      xero_contact_id: supplier.xero_contact_id,
+      is_supplier: true,
+    });
+  }
+
+  for (const input of missing) {
+    await upsertVyronContact(supabase, companyId, input);
+  }
+
+  return { created: missing.length };
+}
+
 export type ContactStatistics = {
   total: number;
   customers: number;
