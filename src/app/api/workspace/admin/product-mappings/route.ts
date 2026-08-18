@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import { upsertCustomerItemMapping } from "@/lib/vyron-import-persist";
 import { requireActiveWorkspaceId, requireAdminSession } from "@/lib/vyron-workspace-admin-server";
 import { getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
 
@@ -80,44 +81,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "productId is required." }, { status: 400 });
     }
 
-    // The target must be an existing product in THIS company. Never create one.
-    const { data: product } = await supabase
-      .from("vyron_cost_products")
-      .select("id")
-      .eq("company_id", companyId)
-      .eq("id", productId)
-      .maybeSingle();
-    if (!product) {
-      return NextResponse.json(
-        { ok: false, error: "Product not found in the active company." },
-        { status: 400 }
-      );
-    }
+    const result = await upsertCustomerItemMapping(supabase, companyId, {
+      sourceItemCode: code,
+      sourceDescription: description,
+      productId,
+    });
 
-    const payload = {
-      company_id: companyId,
-      source_item_code: code || null,
-      source_description: description || null,
-      product_id: productId,
-      updated_at: new Date().toISOString(),
-    };
-
-    // Idempotent per (company, item code); description-only mappings match on description.
-    const existingQuery = supabase
-      .from("vyron_customer_item_mappings")
-      .select("id")
-      .eq("company_id", companyId)
-      .limit(1);
-    const { data: existing } = code
-      ? await existingQuery.eq("source_item_code", code)
-      : await existingQuery.ilike("source_description", description);
-
-    const { error } = existing?.length
-      ? await supabase.from("vyron_customer_item_mappings").update(payload).eq("id", existing[0].id)
-      : await supabase.from("vyron_customer_item_mappings").insert(payload);
-    if (error) throw new Error(error.message);
-
-    return NextResponse.json({ ok: true, updated: Boolean(existing?.length) });
+    return NextResponse.json({ ok: true, updated: result.outcome === "updated" });
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Failed to save mapping." },

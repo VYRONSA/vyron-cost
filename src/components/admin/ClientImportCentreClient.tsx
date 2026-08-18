@@ -36,13 +36,14 @@ const CLIENT_IMPORT_TYPES: ImportEntityType[] = [
   "customer-price-list-items",
   "customer-invoices",
   "supplier-invoices",
+  "product-mappings",
 ];
 
 /** Grouping for the card list. Presentation only — ids are unchanged. */
 const IMPORT_SECTIONS: { title: string; ids: ImportEntityType[] }[] = [
   { title: "CUSTOMER COMMERCIAL", ids: ["customers", "customer-price-list-items", "customer-invoices"] },
   { title: "SUPPLIER / PROCUREMENT", ids: ["suppliers", "supplier-invoices"] },
-  { title: "PRODUCT / COSTING", ids: ["products", "ingredients", "recipes", "bom-lines"] },
+  { title: "PRODUCT / COSTING", ids: ["products", "ingredients", "recipes", "bom-lines", "product-mappings"] },
   { title: "INVENTORY", ids: ["opening-stock", "stock-counts", "packaging"] },
 ];
 
@@ -76,6 +77,8 @@ type InvoicePreview = {
   errors: string[];
 };
 
+type PreviewResponse = { ok?: boolean; error?: string; preview?: InvoicePreview };
+
 export default function ClientImportCentreClient() {
   const { canImports } = useAdminPermissions();
   const [selected, setSelected] = useState<ImportEntityType>("suppliers");
@@ -87,6 +90,7 @@ export default function ClientImportCentreClient() {
   const [validRows, setValidRows] = useState<Record<string, string>[]>([]);
   const [history, setHistory] = useState<ImportHistoryEntry[]>(defaultImportHistory());
   const [preview, setPreview] = useState<InvoicePreview | null>(null);
+  const [previewing, setPreviewing] = useState(false);
   const [mappings, setMappings] = useState<ProductMapping[]>([]);
   const [products, setProducts] = useState<{ id: string; product_name: string }[]>([]);
   const [mapCode, setMapCode] = useState("");
@@ -131,18 +135,46 @@ export default function ClientImportCentreClient() {
       setValidationMessage("Upload and validate a file first.");
       return;
     }
+    setPreviewing(true);
     setValidationMessage("Running preview…");
-    const data = await fetch("/api/workspace/admin/import/preview", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ entity: template.id, rows: validRows }),
-    }).then((res) => res.json());
-    if (!data.ok) {
-      setValidationMessage(data.error || "Preview failed.");
-      return;
+    setErrors([]);
+
+    /**
+     * Every exit path must clear the loading state. A rejected fetch or a
+     * non-JSON body (a gateway timeout returns HTML) previously left the UI
+     * stuck on "Running preview…" with no way back.
+     */
+    try {
+      const response = await fetch("/api/workspace/admin/import/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entity: template.id, rows: validRows }),
+      });
+
+      const raw = await response.text();
+      let data: PreviewResponse | null = null;
+      try {
+        data = JSON.parse(raw) as PreviewResponse;
+      } catch {
+        setValidationMessage(`Preview failed — server returned HTTP ${response.status}.`);
+        setErrors([raw.slice(0, 400) || "The server returned a non-JSON response."]);
+        return;
+      }
+
+      if (!response.ok || !data?.ok) {
+        setValidationMessage(data?.error || `Preview failed (HTTP ${response.status}).`);
+        if (data?.error) setErrors([data.error]);
+        return;
+      }
+
+      setPreview(data.preview as InvoicePreview);
+      setValidationMessage("Preview complete — review below, then confirm the import.");
+    } catch (error) {
+      setValidationMessage("Preview failed — the request could not be completed.");
+      setErrors([error instanceof Error ? error.message : String(error)]);
+    } finally {
+      setPreviewing(false);
     }
-    setPreview(data.preview as InvoicePreview);
-    setValidationMessage("Preview complete — review below, then confirm the import.");
   }
 
   /**
@@ -297,6 +329,9 @@ export default function ClientImportCentreClient() {
                             setErrors([]);
                             setValidRows([]);
                             setPreview(null);
+                            // Selecting Product Mapping loads the existing
+                            // mapping list and product options for the panel.
+                            if (item.id === "product-mappings") void loadMappings();
                           }}
                           className={`w-full rounded-2xl border px-4 py-3 text-left ${selected === item.id ? "border-violet-400 bg-violet-50" : "border-slate-100 bg-white"}`}
                         >
@@ -304,18 +339,6 @@ export default function ClientImportCentreClient() {
                           <div className="text-xs font-semibold text-slate-500">{item.description}</div>
                         </button>
                       ))}
-                      {section.title === "PRODUCT / COSTING" ? (
-                        <button
-                          type="button"
-                          onClick={() => void loadMappings()}
-                          className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-3 text-left"
-                        >
-                          <div className="text-sm font-black text-slate-950">Product Mapping</div>
-                          <div className="text-xs font-semibold text-slate-500">
-                            Map accounting item codes to VYRON products
-                          </div>
-                        </button>
-                      ) : null}
                     </div>
                   );
                 })}
@@ -354,8 +377,13 @@ export default function ClientImportCentreClient() {
                   </div>
                 ) : null}
                 {canImports && needsPreview ? (
-                  <button type="button" onClick={() => void runPreview()} className="mt-4 mr-3 rounded-2xl border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-black text-violet-800">
-                    Run Preview
+                  <button
+                    type="button"
+                    onClick={() => void runPreview()}
+                    disabled={previewing}
+                    className="mt-4 mr-3 rounded-2xl border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-black text-violet-800 disabled:opacity-50"
+                  >
+                    {previewing ? "Running preview…" : "Run Preview"}
                   </button>
                 ) : null}
                 {canImports ? (

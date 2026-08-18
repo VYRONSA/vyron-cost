@@ -395,6 +395,10 @@ export async function persistImportRows(
     return { imported, skipped: rows.length - imported, errors };
   }
 
+  if (entity === "product-mappings") {
+    return persistProductMappings(supabase, companyId, rows);
+  }
+
   if (entity === "customer-price-list-items") {
     return persistCustomerPriceListItems(supabase, companyId, rows);
   }
@@ -491,6 +495,186 @@ export async function postOpeningStockBalances(
  * These write into the existing VYRON COST tables — no import-only
  * tables and no parallel systems. Every lookup is company scoped.
  * ------------------------------------------------------------------ */
+
+
+/**
+ * In-memory resolution index for accounting imports.
+ *
+ * Customer and product resolution used to issue up to four Supabase round-trips
+ * per invoice line. On a real accounting file (578 lines) that is ~2,300
+ * sequential queries, which never returns inside a serverless request. Every
+ * lookup set is small enough to load once per request and resolve in memory.
+ *
+ * Resolution order is unchanged: saved mapping by item code, saved mapping by
+ * description, product SKU, then exact product name.
+ */
+type ResolvedProduct = { id: string; product_name: string };
+
+export type ImportResolutionIndex = {
+  customersByName: Map<string, { id: string; customer_name: string }>;
+  productsById: Map<string, ResolvedProduct>;
+  productsByName: Map<string, ResolvedProduct>;
+  productsBySku: Map<string, ResolvedProduct>;
+  mappingByCode: Map<string, string>;
+  mappingByDescription: Map<string, string>;
+};
+
+const norm = (value: unknown) => String(value ?? "").trim().toLowerCase();
+
+async function loadAll<T>(
+  supabase: SupabaseClient,
+  table: string,
+  columns: string,
+  companyId: string
+): Promise<T[]> {
+  const out: T[] = [];
+  const pageSize = 1000;
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from(table)
+      .select(columns)
+      .eq("company_id", companyId)
+      .range(from, from + pageSize - 1);
+    if (error) throw new Error(`${table}: ${error.message}`);
+    const page = (data || []) as T[];
+    out.push(...page);
+    if (page.length < pageSize) break;
+  }
+  return out;
+}
+
+export async function loadImportResolutionIndex(
+  supabase: SupabaseClient,
+  companyId: string
+): Promise<ImportResolutionIndex> {
+  const [customers, products, mappings] = await Promise.all([
+    loadAll<{ id: string; customer_name: string }>(
+      supabase,
+      "vyron_customers",
+      "id, customer_name",
+      companyId
+    ),
+    loadAll<{ id: string; product_name: string; sku: string | null }>(
+      supabase,
+      "vyron_cost_products",
+      "id, product_name, sku",
+      companyId
+    ),
+    loadAll<{ source_item_code: string | null; source_description: string | null; product_id: string }>(
+      supabase,
+      "vyron_customer_item_mappings",
+      "source_item_code, source_description, product_id",
+      companyId
+    ),
+  ]);
+
+  const index: ImportResolutionIndex = {
+    customersByName: new Map(),
+    productsById: new Map(),
+    productsByName: new Map(),
+    productsBySku: new Map(),
+    mappingByCode: new Map(),
+    mappingByDescription: new Map(),
+  };
+
+  for (const customer of customers) {
+    const key = norm(customer.customer_name);
+    if (key && !index.customersByName.has(key)) index.customersByName.set(key, customer);
+  }
+
+  for (const product of products) {
+    const entry: ResolvedProduct = { id: String(product.id), product_name: product.product_name };
+    index.productsById.set(entry.id, entry);
+    const nameKey = norm(product.product_name);
+    if (nameKey && !index.productsByName.has(nameKey)) index.productsByName.set(nameKey, entry);
+    const skuKey = norm(product.sku);
+    if (skuKey && !index.productsBySku.has(skuKey)) index.productsBySku.set(skuKey, entry);
+  }
+
+  for (const mapping of mappings) {
+    const codeKey = norm(mapping.source_item_code);
+    if (codeKey && !index.mappingByCode.has(codeKey)) {
+      index.mappingByCode.set(codeKey, String(mapping.product_id));
+    }
+    const descKey = norm(mapping.source_description);
+    if (descKey && !index.mappingByDescription.has(descKey)) {
+      index.mappingByDescription.set(descKey, String(mapping.product_id));
+    }
+  }
+
+  return index;
+}
+
+/** Company-scoped customer lookup against the preloaded index. Never creates. */
+function resolveCustomer(index: ImportResolutionIndex, name: string) {
+  return index.customersByName.get(norm(name)) || null;
+}
+
+/**
+ * Product resolution against the preloaded index, preserving the approved
+ * order: saved mapping by code, saved mapping by description, SKU, exact name.
+ */
+function resolveProduct(
+  index: ImportResolutionIndex,
+  code: string | null,
+  name: string | null
+): ResolvedProduct | null {
+  const codeKey = norm(code);
+  const nameKey = norm(name);
+
+  if (codeKey) {
+    const mapped = index.mappingByCode.get(codeKey);
+    if (mapped) {
+      const product = index.productsById.get(mapped);
+      if (product) return product;
+    }
+  }
+
+  if (nameKey) {
+    const mapped = index.mappingByDescription.get(nameKey);
+    if (mapped) {
+      const product = index.productsById.get(mapped);
+      if (product) return product;
+    }
+  }
+
+  for (const key of [codeKey, nameKey]) {
+    if (!key) continue;
+    const bySku = index.productsBySku.get(key);
+    if (bySku) return bySku;
+    const byName = index.productsByName.get(key);
+    if (byName) return byName;
+  }
+
+  return null;
+}
+
+/** Existing invoice numbers for this company, fetched in one batched query. */
+async function loadExistingCustomerInvoices(
+  supabase: SupabaseClient,
+  companyId: string,
+  invoiceNumbers: string[]
+) {
+  const found = new Map<string, { id: string; stock_posted: boolean }>();
+  const chunkSize = 200;
+  for (let i = 0; i < invoiceNumbers.length; i += chunkSize) {
+    const chunk = invoiceNumbers.slice(i, i + chunkSize);
+    if (!chunk.length) continue;
+    const { data, error } = await supabase
+      .from("vyron_customer_invoices")
+      .select("id, invoice_number, stock_posted")
+      .eq("company_id", companyId)
+      .in("invoice_number", chunk);
+    if (error) throw new Error(`vyron_customer_invoices: ${error.message}`);
+    for (const row of data || []) {
+      found.set(String(row.invoice_number), {
+        id: String(row.id),
+        stock_posted: Boolean(row.stock_posted),
+      });
+    }
+  }
+  return found;
+}
 
 /** Case-insensitive, company-scoped customer lookup. Never creates a customer. */
 async function findCustomerByName(supabase: SupabaseClient, companyId: string, name: string) {
@@ -629,9 +813,26 @@ async function persistCustomerPriceListItems(
   const raw = result as Record<string, unknown>;
   const imported = Number(raw.imported ?? raw.applied ?? raw.processed ?? 0);
   const skipped = Number(raw.skipped ?? 0);
-  const errors = Array.isArray(raw.errors) ? (raw.errors as unknown[]).map(String) : [];
+  /**
+   * The price-list engine reports errors as { row, error } objects. Stringifying
+   * them directly rendered "[object Object]" in the Import Centre, so format
+   * them into the row-prefixed messages the UI already expects.
+   */
+  const errors = Array.isArray(raw.errors)
+    ? (raw.errors as unknown[]).map((entry) => {
+        if (entry && typeof entry === "object") {
+          const item = entry as { row?: unknown; error?: unknown };
+          const message = String(item.error ?? "Import error.");
+          const rowNumber = Number(item.row ?? 0);
+          return rowNumber > 0 ? `Row ${rowNumber}: ${message}` : message;
+        }
+        return String(entry);
+      })
+    : [];
 
-  return { imported, skipped, errors };
+  const rejected = Number(raw.rejected ?? 0);
+
+  return { imported, skipped: skipped || rejected, errors };
 }
 
 /**
@@ -672,6 +873,7 @@ async function persistCustomerInvoices(
    * A CSV row is an invoice LINE, and many rows share one InvoiceNumber.
    * Group first so one invoice with N lines never becomes N invoices.
    */
+  const index = await loadImportResolutionIndex(supabase, companyId);
   const groups = new Map<string, Record<string, string>[]>();
   for (const row of rows) {
     const number = (row.invoice_number || row.InvoiceNumber || "").trim();
@@ -693,7 +895,7 @@ async function persistCustomerInvoices(
       continue;
     }
 
-    const customer = await findCustomerByName(supabase, companyId, customerName);
+    const customer = resolveCustomer(index, customerName);
     if (!customer) {
       errors.push(`${invoiceNumber}: customer "${customerName}" not found in this company — invoice not imported`);
       failed += 1;
@@ -723,7 +925,7 @@ async function persistCustomerInvoices(
         continue;
       }
 
-      const product = await findProductForImport(supabase, companyId, code, description);
+      const product = resolveProduct(index, code, description);
       if (!product) {
         unresolved.push(code || description);
       }
@@ -1059,6 +1261,7 @@ export async function previewCustomerInvoices(
   const warnings: string[] = [];
   const errors: string[] = [];
 
+  const index = await loadImportResolutionIndex(supabase, companyId);
   const groups = new Map<string, Record<string, string>[]>();
   let rowsWithoutInvoiceNumber = 0;
   for (const row of rows) {
@@ -1074,6 +1277,9 @@ export async function previewCustomerInvoices(
   if (rowsWithoutInvoiceNumber) {
     warnings.push(`${rowsWithoutInvoiceNumber} row(s) have no InvoiceNumber and will be ignored.`);
   }
+
+  // One batched lookup for every invoice number, instead of one query per invoice.
+  const existingInvoices = await loadExistingCustomerInvoices(supabase, companyId, [...groups.keys()]);
 
   const customersUnresolved = new Set<string>();
   const productsUnresolved = new Set<string>();
@@ -1103,7 +1309,7 @@ export async function previewCustomerInvoices(
       errors.push(`${invoiceNumber}: missing ContactName.`);
     } else {
       if (!customerCache.has(customerName)) {
-        const found = await findCustomerByName(supabase, companyId, customerName);
+        const found = resolveCustomer(index, customerName);
         customerCache.set(customerName, Boolean(found));
       }
       customerOk = customerCache.get(customerName) === true;
@@ -1125,7 +1331,7 @@ export async function previewCustomerInvoices(
 
       const cacheKey = `${code}||${description}`;
       if (!productCache.has(cacheKey)) {
-        const product = await findProductForImport(supabase, companyId, code || null, description || null);
+        const product = resolveProduct(index, code || null, description || null);
         productCache.set(cacheKey, Boolean(product));
       }
       if (productCache.get(cacheKey)) {
@@ -1165,14 +1371,9 @@ export async function previewCustomerInvoices(
     const eligible = customerOk && allLinesResolved && statusOk;
     if (eligible) {
       invoicesEligible += 1;
-      const { data: existing } = await supabase
-        .from("vyron_customer_invoices")
-        .select("id, stock_posted")
-        .eq("company_id", companyId)
-        .eq("invoice_number", invoiceNumber)
-        .limit(1);
-      if (existing?.length) {
-        if (existing[0].stock_posted) {
+      const existing = existingInvoices.get(invoiceNumber);
+      if (existing) {
+        if (existing.stock_posted) {
           warnings.push(`${invoiceNumber}: already posted to stock — it will be left unchanged.`);
         } else {
           updateCount += 1;
@@ -1212,5 +1413,136 @@ export async function previewCustomerInvoices(
     totalOutstanding,
     warnings,
     errors,
+  };
+}
+
+/**
+ * Single implementation of the accounting-item -> VYRON product mapping write.
+ *
+ * Used by both the Product Mapping panel API and the Product Mapping CSV import
+ * so there is exactly one set of rules: company scoped, idempotent on
+ * (company_id, source_item_code), and never creates a product.
+ */
+export async function upsertCustomerItemMapping(
+  supabase: SupabaseClient,
+  companyId: string,
+  input: { sourceItemCode?: string | null; sourceDescription?: string | null; productId: string }
+): Promise<{ outcome: "inserted" | "updated" }> {
+  const code = String(input.sourceItemCode || "").trim();
+  const description = String(input.sourceDescription || "").trim();
+  const productId = String(input.productId || "").trim();
+
+  if (!code && !description) throw new Error("sourceItemCode or sourceDescription is required.");
+  if (!productId) throw new Error("productId is required.");
+
+  // The target must already exist in THIS company. Never create a product.
+  const { data: product } = await supabase
+    .from("vyron_cost_products")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("id", productId)
+    .maybeSingle();
+  if (!product) throw new Error("Product not found in the active company.");
+
+  const payload = {
+    company_id: companyId,
+    source_item_code: code || null,
+    source_description: description || null,
+    product_id: productId,
+    updated_at: new Date().toISOString(),
+  };
+
+  const base = supabase
+    .from("vyron_customer_item_mappings")
+    .select("id")
+    .eq("company_id", companyId)
+    .limit(1);
+  const { data: existing } = code
+    ? await base.eq("source_item_code", code)
+    : await base.ilike("source_description", description);
+
+  if (existing?.length) {
+    const { error } = await supabase
+      .from("vyron_customer_item_mappings")
+      .update(payload)
+      .eq("id", existing[0].id);
+    if (error) throw new Error(error.message);
+    return { outcome: "updated" };
+  }
+
+  const { error } = await supabase.from("vyron_customer_item_mappings").insert(payload);
+  if (error) throw new Error(error.message);
+  return { outcome: "inserted" };
+}
+
+/**
+ * Product Mapping CSV import. Accepts product_id, or product_name for an exact
+ * company-scoped match. No fuzzy matching, and no product is ever created.
+ */
+async function persistProductMappings(
+  supabase: SupabaseClient,
+  companyId: string,
+  rows: Record<string, string>[]
+): Promise<ImportPersistResult> {
+  const errors: string[] = [];
+  let inserted = 0;
+  let updated = 0;
+  let failed = 0;
+  let skippedRows = 0;
+
+  const index = await loadImportResolutionIndex(supabase, companyId);
+
+  for (let i = 0; i < rows.length; i += 1) {
+    const row = rows[i];
+    const rowNumber = i + 2;
+    const code = (row.source_item_code || "").trim();
+    const description = (row.source_description || "").trim();
+    const explicitProductId = (row.product_id || "").trim();
+    const productName = (row.product_name || "").trim();
+
+    if (!code && !description) {
+      errors.push(`Row ${rowNumber}: source_item_code or source_description is required.`);
+      skippedRows += 1;
+      continue;
+    }
+
+    let productId = explicitProductId;
+    if (!productId) {
+      if (!productName) {
+        errors.push(`Row ${rowNumber}: provide product_id or product_name.`);
+        failed += 1;
+        continue;
+      }
+      const product = index.productsByName.get(productName.trim().toLowerCase());
+      if (!product) {
+        errors.push(`Row ${rowNumber}: product "${productName}" not found in this company.`);
+        failed += 1;
+        continue;
+      }
+      productId = product.id;
+    }
+
+    try {
+      const result = await upsertCustomerItemMapping(supabase, companyId, {
+        sourceItemCode: code,
+        sourceDescription: description,
+        productId,
+      });
+      if (result.outcome === "inserted") inserted += 1;
+      else updated += 1;
+    } catch (error) {
+      errors.push(`Row ${rowNumber}: ${error instanceof Error ? error.message : "Mapping failed."}`);
+      failed += 1;
+    }
+  }
+
+  return {
+    imported: inserted + updated,
+    skipped: skippedRows + failed,
+    errors,
+    inserted,
+    updated,
+    skippedRows,
+    failed,
   };
 }

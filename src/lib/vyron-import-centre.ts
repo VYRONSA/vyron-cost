@@ -18,7 +18,8 @@ export type ImportEntityType =
   | "opening-stock"
   | "cost-plans"
   | "customer-price-list-items"
-  | "customer-invoices";
+  | "customer-invoices"
+  | "product-mappings";
 
 export type ImportTemplate = {
   id: ImportEntityType;
@@ -48,6 +49,25 @@ export type ImportHistoryEntry = {
 };
 
 export const importTemplates: ImportTemplate[] = [
+  /**
+   * Accounting item code -> VYRON product, written to vyron_customer_item_mappings.
+   * Company scoped, and never creates a product: the target must already exist.
+   */
+  {
+    id: "product-mappings",
+    label: "Product Mapping",
+    description: "Map accounting item codes to existing VYRON products",
+    columns: ["source_item_code", "source_description", "product_id", "product_name"],
+    requiredColumns: ["source_item_code"],
+    sampleRow: ["165", "N1 SAUSAGE ROLL", "", "Plain Steak Pie 160g"],
+    instructions: [
+      "One row maps one accounting item code to one existing VYRON product.",
+      "Supply product_id, or product_name for an exact company-scoped match.",
+      "Products are never created by this import — map to a product that already exists.",
+      "Re-importing the same item code updates the mapping instead of duplicating it.",
+      "Mappings are stored per company and reused by every future invoice import.",
+    ],
+  },
   {
     id: "customer-price-list-items",
     label: "Customer Price Lists",

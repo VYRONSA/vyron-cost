@@ -457,8 +457,23 @@ export async function importCustomerPriceListRows(
     bucket.push(row);
     customerByName.set(key, bucket);
   }
-  const productByCode = new Map((products || []).map((row) => [String(row.sku || "").toLowerCase(), row]));
-  const productByName = new Map((products || []).map((row) => [String(row.product_name || "").toLowerCase(), row]));
+  /**
+   * Empty keys must never enter these maps. Products commonly have no SKU, so
+   * keying on "" collapsed every such product onto a single entry and made a
+   * blank product_code resolve to one arbitrary product for every row — silently
+   * writing prices against the wrong product. customerByCode already filters
+   * empty keys; these now match that behaviour.
+   */
+  const productByCode = new Map(
+    (products || [])
+      .map((row) => [String(row.sku || "").trim().toLowerCase(), row] as const)
+      .filter(([key]) => Boolean(key))
+  );
+  const productByName = new Map(
+    (products || [])
+      .map((row) => [String(row.product_name || "").trim().toLowerCase(), row] as const)
+      .filter(([key]) => Boolean(key))
+  );
 
   const errors: Array<{ row: number; error: string }> = [];
   const accepted: Array<{
@@ -486,7 +501,8 @@ export async function importCustomerPriceListRows(
       continue;
     }
 
-    let product = productByCode.get(String(input.productCode || "").trim().toLowerCase()) || null;
+    const productCodeKey = String(input.productCode || "").trim().toLowerCase();
+    let product = productCodeKey ? productByCode.get(productCodeKey) || null : null;
     if (!product && input.productName) {
       product = productByName.get(String(input.productName).trim().toLowerCase()) || null;
     }
@@ -621,23 +637,78 @@ export async function importCustomerPriceListRows(
       }
       createdLists.set(key, priceList);
 
-      await upsertCustomerPriceListItems(supabase, companyId, {
-        priceListId: priceList.id,
-        actor,
-        items: rows.map((row) => ({
-          productId: row.productId,
-          basePrice: row.basePrice,
-          markupPct: row.markupPct,
-          discountPct: row.discountPct,
-          gpPct: row.gpPct,
-          overridePrice: row.overridePrice,
-          status: row.status,
-          effectiveFrom: row.effectiveFrom,
-          effectiveTo: row.effectiveTo,
-        })),
-      });
+      /**
+       * vyron_customer_price_list_items is unique on (price_list_id, product_id),
+       * and the upsert below targets that key. PostgreSQL rejects a single
+       * statement containing two rows with the same conflict key —
+       * "ON CONFLICT DO UPDATE command cannot affect row a second time" — so the
+       * batch must be collapsed to one row per product BEFORE it is sent.
+       *
+       * Identical duplicates collapse silently. Duplicates that disagree on any
+       * pricing field are a data conflict: the product is rejected with a clear
+       * error rather than arbitrarily picking one price.
+       */
+      const priceSignature = (row: (typeof rows)[number]) =>
+        JSON.stringify([
+          row.basePrice,
+          row.markupPct,
+          row.discountPct,
+          row.gpPct,
+          row.overridePrice,
+          row.status,
+          row.effectiveFrom,
+          row.effectiveTo,
+        ]);
+
+      const byProduct = new Map<string, typeof rows>();
+      for (const row of rows) {
+        const bucket = byProduct.get(row.productId) || [];
+        bucket.push(row);
+        byProduct.set(row.productId, bucket);
+      }
+
+      const deduped: typeof rows = [];
+      const conflictedProducts = new Set<string>();
+
+      for (const [productId, bucket] of byProduct) {
+        const signatures = new Set(bucket.map(priceSignature));
+        if (signatures.size === 1) {
+          deduped.push(bucket[0]);
+          continue;
+        }
+        conflictedProducts.add(productId);
+        const rowNumbers = bucket.map((row) => row.rowNumber).join(", ");
+        for (const row of bucket) {
+          errors.push({
+            row: row.rowNumber,
+            error: `Conflicting price-list rows for the same product in "${listName}" (rows ${rowNumbers}). The same product appears more than once with different values — resolve the conflict and re-import. Nothing was imported for this product.`,
+          });
+        }
+      }
+
+      if (deduped.length) {
+        await upsertCustomerPriceListItems(supabase, companyId, {
+          priceListId: priceList.id,
+          actor,
+          items: deduped.map((row) => ({
+            productId: row.productId,
+            basePrice: row.basePrice,
+            markupPct: row.markupPct,
+            discountPct: row.discountPct,
+            gpPct: row.gpPct,
+            overridePrice: row.overridePrice,
+            status: row.status,
+            effectiveFrom: row.effectiveFrom,
+            effectiveTo: row.effectiveTo,
+          })),
+        });
+      }
 
       for (const row of rows) {
+        // A product whose rows conflict was not written — it must not be
+        // counted as imported, and must not drive a customer assignment.
+        if (conflictedProducts.has(row.productId)) continue;
+
         if (row.customerId) {
           if (row.listType === "Contract") {
             await assignCustomerPriceLists(supabase, companyId, {
