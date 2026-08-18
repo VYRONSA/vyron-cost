@@ -1,0 +1,2 @@
+invoice_number,supplier_name,supplier_code,invoice_date,due_date,status,subtotal,vat,total,reference,currency,item_code,item_description,quantity,unit_price,discount,line_excl,line_vat,line_total
+SINV-2001,Protein Direct,SUP-001,2026-08-01,2026-08-31,Captured,850.00,127.50,977.50,PO-1001,ZAR,BEEF-01,Beef Goulash,10,85.00,0,850.00,127.50,977.50,

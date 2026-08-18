@@ -354,9 +354,14 @@ export async function persistImportRows(
       const quantity = Number(row.quantity || 0);
       const unitCost = Number(row.unit_cost || 0);
       const wastage = Number(row.wastage_percent || 0);
-      const lineCost = quantity * unitCost * (1 + wastage / 100);
-      const { error } = await supabase.from("vyron_cost_bom_lines").insert({
-        id: randomUUID(),
+
+      /**
+       * line_cost is GENERATED ALWAYS in the database, so it must never appear
+       * in the payload — Postgres rejects the whole row otherwise. This mirrors
+       * insertRecipeLines() in vyron-cost-recipes-data.ts, the canonical
+       * Recipe/BOM persistence contract, which also omits it.
+       */
+      const payload = {
         company_id: companyId,
         bom_id: bom.id,
         line_type: row.line_type || "Ingredient",
@@ -365,13 +370,41 @@ export async function persistImportRows(
         unit: row.unit || "kg",
         unit_cost: unitCost,
         wastage_percent: wastage,
-        line_cost: lineCost,
         sort_order: Number(row.sort_order || imported),
-      });
+      };
+
+      /**
+       * A BOM line is identified within its company by its parent BOM and line
+       * name, so re-importing the same file updates rather than duplicating.
+       */
+      const { data: existingLine } = await supabase
+        .from("vyron_cost_bom_lines")
+        .select("id")
+        .eq("company_id", companyId)
+        .eq("bom_id", bom.id)
+        .ilike("line_name", lineName)
+        .limit(1);
+
+      const { error } = existingLine?.length
+        ? await supabase.from("vyron_cost_bom_lines").update(payload).eq("id", existingLine[0].id)
+        : await supabase.from("vyron_cost_bom_lines").insert({ id: randomUUID(), ...payload });
+
       if (error) errors.push(`${recipeName}/${lineName}: ${error.message}`);
       else imported += 1;
     }
     return { imported, skipped: rows.length - imported, errors };
+  }
+
+  if (entity === "customer-price-list-items") {
+    return persistCustomerPriceListItems(supabase, companyId, rows);
+  }
+
+  if (entity === "customer-invoices") {
+    return persistCustomerInvoices(supabase, companyId, rows);
+  }
+
+  if (entity === "supplier-invoices") {
+    return persistSupplierInvoices(supabase, companyId, rows);
   }
 
   if (entity === "packaging") {
@@ -451,4 +484,733 @@ export async function postOpeningStockBalances(
   }
 
   return { posted, skipped, errors };
+}
+
+/* ------------------------------------------------------------------ *
+ * Customer price lists, customer invoices and supplier invoices.
+ * These write into the existing VYRON COST tables — no import-only
+ * tables and no parallel systems. Every lookup is company scoped.
+ * ------------------------------------------------------------------ */
+
+/** Case-insensitive, company-scoped customer lookup. Never creates a customer. */
+async function findCustomerByName(supabase: SupabaseClient, companyId: string, name: string) {
+  const { data } = await supabase
+    .from("vyron_customers")
+    .select("id, customer_name")
+    .eq("company_id", companyId)
+    .ilike("customer_name", name)
+    .limit(1);
+  return data?.length ? data[0] : null;
+}
+
+/**
+ * Company-scoped product resolution for accounting imports.
+ *
+ * Order: saved accounting-item mapping (by code, then description) -> product
+ * SKU -> exact product name. The mapping table is consulted first so that once
+ * an operator maps an accounting item code to a VYRON product, every future
+ * import resolves it automatically without re-mapping.
+ *
+ * Never creates a product.
+ */
+async function findProductForImport(
+  supabase: SupabaseClient,
+  companyId: string,
+  code: string | null,
+  name: string | null
+) {
+  const loadProduct = async (productId: string) => {
+    const { data } = await supabase
+      .from("vyron_cost_products")
+      .select("id, product_name")
+      .eq("company_id", companyId)
+      .eq("id", productId)
+      .maybeSingle();
+    return data || null;
+  };
+
+  // 1. Saved mapping by accounting item code.
+  if (code) {
+    const { data } = await supabase
+      .from("vyron_customer_item_mappings")
+      .select("product_id")
+      .eq("company_id", companyId)
+      .eq("source_item_code", code)
+      .limit(1);
+    if (data?.length) {
+      const product = await loadProduct(String(data[0].product_id));
+      if (product) return product;
+    }
+  }
+
+  // 2. Saved mapping by accounting description (covers rows with no item code).
+  if (name) {
+    const { data } = await supabase
+      .from("vyron_customer_item_mappings")
+      .select("product_id")
+      .eq("company_id", companyId)
+      .ilike("source_description", name)
+      .limit(1);
+    if (data?.length) {
+      const product = await loadProduct(String(data[0].product_id));
+      if (product) return product;
+    }
+  }
+
+  // 3. Product SKU, then 4. exact product name.
+  for (const candidate of [code, name]) {
+    if (!candidate) continue;
+    const bySku = await supabase
+      .from("vyron_cost_products")
+      .select("id, product_name")
+      .eq("company_id", companyId)
+      .ilike("sku", candidate)
+      .limit(1);
+    if (bySku.data?.length) return bySku.data[0];
+
+    const byName = await supabase
+      .from("vyron_cost_products")
+      .select("id, product_name")
+      .eq("company_id", companyId)
+      .ilike("product_name", candidate)
+      .limit(1);
+    if (byName.data?.length) return byName.data[0];
+  }
+
+  return null;
+}
+
+/** Accepts the accounting export dd/mm/yyyy form as well as ISO. */
+function parseImportDate(value: string | undefined): string | null {
+  const raw = (value || "").trim();
+  if (!raw) return null;
+  const dmy = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) {
+    const [, d, m, y] = dmy;
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return iso ? iso[0] : null;
+}
+
+/**
+ * Customer price lists delegate to the existing engine in
+ * vyron-customer-price-lists.ts. There is exactly one price-list importer;
+ * this adapter only maps Import Centre CSV columns onto PriceImportRow.
+ */
+async function persistCustomerPriceListItems(
+  supabase: SupabaseClient,
+  companyId: string,
+  rows: Record<string, string>[],
+  fileName = "customer-price-lists.csv"
+): Promise<ImportPersistResult> {
+  const { importCustomerPriceListRows } = await import("@/lib/vyron-customer-price-lists");
+
+  const mapped = rows.map((row) => ({
+    listName: (row.price_list_name || "").trim(),
+    listType: (row.list_type || "Standard").trim() as "Standard" | "Contract",
+    customerCode: row.customer_code || undefined,
+    customerName: row.customer_name || undefined,
+    productCode: (row.product_code || "").trim(),
+    productName: (row.product_name || "").trim(),
+    basePrice: row.base_price ? Number(row.base_price) : undefined,
+    overridePrice: row.final_price ? Number(row.final_price) : undefined,
+    effectiveFrom: row.effective_from || undefined,
+    effectiveTo: row.effective_to || undefined,
+    status: (row.status || "Active").trim() as "Active" | "Inactive",
+  }));
+
+  const result = await importCustomerPriceListRows(supabase, companyId, {
+    fileName,
+    rows: mapped,
+    actor: "Import Centre",
+  });
+
+  const raw = result as Record<string, unknown>;
+  const imported = Number(raw.imported ?? raw.applied ?? raw.processed ?? 0);
+  const skipped = Number(raw.skipped ?? 0);
+  const errors = Array.isArray(raw.errors) ? (raw.errors as unknown[]).map(String) : [];
+
+  return { imported, skipped, errors };
+}
+
+/**
+ * The accounting export uses its own status vocabulary. vyron_customer_invoices
+ * constrains status to Draft/Approved/Posted/Sent/Paid/Cancelled, so map onto
+ * those rather than widening the constraint. Unknown values fall back to Draft,
+ * the safest non-destructive state.
+ */
+function mapImportedInvoiceStatus(
+  raw: string | undefined,
+  amountDue: number,
+  amountPaid: number
+): string | null {
+  const value = (raw || "").trim().toLowerCase();
+  if (!value) return null;
+  if (value === "draft") return "Draft";
+  if (value === "voided" || value === "deleted" || value === "cancelled") return "Cancelled";
+  if (value === "paid" || (amountPaid > 0 && amountDue <= 0)) return "Paid";
+  if (value === "awaiting payment" || value === "sent" || value === "submitted") return "Sent";
+  if (value === "approved" || value === "authorised" || value === "authorized") return "Approved";
+  if (value === "posted") return "Posted";
+  // Unsupported status is never guessed — the caller blocks the invoice.
+  return null;
+}
+
+async function persistCustomerInvoices(
+  supabase: SupabaseClient,
+  companyId: string,
+  rows: Record<string, string>[]
+): Promise<ImportPersistResult> {
+  const errors: string[] = [];
+  let inserted = 0;
+  let updated = 0;
+  let failed = 0;
+  let skippedRows = 0;
+
+  /**
+   * A CSV row is an invoice LINE, and many rows share one InvoiceNumber.
+   * Group first so one invoice with N lines never becomes N invoices.
+   */
+  const groups = new Map<string, Record<string, string>[]>();
+  for (const row of rows) {
+    const number = (row.invoice_number || row.InvoiceNumber || "").trim();
+    if (!number) {
+      skippedRows += 1;
+      continue;
+    }
+    const bucket = groups.get(number) || [];
+    bucket.push(row);
+    groups.set(number, bucket);
+  }
+
+  for (const [invoiceNumber, lineRows] of groups) {
+    const head = lineRows[0];
+    const customerName = (head.customer_name || head.ContactName || "").trim();
+    if (!customerName) {
+      errors.push(`${invoiceNumber}: missing ContactName`);
+      failed += 1;
+      continue;
+    }
+
+    const customer = await findCustomerByName(supabase, companyId, customerName);
+    if (!customer) {
+      errors.push(`${invoiceNumber}: customer "${customerName}" not found in this company — invoice not imported`);
+      failed += 1;
+      continue;
+    }
+
+    const resolvedLines: {
+      product_id: string | null;
+      product_name: string;
+      quantity: number;
+      selling_price: number;
+      cost_per_unit: number;
+    }[] = [];
+
+    /**
+     * An invoice is atomic. If any line cannot be resolved to a product, the
+     * whole invoice is blocked — never import a partial invoice, and never
+     * silently drop a line, because that would understate sales and GP.
+     */
+    const unresolved: string[] = [];
+
+    for (const line of lineRows) {
+      const description = (line.item_description || line.Description || line.description || "").trim();
+      const code = (line.item_code || line.InventoryItemCode || line.product_code || "").trim() || null;
+      if (!description && !code) {
+        unresolved.push("line with no item code or description");
+        continue;
+      }
+
+      const product = await findProductForImport(supabase, companyId, code, description);
+      if (!product) {
+        unresolved.push(code || description);
+      }
+
+      const quantity = Number(line.quantity || line.Quantity || 0);
+      const lineAmount = Number(line.line_total || line.LineAmount || line.line_amount || 0);
+      const unitAmount = Number(
+        line.unit_price || line.UnitAmount || line.unit_amount || (quantity ? lineAmount / quantity : 0)
+      );
+
+      resolvedLines.push({
+        product_id: product?.id ? String(product.id) : null,
+        product_name: description || String(product?.product_name || code || "Line"),
+        quantity,
+        selling_price: unitAmount,
+        cost_per_unit: 0,
+      });
+    }
+
+    if (!resolvedLines.length) {
+      errors.push(`${invoiceNumber}: no usable invoice lines`);
+      failed += 1;
+      continue;
+    }
+
+    if (unresolved.length) {
+      const unique = [...new Set(unresolved)];
+      errors.push(
+        `${invoiceNumber}: blocked — ${unique.length} unresolved item(s): ${unique.join(", ")}. Map them under Product Mapping, then re-run.`
+      );
+      failed += 1;
+      continue;
+    }
+
+    const salesValue = resolvedLines.reduce((sum, l) => sum + l.quantity * l.selling_price, 0);
+    const costValue = resolvedLines.reduce((sum, l) => sum + l.quantity * l.cost_per_unit, 0);
+    const grossProfit = salesValue - costValue;
+
+    /**
+     * The accounting export repeats invoice-level figures on every line, so the
+     * header row carries them. These are retained verbatim rather than derived,
+     * so the imported invoice keeps the accounting system's own VAT, paid and
+     * outstanding amounts.
+     */
+    const taxTotal = Number(head.tax_total || head.TaxTotal || 0);
+    const amountPaid = Number(head.amount_paid || head.InvoiceAmountPaid || 0);
+    const amountDue = Number(head.amount_due || head.InvoiceAmountDue || 0);
+
+    const mappedStatus = mapImportedInvoiceStatus(head.status || head.Status, amountDue, amountPaid);
+    if (!mappedStatus) {
+      errors.push(
+        `${invoiceNumber}: unsupported status "${(head.status || head.Status || "").trim()}" — invoice blocked. Use one of Draft, Approved, Posted, Sent, Paid, Cancelled.`
+      );
+      failed += 1;
+      continue;
+    }
+
+    const invoicePayload = {
+      company_id: companyId,
+      customer_id: customer.id,
+      customer_name: customer.customer_name,
+      invoice_number: invoiceNumber,
+      invoice_date:
+        parseImportDate(head.invoice_date || head.InvoiceDate) || new Date().toISOString().slice(0, 10),
+      due_date: parseImportDate(head.due_date || head.DueDate),
+      status: mappedStatus,
+      tax_total: taxTotal,
+      amount_paid: amountPaid,
+      amount_due: amountDue,
+      sales_value: salesValue,
+      cost_value: costValue,
+      gross_profit: grossProfit,
+      gp_percentage: salesValue ? (grossProfit / salesValue) * 100 : 0,
+    };
+
+    /**
+     * Idempotency key: invoice_number within the company. Re-importing updates
+     * the existing invoice and replaces its lines instead of duplicating it.
+     */
+    const { data: existingInvoice } = await supabase
+      .from("vyron_customer_invoices")
+      .select("id, stock_posted")
+      .eq("company_id", companyId)
+      .eq("invoice_number", invoiceNumber)
+      .limit(1);
+
+    let invoiceId: string;
+
+    if (existingInvoice?.length) {
+      if (existingInvoice[0].stock_posted) {
+        errors.push(`${invoiceNumber}: already posted to stock — left unchanged`);
+        skippedRows += 1;
+        continue;
+      }
+      invoiceId = String(existingInvoice[0].id);
+      const { error } = await supabase
+        .from("vyron_customer_invoices")
+        .update({ ...invoicePayload, updated_at: new Date().toISOString() })
+        .eq("id", invoiceId);
+      if (error) {
+        errors.push(`${invoiceNumber}: ${error.message}`);
+        failed += 1;
+        continue;
+      }
+      await supabase.from("vyron_customer_invoice_lines").delete().eq("invoice_id", invoiceId);
+      updated += 1;
+    } else {
+      invoiceId = randomUUID();
+      const { error } = await supabase
+        .from("vyron_customer_invoices")
+        .insert({ id: invoiceId, ...invoicePayload });
+      if (error) {
+        errors.push(`${invoiceNumber}: ${error.message}`);
+        failed += 1;
+        continue;
+      }
+      inserted += 1;
+    }
+
+    // line_total, line_cost and line_gp are GENERATED ALWAYS — never supplied.
+    const { error: linesError } = await supabase
+      .from("vyron_customer_invoice_lines")
+      .insert(resolvedLines.map((line) => ({ id: randomUUID(), invoice_id: invoiceId, ...line })));
+    if (linesError) errors.push(`${invoiceNumber}: lines failed — ${linesError.message}`);
+  }
+
+  return {
+    imported: inserted + updated,
+    skipped: groups.size - (inserted + updated),
+    errors,
+    inserted,
+    updated,
+    skippedRows,
+    failed,
+  };
+}
+
+async function persistSupplierInvoices(
+  supabase: SupabaseClient,
+  companyId: string,
+  rows: Record<string, string>[]
+): Promise<ImportPersistResult> {
+  const errors: string[] = [];
+  let inserted = 0;
+  let updated = 0;
+  let failed = 0;
+  let skippedRows = 0;
+
+  const groups = new Map<string, Record<string, string>[]>();
+  for (const row of rows) {
+    const number = (row.invoice_number || row.InvoiceNumber || "").trim();
+    if (!number) {
+      skippedRows += 1;
+      continue;
+    }
+    const bucket = groups.get(number) || [];
+    bucket.push(row);
+    groups.set(number, bucket);
+  }
+
+  const { data: companySuppliers } = await supabase
+    .from("vyron_cost_suppliers")
+    .select("id")
+    .eq("company_id", companyId);
+  const supplierIds = (companySuppliers || []).map((s) => String(s.id));
+
+  for (const [invoiceNumber, lineRows] of groups) {
+    const head = lineRows[0];
+    const supplierName = (head.supplier_name || head.SupplierName || "").trim();
+    if (!supplierName) {
+      errors.push(`${invoiceNumber}: missing supplier_name`);
+      failed += 1;
+      continue;
+    }
+
+    const { data: supplierMatch } = await supabase
+      .from("vyron_cost_suppliers")
+      .select("id, supplier_name")
+      .eq("company_id", companyId)
+      .ilike("supplier_name", supplierName)
+      .limit(1);
+
+    if (!supplierMatch?.length) {
+      errors.push(`${invoiceNumber}: supplier "${supplierName}" not found in this company — invoice not imported`);
+      failed += 1;
+      continue;
+    }
+    const supplier = supplierMatch[0];
+
+    const lines = lineRows
+      .map((line) => {
+        const itemName = (line.item_description || line.item_name || line.description || "").trim();
+        if (!itemName) return null;
+        return {
+          item_name: itemName,
+          category: line.category || null,
+          quantity: Number(line.quantity || 0),
+          unit: line.unit || "each",
+          unit_cost: Number(line.unit_price || line.unit_cost || 0),
+          vat_rate: Number(line.vat_rate || 0),
+        };
+      })
+      .filter((line): line is NonNullable<typeof line> => Boolean(line));
+
+    if (!lines.length) {
+      errors.push(`${invoiceNumber}: no usable invoice lines`);
+      failed += 1;
+      continue;
+    }
+
+    /**
+     * The standard template carries invoice totals on the header and line VAT
+     * per line. Prefer the accounting system's own figures; fall back to line
+     * VAT, then to a per-line vat_rate, and only then to a derived subtotal.
+     */
+    const derivedSubtotal = lines.reduce((sum, l) => sum + l.quantity * l.unit_cost, 0);
+    const lineVatTotal = lineRows.reduce((sum, line) => sum + Number(line.line_vat || 0), 0);
+    const rateVatTotal = lines.reduce(
+      (sum, l) => sum + l.quantity * l.unit_cost * (l.vat_rate / 100),
+      0
+    );
+
+    const headerSubtotal = Number(head.subtotal || 0);
+    const headerVat = Number(head.vat || 0);
+    const headerTotal = Number(head.total || 0);
+
+    const subtotal = headerSubtotal > 0 ? headerSubtotal : derivedSubtotal;
+    const vat = headerVat > 0 ? headerVat : lineVatTotal > 0 ? lineVatTotal : rateVatTotal;
+    const total = headerTotal > 0 ? headerTotal : subtotal + vat;
+
+    const invoicePayload = {
+      invoice_number: invoiceNumber,
+      supplier_id: supplier.id,
+      supplier_name: supplier.supplier_name,
+      invoice_date: parseImportDate(head.invoice_date) || new Date().toISOString().slice(0, 10),
+      status: head.status || "Captured",
+      source_type: "import",
+      subtotal,
+      vat,
+      total,
+    };
+
+    /**
+     * vyron_cost_supplier_invoices carries no company_id, so company scope is
+     * enforced through supplier_id — the idempotency lookup is restricted to
+     * suppliers belonging to this company.
+     */
+    const { data: existingInvoice } = await supabase
+      .from("vyron_cost_supplier_invoices")
+      .select("id")
+      .ilike("invoice_number", invoiceNumber)
+      .in("supplier_id", supplierIds.length ? supplierIds : [randomUUID()])
+      .limit(1);
+
+    let invoiceId: string;
+
+    if (existingInvoice?.length) {
+      invoiceId = String(existingInvoice[0].id);
+      const { error } = await supabase
+        .from("vyron_cost_supplier_invoices")
+        .update({ ...invoicePayload, updated_at: new Date().toISOString() })
+        .eq("id", invoiceId);
+      if (error) {
+        errors.push(`${invoiceNumber}: ${error.message}`);
+        failed += 1;
+        continue;
+      }
+      await supabase.from("vyron_cost_supplier_invoice_lines").delete().eq("invoice_id", invoiceId);
+      updated += 1;
+    } else {
+      invoiceId = randomUUID();
+      const { error } = await supabase
+        .from("vyron_cost_supplier_invoices")
+        .insert({ id: invoiceId, ...invoicePayload });
+      if (error) {
+        errors.push(`${invoiceNumber}: ${error.message}`);
+        failed += 1;
+        continue;
+      }
+      inserted += 1;
+    }
+
+    // line_excl, line_vat and line_total are database-derived — never supplied.
+    const { error: linesError } = await supabase
+      .from("vyron_cost_supplier_invoice_lines")
+      .insert(lines.map((line, index) => ({ id: randomUUID(), invoice_id: invoiceId, ...line, sort_order: index })));
+    if (linesError) errors.push(`${invoiceNumber}: lines failed — ${linesError.message}`);
+  }
+
+  return {
+    imported: inserted + updated,
+    skipped: groups.size - (inserted + updated),
+    errors,
+    inserted,
+    updated,
+    skippedRows,
+    failed,
+  };
+}
+
+export type CustomerInvoicePreview = {
+  invoicesDetected: number;
+  linesDetected: number;
+  customersMatched: number;
+  customersUnresolved: string[];
+  productsMapped: number;
+  productsUnresolved: string[];
+  missingItemCodeLines: number;
+  invoicesEligible: number;
+  invoicesBlocked: number;
+  insertCount: number;
+  updateCount: number;
+  totalSales: number;
+  totalVat: number;
+  totalPaid: number;
+  totalOutstanding: number;
+  warnings: string[];
+  errors: string[];
+};
+
+/**
+ * Server-side dry run for the customer invoice import.
+ *
+ * Performs every resolution step the real import performs and writes NOTHING.
+ * The operator reviews this before choosing to import, so an invoice that would
+ * be blocked is reported here rather than discovered afterwards.
+ */
+export async function previewCustomerInvoices(
+  supabase: SupabaseClient,
+  companyId: string,
+  rows: Record<string, string>[]
+): Promise<CustomerInvoicePreview> {
+  const warnings: string[] = [];
+  const errors: string[] = [];
+
+  const groups = new Map<string, Record<string, string>[]>();
+  let rowsWithoutInvoiceNumber = 0;
+  for (const row of rows) {
+    const number = (row.invoice_number || row.InvoiceNumber || "").trim();
+    if (!number) {
+      rowsWithoutInvoiceNumber += 1;
+      continue;
+    }
+    const bucket = groups.get(number) || [];
+    bucket.push(row);
+    groups.set(number, bucket);
+  }
+  if (rowsWithoutInvoiceNumber) {
+    warnings.push(`${rowsWithoutInvoiceNumber} row(s) have no InvoiceNumber and will be ignored.`);
+  }
+
+  const customersUnresolved = new Set<string>();
+  const productsUnresolved = new Set<string>();
+  const customerCache = new Map<string, boolean>();
+  const productCache = new Map<string, boolean>();
+
+  let linesDetected = 0;
+  let missingItemCodeLines = 0;
+  let productsMapped = 0;
+  let invoicesEligible = 0;
+  let invoicesBlocked = 0;
+  let insertCount = 0;
+  let updateCount = 0;
+  let totalSales = 0;
+  let totalVat = 0;
+  let totalPaid = 0;
+  let totalOutstanding = 0;
+  const matchedCustomers = new Set<string>();
+
+  for (const [invoiceNumber, lineRows] of groups) {
+    const head = lineRows[0];
+    linesDetected += lineRows.length;
+
+    const customerName = (head.customer_name || head.ContactName || "").trim();
+    let customerOk = false;
+    if (!customerName) {
+      errors.push(`${invoiceNumber}: missing ContactName.`);
+    } else {
+      if (!customerCache.has(customerName)) {
+        const found = await findCustomerByName(supabase, companyId, customerName);
+        customerCache.set(customerName, Boolean(found));
+      }
+      customerOk = customerCache.get(customerName) === true;
+      if (customerOk) matchedCustomers.add(customerName);
+      else customersUnresolved.add(customerName);
+    }
+
+    let allLinesResolved = true;
+    for (const line of lineRows) {
+      const description = (line.item_description || line.Description || line.description || "").trim();
+      const code = (line.item_code || line.InventoryItemCode || line.product_code || "").trim();
+      if (!code) missingItemCodeLines += 1;
+
+      if (!description && !code) {
+        allLinesResolved = false;
+        productsUnresolved.add("(line with no item code or description)");
+        continue;
+      }
+
+      const cacheKey = `${code}||${description}`;
+      if (!productCache.has(cacheKey)) {
+        const product = await findProductForImport(supabase, companyId, code || null, description || null);
+        productCache.set(cacheKey, Boolean(product));
+      }
+      if (productCache.get(cacheKey)) {
+        productsMapped += 1;
+      } else {
+        allLinesResolved = false;
+        productsUnresolved.add(code || description);
+      }
+    }
+
+    const salesValue = lineRows.reduce((sum, line) => {
+      const quantity = Number(line.quantity || line.Quantity || 0);
+      const lineAmount = Number(line.line_total || line.LineAmount || line.line_amount || 0);
+      const unitAmount = Number(
+        line.unit_price || line.UnitAmount || line.unit_amount || (quantity ? lineAmount / quantity : 0)
+      );
+      return sum + quantity * unitAmount;
+    }, 0);
+
+    totalSales += salesValue;
+    totalVat += Number(head.tax_total || head.TaxTotal || 0);
+    totalPaid += Number(head.amount_paid || head.InvoiceAmountPaid || 0);
+    totalOutstanding += Number(head.amount_due || head.InvoiceAmountDue || 0);
+
+    const statusOk =
+      mapImportedInvoiceStatus(
+        head.status || head.Status,
+        Number(head.amount_due || head.InvoiceAmountDue || 0),
+        Number(head.amount_paid || head.InvoiceAmountPaid || 0)
+      ) !== null;
+    if (!statusOk) {
+      errors.push(
+        `${invoiceNumber}: unsupported status "${(head.status || head.Status || "").trim()}" — invoice blocked.`
+      );
+    }
+
+    const eligible = customerOk && allLinesResolved && statusOk;
+    if (eligible) {
+      invoicesEligible += 1;
+      const { data: existing } = await supabase
+        .from("vyron_customer_invoices")
+        .select("id, stock_posted")
+        .eq("company_id", companyId)
+        .eq("invoice_number", invoiceNumber)
+        .limit(1);
+      if (existing?.length) {
+        if (existing[0].stock_posted) {
+          warnings.push(`${invoiceNumber}: already posted to stock — it will be left unchanged.`);
+        } else {
+          updateCount += 1;
+        }
+      } else {
+        insertCount += 1;
+      }
+    } else {
+      invoicesBlocked += 1;
+    }
+  }
+
+  if (customersUnresolved.size) {
+    errors.push(`${customersUnresolved.size} unresolved customer(s) — those invoices are blocked.`);
+  }
+  if (productsUnresolved.size) {
+    errors.push(
+      `${productsUnresolved.size} unresolved accounting item(s) — map them under Product Mapping, then preview again.`
+    );
+  }
+
+  return {
+    invoicesDetected: groups.size,
+    linesDetected,
+    customersMatched: matchedCustomers.size,
+    customersUnresolved: [...customersUnresolved],
+    productsMapped,
+    productsUnresolved: [...productsUnresolved],
+    missingItemCodeLines,
+    invoicesEligible,
+    invoicesBlocked,
+    insertCount,
+    updateCount,
+    totalSales,
+    totalVat,
+    totalPaid,
+    totalOutstanding,
+    warnings,
+    errors,
+  };
 }

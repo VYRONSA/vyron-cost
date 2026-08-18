@@ -1,0 +1,29 @@
+VYRON COST — VYRON Supplier Invoice Import Template
+
+Columns:
+  invoice_number
+  supplier_name
+  supplier_code
+  invoice_date
+  due_date
+  status
+  subtotal
+  vat
+  total
+  reference
+  currency
+  item_code
+  item_description
+  quantity
+  unit_price
+  discount
+  line_excl
+  line_vat
+  line_total
+
+Instructions:
+  - One row represents one supplier invoice line.
+  - Repeat invoice_number on every line of a multi-line invoice.
+  - Dates use YYYY-MM-DD.
+  - Monetary fields are numeric — do not enter currency symbols.
+  - item_code is the source accounting-system item identifier.

@@ -16,7 +16,9 @@ export type ImportEntityType =
   | "invoice-lines"
   | "stock-counts"
   | "opening-stock"
-  | "cost-plans";
+  | "cost-plans"
+  | "customer-price-list-items"
+  | "customer-invoices";
 
 export type ImportTemplate = {
   id: ImportEntityType;
@@ -24,6 +26,15 @@ export type ImportTemplate = {
   description: string;
   columns: string[];
   sampleRow: string[];
+  /**
+   * Columns a file MUST supply. When omitted every column is required, which is
+   * the original behaviour for all pre-existing templates. The standard
+   * accounting templates carry a wider column set where several fields are
+   * optional, so they declare their required subset explicitly.
+   */
+  requiredColumns?: string[];
+  /** Operator guidance shown beside the download button. */
+  instructions?: string[];
 };
 
 export type ImportHistoryEntry = {
@@ -37,6 +48,147 @@ export type ImportHistoryEntry = {
 };
 
 export const importTemplates: ImportTemplate[] = [
+  {
+    id: "customer-price-list-items",
+    label: "Customer Price Lists",
+    description: "Customer-specific pricing into the existing price-list architecture",
+    columns: ["price_list_name", "list_type", "customer_name", "product_name", "final_price", "effective_from", "effective_to"],
+    sampleRow: ["Contract 2026", "Contract", "Acme Trading", "Plain Steak Pie 180g", "32.50", "2026-01-01", ""],
+  },
+  /**
+   * VYRON standard accounting interchange format.
+   *
+   * Source systems (Xero, Sage, Pastel, QuickBooks…) are converted to this shape
+   * externally. The importer understands only this format — there is deliberately
+   * no per-accounting-system import logic.
+   *
+   * One row = one invoice line. Repeating invoice_number groups lines into a
+   * single invoice.
+   */
+  {
+    id: "customer-invoices",
+    label: "Customer Invoices",
+    description: "VYRON standard customer invoice format — one row per invoice line",
+    columns: [
+      "invoice_number",
+      "customer_name",
+      "customer_code",
+      "invoice_date",
+      "due_date",
+      "status",
+      "tax_total",
+      "amount_paid",
+      "amount_due",
+      "reference",
+      "currency",
+      "item_code",
+      "item_description",
+      "quantity",
+      "unit_price",
+      "discount",
+      "line_total",
+    ],
+    requiredColumns: [
+      "invoice_number",
+      "customer_name",
+      "invoice_date",
+      "status",
+      "item_description",
+      "quantity",
+      "unit_price",
+      "line_total",
+    ],
+    sampleRow: [
+      "INV-1001",
+      "Acme Trading",
+      "CUST-001",
+      "2026-08-01",
+      "2026-08-31",
+      "Sent",
+      "7.50",
+      "0.00",
+      "57.50",
+      "ORDER-88",
+      "ZAR",
+      "165",
+      "Plain Steak Pie 180g",
+      "4",
+      "8.50",
+      "0",
+      "34.00",
+    ],
+    instructions: [
+      "One row represents one invoice line.",
+      "Repeat invoice_number on every line of a multi-line invoice.",
+      "Dates use YYYY-MM-DD.",
+      "Monetary fields are numeric — do not enter currency symbols.",
+      "item_code is the source accounting-system item identifier.",
+      "VYRON resolves item_code to a product using the company-specific Product Mapping.",
+    ],
+  },
+  {
+    id: "supplier-invoices",
+    label: "Supplier Invoices",
+    description: "VYRON standard supplier invoice format — one row per invoice line",
+    columns: [
+      "invoice_number",
+      "supplier_name",
+      "supplier_code",
+      "invoice_date",
+      "due_date",
+      "status",
+      "subtotal",
+      "vat",
+      "total",
+      "reference",
+      "currency",
+      "item_code",
+      "item_description",
+      "quantity",
+      "unit_price",
+      "discount",
+      "line_excl",
+      "line_vat",
+      "line_total",
+    ],
+    requiredColumns: [
+      "invoice_number",
+      "supplier_name",
+      "invoice_date",
+      "status",
+      "item_description",
+      "quantity",
+      "unit_price",
+    ],
+    sampleRow: [
+      "SINV-2001",
+      "Protein Direct",
+      "SUP-001",
+      "2026-08-01",
+      "2026-08-31",
+      "Captured",
+      "850.00",
+      "127.50",
+      "977.50",
+      "PO-1001",
+      "ZAR",
+      "BEEF-01",
+      "Beef Goulash",
+      "10",
+      "85.00",
+      "0",
+      "850.00",
+      "127.50",
+      "977.50",
+    ],
+    instructions: [
+      "One row represents one supplier invoice line.",
+      "Repeat invoice_number on every line of a multi-line invoice.",
+      "Dates use YYYY-MM-DD.",
+      "Monetary fields are numeric — do not enter currency symbols.",
+      "item_code is the source accounting-system item identifier.",
+    ],
+  },
   {
     id: "products",
     label: "Products",
@@ -115,13 +267,6 @@ export const importTemplates: ImportTemplate[] = [
     sampleRow: ["PO-1001", "Chicken Fillet", "120", "kg", "95.00"],
   },
   {
-    id: "supplier-invoices",
-    label: "Supplier Invoices",
-    description: "Invoice headers for document intelligence",
-    columns: ["invoice_number", "supplier_name", "invoice_date", "invoice_total", "status"],
-    sampleRow: ["INV-1002", "Protein Direct", "2026-05-18", "9500.00", "Review"],
-  },
-  {
     id: "invoice-lines",
     label: "Invoice Lines",
     description: "Extracted invoice line items",
@@ -186,7 +331,8 @@ export function parseCsvText(text: string, template: ImportTemplate): ParsedImpo
   }
 
   const headerIndex = buildHeaderIndex(header);
-  const missing = template.columns.filter((col) => !headerIndex.has(col.trim().toLowerCase()));
+  const required = template.requiredColumns ?? template.columns;
+  const missing = required.filter((col) => !headerIndex.has(col.trim().toLowerCase()));
   if (missing.length) {
     return {
       validRows: [],

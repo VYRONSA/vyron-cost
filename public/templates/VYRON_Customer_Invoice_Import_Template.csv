@@ -1,0 +1,2 @@
+invoice_number,customer_name,customer_code,invoice_date,due_date,status,tax_total,amount_paid,amount_due,reference,currency,item_code,item_description,quantity,unit_price,discount,line_total
+INV-1001,Acme Trading,CUST-001,2026-08-01,2026-08-31,Sent,7.50,0.00,57.50,ORDER-88,ZAR,165,Plain Steak Pie 180g,4,8.50,0,34.00,

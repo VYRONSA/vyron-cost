@@ -1,0 +1,28 @@
+VYRON COST — VYRON Customer Invoice Import Template
+
+Columns:
+  invoice_number
+  customer_name
+  customer_code
+  invoice_date
+  due_date
+  status
+  tax_total
+  amount_paid
+  amount_due
+  reference
+  currency
+  item_code
+  item_description
+  quantity
+  unit_price
+  discount
+  line_total
+
+Instructions:
+  - One row represents one invoice line.
+  - Repeat invoice_number on every line of a multi-line invoice.
+  - Dates use YYYY-MM-DD.
+  - Monetary fields are numeric — do not enter currency symbols.
+  - item_code is the source accounting-system item identifier.
+  - VYRON resolves item_code to a product using the company-specific Product Mapping.

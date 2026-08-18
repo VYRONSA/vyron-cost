@@ -1,14 +1,9 @@
-import VyronCostAiShell from "@/components/VyronCostAiShell";
-import PriceListImportClient from "@/components/customers/PriceListImportClient";
+import { redirect } from "next/navigation";
 
-export default function PriceListImportPage() {
-  return (
-    <VyronCostAiShell
-      hidePageHeader
-      title="Price List Import"
-      subtitle="BULK PRICE LIST ONBOARDING WITH VALIDATION, DUPLICATE DETECTION, ROLLBACK, AND AUDIT TRAILS."
-    >
-      <PriceListImportClient />
-    </VyronCostAiShell>
-  );
+/**
+ * Consolidated into the single canonical Import Centre.
+ * Kept as a redirect so existing bookmarks and links continue to work.
+ */
+export default function Page() {
+  redirect("/admin/imports");
 }

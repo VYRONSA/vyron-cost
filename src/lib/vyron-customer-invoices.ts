@@ -990,7 +990,9 @@ export async function listCustomersWithHistory(supabase: SupabaseClient, company
       listCustomerContactsAsCustomers(supabase, companyId),
       supabase
         .from("vyron_customer_invoices")
-        .select("customer_id, customer_name, sales_value, gross_profit, status, invoice_date, updated_at")
+        .select(
+          "customer_id, customer_name, sales_value, gross_profit, status, invoice_date, updated_at, amount_due, amount_paid"
+        )
         .eq("company_id", companyId),
       supabase
         .from("vyron_customer_sales_orders")
@@ -1027,7 +1029,22 @@ export async function listCustomersWithHistory(supabase: SupabaseClient, company
     const salesValue = Number(row.sales_value || 0);
     current.lifetimeValue += salesValue;
     current.totalGp += Number(row.gross_profit || 0);
-    if (!["Paid", "Cancelled"].includes(status)) current.outstandingInvoices += salesValue;
+    /**
+     * Outstanding respects the accounting system's amount_due when it has been
+     * populated (imported invoices), falling back to the original status-based
+     * whole-invoice rule otherwise. Invoices predating the amount_due column
+     * default to 0 and therefore behave exactly as before. This is what lets a
+     * partially paid invoice stop reporting as fully outstanding.
+     */
+    const amountDue = Number(row.amount_due || 0);
+    const amountPaid = Number(row.amount_paid || 0);
+    if (status === "Cancelled") {
+      // Cancelled never contributes, as before.
+    } else if (amountDue > 0 || amountPaid > 0) {
+      current.outstandingInvoices += amountDue;
+    } else if (status !== "Paid") {
+      current.outstandingInvoices += salesValue;
+    }
     if (status === "Paid" && row.invoice_date && row.updated_at) {
       const from = new Date(String(row.invoice_date));
       const to = new Date(String(row.updated_at));
