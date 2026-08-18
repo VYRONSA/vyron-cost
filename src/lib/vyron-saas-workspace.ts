@@ -1197,20 +1197,26 @@ export async function getWorkspaceCompanyProfile(
     xeroStatus?: string;
   } | null
 ): Promise<WorkspaceCompanyProfile> {
-  const cached = memoryCompanyProfiles.get(workspaceId);
-  if (cached) return cached;
-
   const supabase = isSupabaseServiceRoleConfigured() ? getSupabaseAdmin() : null;
+
+  /**
+   * Supabase is the source of truth whenever it is configured. The process-local
+   * cache is deliberately NOT read ahead of it: on serverless every instance holds
+   * its own Map, so a cached hit both masks a failed write and makes a save appear
+   * to persist until the next cold start lands on an empty instance.
+   */
   if (supabase) {
     const { data } = await supabase.from("vyron_workspaces").select("*").eq("id", workspaceId).maybeSingle();
     if (data) {
       const workspace = await getWorkspace(workspaceId);
       if (workspace) {
-        const profile = profileFromWorkspace(workspace, data as Record<string, unknown>);
-        memoryCompanyProfiles.set(workspaceId, profile);
-        return profile;
+        return profileFromWorkspace(workspace, data as Record<string, unknown>);
       }
     }
+  } else {
+    // In-memory mode only (no service role configured): local/dev fallback.
+    const cached = memoryCompanyProfiles.get(workspaceId);
+    if (cached) return cached;
   }
 
   const workspace = memoryWorkspaces.get(workspaceId);
@@ -1252,62 +1258,103 @@ export async function updateWorkspaceCompanyProfile(
   const supabase = isSupabaseServiceRoleConfigured() ? getSupabaseAdmin() : null;
   const now = new Date().toISOString();
 
+  /**
+   * Every failure below throws. A save that did not reach the database must never
+   * be reported as success: the caller returns `ok: true` on resolution, so a
+   * silent skip here is indistinguishable from a real save at the UI.
+   */
   if (supabase) {
-    const { data: row } = await supabase
+    const { data: row, error: lookupError } = await supabase
       .from("vyron_workspaces")
       .select("id, company_id")
       .eq("id", workspaceId)
       .maybeSingle();
-    if (row) {
-      const { error } = await supabase
-        .from("vyron_workspaces")
-        .update({
-          company_name: next.companyName,
-          trading_name: next.tradingName,
-          vat_number: next.vatNumber,
-          registration_number: next.registrationNumber,
-          contact_email: next.contactEmail,
-          phone: next.phone,
-          physical_address: next.physicalAddress,
-          postal_address: next.postalAddress,
-          default_vat_rate: next.defaultVatRate,
-          updated_at: now,
-        })
-        .eq("id", workspaceId);
-      if (error) throw new Error(error.message);
-
-      const companyId = row.company_id ? String(row.company_id) : "";
-      if (!companyId) throw new Error("Workspace company association missing.");
-
-      const { data: updatedCompany, error: companyError } = await supabase
-        .from("vyron_cost_companies")
-        .update({
-          name: next.companyName,
-          trading_name: next.tradingName,
-          contact_email: next.contactEmail,
-          phone: next.phone,
-        })
-        .eq("id", companyId)
-        .select("id")
-        .maybeSingle();
-      if (companyError) throw new Error(companyError.message);
-      if (!updatedCompany) throw new Error("Linked company profile not found.");
+    if (lookupError) {
+      throw new Error(`Company profile save failed — workspace lookup error: ${lookupError.message}`);
     }
+    if (!row) {
+      throw new Error(
+        `Company profile save failed — no vyron_workspaces row for workspace ${workspaceId}. Nothing was saved.`
+      );
+    }
+
+    const { error } = await supabase
+      .from("vyron_workspaces")
+      .update({
+        company_name: next.companyName,
+        trading_name: next.tradingName,
+        vat_number: next.vatNumber,
+        registration_number: next.registrationNumber,
+        contact_email: next.contactEmail,
+        phone: next.phone,
+        physical_address: next.physicalAddress,
+        postal_address: next.postalAddress,
+        default_vat_rate: next.defaultVatRate,
+        updated_at: now,
+      })
+      .eq("id", workspaceId);
+    if (error) throw new Error(`Company profile save failed — ${error.message}`);
+
+    const companyId = row.company_id ? String(row.company_id) : "";
+    if (!companyId) throw new Error("Workspace company association missing.");
+
+    const { data: updatedCompany, error: companyError } = await supabase
+      .from("vyron_cost_companies")
+      .update({
+        name: next.companyName,
+        trading_name: next.tradingName,
+        contact_email: next.contactEmail,
+        phone: next.phone,
+      })
+      .eq("id", companyId)
+      .select("id")
+      .maybeSingle();
+    if (companyError) throw new Error(companyError.message);
+    if (!updatedCompany) throw new Error("Linked company profile not found.");
+
+    // Re-read from the database so the caller receives persisted state, never the
+    // locally computed object. This is the only proof the write actually landed.
+    const { data: savedRow, error: reReadError } = await supabase
+      .from("vyron_workspaces")
+      .select("*")
+      .eq("id", workspaceId)
+      .maybeSingle();
+    if (reReadError) {
+      throw new Error(`Company profile saved but could not be re-read — ${reReadError.message}`);
+    }
+    if (!savedRow) {
+      throw new Error("Company profile saved but the workspace row could not be re-read.");
+    }
+
+    const savedWorkspace = await getWorkspace(workspaceId);
+    if (!savedWorkspace) {
+      throw new Error("Company profile saved but the workspace could not be re-read.");
+    }
+
+    const persisted = profileFromWorkspace(savedWorkspace, savedRow as Record<string, unknown>);
+
+    syncMemoryWorkspaceMirror(workspaceId, persisted);
+    // Drop any stale process-local entry; Supabase is authoritative from here.
+    memoryCompanyProfiles.delete(workspaceId);
+    return persisted;
   }
 
-  const memoryWorkspace = memoryWorkspaces.get(workspaceId);
-  if (memoryWorkspace) {
-    memoryWorkspaces.set(workspaceId, {
-      ...memoryWorkspace,
-      companyName: next.companyName,
-      tradingName: next.tradingName,
-      contactEmail: next.contactEmail,
-      phone: next.phone,
-    });
-  }
-
+  // In-memory mode only (no service role configured): local/dev fallback.
+  syncMemoryWorkspaceMirror(workspaceId, next);
   memoryCompanyProfiles.set(workspaceId, next);
   return next;
+}
+
+function syncMemoryWorkspaceMirror(workspaceId: string, profile: WorkspaceCompanyProfile) {
+  const memoryWorkspace = memoryWorkspaces.get(workspaceId);
+  if (!memoryWorkspace) return;
+  memoryWorkspaces.set(workspaceId, {
+    ...memoryWorkspace,
+    companyName: profile.companyName,
+    tradingName: profile.tradingName,
+    contactEmail: profile.contactEmail,
+    phone: profile.phone,
+  });
 }
 
 export async function inviteWorkspaceUser(workspaceId: string, input: InviteUserInput): Promise<WorkspaceMember> {
