@@ -71,6 +71,7 @@ export const vyronNavSections: VyronNavSection[] = [
       { label: "Finished Goods", icon: PackageSearch, href: "/products" },
       { label: "Recipes & BOMs", icon: ChefHat, href: "/recipes" },
       { label: "Import Centre", icon: Upload, href: "/import-centre" },
+      { label: "Customer & Supplier Imports", icon: Upload, href: "/admin/imports" },
     ],
   },
 
