@@ -508,7 +508,7 @@ export async function postOpeningStockBalances(
  * Resolution order is unchanged: saved mapping by item code, saved mapping by
  * description, product SKU, then exact product name.
  */
-type ResolvedProduct = { id: string; product_name: string };
+type ResolvedProduct = { id: string; product_name: string; total_cost: number };
 
 export type ImportResolutionIndex = {
   customersByName: Map<string, { id: string; customer_name: string }>;
@@ -554,10 +554,10 @@ export async function loadImportResolutionIndex(
       "id, customer_name",
       companyId
     ),
-    loadAll<{ id: string; product_name: string; sku: string | null }>(
+    loadAll<{ id: string; product_name: string; sku: string | null; total_cost: number | null }>(
       supabase,
       "vyron_cost_products",
-      "id, product_name, sku",
+      "id, product_name, sku, total_cost",
       companyId
     ),
     loadAll<{ source_item_code: string | null; source_description: string | null; product_id: string }>(
@@ -583,7 +583,11 @@ export async function loadImportResolutionIndex(
   }
 
   for (const product of products) {
-    const entry: ResolvedProduct = { id: String(product.id), product_name: product.product_name };
+    const entry: ResolvedProduct = {
+      id: String(product.id),
+      product_name: product.product_name,
+      total_cost: Number(product.total_cost || 0),
+    };
     index.productsById.set(entry.id, entry);
     const nameKey = norm(product.product_name);
     if (nameKey && !index.productsByName.has(nameKey)) index.productsByName.set(nameKey, entry);
@@ -941,7 +945,9 @@ async function persistCustomerInvoices(
         product_name: description || String(product?.product_name || code || "Line"),
         quantity,
         selling_price: unitAmount,
-        cost_per_unit: 0,
+        // Cost comes from the mapped VYRON product, so imported invoices carry
+        // real cost and GP rather than reporting 100% margin.
+        cost_per_unit: product ? product.total_cost : 0,
       });
     }
 
