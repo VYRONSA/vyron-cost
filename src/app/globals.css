@@ -556,3 +556,133 @@ html:has(.vyron-public-page) body {
   color: #94a3b8;
   opacity: 1;
 }
+
+/* ==========================================================================
+   VYRON COST — report printing
+   --------------------------------------------------------------------------
+   Reports are client deliverables: an operator prints one and hands it to an
+   owner, a CFO or an auditor. Printing the application around the report wastes
+   paper and looks unprofessional, so a print run keeps the report document and
+   drops everything else.
+
+   The sweep hides every element and re-shows only the report document and its
+   descendants. Selecting the sidebar and top bar structurally would break the
+   moment the shell changes; this cannot. `.vyron-printing-report` is set on
+   <body> by ReportDocument only for the duration of the print.
+   ========================================================================== */
+
+.vyron-report-footer {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm 10mm 14mm 10mm;
+  }
+
+  body.vyron-printing-report * {
+    visibility: hidden;
+  }
+
+  body.vyron-printing-report .vyron-report-document,
+  body.vyron-printing-report .vyron-report-document * {
+    visibility: visible;
+  }
+
+  /* Lift the document out of the shell's scroll container to the page origin. */
+  body.vyron-printing-report .vyron-report-document {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    gap: 10px;
+  }
+
+  /* Interactive chrome is not part of the report. */
+  body.vyron-printing-report .vyron-report-controls,
+  body.vyron-printing-report .vyron-report-document button,
+  body.vyron-printing-report .vyron-report-document input,
+  body.vyron-printing-report .vyron-report-document select {
+    display: none !important;
+  }
+
+  /* Flat ink: shadows and rounded chrome cost toner and add nothing on paper. */
+  body.vyron-printing-report .vyron-report-document * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  body.vyron-printing-report .vyron-report-header,
+  body.vyron-printing-report .vyron-report-summary > *,
+  body.vyron-printing-report .vyron-report-table-wrap,
+  body.vyron-printing-report .vyron-report-body {
+    border-radius: 0 !important;
+  }
+
+  body.vyron-printing-report .vyron-report-header {
+    border: 0;
+    border-bottom: 2px solid #0f172a;
+    padding: 0 0 8px;
+  }
+
+  /* The report identity repeats at the top of every sheet. */
+  body.vyron-printing-report .vyron-report-header {
+    display: table-header-group;
+  }
+
+  body.vyron-printing-report .vyron-report-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  body.vyron-printing-report .vyron-report-summary > * {
+    border: 1px solid #cbd5e1;
+    padding: 4px 10px;
+  }
+
+  /* Let a long table paginate instead of scrolling in a box. */
+  body.vyron-printing-report .vyron-report-table-wrap {
+    overflow: visible !important;
+    border: 0;
+  }
+  body.vyron-printing-report table[data-report-table] {
+    width: 100% !important;
+    min-width: 0 !important;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+  body.vyron-printing-report table[data-report-table] thead {
+    display: table-header-group; /* column headers repeat on every page */
+  }
+  body.vyron-printing-report table[data-report-table] tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  body.vyron-printing-report table[data-report-table] th,
+  body.vyron-printing-report table[data-report-table] td {
+    border: 1px solid #cbd5e1;
+    padding: 3px 6px;
+    color: #0f172a !important;
+    background: #fff !important;
+  }
+  body.vyron-printing-report table[data-report-table] thead th {
+    background: #e2e8f0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.vyron-printing-report .vyron-report-footer {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #cbd5e1;
+    padding-top: 4px;
+    font-size: 7.5pt;
+    color: #475569;
+    text-align: center;
+  }
+}
