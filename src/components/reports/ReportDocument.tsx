@@ -37,7 +37,23 @@ export type ReportPeriod =
   /** A snapshot: "As At: 31 July 2026". */
   | { kind: "asAt"; date: string | null };
 
-const DATE_FMT = new Intl.DateTimeFormat("en-ZA", { day: "2-digit", month: "long", year: "numeric" });
+/*
+ * Both formatters are pinned to a fixed zone.
+ *
+ * Without it Intl uses whatever zone the runtime is in: UTC on the server,
+ * the operator's zone in the browser. The two then render different text for
+ * the same instant and React fails hydration (error #418) on every report.
+ * Pinning also makes the reported time the one the business actually works in,
+ * so a report generated at 10:53 says 10:53 rather than 08:53Z.
+ */
+const REPORT_TIME_ZONE = "Africa/Johannesburg";
+
+const DATE_FMT = new Intl.DateTimeFormat("en-ZA", {
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+  timeZone: REPORT_TIME_ZONE,
+});
 const STAMP_FMT = new Intl.DateTimeFormat("en-ZA", {
   day: "2-digit",
   month: "long",
@@ -45,11 +61,14 @@ const STAMP_FMT = new Intl.DateTimeFormat("en-ZA", {
   hour: "2-digit",
   minute: "2-digit",
   hour12: false,
+  timeZone: REPORT_TIME_ZONE,
 });
 
 function formatDay(value: string | null | undefined) {
   if (!value) return null;
-  const d = new Date(value.length <= 10 ? `${value}T00:00:00` : value);
+  // A bare date is anchored at midday so a timezone offset can never roll it
+  // back or forward a day between server and client.
+  const d = new Date(value.length <= 10 ? `${value}T12:00:00Z` : value);
   return Number.isNaN(d.getTime()) ? String(value) : DATE_FMT.format(d);
 }
 
