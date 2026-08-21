@@ -485,6 +485,7 @@ export const NAV_PATH_PERMISSIONS: Record<string, string> = {
   "/suppliers": "suppliers.view",
   "/supplier-intelligence": "suppliers.view",
   "/supplier-inflation": "suppliers.view",
+  "/supplier-invoices": "suppliers.view",
 
   "/document-intelligence": "suppliers.view",
   "/document-intelligence/supplier-learning": "suppliers.view",

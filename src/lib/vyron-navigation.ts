@@ -55,6 +55,7 @@ export const vyronNavSections: VyronNavSection[] = [
     items: [
       { label: "Supplier Intelligence", icon: TrendingUp, href: "/supplier-intelligence" },
       { label: "Supplier Inflation", icon: TrendingUp, href: "/supplier-inflation" },
+      { label: "Supplier Invoices", icon: ReceiptText, href: "/supplier-invoices" },
       { label: "Supplier Invoice Import / Document Intelligence", icon: FileSearch, href: "/document-intelligence" },
       { label: "Email Invoice Inbox", icon: Upload, href: "/email-invoice-inbox" },
     ],

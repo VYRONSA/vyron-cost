@@ -1355,7 +1355,13 @@ export async function requestStockCountRecount(
     .eq("company_id", companyId);
 }
 
-export async function postStockCount(supabase: SupabaseClient, companyId: string, countId: string, actor = "supervisor") {
+export async function postStockCount(
+  supabase: SupabaseClient,
+  companyId: string,
+  countId: string,
+  actor = "supervisor",
+  options?: { movementDate?: string }
+) {
   const header = await getStockCountForCompany(supabase, companyId, countId);
   if (String(header.status || "") !== "Approved") {
     throw new Error("Stock count must be approved before posting.");
@@ -1381,6 +1387,7 @@ export async function postStockCount(supabase: SupabaseClient, companyId: string
         referenceId: countId,
         referenceLabel: header.count_number as string,
         actor,
+        movementDate: options?.movementDate,
       });
     } else {
       await postStockMovement(supabase, {
@@ -1393,6 +1400,7 @@ export async function postStockCount(supabase: SupabaseClient, companyId: string
         referenceId: countId,
         referenceLabel: header.count_number as string,
         actor,
+        movementDate: options?.movementDate,
       });
     }
   }
