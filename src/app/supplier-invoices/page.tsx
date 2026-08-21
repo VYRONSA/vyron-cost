@@ -5,6 +5,7 @@ export default function SupplierInvoicesPage() {
   return (
     <VyronCostAiShell
       hidePageHeader
+      wide
       title="Supplier Invoices"
       subtitle="MANAGE EVERY PROCESSED SUPPLIER INVOICE — SEARCH, OPEN, AMEND AND DELETE."
     >

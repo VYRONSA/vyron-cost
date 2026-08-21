@@ -36,6 +36,8 @@ type VyronPremiumHeroBannerProps = {
   actions?: ReactNode;
   children?: ReactNode;
   controlTitle?: string;
+  /** Compact hero for register pages. */
+  dense?: boolean;
 };
 
 export function VyronPremiumHeroBanner({
@@ -48,6 +50,7 @@ export function VyronPremiumHeroBanner({
   actions,
   children,
   controlTitle,
+  dense = false,
 }: VyronPremiumHeroBannerProps) {
   const panelActions = actions ?? children;
   const panelQuotes = resolveDomainQuotes(visualVariant, quotes);
@@ -56,7 +59,7 @@ export function VyronPremiumHeroBanner({
 
   return (
     <>
-      <VyronPageHero badge={badge} title={title} subtitle={subtitle} outcomes={outcomes} visualVariant={visualVariant} />
+      <VyronPageHero badge={badge} title={title} subtitle={subtitle} outcomes={outcomes} visualVariant={visualVariant} dense={dense} />
       {shouldShowControlPanel ? (
         <VyronPremiumControlPanel title={controlTitle ?? labels.title} actions={panelActions} quotes={panelQuotes} />
       ) : null}

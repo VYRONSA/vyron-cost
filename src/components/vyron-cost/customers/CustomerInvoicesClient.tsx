@@ -855,6 +855,8 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
 
   return (
     <VyronPremiumPageShell
+      dense
+      panelsBelowContent
       config={{
         visualVariant: "customers",
         badge: "Premium Sales Workspace",
@@ -880,7 +882,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
         ],
       }}
     >
-    <div className="mx-auto w-full max-w-[1180px] space-y-6 overflow-x-hidden">
+    <div className="mx-auto w-full space-y-6 overflow-x-hidden">
       <section className="rounded-[32px] border border-violet-100 bg-white/90 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)] md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -1020,9 +1022,9 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                 <p className="text-sm font-semibold text-slate-500">Select finished products. Prices and costs fill automatically when product master data exists.</p>
               </div>
               {finishedGoods.length === 0 ? (
-                <span className="rounded-full bg-[var(--vyron-warning-bg)] px-3 py-2 text-xs font-black text-[var(--vyron-warning-fg)]">No finished goods master found yet</span>
+                <span className="rounded-full bg-[var(--vyron-warning-bg)] px-2.5 py-1.5 text-xs font-black text-[var(--vyron-warning-fg)]">No finished goods master found yet</span>
               ) : (
-                <span className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]">{finishedGoods.length} finished goods loaded</span>
+                <span className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-2.5 py-1.5 text-xs font-black text-[#7E22CE]">{finishedGoods.length} finished goods loaded</span>
               )}
             </div>
 
@@ -1106,7 +1108,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                       <button
                         type="button"
                         onClick={() => removeLine(line.id)}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-100 bg-white px-3 py-2 text-xs font-black text-rose-700"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-100 bg-white px-2.5 py-1.5 text-xs font-black text-rose-700"
                       >
                         <Trash2 size={14} />
                         Remove
@@ -1140,27 +1142,25 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
         </section>
       ) : null}
 
-      <section className="rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-black text-slate-950">Invoice Register</h2>
-            <p className="mt-1 text-sm font-semibold text-slate-500">Draft, approve, email and mark invoices as paid.</p>
-          </div>
+      <section className="rounded-[24px] border border-white/70 bg-white/90 p-4 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <h2 className="text-lg font-black text-slate-950">Invoice Register</h2>
+          <p className="text-sm font-semibold text-slate-500">Draft, approve, email and mark invoices as paid.</p>
         </div>
 
-        <EnterpriseScrollContainer className="rounded-[24px] border border-violet-100">
+        <EnterpriseScrollContainer mode="page" className="rounded-[24px] border border-violet-100">
           <table className="min-w-[900px] w-full text-left text-sm">
             <thead className="bg-slate-950 text-xs font-black uppercase tracking-[0.12em] text-white">
               <tr>
-                <th className="px-4 py-3">Invoice</th>
-                <th className="px-4 py-3">Customer</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3 text-right">Excl</th>
-                <th className="px-4 py-3 text-right">VAT</th>
-                <th className="px-4 py-3 text-right">Total</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Stock</th>
-                <th className="px-4 py-3">Actions</th>
+                <th className="whitespace-nowrap px-4 py-3">Invoice</th>
+                <th className="whitespace-nowrap px-4 py-3">Customer</th>
+                <th className="whitespace-nowrap px-4 py-3">Date</th>
+                <th className="whitespace-nowrap px-4 py-3 text-right">Excl</th>
+                <th className="whitespace-nowrap px-4 py-3 text-right">VAT</th>
+                <th className="whitespace-nowrap px-4 py-3 text-right">Total</th>
+                <th className="whitespace-nowrap px-4 py-3">Status</th>
+                <th className="whitespace-nowrap px-4 py-3">Stock</th>
+                <th className="whitespace-nowrap px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -1168,27 +1168,27 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                 const totals = displayInvoiceTotals(invoice);
                 return (
                   <tr key={invoice.id} className="border-t border-violet-50">
-                    <td className="px-4 py-4 font-black text-violet-700">{invoice.invoiceNumber}</td>
-                    <td className="px-4 py-4 font-black text-slate-950">{invoice.customerName}</td>
-                    <td className="px-4 py-4 font-semibold text-slate-600">{invoice.invoiceDate}</td>
-                    <td className="px-4 py-4 text-right font-black">{money(totals.excl)}</td>
-                    <td className="px-4 py-4 text-right font-black">{money(totals.vat)}</td>
-                    <td className="px-4 py-4 text-right font-black">{money(totals.total)}</td>
-                    <td className="px-4 py-4"><StatusBadge status={invoice.status} /></td>
-                    <td className="px-4 py-4"><StockPostingBadge status={invoice.stockPostingStatus || "Not Posted"} /></td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-wrap gap-2">
-                        <button onClick={() => setSelectedInvoiceId(invoice.id)} className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-800">View</button>
-                        {invoice.status === "Draft" && canApprove ? <button onClick={() => updateInvoiceStatus(invoice.id, "Approved")} className="rounded-xl bg-indigo-50 px-3 py-2 text-xs font-black text-indigo-800">Approve</button> : null}
+                    <td className="whitespace-nowrap px-4 py-2.5 font-black text-violet-700">{invoice.invoiceNumber}</td>
+                    <td className="whitespace-nowrap px-4 py-2.5 font-black text-slate-950">{invoice.customerName}</td>
+                    <td className="whitespace-nowrap px-4 py-2.5 font-semibold text-slate-600">{invoice.invoiceDate}</td>
+                    <td className="whitespace-nowrap px-4 py-2.5 text-right font-black">{money(totals.excl)}</td>
+                    <td className="whitespace-nowrap px-4 py-2.5 text-right font-black">{money(totals.vat)}</td>
+                    <td className="whitespace-nowrap px-4 py-2.5 text-right font-black">{money(totals.total)}</td>
+                    <td className="whitespace-nowrap px-4 py-2.5"><StatusBadge status={invoice.status} /></td>
+                    <td className="whitespace-nowrap px-4 py-2.5"><StockPostingBadge status={invoice.stockPostingStatus || "Not Posted"} /></td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex flex-nowrap items-center gap-1.5">
+                        <button onClick={() => setSelectedInvoiceId(invoice.id)} className="rounded-xl bg-violet-50 px-2.5 py-1.5 text-xs font-black text-violet-800">View</button>
+                        {invoice.status === "Draft" && canApprove ? <button onClick={() => updateInvoiceStatus(invoice.id, "Approved")} className="rounded-xl bg-indigo-50 px-2.5 py-1.5 text-xs font-black text-indigo-800">Approve</button> : null}
                         {invoice.status === "Approved" && canEmail ? (
-                          <a onClick={() => updateInvoiceStatus(invoice.id, "Sent")} href={emailHref(invoice)} className="inline-flex items-center gap-1 rounded-xl bg-purple-50 px-3 py-2 text-xs font-black text-purple-800">
+                          <a onClick={() => updateInvoiceStatus(invoice.id, "Sent")} href={emailHref(invoice)} className="inline-flex items-center gap-1 rounded-xl bg-purple-50 px-2.5 py-1.5 text-xs font-black text-purple-800">
                             <Mail size={13} />
                             Email
                           </a>
                         ) : null}
-                        {invoice.status === "Sent" && canEdit ? <button onClick={() => updateInvoiceStatus(invoice.id, "Paid")} className="rounded-xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#4D7C0F]">Paid</button> : null}
-                        {invoice.status !== "Paid" && invoice.status !== "Cancelled" && canEdit ? <button onClick={() => updateInvoiceStatus(invoice.id, "Cancelled")} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Cancel</button> : null}
-                        {canDelete ? <button onClick={() => deleteInvoice(invoice.id)} className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-black text-rose-700">Delete</button> : null}
+                        {invoice.status === "Sent" && canEdit ? <button onClick={() => updateInvoiceStatus(invoice.id, "Paid")} className="rounded-xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-2.5 py-1.5 text-xs font-black text-[#4D7C0F]">Paid</button> : null}
+                        {invoice.status !== "Paid" && invoice.status !== "Cancelled" && canEdit ? <button onClick={() => updateInvoiceStatus(invoice.id, "Cancelled")} className="rounded-xl bg-slate-100 px-2.5 py-1.5 text-xs font-black text-slate-700">Cancel</button> : null}
+                        {canDelete ? <button onClick={() => deleteInvoice(invoice.id)} className="rounded-xl bg-rose-50 px-2.5 py-1.5 text-xs font-black text-rose-700">Delete</button> : null}
                       </div>
                     </td>
                   </tr>
@@ -1320,11 +1320,11 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
             <table className="w-full text-left text-sm">
               <thead className="bg-violet-50 text-xs font-black uppercase tracking-[0.12em] text-violet-800">
                 <tr>
-                  <th className="px-4 py-3">Description</th>
-                  <th className="px-4 py-3 text-right">Qty</th>
-                  <th className="px-4 py-3 text-right">Unit Excl</th>
-                  <th className="px-4 py-3 text-right">VAT</th>
-                  <th className="px-4 py-3 text-right">Total</th>
+                  <th className="whitespace-nowrap px-4 py-3">Description</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right">Qty</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right">Unit Excl</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right">VAT</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right">Total</th>
                 </tr>
               </thead>
               <tbody>

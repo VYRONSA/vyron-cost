@@ -8,7 +8,7 @@ export default async function Page({
 }) {
   const { create } = await searchParams;
   return (
-    <VyronCostAiShell hidePageHeader title="Customer Invoices"
+    <VyronCostAiShell hidePageHeader wide title="Customer Invoices"
       subtitle="SELL FINISHED GOODS TO CUSTOMERS, REDUCE STOCK, CALCULATE COGS, GP AND EMAIL INVOICES."
     >
       <CustomerInvoicesClient initialFormOpen={create === "1"} />

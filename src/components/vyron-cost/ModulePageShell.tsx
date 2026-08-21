@@ -21,6 +21,8 @@ export default function ModulePageShell({
   actions,
   children,
   visualVariant,
+  panelsBelowContent = false,
+  dense = false,
 }: {
   eyebrow: string;
   title: string;
@@ -28,6 +30,10 @@ export default function ModulePageShell({
   actions?: ReactNode;
   children: ReactNode;
   visualVariant?: VyronVisualVariant;
+  /** Push the reference panels below the content — see VyronPremiumPageShell. */
+  panelsBelowContent?: boolean;
+  /** Compact page chrome - see VyronPremiumPageShell. */
+  dense?: boolean;
 }) {
   const variant = visualVariant ?? variantFromEyebrow(eyebrow);
 
@@ -46,6 +52,8 @@ export default function ModulePageShell({
         ],
       }}
       actions={actions}
+      panelsBelowContent={panelsBelowContent}
+      dense={dense}
     >
       {children}
     </VyronPremiumPageShell>

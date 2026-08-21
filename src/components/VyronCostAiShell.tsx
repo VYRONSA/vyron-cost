@@ -9,6 +9,7 @@ export default function VyronCostAiShell({
   hidePageHeader = false,
   fullWidthMain = false,
   fullHeightWorkspace = false,
+  wide = false,
 }: {
   title: string;
   subtitle?: string;
@@ -16,6 +17,8 @@ export default function VyronCostAiShell({
   hidePageHeader?: boolean;
   fullWidthMain?: boolean;
   fullHeightWorkspace?: boolean;
+  /** Widen the content clamp for column-heavy pages such as invoice registers. */
+  wide?: boolean;
 }) {
   enforceAuthenticatedDashboardDynamicRendering();
 
@@ -26,6 +29,7 @@ export default function VyronCostAiShell({
       hidePageHeader={hidePageHeader}
       fullWidthMain={fullWidthMain}
       fullHeightWorkspace={fullHeightWorkspace}
+      wide={wide}
     >
       {children}
     </VyronCostAiShellClient>

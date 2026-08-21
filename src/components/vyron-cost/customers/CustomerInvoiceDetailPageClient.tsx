@@ -12,7 +12,6 @@ import { customerInvoices, getInvoiceTotals } from "@/lib/vyron-cost/manufacturi
 import { readActiveClient } from "@/lib/vyron-developer-client";
 import { useInventoryPermissions, useInvoicePermissions } from "@/hooks/useModulePermissions";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
-import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import {
   getInvoiceStockPostingStatus,
   type InvoiceStockPostingStatus,
@@ -231,16 +230,10 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
   const unlinkedLines = invoice.lines.some((line) => !line.productId);
 
   return (
-    <VyronPremiumPageShell
-      config={{
-        visualVariant: "customers",
-        title: "Customer Invoice Detail Page",
-        subtitle: "Premium VYRON COST workflow for customer invoice detail page.",
-        formulas: ["GP % = (Price - Cost) / Price"],
-      }}
-    >
-      <EditRouteGuard permission="view_customer_invoices">
+    <EditRouteGuard permission="view_customer_invoices">
             <ModulePageShell
+              dense
+              panelsBelowContent
               eyebrow="Customer Invoice"
               title={invoice.invoiceNumber}
               subtitle={`${invoice.customerName} • ${invoice.invoiceDate}`}
@@ -324,9 +317,9 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
                 </div>
               ) : null}
       
-              <section className="mt-6 rounded-[30px] bg-white/90 p-6 shadow-xl shadow-violet-100">
+              <section className="mt-5 rounded-[24px] bg-white/90 p-5 shadow-xl shadow-violet-100">
                 <h2 className="text-xl font-black">Invoice lines</h2>
-                <EnterpriseScrollContainer className="mt-4">
+                <EnterpriseScrollContainer mode="page" className="mt-4">
                   <table className="w-full min-w-[760px] text-left text-sm">
                     <thead className="text-xs uppercase text-slate-500">
                       <tr>
@@ -340,7 +333,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
                     <tbody className="divide-y divide-slate-100">
                       {invoice.lines.map((line) => (
                         <tr key={`${line.productId}-${line.productName}`}>
-                          <td className="py-4 font-bold">{line.productName}</td>
+                          <td className="py-2.5 font-bold">{line.productName}</td>
                           <td className="text-right">{line.quantity}</td>
                           <td className="text-right">{formatCurrency(line.sellingPrice)}</td>
                           <td className="text-right">{formatCurrency(line.costPerUnit)}</td>
@@ -354,8 +347,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
                 </EnterpriseScrollContainer>
               </section>
             </ModulePageShell>
-          </EditRouteGuard>
-    </VyronPremiumPageShell>
+    </EditRouteGuard>
   );
 }
 

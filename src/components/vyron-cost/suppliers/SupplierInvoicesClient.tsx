@@ -174,6 +174,8 @@ export default function SupplierInvoicesClient() {
 
   return (
     <VyronPremiumPageShell
+      dense
+      panelsBelowContent
       config={{
         visualVariant: "suppliers",
         badge: "Premium Procurement Workspace",
@@ -245,35 +247,24 @@ export default function SupplierInvoicesClient() {
         ].map((tile) => (
           <div
             key={tile.label}
-            className="rounded-2xl border border-white/70 bg-white/90 px-4 py-4 shadow-[0_18px_60px_rgba(30,41,59,0.06)]"
+            className="rounded-2xl border border-white/70 bg-white/90 px-4 py-3 shadow-[0_18px_60px_rgba(30,41,59,0.06)]"
           >
             <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{tile.label}</p>
-            <p className="mt-2 text-xl font-black text-slate-950">{tile.value}</p>
+            <p className="mt-1 text-xl font-black text-slate-950">{tile.value}</p>
           </div>
         ))}
       </section>
 
       {/* ---- filters ---- */}
-      <section className="rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(30,41,59,0.06)]">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-black text-slate-950">Find an invoice</h2>
-            <p className="mt-1 text-sm font-semibold text-slate-500">
-              Filter by supplier, invoice number, date, status or amount.
-            </p>
-          </div>
-          {filtersActive ? (
-            <button
-              onClick={clearFilters}
-              className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-200"
-            >
-              Clear filters
-            </button>
-          ) : null}
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-          <label className="lg:col-span-2">
+      {/*
+        Filters sit in one compact band. The card previously restated the page
+        purpose in a heading and a sentence above two rows of controls, which
+        cost ~130px of the fold on a register whose whole job is showing rows.
+        Every control is unchanged - only the chrome around them is smaller.
+      */}
+      <section className="rounded-[24px] border border-white/70 bg-white/90 p-4 shadow-[0_18px_60px_rgba(30,41,59,0.06)]">
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">
+          <label className="lg:col-span-2 2xl:col-span-1">
             <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Search</span>
             <span className="mt-1 flex items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2">
               <Search size={15} className="text-slate-400" />
@@ -358,40 +349,49 @@ export default function SupplierInvoicesClient() {
               className="mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
             />
           </label>
+
+          {filtersActive ? (
+            <div className="flex items-end">
+              <button
+                onClick={clearFilters}
+                className="w-full rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-200"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : null}
         </div>
       </section>
 
       {/* ---- register ---- */}
-      <section className="rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(30,41,59,0.06)]">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-black text-slate-950">Supplier Invoice Register</h2>
-            <p className="mt-1 text-sm font-semibold text-slate-500">
-              Showing {filtered.length} of {invoices.length} processed invoice{invoices.length === 1 ? "" : "s"}.
-            </p>
-          </div>
+      <section className="rounded-[24px] border border-white/70 bg-white/90 p-4 shadow-[0_18px_60px_rgba(30,41,59,0.06)]">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <h2 className="text-lg font-black text-slate-950">Supplier Invoice Register</h2>
+          <p className="text-sm font-semibold text-slate-500">
+            Showing {filtered.length} of {invoices.length} processed invoice{invoices.length === 1 ? "" : "s"}.
+          </p>
         </div>
 
-        <EnterpriseScrollContainer className="rounded-[24px] border border-indigo-100">
+        <EnterpriseScrollContainer mode="page" className="rounded-[24px] border border-indigo-100">
           <table className="w-full min-w-[1080px] text-left text-sm">
             <thead className="bg-slate-950 text-xs font-black uppercase tracking-[0.12em] text-white">
               <tr>
-                <th className="px-4 py-3">Invoice</th>
-                <th className="px-4 py-3">Supplier</th>
-                <th className="px-4 py-3">Invoice date</th>
-                <th className="px-4 py-3 text-right">Lines</th>
-                <th className="px-4 py-3 text-right">Subtotal</th>
-                <th className="px-4 py-3 text-right">VAT</th>
-                <th className="px-4 py-3 text-right">Total</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Source / PO</th>
-                <th className="px-4 py-3">Actions</th>
+                <th className="whitespace-nowrap px-4 py-3">Invoice</th>
+                <th className="whitespace-nowrap px-4 py-3">Supplier</th>
+                <th className="whitespace-nowrap px-4 py-3">Invoice date</th>
+                <th className="whitespace-nowrap px-4 py-3 text-right">Lines</th>
+                <th className="whitespace-nowrap px-4 py-3 text-right">Subtotal</th>
+                <th className="whitespace-nowrap px-4 py-3 text-right">VAT</th>
+                <th className="whitespace-nowrap px-4 py-3 text-right">Total</th>
+                <th className="whitespace-nowrap px-4 py-3">Status</th>
+                <th className="whitespace-nowrap px-4 py-3">Source / PO</th>
+                <th className="whitespace-nowrap px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((invoice) => (
                 <tr key={invoice.id} className="border-t border-indigo-50 transition hover:bg-indigo-50/40">
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-2.5 whitespace-nowrap">
                     <Link
                       href={`/supplier-invoices/${invoice.id}`}
                       className="font-black text-indigo-700 underline-offset-2 hover:underline"
@@ -405,26 +405,26 @@ export default function SupplierInvoicesClient() {
                       </span>
                     ) : null}
                   </td>
-                  <td className="px-4 py-4 font-black text-slate-950">{invoice.supplier_name || "—"}</td>
-                  <td className="px-4 py-4 font-semibold text-slate-600">{invoice.invoice_date || "—"}</td>
-                  <td className="px-4 py-4 text-right font-semibold text-slate-600">
+                  <td className="px-4 py-2.5 whitespace-nowrap font-black text-slate-950">{invoice.supplier_name || "—"}</td>
+                  <td className="px-4 py-2.5 whitespace-nowrap font-semibold text-slate-600">{invoice.invoice_date || "—"}</td>
+                  <td className="px-4 py-2.5 whitespace-nowrap text-right font-semibold text-slate-600">
                     {lineCounts[invoice.id] ?? 0}
                   </td>
-                  <td className="px-4 py-4 text-right font-black tabular-nums">{money(invoice.subtotal)}</td>
-                  <td className="px-4 py-4 text-right font-black tabular-nums">{money(invoice.vat)}</td>
-                  <td className="px-4 py-4 text-right font-black tabular-nums">{money(invoice.total)}</td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-2.5 whitespace-nowrap text-right font-black tabular-nums">{money(invoice.subtotal)}</td>
+                  <td className="px-4 py-2.5 whitespace-nowrap text-right font-black tabular-nums">{money(invoice.vat)}</td>
+                  <td className="px-4 py-2.5 whitespace-nowrap text-right font-black tabular-nums">{money(invoice.total)}</td>
+                  <td className="px-4 py-2.5 whitespace-nowrap">
                     <StatusPill status={String(invoice.status || "Draft")} />
                   </td>
-                  <td className="px-4 py-4 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                  <td className="px-4 py-2.5 whitespace-nowrap text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
                     {invoice.source_type || "—"}
                     {invoice.matched_po_id ? <span className="block text-emerald-700">PO matched</span> : null}
                   </td>
-                  <td className="px-4 py-4">
-                    <div className="flex flex-wrap gap-2">
+                  <td className="px-4 py-2.5 whitespace-nowrap">
+                    <div className="flex flex-nowrap items-center gap-1.5">
                       <Link
                         href={`/supplier-invoices/${invoice.id}`}
-                        className="rounded-xl bg-indigo-50 px-3 py-2 text-xs font-black text-indigo-800 transition hover:bg-indigo-100"
+                        className="rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-black text-indigo-800 transition hover:bg-indigo-100"
                       >
                         Open
                       </Link>
@@ -432,7 +432,7 @@ export default function SupplierInvoicesClient() {
                         <button
                           onClick={() => void removeInvoice(invoice)}
                           disabled={busyId === invoice.id}
-                          className="inline-flex items-center gap-1 rounded-xl bg-rose-50 px-3 py-2 text-xs font-black text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2.5 py-1.5 text-xs font-black text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
                         >
                           <Trash2 size={13} />
                           {busyId === invoice.id ? "Deleting…" : "Delete"}

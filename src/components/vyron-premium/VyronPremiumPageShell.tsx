@@ -56,6 +56,8 @@ export function VyronPremiumPageShell({
   showFooter = true,
   showSpotlight = true,
   showControlPanel = true,
+  panelsBelowContent = false,
+  dense = false,
 }: {
   config: VyronPremiumPageConfig;
   children: ReactNode;
@@ -65,6 +67,24 @@ export function VyronPremiumPageShell({
   showFooter?: boolean;
   showSpotlight?: boolean;
   showControlPanel?: boolean;
+  /**
+   * Render the formula and intelligence panels AFTER the page content.
+   *
+   * They are reference material, not working data. Above a transaction register
+   * they push the grid most of a viewport down the page, so the operator opens
+   * an invoice list and sees three rows. Below it they stay one scroll away and
+   * the register gets the fold. Purely an ordering change — same panels, same
+   * styling, same props.
+   */
+  panelsBelowContent?: boolean;
+  /**
+   * Compact the page chrome for register pages.
+   *
+   * Trims the hero and drops the control panel's decorative quote column while
+   * keeping its action buttons. On the supplier register this moved the top of
+   * the grid from 1186px down the page to inside the first screen.
+   */
+  dense?: boolean;
 }) {
   const {
     badge = "Premium VYRON COST Workspace",
@@ -88,26 +108,45 @@ export function VyronPremiumPageShell({
   const resolvedIntelligence = intelligenceItems?.length ? intelligenceItems : VYRON_DOMAIN_INTELLIGENCE[visualVariant];
   const spotlight = resolvedQuotes[0];
 
+  const referencePanels =
+    showFormulas || showIntelligence ? (
+      <div className="grid min-w-0 gap-3 lg:grid-cols-2">
+        {showFormulas && normalizedFormulas.length > 0 ? (
+          <VyronPremiumFormulaCard eyebrow={formulaEyebrow} title={formulaTitle} formulas={normalizedFormulas} variant="light" />
+        ) : null}
+        {showIntelligence && resolvedIntelligence.length > 0 ? (
+          <VyronPremiumIntelligencePanel eyebrow={intelligenceEyebrow} title={intelligenceTitle} items={resolvedIntelligence} />
+        ) : null}
+      </div>
+    ) : null;
+
   return (
     <VyronPageFrame>
-      <VyronPremiumHeroBanner badge={badge} title={title} subtitle={subtitle} outcomes={outcomes} visualVariant={visualVariant} />
+      <VyronPremiumHeroBanner
+        badge={badge}
+        title={title}
+        subtitle={subtitle}
+        outcomes={outcomes}
+        visualVariant={visualVariant}
+        dense={dense}
+      />
 
-      {showControlPanel && (actions || resolvedQuotes.length > 0) ? (
+      {showControlPanel && dense && actions ? (
+        /*
+         * Dense pages surface the actions on their own rather than inside the
+         * control-panel card. The card contributes ~90px of border, padding and
+         * a repeated page title above a register that needs the rows.
+         */
+        <div className="flex flex-wrap items-center gap-2">{actions}</div>
+      ) : showControlPanel && !dense && (actions || resolvedQuotes.length > 0) ? (
         <VyronPremiumControlPanel title={controlTitle ?? title} actions={actions} quotes={resolvedQuotes} />
       ) : null}
 
-      {showFormulas || showIntelligence ? (
-        <div className="grid min-w-0 gap-3 lg:grid-cols-2">
-          {showFormulas && normalizedFormulas.length > 0 ? (
-            <VyronPremiumFormulaCard eyebrow={formulaEyebrow} title={formulaTitle} formulas={normalizedFormulas} variant="light" />
-          ) : null}
-          {showIntelligence && resolvedIntelligence.length > 0 ? (
-            <VyronPremiumIntelligencePanel eyebrow={intelligenceEyebrow} title={intelligenceTitle} items={resolvedIntelligence} />
-          ) : null}
-        </div>
-      ) : null}
+      {!panelsBelowContent ? referencePanels : null}
 
       {children}
+
+      {panelsBelowContent ? referencePanels : null}
 
       {showSpotlight && spotlight ? <VyronQuoteCard quote={spotlight.quote} attribution={spotlight.label} /> : null}
       {showFooter ? <VyronFooterStrip /> : null}

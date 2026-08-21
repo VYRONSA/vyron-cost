@@ -363,6 +363,8 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
 
   return (
     <VyronPremiumPageShell
+      dense
+      panelsBelowContent
       config={{
         visualVariant: "suppliers",
         badge: "Premium Procurement Workspace",
@@ -410,13 +412,13 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
       }
     >
       {message ? (
-        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 text-sm font-bold text-indigo-900">
+        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 px-4 py-2.5 text-sm font-bold text-indigo-900">
           {message}
         </div>
       ) : null}
 
       {!headerAgrees ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
           <div className="flex items-start gap-2">
             <AlertTriangle size={16} className="mt-0.5 shrink-0" />
             <div>
@@ -591,39 +593,39 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
           </p>
         </div>
 
-        <EnterpriseScrollContainer className="rounded-[24px] border border-indigo-100">
+        <EnterpriseScrollContainer mode="page" className="rounded-[24px] border border-indigo-100">
           <table className="w-full min-w-[1180px] text-left text-sm">
             <thead className="bg-slate-950 text-xs font-black uppercase tracking-[0.12em] text-white">
               <tr>
-                <th className="px-4 py-3">#</th>
-                <th className="px-4 py-3">Description</th>
-                <th className="px-4 py-3">Ingredient link</th>
-                <th className="px-4 py-3 text-right">Qty</th>
-                <th className="px-4 py-3">Unit</th>
-                <th className="px-4 py-3 text-right">Unit price</th>
-                <th className="px-4 py-3 text-right">Expected</th>
-                <th className="px-4 py-3 text-right">Variance</th>
-                <th className="px-4 py-3 text-right">VAT %</th>
-                <th className="px-4 py-3 text-right">Line excl</th>
-                <th className="px-4 py-3 text-right">Line VAT</th>
-                <th className="px-4 py-3 text-right">Line total</th>
-                <th className="px-4 py-3">PO line</th>
-                <th className="px-4 py-3">Actions</th>
+                <th className="px-4 py-2.5">#</th>
+                <th className="px-4 py-2.5">Description</th>
+                <th className="px-4 py-2.5">Ingredient link</th>
+                <th className="px-4 py-2.5 text-right">Qty</th>
+                <th className="px-4 py-2.5">Unit</th>
+                <th className="px-4 py-2.5 text-right">Unit price</th>
+                <th className="px-4 py-2.5 text-right">Expected</th>
+                <th className="px-4 py-2.5 text-right">Variance</th>
+                <th className="px-4 py-2.5 text-right">VAT %</th>
+                <th className="px-4 py-2.5 text-right">Line excl</th>
+                <th className="px-4 py-2.5 text-right">Line VAT</th>
+                <th className="px-4 py-2.5 text-right">Line total</th>
+                <th className="px-4 py-2.5">PO line</th>
+                <th className="px-4 py-2.5">Actions</th>
               </tr>
             </thead>
             <tbody>
               {lines.map((line, index) =>
                 editingLineId === line.id ? (
                   <tr key={line.id} className="border-t border-indigo-100 bg-indigo-50/50">
-                    <td className="px-4 py-3 font-black text-slate-500">{index + 1}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2.5 font-black text-slate-500">{index + 1}</td>
+                    <td className="px-4 py-2.5">
                       <input
                         value={lineDraft.itemName}
                         onChange={(event) => setLineDraft({ ...lineDraft, itemName: event.target.value })}
                         className="w-full min-w-[220px] rounded-lg border border-indigo-200 bg-white px-2 py-1.5 text-sm font-semibold outline-none"
                       />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2.5">
                       <select
                         value={lineDraft.ingredientId}
                         onChange={(event) => setLineDraft({ ...lineDraft, ingredientId: event.target.value })}
@@ -637,7 +639,7 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
                         ))}
                       </select>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2.5">
                       <input
                         type="number"
                         step="any"
@@ -646,14 +648,14 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
                         className="w-24 rounded-lg border border-indigo-200 bg-white px-2 py-1.5 text-right text-sm font-semibold outline-none"
                       />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2.5">
                       <input
                         value={lineDraft.unit}
                         onChange={(event) => setLineDraft({ ...lineDraft, unit: event.target.value })}
                         className="w-20 rounded-lg border border-indigo-200 bg-white px-2 py-1.5 text-sm font-semibold outline-none"
                       />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2.5">
                       <input
                         type="number"
                         step="any"
@@ -662,7 +664,7 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
                         className="w-28 rounded-lg border border-indigo-200 bg-white px-2 py-1.5 text-right text-sm font-semibold outline-none"
                       />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2.5">
                       <input
                         type="number"
                         step="any"
@@ -671,8 +673,8 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
                         className="w-28 rounded-lg border border-indigo-200 bg-white px-2 py-1.5 text-right text-sm font-semibold outline-none"
                       />
                     </td>
-                    <td className="px-4 py-3 text-right text-xs font-bold text-slate-500">auto</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2.5 text-right text-xs font-bold text-slate-500">auto</td>
+                    <td className="px-4 py-2.5">
                       <input
                         type="number"
                         step="any"
@@ -681,13 +683,13 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
                         className="w-20 rounded-lg border border-indigo-200 bg-white px-2 py-1.5 text-right text-sm font-semibold outline-none"
                       />
                     </td>
-                    <td colSpan={3} className="px-4 py-3 text-right text-xs font-bold text-slate-500">
+                    <td colSpan={3} className="px-4 py-2.5 text-right text-xs font-bold text-slate-500">
                       Recalculated on save
                     </td>
-                    <td className="px-4 py-3 text-xs font-bold text-slate-500">
+                    <td className="px-4 py-2.5 text-xs font-bold text-slate-500">
                       {line.purchase_order_line_id ? "linked" : "—"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2.5">
                       <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => void saveLine()}
@@ -707,9 +709,9 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
                   </tr>
                 ) : (
                   <tr key={line.id} className="border-t border-indigo-50 transition hover:bg-indigo-50/30">
-                    <td className="px-4 py-3 font-black text-slate-400">{index + 1}</td>
-                    <td className="px-4 py-3 font-black text-slate-950">{line.item_name}</td>
-                    <td className="px-4 py-3 text-xs font-bold">
+                    <td className="px-4 py-2.5 font-black text-slate-400">{index + 1}</td>
+                    <td className="px-4 py-2.5 font-black text-slate-950">{line.item_name}</td>
+                    <td className="px-4 py-2.5 text-xs font-bold">
                       {line.ingredient_id ? (
                         <span className="text-emerald-700">
                           {ingredientById.get(line.ingredient_id)?.ingredient_name || "Linked"}
@@ -718,14 +720,14 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
                         <span className="text-slate-400">Not linked</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold tabular-nums">{line.quantity}</td>
-                    <td className="px-4 py-3 text-xs font-bold uppercase text-slate-500">{line.unit}</td>
-                    <td className="px-4 py-3 text-right font-semibold tabular-nums">{money(line.unit_cost)}</td>
-                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-500">
+                    <td className="px-4 py-2.5 text-right font-semibold tabular-nums">{line.quantity}</td>
+                    <td className="px-4 py-2.5 text-xs font-bold uppercase text-slate-500">{line.unit}</td>
+                    <td className="px-4 py-2.5 text-right font-semibold tabular-nums">{money(line.unit_cost)}</td>
+                    <td className="px-4 py-2.5 text-right font-semibold tabular-nums text-slate-500">
                       {Number(line.expected_unit_cost) > 0 ? money(line.expected_unit_cost) : "—"}
                     </td>
                     <td
-                      className={`px-4 py-3 text-right font-black tabular-nums ${
+                      className={`px-4 py-2.5 text-right font-black tabular-nums ${
                         Number(line.variance_percent) > 0
                           ? "text-rose-700"
                           : Number(line.variance_percent) < 0
@@ -735,18 +737,18 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
                     >
                       {Number(line.variance_percent) !== 0 ? `${Number(line.variance_percent).toFixed(2)}%` : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold tabular-nums">{Number(line.vat_rate)}%</td>
-                    <td className="px-4 py-3 text-right font-black tabular-nums">{money(line.line_excl)}</td>
-                    <td className="px-4 py-3 text-right font-semibold tabular-nums">{money(line.line_vat)}</td>
-                    <td className="px-4 py-3 text-right font-black tabular-nums">{money(line.line_total)}</td>
-                    <td className="px-4 py-3 text-xs font-bold text-slate-500">
+                    <td className="px-4 py-2.5 text-right font-semibold tabular-nums">{Number(line.vat_rate)}%</td>
+                    <td className="px-4 py-2.5 text-right font-black tabular-nums">{money(line.line_excl)}</td>
+                    <td className="px-4 py-2.5 text-right font-semibold tabular-nums">{money(line.line_vat)}</td>
+                    <td className="px-4 py-2.5 text-right font-black tabular-nums">{money(line.line_total)}</td>
+                    <td className="px-4 py-2.5 text-xs font-bold text-slate-500">
                       {line.purchase_order_line_id ? (
                         <span className="text-emerald-700">Matched</span>
                       ) : (
                         "—"
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2.5">
                       {canEdit ? (
                         <button
                           onClick={() => openLineEditor(line)}
@@ -772,12 +774,12 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
             {lines.length > 0 ? (
               <tfoot>
                 <tr className="border-t-2 border-slate-950 bg-slate-50 font-black text-slate-950">
-                  <td colSpan={9} className="px-4 py-3 text-right uppercase tracking-[0.1em]">
+                  <td colSpan={9} className="px-4 py-2.5 text-right uppercase tracking-[0.1em]">
                     Invoice totals
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums">{money(lineTotals.excl)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{money(lineTotals.vat)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{money(lineTotals.total)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums">{money(lineTotals.excl)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums">{money(lineTotals.vat)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums">{money(lineTotals.total)}</td>
                   <td colSpan={2} />
                 </tr>
               </tfoot>

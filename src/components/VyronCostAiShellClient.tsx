@@ -36,7 +36,7 @@ import { isClientWorkspaceMode, readActiveClient, signOutClientWorkspace, writeA
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
-import { VYRON_MAX_WIDTH, VYRON_PAGE_PADDING } from "@/components/vyron-ui/constants";
+import { VYRON_MAX_WIDTH, VYRON_MAX_WIDTH_WIDE, VYRON_PAGE_PADDING } from "@/components/vyron-ui/constants";
 import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
 import { VyronLogoLockup } from "@/components/vyron-ui/VyronLogo";
 
@@ -142,6 +142,7 @@ export default function VyronCostAiShellClient({
   hidePageHeader = false,
   fullWidthMain = false,
   fullHeightWorkspace = false,
+  wide = false,
 }: {
   title: string;
   subtitle?: string;
@@ -157,6 +158,16 @@ export default function VyronCostAiShellClient({
    * invoice preview off the top of the screen.
    */
   fullHeightWorkspace?: boolean;
+  /**
+   * Widen the content clamp from 1440px to 1760px.
+   *
+   * For column-heavy pages — invoice registers, invoice detail — where the
+   * table is the content. At 1440px a 1920px monitor shows dead margin either
+   * side of a table that is scrolling horizontally, which is the opposite of
+   * what the extra screen is for. The top bar keeps the standard clamp so the
+   * shell chrome stays identical across every page.
+   */
+  wide?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -583,7 +594,7 @@ export default function VyronCostAiShellClient({
         >
           <div
             className={`mx-auto min-w-0 w-full max-w-full ${
-              fullWidthMain ? "" : `${VYRON_MAX_WIDTH} ${VYRON_PAGE_PADDING}`
+              fullWidthMain ? "" : `${wide ? VYRON_MAX_WIDTH_WIDE : VYRON_MAX_WIDTH} ${VYRON_PAGE_PADDING}`
             } ${fullHeightWorkspace ? "h-full" : ""}`}
           >
             {!hidePageHeader ? (

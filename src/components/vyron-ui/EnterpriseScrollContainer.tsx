@@ -17,8 +17,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
  * the fold** — the user had to scroll the entire page down before horizontal
  * scrolling became possible, by which point the column headers were long gone.
  *
- * TWO MODES — prefer `fill`
- * -------------------------
+ * THREE MODES
+ * -----------
  * `fill`   Pure CSS. Zero runtime cost. For grids inside a page that is already
  *          a full-height flex column: the layout algorithm computes the
  *          remaining space, so nothing needs measuring. **Use this whenever the
@@ -27,6 +27,20 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
  * `auto`   Measured. For grids in normal content-flow pages, where the page
  *          scrolls and the amount of chrome above the grid is not knowable at
  *          author time.
+ *
+ * `page`   Unconstrained vertically: the grid renders at its natural height and
+ *          the SHELL scrolls, so there is no second vertical scrollbar to get
+ *          trapped in. For transaction registers and invoice line tables, where
+ *          the whole point is to see many rows at once and `auto` gives the grid
+ *          only whatever the page chrome leaves over — on a register with a hero
+ *          banner, KPI tiles and a filter bar that was as little as ~220px, or
+ *          three visible rows. Horizontal overflow is still contained so a wide
+ *          table cannot force the shell sideways.
+ *
+ *          The trade-off is deliberate: a sticky column header needs the grid to
+ *          BE the vertical scrollport, which is precisely what this mode gives
+ *          up. Use it where seeing more rows beats pinning the header, and keep
+ *          `auto`/`fill` where the header matters more than row count.
  *
  * WHY `auto` CANNOT BE PURE CSS
  * -----------------------------
@@ -106,7 +120,7 @@ function subscribe(run: Subscriber): () => void {
 type Props = {
   children: ReactNode;
   /** `fill` is pure CSS and free — prefer it where the page is full-height. */
-  mode?: "auto" | "fill";
+  mode?: "auto" | "fill" | "page";
   /** Space left below the grid in `auto` mode, in px. */
   gutter?: number;
   /** Floor so the grid never collapses on short viewports, in px. */
@@ -160,6 +174,21 @@ export default function EnterpriseScrollContainer({
     if (mode !== "auto") return;
     return subscribe(measure);
   }, [measure, mode]);
+
+  if (mode === "page") {
+    /*
+     * No height constraint at all, so the shell scroller stays the only vertical
+     * scrollbar on the page. `overflow-x-auto` still contains a wide table, and
+     * because the element's height is auto its vertical scrollport never has
+     * anything to scroll — the computed `overflow-y: auto` that the spec forces
+     * alongside `overflow-x: auto` stays inert.
+     */
+    return (
+      <div ref={ref} className={`${ENTERPRISE_GRID_CLASS} w-full overflow-x-auto ${className}`}>
+        {children}
+      </div>
+    );
+  }
 
   if (mode === "fill") {
     // Pure CSS. No measurement, no observer, no listener.

@@ -10,6 +10,7 @@ export default async function SupplierInvoiceDetailPage({
   return (
     <VyronCostAiShell
       hidePageHeader
+      wide
       title="Supplier Invoice"
       subtitle="REVIEW AND AMEND A PROCESSED SUPPLIER INVOICE."
     >
