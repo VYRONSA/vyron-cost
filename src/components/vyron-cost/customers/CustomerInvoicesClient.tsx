@@ -2,7 +2,7 @@
 
 
 import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Mail, Plus, Printer, Save, Trash2 } from "lucide-react";
 import { readActiveClient } from "@/lib/vyron-developer-client";
 import { useInventoryPermissions, useInvoicePermissions } from "@/hooks/useModulePermissions";
@@ -415,6 +415,8 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
   const [finishedGoods, setFinishedGoods] = useState<FinishedGoodOption[]>([]);
   const [formOpen, setFormOpen] = useState(initialFormOpen && canCreate);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const invoicePreviewRef = useRef<HTMLElement | null>(null);
+  const invoiceRegisterRef = useRef<HTMLElement | null>(null);
   const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
   const [productPickerLineId, setProductPickerLineId] = useState<string | null>(null);
 
@@ -766,6 +768,30 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
     if (!selectedInvoiceId || demoMode) return;
     void refreshSelectedInvoice(selectedInvoiceId);
   }, [selectedInvoiceId, demoMode]);
+
+  /** Closing the preview scrolls back to the register the operator came from. */
+  function closeInvoicePreview() {
+    setSelectedInvoiceId(null);
+    invoiceRegisterRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /*
+   * Bring the preview into view when View is clicked.
+   *
+   * The preview renders below the register, and the register is now as tall as
+   * the invoice list rather than a short scroll box, so with 72 invoices the
+   * panel landed ~3,500px below the fold and clicking View looked like nothing
+   * had happened. Scrolling to it is what the click always implied.
+   */
+  useEffect(() => {
+    if (!selectedInvoiceId) return;
+    const node = invoicePreviewRef.current;
+    if (!node) return;
+    const frame = requestAnimationFrame(() => {
+      node.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [selectedInvoiceId]);
 
   async function postInvoiceStock(invoice: CustomerInvoice, allowOverride = false) {
     if (!canApprove) {
@@ -1142,7 +1168,10 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
         </section>
       ) : null}
 
-      <section className="rounded-[24px] border border-white/70 bg-white/90 p-4 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <section
+        ref={invoiceRegisterRef}
+        className="rounded-[24px] border border-white/70 bg-white/90 p-4 shadow-[0_18px_60px_rgba(76,29,149,0.08)]"
+      >
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <h2 className="text-lg font-black text-slate-950">Invoice Register</h2>
           <p className="text-sm font-semibold text-slate-500">Draft, approve, email and mark invoices as paid.</p>
@@ -1214,7 +1243,10 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
       </section>
 
       {selectedInvoice ? (
-        <section className="rounded-[32px] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+        <section
+          ref={invoicePreviewRef}
+          className="rounded-[32px] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]"
+        >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">Invoice Preview</p>
@@ -1312,7 +1344,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                   defaultRecipient={selectedInvoice.customerEmail}
                 />
               )}
-              <button onClick={() => setSelectedInvoiceId(null)} className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white">Close</button>
+              <button onClick={closeInvoicePreview} className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white">Close</button>
             </div>
           </div>
 
