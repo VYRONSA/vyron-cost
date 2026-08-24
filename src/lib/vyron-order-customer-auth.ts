@@ -466,3 +466,104 @@ export async function readCustomerSessionToken(): Promise<string | null> {
     return null;
   }
 }
+
+/* ------------------------------------------------------------ admin access */
+
+export type PortalAccessRow = {
+  customerId: string;
+  customerName: string;
+  hasAccess: boolean;
+  displayName: string | null;
+  status: "Active" | "Suspended" | null;
+  lastLoginAt: string | null;
+  lockedUntil: string | null;
+  /** Resolved against the server clock, so the browser's clock cannot alter it. */
+  locked: boolean;
+  failedAttempts: number;
+};
+
+/**
+ * Every customer in the company, with their portal access state.
+ *
+ * Deliberately selects no credential columns: pin_hash, pin_salt and the
+ * algorithm are never read here, so they cannot reach an API response by
+ * accident. There is no path in this module that returns a PIN or its hash —
+ * a forgotten PIN is replaced, never recovered.
+ */
+export async function listPortalAccess(
+  supabase: SupabaseClient,
+  companyId: string
+): Promise<PortalAccessRow[]> {
+  const { data: customers, error } = await supabase
+    .from("vyron_customers")
+    .select("id, customer_name")
+    .eq("company_id", companyId)
+    .order("customer_name");
+  if (error) throw new Error(error.message);
+
+  const { data: identities } = await supabase
+    .from("vyron_customer_portal_identities")
+    .select("customer_id, display_name, status, last_login_at, locked_until, failed_attempts")
+    .eq("company_id", companyId);
+
+  const byCustomer = new Map((identities || []).map((row) => [String(row.customer_id), row]));
+  const now = Date.now();
+
+  return (customers || []).map((customer) => {
+    const identity = byCustomer.get(String(customer.id));
+    return {
+      customerId: String(customer.id),
+      customerName: String(customer.customer_name || ""),
+      hasAccess: Boolean(identity),
+      displayName: identity ? String(identity.display_name || "") : null,
+      status: identity ? ((identity.status as "Active" | "Suspended") ?? null) : null,
+      lastLoginAt: identity?.last_login_at ? String(identity.last_login_at) : null,
+      lockedUntil: identity?.locked_until ? String(identity.locked_until) : null,
+      locked: Boolean(identity?.locked_until && new Date(String(identity.locked_until)).getTime() > now),
+      failedAttempts: Number(identity?.failed_attempts || 0),
+    };
+  });
+}
+
+/**
+ * Suspend or restore a customer's portal access.
+ *
+ * Suspending also drops their live sessions, so access ends immediately rather
+ * than at the next sign-in. The credential itself is left untouched: restoring
+ * access does not require issuing a new PIN.
+ */
+export async function setPortalAccessStatus(
+  supabase: SupabaseClient,
+  companyId: string,
+  input: { customerId: string; status: "Active" | "Suspended" }
+): Promise<void> {
+  const { data: identity } = await supabase
+    .from("vyron_customer_portal_identities")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("customer_id", input.customerId)
+    .maybeSingle();
+  if (!identity?.id) throw new Error("That customer does not have portal access.");
+
+  const { error } = await supabase
+    .from("vyron_customer_portal_identities")
+    .update({
+      status: input.status,
+      failed_attempts: 0,
+      locked_until: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", identity.id);
+  if (error) throw new Error(error.message);
+
+  if (input.status === "Suspended") {
+    await supabase.from("vyron_customer_portal_sessions").delete().eq("identity_id", identity.id);
+  }
+
+  await recordCustomerAuthEvent(supabase, {
+    companyId,
+    identityId: String(identity.id),
+    customerId: input.customerId,
+    event: input.status === "Suspended" ? "access_suspended" : "access_restored",
+  });
+}

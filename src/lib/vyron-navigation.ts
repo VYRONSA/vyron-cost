@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Boxes,
   Building2,
+  KeyRound,
   ChefHat,
   CheckSquare,
   ClipboardList,
@@ -142,6 +143,7 @@ export const vyronNavSections: VyronNavSection[] = [
       { label: "Customer Invoices", icon: ReceiptText, href: "/customer-invoices" },
       { label: "Customer Price Lists", icon: FileText, href: "/customer-price-lists" },
       { label: "Customer GP Reporting", icon: BarChart3, href: "/customer-gp-reporting" },
+      { label: "Portal Access", icon: KeyRound, href: "/customer-portal-access" },
     ],
   },
 
