@@ -295,7 +295,13 @@ function Catalogue({ onBack }: { onBack: () => void }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  /*
+   * Quantity is always held in UNITS. Box entry multiplies by the verified pack
+   * size on the way in, so the box view and the unit view can never disagree and
+   * the value sent to the server is unambiguous.
+   */
   const [qty, setQty] = useState<Record<string, number>>({});
+  const [mode, setMode] = useState<Record<string, "boxes" | "units">>({});
   const loadedOnce = useRef(false);
 
   const load = useCallback(async () => {
@@ -353,8 +359,8 @@ function Catalogue({ onBack }: { onBack: () => void }) {
     return { lines, units, value };
   }, [qty, data]);
 
-  const setQuantity = (productId: string, next: number) =>
-    setQty((prev) => ({ ...prev, [productId]: Math.max(0, next) }));
+  const setQuantity = (productId: string, nextUnits: number) =>
+    setQty((prev) => ({ ...prev, [productId]: Math.max(0, Math.round(nextUnits)) }));
 
   if (loading) {
     return <div className="mx-auto max-w-3xl px-4 py-10 text-sm font-bold text-slate-500">Loading your products…</div>;
@@ -424,8 +430,10 @@ function Catalogue({ onBack }: { onBack: () => void }) {
                     <ProductRow
                       key={product.productId}
                       product={product}
-                      quantity={qty[product.productId] || 0}
-                      onChange={(next) => setQuantity(product.productId, next)}
+                      units={qty[product.productId] || 0}
+                      mode={mode[product.productId] || (product.unitsPerBox ? "boxes" : "units")}
+                      onModeChange={(m) => setMode((prev) => ({ ...prev, [product.productId]: m }))}
+                      onChange={(nextUnits) => setQuantity(product.productId, nextUnits)}
                     />
                   ))}
                 </div>
@@ -461,14 +469,24 @@ function Catalogue({ onBack }: { onBack: () => void }) {
 
 function ProductRow({
   product,
-  quantity,
+  units,
+  mode,
+  onModeChange,
   onChange,
 }: {
   product: CatalogueProduct;
-  quantity: number;
-  onChange: (next: number) => void;
+  units: number;
+  mode: "boxes" | "units";
+  onModeChange: (mode: "boxes" | "units") => void;
+  onChange: (nextUnits: number) => void;
 }) {
   const unavailable = product.priceUnavailable;
+  const perBox = product.unitsPerBox;
+  const boxMode = mode === "boxes" && Boolean(perBox);
+  const step = boxMode && perBox ? perBox : 1;
+  const shown = boxMode && perBox ? Math.round(units / perBox) : units;
+  const lineTotal = units * product.sellingPrice;
+
   return (
     <div className="px-4 py-4">
       <div className="flex items-start justify-between gap-3">
@@ -476,9 +494,7 @@ function ProductRow({
           <p className="text-base font-black text-slate-950">{product.productName}</p>
           <p className="mt-0.5 text-xs font-semibold text-slate-500">
             {product.sku ? `${product.sku} · ` : ""}
-            {/* Pack size is not configured anywhere in VYRON COST yet, so the
-                portal orders in units rather than inventing a box quantity. */}
-            Priced per unit
+            {perBox ? `Box of ${perBox}` : "Sold per unit"}
           </p>
         </div>
         <div className="shrink-0 text-right">
@@ -486,8 +502,17 @@ function ProductRow({
             <span className="text-xs font-black text-amber-700">Price unavailable</span>
           ) : (
             <>
-              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Per unit</p>
-              <p className="text-lg font-black text-slate-950">{money(product.sellingPrice)}</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
+                {boxMode ? "Per box" : "Per unit"}
+              </p>
+              <p className="text-lg font-black text-slate-950">
+                {money(boxMode && product.pricePerBox !== null ? product.pricePerBox : product.sellingPrice)}
+              </p>
+              {perBox ? (
+                <p className="text-[10px] font-bold text-slate-400">
+                  {boxMode ? `${money(product.sellingPrice)} / unit` : `${money(product.pricePerBox ?? 0)} / box`}
+                </p>
+              ) : null}
             </>
           )}
         </div>
@@ -498,53 +523,84 @@ function ProductRow({
           Pricing is currently unavailable for this product. Please contact us to order it.
         </p>
       ) : (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label={`Decrease ${product.productName}`}
-              onClick={() => onChange(quantity - 1)}
-              disabled={quantity <= 0}
-              className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 disabled:opacity-40"
+        <>
+          {perBox ? (
+            <div
+              role="group"
+              aria-label={`${product.productName} ordering unit`}
+              className="mt-3 inline-flex overflow-hidden rounded-xl border border-slate-200"
             >
-              <Minus size={18} />
-            </button>
-            <input
-              value={quantity}
-              onChange={(e) => onChange(Number(e.target.value.replace(/\D/g, "")) || 0)}
-              inputMode="numeric"
-              aria-label={`${product.productName} quantity`}
-              className="h-12 w-16 rounded-xl border border-slate-200 bg-white text-center text-base font-black text-slate-950 outline-none focus:border-slate-900"
-            />
-            <button
-              type="button"
-              aria-label={`Increase ${product.productName}`}
-              onClick={() => onChange(quantity + 1)}
-              className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700"
-            >
-              <Plus size={18} />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {[2, 5, 10].map((step) => (
-              <button
-                key={step}
-                type="button"
-                onClick={() => onChange(quantity + step)}
-                className="h-11 min-w-[52px] rounded-xl bg-slate-100 px-3 text-sm font-black text-slate-700 transition hover:bg-slate-200"
-              >
-                +{step}
-              </button>
-            ))}
-          </div>
-
-          {quantity > 0 ? (
-            <span className="ml-auto text-base font-black tabular-nums text-slate-950">
-              {money(quantity * product.sellingPrice)}
-            </span>
+              {(["boxes", "units"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={mode === option}
+                  onClick={() => onModeChange(option)}
+                  className={`h-11 min-w-[84px] px-4 text-xs font-black uppercase tracking-[0.1em] transition ${
+                    mode === option ? "bg-slate-950 text-white" : "bg-white text-slate-600"
+                  }`}
+                >
+                  {option === "boxes" ? "Boxes" : "Units"}
+                </button>
+              ))}
+            </div>
           ) : null}
-        </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-label={`Decrease ${product.productName}`}
+                onClick={() => onChange(units - step)}
+                disabled={units <= 0}
+                className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 disabled:opacity-40"
+              >
+                <Minus size={18} />
+              </button>
+              <input
+                value={shown}
+                onChange={(e) => {
+                  const entered = Number(e.target.value.replace(/\D/g, "")) || 0;
+                  onChange(boxMode && perBox ? entered * perBox : entered);
+                }}
+                inputMode="numeric"
+                aria-label={`${product.productName} quantity in ${boxMode ? "boxes" : "units"}`}
+                className="h-12 w-16 rounded-xl border border-slate-200 bg-white text-center text-base font-black text-slate-950 outline-none focus:border-slate-900"
+              />
+              <button
+                type="button"
+                aria-label={`Increase ${product.productName}`}
+                onClick={() => onChange(units + step)}
+                className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {[2, 5, 10].map((bump) => (
+                <button
+                  key={bump}
+                  type="button"
+                  onClick={() => onChange(units + bump * step)}
+                  className="h-11 min-w-[52px] rounded-xl bg-slate-100 px-3 text-sm font-black text-slate-700 transition hover:bg-slate-200"
+                >
+                  +{bump}
+                </button>
+              ))}
+            </div>
+
+            {units > 0 ? (
+              <span className="ml-auto text-base font-black tabular-nums text-slate-950">{money(lineTotal)}</span>
+            ) : null}
+          </div>
+
+          {units > 0 && boxMode && perBox ? (
+            <p className="mt-2 text-xs font-bold text-slate-500">
+              {shown} box{shown === 1 ? "" : "es"} × {perBox} = <span className="text-slate-900">{units} units</span>
+            </p>
+          ) : null}
+        </>
       )}
     </div>
   );

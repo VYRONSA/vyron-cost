@@ -29,13 +29,15 @@ export type CatalogueProduct = {
   /** True when no price could be established; such products cannot be ordered. */
   priceUnavailable: boolean;
   /**
-   * Units per selling box.
+   * Units per selling box, from vyron_cost_product_pack_sizes.
    *
-   * Null for every product today: VYRON COST has no pack-size field, and the
-   * brief is explicit that one must not be invented. The customer portal orders
-   * in units until a real pack configuration exists.
+   * Null means no verified pack size exists, and the product is ordered in
+   * units. That is a valid permanent state — a conversion is never inferred
+   * from a product name or weight.
    */
   unitsPerBox: number | null;
+  /** Price for one box. Null whenever unitsPerBox is null. */
+  pricePerBox: number | null;
 };
 
 export type CatalogueCategory = {
@@ -51,7 +53,7 @@ export type CustomerCatalogue = {
   categories: CatalogueCategory[];
   productCount: number;
   unpricedCount: number;
-  /** Products with no pack configuration — surfaced for admin follow-up. */
+  /** Products with no verified pack size — ordered in units. */
   withoutPackSize: number;
 };
 
@@ -111,6 +113,17 @@ export async function getCustomerCatalogue(
   if (customerError) throw new Error(customerError.message);
   if (!customer) throw new Error("Customer not found in this company.");
 
+  const { data: packRows, error: packError } = await supabase
+    .from("vyron_cost_product_pack_sizes")
+    .select("product_id, units_per_box")
+    .eq("company_id", companyId);
+  if (packError) throw new Error(packError.message);
+  const unitsPerBoxByProduct = new Map<string, number>();
+  for (const row of packRows || []) {
+    const units = Number(row.units_per_box);
+    if (Number.isFinite(units) && units > 0) unitsPerBoxByProduct.set(String(row.product_id), units);
+  }
+
   const { data: productRows, error: productError } = await supabase
     .from("vyron_cost_products")
     .select("id, product_name, category, sku, selling_price, status, product_status")
@@ -165,6 +178,7 @@ export async function getCustomerCatalogue(
 
   const rows: CatalogueProduct[] = products.map((product) => {
     const { price, source } = resolvePrice(product);
+    const unitsPerBox = unitsPerBoxByProduct.get(String(product.id)) ?? null;
     return {
       productId: String(product.id),
       productName: String(product.product_name || "—"),
@@ -173,7 +187,9 @@ export async function getCustomerCatalogue(
       sellingPrice: price,
       priceSource: source,
       priceUnavailable: price <= 0,
-      unitsPerBox: null,
+      unitsPerBox,
+      // The box price is derived from the unit price so the two can never drift.
+      pricePerBox: unitsPerBox && price > 0 ? Math.round(price * unitsPerBox * 100) / 100 : null,
     };
   });
 
