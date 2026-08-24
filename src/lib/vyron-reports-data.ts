@@ -1,6 +1,7 @@
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
 import { getCustomerGpReport, type CustomerGpReport } from "@/lib/vyron-customer-gp-reporting";
+import { getBomCompletenessReport, type BomCompletenessReport } from "@/lib/vyron-bom-completeness";
 
 /**
  * Server data for the Reports centre.
@@ -155,5 +156,31 @@ export async function loadManufacturingBatches(
     return { data: rows, error: null, companyId };
   } catch (err) {
     return { data: [], error: err instanceof Error ? err.message : "Manufacturing report failed.", companyId };
+  }
+}
+
+/* ------------------------------------------------- finished goods BOM */
+
+/**
+ * Finished Goods — BOM Completeness.
+ *
+ * Company resolved from the active workspace exactly like every other report
+ * here, so the analysis can only ever see this tenant's products, BOMs, BOM
+ * lines, ingredients and sales.
+ */
+export async function loadBomCompletenessReport(
+  filters: { from?: string; to?: string } = {}
+): Promise<ReportLoad<BomCompletenessReport | null>> {
+  const { supabase, companyId, error } = await scope();
+  if (!supabase || !companyId) return { data: null, error, companyId };
+  try {
+    const report = await getBomCompletenessReport(supabase, companyId, filters);
+    return { data: report, error: null, companyId };
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "BOM completeness report failed.",
+      companyId,
+    };
   }
 }

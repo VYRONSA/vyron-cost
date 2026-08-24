@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import ReportOptionCard from "@/components/ReportOptionCard";
-import { BarChart3, Boxes, FileSpreadsheet, LineChart, PackageSearch, Percent, ShieldAlert, TrendingUp, Truck, Wallet } from "lucide-react";
+import { BarChart3, Boxes, ClipboardList, FileSpreadsheet, LineChart, PackageSearch, Percent, ShieldAlert, TrendingUp, Truck, Wallet } from "lucide-react";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { VyronPremiumSectionHeading } from "@/components/vyron-premium/VyronPremiumSprint";
 
@@ -25,6 +25,7 @@ const reportCards = [
   { href: "/reports/gp?view=month", title: "Monthly GP Report", description: "Revenue, cost of sales and GP by month for trend and period comparison.", icon: LineChart, badge: "Sales GP" },
   { href: "/reports/product-margins", title: "Product GP (Price Review)", description: "Product cost vs selling price, target GP and price-review status.", icon: Percent, badge: "Costing" },
   { href: "/reports/product-costings", title: "Recipe Cost Report", description: "Full product costing breakdowns and BOM-linked cost lines.", icon: FileSpreadsheet, badge: "Costing" },
+  { href: "/reports/bom-completeness", title: "Finished Goods — BOM Completeness", description: "Finished goods whose BOM is missing, empty, incomplete or cannot produce a cost, prioritised by sales exposure.", icon: ClipboardList, badge: "Costing" },
   { href: "/reports/ingredient-movement", title: "Ingredient Cost Report", description: "Ingredient price movement, yield impact and purchase cost trends.", icon: TrendingUp, badge: "Costing" },
   { href: "/reports/category-usage", title: "Category Usage Report", description: "Master-data category usage across suppliers, products and recipes.", icon: LineChart, badge: "Costing" },
   { href: "/financial-leakage", title: "Recovery Opportunities", description: "Potential recovery, confidence and financial leakage exposure.", icon: Wallet, badge: "Recovery" },
