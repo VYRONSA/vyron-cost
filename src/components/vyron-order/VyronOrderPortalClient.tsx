@@ -1151,8 +1151,11 @@ function Review({
       const body = await res.json();
 
       if (res.status === 409 && body?.reason === "price_changed") {
-        setPriceChanges((body.priceChanges || []) as PriceChange[]);
+        // Refresh first, then announce. The banner tells the customer the
+        // totals below are up to date, so it must not appear until they are —
+        // on a slow connection the gap was long enough to read.
         await cart.refresh();
+        setPriceChanges((body.priceChanges || []) as PriceChange[]);
         return;
       }
       if (!res.ok || !body?.ok) {
