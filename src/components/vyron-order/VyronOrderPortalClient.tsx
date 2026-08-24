@@ -157,7 +157,16 @@ function useServerCart() {
  * The greeting is computed on the server and passed in, so the first paint is
  * identical on both sides and the component needs no clock of its own.
  */
-export default function VyronOrderPortalClient({ greeting }: { greeting: string }) {
+export default function VyronOrderPortalClient({
+  greeting,
+  tenantSlug,
+  tenantName,
+}: {
+  greeting: string;
+  /** The supplier's ordering link this portal was opened through. */
+  tenantSlug: string;
+  tenantName: string;
+}) {
   const [view, setView] = useState<View>("signin");
   const [booting, setBooting] = useState(true);
   const [customer, setCustomer] = useState<SessionCustomer | null>(null);
@@ -261,7 +270,13 @@ export default function VyronOrderPortalClient({ greeting }: { greeting: string 
   }
 
   if (view === "signin" || !customer) {
-    return <SignIn onSignedIn={(c) => { setCustomer(c); setView("home"); }} />;
+    return (
+      <SignIn
+        tenantSlug={tenantSlug}
+        tenantName={tenantName}
+        onSignedIn={(c) => { setCustomer(c); setView("home"); }}
+      />
+    );
   }
 
   return (
@@ -380,21 +395,35 @@ function BackBar({ label, onBack, right }: { label: string; onBack: () => void; 
 
 /* ------------------------------------------------------------------ signin */
 
-function SignIn({ onSignedIn }: { onSignedIn: (c: SessionCustomer) => void }) {
+function SignIn({
+  tenantSlug,
+  tenantName,
+  onSignedIn,
+}: {
+  tenantSlug: string;
+  tenantName: string;
+  onSignedIn: (c: SessionCustomer) => void;
+}) {
   const [customers, setCustomers] = useState<{ customerId: string; displayName: string }[]>([]);
   const [customerId, setCustomerId] = useState("");
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadingAccounts, setLoadingAccounts] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/vyron-order/customers", { cache: "no-store" })
+    fetch(`/api/vyron-order/customers?tenant=${encodeURIComponent(tenantSlug)}`, { cache: "no-store" })
       .then((r) => r.json())
-      .then((body) => { if (!cancelled && body?.ok) setCustomers(body.customers); })
-      .catch(() => { /* the field stays empty and the error shows on submit */ });
+      .then((body) => {
+        if (cancelled) return;
+        if (body?.ok) setCustomers(body.customers);
+        else setError("This ordering link is not working. Please ask your supplier to resend it.");
+      })
+      .catch(() => { /* the field stays empty and the error shows on submit */ })
+      .finally(() => { if (!cancelled) setLoadingAccounts(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [tenantSlug]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -405,7 +434,9 @@ function SignIn({ onSignedIn }: { onSignedIn: (c: SessionCustomer) => void }) {
       const res = await fetch("/api/vyron-order/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId, pin }),
+        // The link is sent so the server can require this account to belong to
+        // this supplier. It never widens what the account can reach.
+        body: JSON.stringify({ customerId, pin, tenant: tenantSlug }),
       });
       const body = await res.json();
       if (!res.ok || !body?.ok) {
@@ -430,6 +461,9 @@ function SignIn({ onSignedIn }: { onSignedIn: (c: SessionCustomer) => void }) {
             VYRON<span className="text-[#60a5fa]">ORDER</span>
           </h1>
           <p className="mt-1 text-sm font-semibold text-white/60">Place your order in under a minute.</p>
+          <p className="mt-3 rounded-full bg-white/10 px-4 py-1.5 text-xs font-black uppercase tracking-[0.1em] text-white/80">
+            {tenantName}
+          </p>
         </div>
 
         <form onSubmit={submit} className="mt-8 space-y-4">
@@ -441,7 +475,13 @@ function SignIn({ onSignedIn }: { onSignedIn: (c: SessionCustomer) => void }) {
               required
               className="mt-1.5 h-14 w-full rounded-2xl border border-white/15 bg-white/5 px-4 text-base font-bold text-white outline-none focus:border-white/40"
             >
-              <option value="" disabled>Select your account…</option>
+              <option value="" disabled>
+                {loadingAccounts
+                  ? "Loading accounts…"
+                  : customers.length === 0
+                    ? "No accounts set up yet"
+                    : "Select your account…"}
+              </option>
               {customers.map((c) => (
                 <option key={c.customerId} value={c.customerId} className="text-slate-900">{c.displayName}</option>
               ))}
@@ -474,6 +514,13 @@ function SignIn({ onSignedIn }: { onSignedIn: (c: SessionCustomer) => void }) {
             {busy ? "Signing in…" : "Sign in"}
           </button>
         </form>
+
+        {!loadingAccounts && customers.length === 0 ? (
+          <p className="mt-4 rounded-xl bg-white/5 px-4 py-3 text-center text-xs font-semibold text-white/60">
+            No accounts have been set up for {tenantName} yet. Please contact them to have your
+            ordering access enabled.
+          </p>
+        ) : null}
 
         <p className="mt-6 text-center text-xs font-semibold text-white/40">
           Forgotten your PIN? Contact us and we&apos;ll reset it for you.

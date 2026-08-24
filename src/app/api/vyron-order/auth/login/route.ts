@@ -4,15 +4,18 @@ import {
   authenticateCustomerPin,
   setCustomerSessionCookie,
 } from "@/lib/vyron-order-customer-auth";
+import { resolvePortalTenant } from "@/lib/vyron-order-tenant";
 
 export const runtime = "nodejs";
 
 /**
  * VYRON ORDER customer sign-in.
  *
- * The body carries only a customer id and a PIN. There is deliberately no
- * company input: the tenant is read from the stored identity, so a caller
- * cannot pair a customer with a company it does not belong to.
+ * The body carries a customer id, a PIN, and optionally the slug of the
+ * ordering link that was used. There is deliberately no company input: the
+ * tenant is still read from the stored identity, so a caller cannot pair a
+ * customer with a company it does not belong to. The slug only ever narrows
+ * that — if it is present, the identity must belong to it as well.
  *
  * Every failure returns the same message and the same 401. Distinguishing
  * "unknown customer" from "wrong PIN" would turn this endpoint into a customer
@@ -28,7 +31,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Ordering is not available." }, { status: 503 });
   }
 
-  let body: { customerId?: unknown; pin?: unknown };
+  let body: { customerId?: unknown; pin?: unknown; tenant?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -41,9 +44,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Enter your customer and PIN." }, { status: 400 });
   }
 
+  /*
+   * If the customer came through an ordering link, resolve it and require the
+   * identity to belong to that tenant. An unknown link fails the sign-in with
+   * the same generic message as a wrong PIN rather than saying the link is bad,
+   * so this path reveals nothing either.
+   */
+  let expectedCompanyId: string | null = null;
+  const slug = String(body.tenant || "").trim();
+  if (slug) {
+    const tenant = await resolvePortalTenant(supabase, slug);
+    if (!tenant) {
+      return NextResponse.json({ ok: false, error: "Incorrect customer or PIN." }, { status: 401 });
+    }
+    expectedCompanyId = tenant.companyId;
+  }
+
   const outcome = await authenticateCustomerPin(supabase, {
     customerId,
     pin,
+    expectedCompanyId,
     userAgent: request.headers.get("user-agent"),
   });
 

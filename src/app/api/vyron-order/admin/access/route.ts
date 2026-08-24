@@ -6,6 +6,7 @@ import {
   setCustomerPortalPin,
   setPortalAccessStatus,
 } from "@/lib/vyron-order-customer-auth";
+import { getPortalTenantForCompany, setPortalTenant } from "@/lib/vyron-order-tenant";
 
 export const runtime = "nodejs";
 
@@ -32,9 +33,38 @@ export async function GET() {
   const context = await scope();
   if (!context) return NextResponse.json({ ok: false, error: "No workspace in context." }, { status: 401 });
   try {
-    return NextResponse.json({ ok: true, access: await listPortalAccess(context.supabase, context.companyId) });
+    const [access, tenant] = await Promise.all([
+      listPortalAccess(context.supabase, context.companyId),
+      getPortalTenantForCompany(context.supabase, context.companyId),
+    ]);
+    // The ordering link is public by design, so returning it here is safe. The
+    // company id it resolves to is not returned.
+    return NextResponse.json({
+      ok: true,
+      access,
+      tenant: tenant ? { slug: tenant.slug, displayName: tenant.displayName, status: tenant.status } : null,
+    });
   } catch {
     return NextResponse.json({ ok: false, error: "We couldn't load portal access." }, { status: 500 });
+  }
+}
+
+/** Create or change this workspace's ordering link. */
+export async function PUT(request: NextRequest) {
+  const context = await scope();
+  if (!context) return NextResponse.json({ ok: false, error: "No workspace in context." }, { status: 401 });
+
+  const body = await request.json().catch(() => null);
+  try {
+    const tenant = await setPortalTenant(context.supabase, context.companyId, {
+      slug: String(body?.slug || ""),
+      displayName: String(body?.displayName || ""),
+      status: body?.status === "Disabled" ? "Disabled" : "Active",
+    });
+    return NextResponse.json({ ok: true, tenant: { slug: tenant.slug, displayName: tenant.displayName } });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "We couldn't save that link.";
+    return NextResponse.json({ ok: false, error: message }, { status: 400 });
   }
 }
 

@@ -230,7 +230,17 @@ export async function listPortalCustomers(supabase: SupabaseClient, companyId: s
  */
 export async function authenticateCustomerPin(
   supabase: SupabaseClient,
-  input: { customerId: string; pin: string; userAgent?: string | null }
+  input: {
+    customerId: string;
+    pin: string;
+    userAgent?: string | null;
+    /**
+     * The tenant whose ordering link was used. When present, the identity must
+     * belong to it. This narrows what a link can do; it never widens it — the
+     * tenant used for the session is still the one on the identity row.
+     */
+    expectedCompanyId?: string | null;
+  }
 ): Promise<CustomerLoginOutcome> {
   const { data: identity, error } = await supabase
     .from("vyron_customer_portal_identities")
@@ -248,13 +258,20 @@ export async function authenticateCustomerPin(
    * a scrypt derivation is still performed on the miss path to keep the timing
    * of "no such customer" close to "wrong PIN".
    */
-  if (!identity || identity.status !== "Active") {
+  /*
+   * A customer id that belongs to another tenant is treated exactly like an
+   * unknown one. Answering differently would let someone with one supplier's
+   * ordering link test customer ids against every other tenant.
+   */
+  const wrongTenant = Boolean(input.expectedCompanyId) && companyId !== input.expectedCompanyId;
+
+  if (!identity || identity.status !== "Active" || wrongTenant) {
     await derivePinHash(input.pin, newPinSalt());
     await recordCustomerAuthEvent(supabase, {
       companyId,
       customerId: input.customerId,
       event: "login_failed",
-      detail: identity ? "identity not active" : "no identity",
+      detail: wrongTenant ? "tenant mismatch" : identity ? "identity not active" : "no identity",
       userAgent: input.userAgent,
     });
     return { ok: false, reason: "invalid" };

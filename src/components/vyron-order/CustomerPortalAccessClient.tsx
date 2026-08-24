@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { KeyRound, Search, ShieldCheck, ShieldOff, Clock, AlertTriangle } from "lucide-react";
+import { KeyRound, Search, ShieldCheck, ShieldOff, Clock, AlertTriangle, Link2, Copy, Check } from "lucide-react";
 import type { PortalAccessRow } from "@/lib/vyron-order-customer-auth";
 
 /**
@@ -14,6 +14,13 @@ import type { PortalAccessRow } from "@/lib/vyron-order-customer-auth";
  */
 
 type Draft = { customerId: string; pin: string; confirm: string };
+type Tenant = { slug: string; displayName: string; status: string } | null;
+
+/** Built from the browser own origin so it is correct in every environment. */
+function orderingUrl(slug: string) {
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  return origin + "/order/" + slug;
+}
 
 function formatWhen(iso: string | null) {
   if (!iso) return "Never";
@@ -30,6 +37,9 @@ export default function CustomerPortalAccessClient() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [tenant, setTenant] = useState<Tenant>(null);
+  const [linkDraft, setLinkDraft] = useState<{ slug: string; displayName: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -41,6 +51,7 @@ export default function CustomerPortalAccessClient() {
         return;
       }
       setRows(body.access as PortalAccessRow[]);
+      setTenant((body.tenant as Tenant) ?? null);
       setError(null);
     } catch {
       setError("We couldn't load portal access.");
@@ -54,7 +65,7 @@ export default function CustomerPortalAccessClient() {
       .then((r) => r.json())
       .then((body) => {
         if (cancelled) return;
-        if (body?.ok) setRows(body.access as PortalAccessRow[]);
+        if (body?.ok) { setRows(body.access as PortalAccessRow[]); setTenant((body.tenant as Tenant) ?? null); }
         else { setError(body?.error || "We couldn't load portal access."); setRows([]); }
       })
       .catch(() => { if (!cancelled) { setError("We couldn't load portal access."); setRows([]); } });
@@ -72,6 +83,35 @@ export default function CustomerPortalAccessClient() {
   }, [rows, search, filter]);
 
   const withAccess = (rows || []).filter((r) => r.hasAccess).length;
+
+  async function saveLink() {
+    if (!linkDraft || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/vyron-order/admin/access", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(linkDraft),
+      });
+      const body = await res.json();
+      if (!res.ok || !body?.ok) { setError(body?.error || "We couldn't save that link."); return; }
+      setNotice("Ordering link saved: " + orderingUrl(body.tenant.slug));
+      setLinkDraft(null);
+      await load();
+    } catch {
+      setError("We couldn't save that link.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function copyLink(slug: string) {
+    navigator.clipboard?.writeText(orderingUrl(slug)).then(
+      () => { setCopied(true); setTimeout(() => setCopied(false), 2000); },
+      () => { /* clipboard unavailable — the link is on screen to copy by hand */ }
+    );
+  }
 
   async function savePin() {
     if (!draft || busy) return;
@@ -133,6 +173,101 @@ export default function CustomerPortalAccessClient() {
           customer forgets theirs, issue a new one.
         </p>
       </header>
+
+      {/*
+        The ordering link comes first because nothing else on this screen works
+        without it: a customer with a PIN but no link has nowhere to sign in.
+      */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+          <Link2 size={14} /> Ordering link
+        </h2>
+        <p className="mt-1 text-xs font-semibold text-slate-500">
+          This is the address customers open to order from you. It identifies you, not them — everyone
+          still signs in with their own PIN.
+        </p>
+
+        {tenant && !linkDraft ? (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <code className="rounded-xl bg-slate-950 px-4 py-3 text-sm font-black text-white">
+              {orderingUrl(tenant.slug)}
+            </code>
+            <button
+              type="button"
+              onClick={() => copyLink(tenant.slug)}
+              className="inline-flex h-12 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-[0.1em] text-slate-700"
+            >
+              {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Copied" : "Copy"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setLinkDraft({ slug: tenant.slug, displayName: tenant.displayName })}
+              className="h-12 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-[0.1em] text-slate-700"
+            >
+              Change
+            </button>
+          </div>
+        ) : null}
+
+        {!tenant && !linkDraft ? (
+          <div className="mt-3">
+            <p className="text-sm font-bold text-amber-800">
+              No ordering link yet — customers cannot reach your portal until you create one.
+            </p>
+            <button
+              type="button"
+              onClick={() => setLinkDraft({ slug: "", displayName: "" })}
+              className="mt-3 h-12 rounded-xl bg-slate-950 px-5 text-xs font-black uppercase tracking-[0.1em] text-white"
+            >
+              Create ordering link
+            </button>
+          </div>
+        ) : null}
+
+        {linkDraft ? (
+          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="block">
+                <span className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-400">Link</span>
+                <input
+                  value={linkDraft.slug}
+                  onChange={(e) => setLinkDraft({ ...linkDraft, slug: e.target.value.toLowerCase() })}
+                  placeholder="your-company"
+                  className="mt-1 h-12 w-56 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-slate-900"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-400">Name customers see</span>
+                <input
+                  value={linkDraft.displayName}
+                  onChange={(e) => setLinkDraft({ ...linkDraft, displayName: e.target.value })}
+                  placeholder="Your Company Name"
+                  className="mt-1 h-12 w-72 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-slate-900"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => void saveLink()}
+                disabled={busy}
+                className="h-12 rounded-xl bg-slate-950 px-5 text-xs font-black uppercase tracking-[0.1em] text-white disabled:opacity-50"
+              >
+                {busy ? "Saving…" : "Save link"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLinkDraft(null)}
+                className="h-12 rounded-xl border border-slate-200 bg-white px-5 text-xs font-black uppercase tracking-[0.1em] text-slate-600"
+              >
+                Cancel
+              </button>
+            </div>
+            <p className="mt-3 text-xs font-semibold text-slate-500">
+              Letters, numbers and hyphens. Changing it stops the old link working, so only change it
+              if you have to.
+            </p>
+          </div>
+        ) : null}
+      </section>
 
       {notice ? (
         <p role="status" className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{notice}</p>
