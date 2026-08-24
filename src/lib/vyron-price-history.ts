@@ -73,8 +73,17 @@ export type BuildPriceHistoryInput = {
   supplierName?: string | null;
   invoiceNumber?: string | null;
   invoiceDate?: string | null;
-  documentId: string;
-  lineItemId: string;
+  /**
+   * The extracted document this price came from, when there is one.
+   *
+   * Both of these are foreign keys into the document-intelligence tables, and
+   * both are nullable in the database. A price observed on an imported supplier
+   * invoice has no extracted document behind it, so it records the source
+   * through supplier_id / invoice_number / invoice_date instead and leaves
+   * these null rather than inventing a document row.
+   */
+  documentId?: string | null;
+  lineItemId?: string | null;
   entityType: "ingredient" | "packaging" | "product";
   entityId: string;
   entityName: string;
@@ -102,8 +111,8 @@ export function buildPriceHistoryRecord(input: BuildPriceHistoryInput) {
     supplier_name: input.supplierName ?? null,
     invoice_number: input.invoiceNumber ?? null,
     invoice_date: input.invoiceDate ?? null,
-    document_id: input.documentId,
-    line_item_id: input.lineItemId,
+    document_id: input.documentId ?? null,
+    line_item_id: input.lineItemId ?? null,
     entity_type: input.entityType,
     entity_id: input.entityId,
     entity_name: input.entityName,
