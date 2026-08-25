@@ -116,7 +116,7 @@ export default function StaffNotificationBell() {
         onClick={() => setOpen((v) => !v)}
         aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
         aria-expanded={open}
-        className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#E2E8F0] bg-white text-[#0F172A] transition hover:bg-slate-50"
+        className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#E2E8F0] bg-white text-[#0F172A] transition hover:bg-[rgba(15,23,42,0.04)]"
       >
         <Bell size={17} />
         {unread > 0 ? (
@@ -128,8 +128,8 @@ export default function StaffNotificationBell() {
 
       {open ? (
         <div className="absolute right-0 z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-xl">
-          <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
-            <span className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Notifications</span>
+          <div className="flex items-center justify-between gap-3 border-b border-[rgba(15,23,42,0.06)] px-4 py-3">
+            <span className="vyron-t-label text-[11px] text-[#64748B]">Notifications</span>
             {unread > 0 ? (
               <button type="button" onClick={() => void markAllRead()} className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-[0.1em] text-[#2563EB]">
                 <Check size={13} /> Mark all read
@@ -140,9 +140,9 @@ export default function StaffNotificationBell() {
           <div className="max-h-[22rem] overflow-y-auto">
             {items.length === 0 ? (
               <div className="px-4 py-8 text-center">
-                <Bell size={22} className="mx-auto text-slate-300" />
-                <p className="mt-2 text-sm font-bold text-slate-700">No notifications yet</p>
-                <p className="mt-1 text-xs font-semibold text-slate-500">New customer orders will appear here.</p>
+                <Bell size={22} className="mx-auto text-[#CBD5E1]" />
+                <p className="mt-2 text-sm font-bold text-[#334155]">No notifications yet</p>
+                <p className="mt-1 text-xs font-semibold text-[#64748B]">New customer orders will appear here.</p>
               </div>
             ) : (
               items.map((item) => (
@@ -150,22 +150,22 @@ export default function StaffNotificationBell() {
                   key={item.id}
                   href={item.orderId ? `/order-centre/${item.orderId}` : "/order-centre"}
                   onClick={() => setOpen(false)}
-                  className={`flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 transition hover:bg-slate-50 ${item.read ? "" : "bg-blue-50/40"}`}
+                  className={`flex items-start justify-between gap-3 border-b border-[rgba(15,23,42,0.06)] px-4 py-3 transition hover:bg-[rgba(79,70,229,0.045)] ${item.read ? "" : "bg-[var(--vyron-brand-wash)]"}`}
                 >
                   <span className="min-w-0">
                     <span className="flex items-center gap-2">
                       {!item.read ? <span className="h-2 w-2 shrink-0 rounded-full bg-[#2563EB]" /> : null}
                       <span className="text-[11px] font-black uppercase tracking-[0.1em] text-[#2563EB]">{item.eventLabel}</span>
                     </span>
-                    <span className="mt-0.5 block truncate text-sm font-black text-slate-950">
+                    <span className="mt-0.5 block truncate text-sm font-black text-[#0F172A]">
                       {item.customerName || "Customer order"}
                     </span>
-                    <span className="mt-0.5 block text-xs font-semibold text-slate-500">
+                    <span className="mt-0.5 block text-xs font-semibold text-[#64748B]">
                       {item.orderNumber}
                       {item.total !== null ? ` · ${money(item.total)}` : ""} · {timeAgo(item.createdAt)}
                     </span>
                   </span>
-                  <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400" />
+                  <ChevronRight size={16} className="mt-1 shrink-0 text-[#94A3B8]" />
                 </Link>
               ))
             )}
@@ -174,7 +174,7 @@ export default function StaffNotificationBell() {
           <Link
             href="/order-centre"
             onClick={() => setOpen(false)}
-            className="block bg-slate-50 px-4 py-3 text-center text-[11px] font-black uppercase tracking-[0.1em] text-slate-700 transition hover:bg-slate-100"
+            className="block bg-[rgba(15,23,42,0.03)] px-4 py-3 text-center vyron-t-label text-[11px] text-[#334155] transition hover:bg-[rgba(79,70,229,0.06)]"
           >
             Open VYRON ORDER CENTRE
           </Link>

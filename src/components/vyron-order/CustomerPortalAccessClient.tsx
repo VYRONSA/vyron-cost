@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { KeyRound, Search, ShieldCheck, ShieldOff, Clock, AlertTriangle, Link2, Copy, Check } from "lucide-react";
+import { KeyRound, Search, ShieldCheck, ShieldOff, Clock, AlertTriangle, Link2, Copy, Check, Users, X } from "lucide-react";
+import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
 import type { PortalAccessRow } from "@/lib/vyron-order-customer-auth";
+
+const M = VYRON_MASTER;
 
 /**
  * Staff-side management of who can sign in to VYRON ORDER.
@@ -82,7 +85,14 @@ export default function CustomerPortalAccessClient() {
     });
   }, [rows, search, filter]);
 
+  /*
+   * Every figure below is counted from the rows the API already returned.
+   * Nothing is derived from a second request and nothing is estimated.
+   */
   const withAccess = (rows || []).filter((r) => r.hasAccess).length;
+  const activeCount = (rows || []).filter((r) => r.hasAccess && r.status === "Active").length;
+  const lockedCount = (rows || []).filter((r) => r.locked).length;
+  const draftRow = draft ? (rows || []).find((r) => r.customerId === draft.customerId) || null : null;
 
   async function saveLink() {
     if (!linkDraft || busy) return;
@@ -159,50 +169,85 @@ export default function CustomerPortalAccessClient() {
   }
 
   return (
-    <div className="space-y-5">
-      <header className="rounded-2xl border border-slate-200 bg-white p-5">
-        <h1 className="text-xl font-black text-slate-950">Customer Portal Access</h1>
-        <p className="mt-1 text-sm font-semibold text-slate-500">
-          {rows === null
-            ? "Loading…"
-            : `${withAccess} of ${rows.length} customer${rows.length === 1 ? "" : "s"} can sign in to VYRON ORDER.`}
-        </p>
-        <p className="mt-3 flex items-start gap-2 rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-600">
-          <KeyRound size={15} className="mt-0.5 shrink-0 text-slate-400" />
-          PINs are stored as a one-way hash. They cannot be displayed or recovered here — if a
-          customer forgets theirs, issue a new one.
-        </p>
+    /* Named so visual QA can measure this screen without the staff shell around it. */
+    <div data-vyron-screen="customer-portal-access" className="space-y-5">
+      {/* The module header VYRON COST uses everywhere else. */}
+      <header className={`${M.moduleHeaderNavy} p-4 lg:p-7`}>
+        <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              {/*
+                The mobile shell already names the page above this panel, so on
+                a phone the header keeps only what the shell does not say.
+              */}
+              <div className="mb-2 hidden items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#BFDBFE] lg:inline-flex">
+                VYRON ORDER
+              </div>
+              {/* Present on every screen so the page can be announced; hidden from sight on phones. */}
+              <h1 className={`sr-only lg:not-sr-only lg:text-4xl lg:tracking-tight ${M.headingOnDark}`}>
+                Customer Portal Access
+              </h1>
+              <p className={`mt-2 hidden max-w-3xl text-sm font-medium leading-6 lg:block ${M.bodyOnDark}`}>
+                Manage which customers can access VYRON ORDER.
+              </p>
+              <p className="flex items-start gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-semibold text-[#CBD5E1] lg:mt-4">
+                <KeyRound size={15} className="mt-0.5 shrink-0 text-[#BFDBFE]" />
+                PINs are stored as a one-way hash. They cannot be displayed or recovered here — if a
+                customer forgets theirs, issue a new one.
+              </p>
+            </div>
+          </div>
+        </div>
       </header>
+
+      {/* Counts over the rows already on screen, not a second source. */}
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {([
+          { key: "customers", label: "Customers", value: rows === null ? null : rows.length, icon: <Users size={14} />, tone: "" },
+          { key: "access", label: "Portal access", value: rows === null ? null : withAccess, icon: <KeyRound size={14} />, tone: "" },
+          { key: "active", label: "Active", value: rows === null ? null : activeCount, icon: <ShieldCheck size={14} />, tone: activeCount > 0 ? "vyron-metric-success" : "" },
+          { key: "locked", label: "Locked", value: rows === null ? null : lockedCount, icon: <AlertTriangle size={14} />, tone: lockedCount > 0 ? "vyron-metric-warning" : "" },
+        ]).map((tile) => (
+          <div key={tile.key} className={M.dashboardWidget}>
+            <span className={`flex items-center gap-1.5 ${M.label}`}>
+              <span className={`${M.iconSubtle} h-6 w-6`}>{tile.icon}</span> {tile.label}
+            </span>
+            <span className={`mt-2 block text-2xl tabular-nums ${tile.tone || "font-black text-[#0F172A]"}`}>
+              {tile.value === null ? "—" : tile.value}
+            </span>
+          </div>
+        ))}
+      </div>
 
       {/*
         The ordering link comes first because nothing else on this screen works
         without it: a customer with a PIN but no link has nowhere to sign in.
       */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+      <section className={`${M.modulePanel} p-5`}>
+        <h2 className={`${M.label} flex items-center gap-2 text-[11px]`}>
           <Link2 size={14} /> Ordering link
         </h2>
-        <p className="mt-1 text-xs font-semibold text-slate-500">
+        <p className="mt-1 text-xs font-semibold text-[#64748B]">
           This is the address customers open to order from you. It identifies you, not them — everyone
           still signs in with their own PIN.
         </p>
 
         {tenant && !linkDraft ? (
           <div className="mt-3 flex flex-wrap items-center gap-3">
-            <code className="rounded-xl bg-slate-950 px-4 py-3 text-sm font-black text-white">
+            <code className="min-w-0 break-all rounded-xl vyron-grad-surface px-4 py-3 text-sm font-black text-white shadow-[var(--vyron-elev-brand)]">
               {orderingUrl(tenant.slug)}
             </code>
             <button
               type="button"
               onClick={() => copyLink(tenant.slug)}
-              className="inline-flex h-12 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-[0.1em] text-slate-700"
+              className={`${M.secondaryBtn} h-12 px-4 text-xs font-bold uppercase tracking-[0.1em]`}
             >
               {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Copied" : "Copy"}
             </button>
             <button
               type="button"
               onClick={() => setLinkDraft({ slug: tenant.slug, displayName: tenant.displayName })}
-              className="h-12 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-[0.1em] text-slate-700"
+              className={`${M.secondaryBtn} h-12 px-4 text-xs font-bold uppercase tracking-[0.1em]`}
             >
               Change
             </button>
@@ -210,14 +255,14 @@ export default function CustomerPortalAccessClient() {
         ) : null}
 
         {!tenant && !linkDraft ? (
-          <div className="mt-3">
-            <p className="text-sm font-bold text-amber-800">
+          <div className={`${M.alertWarning} mt-3 p-4`}>
+            <p className="text-sm font-bold">
               No ordering link yet — customers cannot reach your portal until you create one.
             </p>
             <button
               type="button"
               onClick={() => setLinkDraft({ slug: "", displayName: "" })}
-              className="mt-3 h-12 rounded-xl bg-slate-950 px-5 text-xs font-black uppercase tracking-[0.1em] text-white"
+              className={`${M.primaryBtn} mt-3 h-12 px-5 text-xs uppercase tracking-[0.1em]`}
             >
               Create ordering link
             </button>
@@ -225,43 +270,43 @@ export default function CustomerPortalAccessClient() {
         ) : null}
 
         {linkDraft ? (
-          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className={`mt-3 ${M.modulePanelNested}`}>
             <div className="flex flex-wrap items-end gap-3">
               <label className="block">
-                <span className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-400">Link</span>
+                <span className={M.label}>Link</span>
                 <input
                   value={linkDraft.slug}
                   onChange={(e) => setLinkDraft({ ...linkDraft, slug: e.target.value.toLowerCase() })}
                   placeholder="your-company"
-                  className="mt-1 h-12 w-56 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-slate-900"
+                  className={`${M.input} mt-1 h-12 w-56 py-0 text-base font-bold`}
                 />
               </label>
               <label className="block">
-                <span className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-400">Name customers see</span>
+                <span className={M.label}>Name customers see</span>
                 <input
                   value={linkDraft.displayName}
                   onChange={(e) => setLinkDraft({ ...linkDraft, displayName: e.target.value })}
                   placeholder="Your Company Name"
-                  className="mt-1 h-12 w-72 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-slate-900"
+                  className={`${M.input} mt-1 h-12 w-72 max-w-full py-0 text-base font-bold`}
                 />
               </label>
               <button
                 type="button"
                 onClick={() => void saveLink()}
                 disabled={busy}
-                className="h-12 rounded-xl bg-slate-950 px-5 text-xs font-black uppercase tracking-[0.1em] text-white disabled:opacity-50"
+                className={`${M.primaryBtn} h-12 px-5 text-xs uppercase tracking-[0.1em] disabled:opacity-50`}
               >
                 {busy ? "Saving…" : "Save link"}
               </button>
               <button
                 type="button"
                 onClick={() => setLinkDraft(null)}
-                className="h-12 rounded-xl border border-slate-200 bg-white px-5 text-xs font-black uppercase tracking-[0.1em] text-slate-600"
+                className={`${M.secondaryBtn} h-12 px-5 text-xs font-bold uppercase tracking-[0.1em]`}
               >
                 Cancel
               </button>
             </div>
-            <p className="mt-3 text-xs font-semibold text-slate-500">
+            <p className="mt-3 text-xs font-semibold text-[#64748B]">
               Letters, numbers and hyphens. Changing it stops the old link working, so only change it
               if you have to.
             </p>
@@ -270,33 +315,35 @@ export default function CustomerPortalAccessClient() {
       </section>
 
       {notice ? (
-        <p role="status" className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{notice}</p>
+        <p role="status" className={`${M.alertSuccess} px-4 py-3 text-sm font-bold`}>{notice}</p>
       ) : null}
       {error ? (
-        <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{error}</p>
+        <p role="alert" className={`${M.alertError} px-4 py-3 text-sm font-bold`}>{error}</p>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <label className="flex h-12 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
-          <Search size={16} className="shrink-0 text-slate-400" />
+      <div className={`${M.filterBar} mb-0 flex flex-wrap items-center gap-3`}>
+        <label className="flex h-12 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.10)] bg-white/85 px-3 transition focus-within:border-[#4F46E5] focus-within:ring-4 focus-within:ring-[#4F46E5]/12">
+          <Search size={16} className="shrink-0 text-[#94A3B8]" />
           <span className="sr-only">Search customers</span>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search customers…"
-            className="h-full w-full bg-transparent text-sm font-semibold text-slate-900 outline-none"
+            className={`h-full w-full bg-transparent text-sm font-semibold text-[#0F172A] outline-none ${M.inputPlaceholder}`}
           />
         </label>
-        <div role="group" aria-label="Access filter" className="inline-flex overflow-hidden rounded-xl border border-slate-200">
+        <div role="group" aria-label="Access filter" className="flex flex-wrap gap-2">
           {([["all", "All"], ["with", "Has access"], ["without", "No access"]] as const).map(([value, label]) => (
             <button
               key={value}
               type="button"
               aria-pressed={filter === value}
               onClick={() => setFilter(value)}
-              className={`h-12 px-4 text-xs font-black uppercase tracking-[0.1em] transition ${
-                filter === value ? "bg-slate-950 text-white" : "bg-white text-slate-600"
-              }`}
+              className={
+                filter === value
+                  ? `${M.primaryBtn} h-12 px-4 text-xs uppercase tracking-[0.1em]`
+                  : `${M.secondaryBtn} h-12 px-4 text-xs font-bold uppercase tracking-[0.1em]`
+              }
             >
               {label}
             </button>
@@ -305,131 +352,199 @@ export default function CustomerPortalAccessClient() {
       </div>
 
       {rows === null ? (
-        <p className="text-sm font-semibold text-slate-400">Loading customers…</p>
+        /* A skeleton rather than a word, so the page does not jump when it lands. */
+        <div className="space-y-2">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className={`${M.lightCard} h-[5.5rem] animate-pulse`} />
+          ))}
+        </div>
       ) : visible.length === 0 ? (
-        <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm font-bold text-slate-500">
-          No customers match that filter.
-        </p>
+        <div className={M.moduleEmptyState}>
+          <Users size={26} className="mx-auto text-[#CBD5E1]" />
+          <p className="mt-3 text-base font-black text-[#0F172A]">
+            {rows.length === 0 ? "No customers yet" : "No customers match that filter"}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-[#64748B]">
+            {rows.length === 0
+              ? "Customers added to your register appear here, ready to be given portal access."
+              : "Try a different search, or show all customers."}
+          </p>
+          {rows.length > 0 && (filter !== "all" || search.trim()) ? (
+            <button
+              type="button"
+              onClick={() => { setFilter("all"); setSearch(""); }}
+              className={`${M.primaryBtn} mt-5 h-11 px-6 text-sm`}
+            >
+              Show all customers
+            </button>
+          ) : null}
+        </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="divide-y divide-slate-100">
-            {visible.map((row) => {
-              const locked = row.locked;
-              const editing = draft?.customerId === row.customerId;
-              return (
-                <div key={row.customerId} className="px-4 py-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-black text-slate-950">{row.customerName}</p>
-                      <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-500">
-                        {row.hasAccess ? (
-                          <>
-                            <span className="inline-flex items-center gap-1">
-                              <Clock size={12} /> Last signed in {formatWhen(row.lastLoginAt)}
-                            </span>
-                            {row.failedAttempts > 0 ? (
-                              <span className="text-amber-700">{row.failedAttempts} failed attempt{row.failedAttempts === 1 ? "" : "s"}</span>
-                            ) : null}
-                          </>
-                        ) : (
-                          <span>No portal access</span>
-                        )}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      {row.hasAccess ? (
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] ${
-                            row.status === "Suspended" ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"
-                          }`}
-                        >
-                          {row.status === "Suspended" ? <ShieldOff size={12} /> : <ShieldCheck size={12} />}
-                          {row.status}
-                        </span>
-                      ) : null}
-                      {locked ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-amber-800">
-                          <AlertTriangle size={12} /> Locked
-                        </span>
-                      ) : null}
-
-                      <button
-                        type="button"
-                        onClick={() => { setNotice(null); setError(null); setDraft(editing ? null : { customerId: row.customerId, pin: "", confirm: "" }); }}
-                        className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-[0.1em] text-slate-700 transition hover:bg-slate-50"
-                      >
-                        {row.hasAccess ? "Reset PIN" : "Give access"}
-                      </button>
-
-                      {row.hasAccess ? (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => void setStatus(row.customerId, row.status === "Suspended" ? "Active" : "Suspended")}
-                          className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-[0.1em] text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-                        >
-                          {row.status === "Suspended" ? "Restore" : "Suspend"}
-                        </button>
-                      ) : null}
-                    </div>
+        <div className="space-y-2">
+          {visible.map((row) => {
+            const locked = row.locked;
+            return (
+              <div
+                key={row.customerId}
+                className={`${M.lightCard} flex flex-wrap items-start justify-between gap-3 px-4 py-4`}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-black text-[#0F172A]">{row.customerName}</p>
+                    {/* Access state, then lock state — both from the row, never inferred. */}
+                    {row.hasAccess ? (
+                      <span className={row.status === "Suspended" ? "vyron-status vyron-status-error" : "vyron-status vyron-status-success"}>
+                        {row.status === "Suspended" ? <ShieldOff size={12} /> : <ShieldCheck size={12} />}
+                        {row.status}
+                      </span>
+                    ) : (
+                      <span className="vyron-status vyron-status-neutral">No access</span>
+                    )}
+                    {locked ? (
+                      <span className="vyron-status vyron-status-warning">
+                        <AlertTriangle size={12} /> Locked
+                      </span>
+                    ) : null}
                   </div>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-[#64748B]">
+                    {row.hasAccess ? (
+                      <>
+                        <span className="inline-flex items-center gap-1">
+                          <Clock size={12} /> Last signed in {formatWhen(row.lastLoginAt)}
+                        </span>
+                        {row.failedAttempts > 0 ? (
+                          <span className="text-[#B45309]">
+                            {row.failedAttempts} failed attempt{row.failedAttempts === 1 ? "" : "s"}
+                          </span>
+                        ) : null}
+                      </>
+                    ) : (
+                      <span>Cannot sign in to VYRON ORDER yet</span>
+                    )}
+                  </p>
+                </div>
 
-                  {editing ? (
-                    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">
-                        {row.hasAccess ? `New PIN for ${row.customerName}` : `PIN for ${row.customerName}`}
-                      </p>
-                      <div className="mt-3 flex flex-wrap items-end gap-3">
-                        <label className="block">
-                          <span className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-400">PIN (4–8 digits)</span>
-                          <input
-                            value={draft.pin}
-                            onChange={(e) => setDraft({ ...draft, pin: e.target.value.replace(/\D/g, "").slice(0, 8) })}
-                            type="password"
-                            inputMode="numeric"
-                            autoComplete="off"
-                            className="mt-1 h-12 w-36 rounded-xl border border-slate-200 bg-white px-3 text-center text-lg font-black tracking-[0.3em] text-slate-900 outline-none focus:border-slate-900"
-                          />
-                        </label>
-                        <label className="block">
-                          <span className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-400">Confirm</span>
-                          <input
-                            value={draft.confirm}
-                            onChange={(e) => setDraft({ ...draft, confirm: e.target.value.replace(/\D/g, "").slice(0, 8) })}
-                            type="password"
-                            inputMode="numeric"
-                            autoComplete="off"
-                            className="mt-1 h-12 w-36 rounded-xl border border-slate-200 bg-white px-3 text-center text-lg font-black tracking-[0.3em] text-slate-900 outline-none focus:border-slate-900"
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => void savePin()}
-                          disabled={busy}
-                          className="h-12 rounded-xl bg-slate-950 px-5 text-xs font-black uppercase tracking-[0.1em] text-white disabled:opacity-50"
-                        >
-                          {busy ? "Saving…" : "Save PIN"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDraft(null)}
-                          className="h-12 rounded-xl border border-slate-200 bg-white px-5 text-xs font-black uppercase tracking-[0.1em] text-slate-600"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                      <p className="mt-3 text-xs font-semibold text-slate-500">
-                        Write it down before you save — this screen cannot show it to you again.
-                      </p>
-                    </div>
+                {/* Only the actions this customer's current state allows. */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setNotice(null); setError(null); setDraft({ customerId: row.customerId, pin: "", confirm: "" }); }}
+                    className={
+                      row.hasAccess
+                        ? `${M.secondaryBtn} h-11 px-4 text-xs font-bold uppercase tracking-[0.1em]`
+                        : `${M.primaryBtn} h-11 px-4 text-xs uppercase tracking-[0.1em]`
+                    }
+                  >
+                    {row.hasAccess ? "Reset PIN" : "Give access"}
+                  </button>
+
+                  {row.hasAccess ? (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void setStatus(row.customerId, row.status === "Suspended" ? "Active" : "Suspended")}
+                      className={`${M.secondaryBtn} h-11 px-4 text-xs font-bold uppercase tracking-[0.1em] disabled:opacity-50 ${
+                        row.status === "Suspended" ? "" : "text-[#BE123C] hover:border-[#BE123C]/40"
+                      }`}
+                    >
+                      {row.status === "Suspended" ? "Restore" : "Suspend"}
+                    </button>
                   ) : null}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       )}
+
+      {/*
+        Issuing a PIN is deliberate, so it takes over the screen rather than
+        unfolding inside a row. Nothing about the save changes: the same
+        validation, the same request, and the PIN still never comes back.
+      */}
+      {draft ? (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-[rgba(7,17,31,0.45)] p-0 backdrop-blur-sm sm:items-center sm:p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={draftRow?.hasAccess ? "Reset PIN" : "Give portal access"}
+            className="w-full max-w-lg rounded-t-2xl border border-[rgba(15,23,42,0.07)] bg-white p-5 shadow-[var(--vyron-elev-4)] sm:rounded-2xl sm:p-6"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className={M.label}>{draftRow?.hasAccess ? "Reset PIN" : "Give portal access"}</p>
+                <h2 className="mt-1 truncate vyron-t-display text-lg text-[#0F172A]">
+                  {draftRow?.customerName || "Customer"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDraft(null)}
+                aria-label="Close"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#64748B] transition hover:bg-[rgba(15,23,42,0.05)] hover:text-[#0F172A]"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="mt-3 text-sm font-medium text-[#334155]">
+              Set a 4–8 digit PIN for this customer.
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <label className="block">
+                <span className={M.label}>PIN (4–8 digits)</span>
+                <input
+                  value={draft.pin}
+                  onChange={(e) => setDraft({ ...draft, pin: e.target.value.replace(/\D/g, "").slice(0, 8) })}
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  className={`${M.input} mt-1 h-12 py-0 text-center text-lg font-black tracking-[0.3em]`}
+                />
+              </label>
+              <label className="block">
+                <span className={M.label}>Confirm</span>
+                <input
+                  value={draft.confirm}
+                  onChange={(e) => setDraft({ ...draft, confirm: e.target.value.replace(/\D/g, "").slice(0, 8) })}
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  className={`${M.input} mt-1 h-12 py-0 text-center text-lg font-black tracking-[0.3em]`}
+                />
+              </label>
+            </div>
+
+            {error ? (
+              <p role="alert" className={`${M.alertError} mt-4 px-4 py-3 text-sm font-bold`}>{error}</p>
+            ) : null}
+
+            <p className={`${M.alertWarning} mt-4 flex items-start gap-2 px-4 py-3 text-xs font-semibold`}>
+              <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+              Write it down before you save — this screen cannot show it to you again.
+            </p>
+
+            <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setDraft(null)}
+                className={`${M.secondaryBtn} order-2 h-12 text-xs font-bold uppercase tracking-[0.1em] sm:order-1`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void savePin()}
+                disabled={busy}
+                className={`${M.primaryBtn} order-1 h-12 text-xs uppercase tracking-[0.1em] disabled:opacity-50 sm:order-2`}
+              >
+                {busy ? "Saving…" : "Save PIN"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Clock, Mail, MessageSquare, Bell, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
 import { STAFF_STATUS_TONE } from "@/components/vyron-order/OrderCentreClient";
+
+const M = VYRON_MASTER;
 
 /**
  * Staff order detail.
@@ -42,10 +45,10 @@ const CHANNEL_ICON: Record<string, React.ReactNode> = {
 };
 
 const DELIVERY_TONE: Record<string, string> = {
-  Sent: "bg-emerald-50 text-emerald-700",
-  Failed: "bg-red-50 text-red-700",
-  "Not Configured": "bg-amber-50 text-amber-800",
-  Pending: "bg-slate-100 text-slate-600",
+  Sent: "vyron-status vyron-status-success",
+  Failed: "vyron-status vyron-status-error",
+  "Not Configured": "vyron-status vyron-status-warning",
+  Pending: "vyron-status vyron-status-neutral",
 };
 
 export default function OrderCentreDetailClient({ orderId }: { orderId: string }) {
@@ -111,15 +114,15 @@ export default function OrderCentreDetailClient({ orderId }: { orderId: string }
   if (error && !data) {
     return (
       <div className="space-y-4">
-        <Link href="/order-centre" className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-white pl-3 pr-4 text-xs font-black uppercase tracking-[0.1em] text-slate-700">
+        <Link href="/order-centre" className={`${M.secondaryBtn} inline-flex h-11 items-center gap-1.5 pl-3 pr-4 text-xs font-bold uppercase tracking-[0.1em]`}>
           <ArrowLeft size={15} /> Order Centre
         </Link>
-        <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{error}</p>
+        <p role="alert" className={`${M.alertError} px-4 py-3 text-sm font-bold`}>{error}</p>
       </div>
     );
   }
 
-  if (!data) return <p className="text-sm font-semibold text-slate-400">Loading order…</p>;
+  if (!data) return <p className={M.tableEmptyLight}>Loading order…</p>;
 
   const order = data.order;
   const status = String(order.status || "");
@@ -127,93 +130,93 @@ export default function OrderCentreDetailClient({ orderId }: { orderId: string }
 
   return (
     <div className="space-y-5">
-      <Link href="/order-centre" className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-white pl-3 pr-4 text-xs font-black uppercase tracking-[0.1em] text-slate-700">
+      <Link href="/order-centre" className={`${M.secondaryBtn} inline-flex h-11 items-center gap-1.5 pl-3 pr-4 text-xs font-bold uppercase tracking-[0.1em]`}>
         <ArrowLeft size={15} /> Order Centre
       </Link>
 
       {notice ? (
-        <p role="status" className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+        <p role="status" className={`${M.alertSuccess} flex items-center gap-2 px-4 py-3 text-sm font-bold`}>
           <CheckCircle2 size={16} /> {notice}
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{error}</p>
+        <p role="alert" className={`${M.alertError} px-4 py-3 text-sm font-bold`}>{error}</p>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5">
+          <section className={`${M.modulePanel} p-5`}>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-xl font-black text-slate-950 md:text-2xl">{String(order.order_number || "")}</h1>
-              <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] ${STAFF_STATUS_TONE[status] || "border-slate-200 bg-slate-100 text-slate-700"}`}>
+              <h1 className={`text-xl md:text-2xl ${M.heading}`}>{String(order.order_number || "")}</h1>
+              <span className={STAFF_STATUS_TONE[status] || "vyron-status vyron-status-neutral"}>
                 {status}
               </span>
             </div>
-            <p className="mt-1 text-sm font-bold text-slate-700">{String(order.customer_name || "")}</p>
+            <p className="mt-1 text-sm font-bold text-[#334155]">{String(order.customer_name || "")}</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Placed</p>
-                <p className="mt-0.5 text-sm font-bold text-slate-900">{formatStamp(String(order.created_at || ""))}</p>
+                <p className={M.label}>Placed</p>
+                <p className="mt-0.5 text-sm font-bold text-[#0F172A]">{formatStamp(String(order.created_at || ""))}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Delivery</p>
-                <p className="mt-0.5 text-sm font-bold text-slate-900">{formatDate(order.requested_delivery_date ? String(order.requested_delivery_date) : null)}</p>
+                <p className={M.label}>Delivery</p>
+                <p className="mt-0.5 text-sm font-bold text-[#0F172A]">{formatDate(order.requested_delivery_date ? String(order.requested_delivery_date) : null)}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Total</p>
-                <p className="mt-0.5 text-sm font-black tabular-nums text-slate-950">{money(total)}</p>
+                <p className={M.label}>Total</p>
+                <p className="mt-0.5 text-sm font-black tabular-nums text-[#0F172A]">{money(total)}</p>
               </div>
             </div>
 
             {order.notes ? (
-              <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Customer note</p>
-                <p className="mt-1 whitespace-pre-wrap text-sm font-semibold text-slate-700">{String(order.notes)}</p>
+              <div className={`mt-4 ${M.modulePanelNested}`}>
+                <p className={M.label}>Customer note</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm font-semibold text-[#334155]">{String(order.notes)}</p>
               </div>
             ) : null}
           </section>
 
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <section className={`${M.tableSurface} overflow-hidden`}>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[34rem] border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Product</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Qty</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Price</th>
+                  <tr className={M.tableHead}>
+                    <th className="px-4 py-3">Product</th>
+                    <th className="px-4 py-3 text-right">Qty</th>
+                    <th className="px-4 py-3 text-right">Price</th>
                     {data.maySeeCosting ? (
-                      <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Cost</th>
+                      <th className="px-4 py-3 text-right">Cost</th>
                     ) : null}
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Line</th>
+                    <th className="px-4 py-3 text-right">Line</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody>
                   {data.lines.map((line, i) => (
-                    <tr key={`${String(line.id || i)}`}>
-                      <td className="px-4 py-3 text-sm font-bold text-slate-900">{String(line.description || "")}</td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums text-slate-700">{Number(line.quantity || 0)}</td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums text-slate-700">{money(Number(line.selling_price || 0))}</td>
+                    <tr key={`${String(line.id || i)}`} className={M.tableRow}>
+                      <td className="px-4 py-3 text-sm font-bold text-[#0F172A]">{String(line.description || "")}</td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums text-[#334155]">{Number(line.quantity || 0)}</td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums text-[#334155]">{money(Number(line.selling_price || 0))}</td>
                       {data.maySeeCosting ? (
-                        <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums text-slate-500">{money(Number(line.cost_per_unit || 0))}</td>
+                        <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums text-[#64748B]">{money(Number(line.cost_per_unit || 0))}</td>
                       ) : null}
-                      <td className="px-4 py-3 text-right text-sm font-black tabular-nums text-slate-950">{money(Number(line.line_total || 0))}</td>
+                      <td className="px-4 py-3 text-right text-sm font-black tabular-nums text-[#0F172A]">{money(Number(line.line_total || 0))}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <div className="space-y-1.5 border-t border-slate-200 bg-slate-50 px-4 py-4">
-              <div className="flex justify-between text-sm font-semibold text-slate-600">
+            <div className="space-y-1.5 border-t border-[rgba(15,23,42,0.07)] bg-[rgba(15,23,42,0.03)] px-4 py-4">
+              <div className="flex justify-between text-sm font-semibold text-[#64748B]">
                 <span>Subtotal</span><span className="tabular-nums">{money(Number(order.subtotal || 0))}</span>
               </div>
-              <div className="flex justify-between text-sm font-semibold text-slate-600">
+              <div className="flex justify-between text-sm font-semibold text-[#64748B]">
                 <span>VAT</span><span className="tabular-nums">{money(Number(order.vat_amount || 0))}</span>
               </div>
-              <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-black text-slate-950">
+              <div className="flex justify-between border-t border-[rgba(15,23,42,0.07)] pt-2 text-base font-black text-[#0F172A]">
                 <span>Total</span><span className="tabular-nums">{money(total)}</span>
               </div>
               {data.maySeeCosting ? (
-                <div className="mt-2 flex flex-wrap justify-between gap-2 border-t border-slate-200 pt-2 text-xs font-bold text-slate-500">
+                <div className="mt-2 flex flex-wrap justify-between gap-2 border-t border-[rgba(15,23,42,0.07)] pt-2 text-xs font-bold text-[#64748B]">
                   <span>Cost {money(Number(order.cost_value || 0))}</span>
                   <span>GP {money(Number(order.gross_profit || 0))} ({Number(order.gp_percentage || 0).toFixed(1)}%)</span>
                 </div>
@@ -223,10 +226,10 @@ export default function OrderCentreDetailClient({ orderId }: { orderId: string }
         </div>
 
         <div className="space-y-4">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Actions</h2>
+          <section className={`${M.modulePanel} p-5`}>
+            <h2 className={`${M.label} text-[11px]`}>Actions</h2>
             {data.actions.length === 0 ? (
-              <p className="mt-3 text-sm font-semibold text-slate-500">
+              <p className="mt-3 text-sm font-semibold text-[#64748B]">
                 No further action is available while this order is {status}.
               </p>
             ) : (
@@ -237,10 +240,10 @@ export default function OrderCentreDetailClient({ orderId }: { orderId: string }
                     type="button"
                     disabled={busy}
                     onClick={() => void runAction(a.action, a.label)}
-                    className={`h-12 w-full rounded-xl text-xs font-black uppercase tracking-[0.1em] transition disabled:opacity-50 ${
+                    className={`h-12 w-full text-xs font-bold uppercase tracking-[0.1em] disabled:opacity-50 ${
                       a.action === "cancel"
-                        ? "border border-red-200 bg-white text-red-700 hover:bg-red-50"
-                        : "bg-slate-950 text-white hover:bg-slate-800"
+                        ? "inline-flex items-center justify-center gap-2 rounded-xl border border-[#BE123C]/25 bg-white/80 text-[#BE123C] shadow-[var(--vyron-elev-1)] backdrop-blur transition hover:border-[#BE123C]/40 hover:bg-[rgba(190,18,60,0.06)]"
+                        : M.primaryBtn
                     }`}
                   >
                     {busy ? "Working…" : a.label}
@@ -250,27 +253,27 @@ export default function OrderCentreDetailClient({ orderId }: { orderId: string }
             )}
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Notifications</h2>
+          <section className={`${M.modulePanel} p-5`}>
+            <h2 className={`${M.label} text-[11px]`}>Notifications</h2>
             {data.notifications.length === 0 ? (
-              <p className="mt-3 text-sm font-semibold text-slate-500">No notifications for this order.</p>
+              <p className="mt-3 text-sm font-semibold text-[#64748B]">No notifications for this order.</p>
             ) : (
               <ul className="mt-3 space-y-2">
                 {data.notifications.map((n, i) => (
                   <li key={String(n.id || i)} className="flex items-start justify-between gap-2 text-xs">
                     <span className="min-w-0">
-                      <span className="flex items-center gap-1.5 font-bold text-slate-700">
+                      <span className="flex items-center gap-1.5 font-bold text-[#334155]">
                         {CHANNEL_ICON[String(n.channel)] || null}
                         {String(n.recipient_name || "")}
                       </span>
-                      <span className="mt-0.5 block truncate font-semibold text-slate-400">
+                      <span className="mt-0.5 block truncate font-semibold text-[#94A3B8]">
                         {String(n.channel)} · {formatStamp(String(n.created_at || ""))}
                       </span>
                       {n.error ? (
-                        <span className="mt-0.5 block text-[11px] font-semibold text-amber-700">{String(n.error)}</span>
+                        <span className="mt-0.5 block text-[11px] font-semibold text-[#B45309]">{String(n.error)}</span>
                       ) : null}
                     </span>
-                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] ${DELIVERY_TONE[String(n.status)] || "bg-slate-100 text-slate-600"}`}>
+                    <span className={`shrink-0 ${DELIVERY_TONE[String(n.status)] || "vyron-status vyron-status-neutral"}`}>
                       {String(n.status)}
                     </span>
                   </li>
@@ -279,18 +282,18 @@ export default function OrderCentreDetailClient({ orderId }: { orderId: string }
             )}
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h2 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+          <section className={`${M.modulePanel} p-5`}>
+            <h2 className={`${M.label} flex items-center gap-2 text-[11px]`}>
               <Clock size={13} /> Audit trail
             </h2>
             {data.audit.length === 0 ? (
-              <p className="mt-3 text-sm font-semibold text-slate-500">No events recorded.</p>
+              <p className="mt-3 text-sm font-semibold text-[#64748B]">No events recorded.</p>
             ) : (
               <ul className="mt-3 space-y-2.5">
                 {data.audit.map((a, i) => (
                   <li key={i} className="text-xs">
-                    <p className="font-black text-slate-800">{String(a.event_type || "")}</p>
-                    <p className="mt-0.5 font-semibold text-slate-500">
+                    <p className="font-black text-[#0F172A]">{String(a.event_type || "")}</p>
+                    <p className="mt-0.5 font-semibold text-[#64748B]">
                       {String(a.actor || "system")}
                       {a.to_status ? ` → ${String(a.to_status)}` : ""} · {formatStamp(String(a.created_at || ""))}
                     </p>
@@ -301,8 +304,8 @@ export default function OrderCentreDetailClient({ orderId }: { orderId: string }
           </section>
 
           {!data.maySeeCosting ? (
-            <p className="flex items-start gap-2 rounded-xl bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-500">
-              <AlertTriangle size={14} className="mt-0.5 shrink-0 text-slate-400" />
+            <p className={`${M.modulePanelNested} flex items-start gap-2 px-4 py-3 text-xs font-semibold text-[#64748B]`}>
+              <AlertTriangle size={14} className="mt-0.5 shrink-0 text-[#94A3B8]" />
               Cost and margin are hidden for your permission level.
             </p>
           ) : null}

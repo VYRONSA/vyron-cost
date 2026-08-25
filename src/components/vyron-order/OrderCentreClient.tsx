@@ -6,7 +6,10 @@ import {
   Search, ChevronRight, Inbox, ClipboardCheck, Factory, PackageCheck,
   Receipt, TrendingUp, Bell, RefreshCw,
 } from "lucide-react";
+import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
 import type { OrderCentreSummary, OrderCentreRow } from "@/lib/vyron-order-centre";
+
+const M = VYRON_MASTER;
 
 /**
  * VYRON ORDER CENTRE — the operations view of customer orders.
@@ -37,15 +40,15 @@ function formatTime(iso: string) {
 
 /** Customer-facing wording for a status the engine owns. Presentation only. */
 export const STAFF_STATUS_TONE: Record<string, string> = {
-  Draft: "bg-blue-50 text-blue-700 border-blue-200",
-  "Awaiting Approval": "bg-amber-50 text-amber-800 border-amber-200",
-  Approved: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  Picking: "bg-violet-50 text-violet-700 border-violet-200",
-  Packed: "bg-cyan-50 text-cyan-700 border-cyan-200",
-  Dispatched: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "Partially Invoiced": "bg-emerald-50 text-emerald-700 border-emerald-200",
-  Invoiced: "bg-slate-100 text-slate-700 border-slate-200",
-  Cancelled: "bg-red-50 text-red-700 border-red-200",
+  Draft: "vyron-status vyron-status-info",
+  "Awaiting Approval": "vyron-status vyron-status-warning",
+  Approved: "vyron-status vyron-status-info",
+  Picking: "vyron-status vyron-status-info",
+  Packed: "vyron-status vyron-status-info",
+  Dispatched: "vyron-status vyron-status-success",
+  "Partially Invoiced": "vyron-status vyron-status-success",
+  Invoiced: "vyron-status vyron-status-neutral",
+  Cancelled: "vyron-status vyron-status-error",
 };
 
 const FILTERS = ["All", "New", "In production", "Ready", "Dispatched", "Cancelled"];
@@ -118,67 +121,107 @@ export default function OrderCentreClient() {
 
   return (
     <div className="space-y-5">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-xl font-black text-slate-950 md:text-2xl">VYRON Order Centre</h1>
-          <p className="mt-1 text-sm font-semibold text-slate-500">
-            Customer orders, live from the VYRON COST sales-order engine.
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Link
-            href="/order-centre/notifications"
-            className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-[0.1em] text-slate-700 transition hover:bg-slate-50"
-          >
-            <Bell size={15} /> <span className="hidden sm:inline">Notifications</span>
-          </Link>
-          <button
-            type="button"
-            onClick={() => void load(status, search, offset)}
-            className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-[0.1em] text-slate-700 transition hover:bg-slate-50"
-          >
-            <RefreshCw size={15} /> <span className="hidden sm:inline">Refresh</span>
-          </button>
+      {/* The module header VYRON COST uses everywhere else, with this module's own content. */}
+      <header className={`${M.moduleHeaderNavy} p-4 lg:p-7`}>
+        <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              {/*
+                The mobile shell already names the page above this panel, so on a
+                phone the header keeps only what the shell does not say — the
+                live figures. Repeating the title three times down the screen
+                was noise, not branding.
+              */}
+              <div className="mb-2 hidden items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#BFDBFE] lg:inline-flex">
+                VYRON ORDER
+              </div>
+              {/*
+                The heading stays in the document on every screen — a page
+                without one is a page a screen reader cannot announce. On a
+                phone it is only hidden from sight, because the shell above
+                already shows the same words.
+              */}
+              <h1 className={`sr-only lg:not-sr-only lg:text-4xl lg:tracking-tight ${M.headingOnDark}`}>Order Centre</h1>
+              <p className={`mt-2 hidden max-w-3xl text-sm font-medium leading-6 lg:block ${M.bodyOnDark}`}>
+                Customer orders, live from the VYRON COST sales-order engine.
+              </p>
+              <div className="flex flex-wrap gap-3 text-xs font-semibold lg:mt-4">
+                <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[#CBD5E1]">
+                  Today: <span className="text-white tabular-nums">{money(summary?.todayValue ?? 0)}</span>
+                </span>
+                <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[#CBD5E1]">
+                  Orders today:{" "}
+                  <span className="text-white tabular-nums">{summary?.todayCount ?? 0}</span>
+                </span>
+                <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[#CBD5E1]">
+                  Showing: <span className="text-white tabular-nums">{total}</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <Link
+                href="/order-centre/notifications"
+                className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 text-xs font-bold uppercase tracking-[0.1em] text-white backdrop-blur transition hover:border-white/35 hover:bg-white/20"
+              >
+                <Bell size={15} /> <span className="hidden sm:inline">Notifications</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => void load(status, search, offset)}
+                className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 text-xs font-bold uppercase tracking-[0.1em] text-white backdrop-blur transition hover:border-white/35 hover:bg-white/20"
+              >
+                <RefreshCw size={15} className={loading ? "animate-spin" : ""} />{" "}
+                <span className="hidden sm:inline">Refresh</span>
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
       {/* Tiles are counts over the engine's own table, not a second ledger. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        {tiles.map((tile) => (
-          <button
-            key={tile.key}
-            type="button"
-            onClick={() => setStatus(tile.filter)}
-            className={`rounded-2xl border bg-white p-4 text-left transition hover:border-slate-300 ${
-              status === tile.filter ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200"
-            }`}
-          >
-            <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
-              {tile.icon} {tile.label}
-            </span>
-            <span className="mt-2 block text-2xl font-black tabular-nums text-slate-950">{tile.value}</span>
-          </button>
-        ))}
-        <div className="rounded-2xl border border-slate-900 bg-slate-950 p-4 text-white">
-          <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-white/60">
-            <TrendingUp size={16} /> Today
+        {tiles.map((tile) => {
+          const selected = status === tile.filter;
+          return (
+            <button
+              key={tile.key}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => setStatus(tile.filter)}
+              className={`${M.dashboardWidget} text-left ${
+                selected ? "border-[#1D6BFF]/40 ring-1 ring-[#2563EB]/25" : ""
+              }`}
+            >
+              <span className={`flex items-center gap-1.5 ${M.label}`}>
+                <span className={`${M.iconSubtle} h-6 w-6`}>{tile.icon}</span> {tile.label}
+              </span>
+              <span className={`mt-2 block text-2xl tabular-nums ${selected ? M.accentKpiGradient : "font-black text-[#0F172A]"}`}>
+                {tile.value}
+              </span>
+            </button>
+          );
+        })}
+        <div className={`${M.dashboardWidget} border-[#1D6BFF]/25`}>
+          <span className={`flex items-center gap-1.5 ${M.label}`}>
+            <span className={`${M.iconEmphasis} h-6 w-6`}><TrendingUp size={14} /></span> Today
           </span>
-          <span className="mt-2 block text-2xl font-black tabular-nums">{money(summary?.todayValue ?? 0)}</span>
-          <span className="mt-0.5 block text-[11px] font-bold text-white/50">
+          <span className={`mt-2 block text-2xl tabular-nums ${M.accentKpiGradient}`}>{money(summary?.todayValue ?? 0)}</span>
+          <span className="mt-0.5 block text-[11px] font-semibold text-[#64748B]">
             {summary?.todayCount ?? 0} order{(summary?.todayCount ?? 0) === 1 ? "" : "s"}
           </span>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <label className="flex h-12 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
-          <Search size={16} className="shrink-0 text-slate-400" />
+      <div className={`${M.filterBar} mb-0 flex flex-wrap items-center gap-3`}>
+        <label className="flex h-12 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.10)] bg-white/85 px-3 transition focus-within:border-[#4F46E5] focus-within:ring-4 focus-within:ring-[#4F46E5]/12">
+          <Search size={16} className="shrink-0 text-[#94A3B8]" />
           <span className="sr-only">Search orders</span>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search order number or customer…"
-            className="h-full w-full bg-transparent text-sm font-semibold text-slate-900 outline-none"
+            className={`h-full w-full bg-transparent text-sm font-semibold text-[#0F172A] outline-none ${M.inputPlaceholder}`}
           />
         </label>
         <div className="flex flex-wrap gap-2">
@@ -188,9 +231,11 @@ export default function OrderCentreClient() {
               type="button"
               aria-pressed={status === f}
               onClick={() => setStatus(f)}
-              className={`h-11 rounded-xl px-4 text-xs font-black uppercase tracking-[0.1em] transition ${
-                status === f ? "bg-slate-950 text-white" : "border border-slate-200 bg-white text-slate-600"
-              }`}
+              className={
+                status === f
+                  ? `${M.primaryBtn} h-11 px-4 text-xs uppercase tracking-[0.1em]`
+                  : `${M.secondaryBtn} h-11 px-4 text-xs font-bold uppercase tracking-[0.1em]`
+              }
             >
               {f}
             </button>
@@ -199,16 +244,16 @@ export default function OrderCentreClient() {
       </div>
 
       {error ? (
-        <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{error}</p>
+        <p role="alert" className={`${M.alertError} px-4 py-3 text-sm font-bold`}>{error}</p>
       ) : null}
 
       {loading && rows.length === 0 ? (
-        <p className="text-sm font-semibold text-slate-400">Loading orders…</p>
+        <p className={M.tableEmptyLight}>Loading orders…</p>
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
-          <Inbox size={26} className="mx-auto text-slate-300" />
-          <p className="mt-3 text-base font-black text-slate-900">No orders here yet</p>
-          <p className="mt-1 text-sm font-semibold text-slate-500">
+        <div className={M.moduleEmptyState}>
+          <Inbox size={26} className="mx-auto text-[#CBD5E1]" />
+          <p className="mt-3 text-base font-black text-[#0F172A]">No orders here yet</p>
+          <p className="mt-1 text-sm font-semibold text-[#64748B]">
             Customer orders placed through VYRON ORDER arrive here the moment they are submitted.
           </p>
         </div>
@@ -218,30 +263,30 @@ export default function OrderCentreClient() {
             <Link
               key={row.orderId}
               href={`/order-centre/${row.orderId}`}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 transition hover:border-slate-300 hover:bg-slate-50"
+              className={`${M.lightCard} ${M.lightCardHover} flex flex-wrap items-center justify-between gap-3 px-4 py-4`}
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-black text-slate-950">{row.orderNumber}</span>
-                  <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] ${STAFF_STATUS_TONE[row.status] || "border-slate-200 bg-slate-100 text-slate-700"}`}>
+                  <span className="text-sm font-black text-[#0F172A]">{row.orderNumber}</span>
+                  <span className={STAFF_STATUS_TONE[row.status] || "vyron-status vyron-status-neutral"}>
                     {row.status}
                   </span>
                 </div>
-                <p className="mt-1 truncate text-sm font-bold text-slate-700">{row.customerName}</p>
-                <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                <p className="mt-1 truncate text-sm font-bold text-[#334155]">{row.customerName}</p>
+                <p className="mt-0.5 text-xs font-semibold text-[#64748B]">
                   {row.lineCount} product{row.lineCount === 1 ? "" : "s"} · for {formatDate(row.requestedDeliveryDate)} · {formatTime(row.createdAt)}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-3">
-                <span className="text-base font-black tabular-nums text-slate-950">{money(row.total)}</span>
-                <ChevronRight size={17} className="text-slate-400" />
+                <span className="text-base font-black tabular-nums text-[#0F172A]">{money(row.total)}</span>
+                <ChevronRight size={17} className="text-[#94A3B8]" />
               </div>
             </Link>
           ))}
 
           {total > PAGE ? (
             <div className="flex items-center justify-between gap-3 pt-2">
-              <span className="text-xs font-bold text-slate-500">
+              <span className="text-xs font-bold text-[#64748B] tabular-nums">
                 {offset + 1}–{Math.min(offset + PAGE, total)} of {total}
               </span>
               <div className="flex gap-2">
@@ -249,7 +294,7 @@ export default function OrderCentreClient() {
                   type="button"
                   disabled={offset === 0}
                   onClick={() => { const next = Math.max(0, offset - PAGE); setOffset(next); void load(status, search, next); }}
-                  className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-[0.1em] text-slate-700 disabled:opacity-40"
+                  className={`${M.secondaryBtn} h-11 px-4 text-xs font-bold uppercase tracking-[0.1em] disabled:opacity-40`}
                 >
                   Previous
                 </button>
@@ -257,7 +302,7 @@ export default function OrderCentreClient() {
                   type="button"
                   disabled={offset + PAGE >= total}
                   onClick={() => { const next = offset + PAGE; setOffset(next); void load(status, search, next); }}
-                  className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-[0.1em] text-slate-700 disabled:opacity-40"
+                  className={`${M.secondaryBtn} h-11 px-4 text-xs font-bold uppercase tracking-[0.1em] disabled:opacity-40`}
                 >
                   Next
                 </button>

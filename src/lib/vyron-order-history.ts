@@ -57,6 +57,13 @@ export type CustomerOrderLine = {
 
 export type CustomerOrderDetail = CustomerOrderSummary & {
   notes: string | null;
+  /*
+   * Taken from the order the engine wrote, not derived. line_total is stored
+   * VAT-INCLUSIVE while selling_price is exclusive, so summing lines to find a
+   * subtotal produces the total again and a VAT of zero.
+   */
+  subtotal: number;
+  vatAmount: number;
   lines: CustomerOrderLine[];
 };
 
@@ -108,7 +115,7 @@ export async function getCustomerOrder(
   // Scoped by company AND customer: another customer's order id resolves to null.
   const { data: order } = await supabase
     .from("vyron_customer_sales_orders")
-    .select("id, order_number, created_at, requested_delivery_date, total, status, notes")
+    .select("id, order_number, created_at, requested_delivery_date, subtotal, vat_amount, total, status, notes")
     .eq("company_id", scope.companyId)
     .eq("customer_id", scope.customerId)
     .eq("id", orderId)
@@ -132,6 +139,8 @@ export async function getCustomerOrder(
     customerStatus: customerFacingStatus(String(order.status || "")),
     lineCount: (lineRows || []).length,
     notes: order.notes ? String(order.notes) : null,
+    subtotal: Number(order.subtotal || 0),
+    vatAmount: Number(order.vat_amount || 0),
     // selling_price and line_total only — cost_per_unit is never selected.
     lines: (lineRows || []).map((l) => ({
       productId: l.product_id ? String(l.product_id) : null,
@@ -139,7 +148,7 @@ export async function getCustomerOrder(
       quantity: Number(l.quantity || 0),
       unit: String(l.unit || "each"),
       sellingPrice: Number(l.selling_price || 0),
-      lineTotal: Number(l.line_total || 0),
+      lineTotal: Math.round(Number(l.quantity || 0) * Number(l.selling_price || 0) * 100) / 100,
     })),
   };
 }
