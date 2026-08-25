@@ -37,7 +37,7 @@ function isUuid(value: string | null | undefined): value is string {
   return UUID_RE.test(String(value || "").trim());
 }
 
-function isHandcraftedSandboxWorkspace(client: ActiveClient): boolean {
+export function isHandcraftedSandboxWorkspace(client: ActiveClient): boolean {
   if (HANDCRAFTED_DEMO_WORKSPACE_IDS.has(client.id)) return true;
   if (client.id === HANDCRAFTED_COMPANY_ID) return true;
   return false;

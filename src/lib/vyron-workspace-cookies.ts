@@ -22,6 +22,16 @@ export type CompactActiveClientCookie = {
 
 export type CompactWorkspaceSessionCookie = {
   workspaceId: string;
+  /**
+   * Who the session belongs to.
+   *
+   * The cookie is not httpOnly and is therefore client-writable, so nothing in
+   * it may be trusted for authorisation. It carries identity only: the server
+   * looks the membership up and takes the role and permissions from the
+   * database. Without this field the server cannot tell which member is
+   * calling, which is why permissions previously fell back to role defaults.
+   */
+  userId: string;
   companyId: string | null;
   role: WorkspaceUserRole;
 };
@@ -83,6 +93,7 @@ export function compactWorkspaceSessionForCookie(
 ): CompactWorkspaceSessionCookie {
   return {
     workspaceId,
+    userId: session.userId,
     companyId,
     role: session.role,
   };
@@ -101,7 +112,10 @@ export function expandWorkspaceSessionFromCookie(
   }
 
   return {
-    userId: `workspace-${compact.workspaceId}`,
+    // Falls back to the old synthetic id for cookies issued before userId was
+    // carried; those sessions cannot be resolved against a membership and are
+    // rejected by the server rather than silently trusted.
+    userId: compact.userId || `workspace-${compact.workspaceId}`,
     email: "",
     firstName: "Workspace",
     surname: "User",
