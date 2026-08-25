@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendDocumentEmail } from "@/lib/platform/documents/sendDocumentEmail";
+import {
+  sendProviderEmail, sendProviderSms, sendProviderWhatsApp,
+  emailProviderConfigured, providerStatuses, toE164,
+} from "@/lib/vyron-order-providers";
 
 /**
  * VYRON ORDER — the notification engine.
@@ -82,7 +86,19 @@ export type NotificationRecipient = {
 };
 
 export type DeliveryChannel = "email" | "sms" | "whatsapp" | "in_app";
-export type DeliveryStatus = "Pending" | "Sent" | "Failed" | "Not Configured";
+/**
+ * Provider acceptance is Sent. Delivered is reserved for a provider callback
+ * confirming receipt and is never set by a send path — claiming delivery on
+ * acceptance would be the one dishonest thing this engine could do.
+ */
+export type DeliveryStatus =
+  | "Pending"
+  | "Sending"
+  | "Sent"
+  | "Delivered"
+  | "Failed"
+  | "Not Configured"
+  | "Cancelled";
 
 export type OrderNotificationContext = {
   companyId: string;
@@ -151,7 +167,16 @@ export async function saveNotificationRecipient(
   const name = String(input.name || "").trim();
   if (!name) throw new Error("Enter a name.");
   const email = String(input.email || "").trim() || null;
-  const mobile = String(input.mobile || "").trim() || null;
+  const rawMobile = String(input.mobile || "").trim();
+  /*
+   * Mobiles are stored in E.164. A number that cannot be read confidently is
+   * refused rather than stored half-parsed — sending to a misread number could
+   * reach a stranger.
+   */
+  const mobile = rawMobile ? toE164(rawMobile) : null;
+  if (rawMobile && !mobile) {
+    throw new Error("That mobile number could not be read. Use a format like 082 123 4567 or +27821234567.");
+  }
   if (!email && !mobile) throw new Error("Enter an email address or a mobile number.");
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("That email address does not look right.");
 
@@ -297,7 +322,14 @@ async function recordResult(
 
 /* ----------------------------------------------------------------- channels */
 
-/** Email goes out through the platform transport, never a private one. */
+/**
+ * Email.
+ *
+ * Resend is the provider. Where it is not configured but the older
+ * VYRON_EMAIL_WEBHOOK_URL is, the legacy platform transport is used instead, so
+ * an environment set up before Resend keeps working rather than silently going
+ * quiet. With neither, this reports Not Configured and sends nothing.
+ */
 async function deliverEmail(input: {
   to: string;
   subject: string;
@@ -306,6 +338,15 @@ async function deliverEmail(input: {
   documentId: string;
   documentNumber: string;
 }) {
+  if (emailProviderConfigured()) {
+    return sendProviderEmail({
+      to: input.to,
+      subject: input.subject,
+      html: input.htmlBody,
+      text: input.textBody,
+    });
+  }
+
   const result = await sendDocumentEmail({
     documentType: "vyron-order-notification",
     documentId: input.documentId,
@@ -315,10 +356,13 @@ async function deliverEmail(input: {
     textBody: input.textBody,
     htmlBody: input.htmlBody,
   });
-  // provider "none" means the webhook is unset — that is configuration, not a
-  // delivery failure, and it is reported as such.
   if (result.provider === "none") {
-    return { status: "Not Configured" as DeliveryStatus, provider: "none", reference: null, error: result.error };
+    return {
+      status: "Not Configured" as DeliveryStatus,
+      provider: "none",
+      reference: null,
+      error: "Not configured: RESEND_API_KEY and VYRON_EMAIL_FROM are not set.",
+    };
   }
   return {
     status: (result.status === "sent" ? "Sent" : "Failed") as DeliveryStatus,
@@ -328,29 +372,21 @@ async function deliverEmail(input: {
   };
 }
 
-/**
- * SMS and WhatsApp adapters.
- *
- * There is no provider in this product. These exist so the engine has a shaped
- * seam to plug one into, and they report Not Configured rather than pretending.
- * Nothing here sends anything.
- */
-function deliverSms() {
-  return {
-    status: "Not Configured" as DeliveryStatus,
-    provider: "none",
-    reference: null,
-    error: "No SMS provider is configured for VYRON.",
-  };
+/** SMS through Twilio. Reports Not Configured when credentials are absent. */
+async function deliverSms(input: { to: string; body: string }) {
+  return sendProviderSms(input);
 }
 
-function deliverWhatsApp() {
-  return {
-    status: "Not Configured" as DeliveryStatus,
-    provider: "none",
-    reference: null,
-    error: "No WhatsApp provider is configured for VYRON.",
-  };
+/**
+ * WhatsApp through Twilio's Business API — a real authenticated send, not a
+ * wa.me link, which would only open a chat for a human to type into.
+ */
+async function deliverWhatsApp(input: {
+  to: string;
+  body: string;
+  templateVariables?: Record<string, string>;
+}) {
+  return sendProviderWhatsApp(input);
 }
 
 /* ------------------------------------------------------------- email bodies */
@@ -419,6 +455,39 @@ function buildOrderEmail(event: OrderNotificationEvent, ctx: OrderNotificationCo
   return { subject, textBody, htmlBody };
 }
 
+/**
+ * The short form used for SMS and WhatsApp.
+ *
+ * Kept to the facts an operator needs on a phone screen — who, what, when, how
+ * much, and where to open it. Never cost, GP, margin, BOM or supplier pricing:
+ * these messages travel outside VYRON and cannot be permission-gated once sent.
+ */
+function buildShortMessage(event: OrderNotificationEvent, ctx: OrderNotificationContext, viewUrl: string) {
+  return [
+    `${EVENT_LABELS[event].toUpperCase()} — VYRON ORDER`,
+    ctx.tenantName || "",
+    `Order: ${ctx.orderNumber}`,
+    `Customer: ${ctx.customerName}`,
+    `Delivery: ${formatDate(ctx.requestedDeliveryDate)}`,
+    `Items: ${ctx.itemCount}`,
+    `Total: ${money(ctx.total)}`,
+    `View order: ${viewUrl}`,
+  ].filter(Boolean).join("\n");
+}
+
+/** Ordered variables for an approved WhatsApp template, when one is configured. */
+function templateVariables(ctx: OrderNotificationContext, viewUrl: string): Record<string, string> {
+  return {
+    "1": ctx.tenantName || "VYRON ORDER",
+    "2": ctx.orderNumber,
+    "3": ctx.customerName,
+    "4": formatDate(ctx.requestedDeliveryDate),
+    "5": String(ctx.itemCount),
+    "6": money(ctx.total),
+    "7": viewUrl,
+  };
+}
+
 /* ------------------------------------------------------------ the generator */
 
 export type NotificationOutcome = {
@@ -483,6 +552,7 @@ export async function notifyOrderEvent(
       .filter((r) => r.status === "Active" && roleReceives(r.role, event));
 
     const email = buildOrderEmail(event, ctx, viewUrl);
+    const shortMessage = buildShortMessage(event, ctx, viewUrl);
 
     for (const recipient of recipients) {
       const channels: DeliveryChannel[] = [];
@@ -518,8 +588,12 @@ export async function notifyOrderEvent(
                 documentNumber: ctx.orderNumber,
               })
             : channel === "sms"
-              ? deliverSms()
-              : deliverWhatsApp();
+              ? await deliverSms({ to: recipient.mobile as string, body: shortMessage })
+              : await deliverWhatsApp({
+                  to: recipient.mobile as string,
+                  body: shortMessage,
+                  templateVariables: templateVariables(ctx, viewUrl),
+                });
 
         await recordResult(supabase, claim.id, result);
         tally(result.status);
@@ -587,9 +661,16 @@ export async function sendTestNotification(
       documentNumber: "TEST",
     });
   } else if (input.channel === "sms") {
-    result = deliverSms();
+    result = await deliverSms({
+      to: target,
+      body: "VYRON ORDER: this is a test notification. No order was created.",
+    });
   } else if (input.channel === "whatsapp") {
-    result = deliverWhatsApp();
+    result = await deliverWhatsApp({
+      to: target,
+      body: "VYRON ORDER: this is a test notification. No order was created.",
+      templateVariables: { "1": "VYRON ORDER", "2": "TEST", "3": "Test notification", "4": "-", "5": "0", "6": "-", "7": input.baseUrl || "" },
+    });
   } else {
     result = { status: "Sent", provider: "in_app", reference: null, error: null };
   }
@@ -708,13 +789,38 @@ export async function listDeliveryLog(
   return data || [];
 }
 
-/** Whether an email provider is configured, for honest status on the settings screen. */
-export function emailProviderStatus(): { configured: boolean; detail: string } {
-  const configured = Boolean(String(process.env.VYRON_EMAIL_WEBHOOK_URL || "").trim());
+/**
+ * What each channel can actually do, plus when it last genuinely succeeded.
+ *
+ * The last-success timestamp comes from the delivery log — a real Sent row —
+ * so the settings screen cannot show a provider as working on the strength of
+ * configuration alone.
+ */
+export async function getProviderStatus(supabase: SupabaseClient, companyId: string) {
+  const statuses = providerStatuses();
+  const channels: DeliveryChannel[] = ["in_app", "email", "sms", "whatsapp"];
+  const lastSuccess: Record<string, string | null> = {};
+
+  for (const channel of channels) {
+    const { data } = await supabase
+      .from("vyron_order_notification_deliveries")
+      .select("updated_at")
+      .eq("company_id", companyId)
+      .eq("channel", channel)
+      .eq("status", "Sent")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    lastSuccess[channel] = data?.updated_at ? String(data.updated_at) : null;
+  }
+
   return {
-    configured,
-    detail: configured
-      ? "Email is configured and notifications will be sent."
-      : "VYRON_EMAIL_WEBHOOK_URL is not set, so email notifications will be recorded as Not Configured.",
+    inApp: { ...statuses.inApp, lastSuccessAt: lastSuccess.in_app },
+    email: { ...statuses.email, lastSuccessAt: lastSuccess.email },
+    sms: { ...statuses.sms, lastSuccessAt: lastSuccess.sms },
+    whatsapp: { ...statuses.whatsapp, lastSuccessAt: lastSuccess.whatsapp },
   };
 }
+
+/** Re-exported so callers do not need to reach into the provider module. */
+export { toE164 };

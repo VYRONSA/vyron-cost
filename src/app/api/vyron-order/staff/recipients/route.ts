@@ -5,7 +5,7 @@ import {
   saveNotificationRecipient,
   deleteNotificationRecipient,
   sendTestNotification,
-  emailProviderStatus,
+  getProviderStatus,
   type RecipientRole,
   type DeliveryChannel,
 } from "@/lib/vyron-order-notifications";
@@ -19,16 +19,13 @@ export async function GET() {
   const guard = await requireStaffScope("sales_orders.view");
   if (!guard.ok) return guard.response;
   try {
-    return NextResponse.json({
-      ok: true,
-      recipients: await listNotificationRecipients(guard.supabase, guard.companyId),
-      providers: {
-        email: emailProviderStatus(),
-        sms: { configured: false, detail: "No SMS provider is configured for VYRON." },
-        whatsapp: { configured: false, detail: "No WhatsApp provider is configured for VYRON." },
-        inApp: { configured: true, detail: "In-app notifications always work and need no provider." },
-      },
-    });
+    const [recipients, providers] = await Promise.all([
+      listNotificationRecipients(guard.supabase, guard.companyId),
+      // Reports what each channel can actually do, and when it last really
+      // succeeded — never "operational" on the strength of config alone.
+      getProviderStatus(guard.supabase, guard.companyId),
+    ]);
+    return NextResponse.json({ ok: true, recipients, providers });
   } catch {
     return staffError("We couldn't load recipients.", 500);
   }

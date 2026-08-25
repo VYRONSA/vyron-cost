@@ -14,7 +14,25 @@ import type { NotificationRecipient, RecipientRole, DeliveryChannel } from "@/li
  * unless the provider confirmed it.
  */
 
-type Providers = Record<string, { configured: boolean; detail: string }>;
+type ProviderCard = {
+  configured: boolean;
+  provider: string | null;
+  missing: string[];
+  detail: string;
+  lastSuccessAt: string | null;
+};
+type Providers = Record<string, ProviderCard>;
+
+/** Last genuine success, from the delivery log — not from configuration. */
+function lastSuccessLabel(iso: string | null) {
+  if (!iso) return "No successful delivery yet";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "No successful delivery yet";
+  const sameDay = d.toDateString() === new Date().toDateString();
+  return sameDay
+    ? `Last successful delivery: ${d.toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}`
+    : `Last successful delivery: ${d.toLocaleDateString("en-ZA", { day: "numeric", month: "short" })}`;
+}
 
 const ROLES: { value: RecipientRole; label: string; hears: string }[] = [
   { value: "Commercial", label: "Commercial", hears: "New orders, approvals, cancellations" },
@@ -158,7 +176,17 @@ export default function OrderNotificationSettingsClient() {
                 {on ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
                 {on ? "Operational" : "Not configured"}
               </p>
-              <p className="mt-1 text-[11px] font-semibold text-slate-500">{p?.detail || ""}</p>
+              {on && p?.provider ? (
+                <p className="mt-0.5 text-xs font-bold text-slate-600">{p.provider}</p>
+              ) : null}
+              <p className="mt-1.5 text-[11px] font-semibold text-slate-500">{p?.detail || ""}</p>
+              {on ? (
+                <p className="mt-1.5 text-[11px] font-semibold text-slate-400">{lastSuccessLabel(p?.lastSuccessAt ?? null)}</p>
+              ) : p?.missing?.length ? (
+                <p className="mt-1.5 text-[11px] font-bold text-amber-800">
+                  Missing: {p.missing.join(", ")}
+                </p>
+              ) : null}
             </div>
           );
         })}
@@ -222,12 +250,18 @@ export default function OrderNotificationSettingsClient() {
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  {r.emailEnabled && r.email ? (
-                    <button type="button" disabled={busy} onClick={() => void sendTest(r, "email")}
+                  {/* A test per channel the recipient actually has, so each one
+                      can be proven independently. */}
+                  {([
+                    ["email", "Email", Boolean(r.emailEnabled && r.email)],
+                    ["sms", "SMS", Boolean(r.smsEnabled && r.mobile)],
+                    ["whatsapp", "WhatsApp", Boolean(r.whatsappEnabled && r.mobile)],
+                  ] as const).filter(([, , show]) => show).map(([channel, label]) => (
+                    <button key={channel} type="button" disabled={busy} onClick={() => void sendTest(r, channel)}
                       className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-black uppercase tracking-[0.1em] text-slate-700 disabled:opacity-50">
-                      <Send size={14} /> Test
+                      <Send size={14} /> {label}
                     </button>
-                  ) : null}
+                  ))}
                   <button type="button" onClick={() => setDraft({
                     id: r.id, name: r.name, role: r.role, email: r.email || "", mobile: r.mobile || "",
                     emailEnabled: r.emailEnabled, smsEnabled: r.smsEnabled, whatsappEnabled: r.whatsappEnabled, status: r.status,
