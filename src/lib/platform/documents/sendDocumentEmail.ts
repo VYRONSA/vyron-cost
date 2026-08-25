@@ -8,8 +8,14 @@ export type SendDocumentEmailInput = {
   subject: string;
   textBody: string;
   htmlBody: string;
-  pdfFileName: string;
-  pdfBytes: Uint8Array;
+  /*
+   * Optional. Every document email carries a PDF, but VYRON ORDER notifications
+   * are body-only — there is no document to attach when telling someone an
+   * order has arrived. Made optional rather than forked into a second
+   * transport, so all VYRON email continues to leave through one place.
+   */
+  pdfFileName?: string;
+  pdfBytes?: Uint8Array;
 };
 
 export type SendDocumentEmailResult = {
@@ -46,13 +52,16 @@ export async function sendDocumentEmail(input: SendDocumentEmailInput): Promise<
     subject: input.subject,
     text: input.textBody,
     html: input.htmlBody,
-    attachments: [
-      {
-        filename: input.pdfFileName,
-        mimeType: "application/pdf",
-        contentBase64: toBase64(input.pdfBytes),
-      },
-    ],
+    attachments:
+      input.pdfBytes && input.pdfFileName
+        ? [
+            {
+              filename: input.pdfFileName,
+              mimeType: "application/pdf",
+              contentBase64: toBase64(input.pdfBytes),
+            },
+          ]
+        : [],
   };
 
   try {

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronDown, ChevronRight, LogOut, Minus, Plus, Search, ShoppingBag, Star,
-  History, RefreshCw, CalendarDays, CheckCircle2, AlertTriangle, Trash2, ArrowLeft,
+  History, RefreshCw, CalendarDays, CheckCircle2, AlertTriangle, Trash2, ArrowLeft, Check,
 } from "lucide-react";
 import { VyronLogoMark } from "@/components/vyron-ui/VyronLogo";
 import type { CustomerCatalogue, CatalogueProduct } from "@/lib/vyron-order-catalogue";
@@ -532,6 +532,19 @@ function SignIn({
 
 /* -------------------------------------------------------------------- home */
 
+/**
+ * The customer home.
+ *
+ * Structured so the screen answers "what now?" before it offers a menu: a short
+ * greeting, one unmistakable primary action, then whatever is genuinely useful
+ * — an order in progress, an order on its way, the products this customer
+ * actually reorders. Every one of those sections is omitted entirely when there
+ * is no data behind it, rather than rendered empty to fill space.
+ *
+ * On a phone it is a single column of native-feeling controls. From lg it
+ * becomes a real two-column portal: actions and usuals on the left, live order
+ * state on the right — not a stretched phone.
+ */
 function Home({
   greeting: greetingText,
   customer,
@@ -573,112 +586,231 @@ function Home({
   }, []);
 
   const recent = (orders || []).slice(0, 3);
+  /** The most recent order that is still moving — what the customer wants to see. */
+  const active = (orders || []).find((o) => !["Completed", "Cancelled"].includes(o.customerStatus)) || null;
+  const hasCart = Boolean(cart && cart.itemCount > 0);
+
+  /*
+   * One contextual line under the greeting, and only where it is true. No
+   * invented encouragement: if there is nothing to say, nothing is said.
+   */
+  const contextLine = hasCart
+    ? "You have an order in progress."
+    : active
+      ? `Your last order is ${active.customerStatus.toLowerCase()}.`
+      : usuals.length > 0
+        ? "Your usual products are ready when you are."
+        : orders === null
+          ? ""
+          : "Ready to place your next order?";
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 pb-16 pt-6">
-      <h1 className="text-2xl font-black text-slate-950">
-        {greetingText}, {customer.customerName}
-      </h1>
-      <p className="mt-1 text-sm font-semibold text-slate-500">What would you like to order?</p>
+    <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-6 lg:px-6">
+      <header className="lg:max-w-2xl">
+        <p className="text-2xl font-black tracking-[-0.01em] text-slate-950">{greetingText} 👋</p>
+        <p className="mt-1 text-sm font-semibold text-slate-500">{customer.customerName}</p>
+        {contextLine ? (
+          <p className="mt-3 text-base font-bold text-slate-700">{contextLine}</p>
+        ) : null}
+      </header>
 
-      {cart && cart.itemCount > 0 ? (
-        <button
-          type="button"
-          onClick={onResumeCart}
-          className="mt-5 flex w-full items-center justify-between gap-3 rounded-2xl border border-[#2563eb]/30 bg-[#2563eb]/5 px-5 py-4 text-left"
-        >
-          <span className="min-w-0">
-            <span className="block text-[11px] font-black uppercase tracking-[0.12em] text-[#2563eb]">
-              Order in progress
+      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-6">
+        {/* ------------------------------------------------ actions + usuals */}
+        {/* min-w-0: a grid item will not shrink below its min-content width
+            without it, which pushed the whole column past a 390px screen. */}
+        <div className="min-w-0 space-y-4">
+          <button
+            type="button"
+            onClick={onNewOrder}
+            className="group flex min-h-[92px] w-full items-center justify-between gap-4 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 px-6 text-left text-white shadow-lg shadow-slate-900/15 transition hover:shadow-xl hover:shadow-slate-900/25"
+          >
+            <span>
+              <span className="flex items-center gap-2.5 text-lg font-black tracking-[-0.01em]">
+                <Plus size={22} strokeWidth={2.5} /> New order
+              </span>
+              <span className="mt-0.5 block text-xs font-semibold text-white/60">
+                Browse the full range and build your order
+              </span>
             </span>
-            <span className="block text-sm font-bold text-slate-700">
-              {cart.itemCount} item{cart.itemCount === 1 ? "" : "s"} · {money(cart.total)}
-            </span>
-          </span>
-          <span className="inline-flex shrink-0 items-center gap-1 text-xs font-black uppercase tracking-[0.1em] text-[#2563eb]">
-            Continue <ChevronRight size={15} />
-          </span>
-        </button>
-      ) : null}
+            <ChevronRight size={22} className="shrink-0 text-white/40 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
+          </button>
 
-      <button
-        type="button"
-        onClick={onNewOrder}
-        className="mt-4 flex min-h-[88px] w-full items-center justify-center gap-3 rounded-3xl bg-slate-950 px-6 text-base font-black uppercase tracking-[0.12em] text-white transition hover:bg-slate-800"
-      >
-        <ShoppingBag size={22} />
-        New Order
-      </button>
-
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <HomeTile icon={<RefreshCw size={18} />} label="Reorder" note="From past orders" onClick={onHistory} />
-        <HomeTile
-          icon={<Star size={18} />}
-          label="Favourites"
-          note={favouriteCount ? `${favouriteCount} saved` : "None saved yet"}
-          onClick={onFavourites}
-          disabled={favouriteCount === 0}
-        />
-      </div>
-
-      {usuals.length > 0 ? (
-        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
-          <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Your usuals</h2>
-          <p className="mt-1 text-xs font-semibold text-slate-400">
-            Based on what you have ordered before. Tap to add your usual quantity.
-          </p>
-          <div className="mt-3 space-y-2">
-            {usuals.map((usual) => (
-              <div key={usual.productId} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-black text-slate-900">{usual.productName}</p>
-                  <p className="text-xs font-semibold text-slate-500">
-                    Usually {usual.typicalUnits} units · ordered {usual.timesOrdered}×
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => { onQuickAdd(usual.productId, usual.typicalUnits); setAdded((p) => ({ ...p, [usual.productId]: true })); }}
-                  className="h-11 shrink-0 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-[0.1em] text-white"
-                >
-                  {added[usual.productId] ? "Added" : "Add"}
-                </button>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <HomeTile
+              icon={<RefreshCw size={18} />}
+              label="Reorder"
+              note={recent.length ? "Your recent orders" : "No past orders"}
+              onClick={onHistory}
+              disabled={recent.length === 0}
+            />
+            <HomeTile
+              icon={<Star size={18} />}
+              label="Favourites"
+              note={favouriteCount ? `${favouriteCount} saved` : "None saved yet"}
+              onClick={onFavourites}
+              disabled={favouriteCount === 0}
+            />
+            <HomeTile
+              icon={<History size={18} />}
+              label="My orders"
+              note={orders === null ? "Loading…" : `${orders.length} order${orders.length === 1 ? "" : "s"}`}
+              onClick={onHistory}
+              disabled={orders !== null && orders.length === 0}
+            />
           </div>
-        </section>
-      ) : null}
 
-      <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-            <History size={14} /> My Orders
-          </h2>
-          {recent.length > 0 ? (
-            <button type="button" onClick={onHistory} className="text-xs font-black uppercase tracking-[0.1em] text-[#2563eb]">
-              See all
-            </button>
+          {usuals.length > 0 ? (
+            <section className="rounded-3xl border border-slate-200 bg-white p-5">
+              <h2 className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Your usuals</h2>
+              <p className="mt-1 text-xs font-semibold text-slate-400">
+                From what you have ordered before. Tap to add your usual quantity.
+              </p>
+              <div className="mt-3 space-y-2">
+                {usuals.map((usual) => (
+                  <div key={usual.productId} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-slate-900">{usual.productName}</p>
+                      <p className="text-xs font-semibold text-slate-500">
+                        Usually {usual.typicalUnits} units · ordered {usual.timesOrdered}×
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { onQuickAdd(usual.productId, usual.typicalUnits); setAdded((p) => ({ ...p, [usual.productId]: true })); }}
+                      className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl px-4 text-xs font-black uppercase tracking-[0.1em] transition ${
+                        added[usual.productId] ? "bg-emerald-600 text-white" : "bg-slate-950 text-white hover:bg-slate-800"
+                      }`}
+                    >
+                      {added[usual.productId] ? <><Check size={14} /> Added</> : <><Plus size={14} /> Add</>}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
           ) : null}
         </div>
 
-        {orders === null ? (
-          <p className="mt-3 text-sm font-semibold text-slate-400">Loading your orders…</p>
-        ) : recent.length === 0 ? (
-          <>
-            <p className="mt-3 text-sm font-bold text-slate-800">No orders yet</p>
-            <p className="mt-1 text-sm font-semibold text-slate-500">
-              Your orders will appear here once you have placed your first one.
-            </p>
-          </>
-        ) : (
-          <div className="mt-3 space-y-2">
-            {recent.map((order) => (
-              <OrderRow key={order.orderId} order={order} onClick={() => onOpenOrder(order.orderId)} />
-            ))}
-          </div>
-        )}
-      </section>
+        {/* ------------------------------------------------ live order state */}
+        <div className="min-w-0 space-y-4">
+          {hasCart && cart ? (
+            <button
+              type="button"
+              onClick={onResumeCart}
+              className="w-full rounded-3xl border border-[#2563eb]/30 bg-[#2563eb]/[0.06] p-5 text-left transition hover:bg-[#2563eb]/[0.1]"
+            >
+              <span className="flex items-center justify-between gap-3">
+                <span className="text-[11px] font-black uppercase tracking-[0.12em] text-[#2563eb]">
+                  Order in progress
+                </span>
+                <ChevronRight size={17} className="shrink-0 text-[#2563eb]" />
+              </span>
+              <span className="mt-2 block text-2xl font-black tabular-nums text-slate-950">{money(cart.total)}</span>
+              <span className="mt-0.5 block text-sm font-semibold text-slate-500">
+                {cart.itemCount} item{cart.itemCount === 1 ? "" : "s"} · not yet submitted
+              </span>
+              <span className="mt-3 block h-11 rounded-xl bg-[#2563eb] pt-3 text-center text-xs font-black uppercase tracking-[0.1em] text-white">
+                Continue order
+              </span>
+            </button>
+          ) : null}
+
+          {active ? (
+            <button
+              type="button"
+              onClick={() => onOpenOrder(active.orderId)}
+              className="w-full rounded-3xl border border-slate-200 bg-white p-5 text-left transition hover:border-slate-300"
+            >
+              <span className="flex items-center justify-between gap-3">
+                <span className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
+                  Order {active.orderNumber}
+                </span>
+                <ChevronRight size={17} className="shrink-0 text-slate-400" />
+              </span>
+              <span className="mt-2 block text-2xl font-black tabular-nums text-slate-950">{money(active.total)}</span>
+              <span className="mt-0.5 block text-sm font-semibold text-slate-500">
+                {active.requestedDeliveryDate ? `For ${formatDate(active.requestedDeliveryDate)}` : "Delivery date to be confirmed"}
+              </span>
+              <span className="mt-4 block">
+                <OrderProgress status={active.customerStatus} />
+              </span>
+            </button>
+          ) : null}
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-5">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                <History size={14} /> Recent orders
+              </h2>
+              {recent.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={onHistory}
+                  className="-mr-2 inline-flex h-11 items-center px-2 text-xs font-black uppercase tracking-[0.1em] text-[#2563eb]"
+                >
+                  See all
+                </button>
+              ) : null}
+            </div>
+
+            {orders === null ? (
+              <p className="mt-3 text-sm font-semibold text-slate-400">Loading your orders…</p>
+            ) : recent.length === 0 ? (
+              <>
+                <p className="mt-3 text-sm font-bold text-slate-800">No orders yet</p>
+                <p className="mt-1 text-sm font-semibold text-slate-500">
+                  Your orders will appear here once you have placed your first one.
+                </p>
+              </>
+            ) : (
+              <div className="mt-3 space-y-2">
+                {recent.map((order) => (
+                  <OrderRow key={order.orderId} order={order} onClick={() => onOpenOrder(order.orderId)} />
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
     </div>
+  );
+}
+
+/**
+ * Where an order has got to, in the customer's language.
+ *
+ * The steps are a presentation of the engine's own statuses — there is no
+ * second status field anywhere. Cancelled is deliberately not a step on the
+ * line: it is an exit from it, so it renders as its own state.
+ */
+const PROGRESS_STEPS = ["Received", "Confirmed", "Being prepared", "Ready", "On the way"] as const;
+
+function OrderProgress({ status }: { status: string }) {
+  if (status === "Cancelled") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.1em] text-red-700">
+        Cancelled
+      </span>
+    );
+  }
+  // Delivered and Completed sit past the end of the line: every step is done.
+  const index = PROGRESS_STEPS.indexOf(status as (typeof PROGRESS_STEPS)[number]);
+  const reached = index === -1 ? PROGRESS_STEPS.length - 1 : index;
+
+  return (
+    <span className="block">
+      <span className="flex items-center gap-1.5">
+        {PROGRESS_STEPS.map((step, i) => (
+          <span
+            key={step}
+            className={`h-1.5 flex-1 rounded-full transition ${i <= reached ? "bg-[#2563eb]" : "bg-slate-200"}`}
+          />
+        ))}
+      </span>
+      <span className="mt-2 flex items-center gap-2">
+        <span className={`h-2 w-2 rounded-full ${status === "Completed" || status === "Delivered" ? "bg-emerald-500" : "bg-[#2563eb]"}`} />
+        <span className="text-xs font-black uppercase tracking-[0.1em] text-slate-700">{status}</span>
+      </span>
+    </span>
   );
 }
 

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCustomerCatalogue, type CatalogueProduct } from "@/lib/vyron-order-catalogue";
 import { saveCustomerSalesOrder, calculateSalesOrderTotals } from "@/lib/vyron-customer-sales-orders";
+import { notifyOrderEvent } from "@/lib/vyron-order-notifications";
 
 /**
  * VYRON ORDER — the customer cart and order submission.
@@ -288,6 +289,8 @@ export async function submitCart(
   input: {
     idempotencyKey: string;
     acknowledgedPrices: { productId: string; sellingPrice: number }[];
+    /** Origin used to build the staff "View order" link in notifications. */
+    baseUrl?: string;
   }
 ): Promise<SubmitOutcome> {
   const key = String(input.idempotencyKey || "").trim();
@@ -411,6 +414,28 @@ export async function submitCart(
       .eq("idempotency_key", key);
 
     await clearCart(supabase, scope);
+
+    /*
+     * The order is committed at this point. Notifications are generated after
+     * it, never before and never as a condition of it, so a dead email provider
+     * costs a delivery record and not a customer's order. notifyOrderEvent
+     * swallows its own failures for the same reason.
+     */
+    await notifyOrderEvent(
+      supabase,
+      "new_order",
+      {
+        companyId: scope.companyId,
+        salesOrderId: String(order.id),
+        orderNumber: String(order.order_number),
+        customerName: scope.customerName,
+        total: Number(order.total || 0),
+        itemCount: cart.lines.length,
+        requestedDeliveryDate: order.requested_delivery_date ? String(order.requested_delivery_date) : dateCheck.date,
+        notes: cart.notes,
+      },
+      { baseUrl: input.baseUrl }
+    );
 
     return {
       ok: true,

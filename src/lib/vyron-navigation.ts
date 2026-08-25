@@ -3,6 +3,8 @@ import {
   Boxes,
   Building2,
   KeyRound,
+  Bell,
+  Inbox,
   ChefHat,
   CheckSquare,
   ClipboardList,
@@ -144,6 +146,8 @@ export const vyronNavSections: VyronNavSection[] = [
       { label: "Customer Price Lists", icon: FileText, href: "/customer-price-lists" },
       { label: "Customer GP Reporting", icon: BarChart3, href: "/customer-gp-reporting" },
       { label: "Portal Access", icon: KeyRound, href: "/customer-portal-access" },
+      { label: "Order Centre", icon: Inbox, href: "/order-centre" },
+      { label: "Order Notifications", icon: Bell, href: "/order-centre/notifications" },
     ],
   },
 

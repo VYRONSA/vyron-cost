@@ -38,6 +38,9 @@ export async function POST(request: NextRequest) {
   const outcome = await submitCart(guard.supabase, guard.scope, {
     idempotencyKey: String(body.idempotencyKey || ""),
     acknowledgedPrices: acknowledged,
+    // Origin of this request, so the staff "View order" link in notifications is
+    // correct in every environment without hardcoding a production host.
+    baseUrl: request.nextUrl.origin,
   });
 
   if (!outcome.ok) {

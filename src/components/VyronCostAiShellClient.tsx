@@ -39,6 +39,7 @@ import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { VYRON_MAX_WIDTH, VYRON_MAX_WIDTH_WIDE, VYRON_PAGE_PADDING } from "@/components/vyron-ui/constants";
 import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
 import { VyronLogoLockup } from "@/components/vyron-ui/VyronLogo";
+import StaffNotificationBell from "@/components/vyron-order/StaffNotificationBell";
 
 const M = VYRON_MASTER;
 
@@ -565,6 +566,9 @@ export default function VyronCostAiShellClient({
                     </div>
                   </div>
                 ) : null}
+                {/* Always-on channel: an order arriving is visible here even
+                    with every external provider offline. */}
+                <StaffNotificationBell />
                 <Link href="/dashboard" className={`${M.primaryBtn} h-10 shrink-0 px-4 text-sm`}>
                   <Home size={17} />
                   <span className="hidden sm:inline">Command Centre</span>

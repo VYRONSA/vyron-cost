@@ -2,7 +2,6 @@
 
 import {
   ArrowLeft,
-  Bell,
   Building2,
   ChevronDown,
   LogOut,
@@ -45,6 +44,7 @@ import { canAccessRoute } from "@/lib/vyron-package-manager";
 import { isNavItemActive, vyronNavSections } from "@/lib/vyron-navigation";
 import { canAccessPath } from "@/lib/vyron-workspace-permissions";
 import { readWorkspaceSession, type WorkspaceSession } from "@/lib/vyron-workspace-session";
+import StaffNotificationBell from "@/components/vyron-order/StaffNotificationBell";
 
 type SheetKind = "workspace" | "create" | "more" | null;
 
@@ -518,11 +518,7 @@ export default function VyronMobileShell({
           subtitle={subtitle}
           workspaceLabel={workspaceSubtitle}
           workspaceControl={<WorkspaceSwitcherButton client={activeClient} onOpen={() => setSheet("workspace")} />}
-          notificationControl={
-            <PremiumMobileButton variant="secondary" size="icon" href="/alerts">
-              <Bell size={18} />
-            </PremiumMobileButton>
-          }
+          notificationControl={<StaffNotificationBell />}
           profileControl={
             <PremiumMobileButton variant="secondary" size="icon" href="/settings">
               <UserRound size={18} />
