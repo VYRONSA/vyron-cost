@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="VYRON ORDER">
+  <defs>
+    <linearGradient id="vo-ground" x1="0" y1="0" x2="0.75" y2="1">
+      <stop offset="0%" stop-color="#1D6BFF" />
+      <stop offset="30%" stop-color="#4F46E5" />
+      <stop offset="68%" stop-color="#6D28D9" />
+      <stop offset="100%" stop-color="#7E22CE" />
+    </linearGradient>
+    <linearGradient id="vo-chrome" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="45%" stop-color="#EAF0FF" />
+      <stop offset="100%" stop-color="#C3CEE6" />
+    </linearGradient>
+    <linearGradient id="vo-chrome-dark" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#D7DFF3" />
+      <stop offset="100%" stop-color="#98A6C4" />
+    </linearGradient>
+    <linearGradient id="vo-blue" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0%" stop-color="#BFE4FF" />
+      <stop offset="40%" stop-color="#7FD8FF" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+    <linearGradient id="vo-blue-dark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#67C6F5" />
+      <stop offset="100%" stop-color="#1E8FD6" />
+    </linearGradient>
+    <linearGradient id="vo-ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.15" />
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.15" />
+    </linearGradient>
+  </defs>
+
+  <!--
+    The same VYRON mark as VYRON COST, on the ordering gradient rather than the
+    deep navy. A customer with both installed can tell them apart at a glance
+    without either stopping being VYRON.
+  -->
+  <rect width="512" height="512" rx="112" fill="url(#vo-ground)" />
+
+  <g transform="translate(256 256) scale(8) translate(-32 -32)">
+    <circle cx="32" cy="31" r="20.5" fill="none" stroke="url(#vo-ring)" stroke-width="1.4" />
+    <path d="M11 14 L24.5 17.2 L32 53.5 Z" fill="url(#vo-chrome)" />
+    <path d="M24.5 17.2 L32 53.5 L27.4 30.5 Z" fill="url(#vo-chrome-dark)" opacity="0.9" />
+    <path d="M53 10 L39.5 19 L32 53.5 Z" fill="url(#vo-blue)" />
+    <path d="M39.5 19 L32 53.5 L36.4 31 Z" fill="url(#vo-blue-dark)" opacity="0.85" />
+    <path d="M53 10 L50.4 12.4 L33.4 52 L32 53.5 Z" fill="#F2FBFF" opacity="0.8" />
+  </g>
+</svg>

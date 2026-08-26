@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, LogOut, UserRound, History, ShoppingBag } from "lucide-react";
+import { ChevronDown, LogOut, UserRound, History, ShoppingBag, Download } from "lucide-react";
 import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
 import { VyronLogoLockup, VyronLogoMark } from "@/components/vyron-ui/VyronLogo";
+import VyronOrderInstall, { useCanInstall } from "@/components/vyron-order/VyronOrderInstall";
 
 const M = VYRON_MASTER;
 
@@ -41,7 +42,10 @@ export default function VyronOrderShell({
   children: React.ReactNode;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [installOpen, setInstallOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  /* Hidden once it is already running as an installed app. */
+  const canInstall = useCanInstall();
 
   useEffect(() => {
     function onClickOutside(event: MouseEvent) {
@@ -121,6 +125,15 @@ export default function VyronOrderShell({
                         <History size={16} className="text-[#64748B]" /> My orders
                       </button>
                     ) : null}
+                    {canInstall ? (
+                      <button
+                        type="button"
+                        onClick={() => { setMenuOpen(false); setInstallOpen(true); }}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-[#334155] transition hover:bg-[rgba(15,23,42,0.04)]"
+                      >
+                        <Download size={16} className="text-[#64748B]" /> Install app
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => { setMenuOpen(false); onSignOut(); }}
@@ -137,6 +150,8 @@ export default function VyronOrderShell({
       </header>
 
       <div className={`mx-auto w-full ${ORDER_CONTENT_WIDTH} px-4 pb-20 pt-6 md:px-8 md:pt-8`}>{children}</div>
+
+      <VyronOrderInstall open={installOpen} onClose={() => setInstallOpen(false)} />
     </main>
   );
 }
