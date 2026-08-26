@@ -270,13 +270,21 @@ export default function VyronCostAiShellClient({
           writeActiveClient(data.activeClientSummary);
           if (data.hasSessionCookie && data.sessionRole) {
             const summary = data.activeClientSummary;
+            /*
+             * The permissions come from the server, which read them from the
+             * membership. Hydrating with {} rewrote the session on every page
+             * load with nothing but role defaults, so a member whose
+             * permissions were granted individually — invoices.create on a
+             * PROCUREMENT role, say — lost them the moment the shell mounted
+             * and simply never saw the button.
+             */
             const hydratedSession: WorkspaceSession = {
               userId: summary.ownerUserId || `workspace-${summary.id}`,
               email: data.sessionEmail || summary.ownerEmail || summary.companyName,
               firstName: summary.companyName.split(" ")[0] || "Workspace",
               surname: "Owner",
               role: data.sessionRole,
-              permissions: {},
+              permissions: data.sessionPermissions || {},
             };
             writeWorkspaceSession(hydratedSession);
           }

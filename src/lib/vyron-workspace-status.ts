@@ -19,6 +19,16 @@ export type WorkspaceStatusReport = {
   xeroWorkspaceReady: boolean;
   localStorageHint: string | null;
   sessionRole: WorkspaceUserRole | null;
+  /**
+   * The permissions the server resolved for this member.
+   *
+   * getServerWorkspaceSession reads them from vyron_workspace_memberships, so
+   * these are the same permissions the API enforces. The browser needs them to
+   * decide what to offer; without them it can only guess from the role, and a
+   * member with a permission granted specifically to them was shown a screen
+   * with the action missing.
+   */
+  sessionPermissions: Record<string, boolean> | null;
   sessionEmail: string | null;
   activeClientSummary: Pick<
     ActiveClient,
@@ -77,6 +87,7 @@ export async function buildWorkspaceStatusReport(): Promise<WorkspaceStatusRepor
     impersonating: Boolean(client?.impersonating),
     xeroWorkspaceReady: Boolean(client?.id && companyId),
     sessionRole: session?.role || null,
+    sessionPermissions: session?.permissions || null,
     sessionEmail: session?.email || client?.ownerEmail || null,
     localStorageHint: client
       ? "Server workspace cookie is active."
