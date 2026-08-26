@@ -30,6 +30,11 @@ import {
   type FeatureKey,
   type PackageId,
 } from "@/platform";
+import {
+  MULTI_STORE_COMMERCIALS,
+  formatRand,
+  multiStorePriceExamples,
+} from "@/platform/managers/package-manager";
 
 const M = VYRON_MASTER;
 
@@ -491,7 +496,8 @@ export default function VyronPublicLandingPage() {
             Premium intelligence for serious operators
           </h2>
           <p className={`mx-auto mt-4 max-w-2xl text-sm leading-7 sm:text-base ${M.muted}`}>
-            Editable package placeholders — scale from costing foundation to enterprise multi-company control.
+            Scale from costing foundation to multi-location control — every package on the same intelligence
+            layer.
           </p>
         </div>
 
@@ -510,16 +516,31 @@ export default function VyronPublicLandingPage() {
                 </div>
 
                 <div className={`mt-5 text-xs font-bold uppercase tracking-[0.14em] ${M.sectionLabel}`}>{plan.tag}</div>
-                <h3 className={`mt-1 text-2xl sm:text-3xl ${M.heading}`}>{plan.label}</h3>
+                {/* Reserved for two lines so every card's price sits on one line across the row. */}
+                <h3 className={`mt-1 text-2xl sm:text-3xl lg:min-h-[4.5rem] ${M.heading}`}>{plan.label}</h3>
 
-                <div className="mt-4 flex items-end gap-1">
+                <div className="mt-4 flex flex-wrap items-end gap-x-1">
                   <div className={`text-4xl tracking-[-0.04em] sm:text-5xl ${M.accentKpiGradient}`}>{plan.price}</div>
                   {plan.price !== "Custom" ? (
                     <div className={`pb-1 text-sm font-semibold ${M.muted}`}>/month</div>
                   ) : null}
                 </div>
 
-                <p className={`mt-4 min-h-[4.5rem] text-sm leading-6 ${M.muted}`}>{plan.description}</p>
+                {/*
+                  What the price includes reads with the price; the per-location
+                  term sits under it, present but quieter, so the headline figure
+                  stays the thing you see first.
+                */}
+                <div className="mt-2 min-h-[2.75rem]">
+                  {plan.priceIncludes ? (
+                    <p className="text-sm font-bold text-[#0F172A]">{plan.priceIncludes}</p>
+                  ) : null}
+                  {plan.priceFootnote ? (
+                    <p className={`mt-0.5 text-xs font-semibold ${M.muted}`}>{plan.priceFootnote}</p>
+                  ) : null}
+                </div>
+
+                <p className={`mt-3 min-h-[4.5rem] text-sm leading-6 ${M.muted}`}>{plan.description}</p>
 
                 <div className="mt-5 flex-1 space-y-2.5">
                   {plan.highlights.map((highlight) => (
@@ -541,6 +562,64 @@ export default function VyronPublicLandingPage() {
               </LightCard>
             );
           })}
+        </div>
+
+        {/*
+          The location model and what it costs to get started. Deliberately
+          below the cards and at body weight — it explains the price, it does
+          not compete with it.
+        */}
+        <div className={`mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]`}>
+          <LightCard className="p-6">
+            <div className={`text-xs font-bold uppercase tracking-[0.14em] ${M.sectionLabel}`}>
+              How multi-store pricing works
+            </div>
+            <p className={`mt-2 text-sm leading-6 ${M.body}`}>
+              {MULTI_STORE_COMMERCIALS.description} Multi-Store Operations includes{" "}
+              <span className="font-bold text-[#0F172A]">
+                up to {MULTI_STORE_COMMERCIALS.includedLocations} locations
+              </span>{" "}
+              at {formatRand(MULTI_STORE_COMMERCIALS.monthlyPrice)} a month. Beyond that, each additional
+              location is {formatRand(MULTI_STORE_COMMERCIALS.additionalLocationPrice)} a month.
+            </p>
+
+            <div className="mt-5 overflow-x-auto">
+              <table className="w-full min-w-[18rem] border-collapse text-left">
+                <thead>
+                  <tr className={M.tableHead}>
+                    <th className="rounded-l-lg px-3 py-2">Locations</th>
+                    <th className="rounded-r-lg px-3 py-2 text-right">Monthly</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {multiStorePriceExamples().map((row) => (
+                    <tr key={row.locations} className="border-b border-[rgba(15,23,42,0.06)] last:border-0">
+                      <td className={`px-3 py-2.5 text-sm font-semibold ${M.body}`}>{row.locationsLabel}</td>
+                      <td className="px-3 py-2.5 text-right text-sm font-black tabular-nums text-[#0F172A]">
+                        {row.monthlyLabel}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </LightCard>
+
+          <LightCard className="p-6">
+            <div className={`text-xs font-bold uppercase tracking-[0.14em] ${M.sectionLabel}`}>
+              Implementation &amp; onboarding
+            </div>
+            <p className={`mt-2 text-sm leading-6 ${M.body}`}>
+              A once-off implementation gets your costing, suppliers and locations loaded and your team
+              trained.
+            </p>
+            <div className={`mt-4 text-2xl ${M.heading}`}>
+              From {formatRand(MULTI_STORE_COMMERCIALS.implementationFrom)}
+            </div>
+            <p className={`mt-3 text-sm leading-6 ${M.muted}`}>
+              Complex enterprise or multi-company deployments are quoted on scope.
+            </p>
+          </LightCard>
         </div>
       </section>
 

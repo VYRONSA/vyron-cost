@@ -33,6 +33,11 @@ import {
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { bootstrapWorkspaceSession, writeWorkspaceSession } from "@/lib/vyron-workspace-session";
 import { isProtectedCompany, protectedReason } from "@/lib/vyron-protected-tenants";
+import {
+  MULTI_STORE_COMMERCIALS,
+  formatRand,
+  multiStorePriceExamples,
+} from "@/platform/managers/package-manager";
 
 type ClientStatus = "Active" | "Setup" | "Demo" | "Suspended" | "Archived";
 type XeroStatus = "Connected" | "Not Connected" | "Setup Required";
@@ -312,6 +317,127 @@ function xeroClass(status: XeroStatus) {
   if (status === "Connected") return "rounded-full bg-[#A855F7]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]";
   if (status === "Setup Required") return "rounded-full bg-[var(--vyron-warning-bg)] px-3 py-1 text-xs font-black text-[var(--vyron-warning-fg)]";
   return "rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700";
+}
+
+
+/**
+ * The approved commercial model for Multi-Store Operations.
+ *
+ * Read from the same definition the pricing page uses, so what a developer or
+ * a salesperson reads here is what a customer is quoted.
+ *
+ * The split between live and roadmap is the point of this panel. Every
+ * capability on the left has a working route, an API and its tables in this
+ * application today. Everything on the right is part of the Multi-Store vision
+ * and is not production functionality yet — it must not be sold as though it
+ * were, and it is deliberately kept off the public pricing page.
+ */
+function MultiStoreCommercialReference() {
+  return (
+    <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-2xl font-black text-slate-900">Multi-Store Operations — commercial model</h2>
+          <p className="mt-1 max-w-3xl text-sm font-semibold text-slate-500">
+            {MULTI_STORE_COMMERCIALS.positioning}
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full bg-violet-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-violet-700">
+          Approved pricing
+        </span>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        {[
+          ["Monthly price", formatRand(MULTI_STORE_COMMERCIALS.monthlyPrice)],
+          ["Included locations", String(MULTI_STORE_COMMERCIALS.includedLocations)],
+          ["Additional location", `${formatRand(MULTI_STORE_COMMERCIALS.additionalLocationPrice)}/mo`],
+          ["Implementation", `From ${formatRand(MULTI_STORE_COMMERCIALS.implementationFrom)}`],
+          ["Enterprise implementation", "Custom quote"],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">{label}</div>
+            <div className="mt-1.5 text-lg font-black text-slate-900">{value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="rounded-2xl border border-slate-100 p-4">
+          <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+            Worked examples
+          </div>
+          <div className="mt-3 space-y-1.5">
+            {multiStorePriceExamples().map((row) => (
+              <div key={row.locations} className="flex items-center justify-between gap-3 text-sm">
+                <span className="font-semibold text-slate-600">{row.locationsLabel} locations</span>
+                <span className="font-black tabular-nums text-slate-900">{row.monthlyLabel}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100 p-4">
+          <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+            Target customers
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {MULTI_STORE_COMMERCIALS.targetCustomers.map((customer) => (
+              <span
+                key={customer}
+                className="rounded-full bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700"
+              >
+                {customer}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-[#84CC16]/30 bg-[#84CC16]/5 p-4">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={16} className="shrink-0 text-[#4D7C0F]" />
+            <span className="text-[10px] font-black uppercase tracking-[0.12em] text-[#4D7C0F]">
+              Live — in production today
+            </span>
+          </div>
+          <p className="mt-1.5 text-xs font-semibold text-slate-500">Safe to demonstrate and to sell.</p>
+          <ul className="mt-3 space-y-1.5">
+            {MULTI_STORE_COMMERCIALS.liveCapabilities.map((capability) => (
+              <li key={capability} className="flex items-start gap-2 text-sm font-semibold text-slate-700">
+                <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-[#84CC16]" />
+                {capability}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-4">
+          <div className="flex items-center gap-2">
+            <Circle size={16} className="shrink-0 text-[var(--vyron-warning-fg)]" />
+            <span className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--vyron-warning-fg)]">
+              Roadmap — not built yet
+            </span>
+          </div>
+          <p className="mt-1.5 text-xs font-semibold text-[var(--vyron-warning-fg)]">
+            Do not demonstrate or sell these as current functionality. They are not on the pricing page.
+          </p>
+          <ul className="mt-3 space-y-2.5">
+            {MULTI_STORE_COMMERCIALS.roadmapCapabilities.map((capability) => (
+              <li key={capability.label}>
+                <div className="flex items-start gap-2 text-sm font-black text-slate-800">
+                  <Circle size={14} className="mt-0.5 shrink-0 text-slate-400" />
+                  {capability.label}
+                </div>
+                <p className="ml-6 mt-0.5 text-xs font-semibold text-slate-500">{capability.note}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperMode }) {
@@ -1177,6 +1303,8 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
 
         <ActiveWorkspaceBanner activeClient={activeClient} onClear={clearActiveClientStorage} setMessage={setMessage} />
         <FlashMessage message={message} activeClient={activeClient} />
+
+        <MultiStoreCommercialReference />
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
           {[

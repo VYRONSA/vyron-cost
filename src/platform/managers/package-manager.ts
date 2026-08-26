@@ -70,6 +70,10 @@ export type PackageComparisonRow = {
   packageId: PackageId;
   label: string;
   price?: string;
+  /** What the price includes, shown directly under it. */
+  priceIncludes?: string;
+  /** Secondary commercial term, shown quieter than the price itself. */
+  priceFootnote?: string;
   tag?: string;
   recommended?: boolean;
   description: string;
@@ -534,6 +538,102 @@ export function getPackageDefinitions(): PackageDefinition[] {
   return TIER_ORDER.map((id) => PACKAGE_DEFINITIONS[id]).concat(PACKAGE_DEFINITIONS.multi_store_operations);
 }
 
+const RAND = new Intl.NumberFormat("en-ZA", { maximumFractionDigits: 0 });
+
+/** Rands, formatted the way the rest of the pricing is. */
+export function formatRand(amount: number): string {
+  return `R${RAND.format(amount).replace(/\u00a0/g, ",").replace(/\s/g, ",")}`;
+}
+
+/**
+ * The approved commercial model for Multi-Store Operations.
+ *
+ * One definition. The landing page, the pricing card and the developer
+ * reference all read these numbers, and the worked examples are calculated
+ * from them rather than typed out, so a price change cannot leave a stale
+ * figure somewhere on the site.
+ */
+export const MULTI_STORE_COMMERCIALS = {
+  monthlyPrice: 9995,
+  includedLocations: 5,
+  additionalLocationPrice: 1250,
+  implementationFrom: 15000,
+  positioning:
+    "One intelligence layer controlling the cost, stock, procurement, manufacturing and performance of every location.",
+  description:
+    "Built for businesses operating across multiple stores, branches or operational locations.",
+  targetCustomers: [
+    "Retail groups",
+    "Food manufacturers",
+    "Hospitality groups",
+    "Franchise operations",
+    "Distributors",
+    "Multi-branch businesses",
+  ],
+  /*
+   * Capabilities that exist in the production application today — each one has
+   * a working route, an API and its tables behind it. These are the only ones
+   * the public site advertises.
+   */
+  liveCapabilities: [
+    "Everything in Enterprise",
+    "Multi-store operations",
+    "Centralised procurement",
+    "Store ordering and replenishment",
+    "Dispatch and store fulfilment",
+    "Store-level profitability",
+    "Store-level GP intelligence",
+    "Centralised pricing",
+    "Multi-store dashboards",
+    "Store performance intelligence",
+    "Cross-store comparisons",
+    "Production planning from store demand",
+    "AI demand and store forecasting",
+    "VYRON ORDER customer ordering",
+    "Advanced permissions",
+    "Centralised management",
+    "Priority support",
+  ],
+  /*
+   * Part of the Multi-Store vision, not yet production functionality. These
+   * are documented for developers and sales and are deliberately kept off the
+   * public pricing page.
+   */
+  roadmapCapabilities: [
+    {
+      label: "Inter-store stock transfers",
+      note: "No transfer model exists yet — stock does not move between stores in the application.",
+    },
+    {
+      label: "Store-level inventory",
+      note: "Inventory is held per company. Stock is not yet dimensioned by store.",
+    },
+    {
+      label: "Multi-company capability",
+      note: "Company group links exist for reporting only. There is no multi-company management surface.",
+    },
+  ],
+} as const;
+
+/** Monthly total for a given number of locations, from the model above. */
+export function multiStoreMonthlyPrice(locations: number): number {
+  const extra = Math.max(0, Math.ceil(locations) - MULTI_STORE_COMMERCIALS.includedLocations);
+  return MULTI_STORE_COMMERCIALS.monthlyPrice + extra * MULTI_STORE_COMMERCIALS.additionalLocationPrice;
+}
+
+/** Worked examples, calculated rather than written down. */
+export function multiStorePriceExamples(
+  locationCounts: number[] = [MULTI_STORE_COMMERCIALS.includedLocations, 6, 10, 20]
+): Array<{ locations: number; monthly: number; monthlyLabel: string; locationsLabel: string }> {
+  return locationCounts.map((locations) => ({
+    locations,
+    monthly: multiStoreMonthlyPrice(locations),
+    monthlyLabel: formatRand(multiStoreMonthlyPrice(locations)),
+    locationsLabel:
+      locations === MULTI_STORE_COMMERCIALS.includedLocations ? `Up to ${locations}` : String(locations),
+  }));
+}
+
 export function getPackageComparisonRows(): PackageComparisonRow[] {
   return [
     {
@@ -577,13 +677,17 @@ export function getPackageComparisonRows(): PackageComparisonRow[] {
     {
       packageId: "multi_store_operations",
       label: PACKAGE_LABELS.multi_store_operations,
-      price: "Custom",
+      price: formatRand(MULTI_STORE_COMMERCIALS.monthlyPrice),
+      priceIncludes: `Includes up to ${MULTI_STORE_COMMERCIALS.includedLocations} locations`,
+      priceFootnote: `Additional locations ${formatRand(
+        MULTI_STORE_COMMERCIALS.additionalLocationPrice
+      )}/month`,
       tag: "Multi-Store",
-      description: PACKAGE_DEFINITIONS.multi_store_operations.description,
+      description: MULTI_STORE_COMMERCIALS.positioning,
       highlights: [
         "Everything in Enterprise",
         "Stores, store orders and dispatch",
-        "Store performance and store forecasting",
+        "Store profitability and GP intelligence",
         "Production planning from store demand",
       ],
     },
