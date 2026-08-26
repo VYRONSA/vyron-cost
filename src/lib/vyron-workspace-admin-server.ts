@@ -28,6 +28,28 @@ export async function requireActiveWorkspaceId(): Promise<string> {
   return client.id;
 }
 
+/**
+ * The workspace an administrator is actually an administrator of.
+ *
+ * requireActiveWorkspaceId above reads vyron_cost_active_client, which is a
+ * client-written cookie: it can be missing, stale, or simply wrong, and when it
+ * was missing every admin user route failed with "No active client workspace"
+ * before it reached the work it was asked to do.
+ *
+ * The session is the honest answer. getServerWorkspaceSession only returns a
+ * session when vyron_workspace_memberships holds an Active membership for the
+ * user the cookie names, so its workspaceId has already been proven against the
+ * database. Nothing here reads a workspace or company from the request.
+ */
+export async function requireAdminWorkspaceId(
+  permission: "admin.company" | "admin.users" | "admin.imports" = "admin.users"
+): Promise<{ session: WorkspaceSession; workspaceId: string }> {
+  const session = await requireAdminSession(permission);
+  const workspaceId = String(session.workspaceId || "").trim();
+  if (!workspaceId) throw new Error("Workspace session required.");
+  return { session, workspaceId };
+}
+
 export async function getActiveWorkspaceCompanyProfile() {
   const client = await getServerActiveWorkspace();
   if (!client) throw new Error("No active client workspace.");

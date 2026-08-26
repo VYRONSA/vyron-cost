@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   countWorkspaceUsers,
   getWorkspaceUserLimit,
-  requireActiveWorkspaceId,
-  requireAdminSession,
+  requireAdminWorkspaceId,
 } from "@/lib/vyron-workspace-admin-server";
 import { getServerActiveWorkspace } from "@/lib/vyron-workspace-server";
 import {
@@ -14,6 +13,7 @@ import {
   ensureMemoryWorkspace,
   inviteWorkspaceUser,
   listWorkspaceMembers,
+  updateWorkspaceMember,
   type InviteUserInput,
   type WorkspaceRole,
 } from "@/lib/vyron-saas-workspace";
@@ -29,7 +29,7 @@ function adminErrorStatus(error: unknown, fallback = 500) {
   return fallback;
 }
 
-function ownerFallbackMember(session: Awaited<ReturnType<typeof requireAdminSession>>) {
+function ownerFallbackMember(session: Awaited<ReturnType<typeof requireAdminWorkspaceId>>["session"]) {
   return {
     membershipId: `owner-${session.userId}`,
     userId: session.userId,
@@ -46,10 +46,9 @@ function ownerFallbackMember(session: Awaited<ReturnType<typeof requireAdminSess
 
 export async function GET() {
   try {
-    const session = await requireAdminSession();
-    const workspaceId = await requireActiveWorkspaceId();
+    const { session, workspaceId } = await requireAdminWorkspaceId();
     const client = await getServerActiveWorkspace();
-    if (client) {
+    if (client && client.id === workspaceId) {
       ensureMemoryWorkspace({
         id: client.id,
         companyName: client.companyName,
@@ -88,9 +87,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdminSession();
-    const workspaceId = await requireActiveWorkspaceId();
-    const body = (await request.json()) as InviteUserInput & { confirmPassword?: string };
+    // Workspace comes from the verified membership, never from the request.
+    const { workspaceId } = await requireAdminWorkspaceId();
+    const body = (await request.json()) as InviteUserInput & { confirmPassword?: string; status?: "Active" | "Disabled" };
 
     if (body.method === "password") {
       if (!body.password || body.password.length < 8) {
@@ -125,6 +124,30 @@ export async function POST(request: NextRequest) {
         body.permissions || defaultPermissionsForRole(body.role)
       ),
     });
+
+    /*
+     * A user asked to start disabled is disabled through the same function the
+     * Enable/Disable control uses — there is no second status mechanism. The
+     * account exists either way, so a failure here is reported as what it is
+     * rather than swallowed into a success.
+     */
+    if (body.status === "Disabled") {
+      try {
+        const disabled = await updateWorkspaceMember(workspaceId, member.userId, { status: "Disabled" });
+        return NextResponse.json({ ok: true, member: disabled });
+      } catch (statusError) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: `${member.email} was created but could not be set to Disabled: ${
+              statusError instanceof Error ? statusError.message : "unknown error"
+            }. Set their status from the user list.`,
+            member,
+          },
+          { status: 500 }
+        );
+      }
+    }
 
     return NextResponse.json({ ok: true, member });
   } catch (error) {

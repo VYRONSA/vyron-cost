@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireActiveWorkspaceId, requireAdminSession } from "@/lib/vyron-workspace-admin-server";
+import { requireAdminWorkspaceId } from "@/lib/vyron-workspace-admin-server";
 import { deleteWorkspaceMember, updateWorkspaceMember, type WorkspaceRole } from "@/lib/vyron-saas-workspace";
 
 export const runtime = "nodejs";
@@ -18,8 +18,7 @@ export async function PATCH(
   context: { params: Promise<{ userId: string }> }
 ) {
   try {
-    await requireAdminSession();
-    const workspaceId = await requireActiveWorkspaceId();
+    const { workspaceId } = await requireAdminWorkspaceId();
     const { userId } = await context.params;
     const body = (await request.json()) as {
       role?: WorkspaceRole;
@@ -41,8 +40,7 @@ export async function DELETE(
   context: { params: Promise<{ userId: string }> }
 ) {
   try {
-    await requireAdminSession();
-    const workspaceId = await requireActiveWorkspaceId();
+    const { workspaceId } = await requireAdminWorkspaceId();
     const { userId } = await context.params;
     await deleteWorkspaceMember(workspaceId, userId);
     return NextResponse.json({ ok: true });

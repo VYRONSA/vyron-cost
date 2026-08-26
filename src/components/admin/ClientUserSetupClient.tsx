@@ -1,16 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { KeyRound, Trash2, UserPlus } from "lucide-react";
+import { createPortal } from "react-dom";
+import { KeyRound, Trash2, UserPlus, X, Check } from "lucide-react";
 import type { WorkspaceMember, WorkspaceRole } from "@/lib/vyron-saas-workspace";
-import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
 import {
+  ALL_PERMISSION_KEYS,
   ASSIGNABLE_ROLES,
   PERMISSION_GROUPS,
   defaultPermissionsForRole,
   normalizePermissionMap,
   resolveEffectivePermissions,
 } from "@/lib/vyron-workspace-permissions";
+
+const M = VYRON_MASTER;
 
 export default function ClientUserSetupClient() {
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
@@ -33,8 +37,15 @@ export default function ClientUserSetupClient() {
     method: "password" as "invite" | "password",
     password: "",
     confirmPassword: "",
+    status: "Active" as "Active" | "Disabled",
   });
   const [customPermissions, setCustomPermissions] = useState<Record<string, boolean>>({});
+  /* Permissions for the user being created, seeded from the role's own defaults. */
+  const [invitePermissions, setInvitePermissions] = useState<Record<string, boolean>>(
+    () => defaultPermissionsForRole("VIEW_ONLY")
+  );
+  const [creating, setCreating] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -67,37 +78,25 @@ export default function ClientUserSetupClient() {
     setCustomPermissions(resolveEffectivePermissions(rightsMember.role, rightsMember.permissions));
   }, [rightsMember]);
 
-  async function createUser() {
-    if (!inviteForm.firstName.trim() || !inviteForm.surname.trim() || !inviteForm.email.trim()) {
-      setMessage("First name, surname and email are required.");
-      return;
-    }
+  /** Validation the administrator sees before anything is sent. */
+  function inviteProblems() {
+    const problems: Record<string, string> = {};
+    if (!inviteForm.firstName.trim()) problems.firstName = "First name is required.";
+    if (!inviteForm.surname.trim()) problems.surname = "Surname is required.";
+    const email = inviteForm.email.trim();
+    if (!email) problems.email = "Email address is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) problems.email = "Enter a valid email address.";
+    if (!inviteForm.role) problems.role = "Choose a role.";
     if (inviteForm.method === "password") {
-      if (inviteForm.password.length < 8) {
-        setMessage("Password must be at least 8 characters.");
-        return;
-      }
-      if (inviteForm.password !== inviteForm.confirmPassword) {
-        setMessage("Passwords do not match.");
-        return;
-      }
+      if (inviteForm.password.length < 8) problems.password = "At least 8 characters.";
+      if (inviteForm.confirmPassword !== inviteForm.password) problems.confirmPassword = "Passwords do not match.";
     }
+    return problems;
+  }
 
-    const res = await fetch("/api/workspace/admin/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...inviteForm,
-        permissions: defaultPermissionsForRole(inviteForm.role),
-        confirmPassword: inviteForm.confirmPassword,
-      }),
-    });
-    const data = await res.json();
-    if (!data.ok) {
-      setMessage(data.error || "User creation failed.");
-      return;
-    }
-    setInviteOpen(false);
+  const inviteIssues = inviteProblems();
+
+  function resetInviteForm() {
     setInviteForm({
       firstName: "",
       surname: "",
@@ -107,9 +106,60 @@ export default function ClientUserSetupClient() {
       method: "password",
       password: "",
       confirmPassword: "",
+      status: "Active",
     });
-    setMessage("User created.");
-    refresh();
+    setInvitePermissions(defaultPermissionsForRole("VIEW_ONLY"));
+    setInviteError(null);
+  }
+
+  async function createUser() {
+    if (creating) return;
+    const problems = inviteProblems();
+    if (Object.keys(problems).length) {
+      setInviteError(Object.values(problems)[0]);
+      return;
+    }
+
+    setCreating(true);
+    setInviteError(null);
+    try {
+      /*
+       * The workspace is never sent: the server takes it from the membership it
+       * verified for this administrator. The role and the permissions on screen
+       * are what get saved.
+       */
+      const res = await fetch("/api/workspace/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: inviteForm.firstName.trim(),
+          surname: inviteForm.surname.trim(),
+          email: inviteForm.email.trim(),
+          mobile: inviteForm.mobile.trim(),
+          role: inviteForm.role,
+          method: inviteForm.method,
+          password: inviteForm.password,
+          confirmPassword: inviteForm.confirmPassword,
+          status: inviteForm.status,
+          permissions: normalizePermissionMap(invitePermissions),
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) {
+        // The administrator sees what the server actually said.
+        setInviteError(String(data?.error || `User creation failed (HTTP ${res.status}).`));
+        return;
+      }
+      const created = String(data.member?.email || inviteForm.email.trim());
+      setInviteOpen(false);
+      resetInviteForm();
+      setMessage(`User created. ${created} can now sign in.`);
+      refresh();
+    } catch {
+      setInviteError("We could not reach the server. Nothing was created — try again.");
+    } finally {
+      setCreating(false);
+    }
   }
 
   async function patchUser(userId: string, body: Record<string, unknown>) {
@@ -255,43 +305,213 @@ export default function ClientUserSetupClient() {
       </div>
 
       {inviteOpen ? (
-        <Modal title="Create User" onClose={() => setInviteOpen(false)}>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input label="First Name" value={inviteForm.firstName} onChange={(v) => setInviteForm((f) => ({ ...f, firstName: v }))} />
-            <Input label="Surname" value={inviteForm.surname} onChange={(v) => setInviteForm((f) => ({ ...f, surname: v }))} />
-            <Input label="Email" value={inviteForm.email} onChange={(v) => setInviteForm((f) => ({ ...f, email: v }))} />
-            <Input label="Mobile" value={inviteForm.mobile} onChange={(v) => setInviteForm((f) => ({ ...f, mobile: v }))} />
-            <label>
-              <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Role</span>
-              <select
-                value={inviteForm.role}
-                onChange={(e) => setInviteForm((f) => ({ ...f, role: e.target.value as WorkspaceRole }))}
-                className="mt-2 w-full rounded-xl border border-violet-100 px-4 py-3 text-sm font-semibold"
+        <Modal
+          wide
+          title="Create User"
+          subtitle="Create a staff user and assign their workspace role and permissions."
+          onClose={() => { setInviteOpen(false); resetInviteForm(); }}
+          footer={
+            <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => { setInviteOpen(false); resetInviteForm(); }}
+                className={`${M.secondaryBtn} h-12 px-5 text-xs font-bold uppercase tracking-[0.1em] sm:min-w-[8rem]`}
               >
-                {ASSIGNABLE_ROLES.map((role) => <option key={role} value={role}>{role}</option>)}
-              </select>
-            </label>
-            <label>
-              <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Login Method</span>
-              <select
-                value={inviteForm.method}
-                onChange={(e) => setInviteForm((f) => ({ ...f, method: e.target.value as "invite" | "password" }))}
-                className="mt-2 w-full rounded-xl border border-violet-100 px-4 py-3 text-sm font-semibold"
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void createUser()}
+                disabled={creating}
+                className={`${M.primaryBtn} h-12 px-6 text-xs uppercase tracking-[0.1em] disabled:opacity-50 sm:min-w-[11rem]`}
               >
-                <option value="password">Temporary password</option>
-                <option value="invite">Email invite</option>
-              </select>
-            </label>
-            {inviteForm.method === "password" ? (
-              <>
-                <Input label="Password" type="password" value={inviteForm.password} onChange={(v) => setInviteForm((f) => ({ ...f, password: v }))} />
-                <Input label="Confirm Password" type="password" value={inviteForm.confirmPassword} onChange={(v) => setInviteForm((f) => ({ ...f, confirmPassword: v }))} />
-              </>
+                {creating ? "Creating…" : "Create User"}
+              </button>
+            </div>
+          }
+        >
+          <div className="space-y-4">
+            {inviteError ? (
+              <p role="alert" className={`${M.alertError} px-4 py-3 text-sm font-bold`}>{inviteError}</p>
             ) : null}
+
+            <Section title="User details">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="First name"
+                  value={inviteForm.firstName}
+                  onChange={(v) => setInviteForm((f) => ({ ...f, firstName: v }))}
+                  autoComplete="given-name"
+                  error={inviteError ? inviteIssues.firstName : null}
+                />
+                <Input
+                  label="Surname"
+                  value={inviteForm.surname}
+                  onChange={(v) => setInviteForm((f) => ({ ...f, surname: v }))}
+                  autoComplete="family-name"
+                  error={inviteError ? inviteIssues.surname : null}
+                />
+                <Input
+                  label="Email address"
+                  type="email"
+                  inputMode="email"
+                  placeholder="name@company.co.za"
+                  value={inviteForm.email}
+                  onChange={(v) => setInviteForm((f) => ({ ...f, email: v }))}
+                  autoComplete="email"
+                  hint="They sign in with this address."
+                  error={inviteError ? inviteIssues.email : null}
+                />
+                <Input
+                  label="Mobile number"
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="082 000 0000"
+                  value={inviteForm.mobile}
+                  onChange={(v) => setInviteForm((f) => ({ ...f, mobile: v }))}
+                  autoComplete="tel"
+                  hint="Optional."
+                />
+              </div>
+            </Section>
+
+            <Section title="Access" note="The role sets a starting point; the permissions below are what the server enforces.">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block min-w-0">
+                  <span className={M.label}>Role</span>
+                  <select
+                    value={inviteForm.role}
+                    onChange={(e) => {
+                      const role = e.target.value as WorkspaceRole;
+                      setInviteForm((f) => ({ ...f, role }));
+                      // Moving role re-seeds the tick boxes from that role's own defaults.
+                      setInvitePermissions(defaultPermissionsForRole(role));
+                    }}
+                    className={`${M.select} mt-1.5 h-12 w-full`}
+                  >
+                    {ASSIGNABLE_ROLES.map((role) => (
+                      <option key={role} value={role}>{role}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block min-w-0">
+                  <span className={M.label}>User status</span>
+                  <select
+                    value={inviteForm.status}
+                    onChange={(e) => setInviteForm((f) => ({ ...f, status: e.target.value as "Active" | "Disabled" }))}
+                    className={`${M.select} mt-1.5 h-12 w-full`}
+                  >
+                    <option value="Active">Active — can sign in</option>
+                    <option value="Disabled">Disabled — cannot sign in yet</option>
+                  </select>
+                </label>
+                <label className="block min-w-0 sm:col-span-2">
+                  <span className={M.label}>How they get in</span>
+                  <select
+                    value={inviteForm.method}
+                    onChange={(e) => setInviteForm((f) => ({ ...f, method: e.target.value as "invite" | "password" }))}
+                    className={`${M.select} mt-1.5 h-12 w-full`}
+                  >
+                    <option value="password">Set a password now</option>
+                    <option value="invite">Email them an invite</option>
+                  </select>
+                </label>
+              </div>
+            </Section>
+
+            {inviteForm.method === "password" ? (
+              <Section title="Login password" note="At least 8 characters. Give it to them directly — it is not shown again.">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input
+                    label="Password"
+                    type="password"
+                    value={inviteForm.password}
+                    onChange={(v) => setInviteForm((f) => ({ ...f, password: v }))}
+                    autoComplete="new-password"
+                    error={inviteForm.password && inviteForm.password.length < 8 ? "At least 8 characters." : null}
+                  />
+                  <Input
+                    label="Confirm password"
+                    type="password"
+                    value={inviteForm.confirmPassword}
+                    onChange={(v) => setInviteForm((f) => ({ ...f, confirmPassword: v }))}
+                    autoComplete="new-password"
+                    error={inviteForm.confirmPassword && inviteForm.confirmPassword !== inviteForm.password ? "Passwords do not match." : null}
+                  />
+                </div>
+              </Section>
+            ) : null}
+
+            <Section
+              title="Permissions"
+              note={`${Object.values(invitePermissions).filter(Boolean).length} of ${ALL_PERMISSION_KEYS.length} granted. These are saved against the membership and are what the server checks.`}
+            >
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {PERMISSION_GROUPS.map((group) => {
+                  const granted = group.permissions.filter((permission) => invitePermissions[permission.key]).length;
+                  const all = granted === group.permissions.length;
+                  return (
+                    <div key={group.label} className="min-w-0 rounded-xl border border-[rgba(15,23,42,0.07)] bg-white p-3.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-xs font-black text-[#0F172A]">{group.label}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setInvitePermissions((current) => {
+                              const next = { ...current };
+                              for (const permission of group.permissions) next[permission.key] = !all;
+                              return next;
+                            })
+                          }
+                          className="inline-flex h-11 shrink-0 items-center rounded-lg px-2.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#4F46E5] transition hover:bg-[var(--vyron-brand-wash)]"
+                        >
+                          {all ? "None" : "All"}
+                        </button>
+                      </div>
+                      <p className="mt-0.5 text-[11px] font-semibold text-[#94A3B8]">
+                        {granted} of {group.permissions.length}
+                      </p>
+                      <div className="mt-2.5 space-y-1">
+                        {group.permissions.map((permission) => {
+                          const on = Boolean(invitePermissions[permission.key]);
+                          return (
+                            <label
+                              key={permission.key}
+                              className={`flex min-h-[2.25rem] cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 transition ${
+                                on ? "bg-[var(--vyron-brand-wash)]" : "hover:bg-[rgba(15,23,42,0.03)]"
+                              }`}
+                            >
+                              <span
+                                aria-hidden
+                                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
+                                  on
+                                    ? "border-transparent vyron-grad-surface text-white"
+                                    : "border-[rgba(15,23,42,0.18)] bg-white"
+                                }`}
+                              >
+                                {on ? <Check size={13} strokeWidth={3} /> : null}
+                              </span>
+                              <input
+                                type="checkbox"
+                                className="sr-only"
+                                checked={on}
+                                onChange={(e) =>
+                                  setInvitePermissions((current) => ({ ...current, [permission.key]: e.target.checked }))
+                                }
+                              />
+                              <span className={`min-w-0 text-xs ${on ? "font-bold text-[#0F172A]" : "font-medium text-[#334155]"}`}>
+                                {permission.label}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Section>
           </div>
-          <button type="button" onClick={() => void createUser()} className="mt-5 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">
-            Create User
-          </button>
         </Modal>
       ) : null}
 
@@ -348,19 +568,87 @@ export default function ClientUserSetupClient() {
   );
 }
 
-function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[2rem] border border-violet-100 bg-white p-6 shadow-2xl">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h3 className="text-lg font-black text-slate-950">{title}</h3>
-          <button type="button" onClick={onClose} className="rounded-lg border border-violet-100 px-3 py-1 text-xs font-black text-slate-600">
-            Close
+/**
+ * A VYRON modal.
+ *
+ * The header and footer stay put and only the body scrolls, so the primary
+ * action is reachable without scrolling past the form. On a phone it becomes a
+ * full-height sheet rather than a card floating in the middle of the screen.
+ */
+function Modal({
+  title,
+  subtitle,
+  children,
+  onClose,
+  footer,
+  wide,
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  onClose: () => void;
+  footer?: React.ReactNode;
+  wide?: boolean;
+}) {
+  /*
+   * Rendered on <body>.
+   *
+   * The workspace shell establishes its own stacking context, so a modal left
+   * inside it sits behind the fixed sidebar however high its z-index is — which
+   * is why the form appeared with its left edge sliced off. A portal takes it
+   * out of that context entirely.
+   */
+  // Only ever rendered from a click, so the document is always there by then.
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-end justify-center bg-[rgba(7,17,31,0.45)] backdrop-blur-sm sm:items-center sm:p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className={`flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-[rgba(15,23,42,0.07)] bg-white shadow-[var(--vyron-elev-4)] sm:max-h-[90vh] sm:rounded-2xl ${
+          wide ? "sm:max-w-4xl" : "sm:max-w-2xl"
+        }`}
+      >
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[rgba(15,23,42,0.07)] px-5 py-4 md:px-6">
+          <div className="min-w-0">
+            <h3 className={`text-lg ${M.heading}`}>{title}</h3>
+            {subtitle ? (
+              <p className="mt-1 text-sm font-medium text-[#64748B]">{subtitle}</p>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#64748B] transition hover:bg-[rgba(15,23,42,0.05)] hover:text-[#0F172A]"
+          >
+            <X size={18} />
           </button>
         </div>
-        {children}
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6">{children}</div>
+
+        {footer ? (
+          <div className="shrink-0 border-t border-[rgba(15,23,42,0.07)] bg-[rgba(15,23,42,0.02)] px-5 py-4 md:px-6">
+            {footer}
+          </div>
+        ) : null}
       </div>
-    </div>
+    </div>,
+    document.body
+  );
+}
+
+/** A titled block inside a modal, so a long form reads as sections. */
+function Section({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-xl border border-[rgba(15,23,42,0.07)] bg-[rgba(15,23,42,0.02)] p-4 md:p-5">
+      <h4 className={`${M.label} text-[11px]`}>{title}</h4>
+      {note ? <p className="mt-1 text-xs font-medium text-[#64748B]">{note}</p> : null}
+      <div className="mt-3.5">{children}</div>
+    </section>
   );
 }
 
@@ -369,29 +657,48 @@ function Input({
   value,
   onChange,
   type = "text",
+  placeholder,
+  hint,
+  error,
+  autoComplete,
+  inputMode,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
+  placeholder?: string;
+  hint?: string;
+  error?: string | null;
+  autoComplete?: string;
+  inputMode?: "text" | "email" | "tel" | "numeric";
 }) {
+  /*
+   * A field is a label and an input.
+   *
+   * This previously wrapped every single field in VyronPremiumPageShell — a
+   * full marketing page with its own heading and formula cards — so a six-field
+   * form rendered six marketing pages inside the modal, two to a row. That is
+   * what produced the duplicated panels and the one-character-per-line columns.
+   */
   return (
-    <VyronPremiumPageShell
-      config={{
-        title: "Client User Setup",
-        subtitle: "Premium VYRON COST workflow for client user setup.",
-        formulas: ["GP % = (Price - Cost) / Price"],
-      }}
-    >
-      <label>
-            <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</span>
-            <input
-              type={type}
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              className="mt-2 w-full rounded-xl border border-violet-100 px-4 py-3 text-sm font-semibold outline-none focus:border-violet-400"
-            />
-          </label>
-    </VyronPremiumPageShell>
+    <label className="block min-w-0">
+      <span className={M.label}>{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
+        aria-invalid={error ? true : undefined}
+        className={`${M.input} mt-1.5 h-12 py-0 ${error ? "border-[#BE123C] focus:border-[#BE123C] focus:ring-[#BE123C]/12" : ""}`}
+      />
+      {error ? (
+        <span className="mt-1 block text-xs font-semibold text-[#BE123C]">{error}</span>
+      ) : hint ? (
+        <span className="mt-1 block text-xs font-medium text-[#64748B]">{hint}</span>
+      ) : null}
+    </label>
   );
 }

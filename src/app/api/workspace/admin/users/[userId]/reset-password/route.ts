@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireActiveWorkspaceId, requireAdminSession } from "@/lib/vyron-workspace-admin-server";
+import { requireAdminWorkspaceId } from "@/lib/vyron-workspace-admin-server";
 import { resetWorkspaceUserPassword } from "@/lib/vyron-saas-workspace";
 
 export const runtime = "nodejs";
@@ -9,8 +9,7 @@ export async function POST(
   context: { params: Promise<{ userId: string }> }
 ) {
   try {
-    await requireAdminSession();
-    const workspaceId = await requireActiveWorkspaceId();
+    const { workspaceId } = await requireAdminWorkspaceId();
     const { userId } = await context.params;
     const body = (await request.json()) as { password: string; confirmPassword?: string };
     if (!body.password || body.password.length < 8) {
