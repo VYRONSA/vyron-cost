@@ -46,6 +46,7 @@ export default function ClientUserSetupClient() {
   );
   const [creating, setCreating] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [showProblems, setShowProblems] = useState(false);
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -110,15 +111,37 @@ export default function ClientUserSetupClient() {
     });
     setInvitePermissions(defaultPermissionsForRole("VIEW_ONLY"));
     setInviteError(null);
+    setShowProblems(false);
+  }
+
+  /**
+   * Put the first problem in front of the person who pressed the button.
+   *
+   * The form scrolls, and the button sits in a fixed footer, so an
+   * administrator working in the permissions at the bottom cannot see a message
+   * placed at the top — the button simply looked dead. The offending field is
+   * scrolled to and focused, and the message is also shown beside the button.
+   */
+  function revealProblem(problems: Record<string, string>) {
+    const first = Object.keys(problems)[0];
+    if (!first) return;
+    const field = document.getElementById(`invite-${first}`);
+    if (field) {
+      field.scrollIntoView({ block: "center", behavior: "smooth" });
+      (field as HTMLInputElement).focus({ preventScroll: true });
+    }
   }
 
   async function createUser() {
     if (creating) return;
     const problems = inviteProblems();
     if (Object.keys(problems).length) {
+      setShowProblems(true);
       setInviteError(Object.values(problems)[0]);
+      revealProblem(problems);
       return;
     }
+    setShowProblems(false);
 
     setCreating(true);
     setInviteError(null);
@@ -311,7 +334,12 @@ export default function ClientUserSetupClient() {
           subtitle="Create a staff user and assign their workspace role and permissions."
           onClose={() => { setInviteOpen(false); resetInviteForm(); }}
           footer={
-            <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
+            <div className="space-y-3">
+              {/* Beside the button, because that is where the eye is. */}
+              {inviteError ? (
+                <p role="alert" className={`${M.alertError} px-4 py-2.5 text-sm font-bold`}>{inviteError}</p>
+              ) : null}
+              <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => { setInviteOpen(false); resetInviteForm(); }}
@@ -326,32 +354,32 @@ export default function ClientUserSetupClient() {
                 className={`${M.primaryBtn} h-12 px-6 text-xs uppercase tracking-[0.1em] disabled:opacity-50 sm:min-w-[11rem]`}
               >
                 {creating ? "Creating…" : "Create User"}
-              </button>
+                </button>
+              </div>
             </div>
           }
         >
           <div className="space-y-4">
-            {inviteError ? (
-              <p role="alert" className={`${M.alertError} px-4 py-3 text-sm font-bold`}>{inviteError}</p>
-            ) : null}
-
             <Section title="User details">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Input
+                  id="invite-firstName"
                   label="First name"
                   value={inviteForm.firstName}
                   onChange={(v) => setInviteForm((f) => ({ ...f, firstName: v }))}
                   autoComplete="given-name"
-                  error={inviteError ? inviteIssues.firstName : null}
+                  error={showProblems ? inviteIssues.firstName : null}
                 />
                 <Input
+                  id="invite-surname"
                   label="Surname"
                   value={inviteForm.surname}
                   onChange={(v) => setInviteForm((f) => ({ ...f, surname: v }))}
                   autoComplete="family-name"
-                  error={inviteError ? inviteIssues.surname : null}
+                  error={showProblems ? inviteIssues.surname : null}
                 />
                 <Input
+                  id="invite-email"
                   label="Email address"
                   type="email"
                   inputMode="email"
@@ -360,7 +388,7 @@ export default function ClientUserSetupClient() {
                   onChange={(v) => setInviteForm((f) => ({ ...f, email: v }))}
                   autoComplete="email"
                   hint="They sign in with this address."
-                  error={inviteError ? inviteIssues.email : null}
+                  error={showProblems ? inviteIssues.email : null}
                 />
                 <Input
                   label="Mobile number"
@@ -423,6 +451,7 @@ export default function ClientUserSetupClient() {
               <Section title="Login password" note="At least 8 characters. Give it to them directly — it is not shown again.">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Input
+                    id="invite-password"
                     label="Password"
                     type="password"
                     value={inviteForm.password}
@@ -431,6 +460,7 @@ export default function ClientUserSetupClient() {
                     error={inviteForm.password && inviteForm.password.length < 8 ? "At least 8 characters." : null}
                   />
                   <Input
+                    id="invite-confirmPassword"
                     label="Confirm password"
                     type="password"
                     value={inviteForm.confirmPassword}
@@ -662,6 +692,7 @@ function Input({
   error,
   autoComplete,
   inputMode,
+  id,
 }: {
   label: string;
   value: string;
@@ -672,6 +703,7 @@ function Input({
   error?: string | null;
   autoComplete?: string;
   inputMode?: "text" | "email" | "tel" | "numeric";
+  id?: string;
 }) {
   /*
    * A field is a label and an input.
@@ -685,6 +717,7 @@ function Input({
     <label className="block min-w-0">
       <span className={M.label}>{label}</span>
       <input
+        id={id}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
