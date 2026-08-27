@@ -13,6 +13,20 @@ import {
 } from "@/lib/vyron-inventory";
 import { getInvoiceStockPostingStatus } from "@/lib/vyron-invoice-stock-status";
 import { resolveCustomerProductPrice } from "@/lib/vyron-customer-price-lists";
+import { normaliseVatNumber, normaliseVatStatus, validateVatNumber } from "@/lib/vyron-tax-profile";
+import {
+  buildPartySnapshot,
+  calculateInvoiceTax,
+  classifyInvoiceDocument,
+  normaliseTaxTreatment,
+  taxLineToColumns,
+  taxTotalsToColumns,
+  treatmentCarriesRate,
+  validateInvoiceForIssue,
+  type InvoiceTaxSnapshot,
+  type TaxTreatment,
+} from "@/lib/vyron-invoice-tax";
+import { toFixed, toNumber } from "@/lib/vyron-money";
 
 export type CustomerInvoiceStatus = "Draft" | "Approved" | "Posted" | "Sent" | "Paid" | "Cancelled";
 
@@ -23,6 +37,11 @@ export type CustomerInvoiceLineInput = {
   quantity: number;
   sellingPrice: number;
   costPerUnit?: number;
+  /** Omitted means "standard rated"; the rate still comes from the workspace. */
+  taxTreatment?: string | null;
+  taxRate?: number | null;
+  discountPercent?: number | null;
+  discountAmount?: number | null;
 };
 
 export type CustomerInvoiceRow = {
@@ -43,6 +62,11 @@ export type CustomerInvoiceRow = {
   stock_reversed: boolean;
   stock_reversed_at: string | null;
   notes: string | null;
+  tax_total: number;
+  total_incl_tax: number;
+  prices_include_tax: boolean;
+  tax_snapshot: InvoiceTaxSnapshot | null;
+  tax_snapshot_at: string | null;
 };
 
 export type { InvoiceStockPostingStatus } from "@/lib/vyron-invoice-stock-status";
@@ -56,6 +80,18 @@ export type CustomerInvoiceLineRow = {
   quantity: number;
   selling_price: number;
   cost_per_unit: number;
+  /** Generated in Postgres from quantity x selling_price: the pre-discount gross. */
+  line_total: number;
+  line_cost: number;
+  line_gp: number;
+  /** NULL on lines that predate the VAT engine — never calculated, not a zero. */
+  tax_treatment: TaxTreatment | null;
+  tax_rate: number | null;
+  discount_percent: number;
+  discount_amount: number;
+  taxable_amount: number | null;
+  tax_amount: number | null;
+  line_total_incl_tax: number | null;
 };
 
 function round2(n: number) {
@@ -73,19 +109,73 @@ function isMissingTableError(error: unknown) {
   );
 }
 
-function computeTotals(lines: CustomerInvoiceLineInput[]) {
-  let sales = 0;
+/**
+ * The workspace's configured standard rate.
+ *
+ * Read from vyron_workspaces.default_vat_rate rather than assumed. South Africa's
+ * standard rate is 15% today, but a rate is a setting, not a constant, and the
+ * engine must follow whatever the tenant has configured.
+ */
+export async function resolveDefaultVatRate(supabase: SupabaseClient, companyId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from("vyron_workspaces")
+    .select("default_vat_rate")
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (error) throw new Error(`Could not read the workspace VAT rate: ${error.message}`);
+  if (!data || data.default_vat_rate === null || data.default_vat_rate === undefined) {
+    throw new Error(
+      "No default VAT rate is configured for this workspace. Set it in Company Setup before invoicing."
+    );
+  }
+  return Number(data.default_vat_rate);
+}
+
+/**
+ * Turn request lines into engine input.
+ *
+ * A line with no stated treatment is standard rated at the workspace rate — the
+ * ordinary case, and the one the invoice form has always displayed. A line that
+ * states a non-standard treatment is forced to 0%, so a rate left behind from an
+ * earlier edit cannot charge VAT on a zero-rated supply.
+ */
+function toTaxEngineLines(lines: CustomerInvoiceLineInput[], defaultRate: number) {
+  return lines.map((line) => {
+    const treatment: TaxTreatment = normaliseTaxTreatment(line.taxTreatment) ?? "Standard";
+    const rate = treatmentCarriesRate(treatment)
+      ? line.taxRate === null || line.taxRate === undefined
+        ? defaultRate
+        : Number(line.taxRate)
+      : 0;
+    return {
+      quantity: line.quantity,
+      unitPrice: line.sellingPrice,
+      taxTreatment: treatment,
+      taxRate: rate,
+      discountPercent: line.discountPercent ?? 0,
+      discountAmount: line.discountAmount ?? 0,
+    };
+  });
+}
+
+/**
+ * Cost and gross profit for the invoice header.
+ *
+ * `sales` is not computed here: it is the engine's subtotal, which is net of line
+ * discounts and rounded per line. Deriving it a second time from quantity x price
+ * would disagree with the stored line figures the moment a discount is applied.
+ */
+function computeCostTotals(lines: CustomerInvoiceLineInput[], salesValue: number) {
   let cost = 0;
   for (const line of lines) {
-    sales += Number(line.quantity) * Number(line.sellingPrice);
     cost += Number(line.quantity) * Number(line.costPerUnit || 0);
   }
-  const gp = sales - cost;
+  const costValue = round2(cost);
+  const gp = round2(salesValue - costValue);
   return {
-    sales_value: round2(sales),
-    cost_value: round2(cost),
-    gross_profit: round2(gp),
-    gp_percentage: sales ? round2((gp / sales) * 100) : 0,
+    cost_value: costValue,
+    gross_profit: gp,
+    gp_percentage: salesValue ? round2((gp / salesValue) * 100) : 0,
   };
 }
 
@@ -163,6 +253,8 @@ export async function createCustomerInvoice(
     invoiceDate?: string;
     dueDate?: string | null;
     notes?: string;
+    /** Treat selling_price as VAT-inclusive. The application default is exclusive. */
+    pricesIncludeTax?: boolean;
     lines: CustomerInvoiceLineInput[];
   }
 ) {
@@ -200,7 +292,14 @@ export async function createCustomerInvoice(
     }
   }
 
-  const totals = computeTotals(enrichedLines);
+  const defaultRate = await resolveDefaultVatRate(supabase, companyId);
+  const engineLines = toTaxEngineLines(enrichedLines, defaultRate);
+  const tax = calculateInvoiceTax(engineLines, { pricesIncludeTax: Boolean(params.pricesIncludeTax) });
+  const totals = {
+    ...taxTotalsToColumns(tax),
+    ...computeCostTotals(enrichedLines, toNumber(tax.subtotalExclTax, 2)),
+  };
+
   const invoiceNumber =
     params.invoiceNumber ||
     `SI-${String(Date.now()).slice(-8)}`;
@@ -216,24 +315,136 @@ export async function createCustomerInvoice(
       due_date: params.dueDate || null,
       status: "Draft",
       notes: params.notes || null,
+      prices_include_tax: Boolean(params.pricesIncludeTax),
       ...totals,
     })
     .select("*")
     .single();
   if (error) throw new Error(error.message);
 
-  const lineRows = enrichedLines.map((line) => ({
+  const lineRows = enrichedLines.map((line, index) => ({
     invoice_id: invoice.id,
     product_id: line.productId || null,
     product_name: line.productName,
     quantity: line.quantity,
     selling_price: line.sellingPrice,
     cost_per_unit: line.costPerUnit || 0,
+    discount_percent: Number(line.discountPercent || 0),
+    ...taxLineToColumns(tax.lines[index]),
   }));
   const { error: linesError } = await supabase.from("vyron_customer_invoice_lines").insert(lineRows);
   if (linesError) throw new Error(linesError.message);
 
   return invoice as CustomerInvoiceRow;
+}
+
+/**
+ * The statuses at which an invoice has become a document in the customer's hands.
+ *
+ * Draft is the only status at which the invoice may still read live master data.
+ * Everything below is issued, and must show the parties as they were at issue.
+ * Cancelled is deliberately absent: cancelling does not issue anything, and an
+ * invoice cancelled straight out of Draft never became a tax invoice.
+ */
+const ISSUED_STATUSES: CustomerInvoiceStatus[] = ["Approved", "Posted", "Sent", "Paid"];
+
+export function isIssuedInvoiceStatus(status: string): boolean {
+  return ISSUED_STATUSES.includes(status as CustomerInvoiceStatus);
+}
+
+/**
+ * Capture the tax identity of both parties as it stands right now.
+ *
+ * Read straight from the master tables rather than from anything the caller
+ * passed in, and scoped to the company that owns the invoice — the snapshot is
+ * the evidence of what was issued, so it cannot be sourced from a request body.
+ */
+async function buildInvoiceTaxSnapshot(
+  supabase: SupabaseClient,
+  companyId: string,
+  invoice: CustomerInvoiceRow,
+  lines: CustomerInvoiceLineRow[],
+  status: CustomerInvoiceStatus
+): Promise<{ snapshot: InvoiceTaxSnapshot; errors: string[] }> {
+  const [{ data: workspace, error: workspaceError }, { data: customer, error: customerError }] = await Promise.all([
+    supabase
+      .from("vyron_workspaces")
+      .select(
+        "company_name, trading_name, physical_address, vat_number, vat_status, registration_number, default_vat_rate"
+      )
+      .eq("company_id", companyId)
+      .maybeSingle(),
+    invoice.customer_id
+      ? supabase
+          .from("vyron_customers")
+          .select("customer_name, trading_name, billing_address, vat_number, vat_status, registration_number")
+          .eq("id", invoice.customer_id)
+          .eq("company_id", companyId)
+          .maybeSingle()
+      : Promise.resolve({ data: null as Record<string, unknown> | null, error: null }),
+  ]);
+  if (workspaceError) throw new Error(`Could not read the company tax profile: ${workspaceError.message}`);
+  if (customerError) throw new Error(`Could not read the customer tax profile: ${customerError.message}`);
+  if (!workspace) {
+    throw new Error("No workspace company profile is linked to this company. Complete Company Setup before issuing invoices.");
+  }
+
+  const supplier = buildPartySnapshot(workspace as Record<string, unknown>, "supplier");
+  if (!supplier) throw new Error("Could not build the supplier tax snapshot.");
+  const customerSnapshot = buildPartySnapshot((customer as Record<string, unknown>) || null, "customer");
+
+  /*
+   * Recompute from the stored line figures rather than trusting the header.
+   * The header is what the engine wrote; recomputing here is what proves the
+   * document being frozen actually adds up.
+   */
+  const defaultRate = Number(workspace.default_vat_rate ?? 0);
+  const engineLines = lines.map((line) => ({
+    quantity: line.quantity,
+    unitPrice: line.selling_price,
+    taxTreatment: (line.tax_treatment ?? "Standard") as TaxTreatment,
+    taxRate: line.tax_rate ?? defaultRate,
+    discountPercent: 0,
+    discountAmount: line.discount_amount ?? 0,
+  }));
+  const totals = calculateInvoiceTax(engineLines, { pricesIncludeTax: Boolean(invoice.prices_include_tax) });
+  const documentClass = classifyInvoiceDocument(totals.totalInclTax, totals.lines);
+
+  const errors = validateInvoiceForIssue({
+    supplier,
+    customer: customerSnapshot,
+    totals,
+    documentClass,
+    invoiceNumber: String(invoice.invoice_number || ""),
+    invoiceDate: invoice.invoice_date || null,
+    lineCount: lines.length,
+  });
+
+  const treatments = new Map<TaxTreatment, string>();
+  for (const line of totals.lines) {
+    if (!treatments.has(line.taxTreatment)) treatments.set(line.taxTreatment, toFixed(line.taxRate, 4));
+  }
+
+  const snapshot: InvoiceTaxSnapshot = {
+    version: 1,
+    capturedAt: new Date().toISOString(),
+    capturedAtStatus: status,
+    supplier,
+    customer: customerSnapshot,
+    tax: {
+      documentClass: documentClass.documentClass,
+      requiresRecipientDetails: documentClass.requiresRecipientDetails,
+      treatments: [...treatments].map(([treatment, rate]) => ({ treatment, rate })),
+      defaultRate: String(defaultRate),
+      pricesIncludeTax: Boolean(invoice.prices_include_tax),
+      subtotalExclTax: toFixed(totals.subtotalExclTax, 2),
+      taxTotal: toFixed(totals.taxTotal, 2),
+      totalInclTax: toFixed(totals.totalInclTax, 2),
+      currency: "ZAR",
+    },
+  };
+
+  return { snapshot, errors };
 }
 
 export async function updateCustomerInvoiceStatus(
@@ -242,15 +453,90 @@ export async function updateCustomerInvoiceStatus(
   status: CustomerInvoiceStatus,
   companyId?: string
 ) {
-  let query = supabase
-    .from("vyron_customer_invoices")
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", id);
+  const now = new Date().toISOString();
+  const patch: Record<string, unknown> = { status, updated_at: now };
+
+  /*
+   * Freezing happens on the one transition that issues the document: Draft to
+   * anything else. It is deliberately not run on any later move.
+   *
+   * A Sent invoice being marked Paid is not being issued — the document is
+   * already in the customer's hands — so re-running issue validation there would
+   * refuse a payment over a company profile gap that has nothing to do with the
+   * payment. Worse, capturing then would stamp today's VAT number and address
+   * onto a document issued months ago and label it as what was issued.
+   *
+   * The consequence is that invoices raised before this engine existed keep no
+   * snapshot, ever. That is the honest outcome: nothing in the schema records
+   * what the tax profile was on the day they went out, and inventing it is not
+   * available. Reprints of those fall back to live master data, and
+   * resolveInvoiceTaxIdentity reports the source so a caller can say so.
+   */
+  if (isIssuedInvoiceStatus(status)) {
+    if (!companyId) {
+      throw new Error("An invoice cannot be issued without a resolved company. Sign in to a workspace first.");
+    }
+    const loaded = await getCustomerInvoice(supabase, id, companyId);
+    if (!loaded) throw new Error("Invoice not found.");
+
+    if (loaded.invoice.status === "Draft" && !loaded.invoice.tax_snapshot) {
+      const { snapshot, errors } = await buildInvoiceTaxSnapshot(
+        supabase,
+        companyId,
+        loaded.invoice,
+        loaded.lines,
+        status
+      );
+      if (errors.length) {
+        throw new Error(
+          `Complete Company Tax & Legal Details before issuing this invoice.\n- ${errors.join("\n- ")}`
+        );
+      }
+      patch.tax_snapshot = snapshot;
+      patch.tax_snapshot_at = now;
+    }
+  }
+
+  let query = supabase.from("vyron_customer_invoices").update(patch).eq("id", id);
   if (companyId) query = query.eq("company_id", companyId);
 
   const { data, error } = await query.select("*").single();
   if (error) throw new Error(error.message);
   return data as CustomerInvoiceRow;
+}
+
+/**
+ * The tax identity to render this invoice with.
+ *
+ * An issued invoice answers from its frozen snapshot — today's customer VAT
+ * number and today's company address are not consulted at all. A draft has no
+ * snapshot yet, so it reads live master data and says so, which is what lets the
+ * operator see the effect of correcting a VAT number before issuing.
+ */
+export async function resolveInvoiceTaxIdentity(
+  supabase: SupabaseClient,
+  companyId: string,
+  invoiceId: string
+): Promise<{
+  source: "snapshot" | "live";
+  snapshot: InvoiceTaxSnapshot | null;
+  issues: string[];
+} | null> {
+  const loaded = await getCustomerInvoice(supabase, invoiceId, companyId);
+  if (!loaded) return null;
+
+  if (loaded.invoice.tax_snapshot) {
+    return { source: "snapshot", snapshot: loaded.invoice.tax_snapshot, issues: [] };
+  }
+
+  const { snapshot, errors } = await buildInvoiceTaxSnapshot(
+    supabase,
+    companyId,
+    loaded.invoice,
+    loaded.lines,
+    loaded.invoice.status
+  );
+  return { source: "live", snapshot, issues: errors };
 }
 
 export async function deleteCustomerInvoice(supabase: SupabaseClient, companyId: string, id: string) {
@@ -973,6 +1259,9 @@ export type CustomerRow = {
   vat_number?: string | null;
   registration_number?: string | null;
   billing_address?: string | null;
+  delivery_address?: string | null;
+  trading_name?: string | null;
+  vat_status?: string | null;
   website?: string | null;
   status?: string | null;
   credit_limit?: number | null;
@@ -1125,14 +1414,22 @@ export async function createCustomer(
     phone?: string;
     terms?: string;
     vatNumber?: string;
+    vatStatus?: string;
+    tradingName?: string;
     registrationNumber?: string;
     billingAddress?: string;
+    deliveryAddress?: string;
     website?: string;
     status?: string;
     creditLimit?: number;
     onHold?: boolean;
   }
 ) {
+  // Rejected here, not only at the form: a bad number would be printed on a
+  // tax invoice, and the API is reachable without going through the form.
+  const vatError = validateVatNumber(input.vatNumber);
+  if (vatError) throw new Error(vatError);
+
   const { data, error } = await supabase
     .from("vyron_customers")
     .insert({
@@ -1145,9 +1442,12 @@ export async function createCustomer(
       category: input.category || "Customer",
       invoice_email: input.invoiceEmail || input.contactEmail || null,
       terms: input.terms || "30 Days",
-      vat_number: input.vatNumber || null,
+      vat_number: normaliseVatNumber(input.vatNumber) || null,
+      vat_status: normaliseVatStatus(input.vatStatus),
+      trading_name: input.tradingName || null,
       registration_number: input.registrationNumber || null,
       billing_address: input.billingAddress || null,
+      delivery_address: input.deliveryAddress || null,
       website: input.website || null,
       status: input.status || "Active",
       credit_limit: input.creditLimit ?? 0,
@@ -1179,8 +1479,11 @@ export async function updateCustomer(
     phone: string;
     terms: string;
     vatNumber: string;
+    vatStatus: string;
+    tradingName: string;
     registrationNumber: string;
     billingAddress: string;
+    deliveryAddress: string;
     website: string;
     status: string;
     creditLimit: number;
@@ -1189,10 +1492,25 @@ export async function updateCustomer(
 ) {
   const { data: existingCustomer } = await supabase
     .from("vyron_customers")
-    .select("id, customer_name, email, phone, xero_contact_id")
+    .select("id, customer_name, email, phone, xero_contact_id, vat_number")
     .eq("id", customerId)
     .eq("company_id", companyId)
     .maybeSingle();
+
+  /**
+   * Only a *changed* VAT number is validated. A handful of records were imported
+   * with a malformed number years before this rule existed; refusing every save
+   * would lock those records out of unrelated edits like a phone number. Leaving
+   * the bad value alone is allowed; replacing it with another bad one is not.
+   */
+  if (input.vatNumber !== undefined) {
+    const incoming = normaliseVatNumber(input.vatNumber);
+    const stored = normaliseVatNumber(existingCustomer?.vat_number);
+    if (incoming !== stored) {
+      const vatError = validateVatNumber(incoming);
+      if (vatError) throw new Error(vatError);
+    }
+  }
 
   const patch: Record<string, unknown> = {};
   if (input.customerName !== undefined) patch.customer_name = input.customerName.trim();
@@ -1204,9 +1522,12 @@ export async function updateCustomer(
   if (input.invoiceEmail !== undefined) patch.invoice_email = input.invoiceEmail;
   if (input.phone !== undefined) patch.phone = input.phone;
   if (input.terms !== undefined) patch.terms = input.terms;
-  if (input.vatNumber !== undefined) patch.vat_number = input.vatNumber;
+  if (input.vatNumber !== undefined) patch.vat_number = normaliseVatNumber(input.vatNumber);
+  if (input.vatStatus !== undefined) patch.vat_status = normaliseVatStatus(input.vatStatus);
+  if (input.tradingName !== undefined) patch.trading_name = input.tradingName;
   if (input.registrationNumber !== undefined) patch.registration_number = input.registrationNumber;
   if (input.billingAddress !== undefined) patch.billing_address = input.billingAddress;
+  if (input.deliveryAddress !== undefined) patch.delivery_address = input.deliveryAddress;
   if (input.website !== undefined) patch.website = input.website;
   if (input.status !== undefined) {
     patch.status = input.status;

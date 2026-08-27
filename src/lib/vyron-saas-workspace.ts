@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { normalizePermissionMap } from "@/lib/vyron-workspace-permissions";
+import { normaliseVatNumber, normaliseVatStatus, validateVatNumber, type VatStatus } from "@/lib/vyron-tax-profile";
 
 export type WorkspaceRole =
   | "OWNER"
@@ -68,6 +69,15 @@ export type WorkspaceCompanyProfile = {
   physicalAddress: string;
   postalAddress: string;
   defaultVatRate: number;
+  vatStatus: VatStatus;
+  incomeTaxNumber: string;
+  website: string;
+  remittanceEmail: string;
+  bankName: string;
+  bankAccountName: string;
+  bankAccountNumber: string;
+  bankBranchCode: string;
+  bankAccountType: string;
   xeroStatus: string;
   packageName: string;
   userLimit: number;
@@ -115,6 +125,15 @@ export type UpdateCompanyProfileInput = {
   physicalAddress?: string;
   postalAddress?: string;
   defaultVatRate?: number;
+  vatStatus?: string;
+  incomeTaxNumber?: string;
+  website?: string;
+  remittanceEmail?: string;
+  bankName?: string;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  bankBranchCode?: string;
+  bankAccountType?: string;
 };
 
 type MemoryUser = {
@@ -226,6 +245,15 @@ function profileFromWorkspace(workspace: WorkspaceRecord, row?: Record<string, u
     physicalAddress: String(row?.physical_address || ""),
     postalAddress: String(row?.postal_address || ""),
     defaultVatRate: Number(row?.default_vat_rate ?? 15),
+    vatStatus: normaliseVatStatus(row?.vat_status),
+    incomeTaxNumber: String(row?.income_tax_number || ""),
+    website: String(row?.website || ""),
+    remittanceEmail: String(row?.remittance_email || ""),
+    bankName: String(row?.bank_name || ""),
+    bankAccountName: String(row?.bank_account_name || ""),
+    bankAccountNumber: String(row?.bank_account_number || ""),
+    bankBranchCode: String(row?.bank_branch_code || ""),
+    bankAccountType: String(row?.bank_account_type || ""),
     xeroStatus: String(row?.xero_status || "Not Connected"),
     packageName: workspace.packageName,
     userLimit: workspace.userLimit,
@@ -261,6 +289,16 @@ function profileFromActiveClient(client: {
     physicalAddress: client.physicalAddress || "",
     postalAddress: client.postalAddress || "",
     defaultVatRate: client.defaultVatRate ?? 15,
+    // The activation record carries no tax profile; it is captured in Company Setup.
+    vatStatus: "Unknown",
+    incomeTaxNumber: "",
+    website: "",
+    remittanceEmail: "",
+    bankName: "",
+    bankAccountName: "",
+    bankAccountNumber: "",
+    bankBranchCode: "",
+    bankAccountType: "",
     xeroStatus: client.xeroStatus || "Not Connected",
     packageName: client.packageName,
     userLimit: client.userLimit ?? 5,
@@ -1242,17 +1280,31 @@ export async function updateWorkspaceCompanyProfile(
   const existing = await getWorkspaceCompanyProfile(workspaceId).catch(() => null);
   if (!existing) throw new Error("Workspace not found.");
 
+  // A malformed VAT number would end up printed on a tax invoice, so it is
+  // rejected here rather than at the form, which the API can be called around.
+  const vatError = validateVatNumber(input.vatNumber);
+  if (vatError) throw new Error(vatError);
+
   const next: WorkspaceCompanyProfile = {
     ...existing,
     companyName: input.companyName.trim(),
     tradingName: input.tradingName.trim(),
-    vatNumber: input.vatNumber?.trim() || "",
+    vatNumber: normaliseVatNumber(input.vatNumber),
     registrationNumber: input.registrationNumber?.trim() || "",
     contactEmail: input.contactEmail?.trim() || existing.contactEmail,
     phone: input.phone?.trim() || existing.phone,
     physicalAddress: input.physicalAddress?.trim() || "",
     postalAddress: input.postalAddress?.trim() || "",
     defaultVatRate: Number(input.defaultVatRate ?? existing.defaultVatRate),
+    vatStatus: input.vatStatus === undefined ? existing.vatStatus : normaliseVatStatus(input.vatStatus),
+    incomeTaxNumber: input.incomeTaxNumber?.trim() || "",
+    website: input.website?.trim() || "",
+    remittanceEmail: input.remittanceEmail?.trim() || "",
+    bankName: input.bankName?.trim() || "",
+    bankAccountName: input.bankAccountName?.trim() || "",
+    bankAccountNumber: input.bankAccountNumber?.trim() || "",
+    bankBranchCode: input.bankBranchCode?.trim() || "",
+    bankAccountType: input.bankAccountType?.trim() || "",
   };
 
   const supabase = isSupabaseServiceRoleConfigured() ? getSupabaseAdmin() : null;
@@ -1290,6 +1342,15 @@ export async function updateWorkspaceCompanyProfile(
         physical_address: next.physicalAddress,
         postal_address: next.postalAddress,
         default_vat_rate: next.defaultVatRate,
+        vat_status: next.vatStatus,
+        income_tax_number: next.incomeTaxNumber || null,
+        website: next.website || null,
+        remittance_email: next.remittanceEmail || null,
+        bank_name: next.bankName || null,
+        bank_account_name: next.bankAccountName || null,
+        bank_account_number: next.bankAccountNumber || null,
+        bank_branch_code: next.bankBranchCode || null,
+        bank_account_type: next.bankAccountType || null,
         updated_at: now,
       })
       .eq("id", workspaceId);

@@ -19,6 +19,9 @@ export type BomHeader = {
   status?: string | null;
   notes?: string | null;
   product_id?: string | null;
+  /** True when the recipe has a pack photo — the list uses it for a thumbnail. */
+  has_image?: boolean | null;
+  image_path?: string | null;
 };
 
 export type BomLine = {

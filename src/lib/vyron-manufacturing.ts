@@ -148,6 +148,27 @@ function roundCost(n: number) {
   return Math.round(n * 100000000) / 100000000;
 }
 
+/**
+ * line_type casing is not consistent in the data: one tenant holds 319
+ * "ingredient" and 1 "packaging" against 11 "Ingredient" and 2 "Packaging".
+ * Comparing case-sensitively silently dropped the lowercase lines out of
+ * production, so a run consumed nothing while still completing. Every
+ * line_type decision in this module goes through these helpers.
+ */
+export function normaliseLineType(value: unknown) {
+  return String(value ?? "").trim().toLowerCase();
+}
+export function isIngredientLineType(value: unknown) {
+  return normaliseLineType(value) === "ingredient";
+}
+export function isPackagingLineType(value: unknown) {
+  return normaliseLineType(value) === "packaging";
+}
+export function isConsumableLineType(value: unknown) {
+  const t = normaliseLineType(value);
+  return t === "ingredient" || t === "packaging";
+}
+
 export function calcYieldStatus(yieldPct: number): string {
   if (yieldPct < 95) return "Under Yield";
   if (yieldPct > 105) return "Above Yield";
@@ -297,7 +318,7 @@ export function scaleBomRequirements(
   planned_value: number;
 }> {
   return lines
-    .filter((l) => ["Ingredient", "Packaging"].includes(String(l.line_type)))
+    .filter((l) => isConsumableLineType(l.line_type))
     .map((line, idx) => {
       // Six decimals for the quantity, eight for the cost — the precision the
       // BOM columns actually hold, so a scaled requirement matches the recipe.
@@ -322,8 +343,7 @@ export async function resolveStockItemForLine(
   companyId: string,
   line: { line_type: string; ingredient_id: string | null; line_name: string; unit: string; unit_cost: number }
 ) {
-  const entityType: StockEntityType =
-    line.line_type === "Packaging" ? "packaging" : "ingredient";
+  const entityType: StockEntityType = isPackagingLineType(line.line_type) ? "packaging" : "ingredient";
 
   if (line.ingredient_id) {
     const { data: stock } = await supabase
@@ -522,18 +542,18 @@ export async function createProductionRun(
    * it would complete "successfully" having posted nothing. Refuse it at source
    * rather than let it become a run that silently does nothing.
    */
-  if (!scaled.some((l) => l.line_type === "Ingredient" || l.line_type === "Packaging")) {
+  if (!scaled.some((l) => isConsumableLineType(l.line_type))) {
     throw new Error(
       `${source.bom.bom_name || "This BOM"} has no ingredient or packaging lines, so a production run would not consume any stock. Add lines to the BOM first.`
     );
   }
 
-  const ingredientPlanned = scaled.filter((l) => l.line_type === "Ingredient").reduce((s, l) => s + l.planned_value, 0);
-  const packagingPlanned = scaled.filter((l) => l.line_type === "Packaging").reduce((s, l) => s + l.planned_value, 0);
+  const ingredientPlanned = scaled.filter((l) => isIngredientLineType(l.line_type)).reduce((s, l) => s + l.planned_value, 0);
+  const packagingPlanned = scaled.filter((l) => isPackagingLineType(l.line_type)).reduce((s, l) => s + l.planned_value, 0);
   const labourRows = input.labour?.length
     ? input.labour
     : source.lines
-        .filter((l) => l.line_type === "Labour")
+        .filter((l) => normaliseLineType(l.line_type) === "labour")
         .map((l) => ({
           description: l.line_name,
           hours: l.unit === "hour" ? Number(l.quantity) : 1,
@@ -734,11 +754,23 @@ export async function completeProductionRun(
    * that moved nothing.
    */
   const consumable = (run.lines || []).filter(
-    (l) => (l.line_type === "Ingredient" || l.line_type === "Packaging") && Number(l.planned_qty || 0) > 0
+    (l) => isConsumableLineType(l.line_type) && Number(l.planned_qty || 0) > 0
   );
   if (!consumable.length && !run.product_id) {
     throw new Error(
       `${run.run_number} has no ingredient or packaging lines and no linked product, so completing it would not move any stock. Check the BOM this run was created from.`
+    );
+  }
+
+  /*
+   * Producing units requires somewhere to receive them. Without a product the
+   * finished-goods receipt was simply skipped, so a run could report producing
+   * 17 units while finished-goods stock never moved. Refuse instead: a run must
+   * never claim output it cannot post.
+   */
+  if (roundQty(input.actual_qty) > 0 && !run.product_id) {
+    throw new Error(
+      "Production cannot be completed because the BOM is not linked to a finished product. Link the BOM to a product, then complete this run."
     );
   }
 
@@ -800,8 +832,8 @@ export async function completeProductionRun(
       .eq("id", line.id)
       .eq("company_id", companyId);
 
-    if (line.line_type === "Ingredient") ingredientActual += actualValue;
-    else if (line.line_type === "Packaging") packagingActual += actualValue;
+    if (isIngredientLineType(line.line_type)) ingredientActual += actualValue;
+    else if (isPackagingLineType(line.line_type)) packagingActual += actualValue;
     actualUsage += actualValue;
 
     let stockItemId = line.stock_item_id;
@@ -817,8 +849,7 @@ export async function completeProductionRun(
     }
     if (stockItemId && actualLineQty > 0) {
       const avgCost = unitCost;
-      const entityType: StockEntityType =
-        line.line_type === "Packaging" ? "packaging" : "ingredient";
+      const entityType: StockEntityType = isPackagingLineType(line.line_type) ? "packaging" : "ingredient";
       await postInventoryTransaction(supabase, {
         companyId: run.company_id,
         transactionType: "Consumption",
@@ -996,36 +1027,21 @@ export async function completeProductionRun(
     });
   }
 
-  const consumptionLines: Array<{
-    itemId: string;
-    itemName: string;
-    itemType: "raw_material" | "packaging";
-    qtyOut: number;
-    unitCost: number;
-  }> = [];
-  for (const line of run.lines || []) {
-    const override = input.line_actuals?.find((l) => l.line_id === line.id);
-    const actualLineQty = round4(override?.actual_qty ?? line.planned_qty);
-    if (actualLineQty <= 0) continue;
-    consumptionLines.push({
-      itemId: String(line.ingredient_id || line.stock_item_id || line.id),
-      itemName: line.line_name,
-      itemType: line.line_type === "Packaging" ? "packaging" : "raw_material",
-      qtyOut: actualLineQty,
-      unitCost: Number(line.unit_cost || 0),
-    });
-  }
-
-  await syncManufacturingStockLayer(supabase, run.company_id, {
-    runId,
-    runNumber: run.run_number,
-    runDate: new Date().toISOString().slice(0, 10),
-    productId: run.product_id,
-    productName: String(run.product_name_snapshot || "Finished Good"),
-    actualQty,
-    costPerUnit,
-    consumptionLines,
-  });
+  /*
+   * The legacy manufacturing stock layer used to run here as well, writing
+   * MANUFACTURING_OUTPUT rows into vyron_stock_movements and updating
+   * vyron_finished_goods. That produced a second, competing stock balance:
+   * because it ran unconditionally while the authoritative receipt was gated on
+   * product_id, six completed runs left their entire output stranded in that
+   * layer as rows named "Finished Good", against a vyron_finished_goods table
+   * with no rows at all — invisible to the Stock Master.
+   *
+   * Production now posts only through vyron_cost_inventory_transactions ->
+   * vyron_cost_stock_ledger -> vyron_cost_stock_items, which is the single
+   * source of truth. The legacy writer has been removed now that production was
+   * its only caller; vyron_stock_movements and vyron_finished_goods remain,
+   * because other subsystems still read them.
+   */
 
   return getProductionRun(supabase, runId, companyId);
 }
@@ -1062,76 +1078,6 @@ async function findFinishedGoodForCompany(
     return null;
   }
   return rows.find((row) => row.company_id === companyId) || null;
-}
-
-async function syncManufacturingStockLayer(
-  supabase: SupabaseClient,
-  companyId: string,
-  params: {
-    runId: string;
-    runNumber: string;
-    runDate: string;
-    productId?: string | null;
-    productName: string;
-    actualQty: number;
-    costPerUnit: number;
-    consumptionLines: Array<{
-      itemId: string;
-      itemName: string;
-      itemType: "raw_material" | "packaging";
-      qtyOut: number;
-      unitCost: number;
-    }>;
-  }
-) {
-  for (const line of params.consumptionLines) {
-    await supabase.from("vyron_stock_movements").insert({
-      company_id: companyId,
-      movement_date: params.runDate,
-      item_type: line.itemType,
-      item_id: line.itemId,
-      item_name: line.itemName,
-      movement_type: "MANUFACTURING_CONSUMPTION",
-      reference_number: params.runNumber,
-      quantity_in: 0,
-      quantity_out: line.qtyOut,
-      unit_cost: line.unitCost,
-      related_document_id: params.runId,
-      notes: "Manufacturing batch completion",
-    });
-  }
-
-  if (params.actualQty <= 0) return;
-
-  const fg = await findFinishedGoodForCompany(supabase, companyId, params.productName, params.productId);
-  if (fg) {
-    const nextStock = round4(Number(fg.current_stock || 0) + params.actualQty);
-    const nextValue = round2(nextStock * params.costPerUnit);
-    await supabase
-      .from("vyron_finished_goods")
-      .update({
-        current_stock: nextStock,
-        stock_value: nextValue,
-        latest_actual_cost: params.costPerUnit,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", fg.id);
-  }
-
-  await supabase.from("vyron_stock_movements").insert({
-    company_id: companyId,
-    movement_date: params.runDate,
-    item_type: "finished_good",
-    item_id: fg?.id || params.runId,
-    item_name: params.productName,
-    movement_type: "MANUFACTURING_OUTPUT",
-    reference_number: params.runNumber,
-    quantity_in: params.actualQty,
-    quantity_out: 0,
-    unit_cost: params.costPerUnit,
-    related_document_id: params.runId,
-    notes: "Manufacturing batch completion",
-  });
 }
 
 export async function reverseProductionRun(
@@ -1193,7 +1139,7 @@ export async function reverseProductionRun(
     await supabase.from("vyron_stock_movements").insert({
       company_id: run.company_id,
       movement_date: new Date().toISOString().slice(0, 10),
-      item_type: line.line_type === "Packaging" ? "packaging" : "raw_material",
+      item_type: isPackagingLineType(line.line_type) ? "packaging" : "raw_material",
       item_id: String(line.ingredient_id || line.stock_item_id || line.id),
       item_name: line.line_name,
       movement_type: "MANUFACTURING_REVERSAL",

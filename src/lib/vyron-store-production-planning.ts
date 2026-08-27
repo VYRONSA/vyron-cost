@@ -239,8 +239,10 @@ export function buildIngredientRequirements(
     const scale = Number(row.planned_qty || 0) / yieldQty;
 
     for (const line of bomPack.lines) {
-      const lineType = String(line.line_type || "Ingredient");
-      if (lineType !== "Ingredient" && !line.ingredient_id) continue;
+      // Same casing trap as the manufacturing path: the data holds both
+      // "Ingredient" and "ingredient", so compare case-insensitively.
+      const lineType = String(line.line_type || "Ingredient").trim().toLowerCase();
+      if (lineType !== "ingredient" && !line.ingredient_id) continue;
 
       const key = line.ingredient_id ? String(line.ingredient_id) : String(line.line_name);
       const lineRequired = round4(

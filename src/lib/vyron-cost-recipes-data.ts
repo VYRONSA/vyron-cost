@@ -55,6 +55,10 @@ export type RecipeRecord = {
   status: string | null;
   notes: string | null;
   product_id: string | null;
+  /** Storage reference for the pack photo; the bytes live in the documents bucket. */
+  image_bucket: string | null;
+  image_path: string | null;
+  image_mime: string | null;
   lines?: RecipeLineRecord[];
   components?: RecipeComponentRecord[];
 };
@@ -167,6 +171,9 @@ function mapBomRow(row: Record<string, unknown>, lines?: RecipeLineRecord[]): Re
     status: row.status ? String(row.status) : "Draft",
     notes: row.notes ? String(row.notes) : null,
     product_id: row.product_id ? String(row.product_id) : null,
+    image_bucket: row.image_bucket ? String(row.image_bucket) : null,
+    image_path: row.image_path ? String(row.image_path) : null,
+    image_mime: row.image_mime ? String(row.image_mime) : null,
     lines,
   };
 }
@@ -966,6 +973,7 @@ export function recipeToBomHeader(recipe: RecipeRecord) {
     status: recipe.status,
     notes: recipe.notes,
     product_id: recipe.product_id,
+    has_image: Boolean(recipe.image_path),
   };
 }
 

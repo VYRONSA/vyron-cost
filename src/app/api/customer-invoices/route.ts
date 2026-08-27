@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       invoiceDate: body.invoiceDate || undefined,
       dueDate: body.dueDate || body.due_date || undefined,
       notes: body.notes || undefined,
+      pricesIncludeTax: Boolean(body.pricesIncludeTax),
       lines: Array.isArray(body.lines) ? body.lines : [],
     });
     return NextResponse.json({ ok: true, invoice });

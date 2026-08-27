@@ -8,15 +8,30 @@ import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import type { CustomerRow } from "@/lib/vyron-customer-invoices";
+import {
+  VAT_STATUSES,
+  VAT_STATUS_LABELS,
+  normaliseVatNumber,
+  normaliseVatStatus,
+  validateVatNumber,
+  vatStatusWarning,
+  type VatStatus,
+} from "@/lib/vyron-tax-profile";
 
 type CustomerForm = {
   customerName: string;
+  tradingName: string;
   category: string;
   contactEmail: string;
   invoiceEmail: string;
   phone: string;
   terms: string;
   vatNumber: string;
+  vatStatus: VatStatus;
+  registrationNumber: string;
+  billingAddress: string;
+  deliveryAddress: string;
+  website: string;
   status: string;
   creditLimit: string;
   onHold: boolean;
@@ -25,12 +40,21 @@ type CustomerForm = {
 function toForm(customer: CustomerRow): CustomerForm {
   return {
     customerName: customer.customer_name || "",
+    tradingName: customer.trading_name || "",
     category: customer.category || customer.contact_person || "Customer",
     contactEmail: customer.email || "",
     invoiceEmail: customer.invoice_email || customer.email || "",
     phone: customer.phone || "",
     terms: customer.terms || "30 Days",
-    vatNumber: customer.vat_number || "",
+    // Legacy quick-add wrote the literal "N/A" into this field. It is not a VAT
+    // number and must never reach an invoice, so it is read back as blank; the
+    // VAT status below is what actually records "no VAT number".
+    vatNumber: /^n\/?a$/i.test(String(customer.vat_number || "").trim()) ? "" : customer.vat_number || "",
+    vatStatus: normaliseVatStatus(customer.vat_status),
+    registrationNumber: customer.registration_number || "",
+    billingAddress: customer.billing_address || "",
+    deliveryAddress: customer.delivery_address || "",
+    website: customer.website || "",
     status: customer.status || (customer.active ? "Active" : "Inactive"),
     creditLimit: String(Number(customer.credit_limit || 0)),
     onHold: Boolean(customer.on_hold),
@@ -41,6 +65,11 @@ export default function CustomerDetailPageClient({ customer }: { customer: Custo
   const router = useRouter();
   const { canEdit, canDelete } = useModulePermissions("customers");
   const [form, setForm] = useState<CustomerForm>(() => toForm(customer));
+  // What was stored when this page loaded. A pre-existing malformed number is
+  // left alone rather than blocking unrelated edits; only a change is validated.
+  const [savedVatNumber, setSavedVatNumber] = useState(() => toForm(customer).vatNumber);
+  const vatChanged = normaliseVatNumber(form.vatNumber) !== normaliseVatNumber(savedVatNumber);
+  const vatError = vatChanged ? validateVatNumber(form.vatNumber) : "";
   const [message, setMessage] = useState("");
   const deleteConfirm = useConfirmDelete("Delete this customer? Customers with invoices will be archived.");
 
@@ -58,6 +87,10 @@ export default function CustomerDetailPageClient({ customer }: { customer: Custo
       setMessage("Customer name is required.");
       return;
     }
+    if (vatError) {
+      setMessage(vatError);
+      return;
+    }
 
     const response = await fetch(`/api/customers/${customer.id}`, {
       method: "PATCH",
@@ -70,6 +103,7 @@ export default function CustomerDetailPageClient({ customer }: { customer: Custo
       return;
     }
 
+    setSavedVatNumber(form.vatNumber);
     setMessage("Customer saved.");
   }
 
@@ -105,6 +139,13 @@ export default function CustomerDetailPageClient({ customer }: { customer: Custo
           <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5" value={form.customerName} onChange={(event) => update("customerName", event.target.value)} disabled={!canEdit} />
         </label>
         <label className="text-sm font-black text-slate-600">
+          Trading Name
+          <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5" value={form.tradingName} onChange={(event) => update("tradingName", event.target.value)} disabled={!canEdit} />
+          <span className="mt-1.5 block text-[11px] font-semibold text-slate-500">
+            Only where it differs from the registered name above.
+          </span>
+        </label>
+        <label className="text-sm font-black text-slate-600">
           Category
           <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5" value={form.category} onChange={(event) => update("category", event.target.value)} disabled={!canEdit} />
         </label>
@@ -129,10 +170,6 @@ export default function CustomerDetailPageClient({ customer }: { customer: Custo
             <option>21 Days</option>
             <option>30 Days</option>
           </select>
-        </label>
-        <label className="text-sm font-black text-slate-600">
-          VAT Number
-          <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5" value={form.vatNumber} onChange={(event) => update("vatNumber", event.target.value)} disabled={!canEdit} />
         </label>
         <label className="text-sm font-black text-slate-600">
           Status
@@ -163,6 +200,93 @@ export default function CustomerDetailPageClient({ customer }: { customer: Custo
           />
           Customer On Hold
         </label>
+      </div>
+
+      <div className="mt-8 rounded-2xl border border-violet-100 bg-violet-50/40 p-5">
+        <h2 className="text-base font-black text-slate-900">Tax &amp; Legal Details</h2>
+        <p className="mt-1 text-sm font-semibold text-slate-600">
+          A full tax invoice over R5,000 must show the recipient&rsquo;s name, address, and &mdash; where they are a
+          registered vendor &mdash; their VAT number. Below R5,000 an abridged invoice may omit all three.
+        </p>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <label className="text-sm font-black text-slate-600">
+            VAT Status
+            <select
+              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5"
+              value={form.vatStatus}
+              onChange={(event) => update("vatStatus", event.target.value)}
+              disabled={!canEdit}
+            >
+              {VAT_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {VAT_STATUS_LABELS[status]}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1.5 block text-[11px] font-semibold text-slate-500">
+              Registration is never assumed from a VAT number alone.
+            </span>
+          </label>
+
+          <label className="text-sm font-black text-slate-600">
+            VAT Number
+            <input
+              className={
+                "mt-2 w-full rounded-xl border px-3 py-2.5 " +
+                (vatError ? "border-red-300" : "border-slate-200")
+              }
+              value={form.vatNumber}
+              onChange={(event) => update("vatNumber", event.target.value)}
+              disabled={!canEdit}
+            />
+            {vatError ? (
+              <span className="mt-1.5 block text-[11px] font-bold text-red-600">{vatError}</span>
+            ) : vatStatusWarning(form.vatStatus, form.vatNumber) ? (
+              <span className="mt-1.5 block text-[11px] font-bold text-amber-700">
+                {vatStatusWarning(form.vatStatus, form.vatNumber)}
+              </span>
+            ) : null}
+          </label>
+
+          <label className="text-sm font-black text-slate-600">
+            Registration Number
+            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5" value={form.registrationNumber} onChange={(event) => update("registrationNumber", event.target.value)} disabled={!canEdit} />
+          </label>
+
+          <label className="text-sm font-black text-slate-600">
+            Website
+            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5" value={form.website} onChange={(event) => update("website", event.target.value)} disabled={!canEdit} />
+          </label>
+
+          <label className="text-sm font-black text-slate-600 md:col-span-2">
+            Billing Address
+            <textarea
+              rows={3}
+              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"
+              value={form.billingAddress}
+              onChange={(event) => update("billingAddress", event.target.value)}
+              disabled={!canEdit}
+            />
+            <span className="mt-1.5 block text-[11px] font-semibold text-slate-500">
+              Printed on a full tax invoice.
+            </span>
+          </label>
+
+          <label className="text-sm font-black text-slate-600 md:col-span-2">
+            Delivery Address
+            <textarea
+              rows={3}
+              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"
+              value={form.deliveryAddress}
+              onChange={(event) => update("deliveryAddress", event.target.value)}
+              disabled={!canEdit}
+            />
+            <span className="mt-1.5 block text-[11px] font-semibold text-slate-500">
+              Only where goods go somewhere other than the billing address.
+            </span>
+          </label>
+        </div>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">

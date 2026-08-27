@@ -7,6 +7,15 @@ import { VYRON_BTN } from "@/components/vyron-ui";
 import type { CompanyBranding, LogoPosition, LogoSizePreset } from "@/lib/platform/branding";
 import LogoUploadCard, { type LogoToast } from "@/components/admin/LogoUploadCard";
 import { PREVIEW_DOCUMENT_TYPES, type PreviewDocumentType } from "@/lib/platform/documents/buildPreviewDocumentModel";
+import {
+  VAT_STATUSES,
+  VAT_STATUS_LABELS,
+  validateVatNumber,
+  vatStatusWarning,
+} from "@/lib/vyron-tax-profile";
+
+const INPUT_CLASS =
+  "mt-2 w-full rounded-xl border bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-violet-400";
 
 const LOGO_POSITIONS: { value: LogoPosition; label: string }[] = [
   { value: "top_left", label: "Top Left" },
@@ -36,6 +45,15 @@ const emptyProfile: WorkspaceCompanyProfile = {
   physicalAddress: "",
   postalAddress: "",
   defaultVatRate: 15,
+  vatStatus: "Unknown",
+  incomeTaxNumber: "",
+  website: "",
+  remittanceEmail: "",
+  bankName: "",
+  bankAccountName: "",
+  bankAccountNumber: "",
+  bankBranchCode: "",
+  bankAccountType: "",
   xeroStatus: "Not Connected",
   packageName: "Professional",
   userLimit: 5,
@@ -194,6 +212,12 @@ export default function ClientCompanySetupClient() {
       setMessage("You do not have permission to edit company setup.");
       return;
     }
+    // A malformed VAT number would be printed on a tax invoice, so the save stops here.
+    const vatError = validateVatNumber(profile.vatNumber);
+    if (vatError) {
+      setMessage(vatError);
+      return;
+    }
     setSaving(true);
     setMessage(null);
     const res = await fetch("/api/workspace/admin/company", {
@@ -209,6 +233,15 @@ export default function ClientCompanySetupClient() {
         physicalAddress: profile.physicalAddress,
         postalAddress: profile.postalAddress,
         defaultVatRate: profile.defaultVatRate,
+        vatStatus: profile.vatStatus,
+        incomeTaxNumber: profile.incomeTaxNumber,
+        website: profile.website,
+        remittanceEmail: profile.remittanceEmail,
+        bankName: profile.bankName,
+        bankAccountName: profile.bankAccountName,
+        bankAccountNumber: profile.bankAccountNumber,
+        bankBranchCode: profile.bankBranchCode,
+        bankAccountType: profile.bankAccountType,
       }),
     });
     const data = await res.json();
@@ -299,11 +332,49 @@ export default function ClientCompanySetupClient() {
       <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
         <Field label="Company Name" value={profile.companyName} onChange={(v) => setProfile((p) => ({ ...p, companyName: v }))} />
         <Field label="Trading Name" value={profile.tradingName} onChange={(v) => setProfile((p) => ({ ...p, tradingName: v }))} />
-        <Field label="VAT Number" value={profile.vatNumber} onChange={(v) => setProfile((p) => ({ ...p, vatNumber: v }))} />
-        <Field label="Registration Number" value={profile.registrationNumber} onChange={(v) => setProfile((p) => ({ ...p, registrationNumber: v }))} />
+        <SelectField
+          label="VAT Status"
+          value={profile.vatStatus}
+          options={VAT_STATUSES.map((status) => ({ value: status, label: VAT_STATUS_LABELS[status] }))}
+          onChange={(v) => setProfile((p) => ({ ...p, vatStatus: v as typeof p.vatStatus }))}
+          hint="Registration is never assumed from a VAT number alone."
+        />
+        <Field
+          label="VAT Number"
+          value={profile.vatNumber}
+          onChange={(v) => setProfile((p) => ({ ...p, vatNumber: v }))}
+          error={validateVatNumber(profile.vatNumber)}
+          warning={vatStatusWarning(profile.vatStatus, profile.vatNumber)}
+          hint="Required on a full tax invoice — VAT Act s20(4)."
+        />
+        <Field
+          label="Registration Number"
+          value={profile.registrationNumber}
+          onChange={(v) => setProfile((p) => ({ ...p, registrationNumber: v }))}
+          hint="Business identification. Not a SARS tax-invoice requirement."
+        />
+        <Field
+          label="Income Tax Number"
+          value={profile.incomeTaxNumber}
+          onChange={(v) => setProfile((p) => ({ ...p, incomeTaxNumber: v }))}
+          hint="Business identification. Not a SARS tax-invoice requirement."
+        />
         <Field label="Contact Email" value={profile.contactEmail} onChange={(v) => setProfile((p) => ({ ...p, contactEmail: v }))} />
         <Field label="Phone" value={profile.phone} onChange={(v) => setProfile((p) => ({ ...p, phone: v }))} />
-        <Field label="Physical Address" value={profile.physicalAddress} onChange={(v) => setProfile((p) => ({ ...p, physicalAddress: v }))} className="md:col-span-2" />
+        <Field label="Website" value={profile.website} onChange={(v) => setProfile((p) => ({ ...p, website: v }))} />
+        <Field
+          label="Remittance Email"
+          value={profile.remittanceEmail}
+          onChange={(v) => setProfile((p) => ({ ...p, remittanceEmail: v }))}
+          hint="Where customers send proof of payment."
+        />
+        <Field
+          label="Physical Address"
+          value={profile.physicalAddress}
+          onChange={(v) => setProfile((p) => ({ ...p, physicalAddress: v }))}
+          className="md:col-span-2"
+          hint="Required on a full tax invoice — VAT Act s20(4)."
+        />
         <Field label="Postal Address" value={profile.postalAddress} onChange={(v) => setProfile((p) => ({ ...p, postalAddress: v }))} className="md:col-span-2" />
         <Field
           label="Default VAT Rate (%)"
@@ -314,6 +385,25 @@ export default function ClientCompanySetupClient() {
         <ReadOnlyField label="Xero Status" value={profile.xeroStatus} />
         <ReadOnlyField label="Package" value={profile.packageName} />
         <ReadOnlyField label="User Limit" value={String(profile.userLimit)} />
+      </section>
+
+      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
+        <div className="md:col-span-2">
+          <h2 className="text-lg font-black text-slate-950">Banking Details</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-500">
+            Printed on invoices so customers know where to pay. SARS does not require these on a tax invoice.
+          </p>
+        </div>
+        <Field label="Bank Name" value={profile.bankName} onChange={(v) => setProfile((p) => ({ ...p, bankName: v }))} />
+        <Field label="Account Name" value={profile.bankAccountName} onChange={(v) => setProfile((p) => ({ ...p, bankAccountName: v }))} />
+        <Field label="Account Number" value={profile.bankAccountNumber} onChange={(v) => setProfile((p) => ({ ...p, bankAccountNumber: v }))} />
+        <Field label="Branch Code" value={profile.bankBranchCode} onChange={(v) => setProfile((p) => ({ ...p, bankBranchCode: v }))} />
+        <Field
+          label="Account Type"
+          value={profile.bankAccountType}
+          onChange={(v) => setProfile((p) => ({ ...p, bankAccountType: v }))}
+          className="md:col-span-2"
+        />
       </section>
 
       <section className="rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm">
@@ -579,12 +669,20 @@ function Field({
   onChange,
   className,
   type = "text",
+  hint,
+  error,
+  warning,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   className?: string;
   type?: string;
+  hint?: string;
+  /** Malformed input. The save is blocked while this is set. */
+  error?: string;
+  /** Inconsistent but still savable — the user may simply not know yet. */
+  warning?: string;
 }) {
   return (
     <label className={className}>
@@ -593,8 +691,49 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full rounded-xl border border-violet-100 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-violet-400"
+        className={INPUT_CLASS + (error ? " border-red-300" : " border-violet-100")}
       />
+      {error ? <span className="mt-1.5 block text-[11px] font-bold text-red-600">{error}</span> : null}
+      {!error && warning ? (
+        <span className="mt-1.5 block text-[11px] font-bold text-amber-700">{warning}</span>
+      ) : null}
+      {!error && !warning && hint ? (
+        <span className="mt-1.5 block text-[11px] font-semibold text-slate-500">{hint}</span>
+      ) : null}
+    </label>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+  className,
+  hint,
+}: {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+  className?: string;
+  hint?: string;
+}) {
+  return (
+    <label className={className}>
+      <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={INPUT_CLASS + " border-violet-100"}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      {hint ? <span className="mt-1.5 block text-[11px] font-semibold text-slate-500">{hint}</span> : null}
     </label>
   );
 }

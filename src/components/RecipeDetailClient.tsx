@@ -65,6 +65,7 @@ export default function RecipeDetailClient({
   const [lines, setLines] = useState<BomLine[]>(initialLines ?? []);
   const [linkedProduct, setLinkedProduct] = useState<ProductLink | null>(null);
   const [components, setComponents] = useState<RecipeComponentRecord[]>([]);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -103,6 +104,13 @@ export default function RecipeDetailClient({
         setBom(header);
         setLines((data.recipe.lines || []).map(recipeLineToBomLine));
         setComponents(data.recipe.components || []);
+
+        if (data.recipe.image_path) {
+          const img = await fetch(`/api/recipes/${recipeId}/image`).then((r) => r.json()).catch(() => null);
+          setImageUrl(img?.ok && img.image?.url ? img.image.url : null);
+        } else {
+          setImageUrl(null);
+        }
 
         if (header.product_id) {
           const prodRes = await fetch("/api/products").then((r) => r.json());
@@ -389,6 +397,24 @@ export default function RecipeDetailClient({
               </div>
             ) : null}
       
+            {imageUrl ? (
+              <div className="overflow-hidden rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(81,63,190,0.08)] sm:p-6">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageUrl}
+                    alt={`${bom.bom_name} pack`}
+                    className="h-52 w-full rounded-2xl border border-violet-100 object-cover sm:h-40 sm:w-64"
+                  />
+                  <div className="min-w-0">
+                    <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Product / pack photo</div>
+                    <h2 className="mt-1 truncate text-2xl font-black text-slate-900">{bom.bom_name}</h2>
+                    <p className="mt-1 text-sm font-bold text-slate-500">{bom.category || "Uncategorised"}</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             <div className="grid gap-3 sm:grid-cols-2 md:gap-5 lg:grid-cols-5">
               {[
                 ["Ingredient Cost", formatMoney(ingredientCost), "text-slate-900"],

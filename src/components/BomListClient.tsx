@@ -32,6 +32,9 @@ function mapRecipeRow(row: Record<string, unknown>): BomHeader {
     status: row.status ? String(row.status) : "Draft",
     notes: row.notes ? String(row.notes) : null,
     product_id: row.product_id ? String(row.product_id) : null,
+    image_bucket: row.image_bucket ? String(row.image_bucket) : null,
+    image_path: row.image_path ? String(row.image_path) : null,
+    image_mime: row.image_mime ? String(row.image_mime) : null,
   });
 }
 
@@ -109,6 +112,30 @@ export default function BomListClient({
     }, 250);
     return () => clearTimeout(timer);
   }, [loadRecipes]);
+
+  /**
+   * Thumbnails need a signed URL each, so only recipes that actually have a
+   * photo are asked for one. Recipes without an image cost nothing and render
+   * exactly as they did before.
+   */
+  const [thumbs, setThumbs] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const withImage = items.filter((bom) => bom.image_path).map((bom) => bom.id);
+    if (!withImage.length) return;
+    let cancelled = false;
+    void Promise.all(
+      withImage.map(async (id) => {
+        const data = await fetch(`/api/recipes/${id}/image`).then((r) => r.json()).catch(() => null);
+        return [id, data?.ok && data.image?.url ? (data.image.url as string) : ""] as const;
+      })
+    ).then((pairs) => {
+      if (cancelled) return;
+      setThumbs(Object.fromEntries(pairs.filter(([, url]) => url)));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [items]);
 
   const activeFilters = useMemo(() => {
     const chips: { key: string; label: string; clear: () => void }[] = [];
@@ -371,7 +398,17 @@ export default function BomListClient({
 
             {filtered.map((bom) => (
               <div key={bom.id} className="grid grid-cols-[260px_170px_120px_130px_130px_100px_190px] items-center border-t border-slate-100 px-5 py-4 text-sm">
-                <Link href={`/recipes/${bom.id}`} className="font-black text-violet-700">{bom.bom_name}</Link>
+                <div className="flex min-w-0 items-center gap-3">
+                  {thumbs[bom.id] ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={thumbs[bom.id]}
+                      alt=""
+                      className="h-10 w-10 shrink-0 rounded-xl border border-slate-100 object-cover"
+                    />
+                  ) : null}
+                  <Link href={`/recipes/${bom.id}`} className="truncate font-black text-violet-700">{bom.bom_name}</Link>
+                </div>
                 <div className="font-bold text-slate-500">{bom.category || "Uncategorised"}</div>
                 <div className="font-bold text-slate-500">{Number(bom.yield_qty || 0).toFixed(2)} {bom.yield_unit || ""}</div>
                 <div className="font-black text-slate-900">{formatMoney(bom.cost_per_unit)}</div>

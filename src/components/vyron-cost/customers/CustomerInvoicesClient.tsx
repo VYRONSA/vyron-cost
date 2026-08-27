@@ -3,12 +3,20 @@
 
 import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Mail, Plus, Printer, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, Mail, Plus, Printer, Save, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { readActiveClient } from "@/lib/vyron-developer-client";
 import { useInventoryPermissions, useInvoicePermissions } from "@/hooks/useModulePermissions";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import type { InvoiceStockPostingStatus } from "@/lib/vyron-invoice-stock-status";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import {
+  TAX_TREATMENTS,
+  TAX_TREATMENT_LABELS,
+  normaliseTaxTreatment,
+  treatmentCarriesRate,
+  type TaxTreatment,
+} from "@/lib/vyron-invoice-tax";
 import { ItemLookupField } from "@/components/vyron-platform/item-lookup/ItemLookupField";
 import type { ItemLookupResult } from "@/lib/platform/item-lookup/ItemLookupTypes";
 import { DocumentPdfActions } from "@/components/vyron-platform/documents/DocumentPdfActions";
@@ -23,7 +31,15 @@ type InvoiceLine = {
   unitPrice: number;
   unitCost: number;
   vatRate: number;
+  taxTreatment: TaxTreatment;
 };
+
+/**
+ * What the form pre-fills a new line with. The stored rate on a saved line always
+ * wins, and the server recomputes from the workspace's configured rate on save —
+ * this is a starting value for typing, not the rate that gets charged.
+ */
+const DEFAULT_VAT_RATE = 15;
 
 type CustomerInvoice = {
   id: string;
@@ -45,6 +61,10 @@ type CustomerInvoice = {
   stockReversed?: boolean;
   stockPostingStatus?: InvoiceStockPostingStatus;
   salesValue?: number;
+  taxTotal?: number;
+  totalInclTax?: number;
+  /** Set once the invoice left Draft; its tax identity is frozen from then on. */
+  taxSnapshotAt?: string | null;
   costValue?: number;
   grossProfit?: number;
   gpPercentage?: number;
@@ -104,7 +124,8 @@ function defaultLine(): InvoiceLine {
     qty: 1,
     unitPrice: 0,
     unitCost: 0,
-    vatRate: 15,
+    vatRate: DEFAULT_VAT_RATE,
+    taxTreatment: "Standard",
   };
 }
 
@@ -114,10 +135,19 @@ function parseTermDays(terms: string) {
   return match ? Number(match[0]) : 30;
 }
 
+/**
+ * A preview of what the server will calculate.
+ *
+ * The authority is the VAT engine on the server — this exists so the operator can
+ * see the figures while typing. A non-standard treatment carries no VAT here for
+ * the same reason it carries none there: zero rated, exempt and out-of-scope
+ * supplies are not taxed, whatever rate is left on the row.
+ */
 function lineTotals(line: InvoiceLine) {
   const qty = Number(line.qty || 0);
   const excl = qty * Number(line.unitPrice || 0);
-  const vat = excl * (Number(line.vatRate || 0) / 100);
+  const rate = treatmentCarriesRate(line.taxTreatment ?? "Standard") ? Number(line.vatRate || 0) : 0;
+  const vat = excl * (rate / 100);
   const total = excl + vat;
   const cogs = qty * Number(line.unitCost || 0);
   const gp = excl - cogs;
@@ -139,16 +169,23 @@ function invoiceTotals(lines: InvoiceLine[]) {
   );
 }
 
+/**
+ * What a saved invoice actually carries.
+ *
+ * Read from the stored header, not recomputed from the lines in the browser: the
+ * server is where VAT is decided, and this used to fall back to `excl * 0.15`,
+ * which asserted a 15% rate on invoices that may carry none. An invoice with no
+ * lines loaded reports its stored VAT, whatever that is.
+ */
 function displayInvoiceTotals(invoice: CustomerInvoice) {
-  if (invoice.lines.length > 0) return invoiceTotals(invoice.lines);
   const excl = Number(invoice.salesValue || 0);
-  const vat = excl * 0.15;
+  const vat = Number(invoice.taxTotal || 0);
   return {
     excl,
     vat,
-    total: excl + vat,
+    total: Number(invoice.totalInclTax ?? excl + vat),
     cogs: Number(invoice.costValue || 0),
-    gp: Number(invoice.grossProfit ?? excl - Number(invoice.costValue || 0)),
+    gp: Number(invoice.grossProfit || 0),
   };
 }
 
@@ -171,7 +208,10 @@ function mapApiInvoiceLine(row: Record<string, unknown>): InvoiceLine {
     qty: Number(row.quantity || 0),
     unitPrice: Number(row.selling_price || 0),
     unitCost: Number(row.cost_per_unit || 0),
-    vatRate: 15,
+    // A line that predates the VAT engine has no stored rate; show the workspace
+    // default so the row renders, but its treatment stays whatever was recorded.
+    vatRate: row.tax_rate === null || row.tax_rate === undefined ? DEFAULT_VAT_RATE : Number(row.tax_rate),
+    taxTreatment: normaliseTaxTreatment(row.tax_treatment) ?? "Standard",
   };
 }
 
@@ -196,6 +236,9 @@ function mapApiInvoice(row: Record<string, unknown>, lines: InvoiceLine[] = []):
     stockReversed,
     stockPostingStatus: stockPostingStatusFor({ stockPosted, stockReversed }),
     salesValue: Number(row.sales_value || 0),
+    taxTotal: Number(row.tax_total || 0),
+    totalInclTax: Number(row.total_incl_tax ?? Number(row.sales_value || 0) + Number(row.tax_total || 0)),
+    taxSnapshotAt: row.tax_snapshot_at ? String(row.tax_snapshot_at) : null,
     costValue: Number(row.cost_value || 0),
     grossProfit: Number(row.gross_profit || 0),
     gpPercentage: Number(row.gp_percentage || 0),
@@ -415,6 +458,12 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
   const [finishedGoods, setFinishedGoods] = useState<FinishedGoodOption[]>([]);
   const [formOpen, setFormOpen] = useState(initialFormOpen && canCreate);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  /** Why the last issue attempt was refused, and what has to be filled in. */
+  const [issueBlock, setIssueBlock] = useState<{
+    invoiceId: string;
+    heading: string;
+    reasons: string[];
+  } | null>(null);
   const invoicePreviewRef = useRef<HTMLElement | null>(null);
   const invoiceRegisterRef = useRef<HTMLElement | null>(null);
   const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
@@ -474,7 +523,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
               sellingPrice: row.selling_price,
               unitCost: row.average_unit_cost,
               stockOnHand: row.current_stock ?? row.qty_on_hand,
-              vatRate: 15,
+              vatRate: DEFAULT_VAT_RATE,
             },
             index
           )
@@ -589,7 +638,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
       description: item.productName,
       unitPrice: item.currentCost,
       unitCost: item.currentCost,
-      vatRate: item.vatRate ?? 15,
+      vatRate: item.vatRate ?? DEFAULT_VAT_RATE,
     });
   }
 
@@ -652,6 +701,8 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
             quantity: line.qty,
             sellingPrice: line.unitPrice,
             costPerUnit: line.unitCost,
+            taxTreatment: line.taxTreatment,
+            taxRate: line.vatRate,
           })),
         }),
       });
@@ -732,9 +783,27 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
       });
       const data = await res.json();
       if (!data.ok) {
-        alert(data.error || "Could not update invoice.");
+        /*
+         * An invoice refused for an incomplete tax profile is not a generic
+         * failure, and an alert() box that vanishes is no way to deliver a list
+         * of fields somebody has to go and fill in. The server returns the
+         * heading and one line per missing item; both are held on the page until
+         * the operator dismisses them, with a link to the screen that fixes it.
+         */
+        const message = String(data.error || "Could not update invoice.");
+        const [heading, ...reasons] = message.split("\n");
+        if (reasons.length) {
+          setIssueBlock({
+            invoiceId: id,
+            heading,
+            reasons: reasons.map((reason) => reason.replace(/^- /, "").trim()).filter(Boolean),
+          });
+          return;
+        }
+        alert(message);
         return;
       }
+      setIssueBlock(null);
       const updated = mapApiInvoice(data.invoice, invoices.find((inv) => inv.id === id)?.lines || []);
       setInvoices((current) => current.map((invoice) => (invoice.id === id ? updated : invoice)));
       return;
@@ -909,6 +978,48 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
       }}
     >
     <div className="mx-auto w-full space-y-6 overflow-x-hidden">
+      {issueBlock ? (
+        <section
+          role="alert"
+          className="rounded-[24px] border border-amber-300 bg-amber-50 p-5 shadow-[0_10px_40px_rgba(180,83,9,0.12)]"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={22} className="mt-0.5 shrink-0 text-amber-700" />
+              <div>
+                <h2 className="text-base font-black text-amber-900">{issueBlock.heading}</h2>
+                <p className="mt-1 text-sm font-semibold text-amber-800">
+                  The invoice is still a draft. Nothing was issued and nothing was changed.
+                </p>
+                <ul className="mt-3 space-y-1.5">
+                  {issueBlock.reasons.map((reason) => (
+                    <li key={reason} className="flex gap-2 text-sm font-bold text-amber-900">
+                      <span aria-hidden="true">•</span>
+                      <span>{reason}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/admin/company-setup"
+                className="inline-flex items-center gap-2 rounded-2xl bg-amber-700 px-4 py-2.5 text-sm font-black text-white"
+              >
+                Open Company Setup
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIssueBlock(null)}
+                className="rounded-2xl border border-amber-300 bg-white px-4 py-2.5 text-sm font-black text-amber-800"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <section className="rounded-[32px] border border-violet-100 bg-white/90 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)] md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -1122,11 +1233,43 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                       <NumberInput label="Qty" value={line.qty} onChange={(value) => updateLine(line.id, { qty: value })} />
                       <NumberInput label="Unit Price Excl" value={line.unitPrice} onChange={(value) => updateLine(line.id, { unitPrice: value })} />
                       <NumberInput label="Unit Cost" value={line.unitCost} onChange={(value) => updateLine(line.id, { unitCost: value })} />
-                      <NumberInput label="VAT %" value={line.vatRate} onChange={(value) => updateLine(line.id, { vatRate: value })} />
+
+                      <label className="block">
+                        <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">VAT Treatment</span>
+                        <select
+                          value={line.taxTreatment}
+                          onChange={(event) =>
+                            updateLine(line.id, { taxTreatment: event.target.value as TaxTreatment })
+                          }
+                          className="mt-2 w-full rounded-xl border border-violet-100 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:border-violet-400"
+                        >
+                          {TAX_TREATMENTS.map((treatment) => (
+                            <option key={treatment} value={treatment}>
+                              {TAX_TREATMENT_LABELS[treatment]}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      {/* A rate only exists on a standard-rated line. Showing an
+                          editable 15 next to "Zero Rated" invites the operator to
+                          believe VAT is being charged when none is. */}
+                      {treatmentCarriesRate(line.taxTreatment) ? (
+                        <NumberInput label="VAT %" value={line.vatRate} onChange={(value) => updateLine(line.id, { vatRate: value })} />
+                      ) : (
+                        <div className="block">
+                          <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">VAT %</span>
+                          <div className="mt-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-500">
+                            No VAT charged
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
                       <div className="flex flex-wrap gap-4 text-sm font-black text-slate-700">
+                        <span>Excl VAT: <b className="text-slate-950">{money(totals.excl)}</b></span>
+                        <span>VAT: <b className="text-slate-950">{money(totals.vat)}</b></span>
                         <span>Line Total: <b className="text-slate-950">{money(totals.total)}</b></span>
                         <span>COGS: <b className="text-slate-950">{money(totals.cogs)}</b></span>
                         <span>GP: <b className="text-[#7E22CE]">{money(totals.gp)}</b></span>
@@ -1148,9 +1291,9 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
 
           <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-violet-100 bg-white p-4">
             <div className="flex flex-wrap gap-4 text-sm font-black text-slate-700">
-              <span>Excl: <b className="text-slate-950">{money(draftTotals.excl)}</b></span>
+              <span>Subtotal Excl VAT: <b className="text-slate-950">{money(draftTotals.excl)}</b></span>
               <span>VAT: <b className="text-slate-950">{money(draftTotals.vat)}</b></span>
-              <span>Total: <b className="text-slate-950">{money(draftTotals.total)}</b></span>
+              <span>Total Incl VAT: <b className="text-slate-950">{money(draftTotals.total)}</b></span>
               <span>COGS: <b className="text-slate-950">{money(draftTotals.cogs)}</b></span>
               <span>GP: <b className="text-[#7E22CE]">{money(draftTotals.gp)}</b></span>
             </div>

@@ -51,6 +51,8 @@ export type DocumentPdfLineColumn = {
   key: string;
   label: string;
   align?: "left" | "right";
+  /** Fixed column width in mm. Omit to let the table size the column. */
+  width?: number;
 };
 
 export type DocumentPdfLineRow = Record<string, string>;
@@ -75,6 +77,24 @@ export type DocumentPdfAuthorisationLine = {
   value: string;
 };
 
+/**
+ * A banner immediately under the header. Used to state something about the
+ * document's own standing — for example that a reprint was produced from live
+ * master data because the invoice predates snapshotting.
+ */
+export type DocumentPdfNotice = {
+  heading: string;
+  body: string;
+  tone: "info" | "warning";
+};
+
+/** Bank account details, rendered as a payment block above the footer. */
+export type DocumentPdfPaymentDetails = {
+  heading: string;
+  fields: { label: string; value: string }[];
+  reference?: string | null;
+};
+
 export type DocumentPdfModel = {
   docTitle: string;
   docNumber: string;
@@ -88,12 +108,35 @@ export type DocumentPdfModel = {
   notes?: string | null;
   termsAndConditions?: string | null;
   authorisation?: DocumentPdfAuthorisationLine[];
+  notice?: DocumentPdfNotice | null;
+  paymentDetails?: DocumentPdfPaymentDetails | null;
+  /** Shown beside the document title, e.g. "Full Tax Invoice". */
+  docClassLabel?: string | null;
   generatedAtIso?: string;
 };
 
 const PAGE_MARGIN = 14;
 const PAGE_WIDTH = 210;
+const PAGE_HEIGHT = 297;
 const PAGE_CONTENT_RIGHT = PAGE_WIDTH - PAGE_MARGIN;
+/** The footer rule sits at 286, so nothing may be drawn below this. */
+const PAGE_CONTENT_BOTTOM = 280;
+/** Where content restarts on a continuation page (no header band is repeated). */
+const PAGE_CONTENT_TOP = 20;
+
+/**
+ * Start a new page when `needed` mm of content would not fit.
+ *
+ * Without this the totals block was drawn wherever the line table happened to
+ * end. A table finishing near the bottom of a page pushed the subtotal, VAT and
+ * total past the footer rule, where they were clipped off the document entirely —
+ * on an invoice, the three figures that matter most.
+ */
+function ensureSpace(doc: jsPDF, y: number, needed: number): number {
+  if (y + needed <= PAGE_CONTENT_BOTTOM) return y;
+  doc.addPage();
+  return PAGE_CONTENT_TOP;
+}
 
 function money(value: number, currency = "ZAR") {
   return new Intl.NumberFormat("en-ZA", {
@@ -214,11 +257,21 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   doc.text(displayCompanyName(model.branding), headerTextX, headerTextTop);
-  doc.setFontSize(11);
-  doc.text(model.docTitle, headerTextX, headerTextTop + 9);
+  doc.setFontSize(13);
+  doc.text(model.docTitle.toUpperCase(), headerTextX, headerTextTop + 9.5);
+  if (model.docClassLabel) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.text(model.docClassLabel, headerTextX, headerTextTop + 14);
+    doc.setFont("helvetica", "bold");
+  }
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  doc.text(`${model.docNumber} · Generated ${generatedAt.toLocaleString("en-ZA")}`, headerTextX, headerTextTop + 15);
+  doc.text(
+    `${model.docNumber} · Generated ${generatedAt.toLocaleString("en-ZA")}`,
+    headerTextX,
+    headerTextTop + (model.docClassLabel ? 19 : 15)
+  );
 
   const companyMetaLines = [
     model.branding.address,
@@ -254,26 +307,63 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
     doc.restoreGraphicsState();
   }
 
+  // Notice banner (document provenance, e.g. a reprint from live data)
+  let y = 40;
+  if (model.notice) {
+    const noticeRgb: [number, number, number] = model.notice.tone === "warning" ? [254, 243, 199] : [239, 246, 255];
+    const noticeBorder: [number, number, number] = model.notice.tone === "warning" ? [217, 119, 6] : [59, 130, 246];
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    const noticeWidth = PAGE_CONTENT_RIGHT - PAGE_MARGIN - 6;
+    const bodyLines = doc.splitTextToSize(model.notice.body, noticeWidth) as string[];
+    const noticeHeight = 9 + bodyLines.length * 3.6;
+    doc.setFillColor(...noticeRgb);
+    doc.setDrawColor(...noticeBorder);
+    doc.roundedRect(PAGE_MARGIN, y, PAGE_CONTENT_RIGHT - PAGE_MARGIN, noticeHeight, 1.5, 1.5, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...darkTextRgb);
+    doc.text(model.notice.heading, PAGE_MARGIN + 3, y + 5);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.text(bodyLines, PAGE_MARGIN + 3, y + 9.5);
+    y += noticeHeight + 6;
+  }
+
   // Party blocks (company / counterparty)
-  let y = 44;
+  y += 4;
   doc.setTextColor(...darkTextRgb);
   const columnWidth = (PAGE_CONTENT_RIGHT - PAGE_MARGIN) / Math.max(1, model.parties.length);
   const partyTextWidth = columnWidth - 6;
+
+  /*
+   * Party detail lines wrap rather than truncate. They used to run through
+   * fitText, which cut a long street address off with an ellipsis — on a full
+   * tax invoice the recipient's address is a legal requirement, so losing half
+   * of it to a fixed column width is not an acceptable way to make it fit.
+   * The heading and name still fit on one line each by design.
+   */
+  const partyWrapped = model.parties.map((party) => {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    return party.lines.flatMap((line) => doc.splitTextToSize(line, partyTextWidth) as string[]);
+  });
+
   model.parties.forEach((party, index) => {
     const x = PAGE_MARGIN + index * columnWidth;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.text(party.heading, x, y);
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(party.heading.toUpperCase(), x, y);
+    doc.setTextColor(...darkTextRgb);
+    doc.setFontSize(10);
+    doc.text(fitText(doc, party.name, partyTextWidth), x, y + 5.5);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.text(fitText(doc, party.name, partyTextWidth), x, y + 5);
-    party.lines.forEach((line, lineIndex) => doc.text(fitText(doc, line, partyTextWidth), x, y + 10 + lineIndex * 5));
+    doc.setFontSize(8.5);
+    partyWrapped[index].forEach((line, lineIndex) => doc.text(line, x, y + 11 + lineIndex * 4));
   });
 
-  const partyBlockHeight = Math.max(
-    ...model.parties.map((party) => 10 + party.lines.length * 5),
-    16
-  );
+  const partyBlockHeight = Math.max(...partyWrapped.map((lines) => 11 + lines.length * 4), 16);
   y += partyBlockHeight + 8;
 
   // Meta box (doc number/date/status/refs/etc.)
@@ -300,29 +390,44 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
     y += metaBoxHeight + 8;
   }
 
-  // Line items table
+  // Line items table. The header row repeats on every page and rows are never
+  // split, so a long description stays with its own figures.
   autoTable(doc, {
     startY: y,
     theme: "grid",
     headStyles: { fillColor: headerRgb, textColor: headerTextRgb, fontStyle: "bold", fontSize: 8 },
-    styles: { fontSize: 8, cellPadding: 2 },
+    styles: { fontSize: 8, cellPadding: 2, overflow: "linebreak" },
+    margin: { left: PAGE_MARGIN, right: PAGE_MARGIN, bottom: PAGE_HEIGHT - PAGE_CONTENT_BOTTOM },
+    rowPageBreak: "avoid",
+    showHead: "everyPage",
     head: [model.lineColumns.map((column) => column.label)],
     body: model.lineRows.map((row) => model.lineColumns.map((column) => row[column.key] ?? "")),
     columnStyles: Object.fromEntries(
-      model.lineColumns.map((column, index) => [index, { halign: column.align === "right" ? "right" : "left" }])
+      model.lineColumns.map((column, index) => [
+        index,
+        { halign: column.align === "right" ? "right" : "left", cellWidth: column.width ?? "auto" },
+      ])
     ),
   });
 
   const tableEndY = ((doc as unknown as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || y + 10) + 8;
-  const totalsX = 128;
+  const totalsX = 120;
   let sectionY = tableEndY;
 
   if (model.totals) {
+    // Measure the whole block first and move it to a fresh page as a unit. The
+    // subtotal, VAT lines and total must be read together; splitting them across
+    // a page break, or clipping the total off the bottom, makes the document
+    // unusable as an invoice.
+    const vatRowCount = model.totals.vatSummary?.length || 1;
+    const totalsHeight = 6 + (model.totals.discountTotal ? 6 : 0) + vatRowCount * 6 + 11 + 6;
+    sectionY = ensureSpace(doc, tableEndY, totalsHeight);
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...darkTextRgb);
-    let totalsY = tableEndY;
-    doc.text("Subtotal", totalsX, totalsY);
+    let totalsY = sectionY;
+    doc.text("Subtotal (excl VAT)", totalsX, totalsY);
     doc.text(money(model.totals.subtotal, currency), PAGE_CONTENT_RIGHT, totalsY, { align: "right" });
 
     if (model.totals.discountTotal) {
@@ -335,9 +440,11 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
       for (const row of model.totals.vatSummary) {
         totalsY += 6;
         doc.setFont("helvetica", "normal");
-        doc.text(`VAT @ ${row.rate}`, totalsX, totalsY);
+        doc.setFontSize(8.5);
+        doc.text(`${row.rate} on ${money(row.base, currency)}`, totalsX, totalsY);
         doc.text(money(row.vat, currency), PAGE_CONTENT_RIGHT, totalsY, { align: "right" });
         doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
       }
     } else {
       totalsY += 6;
@@ -351,13 +458,51 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
 
     totalsY += 7;
     doc.setFontSize(11);
-    doc.text("Total", totalsX, totalsY);
+    doc.text(`Total (incl VAT) ${currency}`, totalsX, totalsY);
     doc.text(money(model.totals.grandTotal, currency), PAGE_CONTENT_RIGHT, totalsY, { align: "right" });
 
     sectionY = totalsY + 12;
   }
 
+  if (model.paymentDetails?.fields.length) {
+    const rows = Math.ceil(model.paymentDetails.fields.length / 3);
+    const blockHeight = 8 + rows * 10 + (model.paymentDetails.reference ? 6 : 0);
+    sectionY = ensureSpace(doc, sectionY, blockHeight + 4);
+
+    doc.setDrawColor(226, 232, 240);
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(PAGE_MARGIN, sectionY, PAGE_CONTENT_RIGHT - PAGE_MARGIN, blockHeight, 2, 2, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...darkTextRgb);
+    doc.text(model.paymentDetails.heading, PAGE_MARGIN + 4, sectionY + 6);
+
+    const payColumnWidth = (PAGE_CONTENT_RIGHT - PAGE_MARGIN - 8) / 3;
+    model.paymentDetails.fields.forEach((field, index) => {
+      const col = index % 3;
+      const row = Math.floor(index / 3);
+      const x = PAGE_MARGIN + 4 + col * payColumnWidth;
+      const fieldY = sectionY + 13 + row * 10;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.setTextColor(100, 116, 139);
+      doc.text(fitText(doc, field.label.toUpperCase(), payColumnWidth - 4), x, fieldY);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(...darkTextRgb);
+      doc.text(fitText(doc, field.value || "-", payColumnWidth - 4), x, fieldY + 4.5);
+    });
+
+    if (model.paymentDetails.reference) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.text(model.paymentDetails.reference, PAGE_MARGIN + 4, sectionY + blockHeight - 3);
+    }
+    sectionY += blockHeight + 8;
+  }
+
   if (model.notes) {
+    sectionY = ensureSpace(doc, sectionY, 16);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text("Notes", PAGE_MARGIN, sectionY);
@@ -370,6 +515,7 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
 
   const termsAndConditions = model.termsAndConditions ?? model.branding.termsAndConditions ?? null;
   if (termsAndConditions) {
+    sectionY = ensureSpace(doc, sectionY, 16);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text("Terms & Conditions", PAGE_MARGIN, sectionY);
@@ -381,7 +527,7 @@ export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
   }
 
   if (model.authorisation?.length) {
-    sectionY += 4;
+    sectionY = ensureSpace(doc, sectionY + 4, 30);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text("Authorisation", PAGE_MARGIN, sectionY);

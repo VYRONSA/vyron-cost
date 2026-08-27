@@ -8,6 +8,13 @@ import { readActiveClient } from "@/lib/vyron-developer-client";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { useInvoicePermissions, useModulePermissions } from "@/hooks/useModulePermissions";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import {
+  VAT_STATUSES,
+  VAT_STATUS_LABELS,
+  normaliseVatStatus,
+  validateVatNumber,
+  type VatStatus,
+} from "@/lib/vyron-tax-profile";
 
 type Customer = {
   id: string;
@@ -18,6 +25,7 @@ type Customer = {
   phone: string;
   terms: string;
   vatNumber: string;
+  vatStatus: VatStatus;
   status: string;
   revenue: number;
   gpMovement: number;
@@ -67,7 +75,8 @@ function mapApiCustomer(row: Record<string, unknown>): Customer {
     invoiceEmail: String(row.invoice_email || row.email || ""),
     phone: String(row.phone || ""),
     terms: String(row.terms || "30 Days"),
-    vatNumber: String(row.vat_number || "N/A"),
+    vatNumber: String(row.vat_number || ""),
+    vatStatus: normaliseVatStatus(row.vat_status),
     status: String(row.status || (row.active === false ? "Inactive" : "Active")),
     revenue: sales,
     gpMovement,
@@ -141,6 +150,7 @@ export default function CustomersClient() {
     phone: "",
     terms: "30 Days",
     vatNumber: "",
+    vatStatus: "Unknown" as VatStatus,
     status: "Active",
   });
 
@@ -164,6 +174,11 @@ export default function CustomersClient() {
       alert("Please enter a customer name.");
       return;
     }
+    const vatError = validateVatNumber(form.vatNumber);
+    if (vatError) {
+      alert(vatError);
+      return;
+    }
 
     if (!demoMode) {
       try {
@@ -177,7 +192,8 @@ export default function CustomersClient() {
             invoiceEmail: form.invoiceEmail.trim() || form.contactEmail.trim(),
             phone: form.phone.trim(),
             terms: form.terms.trim() || "30 Days",
-            vatNumber: form.vatNumber.trim() || "N/A",
+            vatNumber: form.vatNumber.trim(),
+            vatStatus: form.vatStatus,
             status: form.status.trim() || "Active",
           }),
         });
@@ -200,7 +216,8 @@ export default function CustomersClient() {
         invoiceEmail: form.invoiceEmail.trim() || form.contactEmail.trim(),
         phone: form.phone.trim(),
         terms: form.terms.trim() || "30 Days",
-        vatNumber: form.vatNumber.trim() || "N/A",
+        vatNumber: form.vatNumber.trim(),
+        vatStatus: form.vatStatus,
         status: form.status.trim() || "Active",
         revenue: 0,
         gpMovement: 0,
@@ -213,7 +230,7 @@ export default function CustomersClient() {
       setCustomers((current) => [next, ...current]);
     }
 
-    setForm({ name: "", category: "Customer", contactEmail: "", invoiceEmail: "", phone: "", terms: "30 Days", vatNumber: "", status: "Active" });
+    setForm({ name: "", category: "Customer", contactEmail: "", invoiceEmail: "", phone: "", terms: "30 Days", vatNumber: "", vatStatus: "Unknown", status: "Active" });
   }
 
   async function deleteCustomer(id: string) {
@@ -325,6 +342,20 @@ export default function CustomersClient() {
           <Field label="Invoice Email" value={form.invoiceEmail} placeholder="accounts@customer.co.za" onChange={(value) => setForm((current) => ({ ...current, invoiceEmail: value }))} />
           <Field label="Phone" value={form.phone} placeholder="021 000 0000" onChange={(value) => setForm((current) => ({ ...current, phone: value }))} />
           <Field label="VAT Number" value={form.vatNumber} placeholder="VAT Number" onChange={(value) => setForm((current) => ({ ...current, vatNumber: value }))} />
+          <label className="block">
+            <span className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">VAT Status</span>
+            <select
+              value={form.vatStatus}
+              onChange={(event) => setForm((current) => ({ ...current, vatStatus: event.target.value as VatStatus }))}
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:border-violet-400"
+            >
+              {VAT_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {VAT_STATUS_LABELS[status]}
+                </option>
+              ))}
+            </select>
+          </label>
 
           <div className="grid grid-cols-2 gap-2">
             <label className="space-y-1 text-xs font-black text-slate-700">

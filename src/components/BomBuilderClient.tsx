@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Boxes, Calculator, Layers, Plus, Save, Sparkles, Trash2, TrendingUp } from "lucide-react";
+import { ArrowRight, Boxes, Calculator, ChevronDown, ChevronUp, Copy, Layers, Plus, Save, Sparkles, Trash2, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -12,12 +12,36 @@ import { CostIngredient } from "@/lib/vyron-cost-core-data";
 import { readActiveClient } from "@/lib/vyron-developer-client";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { ItemLookupField } from "@/components/vyron-platform/item-lookup/ItemLookupField";
+import { RecipeImageField } from "@/components/RecipeImageField";
 import type { ItemLookupResult } from "@/lib/platform/item-lookup/ItemLookupTypes";
 
 type DraftLine = Omit<BomLine, "id" | "bom_id" | "line_cost"> & { temp_id: string };
 type ProductOption = { id: string; product_name: string };
 
-const lineTypes = ["Ingredient", "Packaging", "Labour", "Overhead", "Wastage"];
+/**
+ * A component is the unit a person actually builds a pack from — "Salmon maki",
+ * "Condiments", "Packaging" — so the editor holds its lines inside it rather
+ * than asking which component every single row belongs to.
+ *
+ * `id` is present once the component exists in the database; a component added
+ * here is saved on the way out and only then gets one.
+ */
+type DraftComponent = {
+  temp_id: string;
+  id: string | null;
+  name: string;
+  component_type: string;
+  lines: DraftLine[];
+};
+
+const componentTypes = ["Product Component", "Condiment", "Packaging", "Other"];
+
+/** Components are ordered 10, 20, 30 … so a later insert has room between them. */
+const componentSortOrder = (index: number) => (index + 1) * 10;
+
+function newComponent(name = "", type = "Product Component"): DraftComponent {
+  return { temp_id: crypto.randomUUID(), id: null, name, component_type: type, lines: [] };
+}
 
 const bomFieldGuide = [
   {
@@ -78,7 +102,7 @@ export default function BomBuilderClient({
   const canSave = isEdit ? canEdit : canCreate;
   const readOnly = !canSave;
   const [demoMode, setDemoMode] = useState(false);
-  const [ingredients, setIngredients] = useState(initialIngredients);
+  const [, setIngredients] = useState(initialIngredients);
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [bomName, setBomName] = useState(existingBom?.bom_name || "");
   const [category, setCategory] = useState(existingBom?.category || "General");
@@ -92,20 +116,33 @@ export default function BomBuilderClient({
   const [errorMessage, setErrorMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const [lines, setLines] = useState<DraftLine[]>(
-    existingLines?.length
-      ? existingLines.map((line, index) => ({
-          temp_id: line.id || crypto.randomUUID(),
-          line_type: line.line_type || "Ingredient",
-          ingredient_id: line.ingredient_id || null,
-          line_name: line.line_name || "",
-          quantity: Number(line.quantity || 0),
-          unit: line.unit || "unit",
-          unit_cost: Number(line.unit_cost || 0),
-          wastage_percent: Number(line.wastage_percent || 0),
-          sort_order: line.sort_order ?? index,
-        }))
-      : [newLine(0)]
+  const [components, setComponents] = useState<DraftComponent[]>([]);
+  /**
+   * Lines that predate components, or whose component was removed. Never
+   * invented — and seeded from the server-rendered lines so an edit shows its
+   * content immediately, before the grouped fetch lands.
+   */
+  const [ungrouped, setUngrouped] = useState<DraftLine[]>(
+    (existingLines || []).map((line, index) => ({
+      temp_id: line.id || crypto.randomUUID(),
+      line_type: line.line_type || "Ingredient",
+      ingredient_id: line.ingredient_id || null,
+      component_id: line.component_id ?? null,
+      line_name: line.line_name || "",
+      quantity: Number(line.quantity || 0),
+      unit: line.unit || "unit",
+      unit_cost: Number(line.unit_cost || 0),
+      wastage_percent: Number(line.wastage_percent || 0),
+      sort_order: line.sort_order ?? index,
+    }))
+  );
+  const [removedComponentIds, setRemovedComponentIds] = useState<string[]>([]);
+  const [movingLine, setMovingLine] = useState<string | null>(null);
+
+  // Every cost figure still comes from one flat list of lines, exactly as before.
+  const lines = useMemo<DraftLine[]>(
+    () => [...components.flatMap((c) => c.lines), ...ungrouped],
+    [components, ungrouped]
   );
 
   useEffect(() => {
@@ -166,22 +203,31 @@ export default function BomBuilderClient({
         setStatus(header.status || "Draft");
         setProductId(header.product_id || "");
         const recipeLines: BomLine[] = (data.recipe.lines || []).map(recipeLineToBomLine);
-        if (recipeLines.length) {
-          setLines(
-            recipeLines.map((line: BomLine, index: number) => ({
-              temp_id: line.id || crypto.randomUUID(),
-              line_type: line.line_type || "Ingredient",
-              ingredient_id: line.ingredient_id || null,
-              component_id: line.component_id ?? null,
-              line_name: line.line_name || "",
-              quantity: Number(line.quantity || 0),
-              unit: line.unit || "unit",
-              unit_cost: Number(line.unit_cost || 0),
-              wastage_percent: Number(line.wastage_percent || 0),
-              sort_order: line.sort_order ?? index,
-            }))
-          );
-        }
+        const toDraft = (line: BomLine, index: number): DraftLine => ({
+          temp_id: line.id || crypto.randomUUID(),
+          line_type: line.line_type || "Ingredient",
+          ingredient_id: line.ingredient_id || null,
+          component_id: line.component_id ?? null,
+          line_name: line.line_name || "",
+          quantity: Number(line.quantity || 0),
+          unit: line.unit || "unit",
+          unit_cost: Number(line.unit_cost || 0),
+          wastage_percent: Number(line.wastage_percent || 0),
+          sort_order: line.sort_order ?? index,
+        });
+        const drafts = recipeLines.map(toDraft);
+        const loaded: DraftComponent[] = (data.recipe.components || []).map(
+          (c: { id: string; name: string; component_type: string }) => ({
+            temp_id: c.id,
+            id: c.id,
+            name: c.name,
+            component_type: c.component_type || "Product Component",
+            lines: drafts.filter((l) => l.component_id === c.id),
+          })
+        );
+        setComponents(loaded);
+        const known = new Set(loaded.map((c) => c.id));
+        setUngrouped(drafts.filter((l) => !l.component_id || !known.has(l.component_id)));
       })
       .catch(() => {
         // keep SSR props when provided
@@ -196,34 +242,138 @@ export default function BomBuilderClient({
   const actualGp = calcGp(numericSelling, costPerUnit);
   const suggestedPrice = calcSuggestedPrice(costPerUnit, numericTargetGp);
 
-  function updateLine(tempId: string, field: keyof DraftLine, value: string | number | null) {
+  /** Apply a change to one line wherever it lives — inside a component or not. */
+  function patchLine(tempId: string, patch: Partial<DraftLine>) {
     if (readOnly) return;
-    setLines((current) => current.map((line) => (line.temp_id === tempId ? { ...line, [field]: value } : line)));
+    const apply = (l: DraftLine) => (l.temp_id === tempId ? { ...l, ...patch } : l);
+    setComponents((cs) => cs.map((c) => ({ ...c, lines: c.lines.map(apply) })));
+    setUngrouped((ls) => ls.map(apply));
+  }
+
+  function updateLine(tempId: string, field: keyof DraftLine, value: string | number | null) {
+    patchLine(tempId, { [field]: value } as Partial<DraftLine>);
   }
 
   function selectIngredientFromLookup(tempId: string, item: ItemLookupResult) {
+    patchLine(tempId, {
+      ingredient_id: item.entityId || item.stockItemId,
+      line_name: item.productName,
+      unit: item.unit,
+      unit_cost: item.currentCost,
+    });
+  }
+
+  function removeLine(tempId: string) {
     if (readOnly) return;
-    const ingredientId = item.entityId || item.stockItemId;
-    setLines((current) =>
-      current.map((line) =>
-        line.temp_id === tempId
-          ? {
-              ...line,
-              ingredient_id: ingredientId,
-              line_name: item.productName,
-              unit: item.unit,
-              unit_cost: item.currentCost,
-            }
-          : line
-      )
+    const drop = (ls: DraftLine[]) => ls.filter((l) => l.temp_id !== tempId);
+    setComponents((cs) => cs.map((c) => ({ ...c, lines: drop(c.lines) })));
+    setUngrouped(drop);
+  }
+
+  /** A line added here belongs to this component — no second choice to make. */
+  function addLineTo(componentTempId: string, type: "Ingredient" | "Packaging") {
+    if (readOnly) return;
+    const line = newLine(0, type);
+    setComponents((cs) =>
+      cs.map((c) => (c.temp_id === componentTempId ? { ...c, lines: [...c.lines, line] } : c))
     );
   }
+
+  function moveLineToComponent(tempId: string, targetTempId: string) {
+    if (readOnly) return;
+    let moved: DraftLine | undefined;
+    const take = (ls: DraftLine[]) => ls.filter((l) => (l.temp_id === tempId ? ((moved = l), false) : true));
+    const nextComponents = components.map((c) => ({ ...c, lines: take(c.lines) }));
+    const nextUngrouped = take(ungrouped);
+    if (!moved) return;
+    setComponents(
+      nextComponents.map((c) =>
+        c.temp_id === targetTempId ? { ...c, lines: [...c.lines, moved as DraftLine] } : c
+      )
+    );
+    setUngrouped(targetTempId === "__ungrouped__" ? [...nextUngrouped, moved] : nextUngrouped);
+    setMovingLine(null);
+  }
+
+  function addComponent() {
+    if (readOnly) return;
+    setComponents((cs) => [...cs, newComponent("", cs.length ? "Product Component" : "Product Component")]);
+  }
+
+  function patchComponent(tempId: string, patch: Partial<DraftComponent>) {
+    if (readOnly) return;
+    setComponents((cs) => cs.map((c) => (c.temp_id === tempId ? { ...c, ...patch } : c)));
+  }
+
+  function moveComponent(tempId: string, delta: -1 | 1) {
+    if (readOnly) return;
+    setComponents((cs) => {
+      const i = cs.findIndex((c) => c.temp_id === tempId);
+      const j = i + delta;
+      if (i < 0 || j < 0 || j >= cs.length) return cs;
+      const next = [...cs];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  }
+
+  /** Duplicating copies the recipe, never the identity — the copy is a new component. */
+  function duplicateComponent(tempId: string) {
+    if (readOnly) return;
+    setComponents((cs) => {
+      const i = cs.findIndex((c) => c.temp_id === tempId);
+      if (i < 0) return cs;
+      const src = cs[i];
+      const copy: DraftComponent = {
+        temp_id: crypto.randomUUID(),
+        id: null,
+        name: `${src.name} copy`,
+        component_type: src.component_type,
+        lines: src.lines.map((l) => ({ ...l, temp_id: crypto.randomUUID() })),
+      };
+      return [...cs.slice(0, i + 1), copy, ...cs.slice(i + 1)];
+    });
+  }
+
+  /** Removing a component keeps its lines — they fall back to ungrouped, never deleted. */
+  function removeComponent(tempId: string) {
+    if (readOnly) return;
+    const target = components.find((c) => c.temp_id === tempId);
+    if (!target) return;
+    if (target.lines.length) {
+      const ok = window.confirm(
+        `"${target.name || "This component"}" has ${target.lines.length} line${target.lines.length === 1 ? "" : "s"}.
+
+` +
+          "Removing the component keeps those lines on the BOM — they move to Ungrouped. Continue?"
+      );
+      if (!ok) return;
+    }
+    if (target.id) setRemovedComponentIds((ids) => [...ids, target.id as string]);
+    setUngrouped((ls) => [...ls, ...target.lines]);
+    setComponents((cs) => cs.filter((c) => c.temp_id !== tempId));
+  }
+
+  const componentCost = (c: DraftComponent) => c.lines.reduce((sum, l) => sum + calcLineCost(l), 0);
+
+  // Same split the costing engine uses: packaging by line type, case-insensitive.
+  const isPackagingLine = (l: DraftLine) => String(l.line_type || "").trim().toLowerCase() === "packaging";
+  const packagingCostTotal = useMemo(
+    () => lines.filter(isPackagingLine).reduce((sum, l) => sum + calcLineCost(l), 0),
+    [lines]
+  );
+  const ingredientCostTotal = useMemo(
+    () => lines.filter((l) => !isPackagingLine(l)).reduce((sum, l) => sum + calcLineCost(l), 0),
+    [lines]
+  );
 
   function validate() {
     if (!bomName.trim()) return "BOM name is required.";
     if (!numericYield || numericYield <= 0) return "Yield quantity must be more than 0.";
     const bad = lines.find((line) => !line.line_name.trim() || Number(line.quantity || 0) <= 0);
     if (bad) return "Every line must have a name and quantity greater than 0.";
+    const unnamed = components.find((c) => !c.name.trim());
+    if (unnamed) return "Every component needs a name.";
     return "";
   }
 
@@ -247,7 +397,7 @@ export default function BomBuilderClient({
 
     setSaving(true);
     try {
-      const payload = {
+      const header = {
         recipe_name: bomName.trim(),
         category,
         yield_qty: numericYield,
@@ -256,32 +406,91 @@ export default function BomBuilderClient({
         selling_price: numericSelling,
         status,
         product_id: productId || null,
-        lines: lines.map((line, index) => ({
-          line_type: line.line_type,
-          ingredient_id: line.ingredient_id || null,
-          // Without this a save would strip every line's component grouping.
-          component_id: line.component_id ?? null,
-          line_name: line.line_name.trim(),
-          quantity: Number(line.quantity || 0),
-          unit: line.unit || "unit",
-          unit_cost: Number(line.unit_cost || 0),
-          wastage_percent: Number(line.wastage_percent || 0),
-          sort_order: index,
-        })),
       };
 
-      const response = await fetch(isEdit ? `/api/recipes/${resolvedRecipeId}` : "/api/recipes", {
+      /*
+       * Lines reference the component they belong to, so the components have to
+       * exist first. Save the header, reconcile the components to get their real
+       * ids, then save the lines pointing at them.
+       */
+      const headerRes = await fetch(isEdit ? `/api/recipes/${resolvedRecipeId}` : "/api/recipes", {
         method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(isEdit ? header : { ...header, lines: [] }),
+      });
+      const headerData = await headerRes.json();
+      if (!headerData.ok) throw new Error(headerData.error || "BOM save failed.");
+      const savedId: string = headerData.recipe?.id || resolvedRecipeId;
+
+      for (const componentId of removedComponentIds) {
+        await fetch(`/api/recipes/${savedId}/components/${componentId}`, { method: "DELETE" });
+      }
+
+      const idByTemp = new Map<string, string>();
+      for (const [index, component] of components.entries()) {
+        const body = {
+          name: component.name.trim(),
+          component_type: component.component_type,
+          sort_order: componentSortOrder(index),
+        };
+        if (component.id) {
+          const res = await fetch(`/api/recipes/${savedId}/components/${component.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const out = await res.json();
+          if (!out.ok) throw new Error(out.error || `Could not save component "${component.name}".`);
+          idByTemp.set(component.temp_id, component.id);
+        } else {
+          const res = await fetch(`/api/recipes/${savedId}/components`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const out = await res.json();
+          if (!out.ok) throw new Error(out.error || `Could not create component "${component.name}".`);
+          idByTemp.set(component.temp_id, out.component.id);
+        }
+      }
+
+      const orderedLines = [
+        ...components.flatMap((component, ci) =>
+          component.lines.map((line, li) => ({
+            line,
+            component_id: idByTemp.get(component.temp_id) ?? null,
+            sort_order: componentSortOrder(ci) + li,
+          }))
+        ),
+        ...ungrouped.map((line, li) => ({ line, component_id: null, sort_order: 9000 + li })),
+      ];
+
+      const response = await fetch(`/api/recipes/${savedId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...header,
+          lines: orderedLines.map(({ line, component_id, sort_order }) => ({
+            line_type: line.line_type,
+            ingredient_id: line.ingredient_id || null,
+            component_id,
+            line_name: line.line_name.trim(),
+            quantity: Number(line.quantity || 0),
+            unit: line.unit || "unit",
+            unit_cost: Number(line.unit_cost || 0),
+            wastage_percent: Number(line.wastage_percent || 0),
+            sort_order,
+          })),
+        }),
       });
       const data = await response.json();
       if (!data.ok) throw new Error(data.error || "BOM save failed.");
+      setRemovedComponentIds([]);
 
       const linkedCount = Number(data.linkedProducts || 0);
       setMessage(`BOM saved.${linkedCount ? ` ${linkedCount} product cost(s) updated.` : ""}`);
-      if (!isEdit && data.recipe?.id) {
-        router.push(`/recipes/${data.recipe.id}`);
+      if (!isEdit && savedId) {
+        router.push(`/recipes/${savedId}`);
       }
     } catch (error: unknown) {
       setErrorMessage(error instanceof Error ? error.message : "BOM save failed.");
@@ -294,7 +503,6 @@ export default function BomBuilderClient({
   const lineInputClass = `h-10 rounded-xl border border-slate-200 bg-white px-2 text-xs font-bold outline-none focus:border-violet-400 ${readOnly ? "bg-slate-50 text-slate-600" : ""}`;
   const labelClass = "text-xs font-black uppercase tracking-[0.08em] text-slate-500";
 
-  const hasMeaningfulLines = lines.some((line) => line.line_name.trim() && Number(line.quantity || 0) > 0);
   const gpGap = numericTargetGp - actualGp;
 
   return (
@@ -441,6 +649,10 @@ export default function BomBuilderClient({
                 <FieldHint example="24, 10, 1">Units produced per batch — drives cost per unit.</FieldHint>
               </label>
 
+              <div className="md:col-span-2">
+                <RecipeImageField recipeId={resolvedRecipeId} canEdit={canSave} labelClass={labelClass} />
+              </div>
+
               <label className="block">
                 <span className={labelClass}>Yield Unit</span>
                 <input
@@ -518,8 +730,8 @@ export default function BomBuilderClient({
           {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-bold text-[#7E22CE]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-5 py-4 text-sm font-bold text-red-700">{errorMessage}</div>}
 
-          {/* Section 3 — Cost lines */}
-          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)] md:p-8">
+          {/* Section 3 — Components */}
+          <div className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(81,63,190,0.08)] sm:p-6 md:p-8">
             <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]">
@@ -527,141 +739,307 @@ export default function BomBuilderClient({
                 </div>
                 <div>
                   <div className={labelClass}>Section 3</div>
-                  <h3 className="text-2xl font-black text-slate-900">Cost Lines</h3>
+                  <h3 className="text-2xl font-black text-slate-900">Components</h3>
                   <p className="mt-1 text-sm font-semibold text-slate-500">
-                    Add every cost that belongs in this batch — ingredients through to wastage.
+                    Build the pack the way it is made — one component per part, with its own ingredients.
                   </p>
                 </div>
               </div>
               {canSave ? (
-                <div className="flex flex-wrap gap-2">
-                  {lineTypes.map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setLines((c) => [...c, newLine(c.length, type)])}
-                      className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-700 transition hover:bg-violet-100"
-                    >
-                      <Plus size={14} /> {type}
-                    </button>
-                  ))}
+                <button
+                  type="button"
+                  onClick={addComponent}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white"
+                >
+                  <Plus size={18} />
+                  Add Component
+                </button>
+              ) : null}
+            </div>
+
+            {components.length === 0 && ungrouped.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-violet-200 bg-violet-50/50 p-8 text-center">
+                <p className="text-sm font-black text-slate-900">No components yet</p>
+                <p className="mx-auto mt-2 max-w-md text-sm font-semibold text-slate-500">
+                  A pack is built from components — for example Salmon &amp; Avo Cali, Salmon maki, Condiments and
+                  Packaging. Add the first one, then put its ingredients inside it.
+                </p>
+                {canSave ? (
+                  <button
+                    type="button"
+                    onClick={addComponent}
+                    className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white"
+                  >
+                    <Plus size={18} />
+                    Add your first component
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div className="grid gap-4">
+              {components.map((component, index) => {
+                const isPackaging = component.component_type.trim().toLowerCase() === "packaging";
+                return (
+                  <div key={component.temp_id} className="overflow-hidden rounded-2xl border border-violet-100">
+                    <div className="flex flex-col gap-3 bg-violet-50 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
+                      <div className="grid flex-1 gap-3 sm:grid-cols-2">
+                        <label className="block">
+                          <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">
+                            Component name
+                          </span>
+                          <input
+                            disabled={readOnly}
+                            value={component.name}
+                            onChange={(e) => patchComponent(component.temp_id, { name: e.target.value })}
+                            placeholder="e.g. Salmon maki"
+                            className="mt-1 w-full rounded-xl border border-violet-200 bg-white px-3 py-2 text-sm font-black text-slate-900 outline-none focus:border-violet-400"
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">
+                            Type
+                          </span>
+                          <select
+                            disabled={readOnly}
+                            value={component.component_type}
+                            onChange={(e) => patchComponent(component.temp_id, { component_type: e.target.value })}
+                            className="mt-1 w-full rounded-xl border border-violet-200 bg-white px-3 py-2 text-sm font-bold text-violet-800 outline-none focus:border-violet-400"
+                          >
+                            {componentTypes.map((t) => (
+                              <option key={t}>{t}</option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 lg:justify-end">
+                        <div className="text-right">
+                          <div className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">
+                            {isPackaging ? "Packaging cost" : "Component cost"}
+                          </div>
+                          <div className="text-lg font-black text-violet-700">{formatMoney(componentCost(component))}</div>
+                          <div className="text-[0.65rem] font-bold text-slate-500">
+                            {component.lines.length} {isPackaging ? (component.lines.length === 1 ? "item" : "items") : component.lines.length === 1 ? "ingredient" : "ingredients"}
+                          </div>
+                        </div>
+                        {canSave ? (
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button
+                              type="button"
+                              aria-label={`Move ${component.name || "component"} up`}
+                              disabled={index === 0}
+                              onClick={() => moveComponent(component.temp_id, -1)}
+                              className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-600 disabled:opacity-40"
+                            >
+                              <ChevronUp size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`Move ${component.name || "component"} down`}
+                              disabled={index === components.length - 1}
+                              onClick={() => moveComponent(component.temp_id, 1)}
+                              className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-600 disabled:opacity-40"
+                            >
+                              <ChevronDown size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`Duplicate ${component.name || "component"}`}
+                              onClick={() => duplicateComponent(component.temp_id)}
+                              className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-600"
+                            >
+                              <Copy size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`Remove ${component.name || "component"}`}
+                              onClick={() => removeComponent(component.temp_id)}
+                              className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-red-600"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="divide-y divide-slate-100">
+                      {component.lines.length === 0 ? (
+                        <p className="px-4 py-5 text-sm font-semibold text-slate-500 sm:px-5">
+                          Nothing in this component yet.
+                        </p>
+                      ) : null}
+                      {component.lines.map((line) => (
+                        <div key={line.temp_id} className="grid gap-3 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] lg:items-end">
+                          <label className="block lg:col-span-1">
+                            <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500 lg:hidden">
+                              {isPackaging ? "Packaging item" : "Ingredient"}
+                            </span>
+                            <ItemLookupField
+                              initialValue={line.line_name}
+                              defaultType={isPackaging || line.line_type === "Packaging" ? "packaging" : "ingredient"}
+                              onSelect={(item) => selectIngredientFromLookup(line.temp_id, item)}
+                            />
+                          </label>
+                          <label className="block">
+                            <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Qty</span>
+                            <input
+                              disabled={readOnly}
+                              type="number"
+                              step="0.000001"
+                              value={line.quantity}
+                              onChange={(e) => updateLine(line.temp_id, "quantity", Number(e.target.value))}
+                              className={`mt-1 w-full ${lineInputClass}`}
+                            />
+                          </label>
+                          <label className="block">
+                            <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Unit</span>
+                            <input
+                              disabled={readOnly}
+                              value={line.unit}
+                              onChange={(e) => updateLine(line.temp_id, "unit", e.target.value)}
+                              className={`mt-1 w-full ${lineInputClass}`}
+                            />
+                          </label>
+                          <label className="block">
+                            <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Unit cost</span>
+                            <input
+                              disabled={readOnly}
+                              type="number"
+                              step="0.00000001"
+                              value={line.unit_cost}
+                              onChange={(e) => updateLine(line.temp_id, "unit_cost", Number(e.target.value))}
+                              className={`mt-1 w-full ${lineInputClass}`}
+                            />
+                          </label>
+                          <div className="lg:text-right">
+                            <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Line cost</span>
+                            <div className="mt-1 text-sm font-black text-slate-900">{formatMoney(calcLineCost(line))}</div>
+                          </div>
+                          {canSave ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setMovingLine(movingLine === line.temp_id ? null : line.temp_id)}
+                                className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700"
+                              >
+                                Move
+                              </button>
+                              <button
+                                type="button"
+                                aria-label={`Remove ${line.line_name || "line"}`}
+                                onClick={() => removeLine(line.temp_id)}
+                                className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-700"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          ) : null}
+
+                          {movingLine === line.temp_id ? (
+                            <div className="rounded-2xl border border-violet-200 bg-white p-4 lg:col-span-6">
+                              <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                                Move &ldquo;{line.line_name || "this line"}&rdquo; to
+                              </div>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {components
+                                  .filter((c) => c.temp_id !== component.temp_id)
+                                  .map((c) => (
+                                    <button
+                                      key={c.temp_id}
+                                      type="button"
+                                      onClick={() => moveLineToComponent(line.temp_id, c.temp_id)}
+                                      className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-800"
+                                    >
+                                      {c.name || "Untitled component"}
+                                    </button>
+                                  ))}
+                                <button
+                                  type="button"
+                                  onClick={() => setMovingLine(null)}
+                                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-600"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+
+                    {canSave ? (
+                      <div className="border-t border-slate-100 px-4 py-3 sm:px-5">
+                        <button
+                          type="button"
+                          onClick={() => addLineTo(component.temp_id, isPackaging ? "Packaging" : "Ingredient")}
+                          className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700"
+                        >
+                          <Plus size={16} />
+                          {isPackaging ? "Add Packaging" : "Add Ingredient"}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+
+              {ungrouped.length ? (
+                <div className="overflow-hidden rounded-2xl border border-amber-200">
+                  <div className="flex flex-wrap items-center justify-between gap-3 bg-amber-50 px-4 py-4 sm:px-5">
+                    <div>
+                      <div className="text-sm font-black text-slate-900">Ungrouped lines</div>
+                      <div className="text-xs font-bold text-slate-500">
+                        {ungrouped.length} line{ungrouped.length === 1 ? "" : "s"} not in a component yet — move them into one above.
+                      </div>
+                    </div>
+                    <div className="text-lg font-black text-amber-700">
+                      {formatMoney(ungrouped.reduce((sum, l) => sum + calcLineCost(l), 0))}
+                    </div>
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {ungrouped.map((line) => (
+                      <div key={line.temp_id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-black text-slate-900">{line.line_name || "Unnamed line"}</div>
+                          <div className="text-xs font-bold text-slate-500">
+                            {line.quantity} {line.unit} · {formatMoney(calcLineCost(line))}
+                          </div>
+                        </div>
+                        {canSave && components.length ? (
+                          <div className="flex flex-wrap gap-2">
+                            {components.map((c) => (
+                              <button
+                                key={c.temp_id}
+                                type="button"
+                                onClick={() => moveLineToComponent(line.temp_id, c.temp_id)}
+                                className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-800"
+                              >
+                                → {c.name || "Untitled"}
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </div>
 
-            {!ingredients.length ? (
-              <div className="mb-5 rounded-2xl border border-dashed border-violet-200 bg-violet-50/60 px-5 py-6 text-center">
-                <p className="text-sm font-black text-violet-800">No ingredients loaded yet</p>
-                <p className="mt-2 text-sm font-semibold text-slate-600">
-                  Add ingredients in{" "}
-                  <Link href="/ingredients" className="font-black text-violet-700 underline">
-                    Ingredients
-                  </Link>{" "}
-                  first, then return here to build your BOM lines.
-                </p>
+            <div className="mt-5 grid gap-3 rounded-2xl border border-violet-100 bg-violet-50/60 p-4 sm:grid-cols-3">
+              <div>
+                <div className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Ingredient cost</div>
+                <div className="mt-1 text-xl font-black text-slate-900">{formatMoney(ingredientCostTotal)}</div>
               </div>
-            ) : null}
-
-            {!hasMeaningfulLines ? (
-              <div className="mb-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-6">
-                <p className="text-sm font-black text-slate-800">Start building your BOM</p>
-                <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-                  Use the buttons above to add <strong>Ingredient</strong>, <strong>Packaging</strong>,{" "}
-                  <strong>Labour</strong>, <strong>Overhead</strong> or <strong>Wastage</strong> lines. Pick items from
-                  your master list, enter quantities, and line costs will calculate automatically.
-                </p>
+              <div>
+                <div className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Packaging cost</div>
+                <div className="mt-1 text-xl font-black text-violet-700">{formatMoney(packagingCostTotal)}</div>
               </div>
-            ) : null}
-
-            <div className="overflow-x-auto rounded-2xl border border-slate-100">
-              <div className="min-w-[1050px]">
-                <div className="grid grid-cols-[125px_290px_90px_90px_110px_90px_120px_55px] bg-[#07110d] px-3 py-3 text-[11px] font-black uppercase tracking-[0.14em] text-[#A855F7]">
-                  <div>Type</div>
-                  <div>Line</div>
-                  <div>Qty</div>
-                  <div>Unit</div>
-                  <div>Unit Cost</div>
-                  <div>Waste %</div>
-                  <div>Line Cost</div>
-                  <div></div>
-                </div>
-
-                {lines.map((line) => (
-                  <div
-                    key={line.temp_id}
-                    className="grid grid-cols-[125px_290px_90px_90px_110px_90px_120px_55px] items-center border-t border-slate-100 px-3 py-2 text-sm"
-                  >
-                    <select
-                      disabled={readOnly}
-                      value={line.line_type}
-                      onChange={(e) => updateLine(line.temp_id, "line_type", e.target.value)}
-                      className={lineInputClass}
-                    >
-                      {lineTypes.map((type) => (
-                        <option key={type}>{type}</option>
-                      ))}
-                    </select>
-
-                    {line.line_type === "Ingredient" || line.line_type === "Packaging" ? (
-                      <ItemLookupField
-                        className="mx-2"
-                        initialValue={line.line_name}
-                        defaultType={line.line_type === "Packaging" ? "packaging" : "ingredient"}
-                        onSelect={(item) => selectIngredientFromLookup(line.temp_id, item)}
-                      />
-                    ) : (
-                      <input
-                        disabled={readOnly}
-                        readOnly={readOnly}
-                        value={line.line_name}
-                        onChange={(e) => updateLine(line.temp_id, "line_name", e.target.value)}
-                        className={`mx-2 ${lineInputClass}`}
-                      />
-                    )}
-
-                    <input
-                      disabled={readOnly}
-                      readOnly={readOnly}
-                      type="number"
-                      value={line.quantity}
-                      onChange={(e) => updateLine(line.temp_id, "quantity", Number(e.target.value))}
-                      className={lineInputClass}
-                    />
-                    <input
-                      disabled={readOnly}
-                      readOnly={readOnly}
-                      value={line.unit}
-                      onChange={(e) => updateLine(line.temp_id, "unit", e.target.value)}
-                      className={`mx-2 ${lineInputClass}`}
-                    />
-                    <input
-                      disabled={readOnly}
-                      readOnly={readOnly}
-                      type="number"
-                      value={line.unit_cost}
-                      onChange={(e) => updateLine(line.temp_id, "unit_cost", Number(e.target.value))}
-                      className={lineInputClass}
-                    />
-                    <input
-                      disabled={readOnly}
-                      readOnly={readOnly}
-                      type="number"
-                      value={line.wastage_percent}
-                      onChange={(e) => updateLine(line.temp_id, "wastage_percent", Number(e.target.value))}
-                      className={`mx-2 ${lineInputClass}`}
-                    />
-                    <div className="text-right text-sm font-black text-slate-900">{formatMoney(calcLineCost(line))}</div>
-                    {canSave ? (
-                      <button
-                        type="button"
-                        onClick={() => setLines((c) => c.filter((x) => x.temp_id !== line.temp_id))}
-                        className="ml-3 flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-700 transition hover:bg-red-100"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    ) : null}
-                  </div>
-                ))}
+              <div>
+                <div className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Total BOM cost</div>
+                <div className="mt-1 text-xl font-black text-slate-900">{formatMoney(totalCost)}</div>
               </div>
             </div>
           </div>

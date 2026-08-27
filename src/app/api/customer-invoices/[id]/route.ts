@@ -43,6 +43,15 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   const body = await request.json().catch(() => ({}));
   try {
+    /*
+     * Authenticate before resolving the tenant. Resolving first answered an
+     * unauthenticated PATCH with 400 "No active workspace company", which reads
+     * as a configuration problem rather than a refusal — the caller was never
+     * signed in. Nothing was ever mutated either way; this is the correct answer,
+     * not a new gate.
+     */
+    await requireWorkspacePermission("invoices.view");
+
     const companyId = await resolveApiCompanyId();
     if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
 
