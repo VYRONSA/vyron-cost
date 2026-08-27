@@ -172,6 +172,7 @@ export default function BomBuilderClient({
               temp_id: line.id || crypto.randomUUID(),
               line_type: line.line_type || "Ingredient",
               ingredient_id: line.ingredient_id || null,
+              component_id: line.component_id ?? null,
               line_name: line.line_name || "",
               quantity: Number(line.quantity || 0),
               unit: line.unit || "unit",
@@ -258,6 +259,8 @@ export default function BomBuilderClient({
         lines: lines.map((line, index) => ({
           line_type: line.line_type,
           ingredient_id: line.ingredient_id || null,
+          // Without this a save would strip every line's component grouping.
+          component_id: line.component_id ?? null,
           line_name: line.line_name.trim(),
           quantity: Number(line.quantity || 0),
           unit: line.unit || "unit",

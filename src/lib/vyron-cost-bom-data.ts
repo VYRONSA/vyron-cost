@@ -11,6 +11,8 @@ export type BomHeader = {
   target_gp?: number | null;
   selling_price?: number | null;
   total_cost?: number | null;
+  ingredient_cost?: number | null;
+  packaging_cost?: number | null;
   cost_per_unit?: number | null;
   calculated_gp?: number | null;
   suggested_selling_price?: number | null;
@@ -24,6 +26,7 @@ export type BomLine = {
   bom_id?: string;
   line_type: string;
   ingredient_id?: string | null;
+  component_id?: string | null;
   line_name: string;
   quantity: number;
   unit: string;
@@ -32,6 +35,30 @@ export type BomLine = {
   line_cost?: number;
   sort_order?: number;
 };
+
+/**
+ * Recipe quantities carry real workbook precision — 0.006250 kg of salmon is
+ * not 0.0063. Rounding it on screen misreports the recipe, so whole numbers
+ * stay whole and everything else shows the full six decimals the column stores.
+ */
+export function formatQuantity(value: number | null | undefined) {
+  const n = Number(value || 0);
+  return Number.isInteger(n) ? String(n) : n.toFixed(6);
+}
+
+/**
+ * Unit and line costs are stored to eight decimals. Showing all eight would
+ * turn R380.00 into R380.00000000, so trailing zeros are trimmed and at least
+ * two decimals kept — R380.00, R4.3335, R27.052596, R1.7414892.
+ */
+export function formatPreciseMoney(value: number | null | undefined) {
+  const n = Number(value || 0);
+  const trimmed = n.toFixed(8).replace(/(\.\d*?[1-9])0+$/, "$1").replace(/\.0+$/, "");
+  const [whole, decimals = ""] = trimmed.split(".");
+  const padded = decimals.length < 2 ? decimals.padEnd(2, "0") : decimals;
+  const grouped = Number(whole).toLocaleString("en-ZA");
+  return `R${grouped}.${padded}`;
+}
 
 export function formatMoney(value: number | null | undefined) {
   return `R${Number(value || 0).toLocaleString("en-ZA", {

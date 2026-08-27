@@ -42,6 +42,13 @@ export type StockItemRow = {
   last_movement_at: string | null;
 };
 
+/** Costs keep eight decimals, matching BOM unit_cost. */
+function roundCost(n: number) {
+  return Math.round(n * 100000000) / 100000000;
+}
+function roundQty(n: number) {
+  return Math.round(n * 1000000) / 1000000;
+}
 function round4(n: number) {
   return Math.round(n * 10000) / 10000;
 }
@@ -262,13 +269,15 @@ export async function postStockMovement(
     throw new Error("Stock item does not belong to the active company.");
   }
 
-  const qtyIn = round4(params.quantityIn || 0);
-  const qtyOut = round4(params.quantityOut || 0);
-  const oldQty = round4(Number(item.qty_on_hand || 0));
+  // Quantities keep six decimals here too: rounding 0.006250 to 0.0063 at the
+  // ledger would move the Stock Master by the wrong amount.
+  const qtyIn = roundQty(params.quantityIn || 0);
+  const qtyOut = roundQty(params.quantityOut || 0);
+  const oldQty = roundQty(Number(item.qty_on_hand || 0));
   const oldAvg = Number(item.average_cost || item.current_cost || 0);
-  const unitCost = round4(params.unitCost);
+  const unitCost = roundCost(params.unitCost);
 
-  const projectedQty = round4(oldQty + qtyIn - qtyOut);
+  const projectedQty = roundQty(oldQty + qtyIn - qtyOut);
   if (projectedQty < 0 && !params.allowNegative) {
     throw new Error(`Insufficient stock: available ${oldQty}, required ${qtyOut}.`);
   }

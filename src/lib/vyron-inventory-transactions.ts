@@ -67,13 +67,23 @@ function round4(value: number) {
   return Math.round(value * 10000) / 10000;
 }
 
+/** Quantities keep six decimals; 0.006250 must not become 0.0063. */
+function roundQty(value: number) {
+  return Math.round(value * 1000000) / 1000000;
+}
+
+/** Costs keep eight, matching the BOM unit_cost the movement is priced from. */
+function roundCost(value: number) {
+  return Math.round(value * 100000000) / 100000000;
+}
+
 function signedQuantityForType(type: InventoryTransactionType, quantity: number): number {
-  const qty = Math.abs(round4(quantity));
+  const qty = Math.abs(roundQty(quantity));
   if (type === "Receipt") return qty;
   if (type === "Issue" || type === "Consumption") return -qty;
-  if (type === "Adjustment" || type === "Count") return round4(quantity);
+  if (type === "Adjustment" || type === "Count") return roundQty(quantity);
   if (type === "Transfer") return -qty;
-  return round4(quantity);
+  return roundQty(quantity);
 }
 
 function ledgerMovementType(type: InventoryTransactionType): LedgerMovementType {
@@ -218,7 +228,7 @@ export async function postInventoryTransaction(
   if (signedQty === 0) throw new Error("Quantity must be non-zero.");
 
   let stockItemId = input.stockItemId || null;
-  let unitCost = round4(input.unitCost ?? 0);
+  let unitCost = roundCost(input.unitCost ?? 0);
   let entityType = input.entityType;
   let entityId = input.entityId ?? null;
 
@@ -231,7 +241,7 @@ export async function postInventoryTransaction(
     if (!item || String(item.company_id) !== String(input.companyId)) {
       throw new Error("Stock item not found.");
     }
-    if (!unitCost) unitCost = round4(Number(item.average_cost || item.current_cost || 0));
+    if (!unitCost) unitCost = roundCost(Number(item.average_cost || item.current_cost || 0));
     entityType = (item.entity_type as StockEntityType) || entityType;
     entityId = item.entity_id ? String(item.entity_id) : entityId;
   } else {
@@ -247,7 +257,7 @@ export async function postInventoryTransaction(
       }
     );
     stockItemId = String(stock.id);
-    if (!unitCost) unitCost = round4(Number(stock.average_cost || stock.current_cost || 0));
+    if (!unitCost) unitCost = roundCost(Number(stock.average_cost || stock.current_cost || 0));
   }
 
   const magnitude = Math.abs(signedQty);

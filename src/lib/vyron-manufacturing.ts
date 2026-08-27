@@ -133,6 +133,21 @@ function round4(n: number) {
   return Math.round(n * 10000) / 10000;
 }
 
+/**
+ * Quantities are stored to six decimals, and recipes genuinely use them —
+ * 0.006250 kg of salmon is not 0.0063. Rounding a quantity to four decimals
+ * consumes the wrong amount of stock, so quantity maths rounds at six.
+ * Money keeps round2/round4; this is only for quantities.
+ */
+function roundQty(n: number) {
+  return Math.round(n * 1000000) / 1000000;
+}
+
+/** Unit costs are stored to eight decimals (R1.7414892 is a real rate). */
+function roundCost(n: number) {
+  return Math.round(n * 100000000) / 100000000;
+}
+
 export function calcYieldStatus(yieldPct: number): string {
   if (yieldPct < 95) return "Under Yield";
   if (yieldPct > 105) return "Above Yield";
@@ -284,8 +299,10 @@ export function scaleBomRequirements(
   return lines
     .filter((l) => ["Ingredient", "Packaging"].includes(String(l.line_type)))
     .map((line, idx) => {
-      const qty = round4(Number(line.quantity || 0) * batchMultiplier);
-      const unitCost = round4(Number(line.unit_cost || 0));
+      // Six decimals for the quantity, eight for the cost — the precision the
+      // BOM columns actually hold, so a scaled requirement matches the recipe.
+      const qty = roundQty(Number(line.quantity || 0) * batchMultiplier);
+      const unitCost = roundCost(Number(line.unit_cost || 0));
       const plannedValue = round2(calcLineCost({ quantity: qty, unit_cost: unitCost, wastage_percent: line.wastage_percent }));
       return {
         line_type: String(line.line_type),
@@ -497,8 +514,19 @@ export async function createProductionRun(
 
   const yieldQty = Math.max(0.0001, Number(source.bom.yield_qty || 1));
   const multiplier = input.batch_multiplier ?? (input.planned_qty ? input.planned_qty / yieldQty : 1);
-  const plannedQty = round4(input.planned_qty ?? yieldQty * multiplier);
+  const plannedQty = roundQty(input.planned_qty ?? yieldQty * multiplier);
   const scaled = scaleBomRequirements(source.lines, multiplier);
+
+  /*
+   * A run built from a BOM with no consumable lines can never consume stock, so
+   * it would complete "successfully" having posted nothing. Refuse it at source
+   * rather than let it become a run that silently does nothing.
+   */
+  if (!scaled.some((l) => l.line_type === "Ingredient" || l.line_type === "Packaging")) {
+    throw new Error(
+      `${source.bom.bom_name || "This BOM"} has no ingredient or packaging lines, so a production run would not consume any stock. Add lines to the BOM first.`
+    );
+  }
 
   const ingredientPlanned = scaled.filter((l) => l.line_type === "Ingredient").reduce((s, l) => s + l.planned_value, 0);
   const packagingPlanned = scaled.filter((l) => l.line_type === "Packaging").reduce((s, l) => s + l.planned_value, 0);
@@ -557,7 +585,7 @@ export async function createProductionRun(
   for (let i = 0; i < scaled.length; i++) {
     const line = scaled[i];
     const stock = await resolveStockItemForLine(supabase, companyId, line);
-    await supabase.from("vyron_cost_production_run_lines").insert({
+    const { error: lineErr } = await supabase.from("vyron_cost_production_run_lines").insert({
       company_id: companyId,
       production_run_id: runId,
       line_type: line.line_type,
@@ -572,6 +600,8 @@ export async function createProductionRun(
       actual_value: line.planned_value,
       sort_order: i,
     });
+    // A swallowed failure here leaves a run that consumes nothing on completion.
+    if (lineErr) throw new Error(`Could not add "${line.line_name}" to the production run: ${lineErr.message}`);
   }
 
   for (const lb of labourRows) {
@@ -697,6 +727,21 @@ export async function completeProductionRun(
     throw new Error(`Cannot complete from status ${run.status}. Start production first.`);
   }
 
+  /*
+   * A run with nothing to consume and nothing to receive would post no stock at
+   * all, yet still be marked Completed — which is exactly how a completed run
+   * leaves the Stock Master untouched. Refuse it rather than report a success
+   * that moved nothing.
+   */
+  const consumable = (run.lines || []).filter(
+    (l) => (l.line_type === "Ingredient" || l.line_type === "Packaging") && Number(l.planned_qty || 0) > 0
+  );
+  if (!consumable.length && !run.product_id) {
+    throw new Error(
+      `${run.run_number} has no ingredient or packaging lines and no linked product, so completing it would not move any stock. Check the BOM this run was created from.`
+    );
+  }
+
   const stockCheck = await validateProductionStock(supabase, run.company_id, runId);
   if (!stockCheck.ok && !input.stock_override) {
     const err = new Error("STOCK_SHORTAGE");
@@ -704,7 +749,7 @@ export async function completeProductionRun(
     throw err;
   }
 
-  const actualQty = round4(input.actual_qty);
+  const actualQty = roundQty(input.actual_qty);
   const yieldPct = calcYieldPct(Number(run.planned_qty), actualQty);
   const yieldStatus = calcYieldStatus(yieldPct);
   const actor = input.completed_by || "user";
@@ -713,9 +758,39 @@ export async function completeProductionRun(
   let packagingActual = 0;
   let actualUsage = 0;
 
+  /*
+   * Postgres gives us no transaction across these separate posts, so completion
+   * tracks what it has already moved. If any later post fails, everything
+   * already consumed is put back before the error propagates — the run is never
+   * left half-consumed, and it is never marked Completed either, because the
+   * status update happens only after all posting has succeeded.
+   */
+  const posted: Array<{ stockItemId: string; quantity: number; unitCost: number; lineName: string }> = [];
+  async function compensatePostedStock() {
+    for (const p of posted.reverse()) {
+      try {
+        await postStockMovement(supabase, {
+          companyId: run!.company_id,
+          stockItemId: p.stockItemId,
+          movementType: "Production Reversal",
+          quantityIn: p.quantity,
+          unitCost: p.unitCost,
+          referenceType: "production_run_rollback",
+          referenceId: runId,
+          referenceLabel: run!.run_number,
+          actor,
+          metadata: { reason: "Completion failed — stock restored", line_name: p.lineName },
+        });
+      } catch {
+        // Keep restoring the rest even if one line cannot be put back.
+      }
+    }
+  }
+
+  try {
   for (const line of run.lines || []) {
     const override = input.line_actuals?.find((l) => l.line_id === line.id);
-    const actualLineQty = round4(override?.actual_qty ?? line.planned_qty);
+    const actualLineQty = roundQty(override?.actual_qty ?? line.planned_qty);
     const unitCost = Number(line.unit_cost || 0);
     const actualValue = round2(actualLineQty * unitCost);
 
@@ -759,6 +834,7 @@ export async function completeProductionRun(
         notes: `Consumed ${actualLineQty} ${line.unit} for ${run.run_number}`,
         allowNegative: Boolean(input.stock_override),
       });
+      posted.push({ stockItemId, quantity: actualLineQty, unitCost: avgCost, lineName: line.line_name });
       await writeInventoryAudit(supabase, {
         companyId: run.company_id,
         stockItemId,
@@ -769,6 +845,10 @@ export async function completeProductionRun(
         referenceId: runId,
       });
     }
+  }
+  } catch (postErr) {
+    await compensatePostedStock();
+    throw postErr;
   }
 
   let wasteIng = 0;
@@ -843,20 +923,26 @@ export async function completeProductionRun(
       fgId = created.id;
     }
 
-    await postInventoryTransaction(supabase, {
-      companyId: run.company_id,
-      transactionType: "Receipt",
-      entityType: "finished_goods",
-      entityId: run.product_id,
-      stockItemId: fgId,
-      quantity: actualQty,
-      unitCost: costPerUnit,
-      referenceType: "production_run",
-      referenceId: runId,
-      referenceLabel: run.run_number,
-      createdBy: actor,
-      notes: `Production completion ${run.run_number}`,
-    });
+    try {
+      await postInventoryTransaction(supabase, {
+        companyId: run.company_id,
+        transactionType: "Receipt",
+        entityType: "finished_goods",
+        entityId: run.product_id,
+        stockItemId: fgId,
+        quantity: actualQty,
+        unitCost: costPerUnit,
+        referenceType: "production_run",
+        referenceId: runId,
+        referenceLabel: run.run_number,
+        createdBy: actor,
+        notes: `Production completion ${run.run_number}`,
+      });
+    } catch (fgErr) {
+      // Receiving the finished goods failed, so the raw materials go back.
+      await compensatePostedStock();
+      throw fgErr;
+    }
   }
 
   await supabase

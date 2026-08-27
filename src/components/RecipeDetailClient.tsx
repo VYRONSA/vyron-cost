@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import {
@@ -12,13 +13,42 @@ import {
   demoBomLines,
   demoBoms,
   formatMoney,
+  formatPreciseMoney,
+  formatQuantity,
 } from "@/lib/vyron-cost-bom-data";
+import type { RecipeComponentRecord } from "@/lib/vyron-cost-recipes-data";
 import { recipeLineToBomLine, recipeToBomHeader } from "@/lib/vyron-cost-recipes-data";
 import { readActiveClient } from "@/lib/vyron-developer-client";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { ItemLookupField } from "@/components/vyron-platform/item-lookup/ItemLookupField";
 
 type ProductLink = { id: string; product_name: string };
+
+type LineDraft = {
+  line_type: string;
+  ingredient_id: string | null;
+  line_name: string;
+  quantity: string;
+  unit: string;
+  unit_cost: string;
+  wastage_percent: string;
+};
+
+const EMPTY_LINE: LineDraft = {
+  line_type: "Ingredient",
+  ingredient_id: null,
+  line_name: "",
+  quantity: "",
+  unit: "kg",
+  unit_cost: "",
+  wastage_percent: "0",
+};
+
+const COMPONENT_TYPES = ["Product Component", "Condiment", "Packaging", "Other"];
+
+const controlClass =
+  "w-full rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-violet-400";
 
 export default function RecipeDetailClient({
   recipeId,
@@ -29,13 +59,21 @@ export default function RecipeDetailClient({
   initialBom?: BomHeader | null;
   initialLines?: BomLine[];
 }) {
-  const { canEdit } = useModulePermissions("boms");
+  const { canCreate, canEdit, canDelete } = useModulePermissions("boms");
   const [demoMode, setDemoMode] = useState(false);
   const [bom, setBom] = useState<BomHeader | null>(initialBom ?? null);
   const [lines, setLines] = useState<BomLine[]>(initialLines ?? []);
   const [linkedProduct, setLinkedProduct] = useState<ProductLink | null>(null);
+  const [components, setComponents] = useState<RecipeComponentRecord[]>([]);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [addingComponent, setAddingComponent] = useState(false);
+  const [componentDraft, setComponentDraft] = useState({ name: "", component_type: "Product Component", sort_order: "", notes: "" });
+  const [lineDraftFor, setLineDraftFor] = useState<string | null>(null);
+  const [lineDraft, setLineDraft] = useState<LineDraft>({ ...EMPTY_LINE });
 
   useEffect(() => {
     const client = readActiveClient();
@@ -64,6 +102,7 @@ export default function RecipeDetailClient({
         const header = recipeToBomHeader(data.recipe);
         setBom(header);
         setLines((data.recipe.lines || []).map(recipeLineToBomLine));
+        setComponents(data.recipe.components || []);
 
         if (header.product_id) {
           const prodRes = await fetch("/api/products").then((r) => r.json());
@@ -112,6 +151,193 @@ export default function RecipeDetailClient({
       targetGp,
     };
   }, [bom, lines]);
+
+  /**
+   * Lines are grouped by their component, in component order. Subtotals are a
+   * plain sum of the same stored line costs the costing engine uses — this is
+   * presentation, not a second calculation. Any line without a component (or a
+   * demo BOM, which has none) still shows, under an Ungrouped heading, so a
+   * line can never disappear from the screen just because it lacks a grouping.
+   */
+  const groups = useMemo(() => {
+    const byId = new Map(components.map((c) => [c.id, c]));
+    const buckets = new Map<string, BomLine[]>();
+    for (const line of lines) {
+      const key = line.component_id && byId.has(line.component_id) ? line.component_id : "__ungrouped__";
+      const list = buckets.get(key);
+      if (list) list.push(line);
+      else buckets.set(key, [line]);
+    }
+    const out = components
+      .map((c) => ({
+        key: c.id,
+        name: c.name,
+        type: c.component_type,
+        component: c as RecipeComponentRecord | null,
+        isPackaging: c.component_type.trim().toLowerCase() === "packaging",
+        lines: buckets.get(c.id) ?? [],
+        subtotal: (buckets.get(c.id) ?? []).reduce(
+          (sum, l) => sum + Number(l.line_cost ?? calcLineCost(l)),
+          0
+        ),
+      }));
+    const rest = buckets.get("__ungrouped__");
+    if (rest?.length) {
+      out.push({
+        key: "__ungrouped__",
+        name: components.length ? "Ungrouped lines" : "BOM Lines",
+        type: "",
+        component: null,
+        isPackaging: false,
+        lines: rest,
+        subtotal: rest.reduce((sum, l) => sum + Number(l.line_cost ?? calcLineCost(l)), 0),
+      });
+    }
+    return out;
+  }, [components, lines]);
+
+  /**
+   * Prefer the stored split; fall back to summing the lines so a demo BOM, or
+   * one saved before the split existed, still shows a correct breakdown.
+   */
+  const packagingCost = useMemo(
+    () =>
+      bom?.packaging_cost != null
+        ? Number(bom.packaging_cost)
+        : lines
+            .filter((l) => l.line_type.trim().toLowerCase() === "packaging")
+            .reduce((s, l) => s + Number(l.line_cost ?? calcLineCost(l)), 0),
+    [bom, lines]
+  );
+  const ingredientCost = useMemo(
+    () =>
+      bom?.ingredient_cost != null
+        ? Number(bom.ingredient_cost)
+        : lines
+            .filter((l) => l.line_type.trim().toLowerCase() !== "packaging")
+            .reduce((s, l) => s + Number(l.line_cost ?? calcLineCost(l)), 0),
+    [bom, lines]
+  );
+
+  /**
+   * Every mutation re-reads the recipe from the server rather than patching
+   * local state, so what the screen shows after an edit is what the database
+   * actually holds — including the costs the engine recomputed.
+   */
+  async function refresh() {
+    const res = await fetch(`/api/recipes/${recipeId}`);
+    const data = await res.json();
+    if (!data.ok || !data.recipe) throw new Error(data.error || "Reload failed.");
+    setBom(recipeToBomHeader(data.recipe));
+    setLines((data.recipe.lines || []).map(recipeLineToBomLine));
+    setComponents(data.recipe.components || []);
+  }
+
+  async function run(action: () => Promise<Response>, success: string) {
+    if (demoMode) {
+      setNotice("Demo workspace — changes are not saved.");
+      return;
+    }
+    setBusy(true);
+    setNotice("");
+    setError("");
+    try {
+      const res = await action();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) throw new Error(data.error || "Request failed.");
+      await refresh();
+      setNotice(success);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Request failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function addComponent() {
+    const name = componentDraft.name.trim();
+    if (!name) {
+      setError("Component name is required.");
+      return;
+    }
+    await run(
+      () =>
+        fetch(`/api/recipes/${recipeId}/components`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            component_type: componentDraft.component_type,
+            sort_order: componentDraft.sort_order.trim() ? Number(componentDraft.sort_order) : undefined,
+            notes: componentDraft.notes.trim() || null,
+          }),
+        }),
+      `Component “${name}” added.`
+    );
+    setComponentDraft({ name: "", component_type: "Product Component", sort_order: "", notes: "" });
+    setAddingComponent(false);
+  }
+
+  async function addLine(componentId: string) {
+    const name = lineDraft.line_name.trim();
+    if (!name) {
+      setError("Choose an ingredient first.");
+      return;
+    }
+    await run(
+      () =>
+        fetch(`/api/recipes/${recipeId}/lines`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            component_id: componentId,
+            line_type: lineDraft.line_type,
+            ingredient_id: lineDraft.ingredient_id,
+            line_name: name,
+            quantity: Number(lineDraft.quantity || 0),
+            unit: lineDraft.unit || "kg",
+            unit_cost: Number(lineDraft.unit_cost || 0),
+            wastage_percent: Number(lineDraft.wastage_percent || 0),
+          }),
+        }),
+      `“${name}” added.`
+    );
+    setLineDraft({ ...EMPTY_LINE });
+    setLineDraftFor(null);
+  }
+
+  /**
+   * Deleting a component only removes the grouping — the schema sets its lines'
+   * component_id to null rather than deleting them. A component that still has
+   * lines therefore asks first, so no one loses track of costing by accident.
+   */
+  async function removeComponent(component: RecipeComponentRecord) {
+    const count = lines.filter((l) => l.component_id === component.id).length;
+    if (count) {
+      const ok = window.confirm(
+        `“${component.name}” still has ${count} line${count === 1 ? "" : "s"}.\n\n` +
+          `Deleting the component keeps those lines and their costs on this BOM — they simply become ungrouped. Continue?`
+      );
+      if (!ok) return;
+    }
+    await run(
+      () => fetch(`/api/recipes/${recipeId}/components/${component.id}`, { method: "DELETE" }),
+      `Component “${component.name}” removed.`
+    );
+  }
+
+  /** Moving a line changes only its component_id — never its costing values. */
+  async function moveLine(lineId: string, componentId: string) {
+    await run(
+      () =>
+        fetch(`/api/recipes/${recipeId}/lines/${lineId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ component_id: componentId || null }),
+        }),
+      "Line moved."
+    );
+  }
 
   if (loading) {
     return <p className="text-sm font-bold text-slate-500">Loading BOM…</p>;
@@ -163,17 +389,17 @@ export default function RecipeDetailClient({
               </div>
             ) : null}
       
-            <div className="grid gap-5 md:grid-cols-5">
+            <div className="grid gap-3 sm:grid-cols-2 md:gap-5 lg:grid-cols-5">
               {[
+                ["Ingredient Cost", formatMoney(ingredientCost), "text-slate-900"],
+                ["Packaging Cost", formatMoney(packagingCost), "text-violet-700"],
                 ["Total Cost", formatMoney(totals.totalCost), "text-slate-900"],
-                ["Cost / Unit", formatMoney(totals.costPerUnit), "text-violet-700"],
-                ["Selling Price (Batch)", formatMoney(totals.sellingPrice), "text-slate-900"],
-                ["Actual GP", `${totals.actualGp.toFixed(1)}%`, totals.actualGp < totals.targetGp ? "text-red-600" : "text-[#84CC16]"],
-                ["Suggested Batch Price", formatMoney(totals.suggestedBatchPrice), "text-[#84CC16]"],
+                ["Selling Price", formatMoney(totals.sellingPrice), "text-slate-900"],
+                ["GP", `${totals.actualGp.toFixed(2)}%`, totals.actualGp < totals.targetGp ? "text-red-600" : "text-[#84CC16]"],
               ].map(([label, value, cls]) => (
-                <div key={label} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+                <div key={label} className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(81,63,190,0.08)] md:p-6">
                   <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">{label}</div>
-                  <div className={`mt-3 text-3xl font-black ${cls}`}>{value}</div>
+                  <div className={`mt-2 text-2xl font-black md:mt-3 md:text-3xl ${cls}`}>{value}</div>
                 </div>
               ))}
             </div>
@@ -182,32 +408,307 @@ export default function RecipeDetailClient({
               Formula used: Actual GP = (Selling Price - Cost / Unit) / Selling Price. Suggested Price = Cost / Unit / (1 - Target GP%).
             </section>
       
-            <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-              <h2 className="mb-5 text-xl font-black text-slate-900">BOM Lines</h2>
+            <section className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(81,63,190,0.08)] sm:p-6">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-xl font-black text-slate-900">Recipe Components</h2>
+                {canCreate ? (
+                  <button
+                    type="button"
+                    onClick={() => setAddingComponent((v) => !v)}
+                    disabled={busy}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 disabled:opacity-60"
+                  >
+                    <Plus size={16} />
+                    Add Component
+                  </button>
+                ) : null}
+              </div>
+
+              {notice ? (
+                <p className="mb-4 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-800">{notice}</p>
+              ) : null}
+              {error ? (
+                <p className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>
+              ) : null}
+
+              {addingComponent && canCreate ? (
+                <div className="mb-4 rounded-2xl border border-violet-200 bg-violet-50/60 p-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                      Component name
+                      <input
+                        autoFocus
+                        value={componentDraft.name}
+                        onChange={(e) => setComponentDraft((d) => ({ ...d, name: e.target.value }))}
+                        placeholder="e.g. Salmon maki"
+                        className={`mt-2 ${controlClass}`}
+                      />
+                    </label>
+                    <label className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                      Component type
+                      <select
+                        value={componentDraft.component_type}
+                        onChange={(e) => setComponentDraft((d) => ({ ...d, component_type: e.target.value }))}
+                        className={`mt-2 ${controlClass}`}
+                      >
+                        {COMPONENT_TYPES.map((t) => (
+                          <option key={t}>{t}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                      Sort order (optional)
+                      <input
+                        value={componentDraft.sort_order}
+                        onChange={(e) => setComponentDraft((d) => ({ ...d, sort_order: e.target.value }))}
+                        inputMode="numeric"
+                        placeholder="auto"
+                        className={`mt-2 ${controlClass}`}
+                      />
+                    </label>
+                    <label className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                      Notes (optional)
+                      <input
+                        value={componentDraft.notes}
+                        onChange={(e) => setComponentDraft((d) => ({ ...d, notes: e.target.value }))}
+                        className={`mt-2 ${controlClass}`}
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void addComponent()}
+                      disabled={busy}
+                      className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-black text-white disabled:opacity-60"
+                    >
+                      {busy ? "Saving…" : "Create component"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAddingComponent(false)}
+                      className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-600"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <p className="mt-3 text-xs font-bold text-slate-500">
+                    This component belongs to this BOM only. Another recipe may use the same name with different ingredients.
+                  </p>
+                </div>
+              ) : null}
+
               {lines.length === 0 ? (
                 <p className="text-sm font-semibold text-slate-500">No cost lines on this BOM yet.</p>
               ) : (
-                <div className="overflow-hidden rounded-2xl border border-slate-100">
-                  <div className="grid grid-cols-7 bg-slate-50 px-5 py-4 text-xs font-black uppercase tracking-[0.14em] text-slate-500">
-                    <div>Type</div>
-                    <div>Name</div>
-                    <div>Qty</div>
-                    <div>Unit</div>
-                    <div>Unit Cost</div>
-                    <div>Waste</div>
-                    <div>Line Cost</div>
-                  </div>
-                  {lines.map((line) => (
-                    <div key={line.id} className="grid grid-cols-7 border-t border-slate-100 px-5 py-4 text-sm">
-                      <div className="font-bold text-slate-500">{line.line_type}</div>
-                      <div className="font-black text-slate-900">{line.line_name}</div>
-                      <div className="font-bold text-slate-500">{Number(line.quantity || 0).toFixed(4)}</div>
-                      <div className="font-bold text-slate-500">{line.unit}</div>
-                      <div className="font-black text-violet-700">{formatMoney(line.unit_cost)}</div>
-                      <div className="font-bold text-slate-500">{Number(line.wastage_percent || 0).toFixed(1)}%</div>
-                      <div className="font-black text-slate-900">{formatMoney(line.line_cost ?? calcLineCost(line))}</div>
-                    </div>
-                  ))}
+                <div className="grid gap-3">
+                  {groups.map((group) => {
+                    const open = expanded[group.key] ?? true;
+                    return (
+                      <div key={group.key} className="overflow-hidden rounded-2xl border border-violet-100">
+                        <button
+                          type="button"
+                          onClick={() => setExpanded((s) => ({ ...s, [group.key]: !open }))}
+                          aria-expanded={open}
+                          className="flex w-full items-center gap-3 bg-violet-50 px-4 py-4 text-left sm:px-5"
+                        >
+                          {open ? (
+                            <ChevronDown size={18} className="shrink-0 text-violet-700" />
+                          ) : (
+                            <ChevronRight size={18} className="shrink-0 text-violet-700" />
+                          )}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-black text-slate-900 sm:text-base">{group.name}</span>
+                            <span className="block text-xs font-bold text-slate-500">
+                              {group.lines.length} {group.isPackaging ? (group.lines.length === 1 ? "item" : "items") : group.lines.length === 1 ? "ingredient" : "ingredients"}
+                              {group.type ? ` · ${group.type}` : ""}
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-sm font-black text-violet-700 sm:text-base">{formatMoney(group.subtotal)}</span>
+                          {canDelete && group.component ? (
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`Delete component ${group.name}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void removeComponent(group.component as RecipeComponentRecord);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  void removeComponent(group.component as RecipeComponentRecord);
+                                }
+                              }}
+                              className="shrink-0 rounded-xl bg-white/70 p-2 text-red-600"
+                            >
+                              <Trash2 size={15} />
+                            </span>
+                          ) : null}
+                        </button>
+
+                        {open ? (
+                          <>
+                            <div className="overflow-x-auto">
+                              <div className="min-w-[620px]">
+                              <div className="grid grid-cols-[minmax(0,2fr)_1fr_0.7fr_1fr_1fr] bg-slate-50 px-4 py-3 text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500 sm:px-5">
+                                <div>Ingredient</div>
+                                <div className="pr-3 text-right">Qty</div>
+                                <div className="pl-1">Unit</div>
+                                <div className="text-right">Unit Cost</div>
+                                <div className="text-right">Line Cost</div>
+                              </div>
+                              {group.lines.map((line) => (
+                                <div
+                                  key={line.id}
+                                  className="grid grid-cols-[minmax(0,2fr)_1fr_0.7fr_1fr_1fr] items-center border-t border-slate-100 px-4 py-3 text-sm sm:px-5"
+                                >
+                                  <div className="truncate font-black text-slate-900">{line.line_name}</div>
+                                  <div className="pr-3 text-right font-bold tabular-nums text-slate-600">{formatQuantity(line.quantity)}</div>
+                                  <div className="pl-1 font-bold text-slate-500">{line.unit}</div>
+                                  <div className="text-right font-bold tabular-nums text-violet-700">{formatPreciseMoney(line.unit_cost)}</div>
+                                  <div className="text-right font-black tabular-nums text-slate-900">
+                                    {formatPreciseMoney(line.line_cost ?? calcLineCost(line))}
+                                    {canEdit && components.length > 1 ? (
+                                      <select
+                                        aria-label={`Move ${line.line_name} to another component`}
+                                        value={line.component_id || ""}
+                                        onChange={(e) => void moveLine(line.id, e.target.value)}
+                                        disabled={busy}
+                                        className="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-[0.7rem] font-bold text-slate-600 outline-none"
+                                      >
+                                        {components.map((c) => (
+                                          <option key={c.id} value={c.id}>
+                                            {c.name}
+                                          </option>
+                                        ))}
+                                        <option value="">Ungrouped</option>
+                                      </select>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              ))}
+                              <div className="grid grid-cols-[minmax(0,2fr)_1fr_0.7fr_1fr_1fr] border-t border-violet-100 bg-violet-50/60 px-4 py-3 text-sm sm:px-5">
+                                <div className="col-span-4 font-black text-slate-700">Component Cost</div>
+                                <div className="text-right font-black tabular-nums text-slate-900">{formatPreciseMoney(group.subtotal)}</div>
+                              </div>
+                              </div>
+                            </div>
+
+                            {canEdit && group.component ? (
+                                <div className="border-t border-slate-100 px-4 py-3 sm:px-5">
+                                  {lineDraftFor === group.key ? (
+                                    <div className="grid gap-3">
+                                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                        <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                                          Ingredient / packaging
+                                          <div className="mt-2">
+                                            <ItemLookupField
+                                              initialValue={lineDraft.line_name}
+                                              defaultType={lineDraft.line_type === "Packaging" ? "packaging" : "ingredient"}
+                                              onSelect={(item) =>
+                                                setLineDraft((d) => ({
+                                                  ...d,
+                                                  ingredient_id: item.entityId || item.stockItemId,
+                                                  line_name: item.productName,
+                                                  unit: item.unit || d.unit,
+                                                  unit_cost: String(item.currentCost ?? d.unit_cost ?? ""),
+                                                }))
+                                              }
+                                            />
+                                          </div>
+                                        </div>
+                                        <label className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                                          Line type
+                                          <select
+                                            value={lineDraft.line_type}
+                                            onChange={(e) => setLineDraft((d) => ({ ...d, line_type: e.target.value }))}
+                                            className={`mt-2 ${controlClass}`}
+                                          >
+                                            <option>Ingredient</option>
+                                            <option>Packaging</option>
+                                          </select>
+                                        </label>
+                                        <label className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                                          Quantity
+                                          <input
+                                            value={lineDraft.quantity}
+                                            onChange={(e) => setLineDraft((d) => ({ ...d, quantity: e.target.value }))}
+                                            inputMode="decimal"
+                                            placeholder="0.006250"
+                                            className={`mt-2 ${controlClass}`}
+                                          />
+                                        </label>
+                                        <label className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                                          Unit
+                                          <input
+                                            value={lineDraft.unit}
+                                            onChange={(e) => setLineDraft((d) => ({ ...d, unit: e.target.value }))}
+                                            className={`mt-2 ${controlClass}`}
+                                          />
+                                        </label>
+                                        <label className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                                          Unit cost
+                                          <input
+                                            value={lineDraft.unit_cost}
+                                            onChange={(e) => setLineDraft((d) => ({ ...d, unit_cost: e.target.value }))}
+                                            inputMode="decimal"
+                                            placeholder="147.42567"
+                                            className={`mt-2 ${controlClass}`}
+                                          />
+                                        </label>
+                                        <label className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                                          Wastage %
+                                          <input
+                                            value={lineDraft.wastage_percent}
+                                            onChange={(e) => setLineDraft((d) => ({ ...d, wastage_percent: e.target.value }))}
+                                            inputMode="decimal"
+                                            className={`mt-2 ${controlClass}`}
+                                          />
+                                        </label>
+                                      </div>
+                                      <div className="flex flex-wrap gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => void addLine(group.key)}
+                                          disabled={busy}
+                                          className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-black text-white disabled:opacity-60"
+                                        >
+                                          {busy ? "Saving…" : "Add to component"}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setLineDraftFor(null);
+                                            setLineDraft({ ...EMPTY_LINE });
+                                          }}
+                                          className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-600"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setLineDraft({ ...EMPTY_LINE, line_type: group.isPackaging ? "Packaging" : "Ingredient" });
+                                        setLineDraftFor(group.key);
+                                      }}
+                                      className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700"
+                                    >
+                                      <Plus size={16} />
+                                      Add Ingredient
+                                    </button>
+                                  )}
+                                </div>
+                              ) : null}
+                          </>
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </section>

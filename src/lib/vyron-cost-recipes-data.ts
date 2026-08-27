@@ -12,7 +12,30 @@ export type RecipeLineInput = {
   unit_cost: number;
   wastage_percent?: number;
   sort_order?: number;
+  /** Owning component within this same BOM. Null leaves the line ungrouped. */
+  component_id?: string | null;
 };
+
+/**
+ * A named part of one pack — "Salmon maki", "Condiments", "Packaging".
+ *
+ * Components are local to their parent BOM. The same name appears in many packs
+ * with different ingredients and quantities, so components are never shared or
+ * linked between BOMs and there is no global component master.
+ */
+export type RecipeComponentRecord = {
+  id: string;
+  company_id: string | null;
+  bom_id: string;
+  name: string;
+  component_type: string;
+  sort_order: number;
+  yield_qty: number | null;
+  yield_unit: string | null;
+  notes: string | null;
+};
+
+export const RECIPE_COMPONENT_TYPES = ["Product Component", "Condiment", "Packaging", "Other"] as const;
 
 export type RecipeRecord = {
   id: string;
@@ -33,6 +56,7 @@ export type RecipeRecord = {
   notes: string | null;
   product_id: string | null;
   lines?: RecipeLineRecord[];
+  components?: RecipeComponentRecord[];
 };
 
 export type RecipeLineRecord = {
@@ -41,6 +65,7 @@ export type RecipeLineRecord = {
   company_id: string | null;
   line_type: string;
   ingredient_id: string | null;
+  component_id: string | null;
   line_name: string;
   quantity: number;
   unit: string;
@@ -153,6 +178,7 @@ function mapLineRow(row: Record<string, unknown>): RecipeLineRecord {
     company_id: row.company_id ? String(row.company_id) : null,
     line_type: String(row.line_type || "Ingredient"),
     ingredient_id: row.ingredient_id ? String(row.ingredient_id) : null,
+    component_id: row.component_id ? String(row.component_id) : null,
     line_name: String(row.line_name || ""),
     quantity: Number(row.quantity || 0),
     unit: String(row.unit || "kg"),
@@ -268,10 +294,150 @@ export async function getRecipe(supabase: SupabaseClient, companyId: string, rec
     .order("sort_order", { ascending: true });
   if (lineError) throw new Error(lineError.message);
 
-  return mapBomRow(
-    bom as Record<string, unknown>,
-    (lines || []).map((line) => mapLineRow(line as Record<string, unknown>))
-  );
+  const components = await listRecipeComponents(supabase, companyId, recipeId);
+
+  return {
+    ...mapBomRow(
+      bom as Record<string, unknown>,
+      (lines || []).map((line) => mapLineRow(line as Record<string, unknown>))
+    ),
+    components,
+  };
+}
+
+function mapComponentRow(row: Record<string, unknown>): RecipeComponentRecord {
+  return {
+    id: String(row.id),
+    company_id: row.company_id ? String(row.company_id) : null,
+    bom_id: String(row.bom_id),
+    name: String(row.name || ""),
+    component_type: String(row.component_type || "Product Component"),
+    sort_order: Number(row.sort_order || 0),
+    yield_qty: row.yield_qty != null ? Number(row.yield_qty) : null,
+    yield_unit: row.yield_unit ? String(row.yield_unit) : null,
+    notes: row.notes ? String(row.notes) : null,
+  };
+}
+
+/**
+ * Every component query is scoped by company_id AND bom_id, so a component can
+ * only ever be reached through a parent BOM the verified workspace owns.
+ */
+export async function listRecipeComponents(
+  supabase: SupabaseClient,
+  companyId: string,
+  recipeId: string
+): Promise<RecipeComponentRecord[]> {
+  const { data, error } = await supabase
+    .from("vyron_cost_bom_components")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("bom_id", recipeId)
+    .order("sort_order", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data || []).map((row) => mapComponentRow(row as Record<string, unknown>));
+}
+
+export async function createRecipeComponent(
+  supabase: SupabaseClient,
+  companyId: string,
+  recipeId: string,
+  input: { name: string; component_type?: string; sort_order?: number; yield_qty?: number | null; yield_unit?: string | null; notes?: string | null }
+) {
+  const name = String(input.name || "").trim();
+  if (!name) throw new Error("Component name is required.");
+
+  // Confirm the parent BOM belongs to this tenant before attaching anything.
+  const { data: bom, error: bomError } = await supabase
+    .from("vyron_cost_boms")
+    .select("id")
+    .eq("id", recipeId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (bomError) throw new Error(bomError.message);
+  if (!bom) throw new Error("Recipe not found.");
+
+  const existing = await listRecipeComponents(supabase, companyId, recipeId);
+  const nextOrder =
+    input.sort_order ?? (existing.length ? Math.max(...existing.map((c) => c.sort_order)) + 10 : 10);
+
+  const { data, error } = await supabase
+    .from("vyron_cost_bom_components")
+    .insert({
+      id: randomUUID(),
+      company_id: companyId,
+      bom_id: recipeId,
+      name,
+      component_type: input.component_type || "Product Component",
+      sort_order: nextOrder,
+      yield_qty: input.yield_qty ?? null,
+      yield_unit: input.yield_unit ?? null,
+      notes: input.notes ?? null,
+    })
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return mapComponentRow(data as Record<string, unknown>);
+}
+
+export async function updateRecipeComponent(
+  supabase: SupabaseClient,
+  companyId: string,
+  recipeId: string,
+  componentId: string,
+  input: { name?: string; component_type?: string; sort_order?: number; yield_qty?: number | null; yield_unit?: string | null; notes?: string | null }
+) {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (input.name !== undefined) {
+    const name = String(input.name).trim();
+    if (!name) throw new Error("Component name is required.");
+    patch.name = name;
+  }
+  if (input.component_type !== undefined) patch.component_type = input.component_type;
+  if (input.sort_order !== undefined) patch.sort_order = input.sort_order;
+  if (input.yield_qty !== undefined) patch.yield_qty = input.yield_qty;
+  if (input.yield_unit !== undefined) patch.yield_unit = input.yield_unit;
+  if (input.notes !== undefined) patch.notes = input.notes;
+
+  const { data, error } = await supabase
+    .from("vyron_cost_bom_components")
+    .update(patch)
+    .eq("id", componentId)
+    .eq("bom_id", recipeId)
+    .eq("company_id", companyId)
+    .select("*")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Component not found.");
+  return mapComponentRow(data as Record<string, unknown>);
+}
+
+/**
+ * Deleting a component leaves its lines in place and ungrouped — the schema's
+ * ON DELETE SET NULL. Costing is unaffected, so removing a grouping can never
+ * silently destroy cost data.
+ */
+export async function deleteRecipeComponent(
+  supabase: SupabaseClient,
+  companyId: string,
+  recipeId: string,
+  componentId: string
+) {
+  /**
+   * Select the deleted row back so a delete that matched nothing — a wrong
+   * tenant, a wrong BOM, an id that no longer exists — reports not-found
+   * instead of a misleading success.
+   */
+  const { data, error } = await supabase
+    .from("vyron_cost_bom_components")
+    .delete()
+    .eq("id", componentId)
+    .eq("bom_id", recipeId)
+    .eq("company_id", companyId)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) throw new Error("Component not found.");
+  return { ok: true };
 }
 
 async function syncLinkedProducts(
@@ -383,6 +549,8 @@ async function insertRecipeLines(
       bom_id: recipeId,
       line_type: line.line_type || "Ingredient",
       ingredient_id: line.ingredient_id || null,
+      // Carried through so a save that rewrites lines keeps their grouping.
+      component_id: line.component_id || null,
       line_name: line.line_name.trim(),
       quantity: Number(line.quantity || 0),
       unit: line.unit || "kg",
@@ -484,6 +652,7 @@ export async function updateRecipe(
     (existing.lines || []).map((line) => ({
       line_type: line.line_type,
       ingredient_id: line.ingredient_id,
+      component_id: line.component_id,
       line_name: line.line_name,
       quantity: line.quantity,
       unit: line.unit,
@@ -676,6 +845,7 @@ export async function updateRecipeLine(
   const patch: Record<string, unknown> = {};
   if (input.line_type !== undefined) patch.line_type = input.line_type;
   if (input.ingredient_id !== undefined) patch.ingredient_id = input.ingredient_id;
+  if (input.component_id !== undefined) patch.component_id = input.component_id;
   if (input.line_name !== undefined) patch.line_name = input.line_name.trim();
   if (input.quantity !== undefined) patch.quantity = Number(input.quantity);
   if (input.unit !== undefined) patch.unit = input.unit;
@@ -788,6 +958,8 @@ export function recipeToBomHeader(recipe: RecipeRecord) {
     target_gp: recipe.target_gp,
     selling_price: recipe.selling_price,
     total_cost: recipe.total_cost,
+    ingredient_cost: recipe.ingredient_cost,
+    packaging_cost: recipe.packaging_cost,
     cost_per_unit: recipe.cost_per_unit,
     calculated_gp: recipe.calculated_gp,
     suggested_selling_price: recipe.suggested_selling_price,
@@ -803,6 +975,7 @@ export function recipeLineToBomLine(line: RecipeLineRecord) {
     bom_id: line.recipe_id,
     line_type: line.line_type,
     ingredient_id: line.ingredient_id,
+    component_id: line.component_id,
     line_name: line.line_name,
     quantity: line.quantity,
     unit: line.unit,
