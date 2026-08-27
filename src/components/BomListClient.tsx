@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Copy, FileText, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
@@ -45,57 +45,113 @@ export default function BomListClient({
   const { canCreate, canDelete } = useModulePermissions("boms");
   const [items, setItems] = useState(demoSeed ? initialBoms : []);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [descriptionFilter, setDescriptionFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [categories, setCategories] = useState<string[]>([]);
   const [demoMode, setDemoMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadRecipes = useCallback(async (showRefresh = false) => {
-    const client = readActiveClient();
-    const demo = isDemoWorkspace(client);
-    setDemoMode(demo);
+  const loadRecipes = useCallback(
+    async (showRefresh = false) => {
+      const client = readActiveClient();
+      const demo = isDemoWorkspace(client);
+      setDemoMode(demo);
 
-    if (demo) {
-      setItems(demoBoms);
-      setLoading(false);
-      setRefreshing(false);
-      return;
-    }
-
-    if (showRefresh) setRefreshing(true);
-    else setLoading(true);
-
-    try {
-      const response = await fetch("/api/recipes");
-      const data = await response.json();
-      if (data.ok && Array.isArray(data.recipes)) {
-        setItems(data.recipes.map((row: Record<string, unknown>) => mapRecipeRow(row)));
-      } else {
-        setItems([]);
+      if (demo) {
+        setItems(demoBoms);
+        setCategories(
+          [...new Set(demoBoms.map((bom) => (bom.category || "").trim()).filter(Boolean))].sort((a, b) =>
+            a.localeCompare(b)
+          )
+        );
+        setLoading(false);
+        setRefreshing(false);
+        return;
       }
-    } catch {
-      setItems([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
 
+      if (showRefresh) setRefreshing(true);
+      else setLoading(true);
+
+      try {
+        const params = new URLSearchParams();
+        if (search.trim()) params.set("name", search.trim());
+        if (categoryFilter !== "All") params.set("category", categoryFilter);
+        if (descriptionFilter.trim()) params.set("description", descriptionFilter.trim());
+        const query = params.toString();
+        const response = await fetch(`/api/recipes${query ? `?${query}` : ""}`);
+        const data = await response.json();
+        if (data.ok && Array.isArray(data.recipes)) {
+          setItems(data.recipes.map((row: Record<string, unknown>) => mapRecipeRow(row)));
+          if (Array.isArray(data.categories)) setCategories(data.categories as string[]);
+        } else {
+          setItems([]);
+        }
+      } catch {
+        setItems([]);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [search, categoryFilter, descriptionFilter]
+  );
+
+  /**
+   * Typing runs through the database, so the request is debounced — one query
+   * per pause rather than one per keystroke. Kept as a single effect so the
+   * filters drive the same load path the screen already used.
+   */
   useEffect(() => {
-    void loadRecipes();
+    const timer = setTimeout(() => {
+      void loadRecipes();
+    }, 250);
+    return () => clearTimeout(timer);
   }, [loadRecipes]);
 
+  const activeFilters = useMemo(() => {
+    const chips: { key: string; label: string; clear: () => void }[] = [];
+    if (search.trim()) chips.push({ key: "name", label: `Name: ${search.trim()}`, clear: () => setSearch("") });
+    if (categoryFilter !== "All")
+      chips.push({ key: "category", label: `Category: ${categoryFilter}`, clear: () => setCategoryFilter("All") });
+    if (descriptionFilter.trim())
+      chips.push({
+        key: "description",
+        label: `Description: ${descriptionFilter.trim()}`,
+        clear: () => setDescriptionFilter(""),
+      });
+    if (statusFilter !== "All")
+      chips.push({ key: "status", label: `Status: ${statusFilter}`, clear: () => setStatusFilter("All") });
+    return chips;
+  }, [search, categoryFilter, descriptionFilter, statusFilter]);
+
+  function clearFilters() {
+    setSearch("");
+    setCategoryFilter("All");
+    setDescriptionFilter("");
+    setStatusFilter("All");
+  }
+
+  /**
+   * Name, category and description are already applied by the database. Demo
+   * mode has no server to query, so it repeats them here; status stays a
+   * client-side refinement, as it was before.
+   */
   const filtered = useMemo(() => {
     let list = items;
     if (statusFilter !== "All") {
       list = list.filter((bom) => (bom.status || "Draft") === statusFilter);
     }
-    const term = search.toLowerCase().trim();
-    if (!term) return list;
-    return list.filter((bom) =>
-      [bom.bom_name, bom.category || "", bom.status || ""].join(" ").toLowerCase().includes(term)
-    );
-  }, [items, search, statusFilter]);
+    if (!demoMode) return list;
+
+    const term = search.trim().toLowerCase();
+    if (term) list = list.filter((bom) => bom.bom_name.toLowerCase().includes(term));
+    if (categoryFilter !== "All") list = list.filter((bom) => (bom.category || "") === categoryFilter);
+    const note = descriptionFilter.trim().toLowerCase();
+    if (note) list = list.filter((bom) => (bom.notes || "").toLowerCase().includes(note));
+    return list;
+  }, [items, search, categoryFilter, descriptionFilter, statusFilter, demoMode]);
 
   async function remove(id: string) {
     if (!canDelete) return;
@@ -193,14 +249,38 @@ export default function BomListClient({
         <VyronPremiumSectionHeading eyebrow="BOM library" title="Recipes & BOMs" subtitle="Search, filter and open costing structures." />
 
         <div className="mt-5 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
-            <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-              <Search size={18} className="text-violet-700" />
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search BOMs..." className="w-72 bg-transparent text-sm font-bold outline-none placeholder:text-slate-400" />
+            <div className="flex w-full items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 md:w-auto">
+              <Search size={18} className="shrink-0 text-violet-700" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search BOMs..." className="w-full min-w-0 bg-transparent text-sm font-bold outline-none placeholder:text-slate-400 md:w-72" />
             </div>
+            <div className="flex w-full items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 md:w-auto">
+              <FileText size={18} className="shrink-0 text-violet-700" />
+              <input
+                value={descriptionFilter}
+                onChange={(e) => setDescriptionFilter(e.target.value)}
+                placeholder="Search description..."
+                aria-label="Search recipe description"
+                className="w-full min-w-0 bg-transparent text-sm font-bold outline-none placeholder:text-slate-400 md:w-56"
+              />
+            </div>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              aria-label="Filter by category"
+              className="w-full rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-black text-violet-800 outline-none md:w-auto"
+            >
+              <option value="All">All categories</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-black text-violet-800 outline-none"
+              aria-label="Filter by status"
+              className="w-full rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-black text-violet-800 outline-none md:w-auto"
             >
               <option value="All">All statuses</option>
               <option>Draft</option>
@@ -225,6 +305,31 @@ export default function BomListClient({
               </Link>
             ) : null}
         </div>
+
+        {activeFilters.length ? (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Active filters</span>
+            {activeFilters.map((chip) => (
+              <button
+                key={chip.key}
+                type="button"
+                onClick={chip.clear}
+                aria-label={`Remove filter ${chip.label}`}
+                className="inline-flex max-w-full items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-800"
+              >
+                <span className="truncate">{chip.label}</span>
+                <X size={14} className="shrink-0" />
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-600"
+            >
+              Clear all
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {loading ? (
@@ -233,13 +338,24 @@ export default function BomListClient({
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-[2rem] bg-white p-10 text-center shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-          <h3 className="text-xl font-black text-slate-900">No BOMs yet</h3>
+          <h3 className="text-xl font-black text-slate-900">
+            {activeFilters.length ? "No matching BOMs" : "No BOMs yet"}
+          </h3>
           <p className="mt-2 text-sm font-semibold text-slate-500">
-            {search.trim()
-              ? "No recipes match your search. Try a different term or create a new BOM."
+            {activeFilters.length
+              ? "No recipes match every active filter. Try relaxing one, or clear them to see the full library."
               : "Create your first recipe / BOM to cost ingredients, packaging, labour and yield."}
           </p>
-          {!search.trim() && canCreate ? (
+          {activeFilters.length ? (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="mt-6 inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-700"
+            >
+              Clear all filters
+            </button>
+          ) : null}
+          {!activeFilters.length && canCreate ? (
             <Link href="/recipes/new" className="mt-6 inline-flex items-center gap-2 rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">
               <Plus size={18} />
               Create first BOM

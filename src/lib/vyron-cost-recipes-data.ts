@@ -170,7 +170,37 @@ function mapLineRow(row: Record<string, unknown>): RecipeLineRecord {
   };
 }
 
-export async function listRecipes(supabase: SupabaseClient, companyId: string, includeArchived = false) {
+export type RecipeListFilters = {
+  /** Matched against bom_name. */
+  name?: string;
+  /** Exact category match, as offered by listRecipeCategories(). */
+  category?: string;
+  /**
+   * Matched against notes. vyron_cost_boms has no `description` column — notes
+   * is the BOM's free-text field, so that is what the description filter reads.
+   */
+  description?: string;
+};
+
+/**
+ * `%` and `_` are wildcards to ILIKE, so a user typing them would silently widen
+ * their own search. Escape them, and the escape character itself, so the filter
+ * matches the literal text that was typed.
+ */
+function escapeLike(value: string) {
+  return value.replace(/[\\%_]/g, (match) => `\\${match}`);
+}
+
+/**
+ * Filtering runs in the database rather than over the already-loaded page, so a
+ * search reaches every recipe the tenant owns and not just the ones on screen.
+ */
+export async function listRecipes(
+  supabase: SupabaseClient,
+  companyId: string,
+  includeArchived = false,
+  filters: RecipeListFilters = {}
+) {
   let query = supabase
     .from("vyron_cost_boms")
     .select("*")
@@ -179,9 +209,45 @@ export async function listRecipes(supabase: SupabaseClient, companyId: string, i
   if (!includeArchived) {
     query = query.neq("status", "Archived");
   }
+
+  const name = filters.name?.trim();
+  if (name) query = query.ilike("bom_name", `%${escapeLike(name)}%`);
+
+  const category = filters.category?.trim();
+  if (category) query = query.eq("category", category);
+
+  const description = filters.description?.trim();
+  if (description) query = query.ilike("notes", `%${escapeLike(description)}%`);
+
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data || []).map((row) => mapBomRow(row as Record<string, unknown>));
+}
+
+/**
+ * The category options come from the tenant's own recipes, so the dropdown can
+ * never offer a category that matches nothing — or omit one that does.
+ */
+export async function listRecipeCategories(
+  supabase: SupabaseClient,
+  companyId: string,
+  includeArchived = false
+) {
+  let query = supabase
+    .from("vyron_cost_boms")
+    .select("category")
+    .eq("company_id", companyId);
+  if (!includeArchived) {
+    query = query.neq("status", "Archived");
+  }
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  const seen = new Set<string>();
+  for (const row of data || []) {
+    const value = String((row as { category?: unknown }).category ?? "").trim();
+    if (value) seen.add(value);
+  }
+  return [...seen].sort((a, b) => a.localeCompare(b));
 }
 
 export async function getRecipe(supabase: SupabaseClient, companyId: string, recipeId: string) {
