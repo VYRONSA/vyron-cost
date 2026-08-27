@@ -24,6 +24,8 @@ function mapRecipeRow(row: Record<string, unknown>): BomHeader {
     target_gp: row.target_gp != null ? Number(row.target_gp) : null,
     selling_price: row.selling_price != null ? Number(row.selling_price) : null,
     total_cost: Number(row.total_cost || 0),
+    ingredient_cost: row.ingredient_cost != null ? Number(row.ingredient_cost) : null,
+    packaging_cost: row.packaging_cost != null ? Number(row.packaging_cost) : null,
     cost_per_unit: Number(row.cost_per_unit || 0),
     calculated_gp: row.calculated_gp != null ? Number(row.calculated_gp) : null,
     suggested_selling_price: row.suggested_selling_price != null ? Number(row.suggested_selling_price) : null,

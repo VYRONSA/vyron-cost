@@ -24,6 +24,8 @@ export type RecipeRecord = {
   target_gp: number | null;
   selling_price: number | null;
   total_cost: number;
+  ingredient_cost: number | null;
+  packaging_cost: number | null;
   cost_per_unit: number;
   calculated_gp: number | null;
   suggested_selling_price: number | null;
@@ -56,6 +58,20 @@ function round4(n: number) {
   return Math.round(n * 10000) / 10000;
 }
 
+function round8(n: number) {
+  return Math.round(n * 100000000) / 100000000;
+}
+
+/**
+ * Packaging is recorded on the BOM line type, and the data has been written in
+ * mixed casing over time ("Packaging" and "packaging" both exist in production),
+ * so the split must be case-insensitive. `idx_vyron_cost_bom_lines_type` is
+ * already built on lower(line_type), so the database agrees with this reading.
+ */
+export function isPackagingLine(line: { line_type?: string | null }) {
+  return String(line.line_type || "").trim().toLowerCase() === "packaging";
+}
+
 function lineCostInput(line: RecipeLineInput) {
   return {
     quantity: Number(line.quantity || 0),
@@ -82,19 +98,29 @@ export function computeRecipeCosts(
   sellingPrice: number,
   targetGp: number
 ) {
-  const totalCost = round2(
-    lines.reduce(
-      (sum, line) =>
-        sum +
-        calcLineCost(lineCostInput(line)),
-      0
-    )
+  /**
+   * total_cost keeps the meaning it has always had — every line, packaging
+   * included — so no existing recipe total moves. ingredient_cost and
+   * packaging_cost are additive detail: the costing workbooks quote food cost
+   * and packaging as separate figures, and collapsing them into one number lost
+   * information the business actually prices against.
+   */
+  const ingredientCost = round8(
+    lines
+      .filter((line) => !isPackagingLine(line))
+      .reduce((sum, line) => sum + calcLineCost(lineCostInput(line)), 0)
   );
+  const packagingCost = round8(
+    lines
+      .filter((line) => isPackagingLine(line))
+      .reduce((sum, line) => sum + calcLineCost(lineCostInput(line)), 0)
+  );
+  const totalCost = round2(ingredientCost + packagingCost);
   const numericYield = Math.max(1, Number(yieldQty || 1));
   const costPerUnit = round4(totalCost / numericYield);
   const calculatedGp = round2(calcGp(sellingPrice, costPerUnit));
   const suggestedSellingPrice = round2(calcSuggestedPrice(costPerUnit, targetGp));
-  return { totalCost, costPerUnit, calculatedGp, suggestedSellingPrice };
+  return { totalCost, ingredientCost, packagingCost, costPerUnit, calculatedGp, suggestedSellingPrice };
 }
 
 function mapBomRow(row: Record<string, unknown>, lines?: RecipeLineRecord[]): RecipeRecord {
@@ -108,6 +134,8 @@ function mapBomRow(row: Record<string, unknown>, lines?: RecipeLineRecord[]): Re
     target_gp: row.target_gp != null ? Number(row.target_gp) : null,
     selling_price: row.selling_price != null ? Number(row.selling_price) : null,
     total_cost: Number(row.total_cost || 0),
+    ingredient_cost: row.ingredient_cost != null ? Number(row.ingredient_cost) : null,
+    packaging_cost: row.packaging_cost != null ? Number(row.packaging_cost) : null,
     cost_per_unit: Number(row.cost_per_unit || 0),
     calculated_gp: row.calculated_gp != null ? Number(row.calculated_gp) : null,
     suggested_selling_price: row.suggested_selling_price != null ? Number(row.suggested_selling_price) : null,
@@ -339,6 +367,8 @@ export async function createRecipe(
       target_gp: Number(input.target_gp || 0),
       selling_price: Number(input.selling_price || 0),
       total_cost: costs.totalCost,
+      ingredient_cost: costs.ingredientCost,
+      packaging_cost: costs.packagingCost,
       cost_per_unit: costs.costPerUnit,
       calculated_gp: costs.calculatedGp,
       suggested_selling_price: costs.suggestedSellingPrice,
@@ -409,6 +439,8 @@ export async function updateRecipe(
     target_gp: targetGp,
     selling_price: sellingPrice,
     total_cost: costs.totalCost,
+    ingredient_cost: costs.ingredientCost,
+    packaging_cost: costs.packagingCost,
     cost_per_unit: costs.costPerUnit,
     calculated_gp: costs.calculatedGp,
     suggested_selling_price: costs.suggestedSellingPrice,
@@ -477,6 +509,8 @@ export async function recalculateBomCosts(
     .from("vyron_cost_boms")
     .update({
       total_cost: costs.totalCost,
+      ingredient_cost: costs.ingredientCost,
+      packaging_cost: costs.packagingCost,
       cost_per_unit: costs.costPerUnit,
       calculated_gp: costs.calculatedGp,
       suggested_selling_price: costs.suggestedSellingPrice,
@@ -549,6 +583,8 @@ export async function createRecipeLine(
     .from("vyron_cost_boms")
     .update({
       total_cost: costs.totalCost,
+      ingredient_cost: costs.ingredientCost,
+      packaging_cost: costs.packagingCost,
       cost_per_unit: costs.costPerUnit,
       calculated_gp: costs.calculatedGp,
       suggested_selling_price: costs.suggestedSellingPrice,
@@ -620,6 +656,8 @@ export async function updateRecipeLine(
     .from("vyron_cost_boms")
     .update({
       total_cost: costs.totalCost,
+      ingredient_cost: costs.ingredientCost,
+      packaging_cost: costs.packagingCost,
       cost_per_unit: costs.costPerUnit,
       calculated_gp: costs.calculatedGp,
       suggested_selling_price: costs.suggestedSellingPrice,
@@ -660,6 +698,8 @@ export async function deleteRecipeLine(
     .from("vyron_cost_boms")
     .update({
       total_cost: costs.totalCost,
+      ingredient_cost: costs.ingredientCost,
+      packaging_cost: costs.packagingCost,
       cost_per_unit: costs.costPerUnit,
       calculated_gp: costs.calculatedGp,
       suggested_selling_price: costs.suggestedSellingPrice,
