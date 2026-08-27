@@ -184,37 +184,25 @@ export async function buildCustomerInvoiceDocumentModel(
   /* ---------------------------------------------------------------- provenance */
 
   /*
-   * Both facts get stated, because on the real historical invoices both are
-   * true at once: the parties are being shown from today's master data, AND the
-   * VAT total came from the import header while the per-line split was never
-   * captured. Showing only the first would leave a reader to assume the line
-   * table simply forgot to print its VAT column.
+   * NO HISTORICAL-REPRINT BANNER.
+   *
+   * Stage 5 assumed an invoice without a tax snapshot had been issued to a
+   * customer before snapshotting existed, and stamped every such document with
+   * "Historical reprint — not a reproduction of the issued document". That is
+   * wrong for this workflow: these invoices were raised in VYRON COST and were
+   * not sent to customers, so there is no earlier issued document for the
+   * reprint to differ from, and the banner told the reader something untrue.
+   *
+   * The lack of a snapshot is still not hidden — the Tax Details meta field
+   * below states plainly whether the tax identity is the one captured at issue
+   * or the current profile. What is removed is the claim that the document is a
+   * reproduction of something previously issued.
+   *
+   * Nothing about the figures changes. The banner was presentation only: no
+   * amount, rate, treatment, snapshot or database record is read or written
+   * differently because of this.
    */
-  const provenanceParts: string[] = [];
-  if (!fromSnapshot) {
-    provenanceParts.push(
-      "This invoice was raised before VYRON COST began preserving the tax details recorded at the time of issue. " +
-        "The supplier and customer details shown are the current master-data values, which may differ from those on " +
-        "the document originally issued."
-    );
-  }
-  if (summary.hasUndeterminedLines) {
-    provenanceParts.push(
-      `${summary.undeterminedLineCount} of ${lines.length} line(s) carry no recorded VAT treatment, so their VAT is shown as ` +
-        `"Not recorded" rather than as zero. The VAT total below is the figure recorded against the invoice as a whole; ` +
-        "it is not a sum of the line VAT column."
-    );
-  }
-
-  const notice: DocumentPdfNotice | null = provenanceParts.length
-    ? {
-        heading: fromSnapshot
-          ? "Some lines have no recorded VAT treatment"
-          : "Historical reprint — not a reproduction of the issued document",
-        body: `${provenanceParts.join(" ")} Refer to the original invoice for the details as issued.`,
-        tone: "warning",
-      }
-    : null;
+  const notice: DocumentPdfNotice | null = null;
 
   /*
    * The words "Tax Invoice" are a SARS requirement, and only apply where the
@@ -275,7 +263,9 @@ export async function buildCustomerInvoiceDocumentModel(
       { label: "Currency", value: "ZAR (South African Rand)" },
       {
         label: "Tax Details",
-        value: fromSnapshot ? `As issued ${String(invoice.tax_snapshot_at || "").slice(0, 10)}` : "Current master data",
+        value: fromSnapshot
+          ? `Captured ${String(invoice.tax_snapshot_at || "").slice(0, 10)}`
+          : "Company tax profile",
       },
     ],
     lineColumns: [
