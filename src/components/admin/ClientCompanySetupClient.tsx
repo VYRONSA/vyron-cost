@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { WorkspaceCompanyProfile } from "@/lib/vyron-saas-workspace";
 import { useAdminPermissions } from "@/hooks/useModulePermissions";
 import { VYRON_BTN } from "@/components/vyron-ui";
@@ -8,14 +8,19 @@ import type { CompanyBranding, LogoPosition, LogoSizePreset } from "@/lib/platfo
 import LogoUploadCard, { type LogoToast } from "@/components/admin/LogoUploadCard";
 import { PREVIEW_DOCUMENT_TYPES, type PreviewDocumentType } from "@/lib/platform/documents/buildPreviewDocumentModel";
 import {
+  EMPTY_ADDRESS,
   VAT_STATUSES,
   VAT_STATUS_LABELS,
+  composeAddress,
+  evaluateInvoiceReadiness,
   validateVatNumber,
   vatStatusWarning,
+  type StructuredAddress,
 } from "@/lib/vyron-tax-profile";
 
+// min-h-[44px] keeps every control at a comfortable touch target on a phone.
 const INPUT_CLASS =
-  "mt-2 w-full rounded-xl border bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-violet-400";
+  "mt-2 min-h-[44px] w-full rounded-xl border bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-violet-400 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
 
 const LOGO_POSITIONS: { value: LogoPosition; label: string }[] = [
   { value: "top_left", label: "Top Left" },
@@ -54,6 +59,9 @@ const emptyProfile: WorkspaceCompanyProfile = {
   bankAccountNumber: "",
   bankBranchCode: "",
   bankAccountType: "",
+  bankPaymentReference: "",
+  physical: { ...EMPTY_ADDRESS },
+  postal: { ...EMPTY_ADDRESS },
   xeroStatus: "Not Connected",
   packageName: "Professional",
   userLimit: 5,
@@ -61,9 +69,36 @@ const emptyProfile: WorkspaceCompanyProfile = {
   status: "Setup",
 };
 
+/**
+ * Accepts an empty address — not every company supplies one — and rejects only a
+ * value that is present and cannot be an address.
+ */
+function emailProblem(value: string, label: string): string {
+  const email = String(value || "").trim();
+  if (!email) return "";
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) ? "" : `${label} is not a valid email address.`;
+}
+
+const ADDRESS_FIELDS: { key: keyof StructuredAddress; label: string; wide?: boolean }[] = [
+  { key: "line1", label: "Address Line 1", wide: true },
+  { key: "line2", label: "Address Line 2", wide: true },
+  { key: "suburb", label: "Suburb" },
+  { key: "city", label: "City" },
+  { key: "province", label: "Province" },
+  { key: "postalCode", label: "Postal Code" },
+  { key: "country", label: "Country" },
+];
+
 export default function ClientCompanySetupClient() {
   const { canCompany } = useAdminPermissions();
   const [profile, setProfile] = useState<WorkspaceCompanyProfile>(emptyProfile);
+  /*
+   * "Same as physical" copies into the postal fields in local state only. What
+   * was there is stashed so unticking restores it, and nothing reaches the
+   * database until the user actually saves.
+   */
+  const [postalSameAsPhysical, setPostalSameAsPhysical] = useState(false);
+  const [stashedPostal, setStashedPostal] = useState<StructuredAddress | null>(null);
   const [branding, setBranding] = useState<CompanyBranding>({
     workspaceId: null,
     companyId: null,
@@ -212,10 +247,20 @@ export default function ClientCompanySetupClient() {
       setMessage("You do not have permission to edit company setup.");
       return;
     }
-    // A malformed VAT number would be printed on a tax invoice, so the save stops here.
+    /*
+     * No PATCH is sent while client-side validation fails. The server validates
+     * again and remains the authority — this only avoids a round trip that is
+     * certain to be refused, and keeps the message next to the field.
+     */
     const vatError = validateVatNumber(profile.vatNumber);
     if (vatError) {
       setMessage(vatError);
+      return;
+    }
+    const emailError =
+      emailProblem(profile.contactEmail, "Contact email") || emailProblem(profile.remittanceEmail, "Remittance email");
+    if (emailError) {
+      setMessage(emailError);
       return;
     }
     setSaving(true);
@@ -242,6 +287,9 @@ export default function ClientCompanySetupClient() {
         bankAccountNumber: profile.bankAccountNumber,
         bankBranchCode: profile.bankBranchCode,
         bankAccountType: profile.bankAccountType,
+        bankPaymentReference: profile.bankPaymentReference,
+        physical: profile.physical,
+        postal: profile.postal,
       }),
     });
     const data = await res.json();
@@ -302,6 +350,53 @@ export default function ClientCompanySetupClient() {
     if (data.ok) setBranding(data.branding as CompanyBranding);
   }
 
+  /*
+   * The readiness card and the Stage 4 invoice issue gate call the same function,
+   * so what this screen says is missing is exactly what will block an invoice.
+   */
+  const readiness = useMemo(
+    () =>
+      evaluateInvoiceReadiness({
+        companyName: profile.companyName,
+        tradingName: profile.tradingName,
+        registrationNumber: profile.registrationNumber,
+        vatStatus: profile.vatStatus,
+        vatNumber: profile.vatNumber,
+        // Reflects what is on screen now, including edits not yet saved.
+        physicalAddress: composeAddress(profile.physical) || profile.physicalAddress,
+        defaultVatRate: profile.defaultVatRate,
+      }),
+    [profile]
+  );
+
+  function patchAddress(which: "physical" | "postal", key: keyof StructuredAddress, value: string) {
+    setProfile((current) => {
+      const next = { ...current, [which]: { ...current[which], [key]: value } };
+      // While the boxes are ticked the postal address tracks the physical one.
+      if (which === "physical" && postalSameAsPhysical) next.postal = { ...next.physical };
+      return next;
+    });
+  }
+
+  function togglePostalSame(checked: boolean) {
+    setPostalSameAsPhysical(checked);
+    if (checked) {
+      setStashedPostal(profile.postal);
+      setProfile((current) => ({ ...current, postal: { ...current.physical } }));
+      return;
+    }
+    // Nothing was persisted, so the previous postal address comes straight back.
+    if (stashedPostal) setProfile((current) => ({ ...current, postal: stashedPostal }));
+    setStashedPostal(null);
+  }
+
+  function focusField(field: string) {
+    const el = document.querySelector<HTMLElement>(`[data-field="${field}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.focus({ preventScroll: true });
+  }
+
   if (loading) return <div className="text-sm font-semibold text-slate-500">Loading company profile…</div>;
 
   return (
@@ -329,59 +424,215 @@ export default function ClientCompanySetupClient() {
         </div>
       ) : null}
 
+      <section
+        role="status"
+        className={`rounded-[2rem] border p-6 shadow-sm ${
+          readiness.level === "tax-invoice"
+            ? "border-emerald-200 bg-emerald-50"
+            : readiness.level === "invoice"
+              ? "border-sky-200 bg-sky-50"
+              : "border-amber-300 bg-amber-50"
+        }`}
+      >
+        <div className="flex flex-wrap items-start gap-3">
+          <span aria-hidden="true" className="text-2xl leading-none">
+            {readiness.level === "tax-invoice" ? "\u{1F7E2}" : readiness.level === "invoice" ? "\u{1F535}" : "\u{1F7E0}"}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2
+              className={`text-lg font-black ${
+                readiness.level === "tax-invoice"
+                  ? "text-emerald-900"
+                  : readiness.level === "invoice"
+                    ? "text-sky-900"
+                    : "text-amber-900"
+              }`}
+            >
+              {readiness.headline}
+            </h2>
+            <p className="mt-1 text-sm font-semibold text-slate-700">{readiness.explanation}</p>
+
+            {readiness.gaps.length ? (
+              <ul className="mt-4 space-y-2">
+                {readiness.gaps.map((gap) => (
+                  <li key={gap.field}>
+                    <button
+                      type="button"
+                      onClick={() => focusField(gap.field)}
+                      className="w-full min-h-[44px] rounded-2xl border border-amber-300 bg-white px-4 py-3 text-left transition hover:border-amber-500"
+                    >
+                      <span className="block text-sm font-black text-amber-900">{gap.label}</span>
+                      <span className="mt-0.5 block text-xs font-semibold text-slate-600">{gap.detail}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {readiness.confirmed.map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-white bg-white/70 px-4 py-3">
+                    <dt className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{item.label}</dt>
+                    <dd className="mt-1 whitespace-pre-line text-sm font-bold text-slate-900">{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+          </div>
+        </div>
+      </section>
+
       <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
-        <Field label="Company Name" value={profile.companyName} onChange={(v) => setProfile((p) => ({ ...p, companyName: v }))} />
-        <Field label="Trading Name" value={profile.tradingName} onChange={(v) => setProfile((p) => ({ ...p, tradingName: v }))} />
-        <SelectField
-          label="VAT Status"
-          value={profile.vatStatus}
-          options={VAT_STATUSES.map((status) => ({ value: status, label: VAT_STATUS_LABELS[status] }))}
-          onChange={(v) => setProfile((p) => ({ ...p, vatStatus: v as typeof p.vatStatus }))}
-          hint="Registration is never assumed from a VAT number alone."
-        />
+        <div className="md:col-span-2">
+          <h2 className="text-lg font-black text-slate-950">Tax &amp; Legal Profile</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-500">
+            Company identity as it appears on invoices and to SARS.
+          </p>
+        </div>
+        <Field label="Legal Company Name" dataField="companyName" value={profile.companyName} onChange={(v) => setProfile((p) => ({ ...p, companyName: v }))} hint="The registered name of the legal entity." />
+        <Field label="Trading Name" dataField="tradingName" value={profile.tradingName} onChange={(v) => setProfile((p) => ({ ...p, tradingName: v }))} hint="Only where it differs from the legal name." />
         <Field
-          label="VAT Number"
-          value={profile.vatNumber}
-          onChange={(v) => setProfile((p) => ({ ...p, vatNumber: v }))}
-          error={validateVatNumber(profile.vatNumber)}
-          warning={vatStatusWarning(profile.vatStatus, profile.vatNumber)}
-          hint="Required on a full tax invoice — VAT Act s20(4)."
-        />
-        <Field
-          label="Registration Number"
+          label="Company Registration Number"
+          dataField="registrationNumber"
           value={profile.registrationNumber}
           onChange={(v) => setProfile((p) => ({ ...p, registrationNumber: v }))}
           hint="Business identification. Not a SARS tax-invoice requirement."
         />
         <Field
           label="Income Tax Number"
+          dataField="incomeTaxNumber"
           value={profile.incomeTaxNumber}
           onChange={(v) => setProfile((p) => ({ ...p, incomeTaxNumber: v }))}
           hint="Business identification. Not a SARS tax-invoice requirement."
         />
-        <Field label="Contact Email" value={profile.contactEmail} onChange={(v) => setProfile((p) => ({ ...p, contactEmail: v }))} />
-        <Field label="Phone" value={profile.phone} onChange={(v) => setProfile((p) => ({ ...p, phone: v }))} />
-        <Field label="Website" value={profile.website} onChange={(v) => setProfile((p) => ({ ...p, website: v }))} />
-        <Field
-          label="Remittance Email"
-          value={profile.remittanceEmail}
-          onChange={(v) => setProfile((p) => ({ ...p, remittanceEmail: v }))}
-          hint="Where customers send proof of payment."
+        <Field label="Website" dataField="website" value={profile.website} onChange={(v) => setProfile((p) => ({ ...p, website: v }))} className="md:col-span-2" />
+      </section>
+
+      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
+        <div className="md:col-span-2">
+          <h2 className="text-lg font-black text-slate-950">VAT</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-500">
+            Registration is never inferred from a VAT number, and no rate is assumed.
+          </p>
+        </div>
+        <SelectField
+          label="VAT Registration Status"
+          dataField="vatStatus"
+          value={profile.vatStatus}
+          options={VAT_STATUSES.map((status) => ({ value: status, label: VAT_STATUS_LABELS[status] }))}
+          onChange={(v) => setProfile((p) => ({ ...p, vatStatus: v as typeof p.vatStatus }))}
+          hint="Unknown means no tax invoice can be issued."
         />
         <Field
-          label="Physical Address"
-          value={profile.physicalAddress}
-          onChange={(v) => setProfile((p) => ({ ...p, physicalAddress: v }))}
-          className="md:col-span-2"
-          hint="Required on a full tax invoice — VAT Act s20(4)."
+          label="VAT Number"
+          dataField="vatNumber"
+          value={profile.vatNumber}
+          onChange={(v) => setProfile((p) => ({ ...p, vatNumber: v }))}
+          error={validateVatNumber(profile.vatNumber)}
+          warning={vatStatusWarning(profile.vatStatus, profile.vatNumber)}
+          hint="Required on a tax invoice — VAT Act s20(4)."
         />
-        <Field label="Postal Address" value={profile.postalAddress} onChange={(v) => setProfile((p) => ({ ...p, postalAddress: v }))} className="md:col-span-2" />
         <Field
           label="Default VAT Rate (%)"
-          value={String(profile.defaultVatRate)}
-          onChange={(v) => setProfile((p) => ({ ...p, defaultVatRate: Number(v) || 0 }))}
+          dataField="defaultVatRate"
+          value={profile.defaultVatRate === null ? "" : String(profile.defaultVatRate)}
+          onChange={(v) => setProfile((p) => ({ ...p, defaultVatRate: v.trim() === "" ? null : Number(v) }))}
           type="number"
+          hint="The rate this company charges. Not defaulted for you."
         />
+        {profile.vatStatus === "Not Registered" && profile.vatNumber.trim() ? (
+          <p className="md:col-span-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-xs font-bold text-sky-900">
+            This company is marked not VAT registered, so the number above will not be presented as an active VAT
+            number on any invoice.
+          </p>
+        ) : null}
+      </section>
+
+      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
+        <div className="md:col-span-2">
+          <h2 className="text-lg font-black text-slate-950">Physical Address</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-500">
+            Printed on every tax invoice — VAT Act s20(4).
+          </p>
+        </div>
+        {ADDRESS_FIELDS.map((field) => (
+          <Field
+            key={`physical-${field.key}`}
+            label={field.label}
+            dataField={field.key === "line1" ? "physicalLine1" : undefined}
+            value={profile.physical[field.key]}
+            onChange={(v) => patchAddress("physical", field.key, v)}
+            className={field.wide ? "md:col-span-2" : undefined}
+          />
+        ))}
+        {profile.physicalAddress && !composeAddress(profile.physical) ? (
+          <div className="md:col-span-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+              Currently on invoices
+            </span>
+            <p className="mt-2 whitespace-pre-line rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700">
+              {profile.physicalAddress}
+            </p>
+            <span className="mt-1.5 block text-[11px] font-semibold text-slate-500">
+              Captured before this form had separate fields. Fill the fields above to replace it; it is kept until you do.
+            </span>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
+        <div className="md:col-span-2">
+          <h2 className="text-lg font-black text-slate-950">Postal Address</h2>
+          <label className="mt-3 inline-flex min-h-[44px] cursor-pointer items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50/50 px-4 py-2.5">
+            <input
+              type="checkbox"
+              className="h-5 w-5"
+              checked={postalSameAsPhysical}
+              onChange={(e) => togglePostalSame(e.target.checked)}
+            />
+            <span className="text-sm font-black text-slate-700">Same as physical address</span>
+          </label>
+          {postalSameAsPhysical ? (
+            <p className="mt-2 text-xs font-semibold text-slate-500">
+              Copied on screen only. Nothing is written until you save, and unticking restores what was there.
+            </p>
+          ) : null}
+        </div>
+        {ADDRESS_FIELDS.map((field) => (
+          <Field
+            key={`postal-${field.key}`}
+            label={field.label}
+            value={profile.postal[field.key]}
+            onChange={(v) => patchAddress("postal", field.key, v)}
+            className={field.wide ? "md:col-span-2" : undefined}
+            disabled={postalSameAsPhysical}
+          />
+        ))}
+      </section>
+
+      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
+        <div className="md:col-span-2">
+          <h2 className="text-lg font-black text-slate-950">Contact Details</h2>
+        </div>
+        <Field label="Phone" dataField="phone" value={profile.phone} onChange={(v) => setProfile((p) => ({ ...p, phone: v }))} />
+        <Field
+          label="Contact Email"
+          dataField="contactEmail"
+          value={profile.contactEmail}
+          onChange={(v) => setProfile((p) => ({ ...p, contactEmail: v }))}
+          error={emailProblem(profile.contactEmail, "Contact email")}
+        />
+        <Field
+          label="Remittance Email"
+          dataField="remittanceEmail"
+          value={profile.remittanceEmail}
+          onChange={(v) => setProfile((p) => ({ ...p, remittanceEmail: v }))}
+          error={emailProblem(profile.remittanceEmail, "Remittance email")}
+          hint="Where customers send proof of payment."
+          className="md:col-span-2"
+        />
+      </section>
+
+      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-3">
         <ReadOnlyField label="Xero Status" value={profile.xeroStatus} />
         <ReadOnlyField label="Package" value={profile.packageName} />
         <ReadOnlyField label="User Limit" value={String(profile.userLimit)} />
@@ -391,18 +642,21 @@ export default function ClientCompanySetupClient() {
         <div className="md:col-span-2">
           <h2 className="text-lg font-black text-slate-950">Banking Details</h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">
-            Printed on invoices so customers know where to pay. SARS does not require these on a tax invoice.
+            Printed on invoices so customers know where to pay. SARS does not require these on a tax invoice, and they
+            are shown nowhere else in VYRON COST.
           </p>
         </div>
         <Field label="Bank Name" value={profile.bankName} onChange={(v) => setProfile((p) => ({ ...p, bankName: v }))} />
         <Field label="Account Name" value={profile.bankAccountName} onChange={(v) => setProfile((p) => ({ ...p, bankAccountName: v }))} />
         <Field label="Account Number" value={profile.bankAccountNumber} onChange={(v) => setProfile((p) => ({ ...p, bankAccountNumber: v }))} />
         <Field label="Branch Code" value={profile.bankBranchCode} onChange={(v) => setProfile((p) => ({ ...p, bankBranchCode: v }))} />
+        <Field label="Account Type" value={profile.bankAccountType} onChange={(v) => setProfile((p) => ({ ...p, bankAccountType: v }))} />
         <Field
-          label="Account Type"
-          value={profile.bankAccountType}
-          onChange={(v) => setProfile((p) => ({ ...p, bankAccountType: v }))}
+          label="Payment / Reference Instructions"
+          value={profile.bankPaymentReference}
+          onChange={(v) => setProfile((p) => ({ ...p, bankPaymentReference: v }))}
           className="md:col-span-2"
+          hint="Shown with the banking block on an invoice, e.g. what reference to quote."
         />
       </section>
 
@@ -672,6 +926,8 @@ function Field({
   hint,
   error,
   warning,
+  dataField,
+  disabled,
 }: {
   label: string;
   value: string;
@@ -679,6 +935,9 @@ function Field({
   className?: string;
   type?: string;
   hint?: string;
+  /** Lets the readiness card scroll to and focus the field that fixes a gap. */
+  dataField?: string;
+  disabled?: boolean;
   /** Malformed input. The save is blocked while this is set. */
   error?: string;
   /** Inconsistent but still savable — the user may simply not know yet. */
@@ -690,6 +949,8 @@ function Field({
       <input
         type={type}
         value={value}
+        data-field={dataField}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         className={INPUT_CLASS + (error ? " border-red-300" : " border-violet-100")}
       />
@@ -711,6 +972,7 @@ function SelectField({
   onChange,
   className,
   hint,
+  dataField,
 }: {
   label: string;
   value: string;
@@ -718,12 +980,14 @@ function SelectField({
   onChange: (value: string) => void;
   className?: string;
   hint?: string;
+  dataField?: string;
 }) {
   return (
     <label className={className}>
       <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</span>
       <select
         value={value}
+        data-field={dataField}
         onChange={(e) => onChange(e.target.value)}
         className={INPUT_CLASS + " border-violet-100"}
       >

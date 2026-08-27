@@ -36,6 +36,13 @@ export async function GET(request: NextRequest) {
   const missingEnv = missingXeroEnvVars();
 
   try {
+    /*
+     * Authenticate first. This used to answer from the active-client cookie
+     * before any permission check, so an unauthenticated caller got a 400
+     * describing the workspace state rather than a refusal.
+     */
+    await requireWorkspacePermission("xero.view");
+
     const activeWorkspace = await getServerActiveWorkspace();
     if (!activeWorkspace?.id) {
       return NextResponse.json(
@@ -52,7 +59,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    await requireWorkspacePermission("xero.view");
     const { workspaceId, companyId, workspace } = await requireXeroWorkspaceContext(
       xeroContextFromRequest(request)
     );
@@ -67,7 +73,7 @@ export async function GET(request: NextRequest) {
       oauthReady,
       oauthUrl: oauthReady ? buildXeroOAuthUrl(workspaceId, companyId) : null,
       redirectUri: getXeroRedirectUri(),
-      workspaceName: workspace.companyName || workspace.tradingName || workspace.id,
+      workspaceName: workspace?.companyName || workspace?.tradingName || workspaceId,
       missingEnv,
     });
   } catch (error) {

@@ -129,3 +129,202 @@ export function missingTaxInvoiceDetails(
   }
   return missing;
 }
+
+/* ------------------------------------------- company invoice readiness */
+
+/**
+ * The company's own tax/legal profile, as Company Setup captures it.
+ *
+ * This is the supplier side of SupplierTaxIdentity plus the fields Company Setup
+ * is responsible for. It is deliberately the same shape the invoice validator
+ * consumes, so the readiness card and the issue gate cannot drift apart.
+ */
+export type CompanyTaxProfile = {
+  companyName: string;
+  tradingName: string;
+  registrationNumber: string;
+  vatStatus: VatStatus;
+  vatNumber: string;
+  physicalAddress: string;
+  defaultVatRate: number | null;
+};
+
+export type ReadinessLevel = "tax-invoice" | "invoice" | "incomplete";
+
+/**
+ * A missing item, keyed so the UI can focus the field that fixes it.
+ *
+ * `label` is the short headline Company Setup lists. `detail` is a complete
+ * sentence that stands on its own, because the invoice issue gate surfaces it
+ * verbatim as the reason an invoice was refused.
+ */
+export type ReadinessGap = {
+  field: string;
+  label: string;
+  detail: string;
+};
+
+export type InvoiceReadiness = {
+  level: ReadinessLevel;
+  headline: string;
+  explanation: string;
+  gaps: ReadinessGap[];
+  /** Facts worth showing once the profile is good, in display order. */
+  confirmed: { label: string; value: string }[];
+};
+
+/**
+ * The supplier-side requirements for issuing any invoice at all.
+ *
+ * THE SINGLE SOURCE OF TRUTH. validateInvoiceForIssue in vyron-invoice-tax.ts
+ * calls this for its supplier checks rather than restating them, so the Company
+ * Setup readiness card and the Stage 4 issue gate can never disagree about why
+ * an invoice is blocked.
+ */
+export function supplierProfileGaps(profile: CompanyTaxProfile): ReadinessGap[] {
+  const gaps: ReadinessGap[] = [];
+
+  if (!profile.companyName.trim()) {
+    gaps.push({
+      field: "companyName",
+      label: "Legal company name missing",
+      detail: "Your company name is not set. Add it in Company Setup before issuing invoices.",
+    });
+  }
+
+  if (!profile.physicalAddress.trim()) {
+    gaps.push({
+      field: "physicalLine1",
+      label: "Physical address missing",
+      detail: "Your company's physical address is not set. A tax invoice must show it (VAT Act s20(4)).",
+    });
+  }
+
+  if (profile.vatStatus === "Unknown") {
+    gaps.push({
+      field: "vatStatus",
+      label: "VAT registration status not confirmed",
+      detail:
+        "Your company's VAT registration status is Unknown. Confirm whether it is a registered VAT vendor — registration is never assumed from a VAT number alone, so until this is set no tax invoice can be issued.",
+    });
+  }
+
+  if (profile.vatStatus === "Registered" && !isValidSaVatNumber(profile.vatNumber)) {
+    gaps.push({
+      field: "vatNumber",
+      label: normaliseVatNumber(profile.vatNumber) ? "VAT number is not valid" : "VAT number missing",
+      detail:
+        "Your company is marked VAT registered but has no valid VAT number. A tax invoice cannot be issued without it — set it in Company Setup. A South African VAT number is 10 digits starting with 4.",
+    });
+  }
+
+  /*
+   * A rate is not defaulted to 15 here or anywhere else. South Africa's standard
+   * rate is 15% today, but a rate is a setting, and quietly assuming one would
+   * put an unverified number on a tax invoice.
+   */
+  if (profile.defaultVatRate === null || !Number.isFinite(profile.defaultVatRate) || profile.defaultVatRate < 0) {
+    gaps.push({
+      field: "defaultVatRate",
+      label: "Default VAT rate not set",
+      detail: "No default VAT rate is configured for this company. Set it in Company Setup — a rate is never assumed.",
+    });
+  }
+
+  return gaps;
+}
+
+/**
+ * What this company can currently issue, and why.
+ *
+ * Three outcomes, matching the three VAT statuses:
+ *  - Registered with a complete profile  -> tax invoices
+ *  - Not Registered with a complete profile -> invoices, never tax invoices
+ *  - anything incomplete, or Unknown     -> nothing can be issued
+ */
+export function evaluateInvoiceReadiness(profile: CompanyTaxProfile): InvoiceReadiness {
+  const gaps = supplierProfileGaps(profile);
+
+  if (gaps.length) {
+    return {
+      level: "incomplete",
+      headline: "Invoice Setup Incomplete",
+      explanation:
+        "Invoices cannot be issued until the details below are captured. Nothing is assumed on your behalf.",
+      gaps,
+      confirmed: [],
+    };
+  }
+
+  const rate = `${Number(profile.defaultVatRate).toFixed(2)}%`;
+
+  if (profile.vatStatus === "Registered") {
+    return {
+      level: "tax-invoice",
+      headline: "Ready to Issue Tax Invoices",
+      explanation:
+        "This company is a registered VAT vendor with a complete tax profile. Invoices will be issued as tax invoices, showing the VAT number below.",
+      gaps: [],
+      confirmed: [
+        { label: "VAT Status", value: "VAT Registered" },
+        { label: "VAT Number", value: normaliseVatNumber(profile.vatNumber) },
+        { label: "Registration Number", value: profile.registrationNumber.trim() || "Not provided" },
+        { label: "Physical Address", value: profile.physicalAddress.trim() },
+        { label: "Default VAT Rate", value: rate },
+      ],
+    };
+  }
+
+  return {
+    level: "invoice",
+    headline: "Ready to Issue Invoices",
+    explanation:
+      "This company is not registered for VAT, so documents will be issued as invoices, not tax invoices. No VAT is charged and no VAT number is presented on them.",
+    gaps: [],
+    confirmed: [
+      { label: "VAT Status", value: "Not VAT Registered" },
+      { label: "Registration Number", value: profile.registrationNumber.trim() || "Not provided" },
+      { label: "Physical Address", value: profile.physicalAddress.trim() },
+    ],
+  };
+}
+
+/* ----------------------------------------------------------- addresses */
+
+export type StructuredAddress = {
+  line1: string;
+  line2: string;
+  suburb: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  country: string;
+};
+
+export const EMPTY_ADDRESS: StructuredAddress = {
+  line1: "",
+  line2: "",
+  suburb: "",
+  city: "",
+  province: "",
+  postalCode: "",
+  country: "",
+};
+
+export function addressHasContent(address: StructuredAddress) {
+  return Object.values(address).some((part) => String(part || "").trim());
+}
+
+/**
+ * Compose the parts into the single canonical address string invoices read.
+ *
+ * City and postal code share a line, the way a South African address is written.
+ * Empty parts are dropped rather than leaving stray commas.
+ */
+export function composeAddress(address: StructuredAddress): string {
+  const cityLine = [address.city, address.postalCode].map((p) => String(p || "").trim()).filter(Boolean).join(" ");
+  return [address.line1, address.line2, address.suburb, cityLine, address.province, address.country]
+    .map((part) => String(part || "").trim())
+    .filter(Boolean)
+    .join("\n");
+}

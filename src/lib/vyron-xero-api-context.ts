@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
-import { getServerActiveWorkspace } from "@/lib/vyron-workspace-server";
+import { authorisedWorkspaceId, getServerActiveWorkspace } from "@/lib/vyron-workspace-server";
 import { WorkspaceAccessError } from "@/lib/vyron-workspace-access";
 
 export type XeroApiContext = {
@@ -44,12 +44,30 @@ export function xeroContextFromRequest(request: NextRequest, body?: Record<strin
 
 /** Active workspace cookie is the source of truth. Reject mismatched client hints. */
 export async function requireXeroWorkspaceContext(ctx?: XeroApiContext) {
-  const workspace = await getServerActiveWorkspace();
-  if (!workspace?.id) {
-    throw new Error("No active workspace. Select a client workspace first.");
+  /*
+   * The workspace is the one the caller is a verified member of.
+   *
+   * This used to be getServerActiveWorkspace().id — the vyron_cost_active_client
+   * cookie, which the browser writes and nothing validates. Request hints were
+   * checked against that cookie, so they agreed with each other while both
+   * disagreed with the database: editing the cookie pointed readConnection and
+   * the OAuth URL builder at another tenant's Xero connection.
+   *
+   * The cookie is now a hint like any other. It is still read, because the rest
+   * of the context (the display name) comes from it, but it may not select the
+   * tenant, and a cookie naming a different workspace is refused rather than
+   * quietly honoured.
+   */
+  const authorisedId = await authorisedWorkspaceId();
+  if (!authorisedId) {
+    throw new Error("Workspace session required.");
   }
+  const workspaceId = requireUuidIdentifier(authorisedId, "workspace");
 
-  const workspaceId = requireUuidIdentifier(workspace.id, "workspace");
+  const workspace = await getServerActiveWorkspace();
+  if (workspace?.id && requireUuidIdentifier(workspace.id, "workspace") !== workspaceId) {
+    throw new Error("Access denied.");
+  }
   const hintWorkspaceId = ctx?.workspaceId?.trim() || ctx?.clientId?.trim() || null;
   if (hintWorkspaceId) {
     const hintedWorkspaceId = requireUuidIdentifier(hintWorkspaceId, "workspace");
@@ -59,6 +77,7 @@ export async function requireXeroWorkspaceContext(ctx?: XeroApiContext) {
   }
 
   const companyId = requireUuidIdentifier(await requireApiCompanyId(), "company");
+
   if (ctx?.companyId?.trim()) {
     const hintedCompanyId = requireUuidIdentifier(ctx.companyId, "company");
     if (hintedCompanyId !== companyId) {
@@ -66,5 +85,7 @@ export async function requireXeroWorkspaceContext(ctx?: XeroApiContext) {
     }
   }
 
+  // May be null when no active-client cookie is present. The workspace id above
+  // is the authoritative value; this is only the display record.
   return { workspace, workspaceId, companyId };
 }

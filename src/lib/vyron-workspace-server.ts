@@ -47,7 +47,7 @@ export async function shouldUseWorkspaceDemoData(): Promise<boolean> {
  * returns null unless an Active membership exists for the user the cookie
  * names. Imported dynamically because that module imports this one.
  */
-async function authorisedWorkspaceId(): Promise<string | null> {
+export async function authorisedWorkspaceId(): Promise<string | null> {
   try {
     const { getServerWorkspaceSession } = await import("@/lib/vyron-workspace-admin-server");
     const session = await getServerWorkspaceSession();

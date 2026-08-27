@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireActiveWorkspaceId, requireAdminSession } from "@/lib/vyron-workspace-admin-server";
+import { requireAdminWorkspaceId } from "@/lib/vyron-workspace-admin-server";
 import { BrandingService } from "@/lib/platform/branding";
 
 export const runtime = "nodejs";
@@ -12,11 +12,11 @@ const ALLOWED_MIME: Record<string, string> = {
   "image/svg+xml": "image/svg+xml",
 };
 
+/** No session is 401; a session without the permission is 403. */
 function adminErrorStatus(error: unknown, fallback = 400) {
   const message = error instanceof Error ? String(error.message || "") : "";
-  if (message.includes("Workspace session required") || message.includes("Access denied") || message.includes("Admin access required")) {
-    return 403;
-  }
+  if (message.includes("Workspace session required")) return 401;
+  if (message.includes("Access denied") || message.includes("Admin access required")) return 403;
   if (message.includes("No active client workspace")) return 400;
   return fallback;
 }
@@ -34,8 +34,9 @@ async function rasterizeSvgToPng(bytes: Buffer): Promise<Buffer | null> {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdminSession("admin.company");
-    const workspaceId = await requireActiveWorkspaceId();
+    // Resolved from the verified session; a forged active-client cookie must not
+    // be able to replace another workspace's logo.
+    const { workspaceId } = await requireAdminWorkspaceId("admin.company");
 
     const formData = await request.formData();
     const file = formData.get("file");

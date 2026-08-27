@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { previewCustomerInvoices } from "@/lib/vyron-import-persist";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { requireActiveWorkspaceId, requireAdminSession } from "@/lib/vyron-workspace-admin-server";
+import { requireAdminSession } from "@/lib/vyron-workspace-admin-server";
 import { getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
 
 export const runtime = "nodejs";
+
+/** No session is 401; a session without the permission is 403. */
+function adminErrorStatus(error: unknown, fallback = 400) {
+  const message = error instanceof Error ? String(error.message || "") : "";
+  if (message.includes("Workspace session required")) return 401;
+  if (message.includes("Access denied") || message.includes("Admin access required")) return 403;
+  return fallback;
+}
+
 
 /**
  * Dry run for accounting imports. Resolves customers and products exactly as the
@@ -23,7 +32,12 @@ export async function POST(request: NextRequest) {
 
   try {
     await requireAdminSession("admin.imports");
-    await requireActiveWorkspaceId();
+    /*
+     * Scoping is getWorkspaceCompanyId, which resolves the company from the
+     * verified membership. The requireActiveWorkspaceId call that used to sit
+     * here read the browser's active-client cookie, contributed nothing to that
+     * answer, and failed the request outright whenever the cookie was missing.
+     */
     const companyId = await getWorkspaceCompanyId();
     if (!companyId) {
       return NextResponse.json({ ok: false, error: "No active company." }, { status: 400 });
@@ -45,7 +59,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Preview failed." },
-      { status: 400 }
+      { status: adminErrorStatus(error) }
     );
   }
 }

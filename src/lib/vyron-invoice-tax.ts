@@ -37,6 +37,7 @@ import {
   NO_TAX_INVOICE_THRESHOLD,
   normaliseVatNumber,
   normaliseVatStatus,
+  supplierProfileGaps,
   type VatStatus,
 } from "@/lib/vyron-tax-profile";
 import {
@@ -376,20 +377,29 @@ export function validateInvoiceForIssue(input: IssueValidationInput): string[] {
     errors.push("The invoice has no invoice date.");
   }
 
-  if (!input.supplier.legalName) {
-    errors.push("Your company name is not set. Add it in Company Setup before issuing invoices.");
-  }
-  if (!input.supplier.address) {
-    errors.push("Your company's physical address is not set. A tax invoice must show it (VAT Act s20(4)).");
+  /*
+   * The supplier-side checks are not restated here. supplierProfileGaps owns them,
+   * and the Company Setup readiness card calls the same function — so the reason
+   * an invoice is blocked and the reason Company Setup shows as incomplete are
+   * always literally the same list, and cannot drift apart as either changes.
+   *
+   * defaultVatRate is not part of this check: the invoice already carries the
+   * rates its lines were computed at, so a missing workspace default cannot make
+   * an already-priced invoice unissuable. resolveDefaultVatRate refuses at the
+   * point a rate is actually needed.
+   */
+  for (const gap of supplierProfileGaps({
+    companyName: input.supplier.legalName,
+    tradingName: input.supplier.tradingName ?? "",
+    registrationNumber: input.supplier.registrationNumber ?? "",
+    vatStatus: input.supplier.vatStatus,
+    vatNumber: input.supplier.vatNumber ?? "",
+    physicalAddress: input.supplier.address ?? "",
+    defaultVatRate: 0,
+  })) {
+    errors.push(gap.detail);
   }
 
-  // The central refusal: claiming to be a vendor without a number would produce a
-  // document that charges VAT while showing no registration to charge it under.
-  if (input.supplier.vatStatus === "Registered" && !input.supplier.vatNumber) {
-    errors.push(
-      "Your company is marked VAT registered but has no valid VAT number. A tax invoice cannot be issued without it — set it in Company Setup."
-    );
-  }
   if (input.supplier.vatStatus !== "Registered" && compare(input.totals.taxTotal, ZERO) !== 0) {
     errors.push(
       `Your company is marked "${input.supplier.vatStatus}" but this invoice charges VAT. Only a registered vendor may charge VAT.`

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireActiveWorkspaceId, requireAdminSession } from "@/lib/vyron-workspace-admin-server";
+import { requireAdminWorkspaceId } from "@/lib/vyron-workspace-admin-server";
 import { BrandingService } from "@/lib/platform/branding";
 import type { BrandingUpdateInput } from "@/lib/platform/branding";
 import { mergeBrandingDraft } from "@/lib/platform/branding/mergeBrandingDraft";
@@ -11,19 +11,20 @@ export const runtime = "nodejs";
 
 const VALID_TYPES: PreviewDocumentType[] = ["purchase_order", "goods_receipt", "customer_invoice", "sales_order", "quotation"];
 
+/** No session is 401; a session without the permission is 403. */
 function adminErrorStatus(error: unknown, fallback = 400) {
   const message = error instanceof Error ? String(error.message || "") : "";
-  if (message.includes("Workspace session required") || message.includes("Access denied") || message.includes("Admin access required")) {
-    return 403;
-  }
+  if (message.includes("Workspace session required")) return 401;
+  if (message.includes("Access denied") || message.includes("Admin access required")) return 403;
   if (message.includes("No active client workspace")) return 400;
   return fallback;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdminSession("admin.company");
-    const workspaceId = await requireActiveWorkspaceId();
+    // The preview renders the saved branding of this workspace. Resolved from the
+    // session so a forged cookie cannot render another company's letterhead.
+    const { workspaceId } = await requireAdminWorkspaceId("admin.company");
 
     const body = (await request.json().catch(() => ({}))) as {
       documentType?: string;

@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { upsertCustomerItemMapping } from "@/lib/vyron-import-persist";
-import { requireActiveWorkspaceId, requireAdminSession } from "@/lib/vyron-workspace-admin-server";
+import { requireAdminSession } from "@/lib/vyron-workspace-admin-server";
 import { getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
 
 export const runtime = "nodejs";
+
+/** No session is 401; a session without the permission is 403. */
+function adminErrorStatus(error: unknown, fallback = 400) {
+  const message = error instanceof Error ? String(error.message || "") : "";
+  if (message.includes("Workspace session required")) return 401;
+  if (message.includes("Access denied") || message.includes("Admin access required")) return 403;
+  return fallback;
+}
+
 
 /**
  * Accounting item code -> VYRON product mappings.
@@ -15,7 +24,12 @@ export const runtime = "nodejs";
  */
 async function resolveContext() {
   await requireAdminSession("admin.imports");
-  await requireActiveWorkspaceId();
+  /*
+   * getWorkspaceCompanyId resolves the company from the verified membership and
+   * is the only thing that scopes the queries below. The requireActiveWorkspaceId
+   * call that used to sit here read the browser's active-client cookie, added
+   * nothing, and failed the request whenever that cookie was absent.
+   */
   const companyId = await getWorkspaceCompanyId();
   if (!companyId) throw new Error("No active company.");
   return companyId;
@@ -47,7 +61,7 @@ export async function GET() {
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Failed to load mappings." },
-      { status: 400 }
+      { status: adminErrorStatus(error) }
     );
   }
 }
@@ -91,7 +105,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Failed to save mapping." },
-      { status: 400 }
+      { status: adminErrorStatus(error) }
     );
   }
 }
@@ -118,7 +132,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Failed to delete mapping." },
-      { status: 400 }
+      { status: adminErrorStatus(error) }
     );
   }
 }

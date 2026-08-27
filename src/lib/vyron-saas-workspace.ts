@@ -2,7 +2,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { normalizePermissionMap } from "@/lib/vyron-workspace-permissions";
-import { normaliseVatNumber, normaliseVatStatus, validateVatNumber, type VatStatus } from "@/lib/vyron-tax-profile";
+import {
+  composeAddress,
+  addressHasContent,
+  normaliseVatNumber,
+  normaliseVatStatus,
+  validateVatNumber,
+  type StructuredAddress,
+  type VatStatus,
+} from "@/lib/vyron-tax-profile";
 
 export type WorkspaceRole =
   | "OWNER"
@@ -68,7 +76,8 @@ export type WorkspaceCompanyProfile = {
   phone: string;
   physicalAddress: string;
   postalAddress: string;
-  defaultVatRate: number;
+  /** null means no rate has been configured. Never silently 15. */
+  defaultVatRate: number | null;
   vatStatus: VatStatus;
   incomeTaxNumber: string;
   website: string;
@@ -78,6 +87,10 @@ export type WorkspaceCompanyProfile = {
   bankAccountNumber: string;
   bankBranchCode: string;
   bankAccountType: string;
+  bankPaymentReference: string;
+  /** Capture format. physicalAddress above stays the value documents read. */
+  physical: StructuredAddress;
+  postal: StructuredAddress;
   xeroStatus: string;
   packageName: string;
   userLimit: number;
@@ -124,7 +137,7 @@ export type UpdateCompanyProfileInput = {
   phone?: string;
   physicalAddress?: string;
   postalAddress?: string;
-  defaultVatRate?: number;
+  defaultVatRate?: number | null;
   vatStatus?: string;
   incomeTaxNumber?: string;
   website?: string;
@@ -134,6 +147,9 @@ export type UpdateCompanyProfileInput = {
   bankAccountNumber?: string;
   bankBranchCode?: string;
   bankAccountType?: string;
+  bankPaymentReference?: string;
+  physical?: Partial<StructuredAddress>;
+  postal?: Partial<StructuredAddress>;
 };
 
 type MemoryUser = {
@@ -233,6 +249,61 @@ function packageModulesLabel(packageName: string) {
   return ["Dashboard", "Suppliers", "Ingredients", "Products", "Recipes", "Basic reports"];
 }
 
+const EMPTY_STRUCTURED_ADDRESS: StructuredAddress = {
+  line1: "",
+  line2: "",
+  suburb: "",
+  city: "",
+  province: "",
+  postalCode: "",
+  country: "",
+};
+
+function addressFromRow(row: Record<string, unknown> | undefined, prefix: "physical" | "postal"): StructuredAddress {
+  return {
+    line1: String(row?.[`${prefix}_line1`] || ""),
+    line2: String(row?.[`${prefix}_line2`] || ""),
+    suburb: String(row?.[`${prefix}_suburb`] || ""),
+    city: String(row?.[`${prefix}_city`] || ""),
+    province: String(row?.[`${prefix}_province`] || ""),
+    postalCode: String(row?.[`${prefix}_postal_code`] || ""),
+    country: String(row?.[`${prefix}_country`] || ""),
+  };
+}
+
+function mergeAddress(existing: StructuredAddress, patch: Partial<StructuredAddress> | undefined): StructuredAddress {
+  if (!patch) return existing;
+  const next = { ...existing };
+  for (const key of Object.keys(EMPTY_STRUCTURED_ADDRESS) as (keyof StructuredAddress)[]) {
+    if (patch[key] !== undefined) next[key] = String(patch[key] ?? "").trim();
+  }
+  return next;
+}
+
+function addressColumns(prefix: "physical" | "postal", address: StructuredAddress) {
+  return {
+    [`${prefix}_line1`]: address.line1 || null,
+    [`${prefix}_line2`]: address.line2 || null,
+    [`${prefix}_suburb`]: address.suburb || null,
+    [`${prefix}_city`]: address.city || null,
+    [`${prefix}_province`]: address.province || null,
+    [`${prefix}_postal_code`]: address.postalCode || null,
+    [`${prefix}_country`]: address.country || null,
+  };
+}
+
+/**
+ * The canonical single-string address that invoices read.
+ *
+ * Composed from the structured parts whenever any part was captured. When no
+ * part is present the existing free text is kept exactly as it was: workspaces
+ * that predate structured capture must not have their address blanked, and the
+ * structure is never guessed at from a string nobody wrote in that shape.
+ */
+function resolveCanonicalAddress(address: StructuredAddress, existingText: string) {
+  return addressHasContent(address) ? composeAddress(address) : existingText;
+}
+
 function profileFromWorkspace(workspace: WorkspaceRecord, row?: Record<string, unknown>): WorkspaceCompanyProfile {
   return {
     workspaceId: workspace.id,
@@ -244,7 +315,14 @@ function profileFromWorkspace(workspace: WorkspaceRecord, row?: Record<string, u
     phone: workspace.phone,
     physicalAddress: String(row?.physical_address || ""),
     postalAddress: String(row?.postal_address || ""),
-    defaultVatRate: Number(row?.default_vat_rate ?? 15),
+    /*
+     * Not defaulted to 15. South Africa's standard rate is 15% today, but a rate
+     * is a setting: assuming one here would put an unverified number on a tax
+     * invoice and make the readiness card report a rate nobody configured.
+     */
+    defaultVatRate: row?.default_vat_rate === null || row?.default_vat_rate === undefined
+      ? null
+      : Number(row.default_vat_rate),
     vatStatus: normaliseVatStatus(row?.vat_status),
     incomeTaxNumber: String(row?.income_tax_number || ""),
     website: String(row?.website || ""),
@@ -254,6 +332,9 @@ function profileFromWorkspace(workspace: WorkspaceRecord, row?: Record<string, u
     bankAccountNumber: String(row?.bank_account_number || ""),
     bankBranchCode: String(row?.bank_branch_code || ""),
     bankAccountType: String(row?.bank_account_type || ""),
+    bankPaymentReference: String(row?.bank_payment_reference || ""),
+    physical: addressFromRow(row, "physical"),
+    postal: addressFromRow(row, "postal"),
     xeroStatus: String(row?.xero_status || "Not Connected"),
     packageName: workspace.packageName,
     userLimit: workspace.userLimit,
@@ -288,7 +369,7 @@ function profileFromActiveClient(client: {
     phone: client.phone || "",
     physicalAddress: client.physicalAddress || "",
     postalAddress: client.postalAddress || "",
-    defaultVatRate: client.defaultVatRate ?? 15,
+    defaultVatRate: client.defaultVatRate ?? null,
     // The activation record carries no tax profile; it is captured in Company Setup.
     vatStatus: "Unknown",
     incomeTaxNumber: "",
@@ -299,6 +380,9 @@ function profileFromActiveClient(client: {
     bankAccountNumber: "",
     bankBranchCode: "",
     bankAccountType: "",
+    bankPaymentReference: "",
+    physical: { ...EMPTY_STRUCTURED_ADDRESS },
+    postal: { ...EMPTY_STRUCTURED_ADDRESS },
     xeroStatus: client.xeroStatus || "Not Connected",
     packageName: client.packageName,
     userLimit: client.userLimit ?? 5,
@@ -1285,27 +1369,56 @@ export async function updateWorkspaceCompanyProfile(
   const vatError = validateVatNumber(input.vatNumber);
   if (vatError) throw new Error(vatError);
 
+  /*
+   * An omitted field keeps its stored value; a field sent as "" clears it.
+   *
+   * These were written as `input.x?.trim() || ""`, which cannot tell the two
+   * apart: a PATCH carrying only a phone number blanked the VAT number, the
+   * registration number, the banking details and both addresses, because every
+   * omitted field collapsed to an empty string. Any caller that sends less than
+   * the whole profile — and the API accepts partial bodies — silently destroyed
+   * the rest of the company's tax profile.
+   */
+  const keep = (value: string | undefined, current: string) => (value === undefined ? current : value.trim());
+
   const next: WorkspaceCompanyProfile = {
     ...existing,
     companyName: input.companyName.trim(),
     tradingName: input.tradingName.trim(),
-    vatNumber: normaliseVatNumber(input.vatNumber),
-    registrationNumber: input.registrationNumber?.trim() || "",
-    contactEmail: input.contactEmail?.trim() || existing.contactEmail,
-    phone: input.phone?.trim() || existing.phone,
-    physicalAddress: input.physicalAddress?.trim() || "",
-    postalAddress: input.postalAddress?.trim() || "",
-    defaultVatRate: Number(input.defaultVatRate ?? existing.defaultVatRate),
+    vatNumber: input.vatNumber === undefined ? existing.vatNumber : normaliseVatNumber(input.vatNumber),
+    registrationNumber: keep(input.registrationNumber, existing.registrationNumber),
+    contactEmail: keep(input.contactEmail, existing.contactEmail),
+    phone: keep(input.phone, existing.phone),
+    physicalAddress: keep(input.physicalAddress, existing.physicalAddress),
+    postalAddress: keep(input.postalAddress, existing.postalAddress),
+    defaultVatRate:
+      input.defaultVatRate === undefined
+        ? existing.defaultVatRate
+        : input.defaultVatRate === null || !Number.isFinite(Number(input.defaultVatRate))
+          ? null
+          : Number(input.defaultVatRate),
     vatStatus: input.vatStatus === undefined ? existing.vatStatus : normaliseVatStatus(input.vatStatus),
-    incomeTaxNumber: input.incomeTaxNumber?.trim() || "",
-    website: input.website?.trim() || "",
-    remittanceEmail: input.remittanceEmail?.trim() || "",
-    bankName: input.bankName?.trim() || "",
-    bankAccountName: input.bankAccountName?.trim() || "",
-    bankAccountNumber: input.bankAccountNumber?.trim() || "",
-    bankBranchCode: input.bankBranchCode?.trim() || "",
-    bankAccountType: input.bankAccountType?.trim() || "",
+    incomeTaxNumber: keep(input.incomeTaxNumber, existing.incomeTaxNumber),
+    website: keep(input.website, existing.website),
+    remittanceEmail: keep(input.remittanceEmail, existing.remittanceEmail),
+    bankName: keep(input.bankName, existing.bankName),
+    bankAccountName: keep(input.bankAccountName, existing.bankAccountName),
+    bankAccountNumber: keep(input.bankAccountNumber, existing.bankAccountNumber),
+    bankBranchCode: keep(input.bankBranchCode, existing.bankBranchCode),
+    bankAccountType: keep(input.bankAccountType, existing.bankAccountType),
+    bankPaymentReference: keep(input.bankPaymentReference, existing.bankPaymentReference),
+    physical: mergeAddress(existing.physical, input.physical),
+    postal: mergeAddress(existing.postal, input.postal),
   };
+
+  next.physicalAddress = resolveCanonicalAddress(
+    next.physical,
+    input.physicalAddress !== undefined ? next.physicalAddress : existing.physicalAddress
+  );
+  next.postalAddress = resolveCanonicalAddress(
+    next.postal,
+    input.postalAddress !== undefined ? next.postalAddress : existing.postalAddress
+  );
 
   const supabase = isSupabaseServiceRoleConfigured() ? getSupabaseAdmin() : null;
   const now = new Date().toISOString();
@@ -1351,6 +1464,9 @@ export async function updateWorkspaceCompanyProfile(
         bank_account_number: next.bankAccountNumber || null,
         bank_branch_code: next.bankBranchCode || null,
         bank_account_type: next.bankAccountType || null,
+        bank_payment_reference: next.bankPaymentReference || null,
+        ...addressColumns("physical", next.physical),
+        ...addressColumns("postal", next.postal),
         updated_at: now,
       })
       .eq("id", workspaceId);
