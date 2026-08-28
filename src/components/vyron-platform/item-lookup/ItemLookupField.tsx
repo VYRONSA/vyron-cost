@@ -52,6 +52,8 @@ export function ItemLookupField({ onSelect, placeholder, initialValue, defaultTy
   const [statusFilter, setStatusFilter] = useState<"active" | "all">("active");
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Why the last search failed, if it did. Empty when all is well. */
+  const [errorText, setErrorText] = useState("");
   const requestSeq = useRef(0);
 
   useEffect(() => {
@@ -75,10 +77,25 @@ export function ItemLookupField({ onSelect, placeholder, initialValue, defaultTy
       const response = await fetch(`/api/item-lookup/search?${params.toString()}`);
       const payload = (await response.json()) as ItemLookupSearchResponse;
       if (seq !== requestSeq.current) return;
-      setItems(payload.ok ? payload.items : []);
+      /*
+       * A failed lookup is shown, not swallowed. Rendering an empty list for a
+       * signed-out session or an unresolved workspace told the operator their
+       * ingredients did not exist, which sent people looking for missing data
+       * that was never missing.
+       */
+      if (!payload.ok) {
+        setItems([]);
+        setErrorText(payload.error || "Items could not be loaded.");
+      } else {
+        setItems(payload.items);
+        setErrorText("");
+      }
       setActiveIndex(-1);
     } catch {
-      if (seq === requestSeq.current) setItems([]);
+      if (seq === requestSeq.current) {
+        setItems([]);
+        setErrorText("Items could not be loaded. Check your connection and try again.");
+      }
     } finally {
       if (seq === requestSeq.current) setLoading(false);
     }
@@ -165,9 +182,16 @@ export function ItemLookupField({ onSelect, placeholder, initialValue, defaultTy
 
           <div className="max-h-80 overflow-y-auto">
             {items.length === 0 ? (
-              <div className="px-4 py-4 text-sm font-semibold text-slate-500">
-                {loading ? "Searching..." : "No items found."}
-              </div>
+              errorText && !loading ? (
+                <div className="px-4 py-4">
+                  <p className="text-sm font-black text-rose-700">Items could not be loaded</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-600">{errorText}</p>
+                </div>
+              ) : (
+                <div className="px-4 py-4 text-sm font-semibold text-slate-500">
+                  {loading ? "Searching..." : "No items found."}
+                </div>
+              )
             ) : (
               items.map((item, index) => (
                 <button

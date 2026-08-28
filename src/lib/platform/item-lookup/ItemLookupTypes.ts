@@ -40,8 +40,26 @@ export type ItemLookupSearchParams = {
   limit?: number;
 };
 
+/**
+ * Why a lookup returned what it did.
+ *
+ * An empty list used to mean four different things at once — nobody signed in,
+ * no permission, no workspace resolved, or simply nothing matching the search.
+ * The picker could only render "No items found." for all of them, so a broken
+ * session was indistinguishable from an unusual search term. The reason is
+ * carried so the caller can say which one happened.
+ */
+export type ItemLookupSearchReason =
+  | "ok"
+  | "empty"
+  | "no_workspace"
+  | "unauthenticated"
+  | "unauthorized"
+  | "error";
+
 export type ItemLookupSearchResponse = {
   ok: boolean;
   items: ItemLookupResult[];
+  reason?: ItemLookupSearchReason;
   error?: string;
 };
