@@ -120,7 +120,10 @@ export default function BomListClient({
    */
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   useEffect(() => {
-    const withImage = items.filter((bom) => bom.image_path).map((bom) => bom.id);
+    // has_image is what the header actually carries — recipeToBomHeader reduces
+    // image_path to a boolean and does not pass the path through. Filtering on
+    // image_path therefore matched nothing and no thumbnail was ever requested.
+    const withImage = items.filter((bom) => bom.has_image).map((bom) => bom.id);
     if (!withImage.length) return;
     let cancelled = false;
     void Promise.all(
