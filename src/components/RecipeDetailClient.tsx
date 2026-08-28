@@ -17,6 +17,7 @@ import {
   formatQuantity,
 } from "@/lib/vyron-cost-bom-data";
 import type { RecipeComponentRecord } from "@/lib/vyron-cost-recipes-data";
+import { normaliseBomPurpose } from "@/lib/vyron-cost-sub-boms";
 import { recipeLineToBomLine, recipeToBomHeader } from "@/lib/vyron-cost-recipes-data";
 import { readActiveClient } from "@/lib/vyron-developer-client";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
@@ -217,6 +218,7 @@ export default function RecipeDetailClient({
             .reduce((s, l) => s + Number(l.line_cost ?? calcLineCost(l)), 0),
     [bom, lines]
   );
+  const bomPurpose = normaliseBomPurpose(bom?.bom_purpose);
   const ingredientCost = useMemo(
     () =>
       bom?.ingredient_cost != null
@@ -414,6 +416,44 @@ export default function RecipeDetailClient({
                 </div>
               </div>
             ) : null}
+
+            {/*
+              What this BOM is for, in the reader's language. A Finished Good
+              names the product production receives into stock; a Sub-BOM says
+              plainly that it is used inside another BOM and is not sold on its
+              own. No database terms appear here.
+            */}
+            <div
+              className={`rounded-[2rem] border p-5 shadow-sm ${
+                bomPurpose === "Sub-BOM" ? "border-sky-200 bg-sky-50" : "border-emerald-200 bg-emerald-50"
+              }`}
+            >
+              <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                {bomPurpose === "Sub-BOM" ? "BOM Purpose" : "Finished Product"}
+              </div>
+              {bomPurpose === "Sub-BOM" ? (
+                <>
+                  <p className="mt-1 text-lg font-black text-sky-900">Sub-BOM / Assembly</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-600">
+                    Used as a component inside another BOM. It is not sold on its own and holds no finished-goods stock.
+                  </p>
+                </>
+              ) : linkedProduct ? (
+                <>
+                  <p className="mt-1 text-lg font-black text-emerald-900">{linkedProduct.product_name}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-600">
+                    Production of this BOM receives stock against this product.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="mt-1 text-lg font-black text-emerald-900">Not linked yet</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-600">
+                    This BOM produces a finished product, but none is linked. Production cannot receive stock until one is.
+                  </p>
+                </>
+              )}
+            </div>
 
             <div className="grid gap-3 sm:grid-cols-2 md:gap-5 lg:grid-cols-5">
               {[

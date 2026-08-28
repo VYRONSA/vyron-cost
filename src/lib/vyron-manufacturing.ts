@@ -8,6 +8,7 @@ import {
   type StockEntityType,
 } from "@/lib/vyron-inventory";
 import { postInventoryTransaction } from "@/lib/vyron-inventory-transactions";
+import { explodeBomLines } from "@/lib/vyron-cost-sub-boms";
 
 export const PRODUCTION_STATUSES = ["Planned", "Approved", "In Production", "Completed", "Cancelled", "Reversed"] as const;
 export type ProductionStatus = (typeof PRODUCTION_STATUSES)[number];
@@ -524,6 +525,57 @@ export type CreateProductionRunInput = {
   }>;
 };
 
+/**
+ * The BOM's lines with sub-assemblies replaced by their contents.
+ *
+ * Returns the lines unchanged when the BOM contains no child BOMs, so every
+ * existing BOM takes exactly the code path it did before — same lines, same
+ * quantities, same costs.
+ */
+async function explodeForProduction(
+  supabase: SupabaseClient,
+  companyId: string,
+  bomId: string,
+  lines: BomLine[]
+): Promise<BomLine[]> {
+  const childIds = lines.map((l) => (l as unknown as { child_bom_id?: string | null }).child_bom_id).filter(Boolean) as string[];
+  if (!childIds.length) return lines;
+
+  // A child that is a stocked finished good keeps its identity.
+  const { data: stockedChildren } = await supabase
+    .from("vyron_cost_boms")
+    .select("id, product_id")
+    .eq("company_id", companyId)
+    .in("id", [...new Set(childIds)])
+    .not("product_id", "is", null);
+
+  const stockedChildIds = new Set<string>();
+  for (const row of stockedChildren || []) {
+    const { data: fg } = await supabase
+      .from("vyron_cost_stock_items")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("entity_type", "finished_goods")
+      .eq("entity_id", row.product_id)
+      .maybeSingle();
+    if (fg) stockedChildIds.add(String(row.id));
+  }
+
+  const exploded = await explodeBomLines(supabase, companyId, bomId, { stockedChildIds });
+  return exploded.map((l, index) => ({
+    id: l.id ?? `exploded-${index}`,
+    bom_id: bomId,
+    line_type: l.line_type,
+    ingredient_id: l.ingredient_id,
+    line_name: l.via ? `${l.line_name} (via ${l.via})` : l.line_name,
+    quantity: l.quantity,
+    unit: l.unit ?? "kg",
+    unit_cost: l.unit_cost,
+    wastage_percent: l.wastage_percent ?? 0,
+    sort_order: index,
+  })) as unknown as BomLine[];
+}
+
 export async function createProductionRun(
   supabase: SupabaseClient,
   companyId: string,
@@ -535,7 +587,26 @@ export async function createProductionRun(
   const yieldQty = Math.max(0.0001, Number(source.bom.yield_qty || 1));
   const multiplier = input.batch_multiplier ?? (input.planned_qty ? input.planned_qty / yieldQty : 1);
   const plannedQty = roundQty(input.planned_qty ?? yieldQty * multiplier);
-  const scaled = scaleBomRequirements(source.lines, multiplier);
+
+  /*
+   * A line standing for another BOM is expanded into what that BOM is made of.
+   *
+   * The stock model keys every stock item on an entity — an ingredient, a
+   * packaging item, or a product for a finished good. A Sub-BOM has no product,
+   * so it has no stock item and there is nothing for a run to consume:
+   * resolveStockItemForLine would return null and the run would complete having
+   * posted nothing, which is exactly the silent under-consumption this function
+   * already refuses to create a few lines below. So the assembly is replaced by
+   * its ingredients and packaging, scaled by the quantity the parent asked for.
+   *
+   * A child that is itself a finished good with its own stock item is left
+   * alone: it has something to consume, and the existing path handles it.
+   */
+  const bomLines = source.fromRecipe
+    ? source.lines
+    : await explodeForProduction(supabase, companyId, source.bom.id, source.lines);
+
+  const scaled = scaleBomRequirements(bomLines, multiplier);
 
   /*
    * A run built from a BOM with no consumable lines can never consume stock, so

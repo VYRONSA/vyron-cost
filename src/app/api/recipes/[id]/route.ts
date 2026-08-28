@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { deleteRecipe, getRecipe, updateRecipe } from "@/lib/vyron-cost-recipes-data";
 import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
+import { BomInUseError, CircularBomError } from "@/lib/vyron-cost-sub-boms";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import {
   requireWorkspacePermission,
@@ -52,10 +53,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       status: body.status,
       notes: body.notes,
       product_id: body.product_id,
+      bom_purpose: body.bom_purpose ?? body.purpose,
       lines: body.lines,
     });
     return NextResponse.json({ ok: true, recipe, linkedProducts });
   } catch (error) {
+    if (error instanceof CircularBomError) {
+      return NextResponse.json({ ok: false, error: error.message, path: error.path }, { status: 409 });
+    }
     return workspaceAccessErrorResponse(error, "Update failed.");
   }
 }
@@ -75,6 +80,11 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     const recipe = await deleteRecipe(supabase, companyId, id);
     return NextResponse.json({ ok: true, recipe });
   } catch (error) {
+    // A BOM another BOM is built from names its parents, so the operator can see
+    // what to change rather than a bare refusal.
+    if (error instanceof BomInUseError) {
+      return NextResponse.json({ ok: false, error: error.message, parents: error.parents }, { status: 409 });
+    }
     return workspaceAccessErrorResponse(error, "Archive failed.");
   }
 }

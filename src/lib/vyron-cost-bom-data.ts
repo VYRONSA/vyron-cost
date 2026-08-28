@@ -21,6 +21,8 @@ export type BomHeader = {
   product_id?: string | null;
   /** True when the recipe has a pack photo — the list uses it for a thumbnail. */
   has_image?: boolean | null;
+  /** "Finished Good" or "Sub-BOM". */
+  bom_purpose?: string | null;
   image_path?: string | null;
 };
 
@@ -37,6 +39,9 @@ export type BomLine = {
   wastage_percent: number;
   line_cost?: number;
   sort_order?: number;
+  /** Set when the line stands for another BOM rather than an ingredient. */
+  child_bom_id?: string | null;
+  child_bom_name?: string | null;
 };
 
 /**

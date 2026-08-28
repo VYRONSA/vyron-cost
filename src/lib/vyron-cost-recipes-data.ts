@@ -1,6 +1,15 @@
 import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { calcGp, calcLineCost, calcSuggestedPrice } from "@/lib/vyron-cost-bom-data";
+import {
+  assertNoCircularBom,
+  BomInUseError,
+  findParentBoms,
+  loadChildBoms,
+  normaliseBomPurpose,
+  SUB_BOM_LINE_TYPE,
+  type BomPurpose,
+} from "@/lib/vyron-cost-sub-boms";
 
 export type RecipeLineInput = {
   id?: string;
@@ -14,6 +23,8 @@ export type RecipeLineInput = {
   sort_order?: number;
   /** Owning component within this same BOM. Null leaves the line ungrouped. */
   component_id?: string | null;
+  /** The BOM this line stands for. Mutually exclusive with ingredient_id. */
+  child_bom_id?: string | null;
 };
 
 /**
@@ -55,6 +66,8 @@ export type RecipeRecord = {
   status: string | null;
   notes: string | null;
   product_id: string | null;
+  /** What this BOM is for. Not inferred from product_id. */
+  bom_purpose: BomPurpose;
   /** Storage reference for the pack photo; the bytes live in the documents bucket. */
   image_bucket: string | null;
   image_path: string | null;
@@ -70,6 +83,11 @@ export type RecipeLineRecord = {
   line_type: string;
   ingredient_id: string | null;
   component_id: string | null;
+  /** Set when this line stands for another BOM. Never set with ingredient_id. */
+  child_bom_id: string | null;
+  /** Display-only detail about the child BOM; not stored on the line. */
+  child_bom_name?: string | null;
+  child_bom_purpose?: BomPurpose | null;
   line_name: string;
   quantity: number;
   unit: string;
@@ -171,6 +189,7 @@ function mapBomRow(row: Record<string, unknown>, lines?: RecipeLineRecord[]): Re
     status: row.status ? String(row.status) : "Draft",
     notes: row.notes ? String(row.notes) : null,
     product_id: row.product_id ? String(row.product_id) : null,
+    bom_purpose: normaliseBomPurpose(row.bom_purpose),
     image_bucket: row.image_bucket ? String(row.image_bucket) : null,
     image_path: row.image_path ? String(row.image_path) : null,
     image_mime: row.image_mime ? String(row.image_mime) : null,
@@ -186,6 +205,7 @@ function mapLineRow(row: Record<string, unknown>): RecipeLineRecord {
     line_type: String(row.line_type || "Ingredient"),
     ingredient_id: row.ingredient_id ? String(row.ingredient_id) : null,
     component_id: row.component_id ? String(row.component_id) : null,
+    child_bom_id: row.child_bom_id ? String(row.child_bom_id) : null,
     line_name: String(row.line_name || ""),
     quantity: Number(row.quantity || 0),
     unit: String(row.unit || "kg"),
@@ -555,7 +575,10 @@ async function insertRecipeLines(
       company_id: companyId,
       bom_id: recipeId,
       line_type: line.line_type || "Ingredient",
-      ingredient_id: line.ingredient_id || null,
+      // A line is an ingredient or an assembly, never both — the database
+      // enforces the same rule, so sending both would be refused outright.
+      ingredient_id: line.child_bom_id ? null : line.ingredient_id || null,
+      child_bom_id: line.child_bom_id || null,
       // Carried through so a save that rewrites lines keeps their grouping.
       component_id: line.component_id || null,
       line_name: line.line_name.trim(),
@@ -571,6 +594,52 @@ async function insertRecipeLines(
   return (data || []).map((line) => mapLineRow(line as Record<string, unknown>));
 }
 
+/**
+ * Price the sub-BOM lines and refuse any that would close a loop.
+ *
+ * A sub-BOM line carries the child's cost per unit in its own unit_cost, so from
+ * here on it is arithmetically an ordinary line: computeRecipeCosts multiplies
+ * quantity by unit cost by wastage exactly as it always has. That is why a BOM
+ * with no child BOMs produces byte-identical costing to before — it never enters
+ * this function's loop at all.
+ *
+ * Every child is checked for cycles before anything is written, so a refused
+ * save leaves nothing behind.
+ */
+async function resolveSubBomLines(
+  supabase: SupabaseClient,
+  companyId: string,
+  parentBomId: string | null,
+  lines: RecipeLineInput[]
+): Promise<RecipeLineInput[]> {
+  const childIds = lines.map((l) => l.child_bom_id).filter(Boolean) as string[];
+  if (!childIds.length) return lines;
+
+  const children = await loadChildBoms(supabase, companyId, childIds);
+
+  for (const id of new Set(childIds)) {
+    if (!children.has(id)) {
+      // Not visible under this company — another tenant's BOM, or deleted.
+      throw new Error("That BOM could not be found in this workspace.");
+    }
+    if (parentBomId) await assertNoCircularBom(supabase, companyId, parentBomId, id);
+  }
+
+  return lines.map((line) => {
+    if (!line.child_bom_id) return line;
+    const child = children.get(line.child_bom_id)!;
+    return {
+      ...line,
+      line_type: SUB_BOM_LINE_TYPE,
+      ingredient_id: null,
+      line_name: line.line_name?.trim() || child.bom_name,
+      unit: line.unit || child.yield_unit || "unit",
+      // The child's own cost per unit. Priced at save time, like every other line.
+      unit_cost: child.cost_per_unit,
+    };
+  });
+}
+
 export async function createRecipe(
   supabase: SupabaseClient,
   companyId: string,
@@ -584,10 +653,15 @@ export async function createRecipe(
     status?: string;
     notes?: string;
     product_id?: string | null;
+    bom_purpose?: string | null;
     lines?: RecipeLineInput[];
   }
 ) {
-  const lines = input.lines || [];
+  const purpose = normaliseBomPurpose(input.bom_purpose);
+  const recipeId = randomUUID();
+  // No parent id exists yet, so a new BOM cannot be part of a cycle; the
+  // database still refuses a self-reference.
+  const lines = await resolveSubBomLines(supabase, companyId, null, input.lines || []);
   const costs = computeRecipeCosts(
     lines,
     Number(input.yield_qty || 1),
@@ -595,7 +669,6 @@ export async function createRecipe(
     Number(input.target_gp || 0)
   );
 
-  const recipeId = randomUUID();
   const { data, error } = await supabase
     .from("vyron_cost_boms")
     .insert({
@@ -615,7 +688,10 @@ export async function createRecipe(
       suggested_selling_price: costs.suggestedSellingPrice,
       status: input.status || "Draft",
       notes: input.notes || null,
-      product_id: input.product_id || null,
+      // A Sub-BOM keeps product_id null: it is not sold on its own, so it gets
+      // no product and no finished-goods stock item.
+      product_id: purpose === "Sub-BOM" ? null : input.product_id || null,
+      bom_purpose: purpose,
     })
     .select("*")
     .single();
@@ -628,7 +704,7 @@ export async function createRecipe(
     recipeId,
     costs.totalCost,
     costs.costPerUnit,
-    input.product_id
+    purpose === "Sub-BOM" ? null : input.product_id
   );
 
   return { recipe: mapBomRow(data as Record<string, unknown>, savedLines), linkedProducts };
@@ -648,18 +724,22 @@ export async function updateRecipe(
     status?: string;
     notes?: string;
     product_id?: string | null;
+    bom_purpose?: string | null;
     lines?: RecipeLineInput[];
   }
 ) {
   const existing = await getRecipe(supabase, companyId, recipeId);
   if (!existing) throw new Error("Recipe not found.");
 
-  const lines =
+  const purpose = input.bom_purpose === undefined ? existing.bom_purpose : normaliseBomPurpose(input.bom_purpose);
+
+  const requestedLines =
     input.lines ??
     (existing.lines || []).map((line) => ({
       line_type: line.line_type,
       ingredient_id: line.ingredient_id,
       component_id: line.component_id,
+      child_bom_id: line.child_bom_id,
       line_name: line.line_name,
       quantity: line.quantity,
       unit: line.unit,
@@ -667,6 +747,8 @@ export async function updateRecipe(
       wastage_percent: line.wastage_percent,
       sort_order: line.sort_order,
     }));
+
+  const lines = await resolveSubBomLines(supabase, companyId, recipeId, requestedLines);
 
   const yieldQty = input.yield_qty ?? existing.yield_qty;
   const sellingPrice = input.selling_price ?? Number(existing.selling_price || 0);
@@ -688,7 +770,15 @@ export async function updateRecipe(
     suggested_selling_price: costs.suggestedSellingPrice,
     status: input.status ?? existing.status,
     notes: input.notes ?? existing.notes,
-    product_id: input.product_id !== undefined ? input.product_id : existing.product_id,
+    // A BOM turned into a Sub-BOM releases its product link: it is no longer
+    // sold on its own. The product and its stock item are left alone.
+    product_id:
+      purpose === "Sub-BOM"
+        ? null
+        : input.product_id !== undefined
+          ? input.product_id
+          : existing.product_id,
+    bom_purpose: purpose,
     updated_at: new Date().toISOString(),
   };
 
@@ -707,7 +797,8 @@ export async function updateRecipe(
     savedLines = await insertRecipeLines(supabase, companyId, recipeId, lines);
   }
 
-  const nextProductId = input.product_id !== undefined ? input.product_id : existing.product_id;
+  const nextProductId =
+    purpose === "Sub-BOM" ? null : input.product_id !== undefined ? input.product_id : existing.product_id;
   const linkedProducts = await syncLinkedProducts(
     supabase,
     companyId,
@@ -774,7 +865,16 @@ export async function recalculateBomCosts(
   return { productCount };
 }
 
+/**
+ * Deleting a BOM that another BOM is built from would leave the parent with a
+ * line pointing at nothing, so it is refused and the parents are named. The
+ * database says the same thing through ON DELETE RESTRICT; this check runs
+ * first so the caller gets the parent names rather than a constraint code.
+ */
 export async function deleteRecipe(supabase: SupabaseClient, companyId: string, recipeId: string) {
+  const parents = await findParentBoms(supabase, companyId, recipeId);
+  if (parents.length) throw new BomInUseError(parents);
+
   await supabase
     .from("vyron_cost_products")
     .update({ linked_bom_id: null, updated_at: new Date().toISOString() })
@@ -973,6 +1073,7 @@ export function recipeToBomHeader(recipe: RecipeRecord) {
     status: recipe.status,
     notes: recipe.notes,
     product_id: recipe.product_id,
+    bom_purpose: recipe.bom_purpose,
     has_image: Boolean(recipe.image_path),
   };
 }
@@ -991,5 +1092,7 @@ export function recipeLineToBomLine(line: RecipeLineRecord) {
     wastage_percent: line.wastage_percent,
     line_cost: line.line_cost,
     sort_order: line.sort_order,
+    child_bom_id: line.child_bom_id,
+    child_bom_name: line.child_bom_name ?? null,
   };
 }

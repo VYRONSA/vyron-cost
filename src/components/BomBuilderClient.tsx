@@ -12,10 +12,24 @@ import { CostIngredient } from "@/lib/vyron-cost-core-data";
 import { readActiveClient } from "@/lib/vyron-developer-client";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { ItemLookupField } from "@/components/vyron-platform/item-lookup/ItemLookupField";
+import {
+  BOM_PURPOSES,
+  BOM_PURPOSE_DESCRIPTIONS,
+  BOM_PURPOSE_LABELS,
+  normaliseBomPurpose,
+  SUB_BOM_LINE_TYPE,
+  type BomPurpose,
+} from "@/lib/vyron-cost-sub-boms";
 import { RecipeImageField } from "@/components/RecipeImageField";
 import type { ItemLookupResult } from "@/lib/platform/item-lookup/ItemLookupTypes";
 
-type DraftLine = Omit<BomLine, "id" | "bom_id" | "line_cost"> & { temp_id: string };
+type DraftLine = Omit<BomLine, "id" | "bom_id" | "line_cost"> & {
+  temp_id: string;
+  /** Set when the line stands for another BOM rather than an ingredient. */
+  child_bom_id?: string | null;
+  child_bom_name?: string | null;
+};
+type BomOption = { id: string; recipe_name: string; bom_purpose?: string | null; cost_per_unit: number };
 type ProductOption = { id: string; product_name: string };
 
 /**
@@ -112,6 +126,11 @@ export default function BomBuilderClient({
   const [sellingPrice, setSellingPrice] = useState(String(existingBom?.selling_price || 0));
   const [status, setStatus] = useState(existingBom?.status || "Draft");
   const [productId, setProductId] = useState(existingBom?.product_id || "");
+  const [bomPurpose, setBomPurpose] = useState<BomPurpose>(normaliseBomPurpose(existingBom?.bom_purpose));
+  /** Which component is waiting for a BOM to be picked, and the picker's state. */
+  const [bomPickerFor, setBomPickerFor] = useState<string | null>(null);
+  const [bomOptions, setBomOptions] = useState<BomOption[]>([]);
+  const [bomSearch, setBomSearch] = useState("");
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [saving, setSaving] = useState(false);
@@ -202,6 +221,7 @@ export default function BomBuilderClient({
         setSellingPrice(String(header.selling_price || 0));
         setStatus(header.status || "Draft");
         setProductId(header.product_id || "");
+        setBomPurpose(normaliseBomPurpose(header.bom_purpose));
         const recipeLines: BomLine[] = (data.recipe.lines || []).map(recipeLineToBomLine);
         const toDraft = (line: BomLine, index: number): DraftLine => ({
           temp_id: line.id || crypto.randomUUID(),
@@ -277,6 +297,48 @@ export default function BomBuilderClient({
     setComponents((cs) =>
       cs.map((c) => (c.temp_id === componentTempId ? { ...c, lines: [...c.lines, line] } : c))
     );
+  }
+
+  /**
+   * Adding a BOM to a component. The picker lists this workspace's other BOMs;
+   * the BOM being edited is never offered, and the server refuses anything that
+   * would close a loop even if it were.
+   */
+  async function openBomPicker(componentTempId: string) {
+    if (readOnly) return;
+    setBomPickerFor(componentTempId);
+    setBomSearch("");
+    try {
+      const res = await fetch("/api/recipes?limit=500");
+      const data = await res.json();
+      const rows: BomOption[] = (data?.recipes || [])
+        .map((r: Record<string, unknown>) => ({
+          id: String(r.id),
+          recipe_name: String(r.recipe_name || r.bom_name || ""),
+          bom_purpose: r.bom_purpose ? String(r.bom_purpose) : null,
+          cost_per_unit: Number(r.cost_per_unit || 0),
+        }))
+        .filter((r: BomOption) => r.id !== recipeId);
+      setBomOptions(rows);
+    } catch {
+      setBomOptions([]);
+    }
+  }
+
+  function addBomLineTo(componentTempId: string, option: BomOption) {
+    const line: DraftLine = {
+      ...newLine(0, SUB_BOM_LINE_TYPE),
+      line_name: option.recipe_name,
+      unit: "unit",
+      quantity: 1,
+      unit_cost: option.cost_per_unit,
+      child_bom_id: option.id,
+      child_bom_name: option.recipe_name,
+    };
+    setComponents((cs) =>
+      cs.map((c) => (c.temp_id === componentTempId ? { ...c, lines: [...c.lines, line] } : c))
+    );
+    setBomPickerFor(null);
   }
 
   function moveLineToComponent(tempId: string, targetTempId: string) {
@@ -405,7 +467,8 @@ export default function BomBuilderClient({
         target_gp: numericTargetGp,
         selling_price: numericSelling,
         status,
-        product_id: productId || null,
+        product_id: bomPurpose === "Sub-BOM" ? null : productId || null,
+        bom_purpose: bomPurpose,
       };
 
       /*
@@ -472,7 +535,8 @@ export default function BomBuilderClient({
           ...header,
           lines: orderedLines.map(({ line, component_id, sort_order }) => ({
             line_type: line.line_type,
-            ingredient_id: line.ingredient_id || null,
+            ingredient_id: line.child_bom_id ? null : line.ingredient_id || null,
+            child_bom_id: line.child_bom_id || null,
             component_id,
             line_name: line.line_name.trim(),
             quantity: Number(line.quantity || 0),
@@ -712,18 +776,63 @@ export default function BomBuilderClient({
                 <FieldHint example="40% manufacturing">Used to calculate suggested batch price.</FieldHint>
               </label>
 
-              <label className="block">
-                <span className={labelClass}>Link Finished Product</span>
-                <select disabled={readOnly} value={productId} onChange={(e) => setProductId(e.target.value)} className={inputClass}>
-                  <option value="">Link finished product (optional)</option>
-                  {products.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.product_name}
-                    </option>
+              <div className="block sm:col-span-2">
+                <span className={labelClass}>BOM Purpose</span>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  {BOM_PURPOSES.map((purpose) => (
+                    <label
+                      key={purpose}
+                      className={`flex min-h-[44px] cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${
+                        bomPurpose === purpose
+                          ? "border-violet-400 bg-violet-50"
+                          : "border-slate-200 bg-white hover:border-violet-200"
+                      } ${readOnly ? "cursor-not-allowed opacity-70" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name="bom-purpose"
+                        className="mt-1 h-4 w-4"
+                        disabled={readOnly}
+                        checked={bomPurpose === purpose}
+                        onChange={() => setBomPurpose(purpose)}
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-black text-slate-900">{BOM_PURPOSE_LABELS[purpose]}</span>
+                        <span className="mt-0.5 block text-xs font-semibold text-slate-500">
+                          {BOM_PURPOSE_DESCRIPTIONS[purpose]}
+                        </span>
+                      </span>
+                    </label>
                   ))}
-                </select>
-                <FieldHint example="Handcrafted Chicken Pie">On save, linked product costs update from this BOM.</FieldHint>
-              </label>
+                </div>
+              </div>
+
+              {bomPurpose === "Finished Good" ? (
+                <label className="block">
+                  <span className={labelClass}>Finished Product</span>
+                  <select disabled={readOnly} value={productId} onChange={(e) => setProductId(e.target.value)} className={inputClass}>
+                    <option value="">Select finished product (optional)</option>
+                    {products.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.product_name}
+                      </option>
+                    ))}
+                  </select>
+                  <FieldHint example="Handcrafted Chicken Pie">
+                    On save, linked product costs update from this BOM. A finished product is what production receives into stock.
+                  </FieldHint>
+                </label>
+              ) : (
+                <div className="block">
+                  <span className={labelClass}>Finished Product</span>
+                  <p className="mt-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500">
+                    Not applicable to a Sub-BOM
+                  </p>
+                  <FieldHint example="Salmon Roses">
+                    A Sub-BOM is used inside another BOM, so it is not sold on its own and holds no finished-goods stock.
+                  </FieldHint>
+                </div>
+              )}
             </div>
           </div>
 
@@ -872,16 +981,36 @@ export default function BomBuilderClient({
                       ) : null}
                       {component.lines.map((line) => (
                         <div key={line.temp_id} className="grid gap-3 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] lg:items-end">
-                          <label className="block lg:col-span-1">
-                            <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500 lg:hidden">
-                              {isPackaging ? "Packaging item" : "Ingredient"}
-                            </span>
-                            <ItemLookupField
-                              initialValue={line.line_name}
-                              defaultType={isPackaging || line.line_type === "Packaging" ? "packaging" : "ingredient"}
-                              onSelect={(item) => selectIngredientFromLookup(line.temp_id, item)}
-                            />
-                          </label>
+                          {/*
+                            A line standing for another BOM is not searched for
+                            in the ingredient master, so it shows what it is
+                            instead of an item lookup. The BOM is named, never
+                            its id.
+                          */}
+                          {line.child_bom_id ? (
+                            <div className="block lg:col-span-1">
+                              <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">
+                                BOM
+                              </span>
+                              <div className="mt-1 flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5">
+                                <Layers size={16} className="shrink-0 text-violet-600" />
+                                <span className="min-w-0 truncate text-sm font-black text-violet-900">
+                                  {line.child_bom_name || line.line_name}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <label className="block lg:col-span-1">
+                              <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500 lg:hidden">
+                                {isPackaging ? "Packaging item" : "Ingredient"}
+                              </span>
+                              <ItemLookupField
+                                initialValue={line.line_name}
+                                defaultType={isPackaging || line.line_type === "Packaging" ? "packaging" : "ingredient"}
+                                onSelect={(item) => selectIngredientFromLookup(line.temp_id, item)}
+                              />
+                            </label>
+                          )}
                           <label className="block">
                             <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Qty</span>
                             <input
@@ -896,7 +1025,7 @@ export default function BomBuilderClient({
                           <label className="block">
                             <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Unit</span>
                             <input
-                              disabled={readOnly}
+                              disabled={readOnly || Boolean(line.child_bom_id)}
                               value={line.unit}
                               onChange={(e) => updateLine(line.temp_id, "unit", e.target.value)}
                               className={`mt-1 w-full ${lineInputClass}`}
@@ -905,13 +1034,21 @@ export default function BomBuilderClient({
                           <label className="block">
                             <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Unit cost</span>
                             <input
-                              disabled={readOnly}
+                              /* A sub-BOM's unit cost is the child BOM's cost per unit and is
+                                 re-read on every save, so it is shown rather than typed —
+                                 editing it here would be overwritten anyway. */
+                              disabled={readOnly || Boolean(line.child_bom_id)}
                               type="number"
                               step="0.00000001"
                               value={line.unit_cost}
                               onChange={(e) => updateLine(line.temp_id, "unit_cost", Number(e.target.value))}
                               className={`mt-1 w-full ${lineInputClass}`}
                             />
+                            {line.child_bom_id ? (
+                              <span className="mt-1 block text-[0.65rem] font-semibold text-slate-500">
+                                From the BOM&rsquo;s cost per unit
+                              </span>
+                            ) : null}
                           </label>
                           <div className="lg:text-right">
                             <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Line cost</span>
@@ -978,6 +1115,15 @@ export default function BomBuilderClient({
                         >
                           <Plus size={16} />
                           {isPackaging ? "Add Packaging" : "Add Ingredient"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={readOnly}
+                          onClick={() => void openBomPicker(component.temp_id)}
+                          className="inline-flex min-h-[44px] items-center gap-2 rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 disabled:opacity-60"
+                        >
+                          <Layers size={15} />
+                          Add BOM
                         </button>
                       </div>
                     ) : null}
@@ -1133,6 +1279,66 @@ export default function BomBuilderClient({
           />
         </div>
       </div>
+
+      {bomPickerFor ? (
+        <div
+          role="dialog"
+          aria-label="Select BOM"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center"
+          onClick={() => setBomPickerFor(null)}
+        >
+          <div
+            className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-[2rem] bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="border-b border-slate-100 p-5">
+              <h3 className="text-lg font-black text-slate-950">Select BOM</h3>
+              <p className="mt-1 text-sm font-semibold text-slate-500">
+                The BOM you pick becomes a component of this one. Its cost per unit is used for the line.
+              </p>
+              <input
+                autoFocus
+                value={bomSearch}
+                onChange={(e) => setBomSearch(e.target.value)}
+                placeholder="Search BOM..."
+                className="mt-3 min-h-[44px] w-full rounded-xl border border-violet-100 px-4 py-3 text-sm font-semibold outline-none focus:border-violet-400"
+              />
+            </div>
+            <div className="max-h-[46vh] overflow-y-auto p-3">
+              {bomOptions
+                .filter((b) => b.recipe_name.toLowerCase().includes(bomSearch.trim().toLowerCase()))
+                .map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => addBomLineTo(bomPickerFor, b)}
+                    className="flex min-h-[44px] w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left hover:bg-violet-50"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-black text-slate-900">{b.recipe_name}</span>
+                      <span className="text-xs font-bold text-slate-500">
+                        {b.bom_purpose === "Sub-BOM" ? "Sub-BOM / Assembly" : "Finished Good"}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-sm font-black text-violet-700">{formatMoney(b.cost_per_unit)}</span>
+                  </button>
+                ))}
+              {!bomOptions.filter((b) => b.recipe_name.toLowerCase().includes(bomSearch.trim().toLowerCase())).length ? (
+                <p className="px-4 py-6 text-center text-sm font-semibold text-slate-500">No other BOM matches.</p>
+              ) : null}
+            </div>
+            <div className="border-t border-slate-100 p-4 text-right">
+              <button
+                type="button"
+                onClick={() => setBomPickerFor(null)}
+                className="min-h-[44px] rounded-2xl border border-slate-200 px-5 py-2.5 text-sm font-black text-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

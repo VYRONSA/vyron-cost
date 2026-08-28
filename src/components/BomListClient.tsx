@@ -6,6 +6,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { BomHeader, demoBoms, formatMoney } from "@/lib/vyron-cost-bom-data";
 import { recipeToBomHeader } from "@/lib/vyron-cost-recipes-data";
+import {
+  BOM_PURPOSES,
+  BOM_PURPOSE_LABELS,
+  normaliseBomPurpose,
+  type BomPurpose,
+} from "@/lib/vyron-cost-sub-boms";
 import { readActiveClient } from "@/lib/vyron-developer-client";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import {
@@ -32,6 +38,7 @@ function mapRecipeRow(row: Record<string, unknown>): BomHeader {
     status: row.status ? String(row.status) : "Draft",
     notes: row.notes ? String(row.notes) : null,
     product_id: row.product_id ? String(row.product_id) : null,
+    bom_purpose: normaliseBomPurpose(row.bom_purpose),
     image_bucket: row.image_bucket ? String(row.image_bucket) : null,
     image_path: row.image_path ? String(row.image_path) : null,
     image_mime: row.image_mime ? String(row.image_mime) : null,
@@ -113,6 +120,14 @@ export default function BomListClient({
     return () => clearTimeout(timer);
   }, [loadRecipes]);
 
+  /** The BOM being copied, and the copy dialog's fields. */
+  const [copySource, setCopySource] = useState<BomHeader | null>(null);
+  const [copyName, setCopyName] = useState("");
+  const [copyPurpose, setCopyPurpose] = useState<BomPurpose>("Finished Good");
+  const [copyImage, setCopyImage] = useState(false);
+  const [copyBusy, setCopyBusy] = useState(false);
+  const [copyError, setCopyError] = useState("");
+
   /**
    * Thumbnails need a signed URL each, so only recipes that actually have a
    * photo are asked for one. Recipes without an image cost nothing and render
@@ -120,10 +135,11 @@ export default function BomListClient({
    */
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   useEffect(() => {
-    // has_image is what the header actually carries — recipeToBomHeader reduces
-    // image_path to a boolean and does not pass the path through. Filtering on
-    // image_path therefore matched nothing and no thumbnail was ever requested.
-    const withImage = items.filter((bom) => bom.has_image).map((bom) => bom.id);
+    // Rows reach this list two ways: straight from the recipes table, which
+    // carries image_path, and through recipeToBomHeader, which reduces the path
+    // to the has_image boolean and drops it. Either one means there is a
+    // picture to fetch; testing only one of them fetched nothing.
+    const withImage = items.filter((bom) => bom.has_image || bom.image_path).map((bom) => bom.id);
     if (!withImage.length) return;
     let cancelled = false;
     void Promise.all(
@@ -139,6 +155,51 @@ export default function BomListClient({
       cancelled = true;
     };
   }, [items]);
+
+  function openCopy(bom: BomHeader) {
+    setCopySource(bom);
+    setCopyName(`${bom.bom_name} (Copy)`);
+    setCopyPurpose(normaliseBomPurpose(bom.bom_purpose));
+    // Off by default: a copy is a new pack until somebody says otherwise.
+    setCopyImage(false);
+    setCopyError("");
+  }
+
+  async function submitCopy() {
+    if (!copySource) return;
+    const name = copyName.trim();
+    if (!name) {
+      setCopyError("Give the new BOM a name.");
+      return;
+    }
+    setCopyBusy(true);
+    setCopyError("");
+    try {
+      // The demo workspace has no database behind it, so a copy there stays in
+      // memory. duplicate() is that path and is kept for it alone; a real
+      // workspace goes through the copy endpoint, which also brings components,
+      // child BOM references and the pack image across.
+      if (demoMode) {
+        await duplicate(copySource);
+        setCopySource(null);
+        return;
+      }
+
+      const res = await fetch(`/api/recipes/${copySource.id}/copy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newName: name, purpose: copyPurpose, copyImage }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Copy failed.");
+      setCopySource(null);
+      await loadRecipes(true);
+    } catch (error) {
+      setCopyError(error instanceof Error ? error.message : "Copy failed.");
+    } finally {
+      setCopyBusy(false);
+    }
+  }
 
   const activeFilters = useMemo(() => {
     const chips: { key: string; label: string; clear: () => void }[] = [];
@@ -396,7 +457,7 @@ export default function BomListClient({
         <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
           <div className="min-w-[1040px]">
             <div className="grid grid-cols-[260px_170px_120px_130px_130px_100px_190px] bg-slate-50 px-5 py-4 text-xs font-black uppercase tracking-[0.14em] text-slate-500">
-              <div>BOM</div><div>Category</div><div>Yield</div><div>Cost / Unit</div><div>Suggested</div><div>Status</div><div>Actions</div>
+              <div>BOM</div><div>Purpose</div><div>Yield</div><div>Cost / Unit</div><div>Suggested</div><div>Status</div><div>Actions</div>
             </div>
 
             {filtered.map((bom) => (
@@ -412,7 +473,9 @@ export default function BomListClient({
                   ) : null}
                   <Link href={`/recipes/${bom.id}`} className="truncate font-black text-violet-700">{bom.bom_name}</Link>
                 </div>
-                <div className="font-bold text-slate-500">{bom.category || "Uncategorised"}</div>
+                <div className="font-bold text-slate-500">
+                  {BOM_PURPOSE_LABELS[normaliseBomPurpose(bom.bom_purpose)]}
+                </div>
                 <div className="font-bold text-slate-500">{Number(bom.yield_qty || 0).toFixed(2)} {bom.yield_unit || ""}</div>
                 <div className="font-black text-slate-900">{formatMoney(bom.cost_per_unit)}</div>
                 <div className="font-black text-[#A855F7]">{formatMoney(bom.suggested_selling_price)}</div>
@@ -420,7 +483,15 @@ export default function BomListClient({
                 <div className="flex gap-2">
                   <Link href={`/recipes/${bom.id}`} className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">Open</Link>
                   {canCreate ? (
-                    <button type="button" onClick={() => void duplicate(bom)} className="rounded-xl bg-slate-100 p-2 text-slate-700"><Copy size={16} /></button>
+                    <button
+                      type="button"
+                      onClick={() => openCopy(bom)}
+                      aria-label={`Copy ${bom.bom_name}`}
+                      title="Copy BOM"
+                      className="rounded-xl bg-slate-100 p-2 text-slate-700"
+                    >
+                      <Copy size={16} />
+                    </button>
                   ) : null}
                   {canDelete ? (
                     <button type="button" onClick={() => void remove(bom.id)} className="rounded-xl bg-red-50 p-2 text-red-700"><Trash2 size={16} /></button>
@@ -431,6 +502,86 @@ export default function BomListClient({
           </div>
         </div>
       )}
+
+      {copySource ? (
+        <div
+          role="dialog"
+          aria-label="Copy BOM"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center"
+          onClick={() => (copyBusy ? null : setCopySource(null))}
+        >
+          <div className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-black text-slate-950">Copy BOM</h3>
+            <p className="mt-1 text-sm font-semibold text-slate-500">
+              Source: <span className="font-black text-slate-700">{copySource.bom_name}</span>
+            </p>
+
+            <label className="mt-5 block">
+              <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">New BOM Name</span>
+              <input
+                autoFocus
+                value={copyName}
+                onChange={(e) => setCopyName(e.target.value)}
+                className="mt-2 min-h-[44px] w-full rounded-xl border border-violet-100 px-4 py-3 text-sm font-semibold outline-none focus:border-violet-400"
+              />
+            </label>
+
+            <div className="mt-4">
+              <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">BOM Purpose</span>
+              <div className="mt-2 space-y-2">
+                {BOM_PURPOSES.map((purpose) => (
+                  <label
+                    key={purpose}
+                    className={`flex min-h-[44px] cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 ${
+                      copyPurpose === purpose ? "border-violet-400 bg-violet-50" : "border-slate-200"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="copy-purpose"
+                      className="h-4 w-4"
+                      checked={copyPurpose === purpose}
+                      onChange={() => setCopyPurpose(purpose)}
+                    />
+                    <span className="text-sm font-black text-slate-900">{BOM_PURPOSE_LABELS[purpose]}</span>
+                  </label>
+                ))}
+              </div>
+              {copyPurpose === "Finished Good" ? (
+                <p className="mt-2 text-xs font-semibold text-slate-500">
+                  The copy starts with no finished product linked. Open it after copying to choose or create one.
+                </p>
+              ) : null}
+            </div>
+
+            <label className="mt-4 flex min-h-[44px] cursor-pointer items-center gap-3">
+              <input type="checkbox" className="h-5 w-5" checked={copyImage} onChange={(e) => setCopyImage(e.target.checked)} />
+              <span className="text-sm font-black text-slate-700">Copy pack image</span>
+            </label>
+
+            {copyError ? <p className="mt-3 text-xs font-bold text-red-600">{copyError}</p> : null}
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={copyBusy}
+                onClick={() => setCopySource(null)}
+                className="min-h-[44px] rounded-2xl border border-slate-200 px-5 py-2.5 text-sm font-black text-slate-700 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={copyBusy}
+                onClick={() => void submitCopy()}
+                className="min-h-[44px] rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-2.5 text-sm font-black text-white disabled:opacity-60"
+              >
+                {copyBusy ? "Copying…" : "Copy BOM"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </VyronPremiumPageShell>
   );
 }
