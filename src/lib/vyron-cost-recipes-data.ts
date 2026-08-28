@@ -640,6 +640,61 @@ async function resolveSubBomLines(
   });
 }
 
+/**
+ * A product belongs to one BOM. Refuse to take one that another BOM already
+ * costs.
+ *
+ * syncLinkedProducts sets linked_bom_id and rewrites the product's cost without
+ * asking, so saving a copy with the original's product selected would quietly
+ * repoint that product at the copy: the original BOM row survives untouched, but
+ * the product stops costing from it. This is the check that makes that
+ * impossible, and it is deliberately narrow — it fires only when the product is
+ * already linked to a *different* BOM, so re-saving a BOM with its own product
+ * is unaffected.
+ */
+export class ProductAlreadyLinkedError extends Error {
+  readonly productId: string;
+  readonly ownerBomId: string;
+  readonly ownerBomName: string;
+  constructor(productId: string, ownerBomId: string, ownerBomName: string) {
+    super(
+      `That finished product is already produced by "${ownerBomName}". ` +
+        `Choose a different product, or create a new one for this BOM.`
+    );
+    this.name = "ProductAlreadyLinkedError";
+    this.productId = productId;
+    this.ownerBomId = ownerBomId;
+    this.ownerBomName = ownerBomName;
+  }
+}
+
+async function assertProductFree(
+  supabase: SupabaseClient,
+  companyId: string,
+  productId: string | null | undefined,
+  bomId: string
+) {
+  if (!productId) return;
+  const { data: product } = await supabase
+    .from("vyron_cost_products")
+    .select("id, linked_bom_id")
+    .eq("company_id", companyId)
+    .eq("id", productId)
+    .maybeSingle();
+  const owner = product?.linked_bom_id ? String(product.linked_bom_id) : null;
+  if (!owner || owner === bomId) return;
+
+  const { data: ownerBom } = await supabase
+    .from("vyron_cost_boms")
+    .select("id, bom_name")
+    .eq("company_id", companyId)
+    .eq("id", owner)
+    .maybeSingle();
+  // A link pointing at a BOM that no longer exists is stale, not a conflict.
+  if (!ownerBom) return;
+  throw new ProductAlreadyLinkedError(productId, owner, String(ownerBom.bom_name || "another BOM"));
+}
+
 export async function createRecipe(
   supabase: SupabaseClient,
   companyId: string,
@@ -659,6 +714,10 @@ export async function createRecipe(
 ) {
   const purpose = normaliseBomPurpose(input.bom_purpose);
   const recipeId = randomUUID();
+
+  // Checked before anything is written, so a refusal leaves nothing behind.
+  if (purpose !== "Sub-BOM") await assertProductFree(supabase, companyId, input.product_id, recipeId);
+
   // No parent id exists yet, so a new BOM cannot be part of a cycle; the
   // database still refuses a self-reference.
   const lines = await resolveSubBomLines(supabase, companyId, null, input.lines || []);
@@ -748,6 +807,9 @@ export async function updateRecipe(
       sort_order: line.sort_order,
     }));
 
+  if (purpose !== "Sub-BOM" && input.product_id !== undefined) {
+    await assertProductFree(supabase, companyId, input.product_id, recipeId);
+  }
   const lines = await resolveSubBomLines(supabase, companyId, recipeId, requestedLines);
 
   const yieldQty = input.yield_qty ?? existing.yield_qty;

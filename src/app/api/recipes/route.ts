@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRecipe, listRecipeCategories, listRecipes } from "@/lib/vyron-cost-recipes-data";
+import {
+  createRecipe,
+  listRecipeCategories,
+  listRecipes,
+  ProductAlreadyLinkedError,
+} from "@/lib/vyron-cost-recipes-data";
 import { requireApiCompanyId, resolveApiCompanyId } from "@/lib/vyron-api-workspace";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import {
@@ -69,6 +74,12 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ ok: true, recipe, linkedProducts });
   } catch (error) {
+    if (error instanceof ProductAlreadyLinkedError) {
+      return NextResponse.json(
+        { ok: false, error: error.message, productId: error.productId, ownerBomId: error.ownerBomId },
+        { status: 409 }
+      );
+    }
     return workspaceAccessErrorResponse(error, "Create failed.");
   }
 }

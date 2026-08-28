@@ -2,6 +2,7 @@
 
 import { Copy, FileText, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { BomHeader, demoBoms, formatMoney } from "@/lib/vyron-cost-bom-data";
@@ -52,6 +53,7 @@ export default function BomListClient({
   boms: BomHeader[];
   demoSeed?: boolean;
 }) {
+  const router = useRouter();
   const { canCreate, canDelete } = useModulePermissions("boms");
   const [items, setItems] = useState(demoSeed ? initialBoms : []);
   const [search, setSearch] = useState("");
@@ -163,6 +165,22 @@ export default function BomListClient({
     // Off by default: a copy is a new pack until somebody says otherwise.
     setCopyImage(false);
     setCopyError("");
+  }
+
+  /**
+   * Copy & edit opens the builder on a draft. Deliberately no request: the copy
+   * exists only in the form until the user saves, so backing out leaves nothing
+   * behind. Copy now, below, is unchanged and still writes immediately.
+   */
+  function copyAndEdit() {
+    if (!copySource) return;
+    const params = new URLSearchParams({ copyFrom: copySource.id });
+    // Whatever the operator typed here is what they meant to call it.
+    const typed = copyName.trim();
+    if (typed) params.set("name", typed);
+    if (copyImage) params.set("copyImage", "1");
+    setCopySource(null);
+    router.push(`/recipes/new?${params.toString()}`);
   }
 
   async function submitCopy() {
@@ -561,22 +579,38 @@ export default function BomListClient({
 
             {copyError ? <p className="mt-3 text-xs font-bold text-red-600">{copyError}</p> : null}
 
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 flex flex-col gap-2">
               <button
                 type="button"
                 disabled={copyBusy}
-                onClick={() => setCopySource(null)}
-                className="min-h-[44px] rounded-2xl border border-slate-200 px-5 py-2.5 text-sm font-black text-slate-700 disabled:opacity-60"
+                onClick={copyAndEdit}
+                className="min-h-[44px] w-full rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white disabled:opacity-60"
               >
-                Cancel
+                Copy &amp; edit
               </button>
+              <p className="px-1 text-xs font-semibold text-slate-500">
+                Opens a copy in the editor. Nothing is saved until you save it.
+              </p>
+
               <button
                 type="button"
                 disabled={copyBusy}
                 onClick={() => void submitCopy()}
-                className="min-h-[44px] rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-2.5 text-sm font-black text-white disabled:opacity-60"
+                className="mt-2 min-h-[44px] w-full rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-700 disabled:opacity-60"
               >
-                {copyBusy ? "Copying…" : "Copy BOM"}
+                {copyBusy ? "Copying…" : "Copy now"}
+              </button>
+              <p className="px-1 text-xs font-semibold text-slate-500">
+                Creates the copy straight away, unchanged.
+              </p>
+
+              <button
+                type="button"
+                disabled={copyBusy}
+                onClick={() => setCopySource(null)}
+                className="mt-2 min-h-[44px] w-full rounded-2xl border border-slate-200 px-5 py-2.5 text-sm font-black text-slate-700 disabled:opacity-60"
+              >
+                Cancel
               </button>
             </div>
           </div>

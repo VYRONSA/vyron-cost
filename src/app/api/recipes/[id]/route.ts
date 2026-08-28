@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteRecipe, getRecipe, updateRecipe } from "@/lib/vyron-cost-recipes-data";
+import {
+  deleteRecipe,
+  getRecipe,
+  updateRecipe,
+  ProductAlreadyLinkedError,
+} from "@/lib/vyron-cost-recipes-data";
 import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
 import { BomInUseError, CircularBomError } from "@/lib/vyron-cost-sub-boms";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
@@ -60,6 +65,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   } catch (error) {
     if (error instanceof CircularBomError) {
       return NextResponse.json({ ok: false, error: error.message, path: error.path }, { status: 409 });
+    }
+    if (error instanceof ProductAlreadyLinkedError) {
+      return NextResponse.json(
+        { ok: false, error: error.message, productId: error.productId, ownerBomId: error.ownerBomId },
+        { status: 409 }
+      );
     }
     return workspaceAccessErrorResponse(error, "Update failed.");
   }

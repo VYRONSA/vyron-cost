@@ -20,6 +20,7 @@ import {
   SUB_BOM_LINE_TYPE,
   type BomPurpose,
 } from "@/lib/vyron-cost-sub-boms";
+import { buildCopyDraft, toDraftLine } from "@/lib/vyron-cost-bom-draft";
 import { RecipeImageField } from "@/components/RecipeImageField";
 import type { ItemLookupResult } from "@/lib/platform/item-lookup/ItemLookupTypes";
 
@@ -30,7 +31,12 @@ type DraftLine = Omit<BomLine, "id" | "bom_id" | "line_cost"> & {
   child_bom_name?: string | null;
 };
 type BomOption = { id: string; recipe_name: string; bom_purpose?: string | null; cost_per_unit: number };
-type ProductOption = { id: string; product_name: string };
+type ProductOption = {
+  id: string;
+  product_name: string;
+  /** The BOM that already produces this product, if any. */
+  linked_bom_id: string | null;
+};
 
 /**
  * A component is the unit a person actually builds a pack from — "Salmon maki",
@@ -103,16 +109,31 @@ export default function BomBuilderClient({
   existingBom,
   existingLines,
   recipeId,
+  copyFromId,
+  copyImage = false,
+  copyName,
 }: {
   ingredients: CostIngredient[];
   existingBom?: BomHeader | null;
   existingLines?: BomLine[];
   recipeId?: string;
+  /** Source BOM for a Copy & Edit draft. Read only, and never written to. */
+  copyFromId?: string;
+  copyImage?: boolean;
+  /** The name the operator typed before opening the draft, if any. */
+  copyName?: string;
 }) {
   const router = useRouter();
   const { canCreate, canEdit } = useModulePermissions("boms");
   const resolvedRecipeId = existingBom?.id || recipeId || "";
   const isEdit = Boolean(resolvedRecipeId && !resolvedRecipeId.startsWith("demo"));
+  /*
+   * A Copy & Edit draft. Nothing exists in the database yet: the source is read
+   * once to fill the form, and Save takes the ordinary create path, so
+   * abandoning the page leaves nothing behind. isEdit stays false throughout,
+   * which is what keeps Save from writing to the BOM being copied.
+   */
+  const isCopy = Boolean(copyFromId) && !isEdit;
   const canSave = isEdit ? canEdit : canCreate;
   const readOnly = !canSave;
   const [demoMode, setDemoMode] = useState(false);
@@ -142,18 +163,9 @@ export default function BomBuilderClient({
    * content immediately, before the grouped fetch lands.
    */
   const [ungrouped, setUngrouped] = useState<DraftLine[]>(
-    (existingLines || []).map((line, index) => ({
-      temp_id: line.id || crypto.randomUUID(),
-      line_type: line.line_type || "Ingredient",
-      ingredient_id: line.ingredient_id || null,
-      component_id: line.component_id ?? null,
-      line_name: line.line_name || "",
-      quantity: Number(line.quantity || 0),
-      unit: line.unit || "unit",
-      unit_cost: Number(line.unit_cost || 0),
-      wastage_percent: Number(line.wastage_percent || 0),
-      sort_order: line.sort_order ?? index,
-    }))
+    (existingLines || []).map(
+      (line, index) => ({ ...toDraftLine(line, index, () => line.id || crypto.randomUUID()) }) as DraftLine
+    )
   );
   const [removedComponentIds, setRemovedComponentIds] = useState<string[]>([]);
   const [movingLine, setMovingLine] = useState<string | null>(null);
@@ -189,6 +201,7 @@ export default function BomBuilderClient({
               .map((row: Record<string, unknown>) => ({
                 id: String(row.id),
                 product_name: String(row.product_name || ""),
+                linked_bom_id: row.linked_bom_id ? String(row.linked_bom_id) : null,
               }))
           );
         }
@@ -223,18 +236,11 @@ export default function BomBuilderClient({
         setProductId(header.product_id || "");
         setBomPurpose(normaliseBomPurpose(header.bom_purpose));
         const recipeLines: BomLine[] = (data.recipe.lines || []).map(recipeLineToBomLine);
-        const toDraft = (line: BomLine, index: number): DraftLine => ({
-          temp_id: line.id || crypto.randomUUID(),
-          line_type: line.line_type || "Ingredient",
-          ingredient_id: line.ingredient_id || null,
-          component_id: line.component_id ?? null,
-          line_name: line.line_name || "",
-          quantity: Number(line.quantity || 0),
-          unit: line.unit || "unit",
-          unit_cost: Number(line.unit_cost || 0),
-          wastage_percent: Number(line.wastage_percent || 0),
-          sort_order: line.sort_order ?? index,
-        });
+        // Same mapping as a copy uses, so a line cannot keep its identity in one
+        // path and lose it in the other. Existing lines keep their own id as the
+        // draft key; only a copy needs fresh ones.
+        const toDraft = (line: BomLine, index: number): DraftLine =>
+          ({ ...toDraftLine(line, index, () => line.id || crypto.randomUUID()) }) as DraftLine;
         const drafts = recipeLines.map(toDraft);
         const loaded: DraftComponent[] = (data.recipe.components || []).map(
           (c: { id: string; name: string; component_type: string }) => ({
@@ -253,6 +259,63 @@ export default function BomBuilderClient({
         // keep SSR props when provided
       });
   }, [demoMode, existingBom?.id, recipeId]);
+
+  /*
+   * Fill the form from the BOM being copied.
+   *
+   * Every component is given a brand new temporary identity with id === null,
+   * so the save path creates components instead of PATCHing the source's. That
+   * one detail is what keeps the original untouched: reusing a source component
+   * id here would rename the original's components on save.
+   *
+   * Ingredient and child-BOM references are carried across as they are. Both are
+   * shared master records — two BOMs may legitimately use the same ingredient
+   * and the same sub-assembly, and duplicating either would create a second copy
+   * nobody asked for that then drifts from the first.
+   */
+  useEffect(() => {
+    if (demoMode || !isCopy || !copyFromId) return;
+    let cancelled = false;
+
+    fetch(`/api/recipes/${copyFromId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (!data.ok || !data.recipe) {
+          setErrorMessage(data.error || "That BOM could not be found in this workspace.");
+          return;
+        }
+        const header = recipeToBomHeader(data.recipe);
+        // One mapping decides everything about the draft, so what the tests
+        // exercise and what the editor shows cannot drift apart.
+        const draft = buildCopyDraft(
+          { ...data.recipe, bom_name: header.bom_name },
+          (data.recipe.lines || []).map(recipeLineToBomLine),
+          () => crypto.randomUUID()
+        );
+
+        setBomName(copyName?.trim() || draft.bom_name);
+        setCategory(draft.category);
+        setYieldQty(draft.yield_qty);
+        setYieldUnit(draft.yield_unit);
+        setTargetGp(draft.target_gp);
+        setSellingPrice(draft.selling_price);
+        setStatus(draft.status);
+        setProductId(draft.product_id);
+        setBomPurpose(draft.bom_purpose);
+
+        setComponents(draft.components as DraftComponent[]);
+        setUngrouped(draft.ungrouped as DraftLine[]);
+        setRemovedComponentIds([]);
+      })
+      .catch(() => {
+        if (!cancelled) setErrorMessage("That BOM could not be loaded.");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [demoMode, isCopy, copyFromId, copyName]);
 
   const totalCost = useMemo(() => lines.reduce((sum, line) => sum + calcLineCost(line), 0), [lines]);
   const numericYield = Number(yieldQty || 0);
@@ -551,8 +614,33 @@ export default function BomBuilderClient({
       if (!data.ok) throw new Error(data.error || "BOM save failed.");
       setRemovedComponentIds([]);
 
+      /*
+       * The pack photo comes across last, once the new BOM exists to hang it on.
+       * A draft has no id, so there is nothing to attach it to before this
+       * point. The photo is a convenience, not part of the costing, so failing
+       * to copy it says so and leaves the saved BOM alone rather than undoing
+       * work the user has just done.
+       */
+      let photoNote = "";
+      if (isCopy && copyImage && copyFromId && savedId) {
+        try {
+          const imgRes = await fetch(`/api/recipes/${savedId}/image/copy`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sourceBomId: copyFromId }),
+          });
+          const imgData = await imgRes.json();
+          if (!imgData.ok) photoNote = " The pack photo could not be copied — add it from this BOM.";
+        } catch {
+          photoNote = " The pack photo could not be copied — add it from this BOM.";
+        }
+      }
+
       const linkedCount = Number(data.linkedProducts || 0);
-      setMessage(`BOM saved.${linkedCount ? ` ${linkedCount} product cost(s) updated.` : ""}`);
+      setMessage(
+        `${isCopy ? "New BOM created." : "BOM saved."}` +
+          `${linkedCount ? ` ${linkedCount} product cost(s) updated.` : ""}${photoNote}`
+      );
       if (!isEdit && savedId) {
         router.push(`/recipes/${savedId}`);
       }
@@ -654,7 +742,7 @@ export default function BomBuilderClient({
                   disabled={saving}
                   className="inline-flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(29,107,255,0.35)] disabled:opacity-60"
                 >
-                  <Save size={18} /> {saving ? "Saving..." : "Save BOM"}
+                  <Save size={18} /> {saving ? "Saving..." : isCopy ? "Save as New BOM" : "Save BOM"}
                 </button>
               ) : null}
             </div>
@@ -812,11 +900,19 @@ export default function BomBuilderClient({
                   <span className={labelClass}>Finished Product</span>
                   <select disabled={readOnly} value={productId} onChange={(e) => setProductId(e.target.value)} className={inputClass}>
                     <option value="">Select finished product (optional)</option>
-                    {products.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.product_name}
-                      </option>
-                    ))}
+                    {products.map((product) => {
+                      // A product belongs to one BOM. One already produced by a
+                      // different BOM is listed but cannot be taken, so a copy
+                      // can never quietly inherit the original's product.
+                      const takenByAnother =
+                        Boolean(product.linked_bom_id) && product.linked_bom_id !== resolvedRecipeId;
+                      return (
+                        <option key={product.id} value={product.id} disabled={takenByAnother}>
+                          {product.product_name}
+                          {takenByAnother ? " — already produced by another BOM" : ""}
+                        </option>
+                      );
+                    })}
                   </select>
                   <FieldHint example="Handcrafted Chicken Pie">
                     On save, linked product costs update from this BOM. A finished product is what production receives into stock.
@@ -836,6 +932,16 @@ export default function BomBuilderClient({
             </div>
           </div>
 
+          {isCopy && !message ? (
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4">
+              <p className="text-sm font-black text-sky-900">Copy of an existing BOM — nothing is saved yet</p>
+              <p className="mt-1 text-sm font-semibold text-slate-600">
+                Change anything you like. The BOM you copied from is not affected, and leaving this page without
+                saving creates nothing.
+                {copyImage ? " The pack photo is copied across when you save." : ""}
+              </p>
+            </div>
+          ) : null}
           {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-bold text-[#7E22CE]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-5 py-4 text-sm font-bold text-red-700">{errorMessage}</div>}
 

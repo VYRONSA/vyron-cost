@@ -52,6 +52,53 @@ export type CopyBomResult = {
   imageCopied: boolean;
 };
 
+/**
+ * Copy a BOM's pack photo onto another BOM.
+ *
+ * The copy always gets a storage path of its own, so two BOMs never share an
+ * object and removing one photo can never blank the other. Returns the new path
+ * so a caller that is mid-transaction can undo the upload if a later step fails.
+ *
+ * Both BOMs are read scoped to the company, so this cannot reach another
+ * tenant's photo or attach one to another tenant's BOM.
+ */
+export async function copyBomImage(
+  supabase: SupabaseClient,
+  companyId: string,
+  source: { image_bucket?: string | null; image_path?: string | null; image_mime?: string | null },
+  targetBomId: string
+): Promise<string | null> {
+  if (!source.image_path) return null;
+
+  const bucket = String(source.image_bucket || VYRON_DOCUMENTS_BUCKET);
+  const { data: blob, error: dlErr } = await supabase.storage.from(bucket).download(source.image_path);
+  if (dlErr || !blob) throw new Error(`Could not read the original pack photo: ${dlErr?.message ?? "not found"}`);
+  const bytes = Buffer.from(await blob.arrayBuffer());
+
+  const fileName = String(source.image_path).split("/").pop() || "pack-photo";
+  const path = buildDocumentStoragePath(companyId, `bom-${targetBomId}-${randomUUID()}`, fileName);
+  const up = await supabase.storage.from(VYRON_DOCUMENTS_BUCKET).upload(path, bytes, {
+    contentType: String(source.image_mime || "image/jpeg"),
+    upsert: false,
+  });
+  if (up.error) throw new Error(`Could not copy the pack photo: ${up.error.message}`);
+
+  const { error: refErr } = await supabase
+    .from("vyron_cost_boms")
+    .update({
+      image_bucket: VYRON_DOCUMENTS_BUCKET,
+      image_path: path,
+      image_mime: source.image_mime || "image/jpeg",
+    })
+    .eq("id", targetBomId)
+    .eq("company_id", companyId);
+  if (refErr) {
+    await supabase.storage.from(VYRON_DOCUMENTS_BUCKET).remove([path]).catch(() => {});
+    throw new Error(refErr.message);
+  }
+  return path;
+}
+
 export async function copyBom(
   supabase: SupabaseClient,
   companyId: string,
@@ -184,33 +231,8 @@ export async function copyBom(
 
     let imageCopied = false;
     if (input.copyImage && source.image_path) {
-      const bucket = String(source.image_bucket || VYRON_DOCUMENTS_BUCKET);
-      const { data: blob, error: dlErr } = await supabase.storage.from(bucket).download(source.image_path);
-      if (dlErr || !blob) throw new Error(`Could not read the original pack photo: ${dlErr?.message ?? "not found"}`);
-      const bytes = Buffer.from(await blob.arrayBuffer());
-
-      const fileName = String(source.image_path).split("/").pop() || "pack-photo";
-      // A path of its own. Two BOMs never share a storage object, so removing
-      // one photo can never blank the other.
-      const path = buildDocumentStoragePath(companyId, `bom-${newBomId}-${randomUUID()}`, fileName);
-      const up = await supabase.storage.from(VYRON_DOCUMENTS_BUCKET).upload(path, bytes, {
-        contentType: String(source.image_mime || "image/jpeg"),
-        upsert: false,
-      });
-      if (up.error) throw new Error(`Could not copy the pack photo: ${up.error.message}`);
-      uploadedImagePath = path;
-
-      const { error: refErr } = await supabase
-        .from("vyron_cost_boms")
-        .update({
-          image_bucket: VYRON_DOCUMENTS_BUCKET,
-          image_path: path,
-          image_mime: source.image_mime || "image/jpeg",
-        })
-        .eq("id", newBomId)
-        .eq("company_id", companyId);
-      if (refErr) throw new Error(refErr.message);
-      imageCopied = true;
+      uploadedImagePath = await copyBomImage(supabase, companyId, source, newBomId);
+      imageCopied = Boolean(uploadedImagePath);
     }
 
     return {
