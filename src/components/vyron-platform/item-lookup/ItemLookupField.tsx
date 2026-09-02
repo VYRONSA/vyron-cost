@@ -67,11 +67,26 @@ export function ItemLookupField({
   const [typeFilter, setTypeFilter] = useState<ItemLookupItemType | "all">(defaultType);
   const [statusFilter, setStatusFilter] = useState<"active" | "all">("active");
   const containerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Why the last search failed, if it did. Empty when all is well. */
   const [errorText, setErrorText] = useState("");
   /** How many matched in total, so a cut list can say so. */
   const [totalMatches, setTotalMatches] = useState(0);
+  /*
+   * Where the list can actually fit.
+   *
+   * The panel used to hang below the field at a fixed height. On a short
+   * window, or with the field low on the page, the browser simply cut it off —
+   * two rows of a 169-item list were visible and the picker read as broken.
+   * It now opens into whichever side has more room and takes as much of it as
+   * is available.
+   */
+  const [placement, setPlacement] = useState<{ above: boolean; maxHeight: number }>({
+    above: false,
+    maxHeight: 320,
+  });
   const requestSeq = useRef(0);
 
   useEffect(() => {
@@ -122,6 +137,55 @@ export function ItemLookupField({
       if (seq === requestSeq.current) setLoading(false);
     }
   }, [query, typeFilter, statusFilter, materialise]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const measure = () => {
+      const anchor = containerRef.current;
+      if (!anchor) return;
+      const box = anchor.getBoundingClientRect();
+      // Room between the field and each edge, less a small margin.
+      const below = window.innerHeight - box.bottom - 16;
+      const above = box.top - 16;
+      const useAbove = above > below;
+      const room = Math.floor(useAbove ? above : below);
+
+      /*
+       * The filter chips and the count line live above the list, inside the same
+       * panel. Capping only the list left that chrome unaccounted for, so the
+       * panel still overran the window by exactly its own header. It is measured
+       * rather than assumed, because its height changes with the filter row
+       * wrapping on narrow screens.
+       */
+      const panelHeight = panelRef.current?.getBoundingClientRect().height ?? 0;
+      const listHeight = listRef.current?.getBoundingClientRect().height ?? 0;
+      const chrome = panelHeight > listHeight ? Math.ceil(panelHeight - listHeight) : 120;
+
+      setPlacement({
+        above: useAbove,
+        // Strictly what fits. A minimum height here is what pushed the list off
+        // the screen, which is precisely the fault being fixed.
+        maxHeight: Math.max(96, Math.min(460, room - chrome)),
+      });
+    };
+
+    /*
+     * Bring the field to the middle of the window first. Opened where it sits,
+     * a field near the bottom leaves room for two rows however carefully the
+     * height is calculated; centring it gives the list half a screen to use.
+     */
+    containerRef.current?.scrollIntoView({ block: "center", behavior: "auto" });
+    const raf = requestAnimationFrame(measure);
+
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure, true);
+    };
+  }, [open, items.length]);
 
   useEffect(() => {
     if (!open) return;
@@ -177,7 +241,12 @@ export function ItemLookupField({
       </div>
 
       {open ? (
-        <div className="absolute z-30 mt-2 w-full min-w-[420px] rounded-2xl border border-slate-200 bg-white shadow-xl">
+        <div
+          ref={panelRef}
+          className={`absolute z-30 w-full min-w-[420px] rounded-2xl border border-slate-200 bg-white shadow-xl ${
+            placement.above ? "bottom-full mb-2" : "top-full mt-2"
+          }`}
+        >
           <div className="flex flex-wrap gap-1.5 border-b border-slate-100 px-3 py-2">
             {TYPE_FILTERS.map((filter) => (
               <button
@@ -202,13 +271,20 @@ export function ItemLookupField({
             </button>
           </div>
 
-          {items.length && totalMatches > items.length ? (
-            <p className="border-b border-slate-100 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-800">
-              Showing {items.length} of {totalMatches} matches — type more to narrow the list.
+          {items.length ? (
+            <p
+              className={`border-b border-slate-100 px-4 py-2 text-xs font-bold ${
+                totalMatches > items.length ? "bg-amber-50 text-amber-800" : "bg-slate-50 text-slate-600"
+              }`}
+            >
+              {totalMatches > items.length
+                ? `Showing ${items.length} of ${totalMatches} matches — type more to narrow the list.`
+                : `${items.length} ${items.length === 1 ? "item" : "items"} — scroll, or type to narrow the list.`}
             </p>
           ) : null}
 
-          <div className="max-h-80 overflow-y-auto">
+          {/* Sized to the room available, so the list is never a two-row sliver. */}
+          <div ref={listRef} className="overflow-y-auto" style={{ maxHeight: placement.maxHeight }}>
             {items.length === 0 ? (
               errorText && !loading ? (
                 <div className="px-4 py-4">
