@@ -21,6 +21,12 @@ export type ItemLookupFieldProps = {
   initialValue?: string;
   defaultType?: ItemLookupItemType | "all";
   className?: string;
+  /**
+   * Create a stock item for the selected master record. Only for flows that
+   * cannot work without one, such as posting a stock movement; searching is
+   * read-only everywhere else.
+   */
+  materialise?: boolean;
 };
 
 function highlightMatch(text: string, query: string) {
@@ -42,7 +48,17 @@ function highlightMatch(text: string, query: string) {
  * document that references a product/ingredient (Purchase Orders, Sales Orders,
  * Customer Invoices, Stock Movements, BOM/Recipes, and future modules).
  */
-export function ItemLookupField({ onSelect, placeholder, initialValue, defaultType = "all", className }: ItemLookupFieldProps) {
+/** One request covers a normal company's whole master list. */
+const PAGE_SIZE = 200;
+
+export function ItemLookupField({
+  onSelect,
+  placeholder,
+  initialValue,
+  defaultType = "all",
+  className,
+  materialise = false,
+}: ItemLookupFieldProps) {
   const [query, setQuery] = useState(initialValue || "");
   const [items, setItems] = useState<ItemLookupResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -54,6 +70,8 @@ export function ItemLookupField({ onSelect, placeholder, initialValue, defaultTy
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Why the last search failed, if it did. Empty when all is well. */
   const [errorText, setErrorText] = useState("");
+  /** How many matched in total, so a cut list can say so. */
+  const [totalMatches, setTotalMatches] = useState(0);
   const requestSeq = useRef(0);
 
   useEffect(() => {
@@ -74,6 +92,9 @@ export function ItemLookupField({ onSelect, placeholder, initialValue, defaultTy
       if (query.trim()) params.set("q", query.trim());
       if (typeFilter !== "all") params.set("type", typeFilter);
       params.set("status", statusFilter);
+      // Enough to show a company's whole master list rather than the first 20.
+      params.set("limit", String(PAGE_SIZE));
+      if (materialise) params.set("materialise", "1");
       const response = await fetch(`/api/item-lookup/search?${params.toString()}`);
       const payload = (await response.json()) as ItemLookupSearchResponse;
       if (seq !== requestSeq.current) return;
@@ -88,6 +109,7 @@ export function ItemLookupField({ onSelect, placeholder, initialValue, defaultTy
         setErrorText(payload.error || "Items could not be loaded.");
       } else {
         setItems(payload.items);
+        setTotalMatches(Number(payload.total ?? payload.items.length));
         setErrorText("");
       }
       setActiveIndex(-1);
@@ -99,7 +121,7 @@ export function ItemLookupField({ onSelect, placeholder, initialValue, defaultTy
     } finally {
       if (seq === requestSeq.current) setLoading(false);
     }
-  }, [query, typeFilter, statusFilter]);
+  }, [query, typeFilter, statusFilter, materialise]);
 
   useEffect(() => {
     if (!open) return;
@@ -179,6 +201,12 @@ export function ItemLookupField({ onSelect, placeholder, initialValue, defaultTy
               {statusFilter === "active" ? "Active Only" : "All Statuses"}
             </button>
           </div>
+
+          {items.length && totalMatches > items.length ? (
+            <p className="border-b border-slate-100 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-800">
+              Showing {items.length} of {totalMatches} matches — type more to narrow the list.
+            </p>
+          ) : null}
 
           <div className="max-h-80 overflow-y-auto">
             {items.length === 0 ? (

@@ -159,6 +159,12 @@ export default function StockMovementsPageClient() {
             <span className="text-xs font-bold uppercase tracking-wide text-[#64748B]">Stock Item</span>
             <ItemLookupField
               className="mt-1"
+              /*
+               * A stock movement posts against a stock item, so this is the one
+               * picker that needs the record to exist at the moment of choosing.
+               * Every other picker searches read-only.
+               */
+              materialise
               initialValue={selectedItem?.description || ""}
               onSelect={(item) => {
                 setStockItemId(item.stockItemId);

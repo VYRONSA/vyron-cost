@@ -2,8 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ItemLookupResult, ItemLookupSearchParams } from "@/lib/platform/item-lookup/ItemLookupTypes";
 import { findOrCreateStockItem } from "@/lib/vyron-inventory";
 
-const DEFAULT_LIMIT = 20;
-const MAX_LIMIT = 50;
+/*
+ * A picker that silently stops at 20 rows tells the operator their ingredient
+ * does not exist. The default now covers a normal master list outright, and the
+ * ceiling is high enough that a company's whole catalogue can be requested; the
+ * caller is told the true match count either way, so truncation is never silent.
+ */
+const DEFAULT_LIMIT = 200;
+const MAX_LIMIT = 1000;
 
 type StockItemRow = {
   id: string;
@@ -115,11 +121,107 @@ type PendingEntry =
  * a real stock item (via the same lazy-create path GRNs/production/invoices already use) only
  * for the bounded page of results actually being returned.
  */
+/**
+ * A master record presented as a lookup result, with no stock item behind it.
+ *
+ * `stockItemId` is empty because none exists, and `needsStockItem` says so, so
+ * a caller that requires one can create it deliberately instead of a search
+ * doing it as a side effect. Selecting the item for a BOM, purchase order,
+ * invoice or sales order uses `entityId` and is unaffected.
+ */
+function buildResultFromMaster(
+  entry: PendingEntry,
+  financialByProductId: Map<string, ProductFinancialRow>
+): ItemLookupResult {
+  if (entry.kind === "resolved") return entry.result;
+
+  if (entry.kind === "ingredient") {
+    const row = entry.row;
+    return {
+      id: `master:${row.id}`,
+      stockItemId: "",
+      needsStockItem: true,
+      entityType: entry.entityType,
+      entityId: String(row.id),
+      itemCode: masterItemCode("ING", String(row.id)),
+      productName: row.ingredient_name,
+      description: row.ingredient_name,
+      category: row.category || null,
+      unit: row.purchase_unit || "kg",
+      barcode: null,
+      supplierItemCode: null,
+      customerItemCode: null,
+      aliases: [],
+      isActive: true,
+      currentCost: Number(row.purchase_cost || 0),
+      qtyOnHand: 0,
+      stockStatus: null,
+      supplierId: row.supplier_id || null,
+      supplierName: null,
+      defaultWarehouse: null,
+      vatRate: null,
+      financialSalesAccountId: null,
+      financialCostOfSalesAccountId: null,
+      financialInventoryAssetAccountId: null,
+    };
+  }
+
+  const row = entry.row;
+  const financial = financialByProductId.get(row.id);
+  return {
+    id: `master:${row.id}`,
+    stockItemId: "",
+    needsStockItem: true,
+    entityType: "finished_goods",
+    entityId: String(row.id),
+    itemCode: masterItemCode("FG", String(row.id)),
+    productName: row.product_name,
+    description: row.product_name,
+    category: row.product_category || row.category || null,
+    unit: "unit",
+    barcode: null,
+    supplierItemCode: null,
+    customerItemCode: null,
+    aliases: [],
+    isActive: row.product_status !== "Archived",
+    currentCost: Number(row.total_cost || 0),
+    qtyOnHand: 0,
+    stockStatus: null,
+    supplierId: null,
+    supplierName: null,
+    defaultWarehouse: null,
+    vatRate: null,
+    financialSalesAccountId: financial?.financial_sales_account_id || null,
+    financialCostOfSalesAccountId: financial?.financial_cost_of_sales_account_id || null,
+    financialInventoryAssetAccountId: financial?.financial_inventory_asset_account_id || null,
+  };
+}
+
 export async function searchItemLookup(
   supabase: SupabaseClient,
   companyId: string,
   params: ItemLookupSearchParams
 ): Promise<ItemLookupResult[]> {
+  return (await searchItemLookupPage(supabase, companyId, params)).items;
+}
+
+/**
+ * The same search, also reporting how many items matched before the page was
+ * cut. The caller needs the total to tell the operator that more exist.
+ *
+ * Searching is read-only. It used to create a stock item for every master
+ * record it returned, so merely opening a picker wrote rows into the company's
+ * inventory. Nothing about selecting an ingredient for a BOM needs one: the BOM
+ * line stores the ingredient's own master id. A caller that genuinely needs a
+ * stock item — posting a stock movement — asks for one with `materialise`, so
+ * creation happens when an item is committed to a transaction rather than when
+ * somebody types into a search box.
+ */
+export async function searchItemLookupPage(
+  supabase: SupabaseClient,
+  companyId: string,
+  params: ItemLookupSearchParams & { materialise?: boolean }
+): Promise<{ items: ItemLookupResult[]; total: number }> {
   const limit = Math.min(MAX_LIMIT, Math.max(1, Number(params.limit) || DEFAULT_LIMIT));
   const q = params.q?.trim();
   const filtersByEntityType =
@@ -226,11 +328,15 @@ export async function searchItemLookup(
   }
 
   pending.sort((a, b) => a.description.localeCompare(b.description));
+  const total = pending.length;
   const page = pending.slice(0, limit);
 
   const results = await Promise.all(
     page.map(async (entry): Promise<ItemLookupResult> => {
       if (entry.kind === "resolved") return entry.result;
+
+      // Read-only unless the caller asked for a real stock item.
+      if (!params.materialise) return buildResultFromMaster(entry, financialByProductId);
 
       if (entry.kind === "ingredient") {
         const created = await findOrCreateStockItem(supabase, companyId, {
@@ -265,5 +371,5 @@ export async function searchItemLookup(
     })
   );
 
-  return results;
+  return { items: results, total };
 }

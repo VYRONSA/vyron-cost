@@ -7,6 +7,8 @@ export type ItemLookupItemType = ItemLookupEntityType | "consumables" | "service
 export type ItemLookupResult = {
   id: string;
   stockItemId: string;
+  /** True when this came from master data and has no stock item yet. */
+  needsStockItem?: boolean;
   entityType: ItemLookupEntityType;
   entityId: string | null;
   itemCode: string;
@@ -60,6 +62,8 @@ export type ItemLookupSearchReason =
 export type ItemLookupSearchResponse = {
   ok: boolean;
   items: ItemLookupResult[];
+  /** Matches before the page limit, so truncation can be shown rather than hidden. */
+  total?: number;
   reason?: ItemLookupSearchReason;
   error?: string;
 };

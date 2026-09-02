@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { searchItemLookup } from "@/lib/platform/item-lookup/searchItemLookup";
+import { searchItemLookupPage } from "@/lib/platform/item-lookup/searchItemLookup";
 import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { requireWorkspacePermission, WorkspaceAccessError } from "@/lib/vyron-workspace-access";
@@ -41,6 +41,12 @@ export async function GET(request: NextRequest) {
     supplierId: searchParams.get("supplierId") || undefined,
     limit: searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined,
   };
+  /*
+   * Searching is read-only. Only a caller that must have a stock item — posting
+   * a stock movement — asks for one, so opening a picker no longer writes rows
+   * into the company's inventory.
+   */
+  const materialise = searchParams.get("materialise") === "1";
 
   try {
     await requireWorkspacePermission("products.view");
@@ -64,9 +70,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const items = await searchItemLookup(supabase, companyId, params);
+    const { items, total } = await searchItemLookupPage(supabase, companyId, { ...params, materialise });
     // A real search that simply matched nothing is a success, and says so.
-    return NextResponse.json({ ok: true, items, reason: items.length ? "ok" : "empty" });
+    return NextResponse.json({ ok: true, items, total, reason: items.length ? "ok" : "empty" });
   } catch (error) {
     if (error instanceof WorkspaceAccessError) {
       return NextResponse.json(
