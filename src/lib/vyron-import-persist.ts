@@ -1,4 +1,11 @@
 import { randomUUID } from "crypto";
+import {
+  applyCustomerImportPlan,
+  buildCustomerImportPlan,
+  loadCompanyCustomers,
+  type CustomerImportRow,
+  type ExistingBranch,
+} from "@/lib/vyron-customer-merge";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ImportEntityType } from "@/lib/vyron-import-centre";
 import { findOrCreateStockItem, postStockMovement, type StockEntityType } from "@/lib/vyron-inventory";
@@ -169,6 +176,32 @@ async function persistSuppliers(
   };
 }
 
+/**
+ * The branches each customer already has, so an import can tell an existing
+ * branch from a new one. Scoped to the company, like everything else here.
+ */
+async function loadBranchesByCustomer(
+  supabase: SupabaseClient,
+  companyId: string
+): Promise<Map<string, ExistingBranch[]>> {
+  const { data, error } = await supabase
+    .from("vyron_customer_branches")
+    .select(
+      "id, customer_id, branch_code, branch_name, address_line1, address_line2, suburb, city, province, postal_code, country, contact_person, phone, email"
+    )
+    .eq("company_id", companyId)
+    .limit(20000);
+  if (error) throw new Error(error.message);
+
+  const map = new Map<string, ExistingBranch[]>();
+  for (const row of (data || []) as unknown as (ExistingBranch & { customer_id: string })[]) {
+    const list = map.get(row.customer_id) || [];
+    list.push(row);
+    map.set(row.customer_id, list);
+  }
+  return map;
+}
+
 export async function persistImportRows(
   supabase: SupabaseClient,
   companyId: string,
@@ -241,64 +274,62 @@ export async function persistImportRows(
   }
 
   if (entity === "customers") {
-    let imported = 0;
+    /*
+     * Customers merge; they are never blindly inserted. The same customer
+     * arrives in file after file carrying a different slice of the truth, and
+     * each import must add to the one record rather than start another. The
+     * plan decides what happens and the apply step carries out only that, so a
+     * blank column cannot erase a stored value and a disagreement is reported
+     * instead of silently overwriting.
+     */
+    const existing = await loadCompanyCustomers(supabase, companyId);
+    const mapped: CustomerImportRow[] = rows.map((row) => ({
+      customer_name: row.customer_name || row.name || "",
+      trading_name: row.trading_name,
+      registration_number: row.registration_number || row.reg_number,
+      vat_number: row.vat_number,
+      email: row.contact_email || row.email,
+      invoice_email: row.invoice_email,
+      phone: row.phone || row.telephone,
+      billing_address: row.billing_address || row.address,
+      delivery_address: row.delivery_address,
+      contact_person: row.contact_person,
+      website: row.website,
+      category: row.category,
+      terms: row.terms,
+      xero_contact_id: row.xero_contact_id,
+      branch_code: row.branch_code,
+      branch_name: row.branch_name,
+      branch_address_line1: row.branch_address_line1 || row.branch_address,
+      branch_address_line2: row.branch_address_line2,
+      branch_suburb: row.branch_suburb,
+      branch_city: row.branch_city,
+      branch_province: row.branch_province,
+      branch_postal_code: row.branch_postal_code,
+      branch_country: row.branch_country,
+      branch_contact_person: row.branch_contact_person || row.branch_contact,
+      branch_phone: row.branch_phone || row.branch_telephone,
+      branch_email: row.branch_email,
+    }));
+
     const errors: string[] = [];
-    for (const row of rows) {
-      const name = (row.customer_name || row.name || "").trim();
-      if (!name) {
-        errors.push("Missing customer_name");
-        continue;
-      }
-      const payload = {
-        company_id: companyId,
-        customer_name: name,
-        category: row.category || "Customer",
-        email: row.contact_email || row.invoice_email || null,
-        invoice_email: row.invoice_email || row.contact_email || null,
-        phone: row.phone || null,
-        terms: row.terms || "30 Days",
-        vat_number: row.vat_number || null,
-        status: row.status || "Active",
-        active: row.status !== "Inactive",
-      };
+    const named = mapped.filter((row, index) => {
+      if (String(row.customer_name || "").trim()) return true;
+      errors.push(`Row ${index + 1}: missing customer_name`);
+      return false;
+    });
 
-      /**
-       * Re-importing the same customer master must not create a second copy.
-       * A customer is identified within its company by Xero contact id when the
-       * row carries one, otherwise by case-insensitive customer_name. The lookup
-       * is always scoped by company_id so company isolation is preserved.
-       */
-      const xeroId = (row.xero_contact_id || "").trim();
-      let existingId: string | null = null;
+    const branchesByCustomer = await loadBranchesByCustomer(supabase, companyId);
+    const plan = buildCustomerImportPlan(existing, named, branchesByCustomer);
+    const applied = await applyCustomerImportPlan(supabase, companyId, plan);
+    errors.push(...applied.errors);
 
-      if (xeroId) {
-        const { data: byXero } = await supabase
-          .from("vyron_customers")
-          .select("id")
-          .eq("company_id", companyId)
-          .eq("xero_contact_id", xeroId)
-          .maybeSingle();
-        if (byXero?.id) existingId = String(byXero.id);
-      }
-
-      if (!existingId) {
-        const { data: byName } = await supabase
-          .from("vyron_customers")
-          .select("id")
-          .eq("company_id", companyId)
-          .ilike("customer_name", name)
-          .limit(1);
-        if (byName?.length) existingId = String(byName[0].id);
-      }
-
-      const { error } = existingId
-        ? await supabase.from("vyron_customers").update(payload).eq("id", existingId)
-        : await supabase.from("vyron_customers").insert({ id: randomUUID(), ...payload });
-
-      if (error) errors.push(`${name}: ${error.message}`);
-      else imported += 1;
-    }
-    return { imported, skipped: rows.length - imported, errors };
+    const imported = applied.created + applied.updated;
+    return {
+      imported,
+      skipped: rows.length - imported,
+      errors,
+    };
   }
 
   if (entity === "recipes") {

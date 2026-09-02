@@ -1,3 +1,4 @@
+import { BranchNotSelectableError } from "@/lib/vyron-customer-branches";
 import { NextRequest, NextResponse } from "next/server";
 import { createCustomerInvoice, listCustomerInvoices } from "@/lib/vyron-customer-invoices";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
@@ -45,10 +46,14 @@ export async function POST(request: NextRequest) {
       dueDate: body.dueDate || body.due_date || undefined,
       notes: body.notes || undefined,
       pricesIncludeTax: Boolean(body.pricesIncludeTax),
+      branchId: body.branchId || body.branch_id || null,
       lines: Array.isArray(body.lines) ? body.lines : [],
     });
     return NextResponse.json({ ok: true, invoice });
   } catch (error) {
+    if (error instanceof BranchNotSelectableError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 409 });
+    }
     return workspaceAccessErrorResponse(error, "Create failed.");
   }
 }

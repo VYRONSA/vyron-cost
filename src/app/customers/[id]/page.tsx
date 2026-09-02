@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import CustomerDetailPageClient from "@/components/CustomerDetailPageClient";
+import CustomerBranchesPanel from "@/components/vyron-cost/customers/CustomerBranchesPanel";
+import { listCustomerBranches } from "@/lib/vyron-customer-branches";
 import VyronCostAiShell from "@/components/VyronCostAiShell";
 import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
 import { getCustomerById } from "@/lib/vyron-customer-invoices";
@@ -17,6 +19,8 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   if (!customer) notFound();
   const kpis = await getCustomerCommercialKpis(supabase, companyId, id);
   const intelligence = await getCustomerIntelligence(supabase, companyId, id);
+  // Scoped to the resolved company, like every other read on this page.
+  const branches = await listCustomerBranches(supabase, companyId, id);
 
   const money = (value: number) => `R ${Number(value || 0).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -45,6 +49,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         </div>
       </section>
 
+      <CustomerBranchesPanel customerId={id} initialBranches={branches} />
       <CustomerDetailPageClient customer={customer} />
     </VyronCostAiShell>
   );

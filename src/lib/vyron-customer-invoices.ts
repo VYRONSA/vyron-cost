@@ -1,3 +1,10 @@
+import {
+  buildBranchSnapshot,
+  getCustomerBranch,
+  resolveBranchForInvoice,
+  BranchNotSelectableError,
+  type BranchSnapshot,
+} from "@/lib/vyron-customer-branches";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   listCustomerContactsAsCustomers,
@@ -45,6 +52,9 @@ export type CustomerInvoiceLineInput = {
 };
 
 export type CustomerInvoiceRow = {
+  branch_id?: string | null;
+  branch_snapshot?: BranchSnapshot | null;
+  branch_snapshot_at?: string | null;
   id: string;
   company_id: string | null;
   customer_id: string | null;
@@ -255,6 +265,8 @@ export async function createCustomerInvoice(
     notes?: string;
     /** Treat selling_price as VAT-inclusive. The application default is exclusive. */
     pricesIncludeTax?: boolean;
+    /** The customer's branch this invoice is for. Optional: many customers have none. */
+    branchId?: string | null;
     lines: CustomerInvoiceLineInput[];
   }
 ) {
@@ -270,6 +282,13 @@ export async function createCustomerInvoice(
     if (!customer) throw new Error("Customer not found for the active company.");
     if (!customerName) customerName = String(customer.customer_name || "").trim();
   }
+
+  /*
+   * The branch is checked before anything is written: it must belong to this
+   * company, to this customer, and still be active. A branch id from a browser
+   * is a request, never a fact.
+   */
+  const branch = await resolveBranchForInvoice(supabase, companyId, params.customerId, params.branchId);
 
   const enrichedLines = await enrichInvoiceLinesFromProductMaster(
     supabase,
@@ -309,6 +328,7 @@ export async function createCustomerInvoice(
     .insert({
       company_id: companyId,
       customer_id: params.customerId || null,
+      branch_id: branch?.id ?? null,
       customer_name: customerName || params.customerName,
       invoice_number: invoiceNumber,
       invoice_date: params.invoiceDate || new Date().toISOString().slice(0, 10),
@@ -447,6 +467,45 @@ async function buildInvoiceTaxSnapshot(
   return { snapshot, errors };
 }
 
+/**
+ * Change the branch on a draft invoice.
+ *
+ * Only while it is a draft. Once issued, the branch and the address printed on
+ * it are part of a document that has gone to a customer, and changing them
+ * quietly would rewrite history — the snapshot the invoice renders from is
+ * immutable in the database for the same reason.
+ */
+export async function setCustomerInvoiceBranch(
+  supabase: SupabaseClient,
+  companyId: string,
+  invoiceId: string,
+  branchId: string | null
+) {
+  const loaded = await getCustomerInvoice(supabase, invoiceId, companyId);
+  if (!loaded) throw new Error("Invoice not found.");
+  if (loaded.invoice.status !== "Draft") {
+    throw new BranchNotSelectableError(
+      `This invoice is ${loaded.invoice.status}. The branch on an issued invoice cannot be changed.`
+    );
+  }
+
+  const branch = await resolveBranchForInvoice(
+    supabase,
+    companyId,
+    loaded.invoice.customer_id ? String(loaded.invoice.customer_id) : null,
+    branchId
+  );
+
+  const { error } = await supabase
+    .from("vyron_customer_invoices")
+    .update({ branch_id: branch?.id ?? null, updated_at: new Date().toISOString() })
+    .eq("id", invoiceId)
+    .eq("company_id", companyId);
+  if (error) throw new Error(error.message);
+
+  return { ...loaded.invoice, branch_id: branch?.id ?? null };
+}
+
 export async function updateCustomerInvoiceStatus(
   supabase: SupabaseClient,
   id: string,
@@ -494,6 +553,20 @@ export async function updateCustomerInvoiceStatus(
       }
       patch.tax_snapshot = snapshot;
       patch.tax_snapshot_at = now;
+    }
+
+    /*
+     * The branch is frozen alongside the tax identity. A branch that later moves
+     * premises must not rewrite the address on a document already issued, so
+     * what the invoice renders comes from here rather than from the live record.
+     * Written once: the database refuses any later change.
+     */
+    if (loaded.invoice.status === "Draft" && !loaded.invoice.branch_snapshot && loaded.invoice.branch_id) {
+      const branch = await getCustomerBranch(supabase, companyId, String(loaded.invoice.branch_id));
+      if (branch) {
+        patch.branch_snapshot = buildBranchSnapshot(branch);
+        patch.branch_snapshot_at = now;
+      }
     }
   }
 

@@ -471,6 +471,12 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
 
   const [customerName, setCustomerName] = useState("");
   const [customerId, setCustomerId] = useState<string | null>(null);
+  /*
+   * The chosen customer's branches. A customer with none invoices exactly as
+   * it always has: no branch is required, and the field simply does not appear.
+   */
+  const [branches, setBranches] = useState<{ id: string; branch_name: string; branch_code: string | null; is_active: boolean }[]>([]);
+  const [branchId, setBranchId] = useState<string>("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerVatNumber, setCustomerVatNumber] = useState("");
   const [customerTerms, setCustomerTerms] = useState("30 Days");
@@ -488,6 +494,35 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
     }
     setInvoices(data.invoices.map((row: Record<string, unknown>) => mapApiInvoice(row)));
   }
+
+  /*
+   * Branches follow the customer. Changing the customer refreshes the list and
+   * clears any branch already picked, so an invoice can never carry a branch
+   * belonging to somebody else. Only active branches are offered for new work.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    // Every state change happens after the fetch settles, never synchronously
+    // inside the effect, so choosing a customer costs one render rather than two.
+    const branchesFor = customerId
+      ? fetch(`/api/customers/${customerId}/branches?activeOnly=1`)
+          .then((r) => r.json())
+          .then((data) => (data?.ok && Array.isArray(data.branches) ? data.branches : []))
+          .catch(() => [])
+      : Promise.resolve([]);
+
+    void branchesFor.then((list: { id: string; branch_name: string; branch_code: string | null; is_active: boolean }[]) => {
+      if (cancelled) return;
+      setBranches(list);
+      // One branch is chosen for the operator, and stays changeable.
+      setBranchId(list.length === 1 ? String(list[0].id) : "");
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [customerId]);
 
   async function loadLiveCustomers() {
     const res = await fetch("/api/customers");
@@ -657,6 +692,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
   function resetForm() {
     setCustomerName("");
     setCustomerId(null);
+    setBranchId("");
     setCustomerEmail("");
     setCustomerVatNumber("");
     setCustomerTerms("30 Days");
@@ -691,6 +727,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerId: customerId || null,
+          branchId: branchId || null,
           customerName: customerName.trim(),
           invoiceDate,
           dueDate,
@@ -1110,6 +1147,33 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                     </PickerBox>
                   ) : null}
                 </div>
+                {branches.length > 0 ? (
+                  <label className="block md:col-span-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                      Branch / Site
+                    </span>
+                    <select
+                      value={branchId}
+                      onChange={(event) => setBranchId(event.target.value)}
+                      className="mt-1 min-h-[44px] w-full rounded-xl border border-violet-100 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-violet-400"
+                    >
+                      {/*
+                        A customer may invoice centrally as well as per site, so
+                        "no branch" stays available even where branches exist.
+                      */}
+                      <option value="">Head Office / No Branch</option>
+                      {branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.branch_code ? `${branch.branch_name} — ${branch.branch_code}` : branch.branch_name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                      The branch address is printed on the invoice and kept with it.
+                    </p>
+                  </label>
+                ) : null}
+
                 <Input label="Customer Email" value={customerEmail} onChange={setCustomerEmail} type="email" />
                 <Input label="Customer VAT Number" value={customerVatNumber} onChange={setCustomerVatNumber} />
                 <label>

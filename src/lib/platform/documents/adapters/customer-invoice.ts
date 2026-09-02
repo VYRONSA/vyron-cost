@@ -16,6 +16,7 @@ import {
 } from "@/lib/vyron-invoice-tax";
 import { toNumber, toDecimal } from "@/lib/vyron-money";
 import { normaliseVatStatus } from "@/lib/vyron-tax-profile";
+import { buildBranchSnapshot, getCustomerBranch, type BranchSnapshot } from "@/lib/vyron-customer-branches";
 
 /**
  * The customer invoice document.
@@ -181,6 +182,41 @@ export async function buildCustomerInvoiceDocumentModel(
     customerVatNumber ? null : `VAT Status: ${customerVatStatus === "Unknown" ? "Not provided" : customerVatStatus}`,
   ].filter(Boolean) as string[];
 
+  /* -------------------------------------------------------------------- branch */
+
+  /*
+   * Which of the customer's sites this invoice is for.
+   *
+   * Rendered from the snapshot taken when the invoice was issued, so a branch
+   * that later moves premises does not rewrite the address on a document that
+   * has already gone out. A draft has no snapshot yet and shows the branch as it
+   * stands now; an invoice with no branch renders exactly as it always did, with
+   * no empty heading left behind.
+   *
+   * The branch never replaces the customer. The legal customer keeps Bill To
+   * with its VAT and registration numbers; the branch says where the goods went.
+   */
+  const branchSnapshot = (invoice as { branch_snapshot?: BranchSnapshot | null }).branch_snapshot ?? null;
+  const branchIdOnInvoice = (invoice as { branch_id?: string | null }).branch_id ?? null;
+  const liveBranch =
+    !branchSnapshot && branchIdOnInvoice ? await getCustomerBranch(supabase, companyId, String(branchIdOnInvoice)) : null;
+  const branch: BranchSnapshot | null = branchSnapshot ?? (liveBranch ? buildBranchSnapshot(liveBranch) : null);
+
+  const branchParty = branch
+    ? [
+        {
+          heading: "Branch / Site",
+          name: branch.branchCode ? `${branch.branchName} - ${branch.branchCode}` : branch.branchName,
+          lines: [
+            branch.address,
+            branch.contactPerson ? `Attn: ${branch.contactPerson}` : null,
+            [branch.email, branch.phone].filter(Boolean).join(" | ") || null,
+            branch.deliveryInstructions ? `Delivery: ${branch.deliveryInstructions}` : null,
+          ].filter(Boolean) as string[],
+        },
+      ]
+    : [];
+
   /* ---------------------------------------------------------------- provenance */
 
   /*
@@ -254,6 +290,7 @@ export async function buildCustomerInvoiceDocumentModel(
     parties: [
       { heading: "From", name: supplierName, lines: supplierLines },
       { heading: "Bill To", name: customerName, lines: customerLines },
+      ...branchParty,
     ],
     meta: [
       { label: "Invoice Number", value: String(invoice.invoice_number) },

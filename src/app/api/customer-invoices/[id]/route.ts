@@ -1,3 +1,5 @@
+import { setCustomerInvoiceBranch } from "@/lib/vyron-customer-invoices";
+import { BranchNotSelectableError } from "@/lib/vyron-customer-branches";
 import { NextRequest, NextResponse } from "next/server";
 import {
   deleteCustomerInvoice,
@@ -55,6 +57,17 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const companyId = await resolveApiCompanyId();
     if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
 
+    if (body.branchId !== undefined || body.branch_id !== undefined) {
+      // Changing where a draft is billed. Refused once the invoice is issued.
+      const invoice = await setCustomerInvoiceBranch(
+        supabase,
+        companyId,
+        id,
+        body.branchId ?? body.branch_id ?? null
+      );
+      return NextResponse.json({ ok: true, invoice });
+    }
+
     if (body.action === "approve") {
       await requireWorkspacePermission("invoices.reverse");
       const invoice = await updateCustomerInvoiceStatus(supabase, id, "Approved", companyId);
@@ -107,6 +120,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
     return NextResponse.json({ ok: false, error: "Unknown action." }, { status: 400 });
   } catch (error) {
+    if (error instanceof BranchNotSelectableError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 409 });
+    }
     return workspaceAccessErrorResponse(error, "Update failed.");
   }
 }
