@@ -1,4 +1,9 @@
-import { setCustomerInvoiceBranch } from "@/lib/vyron-customer-invoices";
+import {
+  InvoiceNotEditableError,
+  InvoiceNotFoundError,
+  setCustomerInvoiceBranch,
+  updateCustomerInvoice,
+} from "@/lib/vyron-customer-invoices";
 import { BranchNotSelectableError } from "@/lib/vyron-customer-branches";
 import { NextRequest, NextResponse } from "next/server";
 import {
@@ -58,13 +63,38 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
 
     if (body.branchId !== undefined || body.branch_id !== undefined) {
-      // Changing where a draft is billed. Refused once the invoice is issued.
+      /*
+       * Changing where a draft is billed is an edit, so it is gated on the edit
+       * permission rather than the view permission the handler opens with.
+       * Refused outright once the invoice is issued.
+       */
+      await requireWorkspacePermission("invoices.create");
       const invoice = await setCustomerInvoiceBranch(
         supabase,
         companyId,
         id,
         body.branchId ?? body.branch_id ?? null
       );
+      return NextResponse.json({ ok: true, invoice });
+    }
+
+    if (Array.isArray(body.lines)) {
+      /*
+       * Editing a draft. Gated on the same permission that creates one — the
+       * existing model maps edit_customer_invoices onto invoices.create — and
+       * enforced here, not by whether the browser drew a button.
+       */
+      await requireWorkspacePermission("invoices.create");
+      const invoice = await updateCustomerInvoice(supabase, companyId, id, {
+        customerId: body.customerId ?? body.customer_id,
+        customerName: body.customerName,
+        invoiceDate: body.invoiceDate,
+        dueDate: body.dueDate ?? body.due_date,
+        notes: body.notes,
+        pricesIncludeTax: body.pricesIncludeTax,
+        branchId: body.branchId ?? body.branch_id,
+        lines: body.lines,
+      });
       return NextResponse.json({ ok: true, invoice });
     }
 
@@ -120,6 +150,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
     return NextResponse.json({ ok: false, error: "Unknown action." }, { status: 400 });
   } catch (error) {
+    if (error instanceof InvoiceNotFoundError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 404 });
+    }
+    if (error instanceof InvoiceNotEditableError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 409 });
+    }
     if (error instanceof BranchNotSelectableError) {
       return NextResponse.json({ ok: false, error: error.message }, { status: 409 });
     }

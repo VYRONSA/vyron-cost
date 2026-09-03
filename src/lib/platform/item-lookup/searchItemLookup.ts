@@ -327,7 +327,19 @@ export async function searchItemLookupPage(
     }
   }
 
-  pending.sort((a, b) => a.description.localeCompare(b.description));
+  /*
+   * Sorted by name, then by a stable key.
+   *
+   * A company can legitimately hold two master records with the same name, and
+   * comparing only the name left their relative order down to whatever order
+   * the database happened to return — so the same search could come back with
+   * them swapped, and paging could show one twice and the other never.
+   */
+  const sortKey = (entry: PendingEntry) =>
+    entry.kind === "resolved" ? entry.result.itemCode : String(entry.row.id);
+  pending.sort(
+    (a, b) => a.description.localeCompare(b.description) || sortKey(a).localeCompare(sortKey(b))
+  );
   const total = pending.length;
   const page = pending.slice(0, limit);
 

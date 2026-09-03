@@ -458,6 +458,12 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
   const [finishedGoods, setFinishedGoods] = useState<FinishedGoodOption[]>([]);
   const [formOpen, setFormOpen] = useState(initialFormOpen && canCreate);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  /*
+   * The draft being edited, if any. The same form creates and edits, so
+   * there is one set of fields, one validation path and one set of totals.
+   */
+  const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null);
+  const formRef = useRef<HTMLElement>(null);
   /** Why the last issue attempt was refused, and what has to be filled in. */
   const [issueBlock, setIssueBlock] = useState<{
     invoiceId: string;
@@ -637,6 +643,19 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
 
   const selectedInvoice = selectedInvoiceId ? invoices.find((invoice) => invoice.id === selectedInvoiceId) || null : null;
 
+  /**
+   * Opening an invoice puts its top in view.
+   *
+   * The preview is a panel further down a long list, so selecting a row left
+   * the reader wherever they happened to be scrolled — usually halfway through
+   * the invoice, or past it entirely. The heading and number are what someone
+   * opening an invoice is looking for, so the panel is brought to the top of
+   * the window once it has rendered.
+   */
+  function openInvoice(id: string) {
+    setSelectedInvoiceId(id);
+  }
+
   function filteredFinishedGoods(line: InvoiceLine) {
     const term = line.description.trim().toLowerCase();
     const list = term
@@ -690,6 +709,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
   }
 
   function resetForm() {
+    setEditingInvoiceId(null);
     setCustomerName("");
     setCustomerId(null);
     setBranchId("");
@@ -702,6 +722,51 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
     setLines([defaultLine()]);
     setCustomerPickerOpen(false);
     setProductPickerLineId(null);
+  }
+
+  /**
+   * Load a draft back into the form.
+   *
+   * Only a draft, and only with the permission that creates one. The button is
+   * hidden without it, and the route refuses without it — the hiding is a
+   * courtesy, the refusal is the control.
+   */
+  async function startEditingInvoice(id: string) {
+    if (!canCreate) return;
+    const res = await fetch(`/api/customer-invoices/${id}`);
+    const data = await res.json();
+    if (!data.ok || !data.invoice) {
+      alert(data.error || "That invoice could not be loaded.");
+      return;
+    }
+    if (String(data.invoice.status) !== "Draft") {
+      alert(`This invoice is ${data.invoice.status}. Only a draft can be edited.`);
+      return;
+    }
+
+    setCustomerName(String(data.invoice.customer_name || ""));
+    setCustomerId(data.invoice.customer_id ? String(data.invoice.customer_id) : null);
+    setInvoiceDate(String(data.invoice.invoice_date || today()).slice(0, 10));
+    setDueDate(data.invoice.due_date ? String(data.invoice.due_date).slice(0, 10) : addDays(today(), 30));
+    setNote(String(data.invoice.notes || ""));
+    setLines(
+      (data.lines || []).map((line: Record<string, unknown>) => ({
+        id: crypto.randomUUID(),
+        productId: line.product_id ? String(line.product_id) : null,
+        description: String(line.product_name || ""),
+        qty: Number(line.quantity || 0),
+        unitPrice: Number(line.selling_price || 0),
+        unitCost: Number(line.cost_per_unit || 0),
+        taxTreatment: String(line.tax_treatment || "Standard"),
+        vatRate: line.tax_rate != null ? Number(line.tax_rate) : DEFAULT_VAT_RATE,
+      }))
+    );
+    setEditingInvoiceId(id);
+    setFormOpen(true);
+    setSelectedInvoiceId(null);
+    // The branch selector reloads from the customer, so it is set afterwards.
+    setTimeout(() => setBranchId(data.invoice.branch_id ? String(data.invoice.branch_id) : ""), 900);
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ block: "start", behavior: "auto" }));
   }
 
   async function saveInvoice() {
@@ -722,8 +787,11 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
     }
 
     if (!demoMode) {
-      const res = await fetch("/api/customer-invoices", {
-        method: "POST",
+      // The same payload either way; an edit addresses an existing invoice.
+      const res = await fetch(
+        editingInvoiceId ? `/api/customer-invoices/${editingInvoiceId}` : "/api/customer-invoices",
+        {
+        method: editingInvoiceId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerId: customerId || null,
@@ -742,7 +810,8 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
             taxRate: line.vatRate,
           })),
         }),
-      });
+        }
+      );
       const data = await res.json();
       if (!data.ok) {
         alert(data.error || "Could not save invoice.");
@@ -756,8 +825,13 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
             (detail.lines || []).map((line: Record<string, unknown>) => mapApiInvoiceLine(line))
           )
         : mapApiInvoice(data.invoice, validLines);
-      setInvoices((current) => [invoice, ...current]);
-      setSelectedInvoiceId(invoice.id);
+      setInvoices((current) =>
+        editingInvoiceId
+          ? current.map((existing) => (existing.id === invoice.id ? invoice : existing))
+          : [invoice, ...current]
+      );
+      setEditingInvoiceId(null);
+      openInvoice(invoice.id);
       resetForm();
       setFormOpen(false);
       return;
@@ -889,15 +963,39 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
    * panel landed ~3,500px below the fold and clicking View looked like nothing
    * had happened. Scrolling to it is what the click always implied.
    */
+  /*
+   * Put the top of the invoice in view when one is opened.
+   *
+   * This used to scroll smoothly, one frame after the panel appeared. The panel
+   * then kept growing — its detail, lines and totals are fetched after it
+   * mounts — so the animation was still running while the page reflowed beneath
+   * it and finished somewhere in the middle of the invoice, or past it. Whoever
+   * opened it had to scroll back up to find the number.
+   *
+   * It now jumps rather than animates, so there is no window in which the page
+   * can move underneath, and corrects itself once more after the content has
+   * settled. The line count is a dependency because that is what changes when
+   * the detail arrives.
+   */
+  const selectedLineCount = selectedInvoice?.lines?.length ?? 0;
   useEffect(() => {
     if (!selectedInvoiceId) return;
-    const node = invoicePreviewRef.current;
-    if (!node) return;
-    const frame = requestAnimationFrame(() => {
-      node.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [selectedInvoiceId]);
+
+    /*
+     * scrollIntoView rather than window.scrollTo: the page scrolls inside the
+     * app shell, not the window, so moving the window moves nothing.
+     */
+    const toTop = () => {
+      invoicePreviewRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
+    };
+
+    const frame = requestAnimationFrame(toTop);
+    const settle = setTimeout(toTop, 250);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(settle);
+    };
+  }, [selectedInvoiceId, selectedLineCount]);
 
   async function postInvoiceStock(invoice: CustomerInvoice, allowOverride = false) {
     if (!canApprove) {
@@ -1105,10 +1203,18 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
       </div>
 
       {formOpen && canCreate ? (
-        <section className="rounded-[32px] border border-violet-100 bg-white/95 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)] md:p-6">
-          <h2 className="text-2xl font-black text-slate-950">Create Customer Invoice</h2>
+        <section ref={formRef} className="rounded-[32px] border border-violet-100 bg-white/95 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)] md:p-6">
+          <h2 className="text-2xl font-black text-slate-950">{editingInvoiceId ? "Edit Customer Invoice" : "Create Customer Invoice"}</h2>
 
-          <div className="mt-5 grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+          {/*
+            The customer card carries eight fields; the details card carries
+            three. Splitting them near-evenly left the right-hand side mostly
+            empty on a desktop, which is the gap that had people zooming the
+            browser out to read the header. The columns are now proportioned to
+            what they hold, and they split from 1024px rather than 1280px so a
+            1366 screen uses its width instead of stacking.
+          */}
+          <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
             <div className="rounded-[28px] border border-violet-100 bg-violet-50/40 p-5">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="relative md:col-span-2">
@@ -1414,7 +1520,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                     <td className="whitespace-nowrap px-4 py-2.5"><StockPostingBadge status={invoice.stockPostingStatus || "Not Posted"} /></td>
                     <td className="px-4 py-2.5">
                       <div className="flex flex-nowrap items-center gap-1.5">
-                        <button onClick={() => setSelectedInvoiceId(invoice.id)} className="rounded-xl bg-violet-50 px-2.5 py-1.5 text-xs font-black text-violet-800">View</button>
+                        <button onClick={() => openInvoice(invoice.id)} className="rounded-xl bg-violet-50 px-2.5 py-1.5 text-xs font-black text-violet-800">View</button>
                         {invoice.status === "Draft" && canApprove ? <button onClick={() => updateInvoiceStatus(invoice.id, "Approved")} className="rounded-xl bg-indigo-50 px-2.5 py-1.5 text-xs font-black text-indigo-800">Approve</button> : null}
                         {invoice.status === "Approved" && canEmail ? (
                           <a onClick={() => updateInvoiceStatus(invoice.id, "Sent")} href={emailHref(invoice)} className="inline-flex items-center gap-1 rounded-xl bg-purple-50 px-2.5 py-1.5 text-xs font-black text-purple-800">
@@ -1551,6 +1657,20 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                   defaultRecipient={selectedInvoice.customerEmail}
                 />
               )}
+              {/*
+                Editing is offered only for a draft, and only to someone the
+                workspace permits to write invoices. The route enforces the same
+                two conditions, so hiding the button is a courtesy rather than
+                the control.
+              */}
+              {canCreate && selectedInvoice.status === "Draft" ? (
+                <button
+                  onClick={() => void startEditingInvoice(selectedInvoice.id)}
+                  className="rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white"
+                >
+                  Edit Invoice
+                </button>
+              ) : null}
               <button onClick={closeInvoicePreview} className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white">Close</button>
             </div>
           </div>

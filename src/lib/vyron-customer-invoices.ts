@@ -358,6 +358,152 @@ export async function createCustomerInvoice(
   return invoice as CustomerInvoiceRow;
 }
 
+/** No invoice with that id in this workspace. */
+export class InvoiceNotFoundError extends Error {
+  constructor() {
+    super("Invoice not found.");
+    this.name = "InvoiceNotFoundError";
+  }
+}
+
+export class InvoiceNotEditableError extends Error {
+  constructor(status: string) {
+    super(
+      `This invoice is ${status}. Only a draft can be edited — issue a credit note or reverse it instead.`
+    );
+    this.name = "InvoiceNotEditableError";
+  }
+}
+
+/**
+ * Edit a draft invoice.
+ *
+ * Drafts only. Once an invoice is Approved, Posted, Sent or Paid it is a
+ * document in the customer's hands and, for a tax invoice, a record SARS
+ * expects to be immutable; the application already reverses or cancels such an
+ * invoice rather than rewriting it, and that remains the way to correct one.
+ *
+ * Everything is recalculated rather than accepted: the lines go back through
+ * the same tax engine the create path uses, so totals, VAT and the cost side
+ * cannot be set by whatever the browser posted. The customer, branch and each
+ * product are re-checked against this company, so an edit cannot quietly move
+ * an invoice to another tenant's customer.
+ */
+export async function updateCustomerInvoice(
+  supabase: SupabaseClient,
+  companyId: string,
+  invoiceId: string,
+  params: {
+    customerId?: string | null;
+    customerName?: string;
+    invoiceDate?: string;
+    dueDate?: string | null;
+    notes?: string;
+    pricesIncludeTax?: boolean;
+    branchId?: string | null;
+    lines: CustomerInvoiceLineInput[];
+  }
+) {
+  const loaded = await getCustomerInvoice(supabase, invoiceId, companyId);
+  // Another tenant's invoice is simply not here.
+  if (!loaded) throw new InvoiceNotFoundError();
+  if (loaded.invoice.status !== "Draft") {
+    throw new InvoiceNotEditableError(String(loaded.invoice.status));
+  }
+
+  const customerId = params.customerId !== undefined ? params.customerId : loaded.invoice.customer_id;
+  let customerName = String(params.customerName ?? loaded.invoice.customer_name ?? "").trim();
+
+  if (customerId) {
+    const { data: customer, error: customerError } = await supabase
+      .from("vyron_customers")
+      .select("id, customer_name")
+      .eq("id", customerId)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    if (customerError) throw new Error(customerError.message);
+    if (!customer) throw new Error("Customer not found for the active company.");
+    if (!customerName) customerName = String(customer.customer_name || "").trim();
+  }
+
+  // The branch must still belong to the customer the invoice now names.
+  const branch = await resolveBranchForInvoice(
+    supabase,
+    companyId,
+    customerId,
+    params.branchId !== undefined ? params.branchId : loaded.invoice.branch_id
+  );
+
+  const enrichedLines = await enrichInvoiceLinesFromProductMaster(supabase, companyId, customerId, params.lines);
+
+  for (const line of enrichedLines) {
+    if (!line.productId) continue;
+    const { data: product, error: productError } = await supabase
+      .from("vyron_cost_products")
+      .select("id")
+      .eq("id", line.productId)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    if (productError) throw new Error(productError.message);
+    if (!product) throw new Error(`Product "${line.productName}" not found for the active company.`);
+  }
+
+  const pricesIncludeTax =
+    params.pricesIncludeTax !== undefined
+      ? Boolean(params.pricesIncludeTax)
+      : Boolean(loaded.invoice.prices_include_tax);
+
+  const defaultRate = await resolveDefaultVatRate(supabase, companyId);
+  const engineLines = toTaxEngineLines(enrichedLines, defaultRate);
+  const tax = calculateInvoiceTax(engineLines, { pricesIncludeTax });
+  const totals = {
+    ...taxTotalsToColumns(tax),
+    ...computeCostTotals(enrichedLines, toNumber(tax.subtotalExclTax, 2)),
+  };
+
+  const { error: headerError } = await supabase
+    .from("vyron_customer_invoices")
+    .update({
+      customer_id: customerId || null,
+      branch_id: branch?.id ?? null,
+      customer_name: customerName,
+      invoice_date: params.invoiceDate || loaded.invoice.invoice_date,
+      due_date: params.dueDate !== undefined ? params.dueDate : loaded.invoice.due_date,
+      notes: params.notes !== undefined ? params.notes : loaded.invoice.notes,
+      prices_include_tax: pricesIncludeTax,
+      updated_at: new Date().toISOString(),
+      ...totals,
+    })
+    .eq("id", invoiceId)
+    .eq("company_id", companyId);
+  if (headerError) throw new Error(headerError.message);
+
+  // The lines are replaced wholesale, so a removed line leaves nothing behind.
+  const { error: deleteError } = await supabase
+    .from("vyron_customer_invoice_lines")
+    .delete()
+    .eq("invoice_id", invoiceId);
+  if (deleteError) throw new Error(deleteError.message);
+
+  const lineRows = enrichedLines.map((line, index) => ({
+    invoice_id: invoiceId,
+    product_id: line.productId || null,
+    product_name: line.productName,
+    quantity: line.quantity,
+    selling_price: line.sellingPrice,
+    cost_per_unit: line.costPerUnit || 0,
+    discount_percent: Number(line.discountPercent || 0),
+    ...taxLineToColumns(tax.lines[index]),
+  }));
+  if (lineRows.length) {
+    const { error: linesError } = await supabase.from("vyron_customer_invoice_lines").insert(lineRows);
+    if (linesError) throw new Error(linesError.message);
+  }
+
+  const after = await getCustomerInvoice(supabase, invoiceId, companyId);
+  return after!.invoice;
+}
+
 /**
  * The statuses at which an invoice has become a document in the customer's hands.
  *
