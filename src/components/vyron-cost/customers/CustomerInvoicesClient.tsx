@@ -1491,18 +1491,48 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
         </div>
 
         <EnterpriseScrollContainer mode="page" className="rounded-[24px] border border-violet-100">
-          <table className="min-w-[900px] w-full text-left text-sm">
+          {/*
+            A fixed layout with declared column widths.
+
+            Under the browser's automatic layout the customer name was the only
+            column without a natural width, so it absorbed whatever space was
+            going — 261px for a name needing 180 — while the action buttons
+            claimed 342px, and between them they pushed Status and Stock off the
+            edge. max-width on a cell does not restrain a column in that mode.
+            Declaring the widths puts the space where it is needed, leaves the
+            slack to the actions, and lets a long customer name truncate rather
+            than stretch its column.
+          */}
+          <table className="w-full min-w-[1000px] table-fixed text-left text-sm">
+            <colgroup>
+              <col className="w-[110px]" />
+              <col className="w-[180px]" />
+              <col className="w-[100px]" />
+              <col className="w-[100px]" />
+              <col className="w-[90px]" />
+              <col className="w-[104px]" />
+              <col className="w-[90px]" />
+              <col className="w-[106px]" />
+              <col />
+            </colgroup>
             <thead className="bg-slate-950 text-xs font-black uppercase tracking-[0.12em] text-white">
               <tr>
-                <th className="whitespace-nowrap px-4 py-3">Invoice</th>
-                <th className="whitespace-nowrap px-4 py-3">Customer</th>
-                <th className="whitespace-nowrap px-4 py-3">Date</th>
-                <th className="whitespace-nowrap px-4 py-3 text-right">Excl</th>
-                <th className="whitespace-nowrap px-4 py-3 text-right">VAT</th>
-                <th className="whitespace-nowrap px-4 py-3 text-right">Total</th>
-                <th className="whitespace-nowrap px-4 py-3">Status</th>
-                <th className="whitespace-nowrap px-4 py-3">Stock</th>
-                <th className="whitespace-nowrap px-4 py-3">Actions</th>
+                <th className="whitespace-nowrap px-3 py-3">Invoice</th>
+                {/*
+                  The customer name is the only column with no natural width, so
+                  in an auto-width table it took every spare pixel and pushed
+                  Status and Stock off the right-hand edge. It is capped here and
+                  truncated, with the full name on hover, so the columns that
+                  carry the money and the state of the invoice stay on screen.
+                */}
+                <th className="px-3 py-3">Customer</th>
+                <th className="whitespace-nowrap px-3 py-3">Date</th>
+                <th className="whitespace-nowrap px-2.5 py-3 text-right">Excl</th>
+                <th className="whitespace-nowrap px-2.5 py-3 text-right">VAT</th>
+                <th className="whitespace-nowrap px-2.5 py-3 text-right">Total</th>
+                <th className="whitespace-nowrap px-3 py-3">Status</th>
+                <th className="whitespace-nowrap px-3 py-3">Stock</th>
+                <th className="whitespace-nowrap px-3 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -1510,16 +1540,18 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                 const totals = displayInvoiceTotals(invoice);
                 return (
                   <tr key={invoice.id} className="border-t border-violet-50">
-                    <td className="whitespace-nowrap px-4 py-2.5 font-black text-violet-700">{invoice.invoiceNumber}</td>
-                    <td className="whitespace-nowrap px-4 py-2.5 font-black text-slate-950">{invoice.customerName}</td>
-                    <td className="whitespace-nowrap px-4 py-2.5 font-semibold text-slate-600">{invoice.invoiceDate}</td>
-                    <td className="whitespace-nowrap px-4 py-2.5 text-right font-black">{money(totals.excl)}</td>
-                    <td className="whitespace-nowrap px-4 py-2.5 text-right font-black">{money(totals.vat)}</td>
-                    <td className="whitespace-nowrap px-4 py-2.5 text-right font-black">{money(totals.total)}</td>
-                    <td className="whitespace-nowrap px-4 py-2.5"><StatusBadge status={invoice.status} /></td>
-                    <td className="whitespace-nowrap px-4 py-2.5"><StockPostingBadge status={invoice.stockPostingStatus || "Not Posted"} /></td>
-                    <td className="px-4 py-2.5">
-                      <div className="flex flex-nowrap items-center gap-1.5">
+                    <td className="truncate px-3 py-2.5 font-black text-violet-700" title={invoice.invoiceNumber}>{invoice.invoiceNumber}</td>
+                    <td className="truncate px-3 py-2.5 font-black text-slate-950" title={invoice.customerName}>
+                      {invoice.customerName}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-2.5 font-semibold text-slate-600">{invoice.invoiceDate}</td>
+                    <td className="whitespace-nowrap px-2.5 py-2.5 text-right font-black">{money(totals.excl)}</td>
+                    <td className="whitespace-nowrap px-2.5 py-2.5 text-right font-black">{money(totals.vat)}</td>
+                    <td className="whitespace-nowrap px-2.5 py-2.5 text-right font-black">{money(totals.total)}</td>
+                    <td className="whitespace-nowrap px-3 py-2.5"><StatusBadge status={invoice.status} /></td>
+                    <td className="whitespace-nowrap px-3 py-2.5"><StockPostingBadge status={invoice.stockPostingStatus || "Not Posted"} /></td>
+                    <td className="px-3 py-2.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <button onClick={() => openInvoice(invoice.id)} className="rounded-xl bg-violet-50 px-2.5 py-1.5 text-xs font-black text-violet-800">View</button>
                         {invoice.status === "Draft" && canApprove ? <button onClick={() => updateInvoiceStatus(invoice.id, "Approved")} className="rounded-xl bg-indigo-50 px-2.5 py-1.5 text-xs font-black text-indigo-800">Approve</button> : null}
                         {invoice.status === "Approved" && canEmail ? (
