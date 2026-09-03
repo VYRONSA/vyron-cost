@@ -1,3 +1,7 @@
+import {
+  detectInvoiceBoundaries,
+  MultipleInvoicesInDocumentError,
+} from "@/lib/document-intelligence-v2/invoice-boundary";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isAllowedDocumentMime, VYRON_DOCUMENTS_BUCKET } from "@/lib/vyron-documents";
 import {
@@ -20,6 +24,9 @@ import {
 } from "@/lib/vyron-extraction-quality";
 
 export type ExtractedLineItem = {
+  /** Where the line was read from. Optional: older extractions predate it. */
+  sourcePage?: number | null;
+  sourceInvoiceNumber?: string | null;
   description: string;
   quantity: string;
   unit: string;
@@ -40,6 +47,8 @@ export type ExtractedLineItem = {
 };
 
 export type ExtractedInvoice = {
+  /** Every invoice number seen in the file — more than one means a batch scan. */
+  invoiceNumbersSeen?: string[];
   supplier: string;
   invoiceNo: string;
   invoiceDate: string;
@@ -2132,6 +2141,40 @@ export async function persistExtractionToDocument(
     });
   }
 
+  /*
+   * A file holding several invoices is refused before any of it is stored.
+   *
+   * The extractor reads a whole file and returns one header and every line it
+   * finds. For a batch scan that produced one invoice carrying four other
+   * invoices' lines — the first page's number against twenty-three lines worth
+   * fifteen times its own total. Splitting such a file reliably is not
+   * something this can promise, so it stops and asks for one invoice per file.
+   *
+   * This runs before the delete below, so a refused document keeps whatever it
+   * had rather than being emptied on the way out.
+   */
+  const boundary = detectInvoiceBoundaries({
+    invoiceNumber: extraction.invoiceNo !== MISSING ? extraction.invoiceNo : null,
+    invoiceNumbersSeen: extraction.invoiceNumbersSeen || [],
+    lineItems: (extraction.lineItems || []).map((line) => ({
+      sourcePage: line.sourcePage ?? null,
+      sourceInvoiceNumber: line.sourceInvoiceNumber ?? null,
+    })),
+  });
+
+  await supabase
+    .from("vyron_documents")
+    .update({
+      detected_invoice_count: boundary.kind === "multiple" ? boundary.invoiceNumbers.length : 1,
+      detected_invoice_numbers:
+        boundary.kind === "multiple" ? boundary.invoiceNumbers : boundary.invoiceNumber ? [boundary.invoiceNumber] : null,
+    })
+    .eq("id", documentId);
+
+  if (boundary.kind === "multiple") {
+    throw new MultipleInvoicesInDocumentError(boundary);
+  }
+
   const { error: deleteLinesError } = await supabase
     .from("vyron_document_line_items")
     .delete()
@@ -2150,6 +2193,10 @@ export async function persistExtractionToDocument(
       vat: numberFromMoney(line.vatAmount),
       line_total: numberFromMoney(line.lineTotal),
       sku_product_code: line.skuOrProductCode !== MISSING ? line.skuOrProductCode : null,
+      // Provenance. These columns existed and nothing wrote them, which is why
+      // establishing where a line came from previously meant reading the scan.
+      source_page: Number.isFinite(Number(line.sourcePage)) ? Number(line.sourcePage) : null,
+      source_invoice_number: line.sourceInvoiceNumber ?? null,
       confidence_score: line.confidenceScore || null,
       field_confidence: line.fieldConfidence,
     }));

@@ -38,15 +38,24 @@ export function calcLineVat(qty: number, cost: number, vat: number) { return cal
 export function calcLineTotal(qty: number, cost: number, vat: number) { return calcLineExcl(qty, cost) + calcLineVat(qty, cost, vat); }
 export function calcVariance(expected: number, actual: number) { if (!expected || expected <= 0) return 0; return ((actual - expected) / expected) * 100; }
 
-export async function getSupplierInvoices(): Promise<SupplierInvoice[]> {
-  if (!supabase) return demoInvoices;
-  const { data, error } = await supabase.from("vyron_cost_supplier_invoices").select("*").order("created_at", { ascending: false }).limit(1000);
+/**
+ * Supplier invoices for one company.
+ *
+ * This read the whole table, unscoped. It has no callers — the live path is
+ * listSupplierInvoices in vyron-supplier-invoices.ts — but an unscoped read of
+ * a tenant table is a trap for whoever calls it next, so the company is now
+ * required rather than optional.
+ */
+export async function getSupplierInvoices(companyId: string): Promise<SupplierInvoice[]> {
+  if (!supabase || !companyId) return demoInvoices;
+  const { data, error } = await supabase.from("vyron_cost_supplier_invoices").select("*").eq("company_id", companyId).order("created_at", { ascending: false }).limit(1000);
   if (error || !data) return demoInvoices;
   return data as SupplierInvoice[];
 }
-export async function getSupplierInvoiceById(id: string): Promise<{ invoice: SupplierInvoice | null; lines: SupplierInvoiceLine[] }> {
+export async function getSupplierInvoiceById(companyId: string, id: string): Promise<{ invoice: SupplierInvoice | null; lines: SupplierInvoiceLine[] }> {
   if (!supabase || id.startsWith("demo")) return { invoice: demoInvoices[0], lines: demoInvoiceLines };
-  const invoice = await supabase.from("vyron_cost_supplier_invoices").select("*").eq("id", id).maybeSingle();
+  if (!companyId) return { invoice: null, lines: [] };
+  const invoice = await supabase.from("vyron_cost_supplier_invoices").select("*").eq("id", id).eq("company_id", companyId).maybeSingle();
   if (invoice.error || !invoice.data) return { invoice: null, lines: [] };
   const lines = await supabase.from("vyron_cost_supplier_invoice_lines").select("*").eq("invoice_id", id);
   return { invoice: invoice.data as SupplierInvoice, lines: (lines.data || []) as SupplierInvoiceLine[] };
@@ -57,6 +66,8 @@ export async function getInvoiceFormData(): Promise<{ suppliers: CostSupplier[];
 }
 export async function checkDuplicateInvoice(supplierId: string, invoiceNumber: string) {
   if (!supabase || !supplierId || !invoiceNumber.trim()) return false;
+  // Supplier-scoped, and suppliers are company-scoped, so this cannot see
+  // another tenant's invoice numbers.
   const { data } = await supabase.from("vyron_cost_supplier_invoices").select("id").eq("supplier_id", supplierId).ilike("invoice_number", invoiceNumber.trim()).limit(1);
   return Boolean(data && data.length > 0);
 }

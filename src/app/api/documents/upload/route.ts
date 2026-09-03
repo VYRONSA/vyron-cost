@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { traceStart, traceComplete } from "@/lib/vyron-workflow-trace";
 import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
@@ -213,9 +214,30 @@ export async function POST(request: NextRequest) {
     };
     debugLog.apiUpload = apiTrace;
 
+    /*
+     * The content hash, and whether this tenant already has the same bytes.
+     *
+     * The same PDF was uploaded twice and extracted twice with nothing
+     * noticing. Identical content is recognised here so the operator is told,
+     * rather than the upload being blocked — re-uploading is often deliberate,
+     * and file names get reused for genuinely different invoices, so the name
+     * is not evidence of anything. The hash is scoped to the tenant, so one
+     * company's documents never reveal another's.
+     */
+    const contentSha256 = createHash("sha256").update(fileBytes).digest("hex");
+    const { data: alreadyUploaded } = await supabase
+      .from("vyron_documents")
+      .select("id, original_filename, created_at")
+      .eq("tenant_id", tenantId)
+      .eq("content_sha256", contentSha256)
+      .is("deleted_at", null)
+      .limit(1);
+    const duplicateOf = (alreadyUploaded || [])[0] || null;
+
     const { error: insertError } = await supabase.from("vyron_documents").insert({
       id: documentId,
       tenant_id: tenantId,
+      content_sha256: contentSha256,
       document_type: "pending_classification",
       status: "uploading",
       storage_bucket: VYRON_DOCUMENTS_BUCKET,
@@ -321,6 +343,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       ok: true,
+      // Advisory only: the upload succeeded either way, and the operator
+      // decides whether this one was meant.
+      duplicateOfDocumentId: duplicateOf?.id ?? null,
+      duplicateWarning: duplicateOf
+        ? `This file was already uploaded as "${duplicateOf.original_filename}" on ${String(duplicateOf.created_at).slice(0, 10)}. Check it before extracting this copy.`
+        : null,
       documentId,
       tenantId,
       tenantName: lookup.tenant.name,

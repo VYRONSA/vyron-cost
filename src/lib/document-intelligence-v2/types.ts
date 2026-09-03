@@ -61,6 +61,7 @@ export type SupplierInvoiceExtraction = {
   confidence: number;
   fieldConfidence: SupplierInvoiceFieldConfidence;
   documentType: string | null;
+  invoiceNumbersSeen?: string[];
   lineItems: SupplierInvoiceLineItem[];
   warnings: string[];
   validation: SupplierInvoiceExtractionValidation;
@@ -119,6 +120,7 @@ export const SUPPLIER_INVOICE_EXTRACTION_SCHEMA = {
     "vat",
     "total",
     "currency",
+    "invoiceNumbersSeen",
     "confidence",
     "fieldConfidence",
     "documentType",
@@ -178,6 +180,9 @@ export const SUPPLIER_INVOICE_EXTRACTION_SCHEMA = {
       },
     },
     documentType: { anyOf: [{ type: "string" }, { type: "null" }] },
+    // Every invoice number appearing anywhere in the file. A supplier sending a
+    // month of invoices as one scan is the case this exists to make visible.
+    invoiceNumbersSeen: { type: "array", items: { type: "string" } },
     lineItems: {
       type: "array",
       items: {
@@ -191,6 +196,8 @@ export const SUPPLIER_INVOICE_EXTRACTION_SCHEMA = {
           "vatAmount",
           "lineTotal",
           "skuOrProductCode",
+          "sourcePage",
+          "sourceInvoiceNumber",
           "confidenceScore",
           "fieldConfidence",
         ],
@@ -202,6 +209,10 @@ export const SUPPLIER_INVOICE_EXTRACTION_SCHEMA = {
           vatAmount: { anyOf: [{ type: "string" }, { type: "null" }] },
           lineTotal: { anyOf: [{ type: "string" }, { type: "null" }] },
           skuOrProductCode: { anyOf: [{ type: "string" }, { type: "null" }] },
+          // Where this line was read from. Without it, establishing which page
+          // — and which invoice — a line belongs to needs a manual trace.
+          sourcePage: { anyOf: [{ type: "integer" }, { type: "null" }] },
+          sourceInvoiceNumber: { anyOf: [{ type: "string" }, { type: "null" }] },
           confidenceScore: { type: "number" },
           fieldConfidence: {
             type: "object",

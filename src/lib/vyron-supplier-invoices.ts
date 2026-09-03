@@ -86,8 +86,11 @@ export async function listSupplierInvoices(supabase: SupabaseClient, companyId: 
   const supplierIds = await companySupplierIds(supabase, companyId);
   if (!supplierIds.length) return [] as SupplierInvoiceRow[];
 
+  // Scoped twice on purpose: by the company recorded on the invoice, and by
+  // the company's suppliers. The column is the authority; the supplier filter
+  // stays so a row that somehow lacks the column can never widen the result.
   const { data, error } = await scoped(
-    supabase.from("vyron_cost_supplier_invoices").select("*"),
+    supabase.from("vyron_cost_supplier_invoices").select("*").eq("company_id", companyId),
     supplierIds
   )
     .order("invoice_date", { ascending: false })
@@ -117,7 +120,7 @@ export async function getSupplierInvoice(supabase: SupabaseClient, companyId: st
   if (!supplierIds.length) return null;
 
   const { data: invoice, error } = await scoped(
-    supabase.from("vyron_cost_supplier_invoices").select("*").eq("id", id),
+    supabase.from("vyron_cost_supplier_invoices").select("*").eq("id", id).eq("company_id", companyId),
     supplierIds
   ).maybeSingle();
   if (error) throw new Error(error.message);

@@ -27,6 +27,10 @@ function buildPrompt() {
     "Return only JSON that matches the supplied schema.",
     "Never format numeric values as currency strings.",
     "Never rewrite valid ISO dates.",
+    "For every line item, report sourcePage as the 1-based page it appears on,",
+    "and sourceInvoiceNumber as the invoice number printed on that same page.",
+    "List every distinct invoice number appearing anywhere in the file in invoiceNumbersSeen.",
+    "A file may contain several separate invoices; report them all rather than merging them.",
   ].join(" ");
 }
 
