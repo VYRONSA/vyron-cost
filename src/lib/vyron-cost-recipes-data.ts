@@ -57,6 +57,12 @@ export type RecipeRecord = {
   yield_unit: string | null;
   target_gp: number | null;
   selling_price: number | null;
+  /**
+   * Whether selling_price already carries VAT. GP is margin on revenue, so a
+   * VAT-inclusive price has to be brought back to revenue before it is measured
+   * against. Never inferred from category — it is a fact about the deal.
+   */
+  selling_price_includes_vat: boolean;
   total_cost: number;
   ingredient_cost: number | null;
   packaging_cost: number | null;
@@ -139,11 +145,34 @@ function isMissingColumnError(error: unknown, column: string) {
   return code === "42703" || (message.includes("column") && message.includes(column.toLowerCase()));
 }
 
+/**
+ * The revenue a selling price represents.
+ *
+ * VAT collected on a sale is never the seller's income, so it cannot sit in the
+ * denominator of a margin. Where a price is quoted inclusive, revenue is the
+ * price with the tax taken back out; where it is quoted exclusive, the price is
+ * already revenue. Defaults to exclusive, which is what every BOM assumed before
+ * this existed, so an omitted basis changes nothing.
+ */
+export type VatBasis = { includesVat: boolean; vatRate: number };
+
+export const VAT_EXCLUSIVE: VatBasis = { includesVat: false, vatRate: 0 };
+
+export function revenueFromSellingPrice(sellingPrice: number, vat: VatBasis = VAT_EXCLUSIVE) {
+  const price = Number(sellingPrice || 0);
+  if (!vat?.includesVat) return price;
+  const rate = Number(vat.vatRate || 0);
+  // A nonsensical rate must not silently inflate margin; fall back to the price.
+  if (!Number.isFinite(rate) || rate <= -100) return price;
+  return price / (1 + rate / 100);
+}
+
 export function computeRecipeCosts(
   lines: RecipeLineInput[],
   yieldQty: number,
   sellingPrice: number,
-  targetGp: number
+  targetGp: number,
+  vat: VatBasis = VAT_EXCLUSIVE
 ) {
   /**
    * total_cost keeps the meaning it has always had — every line, packaging
@@ -165,9 +194,49 @@ export function computeRecipeCosts(
   const totalCost = round2(ingredientCost + packagingCost);
   const numericYield = Math.max(1, Number(yieldQty || 1));
   const costPerUnit = round4(totalCost / numericYield);
-  const calculatedGp = round2(calcGp(sellingPrice, costPerUnit));
-  const suggestedSellingPrice = round2(calcSuggestedPrice(costPerUnit, targetGp));
+  /*
+   * GP is measured against revenue, not against the amount the customer hands
+   * over. The suggested price is then quoted back on the same basis as
+   * selling_price, so the two are comparable on screen.
+   */
+  const revenuePerUnit = revenueFromSellingPrice(sellingPrice, vat);
+  const calculatedGp = round2(calcGp(revenuePerUnit, costPerUnit));
+  const suggestedRevenue = calcSuggestedPrice(costPerUnit, targetGp);
+  // Derived from the rate, not from the current price, so a BOM priced at 0
+  // still gets a quotable suggestion on the right basis.
+  const grossUp = revenueFromSellingPrice(1, vat) > 0 ? 1 / revenueFromSellingPrice(1, vat) : 1;
+  const suggestedSellingPrice = round2(suggestedRevenue * grossUp);
   return { totalCost, ingredientCost, packagingCost, costPerUnit, calculatedGp, suggestedSellingPrice };
+}
+
+/**
+ * The company's VAT rate, from the one place that already records it.
+ *
+ * vyron_workspaces.default_vat_rate is the configured rate for the workspace the
+ * company belongs to. A second rate stored against the costing tables could
+ * drift from it, and nothing would say which one priced a BOM, so this reads
+ * that field rather than duplicating it. A missing workspace or rate yields 0,
+ * which leaves an inclusive price untouched rather than inventing a deduction.
+ */
+export async function getCompanyVatRate(supabase: SupabaseClient, companyId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from("vyron_workspaces")
+    .select("default_vat_rate")
+    .eq("company_id", companyId)
+    .limit(1);
+  if (error) return 0;
+  const rate = Number(data?.[0]?.default_vat_rate);
+  return Number.isFinite(rate) && rate > 0 ? rate : 0;
+}
+
+/** The VAT basis to measure a given BOM's GP on. */
+async function vatBasisFor(
+  supabase: SupabaseClient,
+  companyId: string,
+  includesVat: boolean
+): Promise<VatBasis> {
+  if (!includesVat) return VAT_EXCLUSIVE;
+  return { includesVat: true, vatRate: await getCompanyVatRate(supabase, companyId) };
 }
 
 function mapBomRow(row: Record<string, unknown>, lines?: RecipeLineRecord[]): RecipeRecord {
@@ -180,6 +249,7 @@ function mapBomRow(row: Record<string, unknown>, lines?: RecipeLineRecord[]): Re
     yield_unit: row.yield_unit ? String(row.yield_unit) : "unit",
     target_gp: row.target_gp != null ? Number(row.target_gp) : null,
     selling_price: row.selling_price != null ? Number(row.selling_price) : null,
+    selling_price_includes_vat: row.selling_price_includes_vat === true,
     total_cost: Number(row.total_cost || 0),
     ingredient_cost: row.ingredient_cost != null ? Number(row.ingredient_cost) : null,
     packaging_cost: row.packaging_cost != null ? Number(row.packaging_cost) : null,
@@ -474,7 +544,13 @@ async function syncLinkedProducts(
   totalCost: number,
   costPerUnit: number,
   productId?: string | null,
-  previousProductId?: string | null
+  previousProductId?: string | null,
+  /*
+   * The linked product mirrors its BOM's cost, so it has to mirror the BOM's
+   * revenue basis too. Without this a VAT-inclusive BOM would report one GP and
+   * the product it feeds would report another off the same numbers.
+   */
+  vat: VatBasis = VAT_EXCLUSIVE
 ) {
   if (previousProductId && previousProductId !== productId) {
     let unlinkResponse = await supabase
@@ -523,12 +599,13 @@ async function syncLinkedProducts(
     const product = productById.get(id);
     const selling = Number(product?.selling_price || 0);
     const target = Number(product?.target_gp || 40);
+    const sellingRevenue = revenueFromSellingPrice(selling, vat);
     const basePatch = {
       linked_bom_id: recipeId,
       total_cost: costPerUnit,
       cost_per_unit: costPerUnit,
-      calculated_gp: calcGp(selling, costPerUnit),
-      actual_gp: calcGp(selling, costPerUnit),
+      calculated_gp: calcGp(sellingRevenue, costPerUnit),
+      actual_gp: calcGp(sellingRevenue, costPerUnit),
       suggested_selling_price: calcSuggestedPrice(costPerUnit, target),
       updated_at: new Date().toISOString(),
     };
@@ -709,6 +786,7 @@ export async function createRecipe(
     notes?: string;
     product_id?: string | null;
     bom_purpose?: string | null;
+    selling_price_includes_vat?: boolean;
     lines?: RecipeLineInput[];
   }
 ) {
@@ -721,11 +799,13 @@ export async function createRecipe(
   // No parent id exists yet, so a new BOM cannot be part of a cycle; the
   // database still refuses a self-reference.
   const lines = await resolveSubBomLines(supabase, companyId, null, input.lines || []);
+  const includesVat = input.selling_price_includes_vat === true;
   const costs = computeRecipeCosts(
     lines,
     Number(input.yield_qty || 1),
     Number(input.selling_price || 0),
-    Number(input.target_gp || 0)
+    Number(input.target_gp || 0),
+    await vatBasisFor(supabase, companyId, includesVat)
   );
 
   const { data, error } = await supabase
@@ -739,6 +819,7 @@ export async function createRecipe(
       yield_unit: input.yield_unit || "unit",
       target_gp: Number(input.target_gp || 0),
       selling_price: Number(input.selling_price || 0),
+      selling_price_includes_vat: includesVat,
       total_cost: costs.totalCost,
       ingredient_cost: costs.ingredientCost,
       packaging_cost: costs.packagingCost,
@@ -763,7 +844,9 @@ export async function createRecipe(
     recipeId,
     costs.totalCost,
     costs.costPerUnit,
-    purpose === "Sub-BOM" ? null : input.product_id
+    purpose === "Sub-BOM" ? null : input.product_id,
+    null,
+    await vatBasisFor(supabase, companyId, includesVat)
   );
 
   return { recipe: mapBomRow(data as Record<string, unknown>, savedLines), linkedProducts };
@@ -784,6 +867,7 @@ export async function updateRecipe(
     notes?: string;
     product_id?: string | null;
     bom_purpose?: string | null;
+    selling_price_includes_vat?: boolean;
     lines?: RecipeLineInput[];
   }
 ) {
@@ -815,7 +899,14 @@ export async function updateRecipe(
   const yieldQty = input.yield_qty ?? existing.yield_qty;
   const sellingPrice = input.selling_price ?? Number(existing.selling_price || 0);
   const targetGp = input.target_gp ?? Number(existing.target_gp || 0);
-  const costs = computeRecipeCosts(lines, yieldQty, sellingPrice, targetGp);
+  const includesVat = input.selling_price_includes_vat ?? existing.selling_price_includes_vat;
+  const costs = computeRecipeCosts(
+    lines,
+    yieldQty,
+    sellingPrice,
+    targetGp,
+    await vatBasisFor(supabase, companyId, includesVat)
+  );
 
   const patch: Record<string, unknown> = {
     bom_name: input.recipe_name?.trim() ?? existing.recipe_name,
@@ -824,6 +915,7 @@ export async function updateRecipe(
     yield_unit: input.yield_unit ?? existing.yield_unit,
     target_gp: targetGp,
     selling_price: sellingPrice,
+    selling_price_includes_vat: includesVat,
     total_cost: costs.totalCost,
     ingredient_cost: costs.ingredientCost,
     packaging_cost: costs.packagingCost,
@@ -868,7 +960,8 @@ export async function updateRecipe(
     costs.totalCost,
     costs.costPerUnit,
     nextProductId,
-    existing.product_id
+    existing.product_id,
+    await vatBasisFor(supabase, companyId, includesVat)
   );
 
   return { recipe: mapBomRow(data as Record<string, unknown>, savedLines), linkedProducts };
@@ -897,7 +990,8 @@ export async function recalculateBomCosts(
     lineInputs,
     recipe.yield_qty,
     Number(recipe.selling_price || 0),
-    Number(recipe.target_gp || 0)
+    Number(recipe.target_gp || 0),
+    await vatBasisFor(supabase, companyId, recipe.selling_price_includes_vat)
   );
 
   const { error } = await supabase
@@ -921,7 +1015,9 @@ export async function recalculateBomCosts(
     recipeId,
     costs.totalCost,
     costs.costPerUnit,
-    recipe.product_id
+    recipe.product_id,
+    null,
+    await vatBasisFor(supabase, companyId, recipe.selling_price_includes_vat)
   );
 
   return { productCount };
@@ -980,7 +1076,8 @@ export async function createRecipeLine(
     lines,
     recipe.yield_qty,
     Number(recipe.selling_price || 0),
-    Number(recipe.target_gp || 0)
+    Number(recipe.target_gp || 0),
+    await vatBasisFor(supabase, companyId, recipe.selling_price_includes_vat)
   );
 
   await supabase
@@ -997,7 +1094,16 @@ export async function createRecipeLine(
     .eq("id", recipeId)
     .eq("company_id", companyId);
 
-  await syncLinkedProducts(supabase, companyId, recipeId, costs.totalCost, costs.costPerUnit, recipe.product_id);
+  await syncLinkedProducts(
+    supabase,
+    companyId,
+    recipeId,
+    costs.totalCost,
+    costs.costPerUnit,
+    recipe.product_id,
+    null,
+    await vatBasisFor(supabase, companyId, recipe.selling_price_includes_vat)
+  );
   return line;
 }
 
@@ -1055,7 +1161,8 @@ export async function updateRecipeLine(
     lines,
     recipe.yield_qty,
     Number(recipe.selling_price || 0),
-    Number(recipe.target_gp || 0)
+    Number(recipe.target_gp || 0),
+    await vatBasisFor(supabase, companyId, recipe.selling_price_includes_vat)
   );
   await supabase
     .from("vyron_cost_boms")
@@ -1070,7 +1177,16 @@ export async function updateRecipeLine(
     })
     .eq("id", recipeId)
     .eq("company_id", companyId);
-  await syncLinkedProducts(supabase, companyId, recipeId, costs.totalCost, costs.costPerUnit, recipe.product_id);
+  await syncLinkedProducts(
+    supabase,
+    companyId,
+    recipeId,
+    costs.totalCost,
+    costs.costPerUnit,
+    recipe.product_id,
+    null,
+    await vatBasisFor(supabase, companyId, recipe.selling_price_includes_vat)
+  );
 
   return mapLineRow(data as Record<string, unknown>);
 }
@@ -1097,7 +1213,8 @@ export async function deleteRecipeLine(
     lines,
     recipe.yield_qty,
     Number(recipe.selling_price || 0),
-    Number(recipe.target_gp || 0)
+    Number(recipe.target_gp || 0),
+    await vatBasisFor(supabase, companyId, recipe.selling_price_includes_vat)
   );
   await supabase
     .from("vyron_cost_boms")
@@ -1112,7 +1229,16 @@ export async function deleteRecipeLine(
     })
     .eq("id", recipeId)
     .eq("company_id", companyId);
-  await syncLinkedProducts(supabase, companyId, recipeId, costs.totalCost, costs.costPerUnit, recipe.product_id);
+  await syncLinkedProducts(
+    supabase,
+    companyId,
+    recipeId,
+    costs.totalCost,
+    costs.costPerUnit,
+    recipe.product_id,
+    null,
+    await vatBasisFor(supabase, companyId, recipe.selling_price_includes_vat)
+  );
   return { ok: true };
 }
 

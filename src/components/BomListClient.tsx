@@ -30,6 +30,7 @@ function mapRecipeRow(row: Record<string, unknown>): BomHeader {
     yield_unit: row.yield_unit ? String(row.yield_unit) : "unit",
     target_gp: row.target_gp != null ? Number(row.target_gp) : null,
     selling_price: row.selling_price != null ? Number(row.selling_price) : null,
+    selling_price_includes_vat: row.selling_price_includes_vat === true,
     total_cost: Number(row.total_cost || 0),
     ingredient_cost: row.ingredient_cost != null ? Number(row.ingredient_cost) : null,
     packaging_cost: row.packaging_cost != null ? Number(row.packaging_cost) : null,

@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
       notes: body.notes,
       product_id: body.product_id,
       bom_purpose: body.bom_purpose ?? body.purpose,
+      selling_price_includes_vat: body.selling_price_includes_vat,
       lines: body.lines,
     });
     return NextResponse.json({ ok: true, recipe, linkedProducts });
