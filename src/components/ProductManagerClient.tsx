@@ -356,9 +356,9 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
 
       <div className={`grid min-w-0 max-w-full grid-cols-1 gap-6 ${canCreate || canEdit ? "xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)]" : ""}`}>
       {canCreate || canEdit ? (
-      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700"><Plus size={22} /></div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700"><Plus size={22} /></div>
           <div>
             <h2 className="text-2xl font-black text-slate-900">{editingId ? "Edit Finished Product" : "Add Finished Product"}</h2>
             <p className="text-sm font-semibold text-slate-500">Link product to BOM to calculate cost and GP.</p>
@@ -406,25 +406,25 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
 
           <div className="grid gap-3 rounded-3xl bg-slate-50 p-5 md:grid-cols-3">
             <div><div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">BOM Cost</div><div className="mt-1 text-2xl font-black text-slate-900">{formatMoney(cost)}</div></div>
-            <div><div className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Actual GP</div><div className={`mt-1 text-2xl font-black ${gp < target ? "text-[var(--vyron-warning-fg)]" : "text-[#A855F7]"}`}>{gp.toFixed(1)}%</div></div>
-            <div><div className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Suggested</div><div className="mt-1 text-2xl font-black text-[#A855F7]">{formatMoney(suggested)}</div></div>
+            <div><div className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Actual GP</div><div className={`mt-1 text-2xl font-black ${gp < target ? "text-[var(--vyron-warning-fg)]" : "text-[#3B82F6]"}`}>{gp.toFixed(1)}%</div></div>
+            <div><div className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Suggested</div><div className="mt-1 text-2xl font-black text-[#3B82F6]">{formatMoney(suggested)}</div></div>
           </div>
 
           <button onClick={save} className="rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[#F8FAFC]">Save Finished Product</button>
-          {message && <div className="rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#A855F7]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#3B82F6]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div>}
         </div>
       </div>
       ) : null}
 
-      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-2xl font-black text-slate-900">Finished Products</h2>
             <p className="text-sm font-semibold text-slate-500">Open products to review BOM, margin and suggested price.</p>
           </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-            <Search size={18} className="text-violet-700" />
+          <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+            <Search size={18} className="text-blue-700" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products..." className="w-64 bg-transparent text-sm font-bold outline-none placeholder:text-slate-400" />
           </div>
         </div>
@@ -455,17 +455,17 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
               const productGp = Number(product.calculated_gp || calcGp(Number(product.selling_price || 0), Number(product.total_cost || 0)));
               return (
                 <div key={product.id} className="grid grid-cols-[240px_160px_160px_120px_120px_110px_120px] items-center border-t border-slate-100 px-5 py-4 text-sm">
-                  <Link href={`/products/${product.id}`} className="font-black text-violet-700">{product.product_name}</Link>
+                  <Link href={`/products/${product.id}`} className="font-black text-blue-700">{product.product_name}</Link>
                   <div className="font-bold text-slate-500">{product.product_category || product.category || "Uncategorised"}</div>
-                  <div className="truncate font-bold text-violet-700">{linked?.bom_name || "Not linked"}</div>
+                  <div className="truncate font-bold text-blue-700">{linked?.bom_name || "Not linked"}</div>
                   <div className="font-black text-slate-900">{formatMoney(product.total_cost)}</div>
                   <div className="font-black text-slate-900">{formatMoney(product.selling_price)}</div>
-                  <div className={`font-black ${productGp < Number(product.target_gp || 0) ? "text-[var(--vyron-warning-fg)]" : "text-[#A855F7]"}`}>{productGp.toFixed(1)}%</div>
+                  <div className={`font-black ${productGp < Number(product.target_gp || 0) ? "text-[var(--vyron-warning-fg)]" : "text-[#3B82F6]"}`}>{productGp.toFixed(1)}%</div>
                   <div className="flex gap-2">
                     {canEdit ? (
                       <button onClick={() => edit(product)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Edit</button>
                     ) : null}
-                    <Link href={`/products/${product.id}/edit`} className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">Open</Link>
+                    <Link href={`/products/${product.id}/edit`} className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-700">Open</Link>
                     {canDelete ? (
                       <button onClick={() => deleteConfirm.requestDelete(() => remove(product.id))} className="rounded-xl bg-red-50 p-2 text-red-700"><Trash2 size={16} /></button>
                     ) : null}
@@ -476,10 +476,10 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
           </div>
         </div>
 
-        <div className="mt-5 rounded-3xl bg-violet-50 p-5">
+        <div className="mt-5 rounded-3xl bg-blue-50 p-5">
           <div className="flex items-start gap-3">
-            <Link2 className="mt-1 text-violet-700" size={22} />
-            <p className="text-sm font-bold leading-6 text-violet-900">A product becomes powerful when linked to a BOM. Cost, GP and suggested price then update from the BOM.</p>
+            <Link2 className="mt-1 text-blue-700" size={22} />
+            <p className="text-sm font-bold leading-6 text-blue-900">A product becomes powerful when linked to a BOM. Cost, GP and suggested price then update from the BOM.</p>
           </div>
         </div>
       </div>

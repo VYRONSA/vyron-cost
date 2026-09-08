@@ -11,8 +11,8 @@ export { PlatformNav };
 export function EnterpriseHubClient({ data }: { data: EnterprisePlatformPayload }) {
   return (
     <section className="grid gap-8">
-      <div className={`${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#1e1635] via-[#252040] to-[#1a1033] p-8`}>
-        <div className="text-xs font-black uppercase tracking-widest text-violet-300">Enterprise Platform</div>
+      <div className={`${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#101b35] via-[#1B2740] to-[#0e1733] p-8`}>
+        <div className="text-xs font-black uppercase tracking-widest text-blue-300">Enterprise Platform</div>
         <h2 className="mt-2 text-3xl font-black text-[#F8FAFC]">{data.multiCompany.groupName}</h2>
         <p className={`mt-2 ${EP_BODY}`}>
           Mode: {data.multiCompany.mode} · {data.multiCompany.units.length} org units · Performance readiness{" "}
@@ -36,8 +36,8 @@ export function EnterpriseHubClient({ data }: { data: EnterprisePlatformPayload 
 export function MultiCompanyClient({ data }: { data: EnterprisePlatformPayload["multiCompany"] }) {
   return (
     <section className="grid gap-6">
-      <div className={`rounded-2xl border border-violet-400/30 bg-violet-500/15 p-6`}>
-        <p className={`text-sm font-bold text-violet-200`}>
+      <div className={`rounded-2xl border border-blue-400/30 bg-blue-500/15 p-6`}>
+        <p className={`text-sm font-bold text-blue-200`}>
           Structure: {data.structureType} · Supported: single company, multi-company, group, holding, subsidiaries, divisions, branches
         </p>
       </div>
@@ -45,14 +45,14 @@ export function MultiCompanyClient({ data }: { data: EnterprisePlatformPayload["
         {data.units.map((u) => (
           <div
             key={u.id}
-            className={`${EP_CARD} p-4 ${u.isPrimary ? "ring-2 ring-violet-400/50" : ""}`}
+            className={`${EP_CARD} p-4 ${u.isPrimary ? "ring-2 ring-blue-400/50" : ""}`}
             style={{ marginLeft: u.unitType === "branch" ? 24 : u.unitType === "division" ? 12 : 0 }}
           >
             <div className="flex flex-wrap justify-between gap-2">
               <div>
                 <span className={EP_LABEL}>{u.unitType}</span>
                 <div className="font-black text-[#F8FAFC]">{u.unitLabel}</div>
-                {u.isPrimary ? <span className="text-xs font-bold text-[#A855F7]">Primary · live data</span> : null}
+                {u.isPrimary ? <span className="text-xs font-bold text-[#3B82F6]">Primary · live data</span> : null}
               </div>
               <span className={`text-xs font-bold ${EP_MUTED}`}>{u.industry}</span>
             </div>
@@ -120,7 +120,7 @@ export function IntercompanyClient({ rows }: { rows: EnterprisePlatformPayload["
               <td className="px-4 py-3">{r.toUnit}</td>
               <td className="px-4 py-3">
                 {r.href ? (
-                  <Link href={r.href} className="font-bold text-violet-300">
+                  <Link href={r.href} className="font-bold text-blue-300">
                     {r.reference}
                   </Link>
                 ) : (
@@ -162,7 +162,7 @@ export function BenchmarkingClient({ engines }: { engines: EnterprisePlatformPay
                     key={r.unitKey}
                     className={
                       r.isBest
-                        ? "bg-[#A855F7]/10"
+                        ? "bg-[#3B82F6]/10"
                         : r.isWorst
                           ? "bg-red-500/10"
                           : EP_TABLE_ROW
@@ -170,7 +170,7 @@ export function BenchmarkingClient({ engines }: { engines: EnterprisePlatformPay
                   >
                     <td className="px-4 py-2 font-black text-[#F8FAFC]">{r.rank}</td>
                     <td className="px-4 py-2 font-bold text-[#CBD5E1]">{r.unitLabel}</td>
-                    <td className={`px-4 py-2 text-right font-black ${r.isBest ? "text-[#A855F7]" : r.isWorst ? "text-red-300" : "text-[#F8FAFC]"}`}>
+                    <td className={`px-4 py-2 text-right font-black ${r.isBest ? "text-[#3B82F6]" : r.isWorst ? "text-red-300" : "text-[#F8FAFC]"}`}>
                       {eng.dimension.includes("yield") || eng.dimension.includes("health") ? `${r.metricValue}` : money(r.metricValue)}
                     </td>
                   </tr>
@@ -269,7 +269,7 @@ export function GroupCommandCentreClient({ cc }: { cc: EnterprisePlatformPayload
                 <dt className="font-bold text-[#94A3B8]">{m.label}</dt>
                 <dd className="font-black text-[#F8FAFC]">
                   {m.href ? (
-                    <Link href={m.href} className="text-violet-300 hover:underline">
+                    <Link href={m.href} className="text-blue-300 hover:underline">
                       {m.unit === "ZAR" ? money(m.value) : `${m.value}${m.unit === "%" ? "%" : ""}`}
                     </Link>
                   ) : m.unit === "ZAR" ? (
@@ -320,8 +320,8 @@ export function EnterpriseSearchClient() {
       <ul className="mt-6 space-y-2">
         {results.map((r) => (
           <li key={`${r.entityType}-${r.id}`}>
-            <Link href={r.href} className={`block ${EP_CARD} transition hover:border-violet-400/30`}>
-              <span className="text-xs font-black uppercase text-violet-300">{r.entityType}</span>
+            <Link href={r.href} className={`block ${EP_CARD} transition hover:border-blue-400/30`}>
+              <span className="text-xs font-black uppercase text-blue-300">{r.entityType}</span>
               <div className="font-black text-[#F8FAFC]">{r.label}</div>
               <p className={EP_BODY}>{r.detail}</p>
               {r.companyLabel ? <p className={EP_MUTED}>{r.companyLabel}</p> : null}
@@ -336,14 +336,14 @@ export function EnterpriseSearchClient() {
 export function KnowledgeGraphClient({ graph }: { graph: EnterprisePlatformPayload["knowledgeGraph"] }) {
   return (
     <section className="grid gap-8 lg:grid-cols-[1fr_320px]">
-      <div className={`${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#1e1635] via-[#252040] to-[#1a1033] p-8`}>
+      <div className={`${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#101b35] via-[#1B2740] to-[#0e1733] p-8`}>
         <h2 className="font-black text-[#F8FAFC]">Supply chain → financial impact</h2>
         <div className="mt-8 space-y-4">
           {graph.nodes.map((n, i) => (
             <div key={n.id} className="flex items-center gap-4">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-400/30 bg-violet-500/20 text-xs font-black text-violet-200">{i + 1}</span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-blue-400/30 bg-blue-500/20 text-xs font-black text-blue-200">{i + 1}</span>
               <div>
-                <div className="text-xs uppercase text-violet-300">{n.type}</div>
+                <div className="text-xs uppercase text-blue-300">{n.type}</div>
                 {n.href ? (
                   <Link href={n.href} className="font-black text-[#F8FAFC] hover:underline">
                     {n.label}
@@ -352,7 +352,7 @@ export function KnowledgeGraphClient({ graph }: { graph: EnterprisePlatformPaylo
                   <div className="font-black text-[#F8FAFC]">{n.label}</div>
                 )}
               </div>
-              {i < graph.nodes.length - 1 ? <div className="ml-4 text-violet-400">↓</div> : null}
+              {i < graph.nodes.length - 1 ? <div className="ml-4 text-blue-400">↓</div> : null}
             </div>
           ))}
         </div>
@@ -396,12 +396,12 @@ export function EnterpriseAiClient({ presets }: { presets: EnterprisePlatformPay
     <section className="grid gap-6 lg:grid-cols-2">
       <div className="space-y-2">
         {presets.map((p) => (
-          <button key={p.question} type="button" disabled={busy} onClick={() => ask(p.question)} className={`block w-full ${EP_CARD} text-left text-sm font-bold text-[#CBD5E1] transition hover:border-violet-400/30 disabled:opacity-50`}>
+          <button key={p.question} type="button" disabled={busy} onClick={() => ask(p.question)} className={`block w-full ${EP_CARD} text-left text-sm font-bold text-[#CBD5E1] transition hover:border-blue-400/30 disabled:opacity-50`}>
             {p.question}
           </button>
         ))}
       </div>
-      <div className={`${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#1e1635] via-[#252040] to-[#1a1033] p-8`}>
+      <div className={`${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#101b35] via-[#1B2740] to-[#0e1733] p-8`}>
         <h2 className="text-xl font-black text-[#F8FAFC]">VYRON Enterprise AI</h2>
         {answer ? (
           <>
@@ -431,9 +431,9 @@ export function PerformanceClient({ perf }: { perf: EnterprisePlatformPayload["p
           <div className="mt-2 text-3xl font-black text-[#F8FAFC]">{(perf.targetTransactions / 1_000_000).toFixed(1)}M+</div>
           <p className={`mt-1 ${EP_MUTED}`}>Current est. {perf.currentTransactionsEstimate.toLocaleString()}</p>
         </div>
-        <div className={`${EP_CARD_LG} border border-violet-400/30 bg-violet-500/15`}>
-          <div className={`${EP_LABEL} text-violet-200`}>Readiness</div>
-          <div className="mt-2 text-3xl font-black text-[#A855F7]">{perf.readinessPct}%</div>
+        <div className={`${EP_CARD_LG} border border-blue-400/30 bg-blue-500/15`}>
+          <div className={`${EP_LABEL} text-blue-200`}>Readiness</div>
+          <div className="mt-2 text-3xl font-black text-[#3B82F6]">{perf.readinessPct}%</div>
         </div>
       </div>
       <ul className="space-y-2">

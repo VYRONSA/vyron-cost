@@ -21,9 +21,9 @@ export default function TestingCentrePage() {
     <VyronCostAiShell hidePageHeader title="Testing Centre" subtitle="Click every route before the client demo. Fix anything red immediately.">
       <section className="grid gap-4">
         {checks.map(([href, label], index) => (
-          <Link key={href} href={href} className="rounded-2xl bg-white p-5 text-sm font-black text-slate-800 shadow-[0_12px_35px_rgba(81,63,190,0.06)] transition hover:bg-violet-50">
+          <Link key={href} href={href} className="rounded-2xl bg-white p-5 text-sm font-black text-slate-800 shadow-[0_12px_35px_rgba(29,78,216,0.06)] transition hover:bg-blue-50">
             {index + 1}. {label}
-            <span className="ml-3 text-violet-700">{href}</span>
+            <span className="ml-3 text-blue-700">{href}</span>
           </Link>
         ))}
       </section>

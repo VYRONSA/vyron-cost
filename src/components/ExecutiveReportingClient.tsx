@@ -57,7 +57,7 @@ export default function ExecutiveReportingClient({
             <button
               type="button"
               onClick={() => exportBoardPackPdf(boardPack)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-900 shadow-lg"
+              className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-blue-900 shadow-lg"
             >
               <FileText size={16} /> Full Board Pack PDF
             </button>
@@ -101,15 +101,15 @@ export default function ExecutiveReportingClient({
         />
       </div>
 
-      <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <VyronPremiumSectionHeading
             eyebrow="Report library"
             title="Available reports"
             subtitle="Filter by topic, open the dashboard, or export the report in the required format."
           />
-          <div className="flex min-w-[280px] items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-            <Sparkles size={18} className="text-violet-700" />
+          <div className="flex min-w-[280px] items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+            <Sparkles size={18} className="text-blue-700" />
             <input
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
@@ -123,17 +123,17 @@ export default function ExecutiveReportingClient({
           {filtered.map((cat) => (
             <article
               key={cat.id}
-              className="group relative overflow-hidden rounded-[2rem] border border-violet-100 bg-gradient-to-br from-white to-violet-50/60 p-6 shadow-[0_16px_45px_rgba(76,29,149,0.07)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(76,29,149,0.12)]"
+              className="group relative overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br from-white to-blue-50/60 p-6 shadow-[0_16px_45px_rgba(30,58,138,0.07)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(30,58,138,0.12)]"
             >
-              <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-fuchsia-200/40 blur-2xl" />
+              <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-blue-200/40 blur-2xl" />
               <div className="relative">
-                <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-violet-700 shadow-sm">
+                <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-blue-700 shadow-sm">
                   Executive Report
                 </div>
                 <h3 className="mt-4 text-2xl font-black tracking-[-0.03em] text-slate-950">{cat.title}</h3>
                 <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">{cat.description}</p>
                 <div className="mt-5 flex flex-wrap gap-2">
-                  <Link href={cat.href} className="rounded-xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-4 py-2 text-xs font-black text-white">
+                  <Link href={cat.href} className="rounded-xl bg-gradient-to-r from-blue-700 to-blue-600 px-4 py-2 text-xs font-black text-white">
                     Open dashboard →
                   </Link>
                   {canExport && cat.exportFormats.includes("pdf") ? (

@@ -24,7 +24,7 @@ export function InsightCard({ insight }: { insight: FinanceExplainableInsight })
         <div className="mt-1">Confidence: {insight.confidence}%</div>
       </div>
       {insight.href ? (
-        <Link href={insight.href} className="mt-3 inline-block text-xs font-black text-violet-700">
+        <Link href={insight.href} className="mt-3 inline-block text-xs font-black text-blue-700">
           Investigate →
         </Link>
       ) : null}
@@ -78,7 +78,7 @@ export function FinanceNav() {
   return (
     <nav className="mb-8 flex flex-wrap gap-2">
       {links.map(([href, label]) => (
-        <Link key={href} href={href} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black hover:bg-violet-50">
+        <Link key={href} href={href} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black hover:bg-blue-50">
           {label}
         </Link>
       ))}

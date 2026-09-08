@@ -21,7 +21,7 @@ export const EP_TABLE = "w-full text-sm text-[#CBD5E1]";
 export const EP_TABLE_HEAD = VYRON_TABLE.head;
 export const EP_TABLE_ROW = `border-t border-white/10 ${VYRON_TABLE.rowHover}`;
 export const EP_INPUT =
-  "flex-1 rounded-2xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 px-4 py-3 font-bold text-[#0F172A] placeholder:text-[#94A3B8] outline-none focus:border-violet-400/40";
+  "flex-1 rounded-2xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 px-4 py-3 font-bold text-[#0F172A] placeholder:text-[#94A3B8] outline-none focus:border-blue-400/40";
 
 export function InsightCard({ insight }: { insight: ExplainableInsight }) {
   return (
@@ -33,7 +33,7 @@ export function InsightCard({ insight }: { insight: ExplainableInsight }) {
         <div className="mt-1">Confidence: {insight.confidence}%</div>
       </div>
       {insight.href ? (
-        <Link href={insight.href} className="mt-2 inline-block text-xs font-black text-violet-300">
+        <Link href={insight.href} className="mt-2 inline-block text-xs font-black text-blue-300">
           View →
         </Link>
       ) : null}

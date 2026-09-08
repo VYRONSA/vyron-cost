@@ -20,11 +20,11 @@ export default async function SupplierIntelligencePage() {
       <section className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {[
           ["Total Suppliers", centreStats.totalSuppliers, "bg-white"],
-          ["Active Suppliers", centreStats.activeSuppliers, "bg-[#A855F7]/10"],
+          ["Active Suppliers", centreStats.activeSuppliers, "bg-[#3B82F6]/10"],
           ["High Risk Suppliers", centreStats.highRiskSuppliers, "bg-red-50"],
           ["Inflation Alerts", centreStats.inflationAlerts, "bg-[var(--vyron-warning-bg)]"],
           ["Open Variances", centreStats.openVariances, "bg-[var(--vyron-warning-bg)]"],
-          ["Savings Opportunities", formatSupplierSpend(centreStats.savingsOpportunities), "bg-violet-50"],
+          ["Savings Opportunities", formatSupplierSpend(centreStats.savingsOpportunities), "bg-blue-50"],
         ].map(([label, value, bg]) => (
           <div key={String(label)} className={`rounded-[2rem] p-5 shadow-sm ${bg}`}>
             <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</div>

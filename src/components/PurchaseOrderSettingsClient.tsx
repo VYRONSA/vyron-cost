@@ -89,7 +89,7 @@ export default function PurchaseOrderSettingsClient({
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
-      <section className="max-w-xl rounded-[2rem] border border-violet-100 bg-white p-6">
+      <section className="max-w-xl rounded-[2rem] border border-blue-100 bg-white p-6">
             <h2 className="text-xl font-black">PO & Invoice Approval Thresholds</h2>
             {!companyResolved ? (
               <p className="mt-3 rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-warning-fg)]">
@@ -136,7 +136,7 @@ export default function PurchaseOrderSettingsClient({
                 type="button"
                 disabled={saving}
                 onClick={() => void save()}
-                className="mt-5 rounded-xl bg-violet-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+                className="mt-5 rounded-xl bg-blue-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
               >
                 {saving ? "Saving…" : "Save settings"}
               </button>

@@ -87,7 +87,7 @@ export default function PriceHistoryScreen({ scope }: { scope: PriceHistoryScope
       <div>
         <Link
           href="/document-intelligence"
-          className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-violet-700 hover:text-violet-900"
+          className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-blue-700 hover:text-blue-900"
         >
           ← Back
           Document Intelligence
@@ -112,7 +112,7 @@ export default function PriceHistoryScreen({ scope }: { scope: PriceHistoryScope
         ))}
       </div>
 
-      <section className="rounded-[2rem] border border-violet-100 bg-white p-5">
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-5">
         <div className="grid gap-3 md:grid-cols-4">
           <input
             className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold"
@@ -152,7 +152,7 @@ export default function PriceHistoryScreen({ scope }: { scope: PriceHistoryScope
 
       {error ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800">{error}</p> : null}
 
-      <section className="rounded-[2rem] border border-violet-100 bg-white p-5 overflow-x-auto">
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-5 overflow-x-auto">
         {loading ? (
           <div className="flex items-center gap-2 py-10 text-sm font-bold text-slate-500">
             <Loader2 size={18} className="animate-spin" />
@@ -187,7 +187,7 @@ export default function PriceHistoryScreen({ scope }: { scope: PriceHistoryScope
                     <td className="py-2 pr-3">{row.supplier_name || "—"}</td>
                     <td className="py-2 pr-3">
                       {row.document_id ? (
-                        <Link href={`/document-intelligence/archive/${row.document_id}`} className="font-bold text-violet-700 hover:underline">
+                        <Link href={`/document-intelligence/archive/${row.document_id}`} className="font-bold text-blue-700 hover:underline">
                           {row.invoice_number || row.document_id.slice(0, 8)}
                         </Link>
                       ) : (

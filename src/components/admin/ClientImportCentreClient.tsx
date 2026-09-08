@@ -303,7 +303,7 @@ export default function ClientImportCentreClient() {
       }}
     >
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-            <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-sm">
+            <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-sm">
               <h2 className="text-2xl font-black text-slate-950">Import Centre</h2>
               <p className="mt-2 text-sm text-slate-500">Download CSV templates, validate uploads and import setup data for your workspace.</p>
               <div className="mt-4 space-y-5">
@@ -333,7 +333,7 @@ export default function ClientImportCentreClient() {
                             // mapping list and product options for the panel.
                             if (item.id === "product-mappings") void loadMappings();
                           }}
-                          className={`w-full rounded-2xl border px-4 py-3 text-left ${selected === item.id ? "border-violet-400 bg-violet-50" : "border-slate-100 bg-white"}`}
+                          className={`w-full rounded-2xl border px-4 py-3 text-left ${selected === item.id ? "border-blue-400 bg-blue-50" : "border-slate-100 bg-white"}`}
                         >
                           <div className="text-sm font-black text-slate-950">{item.label}</div>
                           <div className="text-xs font-semibold text-slate-500">{item.description}</div>
@@ -346,9 +346,9 @@ export default function ClientImportCentreClient() {
             </div>
       
             <div className="space-y-6">
-              <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-sm">
+              <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-sm">
                 <div className="flex flex-wrap gap-3">
-                  <button type="button" onClick={downloadTemplate} className="inline-flex items-center gap-2 rounded-2xl border border-violet-100 px-4 py-3 text-sm font-black text-violet-800">
+                  <button type="button" onClick={downloadTemplate} className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 px-4 py-3 text-sm font-black text-blue-800">
                     <Download size={16} />
                     {template.id === "customer-invoices"
                       ? "Download Standard VYRON Customer Invoice Template"
@@ -381,20 +381,20 @@ export default function ClientImportCentreClient() {
                     type="button"
                     onClick={() => void runPreview()}
                     disabled={previewing}
-                    className="mt-4 mr-3 rounded-2xl border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-black text-violet-800 disabled:opacity-50"
+                    className="mt-4 mr-3 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-black text-blue-800 disabled:opacity-50"
                   >
                     {previewing ? "Running preview…" : "Run Preview"}
                   </button>
                 ) : null}
                 {canImports ? (
-                  <button type="button" onClick={importValidRows} className="mt-4 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white disabled:opacity-50" disabled={needsPreview && !preview}>
+                  <button type="button" onClick={importValidRows} className="mt-4 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-3 text-sm font-black text-white disabled:opacity-50" disabled={needsPreview && !preview}>
                     {needsPreview ? "Confirm Import" : "Import Valid Rows"}
                   </button>
                 ) : null}
               </div>
 
               {preview ? (
-                <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-sm">
+                <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-sm">
                   <h3 className="text-lg font-black text-slate-950">Preview — nothing has been written</h3>
                   <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
                     {[
@@ -446,7 +446,7 @@ export default function ClientImportCentreClient() {
               ) : null}
 
               {products.length ? (
-                <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-sm">
+                <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-sm">
                   <h3 className="text-lg font-black text-slate-950">Product Mapping</h3>
                   <p className="mt-1 text-xs font-semibold text-slate-500">
                     Accounting item code to VYRON product. Saved per company and reused by every future import.
@@ -468,11 +468,11 @@ export default function ClientImportCentreClient() {
                         <option key={product.id} value={product.id}>{product.product_name}</option>
                       ))}
                     </select>
-                    <button type="button" onClick={() => void saveMapping()} className="rounded-xl bg-violet-700 px-4 py-2 text-sm font-black text-white">
+                    <button type="button" onClick={() => void saveMapping()} className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-black text-white">
                       Save Mapping
                     </button>
                   </div>
-                  {mapMessage ? <p className="mt-3 text-xs font-bold text-violet-800">{mapMessage}</p> : null}
+                  {mapMessage ? <p className="mt-3 text-xs font-bold text-blue-800">{mapMessage}</p> : null}
                   <div className="mt-4 max-h-48 space-y-2 overflow-y-auto">
                     {mappings.map((mapping) => (
                       <div key={mapping.id} className="flex justify-between rounded-xl border border-slate-100 px-3 py-2 text-xs">
@@ -487,7 +487,7 @@ export default function ClientImportCentreClient() {
                 </div>
               ) : null}
       
-              <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-sm">
+              <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-sm">
                 <h3 className="text-lg font-black text-slate-950">Import History</h3>
                 <div className="mt-4 space-y-3">
                   {history.map((entry) => (

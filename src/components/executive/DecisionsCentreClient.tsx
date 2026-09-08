@@ -289,7 +289,7 @@ export default function DecisionsCentreClient({
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <SummaryCard label="Critical Decisions" value={String(snapshot.summary.criticalDecisions)} accent="#2563EB" />
-            <SummaryCard label="High Impact Decisions" value={String(snapshot.summary.highImpactDecisions)} accent="#A855F7" />
+            <SummaryCard label="High Impact Decisions" value={String(snapshot.summary.highImpactDecisions)} accent="#3B82F6" />
             <SummaryCard
               label="Estimated Opportunity"
               value={
@@ -314,12 +314,12 @@ export default function DecisionsCentreClient({
           </section>
 
           {snapshot.recommendedDecisions.length === 0 ? (
-            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-6">
+            <section className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
               <div className="flex items-start gap-3">
-                <Gavel size={22} className="mt-0.5 shrink-0 text-violet-700" />
+                <Gavel size={22} className="mt-0.5 shrink-0 text-blue-700" />
                 <div>
-                  <h2 className="text-lg font-bold text-violet-950">No significant executive decisions currently required.</h2>
-                  <p className="mt-2 text-sm font-medium leading-6 text-violet-900">
+                  <h2 className="text-lg font-bold text-blue-950">No significant executive decisions currently required.</h2>
+                  <p className="mt-2 text-sm font-medium leading-6 text-blue-900">
                     Current operational signals do not indicate material decisions requiring executive action.
                   </p>
                 </div>
@@ -418,7 +418,7 @@ export default function DecisionsCentreClient({
                   Competing decisions identified only when supported by simultaneous signals.
                 </p>
                 {snapshot.conflicts.length === 0 ? (
-                  <p className="mt-4 text-sm font-semibold text-violet-700">No decision conflicts detected on current signals.</p>
+                  <p className="mt-4 text-sm font-semibold text-blue-700">No decision conflicts detected on current signals.</p>
                 ) : (
                   <div className="mt-4 space-y-3">
                     {snapshot.conflicts.map((conflict) => (
@@ -583,7 +583,7 @@ function ImpactMatrixQuadrant({
 }) {
   const accent =
     quadrant === "High Impact / Low Effort"
-      ? "border-violet-200 bg-violet-50"
+      ? "border-blue-200 bg-blue-50"
       : quadrant === "High Impact / High Effort"
         ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]"
         : quadrant === "Low Impact / Low Effort"
@@ -695,7 +695,7 @@ function UrgencyBadge({ urgency }: { urgency: ExecutiveDecision["urgency"] }) {
 
 function ConfidenceBadge({ confidence }: { confidence: ExecutiveDecision["confidence"] }) {
   const classes = {
-    High: "text-violet-700",
+    High: "text-blue-700",
     Medium: "text-[var(--vyron-warning-fg)]",
     Low: "text-[#64748B]",
   };

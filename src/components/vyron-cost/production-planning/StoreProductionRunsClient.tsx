@@ -16,9 +16,9 @@ function statusClass(status: string) {
     case "Planned":
       return "bg-sky-100 text-sky-800";
     case "Released":
-      return "bg-violet-100 text-violet-800";
+      return "bg-blue-100 text-blue-800";
     case "Completed":
-      return "bg-violet-100 text-violet-800";
+      return "bg-blue-100 text-blue-800";
     case "Cancelled":
       return "bg-rose-100 text-rose-800";
     default:

@@ -20,9 +20,9 @@ export default function ProfitProtectionHero({ kpis }: { kpis: LeakageKpis }) {
         </div>
         <div className="rounded-lg bg-[#F8FAFC] px-3 py-2">
           <div className="text-[9px] font-black uppercase tracking-[0.14em] text-[#64748B]">Recovery Rate</div>
-          <div className="text-sm font-black text-[#9333EA]">{kpis.recoveryRatePercent}%</div>
+          <div className="text-sm font-black text-[#2563EB]">{kpis.recoveryRatePercent}%</div>
         </div>
-        <Link href="/recovery-opportunities" className="ml-auto rounded-lg bg-[#A78BFA] px-3 py-2 text-[11px] font-black text-[#0F172A]">
+        <Link href="/recovery-opportunities" className="ml-auto rounded-lg bg-[#60A5FA] px-3 py-2 text-[11px] font-black text-[#0F172A]">
           View Recovery
         </Link>
       </div>

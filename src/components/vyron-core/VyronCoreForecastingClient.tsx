@@ -37,8 +37,8 @@ export default function VyronCoreForecastingClient({ data }: { data: VyronCoreCo
       }}
     >
       <section className="grid gap-8">
-        <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-violet-950 to-indigo-950 p-8 text-white">
-        <div className="text-xs font-black uppercase tracking-[0.2em] text-violet-300">VYRON CORE</div>
+        <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-8 text-white">
+        <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VYRON CORE</div>
         <h2 className="mt-2 text-3xl font-black">Workforce Forecasting</h2>
         <p className="mt-2 max-w-2xl text-sm font-semibold text-slate-300">
           Labour cost, productivity, attrition, leakage and health forecasts from the digital twin foundation.
@@ -66,7 +66,7 @@ export default function VyronCoreForecastingClient({ data }: { data: VyronCoreCo
                 {rows.map((r) => (
                   <li key={r.id} className="flex justify-between rounded-xl bg-slate-50 px-3 py-2 text-sm font-bold">
                     <span>{r.periodLabel}</span>
-                    <span className="text-violet-700">
+                    <span className="text-blue-700">
                       {isMoney ? money(r.forecastValue) : r.forecastValue.toFixed(1)}
                       {type === "productivity" || type === "workforce_health" || type === "attrition" ? "%" : ""}
                       <span className="ml-2 text-slate-400">({r.confidence}%)</span>

@@ -90,7 +90,7 @@ export default function InventoryAlertsClient() {
                       type="button"
                       disabled={busyId === alertId}
                       onClick={() => void createPo(alertId)}
-                      className="rounded-lg bg-violet-700 px-3 py-1.5 text-xs font-black text-[#F8FAFC] disabled:opacity-50"
+                      className="rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-black text-[#F8FAFC] disabled:opacity-50"
                     >
                       {busyId === alertId ? "Creating…" : "Create Purchase Order"}
                     </button>
@@ -101,8 +101,8 @@ export default function InventoryAlertsClient() {
             {data.lowStockAlerts.length === 0 ? <p className="text-sm text-slate-500">No open low stock alerts.</p> : null}
           </div>
         </div>
-        <div className="rounded-2xl border border-violet-200 bg-violet-50/50 p-5">
-          <h2 className="text-lg font-black text-violet-900">Slow Moving (30+ days)</h2>
+        <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-5">
+          <h2 className="text-lg font-black text-blue-900">Slow Moving (30+ days)</h2>
           <div className="mt-3 space-y-2">
             {data.slowMoving30.slice(0, 10).map((item) => (
               <div key={String(item.id)} className="rounded-xl bg-white p-3 text-sm">

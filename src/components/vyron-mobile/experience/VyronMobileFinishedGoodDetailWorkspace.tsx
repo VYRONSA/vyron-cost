@@ -125,7 +125,7 @@ function statusTone(status: string) {
   const value = String(status || "").toLowerCase();
   if (value.includes("archive")) return "text-slate-700 bg-slate-100 border-slate-200";
   if (value.includes("review") || value.includes("pending")) return "text-[var(--vyron-warning-fg)] bg-[var(--vyron-warning-bg)] border-[var(--vyron-warning-border)]";
-  if (value.includes("active") || value.includes("approved")) return "text-violet-700 bg-violet-50 border-violet-200";
+  if (value.includes("active") || value.includes("approved")) return "text-blue-700 bg-blue-50 border-blue-200";
   return "text-blue-700 bg-blue-50 border-blue-200";
 }
 
@@ -442,7 +442,7 @@ export default function VyronMobileFinishedGoodDetailWorkspace({ productId }: { 
           <div className="mt-2 text-sm font-semibold text-slate-600">Suggested Price: <span className="font-black text-slate-950">{money(suggestedPrice)}</span></div>
           <div className="mt-1 text-sm font-semibold text-slate-600">Average Cost: <span className="font-black text-slate-950">{money(Number(inventory?.average_cost || 0))}</span></div>
           <div className="mt-1 text-sm font-semibold text-slate-600">Inventory Value: <span className="font-black text-slate-950">{money(Number(inventory?.inventory_value || 0))}</span></div>
-          <div className="mt-1 text-sm font-semibold text-slate-600">Margin Gap: <span className={`font-black ${marginGap > 0 ? "text-rose-700" : "text-violet-700"}`}>{marginGap.toFixed(1)}%</span></div>
+          <div className="mt-1 text-sm font-semibold text-slate-600">Margin Gap: <span className={`font-black ${marginGap > 0 ? "text-rose-700" : "text-blue-700"}`}>{marginGap.toFixed(1)}%</span></div>
         </PremiumMobileCard>
       </div>
 

@@ -102,13 +102,13 @@ export default function VyronCostSidebar() {
                         href={item.href}
                         className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-bold transition-all ${
                           active
-                            ? "bg-[#A78BFA] text-[#0F172A]"
+                            ? "bg-[#60A5FA] text-[#0F172A]"
                             : "text-white/55 hover:bg-white/[0.06] hover:text-white"
                         }`}
                       >
                         <Icon
                           size={16}
-                          className={active ? "text-[#0F172A]" : "text-white/45 group-hover:text-[#DDD6FE]"}
+                          className={active ? "text-[#0F172A]" : "text-white/45 group-hover:text-[#BFDBFE]"}
                         />
                         {item.label}
                       </Link>

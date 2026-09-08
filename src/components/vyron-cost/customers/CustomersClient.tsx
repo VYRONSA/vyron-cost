@@ -324,9 +324,9 @@ export default function CustomersClient() {
     >
     <div className={`grid min-w-0 max-w-full grid-cols-1 gap-6 ${canCreate ? "xl:grid-cols-[minmax(0,240px)_minmax(0,1fr)_minmax(0,300px)]" : "xl:grid-cols-[minmax(0,1fr)_minmax(0,300px)]"}`}>
       {canCreate ? (
-      <aside className="min-w-0 rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <aside className="min-w-0 rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <div className="mb-4 flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-700">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700">
             <Plus size={18} />
           </div>
           <div>
@@ -347,7 +347,7 @@ export default function CustomersClient() {
             <select
               value={form.vatStatus}
               onChange={(event) => setForm((current) => ({ ...current, vatStatus: event.target.value as VatStatus }))}
-              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:border-violet-400"
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:border-blue-400"
             >
               {VAT_STATUSES.map((status) => (
                 <option key={status} value={status}>
@@ -380,14 +380,14 @@ export default function CustomersClient() {
             </label>
           </div>
 
-          <button onClick={addCustomer} className="w-full rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-4 py-4 text-sm font-black uppercase text-white shadow-lg shadow-purple-500/20">
+          <button onClick={addCustomer} className="w-full rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-4 py-4 text-sm font-black uppercase text-white shadow-lg shadow-blue-500/20">
             Save Customer
           </button>
         </div>
       </aside>
       ) : null}
 
-      <section className="min-w-0 rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <section className="min-w-0 rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <div className="mb-5 space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
@@ -399,13 +399,13 @@ export default function CustomersClient() {
               <div className="flex shrink-0 flex-wrap gap-2 self-start sm:self-center">
                 <Link
                   href="/customer-sales-orders"
-                  className="inline-flex items-center justify-center rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-black text-violet-800"
+                  className="inline-flex items-center justify-center rounded-2xl border border-blue-200 bg-white px-4 py-3 text-sm font-black text-blue-800"
                 >
                   Sales Orders
                 </Link>
                 <Link
                   href="/customer-invoices"
-                  className="inline-flex items-center justify-center rounded-2xl bg-purple-700 px-4 py-3 text-sm font-black text-white"
+                  className="inline-flex items-center justify-center rounded-2xl bg-blue-700 px-4 py-3 text-sm font-black text-white"
                 >
                   Create Invoice
                 </Link>
@@ -413,8 +413,8 @@ export default function CustomersClient() {
             ) : null}
           </div>
 
-          <div className="flex min-w-0 items-center gap-2 rounded-2xl bg-purple-50 px-4 py-3">
-            <Search size={17} className="shrink-0 text-purple-700" />
+          <div className="flex min-w-0 items-center gap-2 rounded-2xl bg-blue-50 px-4 py-3">
+            <Search size={17} className="shrink-0 text-blue-700" />
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -437,11 +437,11 @@ export default function CustomersClient() {
           </div>
 
           {loading ? (
-            <div className="rounded-3xl border border-dashed border-violet-200 bg-violet-50/50 p-10 text-center text-sm font-semibold text-slate-600">
+            <div className="rounded-3xl border border-dashed border-blue-200 bg-blue-50/50 p-10 text-center text-sm font-semibold text-slate-600">
               Loading customers…
             </div>
           ) : filteredCustomers.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-violet-200 bg-violet-50/50 p-10 text-center text-sm font-semibold text-slate-600">
+            <div className="rounded-3xl border border-dashed border-blue-200 bg-blue-50/50 p-10 text-center text-sm font-semibold text-slate-600">
               No customers yet. Add your first customer using the form on the left.
             </div>
           ) : null}
@@ -449,7 +449,7 @@ export default function CustomersClient() {
           {filteredCustomers.map((customer) => (
             <div key={customer.id} className="grid grid-cols-[1.3fr_1fr_1.4fr_1fr_0.8fr_0.8fr_95px] items-center gap-3 border-t border-slate-100 px-5 py-4 text-sm">
               <div>
-                <Link href={`/customers/${customer.id}`} className="font-black text-purple-700 hover:underline">{customer.name}</Link>
+                <Link href={`/customers/${customer.id}`} className="font-black text-blue-700 hover:underline">{customer.name}</Link>
                 <div className="text-xs font-bold text-slate-500">{customer.id} · {customer.phone || "No phone"}</div>
                 {(() => {
                   const stats = readCustomerHistoryLocally(customer.id.toLowerCase());
@@ -466,9 +466,9 @@ export default function CustomersClient() {
               <div className="font-semibold text-slate-600">{customer.category}</div>
               <div className="truncate font-bold text-slate-700">{customer.invoiceEmail || "No invoice email"}</div>
               <div className="font-bold text-slate-700">{customer.terms}</div>
-              <div className={`font-bold ${customer.gpMovement < 38 ? "text-[var(--vyron-warning-fg)]" : "text-[#A855F7]"}`}>{customer.gpMovement.toFixed(1)}%</div>
+              <div className={`font-bold ${customer.gpMovement < 38 ? "text-[var(--vyron-warning-fg)]" : "text-[#3B82F6]"}`}>{customer.gpMovement.toFixed(1)}%</div>
               <div>
-                <select value={customer.status} onChange={(event) => updateCustomerStatus(customer.id, event.target.value)} disabled={!canEdit} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-black text-purple-700 outline-none disabled:opacity-60">
+                <select value={customer.status} onChange={(event) => updateCustomerStatus(customer.id, event.target.value)} disabled={!canEdit} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-black text-blue-700 outline-none disabled:opacity-60">
                   <option>Active</option>
                   <option>Watch</option>
                   <option>Review</option>
@@ -480,7 +480,7 @@ export default function CustomersClient() {
               <div className="flex items-center gap-2">
                 <Link
                   href={`/customer-sales-orders?customerId=${customer.id}`}
-                  className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-black text-violet-800"
+                  className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-black text-blue-800"
                 >
                   Sales Orders
                 </Link>
@@ -496,9 +496,9 @@ export default function CustomersClient() {
         </div>
       </section>
 
-      <aside className="min-w-0 rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <aside className="min-w-0 rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-purple-100 text-purple-700">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
             <Users size={21} />
           </div>
           <div className="min-w-0">
@@ -530,9 +530,9 @@ function Field({ label, value, placeholder, onChange }: { label: string; value: 
 function Guide({ icon, title, text, example }: { icon: React.ReactNode; title: string; text: string; example: string }) {
   return (
     <div className="mb-5 flex gap-3">
-      <div className="mt-1 text-purple-700">{icon}</div>
+      <div className="mt-1 text-blue-700">{icon}</div>
       <div>
-        <h3 className="text-sm font-black text-purple-700">{title}</h3>
+        <h3 className="text-sm font-black text-blue-700">{title}</h3>
         <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">{text}</p>
         <p className="mt-2 text-xs font-black text-slate-500">{example}</p>
       </div>

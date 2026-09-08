@@ -137,7 +137,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
                 type="button"
                 disabled={receiving}
                 onClick={() => void receive("partial")}
-                className="rounded-xl border border-violet-200 px-4 py-2.5 text-sm font-bold text-violet-700 disabled:opacity-60"
+                className="rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-bold text-blue-700 disabled:opacity-60"
               >
                 Receive Partial
               </button>

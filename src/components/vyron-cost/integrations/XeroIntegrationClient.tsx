@@ -714,7 +714,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
               <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--vyron-warning-fg)]">
                 Workspace session fix v3 active
               </p>
-              <h2 className="mt-2 text-lg font-bold text-fuchsia-950">No active workspace selected</h2>
+              <h2 className="mt-2 text-lg font-bold text-blue-950">No active workspace selected</h2>
               <p className="mt-2 text-sm font-medium leading-6 text-[var(--vyron-warning-fg)]">
                 Xero integration is scoped to your active company workspace. The server could not find a workspace
                 cookie — local browser storage alone is not used for security.
@@ -870,7 +870,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
           <p className="mt-2 text-sm font-medium text-[var(--vyron-warning-fg)]">
             Set the following environment variables on the server before users can connect to Xero:
           </p>
-          <ul className="mt-2 space-y-1 text-sm font-bold text-fuchsia-950">
+          <ul className="mt-2 space-y-1 text-sm font-bold text-blue-950">
             {REQUIRED_XERO_ENV.map((key) => (
               <li key={key}>
                 · {key}
@@ -905,7 +905,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Workspace: <span className="font-bold text-[#0F172A]">{displayWorkspaceName}</span>
               {workspaceCtx.companyLinked ? (
-                <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-800">
+                <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-800">
                   Company linked
                 </span>
               ) : (
@@ -1256,7 +1256,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
                 className="flex items-center justify-between rounded-lg border border-[#E2E8F0] px-3 py-2 text-sm"
               >
                 <span className="font-medium text-[#334155]">{item.label}</span>
-                <span className={`font-bold ${item.ok ? "text-violet-700" : "text-[var(--vyron-warning-fg)]"}`}>
+                <span className={`font-bold ${item.ok ? "text-blue-700" : "text-[var(--vyron-warning-fg)]"}`}>
                   {item.ok ? "Ready" : "Required"}
                 </span>
               </div>
@@ -1412,7 +1412,7 @@ function InfoTile({ label, value, xero }: { label: string; value: string; xero?:
 function StatusBadge({ status }: { status: XeroSyncStatus }) {
   const classes: Record<string, string> = {
     Ready: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
-    Synced: "border-violet-200 bg-violet-50 text-violet-700",
+    Synced: "border-blue-200 bg-blue-50 text-blue-700",
     Failed: "border-rose-200 bg-rose-50 text-rose-700",
     "Needs Review": "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Processing: "border-blue-200 bg-blue-50 text-blue-700",

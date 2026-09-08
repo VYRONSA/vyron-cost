@@ -177,9 +177,9 @@ export default function IngredientRegisterClient({
       }}
     >
       <section className="grid gap-6 xl:grid-cols-[0.75fr_1.35fr]">
-            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
                   <Plus size={22} />
                 </div>
                 <div>
@@ -198,7 +198,7 @@ export default function IngredientRegisterClient({
                   <input
                     value={form.ingredient_name}
                     onChange={(event) => updateForm("ingredient_name", event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
                   />
                 </label>
 
@@ -207,7 +207,7 @@ export default function IngredientRegisterClient({
                   <input
                     value={form.category}
                     onChange={(event) => updateForm("category", event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
                   />
                 </label>
 
@@ -217,7 +217,7 @@ export default function IngredientRegisterClient({
                     <input
                       value={form.purchase_unit}
                       onChange={(event) => updateForm("purchase_unit", event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
                     />
                   </label>
 
@@ -226,7 +226,7 @@ export default function IngredientRegisterClient({
                     <input
                       value={form.recipe_unit}
                       onChange={(event) => updateForm("recipe_unit", event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
                     />
                   </label>
                 </div>
@@ -238,7 +238,7 @@ export default function IngredientRegisterClient({
                       type="number"
                       value={form.purchase_cost}
                       onChange={(event) => updateForm("purchase_cost", event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
                     />
                   </label>
 
@@ -248,7 +248,7 @@ export default function IngredientRegisterClient({
                       type="number"
                       value={form.previous_cost}
                       onChange={(event) => updateForm("previous_cost", event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
                     />
                   </label>
 
@@ -258,7 +258,7 @@ export default function IngredientRegisterClient({
                       type="number"
                       value={form.yield_percent}
                       onChange={(event) => updateForm("yield_percent", event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
                     />
                   </label>
                 </div>
@@ -266,7 +266,7 @@ export default function IngredientRegisterClient({
                 <button
                   type="button"
                   onClick={saveIngredient}
-                  className="rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-white"
+                  className="rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-white"
                 >
                   {editingId ? "Save Ingredient" : "Add Ingredient"}
                 </button>
@@ -282,14 +282,14 @@ export default function IngredientRegisterClient({
                 )}
 
                 {message && (
-                  <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#7E22CE]">
+                  <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#1D4ED8]">
                     {message}
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
               <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900">Ingredient Register</h2>
@@ -297,8 +297,8 @@ export default function IngredientRegisterClient({
                     Search, open, edit and delete ingredients.
                   </p>
                 </div>
-                <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-                  <Search size={18} className="text-violet-700" />
+                <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+                  <Search size={18} className="text-blue-700" />
                   <input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
@@ -325,9 +325,9 @@ export default function IngredientRegisterClient({
                     <div className="font-bold text-slate-500">{item.category || "Uncategorised"}</div>
                     <div className="font-bold text-slate-500">{item.purchase_unit || "kg"}</div>
                     <div className="font-black text-slate-900">{formatMoney(item.purchase_cost)}</div>
-                    <div className="font-black text-violet-700">{formatMoney(item.true_unit_cost)}</div>
+                    <div className="font-black text-blue-700">{formatMoney(item.true_unit_cost)}</div>
                     <div>
-                      <Link href={`/ingredients/${item.id}`} className="font-black text-violet-700">
+                      <Link href={`/ingredients/${item.id}`} className="font-black text-blue-700">
                         Open →
                       </Link>
                     </div>
@@ -335,7 +335,7 @@ export default function IngredientRegisterClient({
                       <button
                         type="button"
                         onClick={() => startEdit(item)}
-                        className="rounded-xl bg-violet-50 p-2 text-violet-700"
+                        className="rounded-xl bg-blue-50 p-2 text-blue-700"
                       >
                         <Edit3 size={16} />
                       </button>

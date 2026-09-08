@@ -41,9 +41,9 @@ export function VyronFieldGuide({
   footer?: ReactNode;
 }) {
   return (
-    <aside className="rounded-[2rem] border border-slate-200/80 bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+    <aside className="rounded-[2rem] border border-slate-200/80 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
       <div className="flex items-start gap-3 border-b border-slate-100 pb-5">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-violet-700">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
           <BookOpen size={22} />
         </div>
         <div>
@@ -57,9 +57,9 @@ export function VyronFieldGuide({
           const Icon = iconMap[item.icon || "info"];
           return (
             <div key={item.title} className="grid grid-cols-[28px_1fr] gap-3">
-              <Icon size={20} className="mt-1 text-violet-700" />
+              <Icon size={20} className="mt-1 text-blue-700" />
               <div>
-                <h3 className="text-sm font-black text-violet-700">{item.title}</h3>
+                <h3 className="text-sm font-black text-blue-700">{item.title}</h3>
                 <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">{item.description}</p>
                 {item.example ? (
                   <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
@@ -72,7 +72,7 @@ export function VyronFieldGuide({
         })}
       </div>
 
-      {footer ? <div className="mt-6 rounded-2xl border border-violet-100 bg-violet-50/60 p-4">{footer}</div> : null}
+      {footer ? <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">{footer}</div> : null}
     </aside>
   );
 }

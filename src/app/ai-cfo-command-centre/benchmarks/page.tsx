@@ -8,7 +8,7 @@ export default async function AiBenchmarksPage() {
 
   return (
     <VyronCostShell hidePageHeader title="Industry & Group Benchmarking" subtitle="MULTI-COMPANY · FOOD · HOSPITALITY · RETAIL · DISTRIBUTION">
-      <Link href="/ai-cfo-command-centre" className="mb-6 inline-block text-sm font-black text-violet-700">
+      <Link href="/ai-cfo-command-centre" className="mb-6 inline-block text-sm font-black text-blue-700">
         ← AI CFO Command Centre
       </Link>
       <AiBenchmarksClient industry={industry} multiCompany={multiCompany} />

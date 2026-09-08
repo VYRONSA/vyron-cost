@@ -186,24 +186,24 @@ export default function LogoUploadCard({
         onDrop={handleDrop}
         className={`relative mt-2 flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed p-8 text-center transition ${
           dragActive
-            ? "border-violet-400 bg-violet-50"
-            : "border-violet-100 bg-violet-50/40 hover:border-violet-300 hover:bg-violet-50/70"
+            ? "border-blue-400 bg-blue-50"
+            : "border-blue-100 bg-blue-50/40 hover:border-blue-300 hover:bg-blue-50/70"
         } ${!canEdit ? "opacity-60" : ""}`}
       >
         {logoPreview ? (
-          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border border-violet-100 bg-white">
+          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border border-blue-100 bg-white">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={logoPreview} alt="Company logo" className="max-h-20 max-w-20 object-contain" />
           </div>
         ) : (
-          <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-dashed border-violet-200 bg-white text-violet-300">
+          <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-dashed border-blue-200 bg-white text-blue-300">
             <ImageOff size={28} />
           </div>
         )}
 
         <div>
           <div className="flex items-center justify-center gap-2 text-sm font-black text-slate-900">
-            <UploadCloud size={18} className="text-violet-600" />
+            <UploadCloud size={18} className="text-blue-600" />
             {dragActive ? "Drop to upload" : "Drag & drop your logo here"}
           </div>
           <p className="mt-1 text-xs font-semibold text-slate-500">PNG, JPG or SVG · up to {formatBytes(MAX_UPLOAD_BYTES)}</p>
@@ -243,9 +243,9 @@ export default function LogoUploadCard({
 
         {uploading ? (
           <div className="w-full max-w-xs">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-violet-100">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-blue-100">
               <div
-                className="h-full rounded-full bg-violet-600 transition-[width] duration-150"
+                className="h-full rounded-full bg-blue-600 transition-[width] duration-150"
                 style={{ width: `${progress}%` }}
               />
             </div>

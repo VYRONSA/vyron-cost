@@ -8,7 +8,7 @@ export default async function ExecutiveTimelinePage() {
 
   return (
     <VyronCostShell hidePageHeader title="Executive Timeline" subtitle="SUPPLIERS · COSTS · APPROVALS · RECOVERY · PRODUCTION · INVENTORY">
-      <Link href="/ai-cfo-command-centre" className="mb-6 inline-block text-sm font-black text-violet-700">
+      <Link href="/ai-cfo-command-centre" className="mb-6 inline-block text-sm font-black text-blue-700">
         ← AI CFO Command Centre
       </Link>
       <ExecutiveTimelineClient events={timeline} />

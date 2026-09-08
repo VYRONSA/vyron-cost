@@ -173,27 +173,27 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
       <section className="grid gap-6">
         <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
         <div>
-          <Link href="/inventory/counts" className="text-sm font-black text-violet-700">← Back to Stock Counts</Link>
+          <Link href="/inventory/counts" className="text-sm font-black text-blue-700">← Back to Stock Counts</Link>
           <h1 className="mt-2 text-3xl font-black text-slate-950">{String(count.count_number || countId)}</h1>
           <p className="text-sm font-semibold text-slate-500">{String(count.count_type)} · {status} · variance {formatMoney(Number(count.variance_value_total || totals.varianceValue || 0))}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {editable && canCreateCount ? <button type="button" disabled={saving} onClick={() => void saveLines()} className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"><Save size={14} />{saving ? "Saving…" : "Save Count Lines"}</button> : null}
+          {editable && canCreateCount ? <button type="button" disabled={saving} onClick={() => void saveLines()} className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"><Save size={14} />{saving ? "Saving…" : "Save Count Lines"}</button> : null}
           <DocumentPdfActions
             pdfUrl={`/api/inventory/counts/${countId}/pdf${poApiWorkspaceContext().query}`}
             fileName={`${String(count.count_number || countId)}.pdf`}
           />
-          <button type="button" onClick={exportCsv} className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-4 py-2 text-xs font-black text-violet-800"><Download size={14} />Export CSV</button>
+          <button type="button" onClick={exportCsv} className="inline-flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2 text-xs font-black text-blue-800"><Download size={14} />Export CSV</button>
         </div>
       </div>
 
       {message ? <p className="rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-warning-fg)] print:hidden">{message}</p> : null}
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">System Qty</div><div className="mt-1 text-2xl font-black text-slate-950">{totals.system.toFixed(2)}</div></div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Counted Qty</div><div className="mt-1 text-2xl font-black text-slate-950">{totals.counted.toFixed(2)}</div></div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Variance Qty</div><div className={totals.varianceQty !== 0 ? "mt-1 text-2xl font-black text-red-600" : "mt-1 text-2xl font-black text-slate-950"}>{totals.varianceQty.toFixed(2)}</div></div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Variance Value</div><div className="mt-1 text-2xl font-black text-slate-950">{formatMoney(totals.varianceValue)}</div></div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><div className="text-[10px] font-black uppercase text-blue-600">System Qty</div><div className="mt-1 text-2xl font-black text-slate-950">{totals.system.toFixed(2)}</div></div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><div className="text-[10px] font-black uppercase text-blue-600">Counted Qty</div><div className="mt-1 text-2xl font-black text-slate-950">{totals.counted.toFixed(2)}</div></div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><div className="text-[10px] font-black uppercase text-blue-600">Variance Qty</div><div className={totals.varianceQty !== 0 ? "mt-1 text-2xl font-black text-red-600" : "mt-1 text-2xl font-black text-slate-950"}>{totals.varianceQty.toFixed(2)}</div></div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><div className="text-[10px] font-black uppercase text-blue-600">Variance Value</div><div className="mt-1 text-2xl font-black text-slate-950">{formatMoney(totals.varianceValue)}</div></div>
       </div>
 
       <div className="flex flex-wrap gap-2 print:hidden">
@@ -203,17 +203,17 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
         {status === "Approved" && canPostAdjustment ? <button type="button" onClick={() => void action("post", { actor: "supervisor" })} className="rounded-xl bg-[var(--vyron-warning-solid)] px-3 py-2 text-xs font-black text-white">Post to Ledger</button> : null}
       </div>
 
-      <div className="rounded-[2rem] border border-violet-100 bg-white p-4 print:hidden">
-        <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-          <Search size={18} className="text-violet-700" />
+      <div className="rounded-[2rem] border border-blue-100 bg-white p-4 print:hidden">
+        <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+          <Search size={18} className="text-blue-700" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search item or variance class…" className="w-full bg-transparent text-sm font-bold text-slate-800 outline-none placeholder:text-slate-400" />
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-violet-700">{filtered.length}</span>
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">{filtered.length}</span>
         </div>
       </div>
 
-        <EnterpriseScrollContainer className="rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+        <EnterpriseScrollContainer className="rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <table className="min-w-[980px] w-full text-left text-sm">
-          <thead className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100">
+          <thead className="bg-blue-800 text-xs font-black uppercase tracking-[0.14em] text-blue-100">
             <tr><th className="px-4 py-3">Item</th><th className="px-4 py-3">System</th><th className="px-4 py-3">Counted</th><th className="px-4 py-3">Variance</th><th className="px-4 py-3">%</th><th className="px-4 py-3">Value</th><th className="px-4 py-3">Class</th><th className="px-4 py-3">Unit</th></tr>
           </thead>
           <tbody>

@@ -84,7 +84,7 @@ export default function CustomerIntelligenceClient() {
       </div>
 
       {customers.length > 0 ? (
-        <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <VyronPremiumSectionHeading
             eyebrow="Detail"
             title="Customer GP intelligence"
@@ -97,15 +97,15 @@ export default function CustomerIntelligenceClient() {
                 <div className="font-black text-slate-950">{customer.name}</div>
                 <div className="text-right font-black">{formatCurrency(customer.revenue)}</div>
                 <div className="text-right font-bold">{formatCurrency(customer.cogs)}</div>
-                <div className="text-right font-black text-[#7E22CE]">{formatCurrency(customer.gp)}</div>
+                <div className="text-right font-black text-[#1D4ED8]">{formatCurrency(customer.gp)}</div>
                 <div className="text-right font-black">{customer.gpPct}%</div>
-                <div className="font-bold text-purple-700">{customer.topProduct}</div>
+                <div className="font-bold text-blue-700">{customer.topProduct}</div>
               </div>
             ))}
           </div>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <div className="rounded-3xl bg-purple-50 p-5 text-sm font-semibold leading-6 text-purple-950">AI Recommendation: Local Café Group has strong weekly demand. Consider volume discount tied to minimum order quantity while protecting GP above 40%.</div>
+            <div className="rounded-3xl bg-blue-50 p-5 text-sm font-semibold leading-6 text-blue-950">AI Recommendation: Local Café Group has strong weekly demand. Consider volume discount tied to minimum order quantity while protecting GP above 40%.</div>
             <div className="rounded-3xl bg-slate-950 p-5 text-sm font-semibold leading-6 text-white">Risk Watch: Farmstall Foods GP is below benchmark. Review chicken and packaging price increases before the next quote.</div>
           </div>
         </div>
@@ -116,8 +116,8 @@ export default function CustomerIntelligenceClient() {
 
 function Metric({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-[2rem] border border-violet-100 bg-white p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-      <div className="text-xs font-black uppercase tracking-[0.12em] text-violet-600">{title}</div>
+    <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <div className="text-xs font-black uppercase tracking-[0.12em] text-blue-600">{title}</div>
       <div className="mt-2 text-3xl font-black text-slate-950">{value}</div>
     </div>
   );

@@ -137,7 +137,7 @@ export default function IngredientEditPageClient({ ingredient }: { ingredient: C
   }
 
   const inputClass =
-    "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-violet-400 disabled:bg-slate-50";
+    "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-blue-400 disabled:bg-slate-50";
   const labelClass = "text-xs font-black uppercase tracking-[0.08em] text-slate-500";
 
   return (
@@ -150,13 +150,13 @@ export default function IngredientEditPageClient({ ingredient }: { ingredient: C
       }}
     >
       <section className="mx-auto max-w-4xl">
-            <div className="rounded-[1.75rem] border border-slate-200/80 bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-              <Link href="/ingredients" className="mb-5 inline-flex items-center gap-2 text-sm font-black text-violet-700">
+            <div className="rounded-[1.75rem] border border-slate-200/80 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+              <Link href="/ingredients" className="mb-5 inline-flex items-center gap-2 text-sm font-black text-blue-700">
                 ← Back
               </Link>
 
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
                   <Leaf size={24} />
                 </div>
                 <div>
@@ -166,13 +166,13 @@ export default function IngredientEditPageClient({ ingredient }: { ingredient: C
               </div>
 
               <div className="mb-5 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-violet-50 p-4">
+                <div className="rounded-2xl bg-blue-50 p-4">
                   <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">True Unit Cost</div>
-                  <div className="mt-1 text-3xl font-black text-violet-700">{formatMoney(previewTrueCost)}</div>
+                  <div className="mt-1 text-3xl font-black text-blue-700">{formatMoney(previewTrueCost)}</div>
                 </div>
-                <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-4">
+                <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-4">
                   <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Movement</div>
-                  <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-red-600" : "text-[#7E22CE]"}`}>
+                  <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-red-600" : "text-[#1D4ED8]"}`}>
                     {movement.toFixed(1)}%
                   </div>
                 </div>
@@ -318,7 +318,7 @@ export default function IngredientEditPageClient({ ingredient }: { ingredient: C
                     <button
                       type="button"
                       onClick={saveIngredient}
-                      className="inline-flex flex-1 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:brightness-110"
+                      className="inline-flex flex-1 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:brightness-110"
                     >
                       <Save size={18} /> Save Ingredient
                     </button>
@@ -334,7 +334,7 @@ export default function IngredientEditPageClient({ ingredient }: { ingredient: C
                   ) : null}
                 </div>
 
-                {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-black text-[#7E22CE]">{message}</div>}
+                {message && <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-4 text-sm font-black text-[#1D4ED8]">{message}</div>}
               </div>
             </div>
           </section>

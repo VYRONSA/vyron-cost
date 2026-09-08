@@ -87,19 +87,19 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
         ].map(([label, value, note]) => (
           <div
             key={label}
-            className="rounded-[2rem] border border-violet-100 bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]"
+            className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]"
           >
-            <div className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-600">{label}</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600">{label}</div>
             <div className="mt-2 text-3xl font-black text-slate-950">{value}</div>
             <div className="mt-1 text-xs font-semibold text-slate-500">{note}</div>
           </div>
         ))}
       </div>
 
-      <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-violet-950 to-indigo-950 p-8 text-white shadow-[0_24px_80px_rgba(30,27,75,0.35)]">
+      <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-8 text-white shadow-[0_24px_80px_rgba(30,27,75,0.35)]">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="text-xs font-black uppercase tracking-[0.2em] text-violet-300">VYRON CORE</div>
+            <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VYRON CORE</div>
             <h2 className="mt-2 text-4xl font-black">Executive Command Centre</h2>
             <p className="mt-2 max-w-2xl text-sm font-semibold text-slate-300">
               Workforce Digital Twin — clocking, field operations, travel, cost and risk intelligence unified for executive decisions.
@@ -130,7 +130,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <CommandCentreCard title="Clocking Intelligence" subtitle="Attendance · hours · overtime" href="/vyron-core/command-centre" accent="bg-gradient-to-br from-indigo-800 to-violet-900">
+        <CommandCentreCard title="Clocking Intelligence" subtitle="Attendance · hours · overtime" href="/vyron-core/command-centre" accent="bg-gradient-to-br from-indigo-800 to-blue-900">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <KpiTile label="On-time rate" value={`${modules.clocking.onTimeRate}%`} />
             <KpiTile label="Late arrivals" value={String(modules.clocking.lateArrivals)} />
@@ -141,7 +141,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
           </div>
         </CommandCentreCard>
 
-        <CommandCentreCard title="Field Operations" subtitle="Visits · jobs · coverage" href="/vyron-core/command-centre" accent="bg-gradient-to-br from-[#24183F] to-[#1a1033]">
+        <CommandCentreCard title="Field Operations" subtitle="Visits · jobs · coverage" href="/vyron-core/command-centre" accent="bg-gradient-to-br from-[#16233F] to-[#0e1733]">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <KpiTile label="Active staff" value={String(modules.fieldOperations.activeFieldStaff)} />
             <KpiTile label="Visits done" value={String(modules.fieldOperations.visitsCompleted)} />
@@ -152,7 +152,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
           </div>
         </CommandCentreCard>
 
-        <CommandCentreCard title="Travel Intelligence" subtitle="Km · claims · routes" href="/vyron-core/forecasting" accent="bg-gradient-to-br from-violet-900 to-fuchsia-950">
+        <CommandCentreCard title="Travel Intelligence" subtitle="Km · claims · routes" href="/vyron-core/forecasting" accent="bg-gradient-to-br from-blue-900 to-blue-950">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <KpiTile label="Km / month" value={String(modules.travelIntelligence.totalKmMonth)} />
             <KpiTile label="Claims" value={money(modules.travelIntelligence.claimValueMonth)} />
@@ -163,7 +163,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
           </div>
         </CommandCentreCard>
 
-        <CommandCentreCard title="Cost & Risk Intelligence" subtitle="Labour · leakage · compliance" href="/financial-leakage" accent="bg-gradient-to-br from-fuchsia-800 to-red-950">
+        <CommandCentreCard title="Cost & Risk Intelligence" subtitle="Labour · leakage · compliance" href="/financial-leakage" accent="bg-gradient-to-br from-blue-800 to-red-950">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <KpiTile label="Labour cost" value={money(modules.costIntelligence.labourCostMonth)} />
             <KpiTile label="Overtime" value={money(modules.costIntelligence.overtimeCost)} />
@@ -190,7 +190,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
             </div>
             <div>
               <div className="text-[10px] font-black uppercase text-slate-400">Productivity index</div>
-              <ExecutiveSparkChart data={trends.productivityTrend} colour="#8b5cf6" height={100} variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
+              <ExecutiveSparkChart data={trends.productivityTrend} colour="#3b82f6" height={100} variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
             </div>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
               <h3 className="text-xl font-black text-slate-950">Attrition forecasting</h3>
               <p className="mt-1 text-sm font-semibold text-slate-500">Predicted monthly attrition % from digital twin signals</p>
             </div>
-            <Link href="/vyron-core/forecasting" className="text-sm font-black text-violet-700">
+            <Link href="/vyron-core/forecasting" className="text-sm font-black text-blue-700">
               Full forecasts →
             </Link>
           </div>
@@ -220,15 +220,15 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
           </div>
         </div>
 
-        <div className="rounded-[2rem] bg-gradient-to-b from-slate-900 to-violet-950 p-6 text-white">
+        <div className="rounded-[2rem] bg-gradient-to-b from-slate-900 to-blue-950 p-6 text-white">
           <div className="flex items-center gap-2">
-            <BrainCircuit className="text-violet-300" size={24} />
+            <BrainCircuit className="text-blue-300" size={24} />
             <h3 className="text-xl font-black">AI Executive Summary</h3>
           </div>
           <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">{aiExecutiveSummary.summary}</p>
           <ul className="mt-4 space-y-2">
             {aiExecutiveSummary.bullets.map((bullet) => (
-              <li key={bullet} className="rounded-xl bg-white/10 px-3 py-2 text-xs font-bold text-violet-100">
+              <li key={bullet} className="rounded-xl bg-white/10 px-3 py-2 text-xs font-bold text-blue-100">
                 {bullet}
               </li>
             ))}
@@ -244,7 +244,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
                   {item.category}
                 </span>
                 {item.href ? (
-                  <Link href={item.href} className="mt-2 block text-sm font-bold text-violet-100 hover:text-white">
+                  <Link href={item.href} className="mt-2 block text-sm font-bold text-blue-100 hover:text-white">
                     {item.message}
                   </Link>
                 ) : (
@@ -287,8 +287,8 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
                 <div className="text-xs font-semibold text-slate-500">{t.role}</div>
               </div>
               <div className="font-semibold text-slate-600">{t.department}</div>
-              <div className="font-black text-violet-700">{t.clockInRate}%</div>
-              <div className="font-black text-[#7E22CE]">{t.productivityIndex}%</div>
+              <div className="font-black text-blue-700">{t.clockInRate}%</div>
+              <div className="font-black text-[#1D4ED8]">{t.productivityIndex}%</div>
               <div className="font-black">{t.healthScore}</div>
               <div className={`font-black ${t.riskScore >= 40 ? "text-red-600" : "text-slate-700"}`}>{t.riskScore}</div>
               <div className={`font-black ${t.attritionProbability >= 0.2 ? "text-[var(--vyron-warning-fg)]" : "text-slate-700"}`}>
@@ -307,7 +307,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
             <div key={h.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
               <div className="flex items-center justify-between">
                 <div className="font-black text-slate-900">{h.department}</div>
-                <div className="text-2xl font-black text-violet-700">{Math.round(h.score)}</div>
+                <div className="text-2xl font-black text-blue-700">{Math.round(h.score)}</div>
               </div>
               <div className="mt-3 grid grid-cols-3 gap-2 text-[10px] font-bold text-slate-500">
                 <span>Clock {Math.round(h.clockingScore)}</span>
@@ -323,8 +323,8 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
         <h3 className="text-xl font-black text-slate-950">Active forecasts</h3>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {forecasts.slice(0, 9).map((f) => (
-            <div key={f.id} className="rounded-2xl border border-violet-100 bg-violet-50/50 p-4">
-              <div className="text-[10px] font-black uppercase text-violet-600">{f.forecastType.replace(/_/g, " ")}</div>
+            <div key={f.id} className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+              <div className="text-[10px] font-black uppercase text-blue-600">{f.forecastType.replace(/_/g, " ")}</div>
               <div className="mt-1 text-lg font-black text-slate-900">
                 {f.forecastType === "labour_cost" || f.forecastType === "leakage" ? money(f.forecastValue) : f.forecastValue.toFixed(1)}
                 {f.forecastType === "productivity" || f.forecastType === "workforce_health" ? "%" : f.forecastType === "attrition" ? "%" : ""}
@@ -348,10 +348,10 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
           <Link
             key={item.label}
             href={item.href}
-            className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:border-violet-200"
+            className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:border-blue-200"
           >
             <div className="flex items-center gap-3">
-              <item.Icon className="text-violet-600" size={22} />
+              <item.Icon className="text-blue-600" size={22} />
               <span className="font-black text-slate-900">{item.label}</span>
             </div>
             <ArrowRight size={16} className="text-slate-400" />

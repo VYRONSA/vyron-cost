@@ -85,19 +85,19 @@ export default function RecoveryOpportunitiesClient({
     >
       <section className="grid gap-6">
         <div className="grid gap-5 md:grid-cols-4">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Estimated Recovery</div>
           <div className="mt-3 text-4xl font-black text-[var(--vyron-warning-fg)]">{money(summary.estimatedRecovery)}</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Verified Recovery</div>
-          <div className="mt-3 text-4xl font-black text-[#7E22CE]">{money(summary.verifiedRecovery)}</div>
+          <div className="mt-3 text-4xl font-black text-[#1D4ED8]">{money(summary.verifiedRecovery)}</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Potential Recovery</div>
-          <div className="mt-3 text-4xl font-black text-violet-700">{money(summary.potentialRecovery)}</div>
+          <div className="mt-3 text-4xl font-black text-blue-700">{money(summary.potentialRecovery)}</div>
         </div>
-        <div className="rounded-[2rem] bg-[#A855F7]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-[#3B82F6]/10 p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Recovered To Date</div>
           <div className="mt-3 text-4xl font-black text-[#84CC16]">{money(summary.recoveredToDate)}</div>
         </div>
@@ -107,19 +107,19 @@ export default function RecoveryOpportunitiesClient({
         Estimated Recovery uses assumptions where actual recipe quantity or sales volume is missing. These values are never presented as verified recoverable value.
       </div>
 
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <h3 className="text-lg font-black text-slate-900">Recovery Funnel</h3>
         <div className="mt-3 grid grid-cols-5 gap-3">
           {funnel.map((step) => (
             <div key={step.status} className="rounded-xl bg-slate-50 p-3 text-center">
               <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">{step.status}</div>
-              <div className="mt-2 text-2xl font-black text-violet-700">{step.count}</div>
+              <div className="mt-2 text-2xl font-black text-blue-700">{step.count}</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <h2 className="text-2xl font-black text-slate-900">Recovery Opportunities</h2>
@@ -146,8 +146,8 @@ export default function RecoveryOpportunitiesClient({
               </button>
             </div>
 
-            <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-              <Search size={18} className="text-violet-700" />
+            <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+              <Search size={18} className="text-blue-700" />
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
@@ -160,7 +160,7 @@ export default function RecoveryOpportunitiesClient({
               type="button"
               onClick={saveGenerated}
               disabled={saving}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
             >
               <RefreshCcw size={18} />
               {saving ? "Saving..." : "Save Calculated"}
@@ -169,7 +169,7 @@ export default function RecoveryOpportunitiesClient({
         </div>
 
         {message && (
-          <div className="mt-4 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-bold text-[#7E22CE]">
+          <div className="mt-4 rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-4 text-sm font-bold text-[#1D4ED8]">
             {message}
           </div>
         )}
@@ -181,7 +181,7 @@ export default function RecoveryOpportunitiesClient({
         )}
       </div>
 
-        <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <div className="grid grid-cols-10 bg-slate-50 px-5 py-4 text-xs font-black uppercase tracking-[0.14em] text-slate-500">
           <div>Opportunity</div>
           <div>Type</div>
@@ -200,7 +200,7 @@ export default function RecoveryOpportunitiesClient({
             <div>
               <div className="font-black text-slate-900">{item.title}</div>
               <div className="mt-1 flex flex-wrap gap-1">
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${item.is_estimated ? "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]" : "bg-[#A855F7]/12 text-[#7E22CE]"}`}>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${item.is_estimated ? "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]" : "bg-[#3B82F6]/12 text-[#1D4ED8]"}`}>
                   {item.is_estimated ? "Estimated" : "Verified"}
                 </span>
                 {(item.missing_inputs?.length || 0) > 0 ? (
@@ -211,19 +211,19 @@ export default function RecoveryOpportunitiesClient({
               </div>
             </div>
             <div className="font-bold text-slate-500">{item.opportunity_type}</div>
-            <div className="font-black text-violet-700">{money(item.monthly_value)}</div>
+            <div className="font-black text-blue-700">{money(item.monthly_value)}</div>
             <div className="font-black text-[#84CC16]">{money(item.annual_value)}</div>
             <div className="font-black text-slate-900">{Number(item.confidence || 0).toFixed(0)}%</div>
-            <div className={`font-black ${item.confidence_level === "High Confidence" ? "text-[#7E22CE]" : item.confidence_level === "Medium Confidence" ? "text-[var(--vyron-warning-fg)]" : "text-red-700"}`}>
+            <div className={`font-black ${item.confidence_level === "High Confidence" ? "text-[#1D4ED8]" : item.confidence_level === "Medium Confidence" ? "text-[var(--vyron-warning-fg)]" : "text-red-700"}`}>
               {item.confidence_level || "Medium Confidence"}
             </div>
-            <div className={`text-xs font-black ${item.is_estimated ? "text-[var(--vyron-warning-fg)]" : "text-[#7E22CE]"}`}>
+            <div className={`text-xs font-black ${item.is_estimated ? "text-[var(--vyron-warning-fg)]" : "text-[#1D4ED8]"}`}>
               {item.is_estimated ? "Estimated Recovery" : "Verified Recovery"}
             </div>
-            <div className="font-black text-violet-700">{item.status || "Identified"}</div>
+            <div className="font-black text-blue-700">{item.status || "Identified"}</div>
             <div className="font-bold text-slate-500">{item.data_source || "System"}</div>
             <div>
-              <Link href={`/recovery-opportunities/${item.id}`} className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">
+              <Link href={`/recovery-opportunities/${item.id}`} className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-700">
                 Open
               </Link>
             </div>

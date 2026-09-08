@@ -303,8 +303,8 @@ export default function ExecutionCentreClient({
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <SummaryCard label="Recommended" value={String(summary.recommended)} accent="#1D6BFF" />
             <SummaryCard label="Approved" value={String(summary.approved)} accent="#6366F1" />
-            <SummaryCard label="In Progress" value={String(summary.inProgress)} accent="#C026D3" />
-            <SummaryCard label="Completed" value={String(summary.completed)} accent="#8B5CF6" />
+            <SummaryCard label="In Progress" value={String(summary.inProgress)} accent="#2563EB" />
+            <SummaryCard label="Completed" value={String(summary.completed)} accent="#3B82F6" />
             <SummaryCard label="Overdue" value={String(summary.overdue)} accent="#2563EB" />
           </section>
 
@@ -779,7 +779,7 @@ function StatusBadge({ status, overdue }: { status: ExecutionActionRow["status"]
     Recommended: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
     Approved: "border-indigo-200 bg-indigo-50 text-indigo-800",
     "In Progress": "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    Completed: "border-violet-200 bg-violet-50 text-violet-800",
+    Completed: "border-blue-200 bg-blue-50 text-blue-800",
     Cancelled: "border-[#E2E8F0] bg-[#F6F7FB] text-[#64748B]",
   };
   return (

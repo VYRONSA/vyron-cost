@@ -321,7 +321,7 @@ export default function FinishedGoodsClient() {
         <MetricCard title="Fastest Mover" value={fastest?.product_name ?? "—"} />
       </div>
 
-      <div className="rounded-[32px] border border-white/70 bg-white/85 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.10)]">
+      <div className="rounded-[32px] border border-white/70 bg-white/85 p-5 shadow-[0_18px_60px_rgba(30,58,138,0.10)]">
         <div className="mb-5 flex flex-col justify-between gap-3 md:flex-row md:items-center">
           <div>
             <h2 className="text-xl font-black text-slate-950">Finished Goods Intelligence</h2>
@@ -336,7 +336,7 @@ export default function FinishedGoodsClient() {
             >
               <Download size={14} /> Export
             </button>
-            <Link href="/manufacturing-intelligence" className="rounded-full bg-purple-700 px-5 py-2 text-sm font-black text-white shadow-lg shadow-purple-700/20">Open Manufacturing</Link>
+            <Link href="/manufacturing-intelligence" className="rounded-full bg-blue-700 px-5 py-2 text-sm font-black text-white shadow-lg shadow-blue-700/20">Open Manufacturing</Link>
           </div>
         </div>
 
@@ -437,7 +437,7 @@ export default function FinishedGoodsClient() {
                 <SmallMetric label="Days Cover" value={`${item.days_cover} days`} />
               </div>
 
-              <div className="mt-5 rounded-2xl bg-purple-50 p-4 text-sm font-semibold text-purple-900">
+              <div className="mt-5 rounded-2xl bg-blue-50 p-4 text-sm font-semibold text-blue-900">
                 AI: {recommendation(item.status, item.product_name)}
               </div>
               </Link>
@@ -467,7 +467,7 @@ export default function FinishedGoodsClient() {
 }
 
 function MetricCard({ title, value }: { title: string; value: string }) {
-  return <div className="rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-[0_16px_50px_rgba(76,29,149,0.10)]"><p className="text-xs font-black uppercase tracking-[0.18em] text-purple-700">{title}</p><p className="mt-3 text-2xl font-black text-slate-950">{value}</p></div>;
+  return <div className="rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-[0_16px_50px_rgba(30,58,138,0.10)]"><p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">{title}</p><p className="mt-3 text-2xl font-black text-slate-950">{value}</p></div>;
 }
 function SmallMetric({ label, value }: { label: string; value: string }) {
   return <div className="rounded-2xl bg-slate-50 p-3"><p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</p><p className="mt-1 text-sm font-black text-slate-950">{value}</p></div>;
@@ -476,7 +476,7 @@ function badgeClass(status: string) {
   if (status === "Low Stock") return "bg-rose-100 text-rose-800";
   if (status === "Overstocked") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   if (status === "Watch") return "bg-indigo-100 text-indigo-800";
-  return "bg-[#A855F7]/12 text-[#4D7C0F]";
+  return "bg-[#3B82F6]/12 text-[#4D7C0F]";
 }
 function recommendation(status: string, product: string) {
   if (status === "Low Stock") return `${product} is below safe cover. Recommend manufacturing within 48 hours.`;

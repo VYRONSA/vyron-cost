@@ -193,7 +193,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
           ["Cost / Unit", formatMoney(run.cost_per_unit)],
         ].map(([label, val]) => (
           <div key={String(label)} className="rounded-2xl bg-white p-4 shadow-sm">
-            <div className="text-[10px] font-black uppercase text-violet-600">{label}</div>
+            <div className="text-[10px] font-black uppercase text-blue-600">{label}</div>
             <div className="mt-1 text-xl font-black">{val}</div>
           </div>
         ))}
@@ -258,7 +258,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
         </div>
 
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-black uppercase text-violet-800">Production Costing</h3>
+          <h3 className="text-sm font-black uppercase text-blue-800">Production Costing</h3>
           <dl className="mt-3 space-y-2 text-sm font-semibold">
             <div className="flex justify-between">
               <dt>Ingredient cost</dt>
@@ -290,7 +290,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
       </div>
 
       {run.status === "Completed" ? (
-        <div className="rounded-[2rem] border border-[#A855F7]/20 bg-[#A855F7]/10 p-6">
+        <div className="rounded-[2rem] border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-6">
           <h3 className="text-sm font-black uppercase text-[#4D7C0F]">Variance Analysis</h3>
           <div className="mt-4 grid gap-3 sm:grid-cols-3 text-sm font-bold">
             <div>Cost variance: {run.cost_variance_pct}%</div>
@@ -393,7 +393,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
           <ul className="mt-3 space-y-2 text-sm">
             {run.audit!.map((a, i) => (
               <li key={i} className="font-semibold text-slate-700">
-                <span className="text-violet-700">{a.event_type}</span> — {a.actor || "system"} — {a.detail || ""}{" "}
+                <span className="text-blue-700">{a.event_type}</span> — {a.actor || "system"} — {a.detail || ""}{" "}
                 <span className="text-xs text-slate-400">{new Date(a.created_at).toLocaleString()}</span>
               </li>
             ))}

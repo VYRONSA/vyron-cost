@@ -41,7 +41,7 @@ export function VyronVisualImagePanel({
   className?: string;
 }) {
   return (
-    <div className={`relative overflow-hidden rounded-[2.4rem] bg-[#09031f] p-3 shadow-[0_30px_90px_rgba(76,29,149,0.24)] ${className}`}>
+    <div className={`relative overflow-hidden rounded-[2.4rem] bg-[#030b1f] p-3 shadow-[0_30px_90px_rgba(30,58,138,0.24)] ${className}`}>
       <img
         src={VISUALS[visual]}
         alt=""

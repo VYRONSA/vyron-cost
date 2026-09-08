@@ -62,14 +62,14 @@ export default function ProductBomLinkClient({
   }
 
   return (
-    <div className="mt-5 rounded-3xl bg-violet-50 p-5">
+    <div className="mt-5 rounded-3xl bg-blue-50 p-5">
       <div className="mb-4 flex items-start gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl vyron-grad-surface text-white">
           <Link2 size={20} />
         </div>
         <div>
-          <div className="font-black text-violet-950">Link BOM to this product</div>
-          <p className="mt-1 text-sm font-bold leading-6 text-violet-900">Choose a BOM and product cost/GP will update.</p>
+          <div className="font-black text-blue-950">Link BOM to this product</div>
+          <p className="mt-1 text-sm font-bold leading-6 text-blue-900">Choose a BOM and product cost/GP will update.</p>
         </div>
       </div>
 
@@ -78,7 +78,7 @@ export default function ProductBomLinkClient({
           value={bomId}
           disabled={!canEdit}
           onChange={(e) => setBomId(e.target.value)}
-          className="rounded-2xl border border-violet-200 bg-white px-4 py-4 text-sm font-bold outline-none disabled:bg-slate-100"
+          className="rounded-2xl border border-blue-200 bg-white px-4 py-4 text-sm font-bold outline-none disabled:bg-slate-100"
         >
           <option value="">Choose BOM...</option>
           {boms.map((item) => (
@@ -114,7 +114,7 @@ export default function ProductBomLinkClient({
       {!canEdit ? (
         <p className="mt-4 text-sm font-bold text-[var(--vyron-success-fg)]">BOM linking is read-only for your role.</p>
       ) : null}
-      {message && <div className="mt-4 rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/12 px-4 py-3 text-sm font-bold text-[#7E22CE]">{message}</div>}
+      {message && <div className="mt-4 rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/12 px-4 py-3 text-sm font-bold text-[#1D4ED8]">{message}</div>}
       {errorMessage && <div className="mt-4 rounded-2xl bg-red-100 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div>}
     </div>
   );

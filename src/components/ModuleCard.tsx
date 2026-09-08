@@ -27,15 +27,15 @@ export default function ModuleCard({
         <div
           className={
             dark
-              ? "rounded-2xl bg-[#A855F7]/12 p-3 text-[#A855F7]"
-              : "rounded-2xl bg-[#A855F7]/10 p-3 text-[#7E22CE]"
+              ? "rounded-2xl bg-[#3B82F6]/12 p-3 text-[#3B82F6]"
+              : "rounded-2xl bg-[#3B82F6]/10 p-3 text-[#1D4ED8]"
           }
         >
           <Icon size={22} />
         </div>
 
         <ArrowUpRight
-          className={dark ? "text-[#A855F7]" : "text-[#84CC16]"}
+          className={dark ? "text-[#3B82F6]" : "text-[#84CC16]"}
           size={20}
         />
       </div>

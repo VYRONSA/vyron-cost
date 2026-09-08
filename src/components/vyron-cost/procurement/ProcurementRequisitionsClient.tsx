@@ -18,8 +18,8 @@ function formatMoney(value: number) {
 }
 
 function statusClass(status: string) {
-  if (status === "ReadyForPurchase") return "bg-violet-100 text-violet-800";
-  if (status === "Approved") return "bg-violet-100 text-violet-800";
+  if (status === "ReadyForPurchase") return "bg-blue-100 text-blue-800";
+  if (status === "Approved") return "bg-blue-100 text-blue-800";
   if (status === "Ordered") return "bg-blue-100 text-blue-800";
   if (status === "Received") return "bg-slate-100 text-slate-700";
   if (status === "Cancelled") return "bg-rose-100 text-rose-800";

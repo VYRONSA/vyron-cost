@@ -348,7 +348,7 @@ export default function VyronPublicLandingPage() {
 
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 sm:rounded-[1.5rem]">
                 <MiniSparkline />
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-[#1D6BFF]/20 text-violet-200 sm:h-12 sm:w-12 sm:rounded-2xl">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-[#1D6BFF]/20 text-blue-200 sm:h-12 sm:w-12 sm:rounded-2xl">
                   <BrainCircuit size={22} />
                 </div>
                 <div className={`mt-4 text-[10px] font-bold uppercase tracking-[0.14em] sm:text-xs ${M.mutedOnDark}`}>

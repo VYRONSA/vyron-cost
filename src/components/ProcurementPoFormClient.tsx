@@ -175,14 +175,14 @@ export default function ProcurementPoFormClient({
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-violet-800 via-indigo-950 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(81,63,190,0.28)]">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#A855F7]/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-[#A855F7]/10 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-blue-800 via-indigo-950 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(29,78,216,0.28)]">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#3B82F6]/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-[#3B82F6]/10 blur-3xl" />
         <div className="relative grid gap-7 xl:grid-cols-[1.2fr_0.8fr] xl:items-center">
           <div>
             <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#CBD5E1]">Premium Purchase Order Workspace</div>
             <h2 className="mt-5 text-4xl font-black tracking-[-0.04em] md:text-5xl">Procurement Command Centre</h2>
-            <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-violet-100">Create supplier purchase orders with approval discipline, line-level cost control and clear purchasing accountability.</p>
+            <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-blue-100">Create supplier purchase orders with approval discipline, line-level cost control and clear purchasing accountability.</p>
             <div className="mt-6 flex flex-wrap gap-3">
           <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">Supplier</span>
           <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">PO Lines</span>
@@ -193,7 +193,7 @@ export default function ProcurementPoFormClient({
           </div>
           <div className="grid gap-4">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-fuchsia-200">VYRON COST principle</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-200">VYRON COST principle</div>
               <p className="mt-3 text-lg font-black leading-snug text-white">&ldquo;Every purchase order creates future cost. Approve it before it becomes leakage.&rdquo;</p>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
@@ -203,7 +203,7 @@ export default function ProcurementPoFormClient({
           </div>
         </div>
       </section>
-      <section className="grid gap-6 rounded-[2rem] border border-violet-100 bg-white p-6">
+      <section className="grid gap-6 rounded-[2rem] border border-blue-100 bg-white p-6">
       <div className="grid gap-4 md:grid-cols-2">
         <label className="text-xs font-black uppercase text-slate-500">
           PO Number
@@ -265,7 +265,7 @@ export default function ProcurementPoFormClient({
             <input disabled={!canSaveDraft} type="date" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" value={line.expected_delivery_date} onChange={(e) => updateLine(line.id, { expected_delivery_date: e.target.value })} />
           </div>
         ))}
-        <button type="button" disabled={!canSaveDraft} onClick={() => setLines((c) => [...c, emptyLine()])} className="text-xs font-black text-violet-700 disabled:opacity-50">
+        <button type="button" disabled={!canSaveDraft} onClick={() => setLines((c) => [...c, emptyLine()])} className="text-xs font-black text-blue-700 disabled:opacity-50">
           + Add line
         </button>
       </div>

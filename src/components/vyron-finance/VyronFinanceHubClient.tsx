@@ -18,8 +18,8 @@ export default function VyronFinanceHubClient({ data }: { data: VyronFinanceInte
       }}
     >
       <section className="grid gap-8">
-            <div className="rounded-[2rem] bg-gradient-to-br from-indigo-950 via-slate-950 to-violet-950 p-8 text-white">
-              <div className="text-xs font-black uppercase tracking-widest text-violet-300">VYRON FINANCE Intelligence Layer</div>
+            <div className="rounded-[2rem] bg-gradient-to-br from-indigo-950 via-slate-950 to-blue-950 p-8 text-white">
+              <div className="text-xs font-black uppercase tracking-widest text-blue-300">VYRON FINANCE Intelligence Layer</div>
               <div className="mt-4 flex flex-wrap items-end gap-6">
                 <div className="text-6xl font-black">{healthScores.overall}</div>
                 <div className="text-sm text-slate-300">Overall financial health · feeds VYRON FINANCE</div>
@@ -34,7 +34,7 @@ export default function VyronFinanceHubClient({ data }: { data: VyronFinanceInte
                   ["Supplier", healthScores.supplierRisk],
                 ].map(([l, v]) => (
                   <div key={String(l)} className="rounded-xl bg-white/10 p-3">
-                    <div className="text-[10px] font-black uppercase text-violet-200">{l}</div>
+                    <div className="text-[10px] font-black uppercase text-blue-200">{l}</div>
                     <div className="text-2xl font-black">{v}</div>
                   </div>
                 ))}

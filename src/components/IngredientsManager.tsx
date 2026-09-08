@@ -140,7 +140,7 @@ export default function IngredientsManager({
     <section className="grid gap-6 xl:grid-cols-[0.8fr_1.5fr]">
       <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-3 text-[#84CC16]">
+          <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-3 text-[#84CC16]">
             <Plus size={20} />
           </div>
           <div>
@@ -152,38 +152,38 @@ export default function IngredientsManager({
         <div className="grid gap-4">
           <label className="text-sm font-black text-slate-600">
             Ingredient Name
-            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400" value={form.ingredient_name} onChange={(event) => updateForm("ingredient_name", event.target.value)} />
+            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400" value={form.ingredient_name} onChange={(event) => updateForm("ingredient_name", event.target.value)} />
           </label>
 
           <label className="text-sm font-black text-slate-600">
             Category
-            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400" value={form.category} onChange={(event) => updateForm("category", event.target.value)} />
+            <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400" value={form.category} onChange={(event) => updateForm("category", event.target.value)} />
           </label>
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="text-sm font-black text-slate-600">
               Current Cost
-              <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400" value={form.purchase_cost} onChange={(event) => updateForm("purchase_cost", event.target.value)} />
+              <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400" value={form.purchase_cost} onChange={(event) => updateForm("purchase_cost", event.target.value)} />
             </label>
 
             <label className="text-sm font-black text-slate-600">
               Yield %
-              <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400" value={form.yield_percent} onChange={(event) => updateForm("yield_percent", event.target.value)} />
+              <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400" value={form.yield_percent} onChange={(event) => updateForm("yield_percent", event.target.value)} />
             </label>
           </div>
 
           <div className="rounded-3xl bg-[#07110d] p-5 text-white">
-            <div className="text-xs font-black uppercase tracking-[0.25em] text-[#A855F7]">Preview</div>
+            <div className="text-xs font-black uppercase tracking-[0.25em] text-[#3B82F6]">Preview</div>
             <div className="mt-2 text-3xl font-black">{formatMoney(previewTrueCost)}</div>
             <div className="mt-1 text-sm text-slate-300">True usable unit cost</div>
           </div>
 
-          <button type="button" onClick={addIngredient} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
+          <button type="button" onClick={addIngredient} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#23304f]">
             <Plus size={18} />
             Add Ingredient
           </button>
 
-          {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#7E22CE]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#1D4ED8]">{message}</div>}
         </div>
       </div>
 
@@ -214,7 +214,7 @@ export default function IngredientsManager({
 
         <div className="overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[1120px]">
-            <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
+            <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
               <div>Ingredient</div><div>Category</div><div>Current</div><div>Yield</div><div>True Cost</div><div>Movement</div><div>Full Edit</div><div>Delete</div>
             </div>
 
@@ -225,7 +225,7 @@ export default function IngredientsManager({
               return (
                 <div key={item.id} className="grid grid-cols-8 items-center border-t border-slate-100 px-5 py-5 text-sm">
                   <div>
-                    <Link href={`/ingredients/${item.id}`} className="font-black text-[#F8FAFC] hover:text-[#7E22CE]">
+                    <Link href={`/ingredients/${item.id}`} className="font-black text-[#F8FAFC] hover:text-[#1D4ED8]">
                       {item.ingredient_name}
                     </Link>
                     <div className="mt-1 text-xs text-slate-500">{item.purchase_unit} → {item.recipe_unit}</div>
@@ -233,10 +233,10 @@ export default function IngredientsManager({
                   <div className="font-bold text-slate-600">{item.category}</div>
                   <div className="font-black">{formatMoney(Number(item.purchase_cost))}</div>
                   <div>{Number(item.yield_percent).toFixed(1)}%</div>
-                  <div className="font-black text-[#7E22CE]">{formatMoney(Number(item.true_unit_cost))}</div>
+                  <div className="font-black text-[#1D4ED8]">{formatMoney(Number(item.true_unit_cost))}</div>
                   <div><StatusPill tone={tone}>{movement >= 0 ? "+" : ""}{movement.toFixed(1)}%</StatusPill></div>
                   <div>
-                    <Link href={`/ingredients/${item.id}/edit`} className="inline-flex items-center gap-2 rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]">
+                    <Link href={`/ingredients/${item.id}/edit`} className="inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-3 py-2 text-xs font-black text-[#1D4ED8]">
                       <Edit3 size={14} />
                       Edit
                     </Link>

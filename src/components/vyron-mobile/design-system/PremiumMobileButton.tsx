@@ -10,7 +10,7 @@ const VARIANT_CLASS: Record<PremiumMobileButtonVariant, string> = {
     "border border-[#D8B24A]/70 vyron-grad-surface text-white shadow-[0_16px_36px_rgba(190,140,33,0.34)]",
   secondary: "border border-slate-200 bg-white text-slate-900 shadow-[0_10px_24px_rgba(15,23,42,0.07)]",
   danger: "border border-rose-200 bg-rose-50 text-rose-700 shadow-[0_10px_24px_rgba(59,130,246,0.14)]",
-  success: "border border-violet-200 bg-violet-50 text-violet-700 shadow-[0_10px_24px_rgba(16,185,129,0.14)]",
+  success: "border border-blue-200 bg-blue-50 text-blue-700 shadow-[0_10px_24px_rgba(16,185,129,0.14)]",
   ghost: "border border-transparent bg-slate-100/60 text-slate-700 hover:bg-slate-100",
 };
 

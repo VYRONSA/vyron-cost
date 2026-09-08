@@ -23,7 +23,7 @@ export function FieldHelp({ text }: { text: string }) {
 export function SectionHeader({ number, title, subtitle }: { number: string; title: string; subtitle: string }) {
   return (
     <div className="mb-4 flex items-center gap-3">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-sm font-black text-violet-700">{number}</div>
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-sm font-black text-blue-700">{number}</div>
       <div>
         <h3 className="text-lg font-black text-slate-950">{title}</h3>
         <p className="text-xs font-semibold text-slate-500">{subtitle}</p>
@@ -35,12 +35,12 @@ export function SectionHeader({ number, title, subtitle }: { number: string; tit
 export function CollapsibleHelp({ title = "Need help with this page?", items }: { title?: string; items: HelpItem[] }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-[1.5rem] border border-violet-100 bg-violet-50/60 p-4">
+    <div className="rounded-[1.5rem] border border-blue-100 bg-blue-50/60 p-4">
       <button type="button" onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between gap-3 text-left">
-        <span className="inline-flex items-center gap-2 text-sm font-black text-violet-800">
+        <span className="inline-flex items-center gap-2 text-sm font-black text-blue-800">
           <HelpCircle size={17} /> {title}
         </span>
-        <span className="text-xs font-black uppercase tracking-[0.14em] text-violet-600">{open ? "Hide" : "Show"}</span>
+        <span className="text-xs font-black uppercase tracking-[0.14em] text-blue-600">{open ? "Hide" : "Show"}</span>
       </button>
       {open ? (
         <div className="mt-4 grid gap-3 md:grid-cols-2">

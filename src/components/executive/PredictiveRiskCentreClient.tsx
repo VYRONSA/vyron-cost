@@ -293,7 +293,7 @@ export default function PredictiveRiskCentreClient({
               value={String(snapshot.summary.criticalForecastRisks)}
               accent="#2563EB"
             />
-            <SummaryCard label="High Forecast Risks" value={String(snapshot.summary.highForecastRisks)} accent="#A855F7" />
+            <SummaryCard label="High Forecast Risks" value={String(snapshot.summary.highForecastRisks)} accent="#3B82F6" />
             <SummaryCard
               label="Forecast Exposure"
               value={
@@ -309,12 +309,12 @@ export default function PredictiveRiskCentreClient({
           </section>
 
           {snapshot.forecastedRisks.length === 0 ? (
-            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-6">
+            <section className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
               <div className="flex items-start gap-3">
-                <LineChart size={22} className="mt-0.5 shrink-0 text-violet-700" />
+                <LineChart size={22} className="mt-0.5 shrink-0 text-blue-700" />
                 <div>
-                  <h2 className="text-lg font-bold text-violet-950">No significant forecast risks detected.</h2>
-                  <p className="mt-2 text-sm font-medium leading-6 text-violet-900">
+                  <h2 className="text-lg font-bold text-blue-950">No significant forecast risks detected.</h2>
+                  <p className="mt-2 text-sm font-medium leading-6 text-blue-900">
                     Current operational signals show no material forward-looking risk escalation within the{" "}
                     {snapshot.summary.forecastHorizon.toLowerCase()} horizon.
                   </p>
@@ -585,7 +585,7 @@ function ModelCard({ model }: { model: PredictiveModel }) {
 function ScenarioCard({ scenario }: { scenario: ScenarioItem }) {
   const accent =
     scenario.title === "Best Case"
-      ? "border-violet-200 bg-violet-50"
+      ? "border-blue-200 bg-blue-50"
       : scenario.title === "Worst Case"
         ? "border-rose-200 bg-rose-50"
         : "border-[#E2E8F0] bg-[#F8FAFC]";
@@ -699,7 +699,7 @@ function SeverityBadge({ severity }: { severity: ForecastedRisk["severity"] }) {
 
 function ConfidenceBadge({ confidence }: { confidence: ForecastedRisk["confidence"] }) {
   const classes = {
-    High: "text-violet-700",
+    High: "text-blue-700",
     Medium: "text-[var(--vyron-warning-fg)]",
     Low: "text-[#64748B]",
   };

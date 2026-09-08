@@ -21,7 +21,7 @@ function statusClass(status: string) {
   if (status === "Partially Received") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   if (status === "Sent" || status === "Approved") return "bg-blue-100 text-blue-800";
   if (status === "Cancelled") return "bg-rose-100 text-rose-800";
-  return "bg-violet-100 text-violet-800";
+  return "bg-blue-100 text-blue-800";
 }
 
 export default function PurchaseOrdersEngineClient() {

@@ -214,7 +214,7 @@ export default function InventoryStockListClient({
         ) : null}
 
         {addOpen ? (
-          <div className="mb-6 rounded-[2rem] border border-violet-100 bg-violet-50/40 p-5">
+          <div className="mb-6 rounded-[2rem] border border-blue-100 bg-blue-50/40 p-5">
             <div className="mb-4">
               <h3 className="text-xl font-black text-slate-950">Add New Inventory Item</h3>
               <p className="mt-1 text-sm font-semibold text-slate-500">
@@ -228,7 +228,7 @@ export default function InventoryStockListClient({
                 <select
                   value={form.entityType}
                   onChange={(e) => updateForm("entityType", e.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-violet-100 bg-white px-4 py-3 text-sm font-bold outline-none"
+                  className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold outline-none"
                 >
                   <option value="ingredient">Raw Material / Ingredient</option>
                   <option value="packaging">Packaging</option>
@@ -342,8 +342,8 @@ export default function InventoryStockListClient({
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1.75rem] border border-white/70 bg-white p-5 shadow-[0_16px_50px_rgba(76,29,149,0.08)]">
-      <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">{label}</p>
+    <div className="rounded-[1.75rem] border border-white/70 bg-white p-5 shadow-[0_16px_50px_rgba(30,58,138,0.08)]">
+      <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">{label}</p>
       <p className="mt-3 truncate text-2xl font-black text-slate-950">{value}</p>
     </div>
   );
@@ -370,7 +370,7 @@ function Input({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full rounded-2xl border border-violet-100 bg-white px-4 py-3 text-sm font-bold outline-none placeholder:text-slate-300 focus:border-violet-400"
+        className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold outline-none placeholder:text-slate-300 focus:border-blue-400"
       />
     </label>
   );

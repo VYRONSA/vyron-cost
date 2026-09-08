@@ -96,14 +96,14 @@ export function RecipeImageField({
         Product / Pack Photo
       </span>
 
-      <div className="mt-2 rounded-2xl border border-dashed border-violet-200 bg-violet-50/40 p-4">
+      <div className="mt-2 rounded-2xl border border-dashed border-blue-200 bg-blue-50/40 p-4">
         {url ? (
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={url}
               alt="Product pack"
-              className="h-32 w-full rounded-2xl border border-violet-100 bg-white object-cover sm:h-24 sm:w-32"
+              className="h-32 w-full rounded-2xl border border-blue-100 bg-white object-cover sm:h-24 sm:w-32"
             />
             {canEdit ? (
               <div className="flex flex-wrap gap-2">
@@ -111,7 +111,7 @@ export function RecipeImageField({
                   type="button"
                   disabled={busy}
                   onClick={() => inputRef.current?.click()}
-                  className="rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 disabled:opacity-60"
+                  className="rounded-2xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-black text-blue-700 disabled:opacity-60"
                 >
                   {busy ? "Working…" : "Replace photo"}
                 </button>
@@ -135,7 +135,7 @@ export function RecipeImageField({
               </p>
             ) : (
               <>
-                <ImagePlus size={26} className="mx-auto text-violet-500" />
+                <ImagePlus size={26} className="mx-auto text-blue-500" />
                 <p className="mt-2 text-sm font-semibold text-slate-500">
                   Add a photo of the finished pack — JPG, PNG or WEBP, up to 8MB.
                 </p>
@@ -144,7 +144,7 @@ export function RecipeImageField({
                     type="button"
                     disabled={busy || !loaded}
                     onClick={() => inputRef.current?.click()}
-                    className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white disabled:opacity-60"
+                    className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-3 text-sm font-black text-white disabled:opacity-60"
                   >
                     {busy ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
                     {busy ? "Uploading…" : "Upload Product Photo"}

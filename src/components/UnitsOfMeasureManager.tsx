@@ -142,7 +142,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
     <section className="grid gap-6 xl:grid-cols-[0.95fr_1.4fr]">
       <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-3 text-[#84CC16]">
+          <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-3 text-[#84CC16]">
             {editingId ? <Edit3 size={20} /> : <Plus size={20} />}
           </div>
           <div>
@@ -155,7 +155,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
           <label className="text-sm font-black text-slate-600">
             Code
             <input
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400"
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400"
               value={form.code}
               onChange={(e) => setForm((c) => ({ ...c, code: e.target.value }))}
             />
@@ -164,7 +164,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
           <label className="text-sm font-black text-slate-600">
             Name
             <input
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400"
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400"
               value={form.name}
               onChange={(e) => setForm((c) => ({ ...c, name: e.target.value }))}
             />
@@ -174,7 +174,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
             <label className="text-sm font-black text-slate-600">
               Symbol
               <input
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400"
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400"
                 value={form.symbol}
                 onChange={(e) => setForm((c) => ({ ...c, symbol: e.target.value }))}
               />
@@ -182,7 +182,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
             <label className="text-sm font-black text-slate-600">
               Category
               <input
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400"
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400"
                 value={form.category}
                 onChange={(e) => setForm((c) => ({ ...c, category: e.target.value }))}
               />
@@ -196,7 +196,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
                 type="number"
                 min={0}
                 max={6}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400"
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400"
                 value={form.decimal_precision}
                 onChange={(e) => setForm((c) => ({ ...c, decimal_precision: Number(e.target.value || 0) }))}
               />
@@ -204,7 +204,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
             <label className="text-sm font-black text-slate-600">
               Status
               <select
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400"
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400"
                 value={form.is_active ? "Active" : "Inactive"}
                 onChange={(e) => setForm((c) => ({ ...c, is_active: e.target.value === "Active" }))}
               >
@@ -217,7 +217,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
           <label className="text-sm font-black text-slate-600">
             Notes
             <textarea
-              className="mt-2 min-h-20 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400"
+              className="mt-2 min-h-20 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400"
               value={form.notes}
               onChange={(e) => setForm((c) => ({ ...c, notes: e.target.value }))}
             />
@@ -260,12 +260,12 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by code, name, category or symbol"
-          className="mt-4 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400"
+          className="mt-4 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400"
         />
 
         <div className="mt-4 overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[900px]">
-            <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
+            <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
               <div>Code</div>
               <div>Name</div>
               <div>Symbol</div>
@@ -281,13 +281,13 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
                 <div className="text-slate-600">{row.symbol || "-"}</div>
                 <div className="text-slate-600">{row.category}</div>
                 <div className="text-slate-600">{row.decimal_precision}</div>
-                <div className={row.is_active ? "text-purple-700" : "text-slate-500"}>{row.is_active ? "Active" : "Inactive"}</div>
+                <div className={row.is_active ? "text-blue-700" : "text-slate-500"}>{row.is_active ? "Active" : "Inactive"}</div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => startEdit(row)}
                     disabled={busy}
-                    className="inline-flex items-center gap-1 rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE] disabled:opacity-60"
+                    className="inline-flex items-center gap-1 rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-3 py-2 text-xs font-black text-[#1D4ED8] disabled:opacity-60"
                   >
                     <Edit3 size={14} />Edit
                   </button>

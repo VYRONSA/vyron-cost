@@ -25,7 +25,7 @@ export default function ReviewWorkspaceLayoutControls({
           type="button"
           onClick={() => onChange(id)}
           className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black transition ${
-            layout === id ? "bg-white text-violet-800 shadow-sm" : "text-slate-600 hover:bg-white/70"
+            layout === id ? "bg-white text-blue-800 shadow-sm" : "text-slate-600 hover:bg-white/70"
           }`}
         >
           <Icon size={12} />

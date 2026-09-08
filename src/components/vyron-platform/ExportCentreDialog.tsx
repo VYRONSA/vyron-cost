@@ -365,7 +365,7 @@ export default function ExportCentreDialog(props: ExportCentreDialogProps) {
             type="button"
             onClick={onExport}
             disabled={!canExport}
-            className="rounded-full bg-purple-700 px-5 py-2 text-sm font-black text-white shadow-lg shadow-purple-700/20 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full bg-blue-700 px-5 py-2 text-sm font-black text-white shadow-lg shadow-blue-700/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy ? "Exporting..." : "Export"}
           </button>

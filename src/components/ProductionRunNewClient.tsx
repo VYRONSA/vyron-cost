@@ -102,7 +102,7 @@ export default function ProductionRunNewClient() {
     >
       <section className="grid max-w-3xl gap-6">
         <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <label className="text-xs font-black uppercase tracking-[0.12em] text-violet-600">Recipe / BOM *</label>
+        <label className="text-xs font-black uppercase tracking-[0.12em] text-blue-600">Recipe / BOM *</label>
         <select
           value={bomId}
           onChange={(e) => setBomId(e.target.value)}
@@ -192,7 +192,7 @@ export default function ProductionRunNewClient() {
               type="button"
               disabled={saving}
               onClick={() => void createRun()}
-              className="rounded-2xl bg-violet-700 px-6 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+              className="rounded-2xl bg-blue-700 px-6 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
             >
               {saving ? "Creating…" : "Create Production Run"}
             </button>

@@ -42,7 +42,7 @@ export default function TrainingManualClient() {
                 </div>
                 <a
                   href="/api/training-manual"
-                  className="rounded-xl vyron-grad-deep px-5 py-3 text-sm font-black text-[#DDD6FE]"
+                  className="rounded-xl vyron-grad-deep px-5 py-3 text-sm font-black text-[#BFDBFE]"
                 >
                   Download Full Training Manual PDF
                 </a>
@@ -52,7 +52,7 @@ export default function TrainingManualClient() {
             <div className="grid gap-4 md:grid-cols-2">
               {manualSections.map((section) => (
                 <div key={section.n} className="rounded-[2rem] border border-white bg-white p-5 shadow-sm">
-                  <div className="text-xs font-black uppercase tracking-[0.16em] text-[#7E22CE]">Step {section.n}</div>
+                  <div className="text-xs font-black uppercase tracking-[0.16em] text-[#1D4ED8]">Step {section.n}</div>
                   <h3 className="mt-2 text-lg font-black text-[#F8FAFC]">{section.title}</h3>
                   <p className="mt-2 text-sm leading-7 text-slate-600">{section.body}</p>
                 </div>
@@ -60,7 +60,7 @@ export default function TrainingManualClient() {
             </div>
 
             <div className="rounded-[2rem] vyron-grad-deep p-6 text-white">
-              <h3 className="text-lg font-black text-[#DDD6FE]">Quick links for training</h3>
+              <h3 className="text-lg font-black text-[#BFDBFE]">Quick links for training</h3>
               <div className="mt-4 flex flex-wrap gap-3 text-sm font-black">
                 <Link href="/products" className="rounded-full bg-white/10 px-4 py-2">Products</Link>
                 <Link href="/recipes" className="rounded-full bg-white/10 px-4 py-2">Recipes & BOM</Link>

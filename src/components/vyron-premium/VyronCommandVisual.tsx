@@ -37,7 +37,7 @@ export function VyronCommandVisual({
   imageClassName?: string;
 }) {
   return (
-    <div className={`relative overflow-hidden rounded-[2.6rem] bg-[#09031f] p-3 shadow-[0_30px_90px_rgba(76,29,149,.25)] ${className}`}>
+    <div className={`relative overflow-hidden rounded-[2.6rem] bg-[#030b1f] p-3 shadow-[0_30px_90px_rgba(30,58,138,.25)] ${className}`}>
       <img
         src={VYRON_VISUALS[visual]}
         alt=""

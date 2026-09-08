@@ -51,7 +51,7 @@ export default function InventoryStockDetailClient({ stockItemId }: { stockItemI
       }}
     >
       <section className="grid gap-6">
-        <Link href="/inventory/stock" className="text-xs font-black text-violet-700">
+        <Link href="/inventory/stock" className="text-xs font-black text-blue-700">
         ← Stock Master
         </Link>
         <h1 className="text-3xl font-black">{String(item.description)}</h1>
@@ -59,22 +59,22 @@ export default function InventoryStockDetailClient({ stockItemId }: { stockItemI
         {String(item.item_code)} · {String(item.entity_type)} · {String(item.stock_status)} · {String(item.valuation_method)}
       </p>
       <div className="grid gap-4 md:grid-cols-4">
-        <div className="rounded-2xl bg-violet-50 p-4">
-          <div className="text-[10px] font-black uppercase text-violet-600">On Hand</div>
+        <div className="rounded-2xl bg-blue-50 p-4">
+          <div className="text-[10px] font-black uppercase text-blue-600">On Hand</div>
           <div className="text-2xl font-black">
             {Number(item.qty_on_hand).toFixed(2)} {String(item.unit)}
           </div>
         </div>
-        <div className="rounded-2xl bg-violet-50 p-4">
-          <div className="text-[10px] font-black uppercase text-violet-600">Avg Cost</div>
+        <div className="rounded-2xl bg-blue-50 p-4">
+          <div className="text-[10px] font-black uppercase text-blue-600">Avg Cost</div>
           <div className="text-2xl font-black">R{Number(item.average_cost).toFixed(2)}</div>
         </div>
-        <div className="rounded-2xl bg-violet-50 p-4">
-          <div className="text-[10px] font-black uppercase text-violet-600">Current Cost</div>
+        <div className="rounded-2xl bg-blue-50 p-4">
+          <div className="text-[10px] font-black uppercase text-blue-600">Current Cost</div>
           <div className="text-2xl font-black">R{Number(item.current_cost).toFixed(2)}</div>
         </div>
-        <div className="rounded-2xl bg-violet-50 p-4">
-          <div className="text-[10px] font-black uppercase text-violet-600">Inventory Value</div>
+        <div className="rounded-2xl bg-blue-50 p-4">
+          <div className="text-[10px] font-black uppercase text-blue-600">Inventory Value</div>
           <div className="text-2xl font-black">{formatMoney(Number(item.inventory_value))}</div>
         </div>
       </div>
@@ -85,7 +85,7 @@ export default function InventoryStockDetailClient({ stockItemId }: { stockItemI
         <div className="overflow-x-auto rounded-2xl border bg-white">
         <h2 className="border-b px-4 py-3 text-sm font-black">Stock Ledger</h2>
         <table className="min-w-full text-xs">
-          <thead className="bg-slate-900 font-black uppercase text-[#A855F7]">
+          <thead className="bg-slate-900 font-black uppercase text-[#3B82F6]">
             <tr>
               <th className="px-3 py-2">Date</th>
               <th>Type</th>

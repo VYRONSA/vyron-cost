@@ -39,7 +39,7 @@ export default function AiAssistantClient() {
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl vyron-grad-deep text-[#DDD6FE]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl vyron-grad-deep text-[#BFDBFE]">
             <Sparkles size={22} />
           </div>
           <div>
@@ -56,13 +56,13 @@ export default function AiAssistantClient() {
               if (event.key === "Enter") ask();
             }}
             placeholder="Ask VYRON anything about margin, suppliers, recipes..."
-            className="flex-1 rounded-2xl border border-slate-200 px-4 py-4 text-sm font-bold outline-none focus:border-[#A78BFA]"
+            className="flex-1 rounded-2xl border border-slate-200 px-4 py-4 text-sm font-bold outline-none focus:border-[#60A5FA]"
           />
           <button
             type="button"
             onClick={() => ask()}
             disabled={isPending}
-            className="inline-flex items-center gap-2 rounded-2xl vyron-grad-deep px-5 py-4 text-sm font-black text-[#DDD6FE] disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-2xl vyron-grad-deep px-5 py-4 text-sm font-black text-[#BFDBFE] disabled:opacity-60"
           >
             <WandSparkles size={18} />
             Ask
@@ -77,7 +77,7 @@ export default function AiAssistantClient() {
                 key={item}
                 type="button"
                 onClick={() => ask(item)}
-                className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-4 py-2 text-xs font-black text-[#7E22CE] transition hover:bg-[#A855F7]/15"
+                className="rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-2 text-xs font-black text-[#1D4ED8] transition hover:bg-[#3B82F6]/15"
               >
                 {item}
               </button>
@@ -95,7 +95,7 @@ export default function AiAssistantClient() {
         ) : (
           <div className="mt-4 space-y-4">
             <div className="rounded-2xl vyron-grad-deep p-5 text-white">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#DDD6FE]">Summary</div>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#BFDBFE]">Summary</div>
               <div className="mt-2 text-lg font-black">{answer.summary}</div>
             </div>
             <div>
@@ -125,12 +125,12 @@ export default function AiAssistantClient() {
                     ? "border-red-200 bg-red-50"
                     : item.tone === "amber"
                       ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]"
-                      : "border-[#A855F7]/25 bg-[#A855F7]/10"
+                      : "border-[#3B82F6]/25 bg-[#3B82F6]/10"
                 }`}
               >
                 <div className="vyron-t-title text-[#0F172A]">{item.title}</div>
                 <div className="mt-2 text-sm text-slate-600">{item.detail}</div>
-                <div className="mt-3 text-lg font-black text-violet-700">{item.impact}</div>
+                <div className="mt-3 text-lg font-black text-blue-700">{item.impact}</div>
               </Link>
             ))}
           </div>

@@ -447,7 +447,7 @@ function MiniBars({ data, suffix, moneyMode }: { data: Array<{ label: string; va
         <div key={row.label}>
           <div className="mb-1 flex items-center justify-between text-xs text-slate-600"><span>{row.label}</span><span>{moneyMode ? money(row.value) : `${row.value.toFixed(2)}${suffix || ""}`}</span></div>
           <div className="h-2 rounded bg-slate-100">
-            <div className={`h-2 rounded ${row.value >= 0 ? "bg-violet-500" : "bg-rose-500"}`} style={{ width: `${Math.min(100, (Math.abs(row.value) / max) * 100)}%` }} />
+            <div className={`h-2 rounded ${row.value >= 0 ? "bg-blue-500" : "bg-rose-500"}`} style={{ width: `${Math.min(100, (Math.abs(row.value) / max) * 100)}%` }} />
           </div>
         </div>
       ))}

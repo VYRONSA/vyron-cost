@@ -41,13 +41,13 @@ export default function AuditorWorkspaceClient() {
       }}
     >
       <section className="grid gap-8">
-            <div className="rounded-[2rem] border-2 border-dashed border-violet-300 bg-violet-50 p-6">
-              <div className="text-xs font-black uppercase text-violet-700">Auditor mode — read only</div>
-              <p className="mt-2 text-sm font-semibold text-violet-900">Search and drill into records without edit permissions.</p>
+            <div className="rounded-[2rem] border-2 border-dashed border-blue-300 bg-blue-50 p-6">
+              <div className="text-xs font-black uppercase text-blue-700">Auditor mode — read only</div>
+              <p className="mt-2 text-sm font-semibold text-blue-900">Search and drill into records without edit permissions.</p>
             </div>
             <div className="flex flex-wrap gap-2">
               {QUICK_LINKS.map(([label, href]) => (
-                <Link key={href} href={href} className="rounded-xl bg-white px-4 py-2 text-xs font-black shadow-sm hover:bg-violet-50">
+                <Link key={href} href={href} className="rounded-xl bg-white px-4 py-2 text-xs font-black shadow-sm hover:bg-blue-50">
                   {label}
                 </Link>
               ))}
@@ -67,8 +67,8 @@ export default function AuditorWorkspaceClient() {
             <ul className="space-y-2">
               {results.map((r) => (
                 <li key={`${r.entityType}-${r.id}`}>
-                  <Link href={r.href} className="block rounded-xl bg-white p-4 shadow-sm hover:bg-violet-50">
-                    <span className="text-[10px] font-black uppercase text-violet-600">{r.entityType}</span>
+                  <Link href={r.href} className="block rounded-xl bg-white p-4 shadow-sm hover:bg-blue-50">
+                    <span className="text-[10px] font-black uppercase text-blue-600">{r.entityType}</span>
                     <div className="font-black text-slate-900">{r.label}</div>
                     <div className="text-sm text-slate-600">{r.detail}</div>
                   </Link>

@@ -18,11 +18,11 @@ const STATUS_COLOURS: Record<string, string> = {
   New: "bg-slate-100 text-slate-700",
   Assigned: "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
   "Under Review": "bg-sky-100 text-sky-800",
-  Accepted: "bg-[#A855F7]/12 text-[#4D7C0F]",
+  Accepted: "bg-[#3B82F6]/12 text-[#4D7C0F]",
   Rejected: "bg-red-100 text-red-800",
   Implemented: "bg-indigo-100 text-indigo-800",
   Closed: "bg-slate-200 text-slate-600",
-  "Scheduled Review": "bg-violet-100 text-violet-800",
+  "Scheduled Review": "bg-blue-100 text-blue-800",
 };
 
 export default function AiProcurementManagerClient({
@@ -75,20 +75,20 @@ export default function AiProcurementManagerClient({
       }}
     >
       <section className="grid gap-6">
-        <div className="rounded-[2rem] bg-gradient-to-r from-violet-700 to-indigo-800 p-6 text-white shadow-[0_18px_50px_rgba(81,63,190,0.2)]">
+        <div className="rounded-[2rem] bg-gradient-to-r from-blue-700 to-indigo-800 p-6 text-white shadow-[0_18px_50px_rgba(29,78,216,0.2)]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-violet-200">
+            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-blue-200">
               <BrainCircuit size={16} /> See It. Understand It. Fix It.
             </div>
             <h2 className="mt-2 text-2xl font-black">AI Procurement Command Centre</h2>
-            <p className="mt-2 max-w-xl text-sm font-semibold text-violet-100">
+            <p className="mt-2 max-w-xl text-sm font-semibold text-blue-100">
               Recommendations from supplier price history, POs, GRNs, invoices, inventory, production, and recovery intelligence — not generic AI text.
             </p>
           </div>
           <div className="text-right">
             <div className="text-5xl font-black">{health.overall}</div>
-            <div className="text-xs font-black uppercase tracking-[0.14em] text-violet-200">/ 100</div>
+            <div className="text-xs font-black uppercase tracking-[0.14em] text-blue-200">/ 100</div>
           </div>
         </div>
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
@@ -102,13 +102,13 @@ export default function AiProcurementManagerClient({
             { label: "Production efficiency", value: health.productionEfficiency },
           ].map((item) => (
             <div key={item.label} className="rounded-xl bg-white/10 px-3 py-2">
-              <div className="text-[10px] font-black uppercase tracking-[0.1em] text-violet-200">{item.label}</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.1em] text-blue-200">{item.label}</div>
               <div className="mt-1 text-xl font-black">{item.value}</div>
             </div>
           ))}
         </div>
         {health.notes.length > 0 && (
-          <ul className="mt-4 list-disc space-y-1 pl-5 text-xs font-semibold text-violet-100">
+          <ul className="mt-4 list-disc space-y-1 pl-5 text-xs font-semibold text-blue-100">
             {health.notes.map((note) => (
               <li key={note}>{note}</li>
             ))}
@@ -121,7 +121,7 @@ export default function AiProcurementManagerClient({
           type="button"
           disabled={recomputing}
           onClick={() => void recompute()}
-          className="inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
         >
           <RefreshCw size={16} className={recomputing ? "animate-spin" : ""} />
           {recomputing ? "Regenerating…" : "Regenerate from live data"}
@@ -129,31 +129,31 @@ export default function AiProcurementManagerClient({
       </div>
 
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Open Recommendations</div>
           <div className="mt-3 text-4xl font-black text-[var(--vyron-warning-fg)]">{stats.openRecommendations}</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Accepted</div>
           <div className="mt-3 text-4xl font-black text-sky-700">{stats.acceptedRecommendations}</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Implemented</div>
-          <div className="mt-3 text-4xl font-black text-[#7E22CE]">{stats.implementedRecommendations}</div>
+          <div className="mt-3 text-4xl font-black text-[#1D4ED8]">{stats.implementedRecommendations}</div>
         </div>
-        <div className="rounded-[2rem] bg-red-50 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-red-50 p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-red-600">High risk items</div>
           <div className="mt-3 text-4xl font-black text-red-700">{stats.highRiskItems}</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Potential Savings</div>
-          <div className="mt-3 text-4xl font-black text-violet-700">{procurementMoney(stats.potentialSavingsAnnual)}</div>
+          <div className="mt-3 text-4xl font-black text-blue-700">{procurementMoney(stats.potentialSavingsAnnual)}</div>
           <p className="mt-1 text-xs font-bold text-slate-500">Annualized open actions</p>
         </div>
-        <div className="rounded-[2rem] bg-[#A855F7]/10 p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-[#3B82F6]/10 p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Realized Savings</div>
           <div className="mt-3 text-4xl font-black text-[#84CC16]">{procurementMoney(stats.realizedSavingsAnnual)}</div>
-          <p className="mt-1 text-xs font-bold text-[#7E22CE]">From implemented actions</p>
+          <p className="mt-1 text-xs font-bold text-[#1D4ED8]">From implemented actions</p>
         </div>
       </div>
 
@@ -190,12 +190,12 @@ export default function AiProcurementManagerClient({
           <Link
             key={row.recommendation_key}
             href={`/ai-procurement-manager/${encodeURIComponent(row.recommendation_key)}`}
-            className="block rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)] transition hover:shadow-[0_22px_60px_rgba(81,63,190,0.12)]"
+            className="block rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)] transition hover:shadow-[0_22px_60px_rgba(29,78,216,0.12)]"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-violet-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-violet-800">
+                  <span className="rounded-full bg-blue-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-blue-800">
                     {row.category}
                   </span>
                   <span
@@ -214,14 +214,14 @@ export default function AiProcurementManagerClient({
               </div>
               <div className="text-right">
                 <div className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">Potential / year</div>
-                <div className="mt-1 text-2xl font-black text-[#7E22CE]">
+                <div className="mt-1 text-2xl font-black text-[#1D4ED8]">
                   {procurementMoney(row.potential_benefit_annual)}
                 </div>
                 <div className="mt-1 text-xs font-bold text-slate-500">{row.confidence_level}</div>
               </div>
             </div>
-            <div className="mt-4 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-4">
-              <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7E22CE]">Recommendation</div>
+            <div className="mt-4 rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-4">
+              <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#1D4ED8]">Recommendation</div>
               <p className="mt-1 text-sm font-bold text-[#4D7C0F]">{row.recommended_action}</p>
             </div>
             <p className="mt-3 text-xs font-bold text-slate-500">{row.expected_result}</p>

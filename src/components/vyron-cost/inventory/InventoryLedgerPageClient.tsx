@@ -82,7 +82,7 @@ export default function InventoryLedgerPageClient() {
                   <td className="px-4 py-3 font-mono text-xs">{row.transaction_number}</td>
                   <td className="px-4 py-3">{row.transaction_type}</td>
                   <td className="px-4 py-3 font-semibold">{row.item_name}</td>
-                  <td className={`px-4 py-3 text-right font-bold ${row.signed_quantity < 0 ? "text-rose-600" : "text-violet-700"}`}>
+                  <td className={`px-4 py-3 text-right font-bold ${row.signed_quantity < 0 ? "text-rose-600" : "text-blue-700"}`}>
                     {row.signed_quantity > 0 ? "+" : ""}
                     {row.signed_quantity}
                   </td>

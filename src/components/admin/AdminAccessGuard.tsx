@@ -39,7 +39,7 @@ export default function AdminAccessGuard({ children }: { children: React.ReactNo
 
   if (!allowed) {
     return (
-      <div className="rounded-[2rem] border border-violet-100 bg-white p-8 text-center shadow-lg">
+      <div className="rounded-[2rem] border border-blue-100 bg-white p-8 text-center shadow-lg">
         <h1 className="text-2xl font-black text-slate-950">
           {signedIn ? "Admin access required" : "Sign in to continue"}
         </h1>

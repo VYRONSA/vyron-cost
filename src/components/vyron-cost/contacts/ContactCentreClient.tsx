@@ -63,14 +63,14 @@ function formatDate(value: string | null | undefined) {
 function ContactBadge({ contact }: { contact: VyronContact }) {
   if (contact.is_customer && contact.is_supplier) {
     return (
-      <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-violet-800">
+      <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-blue-800">
         Customer + Supplier
       </span>
     );
   }
   if (contact.is_customer) {
     return (
-      <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-violet-800">
+      <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-blue-800">
         Customer
       </span>
     );
@@ -639,7 +639,7 @@ export default function ContactCentreClient() {
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wide text-[#64748B]">Contact Name</div>
                     <div className="mt-1 text-xl font-black text-[#0F172A]">{selectedContact.contact_name}</div>
-                    <Link href={`/contacts/${selectedContact.id}`} className="mt-2 inline-block text-xs font-black text-violet-700 hover:underline">
+                    <Link href={`/contacts/${selectedContact.id}`} className="mt-2 inline-block text-xs font-black text-blue-700 hover:underline">
                       Open Full Detail Page
                     </Link>
                     <div className="mt-3">

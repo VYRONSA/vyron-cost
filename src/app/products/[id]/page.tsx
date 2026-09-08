@@ -239,10 +239,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           ["BOM Cost", formatMoney(cost), "text-slate-900"],
           ["Selling Price", formatMoney(price), "text-slate-900"],
           ["Actual GP", `${actualGp.toFixed(1)}%`, actualGp < targetGp ? "text-red-600" : "text-[#84CC16]"],
-          ["Target GP", `${targetGp.toFixed(1)}%`, "text-violet-700"],
+          ["Target GP", `${targetGp.toFixed(1)}%`, "text-blue-700"],
           ["Suggested", formatMoney(suggestedPrice), "text-[#84CC16]"],
         ].map(([label, value, cls]) => (
-          <div key={label} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+          <div key={label} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">{label}</div>
             <div className={`mt-3 text-3xl font-black ${cls}`}>{value}</div>
           </div>
@@ -250,7 +250,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </section>
 
       <section className="mt-5 grid gap-5 lg:grid-cols-3">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)] lg:col-span-1">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)] lg:col-span-1">
           <h2 className="text-xl font-black text-slate-900">Basic Information</h2>
           <div className="mt-4 space-y-2 text-sm font-semibold text-slate-600">
             <div><span className="font-black text-slate-800">Product:</span> {product.product_name}</div>
@@ -260,7 +260,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)] lg:col-span-1">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)] lg:col-span-1">
           <h2 className="text-xl font-black text-slate-900">Cost Information</h2>
           <div className="mt-4 space-y-2 text-sm font-semibold text-slate-600">
             <div><span className="font-black text-slate-800">Total Cost:</span> {formatMoney(cost)}</div>
@@ -269,7 +269,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)] lg:col-span-1">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)] lg:col-span-1">
           <h2 className="text-xl font-black text-slate-900">Pricing</h2>
           <div className="mt-4 space-y-2 text-sm font-semibold text-slate-600">
             <div><span className="font-black text-slate-800">Selling Price:</span> {formatMoney(price)}</div>
@@ -279,29 +279,29 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </section>
 
       <section className="mt-5 grid gap-5 md:grid-cols-3">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <h2 className="text-xl font-black text-slate-900">GP</h2>
           <div className="mt-3 text-3xl font-black text-slate-900">{actualGp.toFixed(1)}%</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Target GP</h2>
-          <div className="mt-3 text-3xl font-black text-violet-700">{targetGp.toFixed(1)}%</div>
+          <div className="mt-3 text-3xl font-black text-blue-700">{targetGp.toFixed(1)}%</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Actual GP</h2>
           <div className={`mt-3 text-3xl font-black ${actualGp < targetGp ? "text-red-600" : "text-[#84CC16]"}`}>{actualGp.toFixed(1)}%</div>
         </div>
       </section>
 
       <section className="mt-5 grid gap-5 xl:grid-cols-2">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Recipe/BOM</h2>
           {bom ? (
-            <div className="mt-5 rounded-3xl bg-violet-50 p-5">
-              <div className="text-xs font-black uppercase tracking-[0.14em] text-violet-700">BOM / Recipe</div>
-              <div className="mt-2 text-2xl font-black text-violet-950">{bom.bom_name}</div>
+            <div className="mt-5 rounded-3xl bg-blue-50 p-5">
+              <div className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">BOM / Recipe</div>
+              <div className="mt-2 text-2xl font-black text-blue-950">{bom.bom_name}</div>
               <div className="mt-5 flex flex-wrap gap-3">
-                <Link href={`/recipes/${bom.id}`} className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-700">Open BOM</Link>
+                <Link href={`/recipes/${bom.id}`} className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-blue-700">Open BOM</Link>
                 <Link href={`/recipes/${bom.id}/edit`} className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">Edit BOM</Link>
               </div>
             </div>
@@ -312,7 +312,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <ProductBomLinkClient productId={product.id} currentBomId={product.linked_bom_id} sellingPrice={price} targetGp={targetGp} boms={boms} />
         </div>
 
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Ingredient Summary</h2>
           {detailData.ingredientSummary.length ? (
             <div className="mt-4 space-y-3">
@@ -339,7 +339,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         </div>
       </section>
 
-      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <h2 className="text-xl font-black text-slate-900">Inventory</h2>
         {detailData.inventory ? (
           <div className="mt-4 grid gap-3 md:grid-cols-4">
@@ -353,7 +353,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         )}
       </section>
 
-      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <h2 className="text-xl font-black text-slate-900">Sales Orders</h2>
         <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200">
           <table className="min-w-full text-sm">
@@ -379,7 +379,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                     <td className="px-4 py-3 text-right font-semibold">{formatMoney(row.line_total)}</td>
                     <td className="px-4 py-3 text-right font-semibold">{formatMoney(row.line_gp)}</td>
                     <td className="px-4 py-3">
-                      <Link href={`/customer-invoices/${encodeURIComponent(row.invoice_number)}`} className="font-black text-violet-700 hover:underline">
+                      <Link href={`/customer-invoices/${encodeURIComponent(row.invoice_number)}`} className="font-black text-blue-700 hover:underline">
                         {row.invoice_number}
                       </Link>
                     </td>
@@ -396,7 +396,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </section>
 
       <section className="mt-5 grid gap-5 xl:grid-cols-2">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Production History</h2>
           {detailData.productionHistory.length ? (
             <div className="mt-4 space-y-3">
@@ -413,7 +413,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
 
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Purchase History</h2>
           {detailData.purchaseHistory.length ? (
             <div className="mt-4 space-y-3">
@@ -432,13 +432,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </section>
 
       <section className="mt-5 grid gap-5 xl:grid-cols-2">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <h2 className="text-xl font-black text-slate-900">AI Cost Intelligence</h2>
           {detailData.aiInsights.length ? (
             <div className="mt-4 space-y-3">
               {detailData.aiInsights.map((insight) => (
                 <div key={insight.id} className="rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-700">
-                  <div className="inline-flex rounded-full bg-violet-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-violet-700">{insight.priority}</div>
+                  <div className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-blue-700">{insight.priority}</div>
                   <div className="mt-2 font-black text-slate-900">{insight.title}</div>
                   <div className="mt-1">{insight.impact}</div>
                   <div className="mt-1 text-slate-600">{insight.recommendation}</div>
@@ -450,7 +450,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
 
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Audit History</h2>
           {detailData.auditHistory.length ? (
             <div className="mt-4 space-y-3">

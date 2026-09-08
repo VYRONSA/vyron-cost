@@ -104,7 +104,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
   if (error || !detail) {
     return (
       <div className="space-y-4">
-        <Link href="/document-intelligence" className="text-xs font-black uppercase text-violet-700">
+        <Link href="/document-intelligence" className="text-xs font-black uppercase text-blue-700">
           ← Document Intelligence
         </Link>
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
@@ -123,7 +123,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
         <div>
           <Link
             href="/document-intelligence"
-            className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-violet-700"
+            className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-blue-700"
           >
             ← Back
           </Link>
@@ -145,11 +145,11 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
         </button>
       </div>
 
-      {message ? <p className="rounded-xl border border-[#A855F7]/25 bg-[#A855F7]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
+      {message ? <p className="rounded-xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
       {error ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800">{error}</p> : null}
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <section className="rounded-[2rem] border border-violet-100 bg-white p-4 min-h-[420px]">
+        <section className="rounded-[2rem] border border-blue-100 bg-white p-4 min-h-[420px]">
           <h3 className="mb-3 text-sm font-black uppercase text-slate-500">Original invoice preview</h3>
           {previewUrl ? (
             <InvoiceDocumentViewer url={previewUrl} mimeType={previewMime || "application/pdf"} />
@@ -158,7 +158,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
           )}
         </section>
 
-        <section className="rounded-[2rem] border border-violet-100 bg-white p-5 space-y-4">
+        <section className="rounded-[2rem] border border-blue-100 bg-white p-5 space-y-4">
           <h3 className="text-sm font-black uppercase text-slate-500">Approved header values</h3>
           <dl className="grid grid-cols-2 gap-2 text-sm">
             {(
@@ -180,14 +180,14 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
             ))}
           </dl>
           {doc.processing_notes ? (
-            <p className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-900">
+            <p className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
               {String(doc.processing_notes)}
             </p>
           ) : null}
         </section>
       </div>
 
-      <section className="rounded-[2rem] border border-violet-100 bg-white p-5 overflow-x-auto">
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-5 overflow-x-auto">
         <h3 className="text-sm font-black uppercase text-slate-500">Line allocations</h3>
         <table className="mt-3 min-w-[900px] w-full text-left text-sm">
           <thead className="text-[10px] font-black uppercase text-slate-500">
@@ -216,7 +216,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-[2rem] border border-violet-100 bg-white p-5 overflow-x-auto">
+        <section className="rounded-[2rem] border border-blue-100 bg-white p-5 overflow-x-auto">
           <h3 className="text-sm font-black uppercase text-slate-500">Cost updates</h3>
           <table className="mt-3 min-w-full text-left text-xs">
             <thead className="font-black uppercase text-slate-500">
@@ -240,7 +240,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
           </table>
         </section>
 
-        <section className="rounded-[2rem] border border-violet-100 bg-white p-5 overflow-x-auto">
+        <section className="rounded-[2rem] border border-blue-100 bg-white p-5 overflow-x-auto">
           <h3 className="text-sm font-black uppercase text-slate-500">Price history updates</h3>
           <table className="mt-3 min-w-full text-left text-xs">
             <thead className="font-black uppercase text-slate-500">
@@ -280,7 +280,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
         </section>
       </div>
 
-      <section className="rounded-[2rem] border border-violet-100 bg-white p-5">
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-5">
         <h3 className="text-sm font-black uppercase text-slate-500">Audit trail</h3>
         <div className="mt-3 space-y-3">
           {detail.approvalAudit.map((row) => (
@@ -290,7 +290,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
               </div>
               <div className="mt-1 text-slate-600">{String(row.approval_notes || "—")}</div>
               {row.reconciliation_note ? (
-                <div className="mt-1 text-xs text-violet-700">Reconciliation: {String(row.reconciliation_note)}</div>
+                <div className="mt-1 text-xs text-blue-700">Reconciliation: {String(row.reconciliation_note)}</div>
               ) : null}
               <div className="mt-2 text-[11px] text-slate-400">
                 {Number(row.cost_updates_count || 0)} cost updates · {Number(row.price_history_count || 0)} price history rows
@@ -331,7 +331,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
       </section>
 
       {detail.extractionLogs.length > 0 ? (
-        <section className="rounded-[2rem] border border-violet-100 bg-white p-5">
+        <section className="rounded-[2rem] border border-blue-100 bg-white p-5">
           <h3 className="text-sm font-black uppercase text-slate-500">Extraction log</h3>
           <div className="mt-3 space-y-2">
             {detail.extractionLogs.map((row) => (

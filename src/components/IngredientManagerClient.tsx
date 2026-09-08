@@ -204,7 +204,7 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
     }
   }
 
-  const inputClass = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-violet-400";
+  const inputClass = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-blue-400";
   const labelClass = "text-xs font-black uppercase tracking-[0.08em] text-slate-500";
 
   const ingredientQuotes = VYRON_DOMAIN_QUOTES.ingredients;
@@ -234,9 +234,9 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
       >
       <section className={`grid min-w-0 max-w-full grid-cols-1 gap-5 ${canCreate || canEdit ? "xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)]" : ""}`}>
       {canCreate || canEdit ? (
-      <div className="min-w-0 rounded-[1.75rem] bg-white p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <div className="min-w-0 rounded-[1.75rem] bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
             <Plus size={20} />
           </div>
           <div>
@@ -246,13 +246,13 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
         </div>
 
         <div className="mb-4 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-violet-400/20 bg-violet-600/10 p-4">
+          <div className="rounded-2xl border border-blue-400/20 bg-blue-600/10 p-4">
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">True Unit Cost</div>
-            <div className="mt-1 text-3xl font-black text-violet-300">{formatMoney(trueCost)}</div>
+            <div className="mt-1 text-3xl font-black text-blue-300">{formatMoney(trueCost)}</div>
           </div>
-          <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/8 p-4">
+          <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/8 p-4">
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Movement</div>
-            <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#A855F7]"}`}>{movement.toFixed(1)}%</div>
+            <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#3B82F6]"}`}>{movement.toFixed(1)}%</div>
           </div>
         </div>
 
@@ -329,8 +329,8 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
             <input value={form.current_alert} onChange={(e) => update("current_alert", e.target.value)} placeholder="Imported from invoice / Excel / PDF" className={inputClass} />
           </div>
 
-          <details className="rounded-2xl bg-violet-50 p-4">
-            <summary className="cursor-pointer text-sm font-black text-violet-800">Need help?</summary>
+          <details className="rounded-2xl bg-blue-50 p-4">
+            <summary className="cursor-pointer text-sm font-black text-blue-800">Need help?</summary>
             <div className="mt-3 space-y-2 text-xs font-semibold leading-5 text-slate-600">
               <p><b>Supplier Cost:</b> invoice price excluding VAT.</p>
               <p><b>Previous Cost:</b> last supplier price for movement.</p>
@@ -344,20 +344,20 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
             Save Ingredient
           </button>
 
-          {message && <div className="rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#A855F7]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#3B82F6]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div>}
         </div>
       </div>
       ) : null}
 
-      <div className="min-w-0 rounded-[1.75rem] bg-white p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <div className="min-w-0 rounded-[1.75rem] bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-2xl font-black text-slate-950">Ingredients</h2>
             <p className="text-xs font-semibold text-slate-500">Open, edit or delete.</p>
           </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-            <Search size={18} className="text-violet-700" />
+          <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+            <Search size={18} className="text-blue-700" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="min-w-0 w-full bg-transparent text-sm font-bold outline-none placeholder:text-slate-400 md:w-52" />
           </div>
         </div>
@@ -380,11 +380,11 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
               const move = calculateMovementPercent(Number(item.previous_cost || 0), Number(item.purchase_cost || 0));
               return (
                 <div key={item.id} className="grid grid-cols-[220px_130px_110px_110px_90px_110px] items-center border-t border-slate-100 px-5 py-4 text-sm">
-                  <Link href={`/ingredients/${item.id}`} className="font-black text-violet-700">{item.ingredient_name}</Link>
+                  <Link href={`/ingredients/${item.id}`} className="font-black text-blue-700">{item.ingredient_name}</Link>
                   <div className="font-bold text-slate-500">{item.category}</div>
                   <div className="font-black text-slate-900">{formatMoney(item.purchase_cost)}</div>
-                  <div className="font-black text-violet-700">{formatMoney(item.true_unit_cost)}</div>
-                  <div className={`font-black ${move > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#A855F7]"}`}>{move.toFixed(1)}%</div>
+                  <div className="font-black text-blue-700">{formatMoney(item.true_unit_cost)}</div>
+                  <div className={`font-black ${move > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#3B82F6]"}`}>{move.toFixed(1)}%</div>
                   <div className="flex gap-2">
                     {canEdit ? (
                       <button onClick={() => edit(item)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Edit</button>

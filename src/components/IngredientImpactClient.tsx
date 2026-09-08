@@ -55,14 +55,14 @@ export default function IngredientImpactClient({ ingredientId }: { ingredientId:
               type="button"
               onClick={recalculate}
               disabled={working}
-              className="inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-lg shadow-violet-500/25 disabled:opacity-60"
+              className="inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-lg shadow-blue-500/25 disabled:opacity-60"
             >
               <RefreshCcw size={18} />
               {working ? "Recalculating..." : "Recalculate Affected BOMs"}
             </button>
 
             {message && (
-              <div className="mt-4 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-bold text-[#7E22CE]">
+              <div className="mt-4 rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-4 text-sm font-bold text-[#1D4ED8]">
                 {message}
               </div>
             )}

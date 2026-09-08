@@ -234,7 +234,7 @@ export default function ClientUserSetupClient() {
           type="button"
           disabled={!canCreateUser}
           onClick={() => setInviteOpen(true)}
-          className="inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <UserPlus size={16} />
           Create User
@@ -253,9 +253,9 @@ export default function ClientUserSetupClient() {
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-[2rem] border border-violet-100 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-sm">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-violet-50 text-[10px] font-black uppercase tracking-[0.14em] text-violet-700">
+          <thead className="bg-blue-50 text-[10px] font-black uppercase tracking-[0.14em] text-blue-700">
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
@@ -266,17 +266,17 @@ export default function ClientUserSetupClient() {
           </thead>
           <tbody>
             {members.map((member) => (
-              <tr key={member.userId} className="border-t border-violet-50">
+              <tr key={member.userId} className="border-t border-blue-50">
                 <td className="px-4 py-3 font-bold">{member.firstName} {member.surname}</td>
                 <td className="px-4 py-3">{member.email}</td>
                 <td className="px-4 py-3">
                   {member.role === "OWNER" ? (
-                    <span className="font-black text-violet-700">OWNER</span>
+                    <span className="font-black text-blue-700">OWNER</span>
                   ) : (
                     <select
                       value={member.role}
                       onChange={(e) => void patchUser(member.userId, { role: e.target.value })}
-                      className="rounded-lg border border-violet-100 px-2 py-1 text-xs font-bold"
+                      className="rounded-lg border border-blue-100 px-2 py-1 text-xs font-bold"
                     >
                       {ASSIGNABLE_ROLES.map((role) => (
                         <option key={role} value={role}>{role}</option>
@@ -287,18 +287,18 @@ export default function ClientUserSetupClient() {
                 <td className="px-4 py-3">{member.status}</td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => setRightsUserId(member.userId)} className="rounded-lg border border-violet-100 px-2 py-1 text-xs font-black text-violet-800">
+                    <button type="button" onClick={() => setRightsUserId(member.userId)} className="rounded-lg border border-blue-100 px-2 py-1 text-xs font-black text-blue-800">
                       Rights
                     </button>
                     {member.role !== "OWNER" ? (
                       <>
-                        <button type="button" onClick={() => setResetUserId(member.userId)} className="rounded-lg border border-violet-100 px-2 py-1 text-xs font-black text-violet-800">
+                        <button type="button" onClick={() => setResetUserId(member.userId)} className="rounded-lg border border-blue-100 px-2 py-1 text-xs font-black text-blue-800">
                           <KeyRound size={12} className="inline" /> Reset
                         </button>
                         <button
                           type="button"
                           onClick={() => void patchUser(member.userId, { status: member.status === "Disabled" ? "Active" : "Disabled" })}
-                          className="rounded-lg border border-violet-100 px-2 py-1 text-xs font-black text-violet-800"
+                          className="rounded-lg border border-blue-100 px-2 py-1 text-xs font-black text-blue-800"
                         >
                           {member.status === "Disabled" ? "Enable" : "Disable"}
                         </button>
@@ -550,7 +550,7 @@ export default function ClientUserSetupClient() {
           <div className="max-h-[60vh] space-y-5 overflow-y-auto pr-2">
             {PERMISSION_GROUPS.map((group) => (
               <div key={group.label}>
-                <div className="text-xs font-black uppercase tracking-[0.14em] text-violet-700">{group.label}</div>
+                <div className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">{group.label}</div>
                 <div className="mt-2 space-y-2">
                   {group.permissions.map((permission) => (
                     <label key={permission.key} className="flex items-center gap-2 text-sm font-semibold text-slate-700">

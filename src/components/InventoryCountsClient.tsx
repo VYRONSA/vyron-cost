@@ -107,7 +107,7 @@ export default function InventoryCountsClient() {
                 type="button"
                 disabled={creating !== null}
                 onClick={() => void newCount(type)}
-                className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-900 shadow-lg disabled:opacity-60"
+                className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-blue-900 shadow-lg disabled:opacity-60"
               >
                 {creating === type ? "Creating…" : `New ${labelForType(type)} Count`}
               </button>
@@ -134,24 +134,24 @@ export default function InventoryCountsClient() {
         className="max-w-2xl"
       />
 
-      <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <VyronPremiumSectionHeading eyebrow="Search" title="Stock count register" subtitle="Filter by count number, type, status or creator." />
 
-        <div className="mt-5 flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-          <Search size={18} className="text-violet-700" />
+        <div className="mt-5 flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+          <Search size={18} className="text-blue-700" />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search stock counts…"
             className="w-full bg-transparent text-sm font-bold text-slate-800 outline-none placeholder:text-slate-400"
           />
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-violet-700">{filtered.length}</span>
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">{filtered.length}</span>
         </div>
       </div>
 
       {message ? <p className="rounded-2xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-warning-fg)]">{message}</p> : null}
 
-      <div className="overflow-hidden rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <div className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         {filtered.length === 0 ? (
           <div className="p-6">
             <VyronPremiumEmptyState
@@ -168,19 +168,19 @@ export default function InventoryCountsClient() {
           const id = String(count.id);
           const status = String(count.status || "Draft");
           return (
-            <Link key={id} href={`/inventory/counts/${id}`} className="grid gap-2 border-t border-slate-100 p-5 hover:bg-violet-50 md:grid-cols-[1.2fr_1fr_1fr_1fr_auto] md:items-center">
+            <Link key={id} href={`/inventory/counts/${id}`} className="grid gap-2 border-t border-slate-100 p-5 hover:bg-blue-50 md:grid-cols-[1.2fr_1fr_1fr_1fr_auto] md:items-center">
               <div>
                 <div className="text-lg font-black text-slate-950">{String(count.count_number || id)}</div>
                 <div className="text-xs font-bold text-slate-500">Created {String(count.created_at || "").slice(0, 16) || "—"}</div>
               </div>
               <div className="text-sm font-bold text-slate-700">{String(count.count_type || "stock")}</div>
               <div>
-                <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-black text-violet-700">{status}</span>
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">{status}</span>
               </div>
               <div className={Number(count.variance_value_total || 0) !== 0 ? "text-sm font-black text-red-600" : "text-sm font-black text-slate-700"}>
                 {formatMoney(Number(count.variance_value_total || 0))}
               </div>
-              <div className="text-xs font-black text-violet-700">Open →</div>
+              <div className="text-xs font-black text-blue-700">Open →</div>
             </Link>
           );
         })}

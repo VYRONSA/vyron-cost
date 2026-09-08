@@ -265,12 +265,12 @@ export default function BusinessHealthCentreClient({
                       snapshot.overallScore == null
                         ? "#CBD5E1"
                         : snapshot.overallScore >= 80
-                          ? "#8B5CF6"
+                          ? "#1D4ED8"
                           : snapshot.overallScore >= 65
-                            ? "#C026D3"
+                            ? "#3B82F6"
                             : snapshot.overallScore >= 45
-                              ? "#A855F7"
-                              : "#2563EB",
+                              ? "#B45309"
+                              : "#BE123C",
                   }}
                 >
                   <div className="text-3xl font-black text-[#0F172A]">
@@ -485,7 +485,7 @@ function RiskColumn({ level, items }: { level: RiskLevel; items: Array<{ id: str
     Critical: "border-rose-200 bg-rose-50",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]",
     Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]",
-    Low: "border-violet-200 bg-violet-50",
+    Low: "border-blue-200 bg-blue-50",
   };
   return (
     <div className={`rounded-2xl border p-4 ${colors[level]}`}>
@@ -511,7 +511,7 @@ function RiskColumn({ level, items }: { level: RiskLevel; items: Array<{ id: str
 
 function StatusBadge({ status, large }: { status: HealthStatus; large?: boolean }) {
   const classes: Record<HealthStatus, string> = {
-    Healthy: "border-violet-200 bg-violet-50 text-violet-800",
+    Healthy: "border-blue-200 bg-blue-50 text-blue-800",
     Watch: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Risk: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
@@ -533,7 +533,7 @@ function RiskLevelBadge({ level }: { level: RiskLevel }) {
     Critical: "border-rose-200 bg-rose-50 text-rose-700",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    Low: "border-violet-200 bg-violet-50 text-violet-800",
+    Low: "border-blue-200 bg-blue-50 text-blue-800",
   };
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes[level]}`}>
@@ -554,7 +554,7 @@ function ActionSeverityBadge({ severity }: { severity: ExecutiveHealthAction["se
 
 function TrendBadge({ trend }: { trend: TrendDirection }) {
   const config: Record<TrendDirection, { className: string; icon: typeof TrendingUp }> = {
-    Improving: { className: "border-violet-200 bg-violet-50 text-violet-800", icon: TrendingUp },
+    Improving: { className: "border-blue-200 bg-blue-50 text-blue-800", icon: TrendingUp },
     Stable: { className: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]", icon: Activity },
     Declining: { className: "border-rose-200 bg-rose-50 text-rose-800", icon: TrendingDown },
     "Insufficient Data": { className: "border-slate-200 bg-slate-50 text-slate-700", icon: AlertTriangle },

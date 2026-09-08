@@ -651,8 +651,8 @@ export default function BomBuilderClient({
     }
   }
 
-  const inputClass = `mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400 ${readOnly ? "bg-slate-50 text-slate-600" : "bg-white"}`;
-  const lineInputClass = `h-10 rounded-xl border border-slate-200 bg-white px-2 text-xs font-bold outline-none focus:border-violet-400 ${readOnly ? "bg-slate-50 text-slate-600" : ""}`;
+  const inputClass = `mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400 ${readOnly ? "bg-slate-50 text-slate-600" : "bg-white"}`;
+  const lineInputClass = `h-10 rounded-xl border border-slate-200 bg-white px-2 text-xs font-bold outline-none focus:border-blue-400 ${readOnly ? "bg-slate-50 text-slate-600" : ""}`;
   const labelClass = "text-xs font-black uppercase tracking-[0.08em] text-slate-500";
 
   const gpGap = numericTargetGp - actualGp;
@@ -666,9 +666,9 @@ export default function BomBuilderClient({
       ) : null}
 
       {/* Premium hero + quote strip */}
-      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-violet-700 via-indigo-800 to-[#07110d] p-8 text-white shadow-[0_24px_60px_rgba(81,63,190,0.28)]">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#A855F7]/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 left-1/3 h-48 w-48 rounded-full bg-[#A855F7]/10 blur-3xl" />
+      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 via-indigo-800 to-[#07110d] p-8 text-white shadow-[0_24px_60px_rgba(29,78,216,0.28)]">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#3B82F6]/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 left-1/3 h-48 w-48 rounded-full bg-[#3B82F6]/10 blur-3xl" />
         <div className="relative grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#CBD5E1]">
@@ -676,20 +676,20 @@ export default function BomBuilderClient({
               Premium Costing Workspace
             </div>
             <h2 className="mt-4 text-3xl font-black tracking-tight md:text-4xl">BOM Builder</h2>
-            <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-violet-100">
+            <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-blue-100">
               Build a complete bill of materials — ingredients, packaging, labour, overhead and wastage — then watch
               cost per unit, gross profit and suggested price update as you work.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#A855F7]">Costing principle</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#3B82F6]">Costing principle</div>
               <p className="mt-2 text-sm font-semibold leading-6 text-slate-100">
                 &ldquo;Margin is not luck — it is engineered from yield, wastage and true unit cost.&rdquo;
               </p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-fuchsia-200">Profit discipline</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-200">Profit discipline</div>
               <p className="mt-2 text-sm font-semibold leading-6 text-slate-100">
                 &ldquo;Every line you add reshapes batch cost, GP and the price needed to protect wealth.&rdquo;
               </p>
@@ -702,11 +702,11 @@ export default function BomBuilderClient({
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[
           ["Total Batch Cost", formatMoney(totalCost), "text-slate-900", "bg-white"],
-          ["Cost / Unit", formatMoney(costPerUnit), "text-violet-700", "bg-violet-50"],
-          ["Actual GP", `${actualGp.toFixed(1)}%`, actualGp < numericTargetGp ? "text-red-600" : "text-[#84CC16]", actualGp < numericTargetGp ? "bg-red-50" : "bg-[#A855F7]/10"],
-          ["Suggested Batch Price", formatMoney(suggestedPrice), "text-[#7E22CE]", "bg-[#A855F7]/10"],
+          ["Cost / Unit", formatMoney(costPerUnit), "text-blue-700", "bg-blue-50"],
+          ["Actual GP", `${actualGp.toFixed(1)}%`, actualGp < numericTargetGp ? "text-red-600" : "text-[#84CC16]", actualGp < numericTargetGp ? "bg-red-50" : "bg-[#3B82F6]/10"],
+          ["Suggested Batch Price", formatMoney(suggestedPrice), "text-[#1D4ED8]", "bg-[#3B82F6]/10"],
         ].map(([label, value, cls, bg]) => (
-          <div key={label} className={`rounded-[2rem] p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)] ${bg}`}>
+          <div key={label} className={`rounded-[2rem] p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)] ${bg}`}>
             <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">{label}</div>
             <div className={`mt-2 text-3xl font-black ${cls}`}>{value}</div>
           </div>
@@ -722,10 +722,10 @@ export default function BomBuilderClient({
       <div className="grid gap-8 2xl:grid-cols-[1fr_380px]">
         <div className="grid gap-8">
           {/* Section 1 — Recipe setup */}
-          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)] md:p-8">
+          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)] md:p-8">
             <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
                   <Boxes size={24} />
                 </div>
                 <div>
@@ -740,7 +740,7 @@ export default function BomBuilderClient({
                 <button
                   onClick={() => void saveBom()}
                   disabled={saving}
-                  className="inline-flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(29,107,255,0.35)] disabled:opacity-60"
+                  className="inline-flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(29,107,255,0.35)] disabled:opacity-60"
                 >
                   <Save size={18} /> {saving ? "Saving..." : isCopy ? "Save as New BOM" : "Save BOM"}
                 </button>
@@ -821,9 +821,9 @@ export default function BomBuilderClient({
           </div>
 
           {/* Section 2 — Pricing */}
-          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)] md:p-8">
+          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)] md:p-8">
             <div className="mb-6 flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/12 text-[#7E22CE]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/12 text-[#1D4ED8]">
                 <TrendingUp size={24} />
               </div>
               <div>
@@ -872,8 +872,8 @@ export default function BomBuilderClient({
                       key={purpose}
                       className={`flex min-h-[44px] cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${
                         bomPurpose === purpose
-                          ? "border-violet-400 bg-violet-50"
-                          : "border-slate-200 bg-white hover:border-violet-200"
+                          ? "border-blue-400 bg-blue-50"
+                          : "border-slate-200 bg-white hover:border-blue-200"
                       } ${readOnly ? "cursor-not-allowed opacity-70" : ""}`}
                     >
                       <input
@@ -942,11 +942,11 @@ export default function BomBuilderClient({
               </p>
             </div>
           ) : null}
-          {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-bold text-[#7E22CE]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-4 text-sm font-bold text-[#1D4ED8]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-5 py-4 text-sm font-bold text-red-700">{errorMessage}</div>}
 
           {/* Section 3 — Components */}
-          <div className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(81,63,190,0.08)] sm:p-6 md:p-8">
+          <div className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(29,78,216,0.08)] sm:p-6 md:p-8">
             <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]">
@@ -964,7 +964,7 @@ export default function BomBuilderClient({
                 <button
                   type="button"
                   onClick={addComponent}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-3 text-sm font-black text-white"
                 >
                   <Plus size={18} />
                   Add Component
@@ -973,7 +973,7 @@ export default function BomBuilderClient({
             </div>
 
             {components.length === 0 && ungrouped.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-violet-200 bg-violet-50/50 p-8 text-center">
+              <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/50 p-8 text-center">
                 <p className="text-sm font-black text-slate-900">No components yet</p>
                 <p className="mx-auto mt-2 max-w-md text-sm font-semibold text-slate-500">
                   A pack is built from components — for example Salmon &amp; Avo Cali, Salmon maki, Condiments and
@@ -983,7 +983,7 @@ export default function BomBuilderClient({
                   <button
                     type="button"
                     onClick={addComponent}
-                    className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white"
+                    className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-3 text-sm font-black text-white"
                   >
                     <Plus size={18} />
                     Add your first component
@@ -996,8 +996,8 @@ export default function BomBuilderClient({
               {components.map((component, index) => {
                 const isPackaging = component.component_type.trim().toLowerCase() === "packaging";
                 return (
-                  <div key={component.temp_id} className="overflow-hidden rounded-2xl border border-violet-100">
-                    <div className="flex flex-col gap-3 bg-violet-50 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
+                  <div key={component.temp_id} className="overflow-hidden rounded-2xl border border-blue-100">
+                    <div className="flex flex-col gap-3 bg-blue-50 px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
                       <div className="grid flex-1 gap-3 sm:grid-cols-2">
                         <label className="block">
                           <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">
@@ -1008,7 +1008,7 @@ export default function BomBuilderClient({
                             value={component.name}
                             onChange={(e) => patchComponent(component.temp_id, { name: e.target.value })}
                             placeholder="e.g. Salmon maki"
-                            className="mt-1 w-full rounded-xl border border-violet-200 bg-white px-3 py-2 text-sm font-black text-slate-900 outline-none focus:border-violet-400"
+                            className="mt-1 w-full rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm font-black text-slate-900 outline-none focus:border-blue-400"
                           />
                         </label>
                         <label className="block">
@@ -1019,7 +1019,7 @@ export default function BomBuilderClient({
                             disabled={readOnly}
                             value={component.component_type}
                             onChange={(e) => patchComponent(component.temp_id, { component_type: e.target.value })}
-                            className="mt-1 w-full rounded-xl border border-violet-200 bg-white px-3 py-2 text-sm font-bold text-violet-800 outline-none focus:border-violet-400"
+                            className="mt-1 w-full rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm font-bold text-blue-800 outline-none focus:border-blue-400"
                           >
                             {componentTypes.map((t) => (
                               <option key={t}>{t}</option>
@@ -1033,7 +1033,7 @@ export default function BomBuilderClient({
                           <div className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">
                             {isPackaging ? "Packaging cost" : "Component cost"}
                           </div>
-                          <div className="text-lg font-black text-violet-700">{formatMoney(componentCost(component))}</div>
+                          <div className="text-lg font-black text-blue-700">{formatMoney(componentCost(component))}</div>
                           <div className="text-[0.65rem] font-bold text-slate-500">
                             {component.lines.length} {isPackaging ? (component.lines.length === 1 ? "item" : "items") : component.lines.length === 1 ? "ingredient" : "ingredients"}
                           </div>
@@ -1098,9 +1098,9 @@ export default function BomBuilderClient({
                               <span className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">
                                 BOM
                               </span>
-                              <div className="mt-1 flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5">
-                                <Layers size={16} className="shrink-0 text-violet-600" />
-                                <span className="min-w-0 truncate text-sm font-black text-violet-900">
+                              <div className="mt-1 flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5">
+                                <Layers size={16} className="shrink-0 text-blue-600" />
+                                <span className="min-w-0 truncate text-sm font-black text-blue-900">
                                   {line.child_bom_name || line.line_name}
                                 </span>
                               </div>
@@ -1181,7 +1181,7 @@ export default function BomBuilderClient({
                           ) : null}
 
                           {movingLine === line.temp_id ? (
-                            <div className="rounded-2xl border border-violet-200 bg-white p-4 lg:col-span-6">
+                            <div className="rounded-2xl border border-blue-200 bg-white p-4 lg:col-span-6">
                               <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
                                 Move &ldquo;{line.line_name || "this line"}&rdquo; to
                               </div>
@@ -1193,7 +1193,7 @@ export default function BomBuilderClient({
                                       key={c.temp_id}
                                       type="button"
                                       onClick={() => moveLineToComponent(line.temp_id, c.temp_id)}
-                                      className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-800"
+                                      className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-800"
                                     >
                                       {c.name || "Untitled component"}
                                     </button>
@@ -1217,7 +1217,7 @@ export default function BomBuilderClient({
                         <button
                           type="button"
                           onClick={() => addLineTo(component.temp_id, isPackaging ? "Packaging" : "Ingredient")}
-                          className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700"
+                          className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-black text-blue-700"
                         >
                           <Plus size={16} />
                           {isPackaging ? "Add Packaging" : "Add Ingredient"}
@@ -1226,7 +1226,7 @@ export default function BomBuilderClient({
                           type="button"
                           disabled={readOnly}
                           onClick={() => void openBomPicker(component.temp_id)}
-                          className="inline-flex min-h-[44px] items-center gap-2 rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 disabled:opacity-60"
+                          className="inline-flex min-h-[44px] items-center gap-2 rounded-2xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-black text-blue-700 disabled:opacity-60"
                         >
                           <Layers size={15} />
                           Add BOM
@@ -1266,7 +1266,7 @@ export default function BomBuilderClient({
                                 key={c.temp_id}
                                 type="button"
                                 onClick={() => moveLineToComponent(line.temp_id, c.temp_id)}
-                                className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-800"
+                                className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-800"
                               >
                                 → {c.name || "Untitled"}
                               </button>
@@ -1280,14 +1280,14 @@ export default function BomBuilderClient({
               ) : null}
             </div>
 
-            <div className="mt-5 grid gap-3 rounded-2xl border border-violet-100 bg-violet-50/60 p-4 sm:grid-cols-3">
+            <div className="mt-5 grid gap-3 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:grid-cols-3">
               <div>
                 <div className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Ingredient cost</div>
                 <div className="mt-1 text-xl font-black text-slate-900">{formatMoney(ingredientCostTotal)}</div>
               </div>
               <div>
                 <div className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Packaging cost</div>
-                <div className="mt-1 text-xl font-black text-violet-700">{formatMoney(packagingCostTotal)}</div>
+                <div className="mt-1 text-xl font-black text-blue-700">{formatMoney(packagingCostTotal)}</div>
               </div>
               <div>
                 <div className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-slate-500">Total BOM cost</div>
@@ -1300,10 +1300,10 @@ export default function BomBuilderClient({
         {/* Right sidebar — formula, how-it-works, field guide */}
         <div className="grid gap-6 self-start 2xl:sticky 2xl:top-6">
           <aside className="relative overflow-hidden rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-600/20 via-transparent to-[#A855F7]/10" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-[#3B82F6]/10" />
             <div className="relative">
-              <Calculator size={28} className="text-[#A855F7]" />
-              <div className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-[#A855F7]">Formula Panel</div>
+              <Calculator size={28} className="text-[#3B82F6]" />
+              <div className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-[#3B82F6]">Formula Panel</div>
               <h2 className="mt-2 text-2xl font-black">How costs roll up</h2>
               <div className="mt-5 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm font-semibold leading-7 text-slate-200">
                 <p>
@@ -1322,7 +1322,7 @@ export default function BomBuilderClient({
                   <span className="font-black text-white">Suggested Price</span> = Cost / Unit ÷ (1 − Target GP%)
                 </p>
               </div>
-              <div className="mt-5 rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/10 p-4">
+              <div className="mt-5 rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 p-4">
                 <div className="text-[10px] font-black uppercase tracking-[0.14em] text-[#CBD5E1]">Live preview</div>
                 <div className="mt-2 text-3xl font-black text-white">{actualGp.toFixed(1)}% GP</div>
                 <div className="mt-1 text-xs font-semibold text-[#CBD5E1]">Suggested: {formatMoney(suggestedPrice)}</div>
@@ -1330,8 +1330,8 @@ export default function BomBuilderClient({
             </div>
           </aside>
 
-          <aside className="rounded-[2rem] border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-            <div className="text-xs font-black uppercase tracking-[0.16em] text-violet-600">How it works</div>
+          <aside className="rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+            <div className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">How it works</div>
             <h2 className="mt-2 text-xl font-black text-slate-900">Guided BOM workflow</h2>
             <ol className="mt-5 space-y-4 text-sm font-semibold leading-6 text-slate-700">
               <li className="flex gap-3">
@@ -1359,15 +1359,15 @@ export default function BomBuilderClient({
             </Link>
           </aside>
 
-          <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-violet-800 via-indigo-900 to-slate-950 p-6 text-white shadow-[0_18px_55px_rgba(81,63,190,0.2)]">
+          <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-800 via-indigo-900 to-slate-950 p-6 text-white shadow-[0_18px_55px_rgba(29,78,216,0.2)]">
             <div className="pointer-events-none absolute -right-8 top-8 h-32 w-32 rounded-full border border-white/10" />
-            <div className="pointer-events-none absolute bottom-6 left-6 h-20 w-20 rounded-full border border-[#A855F7]/25" />
+            <div className="pointer-events-none absolute bottom-6 left-6 h-20 w-20 rounded-full border border-[#3B82F6]/25" />
             <div className="relative">
-              <div className="text-[10px] font-black uppercase tracking-[0.18em] text-fuchsia-200">Wealth protection</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-200">Wealth protection</div>
               <p className="mt-3 text-lg font-black leading-snug">
                 A BOM is your financial blueprint — not just a recipe card.
               </p>
-              <p className="mt-3 text-sm font-semibold leading-6 text-violet-100">
+              <p className="mt-3 text-sm font-semibold leading-6 text-blue-100">
                 Operators who cost every line protect margin before price pressure hits the P&amp;L.
               </p>
             </div>
@@ -1378,7 +1378,7 @@ export default function BomBuilderClient({
             subtitle="What each header field controls in your costing model."
             items={bomFieldGuide}
             footer={
-              <p className="text-sm font-semibold leading-6 text-violet-900">
+              <p className="text-sm font-semibold leading-6 text-blue-900">
                 Tip: link a finished product so saves push batch cost through to Product Master GP.
               </p>
             }
@@ -1407,7 +1407,7 @@ export default function BomBuilderClient({
                 value={bomSearch}
                 onChange={(e) => setBomSearch(e.target.value)}
                 placeholder="Search BOM..."
-                className="mt-3 min-h-[44px] w-full rounded-xl border border-violet-100 px-4 py-3 text-sm font-semibold outline-none focus:border-violet-400"
+                className="mt-3 min-h-[44px] w-full rounded-xl border border-blue-100 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
               />
             </div>
             <div className="max-h-[46vh] overflow-y-auto p-3">
@@ -1418,7 +1418,7 @@ export default function BomBuilderClient({
                     key={b.id}
                     type="button"
                     onClick={() => addBomLineTo(bomPickerFor, b)}
-                    className="flex min-h-[44px] w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left hover:bg-violet-50"
+                    className="flex min-h-[44px] w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left hover:bg-blue-50"
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-black text-slate-900">{b.recipe_name}</span>
@@ -1426,7 +1426,7 @@ export default function BomBuilderClient({
                         {b.bom_purpose === "Sub-BOM" ? "Sub-BOM / Assembly" : "Finished Good"}
                       </span>
                     </span>
-                    <span className="shrink-0 text-sm font-black text-violet-700">{formatMoney(b.cost_per_unit)}</span>
+                    <span className="shrink-0 text-sm font-black text-blue-700">{formatMoney(b.cost_per_unit)}</span>
                   </button>
                 ))}
               {!bomOptions.filter((b) => b.recipe_name.toLowerCase().includes(bomSearch.trim().toLowerCase())).length ? (

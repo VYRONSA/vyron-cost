@@ -169,10 +169,10 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
         </VyronPremiumHeroBanner>
       </div>
 
-      <div className="rounded-[2rem] border border-violet-100 bg-white p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)] print:hidden">
+      <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_18px_60px_rgba(30,58,138,0.08)] print:hidden">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-violet-700">
+            <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-blue-700">
               <Truck size={13} /> Receipt Actions
             </div>
             <h2 className="mt-2 text-2xl font-black text-slate-950">GRN control panel</h2>
@@ -180,13 +180,13 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {po?.id ? <Link href={`/purchase-orders/${po.id}`} className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-800">Open PO</Link> : null}
+          {po?.id ? <Link href={`/purchase-orders/${po.id}`} className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-800">Open PO</Link> : null}
           {po?.id && canCreate ? <Link href={`/goods-receipts/new?po=${po.id}`} className="rounded-xl bg-[var(--vyron-warning-bg)] px-3 py-2 text-xs font-black text-[var(--vyron-warning-fg)]">Receive Balance</Link> : null}
           {canEdit ? (
             <button type="button" onClick={() => setEditing((value) => !value)} className="inline-flex items-center gap-1 rounded-xl vyron-grad-surface px-3 py-2 text-xs font-semibold text-white"><Pencil size={14} />{editing ? "Cancel Edit" : stockPosted ? "Edit Notes" : "Edit GRN"}</button>
           ) : null}
           {editing && canEdit ? <button type="button" disabled={saving} onClick={() => void saveGrn()} className="inline-flex items-center gap-1 rounded-xl vyron-grad-surface border border-transparent px-3 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"><Save size={14} />{saving ? "Saving…" : "Save GRN"}</button> : null}
-          <button type="button" onClick={exportCsv} className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800"><Download size={14} />Export CSV</button>
+          <button type="button" onClick={exportCsv} className="inline-flex items-center gap-1 rounded-xl bg-blue-100 px-3 py-2 text-xs font-black text-blue-800"><Download size={14} />Export CSV</button>
           <DocumentPdfActions
             pdfUrl={`/api/goods-receipts/${grnId}/pdf${poApiWorkspaceContext().query}`}
             emailUrl={`/api/goods-receipts/${grnId}/email${poApiWorkspaceContext().query}`}
@@ -224,26 +224,26 @@ export default function GoodsReceiptDetailClient({ grnId }: { grnId: string }) {
       />
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Linked PO</div>{po?.id ? <Link href={`/purchase-orders/${po.id}`} className="mt-2 block text-lg font-black text-violet-700">{po.po_number}</Link> : <div className="mt-2 text-lg font-black">—</div>}</div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Received</div><div className="mt-2 text-lg font-black">{totals.received.toFixed(2)}</div></div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Damaged/Rejected</div><div className="mt-2 text-lg font-black">{(totals.damaged + totals.rejected).toFixed(2)}</div></div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Status</div>{editing && !stockPosted ? <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-2 w-full rounded-xl border px-3 py-2 font-bold"><option>Posted</option><option>Draft</option><option>Corrected</option><option>Cancelled</option></select> : <div className="mt-2 text-lg font-black">{String(receipt.status || "Posted")}{stockPosted ? <span className="mt-1 block text-xs font-bold text-[#7E22CE]">Stock posted</span> : null}</div>}</div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><div className="text-[10px] font-black uppercase text-blue-600">Linked PO</div>{po?.id ? <Link href={`/purchase-orders/${po.id}`} className="mt-2 block text-lg font-black text-blue-700">{po.po_number}</Link> : <div className="mt-2 text-lg font-black">—</div>}</div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><div className="text-[10px] font-black uppercase text-blue-600">Received</div><div className="mt-2 text-lg font-black">{totals.received.toFixed(2)}</div></div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><div className="text-[10px] font-black uppercase text-blue-600">Damaged/Rejected</div><div className="mt-2 text-lg font-black">{(totals.damaged + totals.rejected).toFixed(2)}</div></div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><div className="text-[10px] font-black uppercase text-blue-600">Status</div>{editing && !stockPosted ? <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-2 w-full rounded-xl border px-3 py-2 font-bold"><option>Posted</option><option>Draft</option><option>Corrected</option><option>Cancelled</option></select> : <div className="mt-2 text-lg font-black">{String(receipt.status || "Posted")}{stockPosted ? <span className="mt-1 block text-xs font-bold text-[#1D4ED8]">Stock posted</span> : null}</div>}</div>
       </div>
 
-      <EnterpriseScrollContainer className="min-w-0 rounded-[2rem] border border-violet-100 bg-white">
+      <EnterpriseScrollContainer className="min-w-0 rounded-[2rem] border border-blue-100 bg-white">
         <table className="min-w-[900px] w-full text-left text-sm">
-          <thead className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100"><tr><th className="px-4 py-3">Item</th><th className="px-4 py-3">Ordered</th><th className="px-4 py-3">Received</th><th className="px-4 py-3">Damaged</th><th className="px-4 py-3">Rejected</th><th className="px-4 py-3">Outstanding</th><th className="px-4 py-3">Unit</th></tr></thead>
+          <thead className="bg-blue-800 text-xs font-black uppercase tracking-[0.14em] text-blue-100"><tr><th className="px-4 py-3">Item</th><th className="px-4 py-3">Ordered</th><th className="px-4 py-3">Received</th><th className="px-4 py-3">Damaged</th><th className="px-4 py-3">Rejected</th><th className="px-4 py-3">Outstanding</th><th className="px-4 py-3">Unit</th></tr></thead>
           <tbody>
             {lines.map((line, index) => {
               const outstanding = Math.max(0, num(line.ordered_qty) - num(line.received_qty) - num(line.damaged_qty) - num(line.rejected_qty));
               const lineEditing = editing && !stockPosted;
-              return <tr key={String(line.id || index)} className="border-t border-slate-100"><td className="px-4 py-3 font-bold">{String(line.item_name)}</td><td className="px-4 py-3">{num(line.ordered_qty)}</td><td className="px-4 py-3">{lineEditing ? <input type="number" min="0" className="w-24 rounded-xl border px-2 py-1 font-bold" value={num(line.received_qty)} onChange={(e) => updateLine(index, { received_qty: num(e.target.value) })} /> : num(line.received_qty)}</td><td className="px-4 py-3">{lineEditing ? <input type="number" min="0" className="w-24 rounded-xl border px-2 py-1 font-bold" value={num(line.damaged_qty)} onChange={(e) => updateLine(index, { damaged_qty: num(e.target.value) })} /> : num(line.damaged_qty)}</td><td className="px-4 py-3">{lineEditing ? <input type="number" min="0" className="w-24 rounded-xl border px-2 py-1 font-bold" value={num(line.rejected_qty)} onChange={(e) => updateLine(index, { rejected_qty: num(e.target.value) })} /> : num(line.rejected_qty)}</td><td className="px-4 py-3 font-black text-violet-700">{outstanding.toFixed(2)}</td><td className="px-4 py-3">{String(line.unit || "—")}</td></tr>;
+              return <tr key={String(line.id || index)} className="border-t border-slate-100"><td className="px-4 py-3 font-bold">{String(line.item_name)}</td><td className="px-4 py-3">{num(line.ordered_qty)}</td><td className="px-4 py-3">{lineEditing ? <input type="number" min="0" className="w-24 rounded-xl border px-2 py-1 font-bold" value={num(line.received_qty)} onChange={(e) => updateLine(index, { received_qty: num(e.target.value) })} /> : num(line.received_qty)}</td><td className="px-4 py-3">{lineEditing ? <input type="number" min="0" className="w-24 rounded-xl border px-2 py-1 font-bold" value={num(line.damaged_qty)} onChange={(e) => updateLine(index, { damaged_qty: num(e.target.value) })} /> : num(line.damaged_qty)}</td><td className="px-4 py-3">{lineEditing ? <input type="number" min="0" className="w-24 rounded-xl border px-2 py-1 font-bold" value={num(line.rejected_qty)} onChange={(e) => updateLine(index, { rejected_qty: num(e.target.value) })} /> : num(line.rejected_qty)}</td><td className="px-4 py-3 font-black text-blue-700">{outstanding.toFixed(2)}</td><td className="px-4 py-3">{String(line.unit || "—")}</td></tr>;
             })}
           </tbody>
         </table>
       </EnterpriseScrollContainer>
 
-      <label className="grid gap-2 text-xs font-black uppercase tracking-[0.12em] text-slate-500 print:hidden">GRN Notes<textarea disabled={!editing} className="min-h-24 rounded-2xl border border-violet-100 bg-white px-4 py-3 text-sm font-semibold normal-case tracking-normal text-slate-800 disabled:bg-slate-50" value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
+      <label className="grid gap-2 text-xs font-black uppercase tracking-[0.12em] text-slate-500 print:hidden">GRN Notes<textarea disabled={!editing} className="min-h-24 rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-semibold normal-case tracking-normal text-slate-800 disabled:bg-slate-50" value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
     </section>
   );
 }

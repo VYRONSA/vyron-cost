@@ -35,7 +35,7 @@ export default function ContractsClient({ contracts }: { contracts: ContractRow[
             <EnterpriseScrollContainer className="rounded-[2rem] bg-white shadow-sm">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-900 text-left text-[10px] font-black uppercase text-[#A855F7]">
+                  <tr className="bg-slate-900 text-left text-[10px] font-black uppercase text-[#3B82F6]">
                     <th className="p-4">Supplier</th>
                     <th className="p-4">Contract</th>
                     <th className="p-4">Type</th>
@@ -48,7 +48,7 @@ export default function ContractsClient({ contracts }: { contracts: ContractRow[
                     <tr key={c.id} className="border-t border-slate-100">
                       <td className="p-4 font-bold">{c.supplierName}</td>
                       <td className="p-4">
-                        <Link href={c.href} className="font-black text-violet-700 hover:underline">
+                        <Link href={c.href} className="font-black text-blue-700 hover:underline">
                           {c.title}
                         </Link>
                       </td>

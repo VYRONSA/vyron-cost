@@ -157,7 +157,7 @@ export function entityTypeLabel(entityType: MatchOption["entityType"]) {
 export function entityTypePillClass(entityType: MatchOption["entityType"]) {
   if (entityType === "packaging") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   if (entityType === "product") return "bg-blue-100 text-blue-800";
-  return "bg-violet-100 text-violet-800";
+  return "bg-blue-100 text-blue-800";
 }
 
 export function matchQualityLabel(quality: MatchQuality) {
@@ -168,7 +168,7 @@ export function matchQualityLabel(quality: MatchQuality) {
 }
 
 export function matchQualityClass(quality: MatchQuality) {
-  if (quality === "remembered") return "bg-[#A855F7]/12 text-[#4D7C0F]";
+  if (quality === "remembered") return "bg-[#3B82F6]/12 text-[#4D7C0F]";
   if (quality === "exact") return "bg-sky-100 text-sky-800";
   if (quality === "similar") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   return "bg-slate-100 text-slate-700";

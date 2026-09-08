@@ -68,7 +68,7 @@ export default function FinishedGoodsDashboardClient() {
           ]}
         />
         <div className="relative overflow-hidden rounded-[2rem] bg-[#07110d] p-8 text-white shadow-[0_24px_60px_rgba(6,20,14,0.28)]">
-          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-[#A855F7]">Total finished goods value</div>
+          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-[#3B82F6]">Total finished goods value</div>
           <div className="mt-2 text-4xl font-black">{formatMoney(totalValue)}</div>
           <p className="mt-3 text-sm font-semibold leading-6 text-slate-400">Linked to inventory module — updated on each completed production run.</p>
         </div>
@@ -89,7 +89,7 @@ export default function FinishedGoodsDashboardClient() {
         <EnterpriseScrollContainer className="rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
           <table className="w-full min-w-[700px] text-sm">
             <thead>
-              <tr className="bg-violet-50 text-left text-xs font-black uppercase text-violet-800">
+              <tr className="bg-blue-50 text-left text-xs font-black uppercase text-blue-800">
                 <th className="px-5 py-4">Product</th>
                 <th className="px-5 py-4">On hand</th>
                 <th className="px-5 py-4">Avg cost</th>
@@ -112,11 +112,11 @@ export default function FinishedGoodsDashboardClient() {
                   <td className="px-5 py-4 font-black">{formatMoney(item.inventory_value)}</td>
                   <td className="px-5 py-4">{item.stock_status}</td>
                   <td className="px-5 py-4">
-                    <Link href={`/inventory/stock/${item.id}`} className="text-xs font-black text-violet-700">
+                    <Link href={`/inventory/stock/${item.id}`} className="text-xs font-black text-blue-700">
                       Stock detail
                     </Link>
                     {item.product_id ? (
-                      <Link href={`/products/${item.product_id}/edit`} className="ml-3 text-xs font-black text-[#7E22CE]">
+                      <Link href={`/products/${item.product_id}/edit`} className="ml-3 text-xs font-black text-[#1D4ED8]">
                         Open maintenance
                       </Link>
                     ) : null}

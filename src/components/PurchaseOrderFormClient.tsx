@@ -159,7 +159,7 @@ export default function PurchaseOrderFormClient({
             <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="text-2xl font-black text-[#F8FAFC]">{mode === "create" ? "Create Purchase Order" : "Edit Purchase Order"}</h2>
-                <Link href="/purchase-orders" className="text-sm font-black text-[#7E22CE]">
+                <Link href="/purchase-orders" className="text-sm font-black text-[#1D4ED8]">
                   Back to register
                 </Link>
               </div>
@@ -196,7 +196,7 @@ export default function PurchaseOrderFormClient({
               <div className="mt-6">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-lg font-black text-slate-900">Line Items</h3>
-                  <button type="button" onClick={addLine} className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-4 py-2 text-xs font-black text-[#7E22CE]">
+                  <button type="button" onClick={addLine} className="rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-2 text-xs font-black text-[#1D4ED8]">
                     + Add line
                   </button>
                 </div>
@@ -248,7 +248,7 @@ export default function PurchaseOrderFormClient({
                         <div className="flex items-end justify-between gap-3 md:col-span-2">
                           <div>
                             <div className="text-xs font-black uppercase text-slate-400">Line total</div>
-                            <div className="text-lg font-black text-violet-700">{formatMoney(line.line_total)}</div>
+                            <div className="text-lg font-black text-blue-700">{formatMoney(line.line_total)}</div>
                           </div>
                           <button type="button" onClick={() => removeLine(line.id)} className="rounded-full bg-red-50 px-3 py-2 text-xs font-black text-red-700">
                             Remove
@@ -278,11 +278,11 @@ export default function PurchaseOrderFormClient({
                 ) : null}
               </div>
 
-              {message ? <div className="mt-4 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-black text-[#7E22CE]">{message}</div> : null}
+              {message ? <div className="mt-4 rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3 text-sm font-black text-[#1D4ED8]">{message}</div> : null}
             </div>
 
             <aside className="rounded-[2rem] vyron-grad-deep p-6 text-white">
-              <div className="text-xs font-black uppercase tracking-[0.2em] text-[#DDD6FE]">PO Summary</div>
+              <div className="text-xs font-black uppercase tracking-[0.2em] text-[#BFDBFE]">PO Summary</div>
               <div className="mt-4 space-y-4">
                 <div>
                   <div className="text-xs text-white/50">Expected total</div>

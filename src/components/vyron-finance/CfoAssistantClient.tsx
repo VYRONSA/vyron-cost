@@ -44,7 +44,7 @@ export default function CfoAssistantClient({ presets }: { presets: CfoAssistantA
                     type="button"
                     disabled={busy}
                     onClick={() => ask(p.question)}
-                    className="rounded-xl bg-white px-4 py-3 text-left text-sm font-bold text-slate-800 shadow-sm hover:bg-violet-50 disabled:opacity-50"
+                    className="rounded-xl bg-white px-4 py-3 text-left text-sm font-bold text-slate-800 shadow-sm hover:bg-blue-50 disabled:opacity-50"
                   >
                     {p.question}
                   </button>
@@ -55,7 +55,7 @@ export default function CfoAssistantClient({ presets }: { presets: CfoAssistantA
               <h2 className="text-xl font-black">AI CFO Assistant</h2>
               {answer ? (
                 <>
-                  <p className="mt-2 text-sm text-violet-300">{answer.question}</p>
+                  <p className="mt-2 text-sm text-blue-300">{answer.question}</p>
                   <p className="mt-4 text-sm leading-8 text-slate-200">{answer.answer}</p>
                   <div className="mt-6 rounded-xl bg-white/10 p-4 text-xs font-bold text-slate-300">
                     <div>Formula: {answer.formula}</div>
@@ -77,7 +77,7 @@ export default function CfoAssistantClient({ presets }: { presets: CfoAssistantA
                     type="button"
                     disabled={busy || !question.trim()}
                     onClick={() => ask(question)}
-                    className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-black disabled:opacity-50"
+                    className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-black disabled:opacity-50"
                   >
                     Ask
                   </button>

@@ -38,7 +38,7 @@ export default function SavingsTrackerClient() {
     >
       <section className="grid gap-6">
             <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Savings Tracked</div>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">Savings Tracked</div>
               <div className="mt-3 text-5xl font-black">{money(total)}</div>
             </div>
             <div className="rounded-[2rem] bg-white p-6">
@@ -52,7 +52,7 @@ export default function SavingsTrackerClient() {
               {rows.map(([label, amount]) => (
                 <div key={String(label)} className="flex justify-between rounded-[2rem] bg-white p-5 font-black">
                   <span>{label}</span>
-                  <span className="text-[#7E22CE]">{money(Number(amount))}</span>
+                  <span className="text-[#1D4ED8]">{money(Number(amount))}</span>
                 </div>
               ))}
             </div>

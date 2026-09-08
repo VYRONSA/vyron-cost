@@ -53,9 +53,9 @@ export default function InvoiceForensicsClient({ rows }: { rows: InvoiceRiskFind
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] border border-violet-100 bg-white p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-              <div className="flex items-center gap-3 rounded-[1.5rem] border border-violet-100 bg-violet-50/50 px-4 py-3">
-                <Search size={20} className="text-violet-700" />
+            <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+              <div className="flex items-center gap-3 rounded-[1.5rem] border border-blue-100 bg-blue-50/50 px-4 py-3">
+                <Search size={20} className="text-blue-700" />
                 <input
                   value={search}
                   onChange={(event) => {
@@ -71,9 +71,9 @@ export default function InvoiceForensicsClient({ rows }: { rows: InvoiceRiskFind
               </div>
             </div>
 
-            <div className="overflow-x-auto rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+            <div className="overflow-x-auto rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
               <div className="min-w-[1180px]">
-                <div className="grid grid-cols-9 bg-violet-800 px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-violet-100">
+                <div className="grid grid-cols-9 bg-blue-800 px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-blue-100">
                   <div>Invoice</div>
                   <div>Supplier</div>
                   <div>Amount</div>
@@ -98,7 +98,7 @@ export default function InvoiceForensicsClient({ rows }: { rows: InvoiceRiskFind
                     <div>{row.duplicate_of || "—"}</div>
                     <div>{row.review_status}</div>
                     <div>
-                      <Link href="/invoice-centre" className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]">
+                      <Link href="/invoice-centre" className="rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-3 py-2 text-xs font-black text-[#1D4ED8]">
                         Open
                       </Link>
                     </div>

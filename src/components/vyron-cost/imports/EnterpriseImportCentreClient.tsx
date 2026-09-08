@@ -233,7 +233,7 @@ export default function EnterpriseImportCentreClient({
                 <h2 className="text-lg font-black text-[#0F172A]">{card.name}</h2>
                 <p className="mt-2 text-sm font-medium leading-6 text-[#64748B]">{card.description}</p>
               </div>
-              <Upload size={20} className="text-[#7E22CE]" />
+              <Upload size={20} className="text-[#1D4ED8]" />
             </div>
 
             <dl className="mt-5 grid gap-2 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm">
@@ -259,7 +259,7 @@ export default function EnterpriseImportCentreClient({
               {importEnabled ? (
                 <Link
                   href={card.actions.importHref as string}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl vyron-grad-deep px-4 py-2.5 text-sm font-black text-[#DDD6FE]"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl vyron-grad-deep px-4 py-2.5 text-sm font-black text-[#BFDBFE]"
                 >
                   Import
                   <ArrowRight size={14} />

@@ -50,7 +50,7 @@ export default function SupplierNegotiationPackClient({ suppliers }: { suppliers
                       <p className="mt-1 text-sm font-bold text-slate-500">{supplier.category} · movement {supplier.price_movement_percent.toFixed(1)}%</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-black text-[#7E22CE]">{formatSupplierSpend(supplier.negotiation_opportunity)}</div>
+                      <div className="text-3xl font-black text-[#1D4ED8]">{formatSupplierSpend(supplier.negotiation_opportunity)}</div>
                       <div className="text-xs font-bold text-slate-400">negotiation opportunity</div>
                     </div>
                   </div>

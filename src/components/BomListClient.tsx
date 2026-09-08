@@ -355,16 +355,16 @@ export default function BomListClient({
       }}
       showControlPanel={false}
     >
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <VyronPremiumSectionHeading eyebrow="BOM library" title="Recipes & BOMs" subtitle="Search, filter and open costing structures." />
 
         <div className="mt-5 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
-            <div className="flex w-full items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 md:w-auto">
-              <Search size={18} className="shrink-0 text-violet-700" />
+            <div className="flex w-full items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 md:w-auto">
+              <Search size={18} className="shrink-0 text-blue-700" />
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search BOMs..." className="w-full min-w-0 bg-transparent text-sm font-bold outline-none placeholder:text-slate-400 md:w-72" />
             </div>
-            <div className="flex w-full items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 md:w-auto">
-              <FileText size={18} className="shrink-0 text-violet-700" />
+            <div className="flex w-full items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 md:w-auto">
+              <FileText size={18} className="shrink-0 text-blue-700" />
               <input
                 value={descriptionFilter}
                 onChange={(e) => setDescriptionFilter(e.target.value)}
@@ -377,7 +377,7 @@ export default function BomListClient({
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               aria-label="Filter by category"
-              className="w-full rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-black text-violet-800 outline-none md:w-auto"
+              className="w-full rounded-2xl border border-blue-200 bg-white px-4 py-3 text-sm font-black text-blue-800 outline-none md:w-auto"
             >
               <option value="All">All categories</option>
               {categories.map((category) => (
@@ -390,7 +390,7 @@ export default function BomListClient({
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               aria-label="Filter by status"
-              className="w-full rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-black text-violet-800 outline-none md:w-auto"
+              className="w-full rounded-2xl border border-blue-200 bg-white px-4 py-3 text-sm font-black text-blue-800 outline-none md:w-auto"
             >
               <option value="All">All statuses</option>
               <option>Draft</option>
@@ -402,14 +402,14 @@ export default function BomListClient({
                 type="button"
                 onClick={() => void loadRecipes(true)}
                 disabled={refreshing}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-700 disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-blue-200 bg-white px-5 py-3 text-sm font-black text-blue-700 disabled:opacity-60"
               >
                 <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
                 Refresh
               </button>
             )}
             {canCreate ? (
-              <Link href="/recipes/new" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white">
+              <Link href="/recipes/new" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-3 text-sm font-black text-white">
                 <Plus size={18} />
                 New BOM
               </Link>
@@ -425,7 +425,7 @@ export default function BomListClient({
                 type="button"
                 onClick={chip.clear}
                 aria-label={`Remove filter ${chip.label}`}
-                className="inline-flex max-w-full items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-800"
+                className="inline-flex max-w-full items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-800"
               >
                 <span className="truncate">{chip.label}</span>
                 <X size={14} className="shrink-0" />
@@ -443,11 +443,11 @@ export default function BomListClient({
       </div>
 
       {loading ? (
-        <div className="rounded-[2rem] bg-white p-10 text-center text-sm font-bold text-slate-500 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-10 text-center text-sm font-bold text-slate-500 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           Loading recipes...
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-[2rem] bg-white p-10 text-center shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-10 text-center shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <h3 className="text-xl font-black text-slate-900">
             {activeFilters.length ? "No matching BOMs" : "No BOMs yet"}
           </h3>
@@ -460,7 +460,7 @@ export default function BomListClient({
             <button
               type="button"
               onClick={clearFilters}
-              className="mt-6 inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-700"
+              className="mt-6 inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-white px-5 py-3 text-sm font-black text-blue-700"
             >
               Clear all filters
             </button>
@@ -473,7 +473,7 @@ export default function BomListClient({
           ) : null}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="min-w-[1040px]">
             <div className="grid grid-cols-[260px_170px_120px_130px_130px_100px_190px] bg-slate-50 px-5 py-4 text-xs font-black uppercase tracking-[0.14em] text-slate-500">
               <div>BOM</div><div>Purpose</div><div>Yield</div><div>Cost / Unit</div><div>Suggested</div><div>Status</div><div>Actions</div>
@@ -490,17 +490,17 @@ export default function BomListClient({
                       className="h-10 w-10 shrink-0 rounded-xl border border-slate-100 object-cover"
                     />
                   ) : null}
-                  <Link href={`/recipes/${bom.id}`} className="truncate font-black text-violet-700">{bom.bom_name}</Link>
+                  <Link href={`/recipes/${bom.id}`} className="truncate font-black text-blue-700">{bom.bom_name}</Link>
                 </div>
                 <div className="font-bold text-slate-500">
                   {BOM_PURPOSE_LABELS[normaliseBomPurpose(bom.bom_purpose)]}
                 </div>
                 <div className="font-bold text-slate-500">{Number(bom.yield_qty || 0).toFixed(2)} {bom.yield_unit || ""}</div>
                 <div className="font-black text-slate-900">{formatMoney(bom.cost_per_unit)}</div>
-                <div className="font-black text-[#A855F7]">{formatMoney(bom.suggested_selling_price)}</div>
-                <div className="font-black text-violet-700">{bom.status || "Draft"}</div>
+                <div className="font-black text-[#3B82F6]">{formatMoney(bom.suggested_selling_price)}</div>
+                <div className="font-black text-blue-700">{bom.status || "Draft"}</div>
                 <div className="flex gap-2">
-                  <Link href={`/recipes/${bom.id}`} className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">Open</Link>
+                  <Link href={`/recipes/${bom.id}`} className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-700">Open</Link>
                   {canCreate ? (
                     <button
                       type="button"
@@ -541,7 +541,7 @@ export default function BomListClient({
                 autoFocus
                 value={copyName}
                 onChange={(e) => setCopyName(e.target.value)}
-                className="mt-2 min-h-[44px] w-full rounded-xl border border-violet-100 px-4 py-3 text-sm font-semibold outline-none focus:border-violet-400"
+                className="mt-2 min-h-[44px] w-full rounded-xl border border-blue-100 px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400"
               />
             </label>
 
@@ -552,7 +552,7 @@ export default function BomListClient({
                   <label
                     key={purpose}
                     className={`flex min-h-[44px] cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 ${
-                      copyPurpose === purpose ? "border-violet-400 bg-violet-50" : "border-slate-200"
+                      copyPurpose === purpose ? "border-blue-400 bg-blue-50" : "border-slate-200"
                     }`}
                   >
                     <input
@@ -585,7 +585,7 @@ export default function BomListClient({
                 type="button"
                 disabled={copyBusy}
                 onClick={copyAndEdit}
-                className="min-h-[44px] w-full rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white disabled:opacity-60"
+                className="min-h-[44px] w-full rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-3 text-sm font-black text-white disabled:opacity-60"
               >
                 Copy &amp; edit
               </button>
@@ -597,7 +597,7 @@ export default function BomListClient({
                 type="button"
                 disabled={copyBusy}
                 onClick={() => void submitCopy()}
-                className="mt-2 min-h-[44px] w-full rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-700 disabled:opacity-60"
+                className="mt-2 min-h-[44px] w-full rounded-2xl border border-blue-200 bg-white px-5 py-3 text-sm font-black text-blue-700 disabled:opacity-60"
               >
                 {copyBusy ? "Copying…" : "Copy now"}
               </button>

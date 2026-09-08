@@ -13,7 +13,7 @@ function formatMoney(value: number) {
 }
 
 function trendClass(trend: string) {
-  if (trend === "Growing") return "bg-violet-100 text-violet-800";
+  if (trend === "Growing") return "bg-blue-100 text-blue-800";
   if (trend === "Declining") return "bg-rose-100 text-rose-800";
   return "bg-slate-100 text-slate-700";
 }

@@ -104,13 +104,13 @@ export default function CustomerStatementsClient() {
         ],
       }}
     >
-      <section className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <VyronPremiumSectionHeading eyebrow="Filter" title="Statement parameters" subtitle="Select customer and date range." />
 
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           <label className="text-sm font-black text-slate-600">
             Customer
-            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400">
+            <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400">
               {customers.map((customer) => (
                 <option key={customer.id} value={customer.id}>{customer.name}</option>
               ))}
@@ -118,32 +118,32 @@ export default function CustomerStatementsClient() {
           </label>
           <label className="text-sm font-black text-slate-600">
             From Date
-            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400" />
+            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400" />
           </label>
           <label className="text-sm font-black text-slate-600">
             To Date
-            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400" />
+            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400" />
           </label>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-3">
-          <button type="button" onClick={() => window.print()} className="rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-800">Print Statement</button>
+          <button type="button" onClick={() => window.print()} className="rounded-2xl border border-blue-200 bg-white px-5 py-3 text-sm font-black text-blue-800">Print Statement</button>
           <a href={emailHref} className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white">Email Statement</a>
         </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-600">Outstanding Balance</p>
+        <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-600">Outstanding Balance</p>
           <p className="mt-2 text-3xl font-black text-slate-950">{formatCurrency(outstanding)}</p>
         </div>
-        <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-600">Total Sales (Period)</p>
+        <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-600">Total Sales (Period)</p>
           <p className="mt-2 text-3xl font-black text-slate-950">{formatCurrency(totalSales)}</p>
         </div>
       </section>
 
-      <section className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <VyronPremiumSectionHeading eyebrow="History" title="Invoice history" />
         <EnterpriseScrollContainer className="mt-4 rounded-3xl border border-slate-100">
           <table className="min-w-[720px] w-full text-left text-sm">
@@ -158,7 +158,7 @@ export default function CustomerStatementsClient() {
             <tbody className="divide-y divide-slate-100">
               {invoices.length ? invoices.map((invoice) => (
                 <tr key={invoice.invoice_number}>
-                  <td className="px-4 py-3 font-black text-violet-700">{invoice.invoice_number}</td>
+                  <td className="px-4 py-3 font-black text-blue-700">{invoice.invoice_number}</td>
                   <td className="px-4 py-3">{invoice.invoice_date}</td>
                   <td className="px-4 py-3">{invoice.status}</td>
                   <td className="px-4 py-3 text-right font-black">{formatCurrency(invoice.sales_value)}</td>

@@ -291,7 +291,7 @@ export default function ActionsCentreClient({
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <SummaryCard label="Critical Actions" value={String(snapshot.summary.criticalActions)} accent="#2563EB" />
-            <SummaryCard label="High Priority Actions" value={String(snapshot.summary.highPriorityActions)} accent="#A855F7" />
+            <SummaryCard label="High Priority Actions" value={String(snapshot.summary.highPriorityActions)} accent="#3B82F6" />
             <SummaryCard
               label="Estimated Opportunity"
               value={
@@ -316,12 +316,12 @@ export default function ActionsCentreClient({
           </section>
 
           {snapshot.pipeline.length === 0 ? (
-            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-6">
+            <section className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
               <div className="flex items-start gap-3">
-                <CheckSquare size={22} className="mt-0.5 shrink-0 text-violet-700" />
+                <CheckSquare size={22} className="mt-0.5 shrink-0 text-blue-700" />
                 <div>
-                  <h2 className="text-lg font-bold text-violet-950">No significant actions currently required.</h2>
-                  <p className="mt-2 text-sm font-medium leading-6 text-violet-900">
+                  <h2 className="text-lg font-bold text-blue-950">No significant actions currently required.</h2>
+                  <p className="mt-2 text-sm font-medium leading-6 text-blue-900">
                     Current operational signals do not indicate material execution actions.
                   </p>
                 </div>
@@ -418,7 +418,7 @@ export default function ActionsCentreClient({
                   Data and integration gaps blocking execution readiness.
                 </p>
                 {snapshot.blockers.length === 0 ? (
-                  <p className="mt-4 text-sm font-semibold text-violet-700">No blockers detected on current data.</p>
+                  <p className="mt-4 text-sm font-semibold text-blue-700">No blockers detected on current data.</p>
                 ) : (
                   <div className="mt-4 space-y-3">
                     {snapshot.blockers.map((blocker) => (
@@ -592,7 +592,7 @@ function ImpactMatrixQuadrant({
 }) {
   const accent =
     quadrant === "High Impact / Low Effort"
-      ? "border-violet-200 bg-violet-50"
+      ? "border-blue-200 bg-blue-50"
       : quadrant === "High Impact / High Effort"
         ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]"
         : quadrant === "Low Impact / Low Effort"
@@ -726,7 +726,7 @@ function PriorityBadge({ priority }: { priority: ExecutionAction["priority"] }) 
 
 function StatusBadge({ status }: { status: ExecutionAction["status"] }) {
   const classes: Record<ExecutionAction["status"], string> = {
-    Ready: "border-violet-200 bg-violet-50 text-violet-800",
+    Ready: "border-blue-200 bg-blue-50 text-blue-800",
     Recommended: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
     Waiting: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Blocked: "border-rose-200 bg-rose-50 text-rose-800",
@@ -740,7 +740,7 @@ function StatusBadge({ status }: { status: ExecutionAction["status"] }) {
 
 function ConfidenceBadge({ confidence }: { confidence: ExecutionAction["confidence"] }) {
   const classes = {
-    High: "text-violet-700",
+    High: "text-blue-700",
     Medium: "text-[var(--vyron-warning-fg)]",
     Low: "text-[#64748B]",
   };

@@ -67,7 +67,7 @@ function StatusPill({ ok, label }: { ok: boolean; label?: string }) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${
-        ok ? "border-violet-200 bg-violet-50 text-violet-800" : "border-rose-200 bg-rose-50 text-rose-800"
+        ok ? "border-blue-200 bg-blue-50 text-blue-800" : "border-rose-200 bg-rose-50 text-rose-800"
       }`}
     >
       {ok ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
@@ -155,12 +155,12 @@ export default function DeploymentReadinessClient() {
         <>
           <section
             className={`rounded-2xl border px-5 py-4 ${
-              overallReady ? "border-violet-200 bg-violet-50" : "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]"
+              overallReady ? "border-blue-200 bg-blue-50" : "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]"
             }`}
           >
             <div className="flex items-start gap-3">
               {overallReady ? (
-                <CheckCircle2 size={22} className="mt-0.5 shrink-0 text-violet-700" />
+                <CheckCircle2 size={22} className="mt-0.5 shrink-0 text-blue-700" />
               ) : (
                 <AlertTriangle size={22} className="mt-0.5 shrink-0 text-[var(--vyron-warning-fg)]" />
               )}

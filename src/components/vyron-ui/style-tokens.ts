@@ -1,6 +1,6 @@
 /**
  * VYRON COST — Master visual direction (Batch 1 foundation).
- * VYRON Enterprise Design Language. Blue→purple brand fade, glass surfaces and a
+ * VYRON Enterprise Design Language. Blue→indigo brand fade, glass surfaces and a
  * layered elevation scale; presentation only — layouts and spacing are unchanged.
  * Use these tokens for all new migrations; do not hardcode one-off colours.
  */

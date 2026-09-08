@@ -49,7 +49,7 @@ const EMPTY_LINE: LineDraft = {
 const COMPONENT_TYPES = ["Product Component", "Condiment", "Packaging", "Other"];
 
 const controlClass =
-  "w-full rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-violet-400";
+  "w-full rounded-2xl border border-blue-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-blue-400";
 
 export default function RecipeDetailClient({
   recipeId,
@@ -358,7 +358,7 @@ export default function RecipeDetailClient({
       <div className="rounded-[2rem] bg-white p-8 font-bold text-slate-600">
         {error || "BOM not found."}
         <div className="mt-4">
-          <Link href="/recipes" className="text-sm font-black text-violet-700">
+          <Link href="/recipes" className="text-sm font-black text-blue-700">
             ← Back to Recipes
           </Link>
         </div>
@@ -379,7 +379,7 @@ export default function RecipeDetailClient({
     >
       <section className="grid gap-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Link href="/recipes" className="text-xs font-black text-violet-700">
+              <Link href="/recipes" className="text-xs font-black text-blue-700">
                 ← Recipes & BOM
               </Link>
               {canEdit ? (
@@ -390,9 +390,9 @@ export default function RecipeDetailClient({
             </div>
       
             {linkedProduct ? (
-              <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-bold text-[#4D7C0F]">
+              <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-4 text-sm font-bold text-[#4D7C0F]">
                 Linked finished product:{" "}
-                <Link href={`/products/${linkedProduct.id}/edit`} className="font-black text-[#7E22CE] underline">
+                <Link href={`/products/${linkedProduct.id}/edit`} className="font-black text-[#1D4ED8] underline">
                   {linkedProduct.product_name}
                 </Link>
                 {" · "}Product cost syncs when this BOM is saved.
@@ -400,13 +400,13 @@ export default function RecipeDetailClient({
             ) : null}
       
             {imageUrl ? (
-              <div className="overflow-hidden rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(81,63,190,0.08)] sm:p-6">
+              <div className="overflow-hidden rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(29,78,216,0.08)] sm:p-6">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={imageUrl}
                     alt={`${bom.bom_name} pack`}
-                    className="h-52 w-full rounded-2xl border border-violet-100 object-cover sm:h-40 sm:w-64"
+                    className="h-52 w-full rounded-2xl border border-blue-100 object-cover sm:h-40 sm:w-64"
                   />
                   <div className="min-w-0">
                     <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Product / pack photo</div>
@@ -458,23 +458,23 @@ export default function RecipeDetailClient({
             <div className="grid gap-3 sm:grid-cols-2 md:gap-5 lg:grid-cols-5">
               {[
                 ["Ingredient Cost", formatMoney(ingredientCost), "text-slate-900"],
-                ["Packaging Cost", formatMoney(packagingCost), "text-violet-700"],
+                ["Packaging Cost", formatMoney(packagingCost), "text-blue-700"],
                 ["Total Cost", formatMoney(totals.totalCost), "text-slate-900"],
                 ["Selling Price", formatMoney(totals.sellingPrice), "text-slate-900"],
                 ["GP", `${totals.actualGp.toFixed(2)}%`, totals.actualGp < totals.targetGp ? "text-red-600" : "text-[#84CC16]"],
               ].map(([label, value, cls]) => (
-                <div key={label} className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(81,63,190,0.08)] md:p-6">
+                <div key={label} className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(29,78,216,0.08)] md:p-6">
                   <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">{label}</div>
                   <div className={`mt-2 text-2xl font-black md:mt-3 md:text-3xl ${cls}`}>{value}</div>
                 </div>
               ))}
             </div>
       
-            <section className="rounded-[2rem] border border-violet-100 bg-violet-50 p-5 text-sm font-black text-violet-900">
+            <section className="rounded-[2rem] border border-blue-100 bg-blue-50 p-5 text-sm font-black text-blue-900">
               Formula used: Actual GP = (Selling Price - Cost / Unit) / Selling Price. Suggested Price = Cost / Unit / (1 - Target GP%).
             </section>
       
-            <section className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(81,63,190,0.08)] sm:p-6">
+            <section className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(29,78,216,0.08)] sm:p-6">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-black text-slate-900">Recipe Components</h2>
                 {canCreate ? (
@@ -482,7 +482,7 @@ export default function RecipeDetailClient({
                     type="button"
                     onClick={() => setAddingComponent((v) => !v)}
                     disabled={busy}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 disabled:opacity-60"
+                    className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-black text-blue-700 disabled:opacity-60"
                   >
                     <Plus size={16} />
                     Add Component
@@ -491,14 +491,14 @@ export default function RecipeDetailClient({
               </div>
 
               {notice ? (
-                <p className="mb-4 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-800">{notice}</p>
+                <p className="mb-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800">{notice}</p>
               ) : null}
               {error ? (
                 <p className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>
               ) : null}
 
               {addingComponent && canCreate ? (
-                <div className="mb-4 rounded-2xl border border-violet-200 bg-violet-50/60 p-4">
+                <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50/60 p-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
                       Component name
@@ -571,17 +571,17 @@ export default function RecipeDetailClient({
                   {groups.map((group) => {
                     const open = expanded[group.key] ?? true;
                     return (
-                      <div key={group.key} className="overflow-hidden rounded-2xl border border-violet-100">
+                      <div key={group.key} className="overflow-hidden rounded-2xl border border-blue-100">
                         <button
                           type="button"
                           onClick={() => setExpanded((s) => ({ ...s, [group.key]: !open }))}
                           aria-expanded={open}
-                          className="flex w-full items-center gap-3 bg-violet-50 px-4 py-4 text-left sm:px-5"
+                          className="flex w-full items-center gap-3 bg-blue-50 px-4 py-4 text-left sm:px-5"
                         >
                           {open ? (
-                            <ChevronDown size={18} className="shrink-0 text-violet-700" />
+                            <ChevronDown size={18} className="shrink-0 text-blue-700" />
                           ) : (
-                            <ChevronRight size={18} className="shrink-0 text-violet-700" />
+                            <ChevronRight size={18} className="shrink-0 text-blue-700" />
                           )}
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-black text-slate-900 sm:text-base">{group.name}</span>
@@ -590,7 +590,7 @@ export default function RecipeDetailClient({
                               {group.type ? ` · ${group.type}` : ""}
                             </span>
                           </span>
-                          <span className="shrink-0 text-sm font-black text-violet-700 sm:text-base">{formatMoney(group.subtotal)}</span>
+                          <span className="shrink-0 text-sm font-black text-blue-700 sm:text-base">{formatMoney(group.subtotal)}</span>
                           {canDelete && group.component ? (
                             <span
                               role="button"
@@ -633,7 +633,7 @@ export default function RecipeDetailClient({
                                   <div className="truncate font-black text-slate-900">{line.line_name}</div>
                                   <div className="pr-3 text-right font-bold tabular-nums text-slate-600">{formatQuantity(line.quantity)}</div>
                                   <div className="pl-1 font-bold text-slate-500">{line.unit}</div>
-                                  <div className="text-right font-bold tabular-nums text-violet-700">{formatPreciseMoney(line.unit_cost)}</div>
+                                  <div className="text-right font-bold tabular-nums text-blue-700">{formatPreciseMoney(line.unit_cost)}</div>
                                   <div className="text-right font-black tabular-nums text-slate-900">
                                     {formatPreciseMoney(line.line_cost ?? calcLineCost(line))}
                                     {canEdit && components.length > 1 ? (
@@ -655,7 +655,7 @@ export default function RecipeDetailClient({
                                   </div>
                                 </div>
                               ))}
-                              <div className="grid grid-cols-[minmax(0,2fr)_1fr_0.7fr_1fr_1fr] border-t border-violet-100 bg-violet-50/60 px-4 py-3 text-sm sm:px-5">
+                              <div className="grid grid-cols-[minmax(0,2fr)_1fr_0.7fr_1fr_1fr] border-t border-blue-100 bg-blue-50/60 px-4 py-3 text-sm sm:px-5">
                                 <div className="col-span-4 font-black text-slate-700">Component Cost</div>
                                 <div className="text-right font-black tabular-nums text-slate-900">{formatPreciseMoney(group.subtotal)}</div>
                               </div>
@@ -762,7 +762,7 @@ export default function RecipeDetailClient({
                                         setLineDraft({ ...EMPTY_LINE, line_type: group.isPackaging ? "Packaging" : "Ingredient" });
                                         setLineDraftFor(group.key);
                                       }}
-                                      className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700"
+                                      className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-black text-blue-700"
                                     >
                                       <Plus size={16} />
                                       Add Ingredient

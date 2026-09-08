@@ -609,7 +609,7 @@ function SourceCard({ source }: { source: IntelligenceSourceStatus }) {
 
 function ConfidenceBadge({ confidence }: { confidence: DecisionConfidence }) {
   const classes = {
-    High: "border-violet-200 bg-violet-50 text-violet-800",
+    High: "border-blue-200 bg-blue-50 text-blue-800",
     Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Low: "border-[#E2E8F0] bg-[#F6F7FB] text-[#64748B]",
   };

@@ -24,7 +24,7 @@ const MIN_INTERACTIONS = 3;
 const MIN_AUTH_MS_BEFORE_PROMPT = 20000;
 
 function toneClass(tone: PwaNoticeTone) {
-  if (tone === "success") return "border-violet-200 bg-violet-50 text-violet-700";
+  if (tone === "success") return "border-blue-200 bg-blue-50 text-blue-700";
   if (tone === "warning") return "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   return "border-slate-200 bg-white text-slate-700";
 }
@@ -303,7 +303,7 @@ export default function PwaRuntime() {
         <div className="pointer-events-auto w-full overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.07)] bg-white/90 shadow-[0_8px_16px_rgba(15,23,42,0.05),0_24px_56px_rgba(15,23,42,0.12)] backdrop-blur-xl backdrop-saturate-150">
           {showInstall ? (
             <div className="flex items-start gap-3.5 p-4">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1d6bff] via-[#4f46e5] to-[#7e22ce] text-white shadow-[0_4px_12px_rgba(79,70,229,0.20)]">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1d6bff] via-[#4f46e5] to-[#1d4ed8] text-white shadow-[0_4px_12px_rgba(79,70,229,0.20)]">
                 <Download size={18} />
               </span>
               <div className="min-w-0 flex-1">
@@ -318,7 +318,7 @@ export default function PwaRuntime() {
                     type="button"
                     onClick={() => void handleInstall()}
                     disabled={installing}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#1d6bff] via-[#4f46e5] to-[#7e22ce] px-4 text-xs font-bold text-white shadow-[0_4px_12px_rgba(79,70,229,0.18)] transition hover:brightness-[1.06] disabled:opacity-50"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#1d6bff] via-[#4f46e5] to-[#1d4ed8] px-4 text-xs font-bold text-white shadow-[0_4px_12px_rgba(79,70,229,0.18)] transition hover:brightness-[1.06] disabled:opacity-50"
                   >
                     {installing ? "Installing…" : "Install"}
                   </button>

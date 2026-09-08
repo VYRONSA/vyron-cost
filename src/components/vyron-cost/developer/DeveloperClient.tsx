@@ -195,7 +195,7 @@ async function fetchWorkspaceClient(clientId: string): Promise<ClientWorkspace |
 }
 
 function clientLoginDisplayClass(status: ClientLoginDisplayStatus) {
-  if (status === "active_login") return "rounded-full bg-[#A855F7]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]";
+  if (status === "active_login") return "rounded-full bg-[#3B82F6]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]";
   if (status === "disabled_login") return "rounded-full bg-rose-100 px-3 py-1 text-xs font-black text-rose-800";
   return "rounded-full bg-[var(--vyron-warning-bg)] px-3 py-1 text-xs font-black text-[var(--vyron-warning-fg)]";
 }
@@ -282,8 +282,8 @@ function buildLocalClient(
 }
 
 function statusClass(status: ClientStatus) {
-  if (status === "Active") return "bg-[#A855F7]/12 text-[#4D7C0F]";
-  if (status === "Demo") return "bg-violet-100 text-violet-800";
+  if (status === "Active") return "bg-[#3B82F6]/12 text-[#4D7C0F]";
+  if (status === "Demo") return "bg-blue-100 text-blue-800";
   if (status === "Suspended") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   if (status === "Archived") return "bg-slate-200 text-slate-700";
   return "bg-slate-100 text-slate-700";
@@ -314,7 +314,7 @@ function validateAdminForm(admin: typeof emptyAdminForm, requirePassword = false
 }
 
 function xeroClass(status: XeroStatus) {
-  if (status === "Connected") return "rounded-full bg-[#A855F7]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]";
+  if (status === "Connected") return "rounded-full bg-[#3B82F6]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]";
   if (status === "Setup Required") return "rounded-full bg-[var(--vyron-warning-bg)] px-3 py-1 text-xs font-black text-[var(--vyron-warning-fg)]";
   return "rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700";
 }
@@ -334,7 +334,7 @@ function xeroClass(status: XeroStatus) {
  */
 function MultiStoreCommercialReference() {
   return (
-    <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+    <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-2xl font-black text-slate-900">Multi-Store Operations — commercial model</h2>
@@ -342,7 +342,7 @@ function MultiStoreCommercialReference() {
             {MULTI_STORE_COMMERCIALS.positioning}
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-violet-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-violet-700">
+        <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-blue-700">
           Approved pricing
         </span>
       </div>
@@ -1308,8 +1308,8 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
           {[
-            ["Active Clients", statusCounts.total, "bg-violet-50 text-violet-800"],
-            ["Live", statusCounts.active, "bg-[#A855F7]/10 text-[#4D7C0F]"],
+            ["Active Clients", statusCounts.total, "bg-blue-50 text-blue-800"],
+            ["Live", statusCounts.active, "bg-[#3B82F6]/10 text-[#4D7C0F]"],
             ["Demo", statusCounts.demo, "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
             ["In Setup", statusCounts.setup, "bg-slate-50 text-slate-800"],
             ["Suspended", statusCounts.suspended, "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
@@ -1323,7 +1323,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
         </section>
 
         <section className="grid w-full max-w-full min-w-0 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+          <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-2xl font-black text-slate-900">Quick Actions</h2>
@@ -1342,9 +1342,9 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
                 <Link
                   key={href}
                   href={href}
-                  className="rounded-2xl border border-violet-100 bg-violet-50/40 p-4 transition hover:border-violet-300 hover:bg-violet-50"
+                  className="rounded-2xl border border-blue-100 bg-blue-50/40 p-4 transition hover:border-blue-300 hover:bg-blue-50"
                 >
-                  <Icon size={20} className="text-violet-700" />
+                  <Icon size={20} className="text-blue-700" />
                   <div className="mt-3 font-black text-slate-900">{title}</div>
                   <div className="mt-1 text-xs font-semibold text-slate-500">{note}</div>
                 </Link>
@@ -1352,7 +1352,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
             </div>
           </div>
 
-          <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+          <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
             <h2 className="text-2xl font-black text-slate-900">Setup Notes</h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">Recent platform activity and onboarding reminders.</p>
             <ul className="mt-5 space-y-3">
@@ -1365,7 +1365,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
           </div>
         </section>
 
-        <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-2xl font-black text-slate-900">Client Register Summary</h2>
@@ -1373,7 +1373,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
             </div>
             <Link
               href="/developer/clients"
-              className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-white px-4 py-2 text-xs font-black text-violet-800"
+              className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-white px-4 py-2 text-xs font-black text-blue-800"
             >
               View all clients
               <ArrowRight size={14} />
@@ -1387,7 +1387,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
                 className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3"
               >
                 <div>
-                  <div className="font-black text-violet-700">{client.companyName}</div>
+                  <div className="font-black text-blue-700">{client.companyName}</div>
                   <div className="text-xs font-semibold text-slate-500">
                     {client.packageName} · {client.activeUsers}/{client.userLimit} users
                   </div>
@@ -1427,10 +1427,10 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
           </div>
         ) : null}
 
-        <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-violet-100 bg-slate-50 px-4 py-3 sm:min-w-[240px]">
-              <Search size={18} className="text-violet-700" />
+            <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-blue-100 bg-slate-50 px-4 py-3 sm:min-w-[240px]">
+              <Search size={18} className="text-blue-700" />
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
@@ -1443,7 +1443,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
               <select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-                className="mt-1 block w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none focus:border-violet-400 sm:min-w-[140px]"
+                className="mt-1 block w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none focus:border-blue-400 sm:min-w-[140px]"
               >
                 <option value="All">All</option>
                 <option value="Active">Active</option>
@@ -1458,7 +1458,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
               <select
                 value={packageFilter}
                 onChange={(event) => setPackageFilter(event.target.value)}
-                className="mt-1 block w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none focus:border-violet-400 sm:min-w-[160px]"
+                className="mt-1 block w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none focus:border-blue-400 sm:min-w-[160px]"
               >
                 <option value="All">All</option>
                 {packageOptions.map((pkg) => (
@@ -1471,7 +1471,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
             <button
               type="button"
               onClick={refreshClients}
-              className="inline-flex items-center gap-2 self-end rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-800"
+              className="inline-flex items-center gap-2 self-end rounded-2xl border border-blue-200 bg-white px-5 py-3 text-sm font-black text-blue-800"
             >
               <RefreshCcw size={16} />
               Refresh
@@ -1500,7 +1500,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
                 className={`rounded-xl px-4 py-2 text-xs font-black ${
                   directoryView === value
                     ? "vyron-grad-surface text-white"
-                    : "bg-violet-50 text-violet-800"
+                    : "bg-blue-50 text-blue-800"
                 }`}
               >
                 {label}
@@ -1511,12 +1511,12 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
 
         <FlashMessage message={message} activeClient={activeClient} />
 
-        <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-xl font-black text-slate-900">
               {directoryView === "archived" ? "Archived Clients" : "Client Register"}
             </h2>
-            <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-black text-violet-700">
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
               {filteredClients.length} shown
             </span>
           </div>
@@ -1679,17 +1679,17 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
           ) : null}
 
           {selectedClient ? (
-            <div className="mt-5 rounded-2xl border border-violet-100 bg-violet-50/40 p-5">
+            <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/40 p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-600">Selected workspace</div>
+                  <div className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600">Selected workspace</div>
                   <div className="mt-1 text-lg font-black text-slate-950">{selectedClient.companyName}</div>
                   <div className="mt-1 text-sm font-semibold text-slate-600">
                     {selectedClient.contactEmail || "No contact email"} · {selectedClient.phone || "No phone"}
                   </div>
                   {selectedClient.owner ? (
-                    <div className="mt-3 rounded-xl border border-violet-100 bg-white px-4 py-3 text-sm">
-                      <div className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-600">
+                    <div className="mt-3 rounded-xl border border-blue-100 bg-white px-4 py-3 text-sm">
+                      <div className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600">
                         Primary administrator
                       </div>
                       <div className="mt-1 font-black text-slate-900">{ownerDisplayName(selectedClient.owner)}</div>
@@ -1712,7 +1712,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
                     </div>
                   ) : null}
                   <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-slate-700">
-                    <div className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-600">
+                    <div className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600">
                       Workspace session debug
                     </div>
                     <dl className="mt-2 space-y-1">
@@ -1750,7 +1750,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
                   <button
                     type="button"
                     onClick={() => startEditClient(selectedClient.id)}
-                    className="rounded-xl bg-white px-4 py-2 text-xs font-black text-violet-800"
+                    className="rounded-xl bg-white px-4 py-2 text-xs font-black text-blue-800"
                   >
                     Edit in Setup
                   </button>
@@ -1758,7 +1758,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
                     <button
                       type="button"
                       onClick={() => loginAsClient(selectedClient)}
-                      className="rounded-xl bg-white px-4 py-2 text-xs font-black text-violet-800"
+                      className="rounded-xl bg-white px-4 py-2 text-xs font-black text-blue-800"
                     >
                       Login As Client
                     </button>
@@ -1797,9 +1797,9 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
       <FlashMessage message={message} activeClient={activeClient} />
 
       <div className="grid w-full max-w-full min-w-0 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-        <section ref={newClientRef} className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <section ref={newClientRef} className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
               <Plus size={22} />
             </div>
             <div>
@@ -1862,7 +1862,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
                 <select
                   value={form.packageName}
                   onChange={(event) => setForm((current) => ({ ...current, packageName: event.target.value }))}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold outline-none focus:border-blue-400"
                 >
                   {PACKAGE_OPTIONS.map((pkg) => (
                     <option key={pkg} value={pkg}>
@@ -1884,7 +1884,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
               type="button"
               onClick={() => void (editingClientId ? saveEditedClient() : createClientWithOwner())}
               disabled={saving}
-              className="rounded-2xl bg-violet-700 px-6 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+              className="rounded-2xl bg-blue-700 px-6 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
             >
               {saving ? "Saving…" : editingClientId ? "Save Client" : "Save Client"}
             </button>
@@ -1904,14 +1904,14 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
             ) : null}
             <Link
               href="/developer/clients"
-              className="rounded-2xl border border-violet-200 bg-white px-6 py-3 text-sm font-black text-violet-800"
+              className="rounded-2xl border border-blue-200 bg-white px-6 py-3 text-sm font-black text-blue-800"
             >
               Open Directory
             </Link>
           </div>
         </section>
 
-        <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <h2 className="text-2xl font-black text-slate-900">Setup Checklist</h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">Complete these items before marking the workspace Live.</p>
           <ul className="mt-5 space-y-3">
@@ -1936,25 +1936,25 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
       </div>
 
       {recentSetupClients.length > 0 ? (
-        <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-black text-slate-900">Recently Created</h2>
               <p className="mt-1 text-sm font-semibold text-slate-500">Workspaces still in Setup — manage them from the directory.</p>
             </div>
-            <Link href="/developer/clients" className="text-xs font-black text-violet-700 hover:underline">
+            <Link href="/developer/clients" className="text-xs font-black text-blue-700 hover:underline">
               View directory
             </Link>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             {recentSetupClients.map((client) => (
               <div key={client.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                <div className="font-black text-violet-700">{client.companyName}</div>
+                <div className="font-black text-blue-700">{client.companyName}</div>
                 <div className="mt-1 text-xs font-semibold text-slate-500">{client.packageName}</div>
                 <button
                   type="button"
                   onClick={() => startEditClient(client.id)}
-                  className="mt-3 rounded-xl bg-white px-3 py-2 text-xs font-black text-violet-800"
+                  className="mt-3 rounded-xl bg-white px-3 py-2 text-xs font-black text-blue-800"
                 >
                   Continue setup
                 </button>
@@ -1969,7 +1969,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
 
 function PageHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+    <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
       <h1 className="text-3xl font-black text-slate-950 md:text-4xl">{title}</h1>
       <p className="mt-2 text-sm font-semibold text-slate-600">{subtitle}</p>
     </section>
@@ -1990,7 +1990,7 @@ function ActionBar({
       <button
         type="button"
         onClick={onRefresh}
-        className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-800"
+        className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-white px-5 py-3 text-sm font-black text-blue-800"
       >
         <RefreshCcw size={16} />
         Refresh Clients
@@ -2018,11 +2018,11 @@ function ActiveWorkspaceBanner({
   setMessage: (value: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3">
-      <div className="text-sm font-bold text-violet-900">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
+      <div className="text-sm font-bold text-blue-900">
         {activeClient ? (
           <>
-            Active Workspace: <span className="font-black text-violet-700">{activeClient.companyName}</span>
+            Active Workspace: <span className="font-black text-blue-700">{activeClient.companyName}</span>
           </>
         ) : (
           "No active client selected."
@@ -2035,7 +2035,7 @@ function ActiveWorkspaceBanner({
             onClear();
             setMessage("Active client cleared.");
           }}
-          className="inline-flex items-center gap-1 rounded-xl border border-violet-300 bg-white px-4 py-2 text-xs font-black text-violet-800"
+          className="inline-flex items-center gap-1 rounded-xl border border-blue-300 bg-white px-4 py-2 text-xs font-black text-blue-800"
         >
           <X size={14} />
           Clear Active Client
@@ -2127,7 +2127,7 @@ function ClientRegisterTable({
               bulkSelected.has(client.id)
                 ? "bg-rose-50"
                 : selectedClientId === client.id
-                  ? "bg-violet-50/70"
+                  ? "bg-blue-50/70"
                   : "bg-white"
             }`}
           >
@@ -2142,7 +2142,7 @@ function ClientRegisterTable({
               />
             </div>
             <div>
-              <div className="font-black text-violet-700">{client.companyName}</div>
+              <div className="font-black text-blue-700">{client.companyName}</div>
               <div className="text-xs font-bold text-slate-500">
                 {client.tradingName} · {client.id}
               </div>
@@ -2184,7 +2184,7 @@ function ClientRegisterTable({
               <button
                 type="button"
                 onClick={() => onEdit(client.id)}
-                className="inline-flex items-center justify-center gap-1 rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-800"
+                className="inline-flex items-center justify-center gap-1 rounded-xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-800"
               >
                 <Pencil size={14} />
                 Edit
@@ -2193,7 +2193,7 @@ function ClientRegisterTable({
                 <button
                   type="button"
                   onClick={() => onLogin(client)}
-                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800"
+                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-blue-100 px-3 py-2 text-xs font-black text-blue-800"
                 >
                   <LogIn size={14} />
                   Login As Client
@@ -2386,7 +2386,7 @@ function ManageLoginModal({
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[2rem] bg-white p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-600">Manage Login</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600">Manage Login</div>
             <h2 className="mt-1 text-2xl font-black text-slate-950">{client.companyName}</h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">{client.id}</p>
           </div>
@@ -2430,7 +2430,7 @@ function ManageLoginModal({
             type="button"
             disabled={saving}
             onClick={onSave}
-            className="rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+            className="rounded-2xl bg-blue-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save Login Details"}
           </button>
@@ -2438,7 +2438,7 @@ function ManageLoginModal({
             type="button"
             disabled={saving}
             onClick={onSendReset}
-            className="rounded-2xl border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-black text-violet-800 disabled:opacity-60"
+            className="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-black text-blue-800 disabled:opacity-60"
           >
             Send Reset Link
           </button>
@@ -2462,7 +2462,7 @@ function ManageLoginModal({
             type="button"
             disabled={saving}
             onClick={onEnable}
-            className="rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/10 px-5 py-3 text-sm font-black text-[#4D7C0F] disabled:opacity-60"
+            className="rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-5 py-3 text-sm font-black text-[#4D7C0F] disabled:opacity-60"
           >
             Enable Login
           </button>
@@ -2493,7 +2493,7 @@ function Field({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none placeholder:text-slate-400 focus:border-violet-400"
+        className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none placeholder:text-slate-400 focus:border-blue-400"
       />
     </label>
   );
@@ -2516,7 +2516,7 @@ function NumberField({
         min={1}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+        className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
       />
     </label>
   );

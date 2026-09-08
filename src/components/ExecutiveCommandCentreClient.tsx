@@ -86,19 +86,19 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 <Link
                   key={label}
                   href={href}
-                  className="rounded-[2rem] border border-violet-100 bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] transition hover:border-violet-300"
+                  className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] transition hover:border-blue-300"
                 >
-                  <div className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-600">{label}</div>
+                  <div className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600">{label}</div>
                   <div className="mt-2 text-3xl font-black text-slate-950">{value}</div>
                   <div className="mt-1 text-xs font-semibold text-slate-500">{note}</div>
                 </Link>
               ))}
             </div>
 
-            <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-violet-950 to-indigo-950 p-8 text-white shadow-[0_24px_80px_rgba(30,27,75,0.35)]">
+            <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-8 text-white shadow-[0_24px_80px_rgba(30,27,75,0.35)]">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <div className="text-xs font-black uppercase tracking-[0.2em] text-violet-300">VYRON COST</div>
+                  <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VYRON COST</div>
                   <h2 className="mt-2 text-4xl font-black">Executive Command Centre</h2>
                   <p className="mt-2 max-w-2xl text-sm font-semibold text-slate-300">
                     CEO / CFO / Owner view — procurement, inventory, manufacturing, recovery and AI intelligence in one place.
@@ -133,7 +133,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
             </div>
 
             <div className="grid gap-6 xl:grid-cols-2">
-              <CommandCentreCard title="Procurement Command Centre" subtitle="Spend · PO · inflation" href="/purchase-orders" accent="bg-gradient-to-br from-indigo-800 to-violet-900">
+              <CommandCentreCard title="Procurement Command Centre" subtitle="Spend · PO · inflation" href="/purchase-orders" accent="bg-gradient-to-br from-indigo-800 to-blue-900">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <KpiTile label="Spend today" value={money(procurement.spendToday)} />
                   <KpiTile label="Spend this month" value={money(procurement.spendThisMonth)} />
@@ -146,7 +146,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 </div>
               </CommandCentreCard>
 
-              <CommandCentreCard title="Inventory Command Centre" subtitle="Valuation · stock risk" href="/inventory-intelligence" accent="bg-gradient-to-br from-[#24183F] to-[#1a1033]">
+              <CommandCentreCard title="Inventory Command Centre" subtitle="Valuation · stock risk" href="/inventory-intelligence" accent="bg-gradient-to-br from-[#16233F] to-[#0e1733]">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                   <KpiTile label="Inventory value" value={money(inventory.inventoryValue)} />
                   <KpiTile label="Low stock" value={String(inventory.lowStock)} />
@@ -160,7 +160,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 </div>
               </CommandCentreCard>
 
-              <CommandCentreCard title="Manufacturing Command Centre" subtitle="Cost · yield · wastage" href="/manufacturing" accent="bg-gradient-to-br from-violet-900 to-fuchsia-950">
+              <CommandCentreCard title="Manufacturing Command Centre" subtitle="Cost · yield · wastage" href="/manufacturing" accent="bg-gradient-to-br from-blue-900 to-blue-950">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                   <KpiTile label="Today" value={String(manufacturing.productionToday)} />
                   <KpiTile label="FG produced" value={String(manufacturing.finishedGoodsProduced)} />
@@ -170,11 +170,11 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 </div>
                 <div className="mt-4 rounded-2xl bg-white/10 p-4">
                   <div className="text-[10px] font-black uppercase opacity-75">Production performance (avg yield % by week)</div>
-                  <ExecutiveSparkChart data={trends.productionPerformanceTrend} colour="#f0abfc" variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
+                  <ExecutiveSparkChart data={trends.productionPerformanceTrend} colour="#93c5fd" variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
                 </div>
               </CommandCentreCard>
 
-              <CommandCentreCard title="Recovery Command Centre" subtitle="Identify · verify · recover" href="/financial-leakage" accent="bg-gradient-to-br from-fuchsia-800 to-red-950">
+              <CommandCentreCard title="Recovery Command Centre" subtitle="Identify · verify · recover" href="/financial-leakage" accent="bg-gradient-to-br from-blue-800 to-red-950">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <KpiTile label="Potential recovery" value={money(recovery.potentialRecovery)} />
                   <KpiTile label="Verified recovery" value={money(recovery.verifiedRecovery)} />
@@ -194,7 +194,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                   <h3 className="text-xl font-black text-slate-950">Supplier inflation graph</h3>
                   <p className="text-sm font-semibold text-slate-500">Cumulative price movement % by week from price history</p>
                 </div>
-                <Link href="/document-intelligence/price-history/supplier" className="text-sm font-black text-violet-700">
+                <Link href="/document-intelligence/price-history/supplier" className="text-sm font-black text-blue-700">
                   Price history →
                 </Link>
               </div>
@@ -212,9 +212,9 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 </div>
               </div>
 
-              <div className="rounded-[2rem] bg-gradient-to-b from-slate-900 to-violet-950 p-6 text-white">
+              <div className="rounded-[2rem] bg-gradient-to-b from-slate-900 to-blue-950 p-6 text-white">
                 <div className="flex items-center gap-2">
-                  <BrainCircuit className="text-violet-300" size={24} />
+                  <BrainCircuit className="text-blue-300" size={24} />
                   <h3 className="text-xl font-black">AI Intelligence Feed</h3>
                 </div>
                 <p className="mt-1 text-sm font-semibold text-slate-400">Production · procurement · recovery · inventory</p>
@@ -234,7 +234,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                           </span>
                         </div>
                         {item.href ? (
-                          <Link href={item.href} className="mt-2 block text-sm font-bold leading-6 text-violet-100 hover:text-white">
+                          <Link href={item.href} className="mt-2 block text-sm font-bold leading-6 text-blue-100 hover:text-white">
                             {item.message}
                           </Link>
                         ) : (
@@ -257,10 +257,10 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 <Link
                   key={item.label}
                   href={item.href}
-                  className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:border-violet-200"
+                  className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:border-blue-200"
                 >
                   <div className="flex items-center gap-3">
-                    <item.Icon className="text-violet-600" size={22} />
+                    <item.Icon className="text-blue-600" size={22} />
                     <span className="font-black text-slate-900">{item.label}</span>
                   </div>
                   <ArrowRight size={16} className="text-slate-400" />
@@ -285,7 +285,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                     <ul className="mt-2 space-y-2 text-sm font-bold">
                       {supplierIntelligence.topInflationSuppliers.map((s) => (
                         <li key={s.supplierId}>
-                          <Link href={s.href} className="text-violet-700 hover:underline">
+                          <Link href={s.href} className="text-blue-700 hover:underline">
                             {s.supplierName} — {s.inflationPct.toFixed(1)}%
                           </Link>
                         </li>
@@ -300,7 +300,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                     <ul className="mt-2 space-y-2 text-sm font-bold">
                       {supplierIntelligence.topRiskSuppliers.map((s) => (
                         <li key={s.supplierId}>
-                          <Link href={s.href} className="text-violet-700 hover:underline">
+                          <Link href={s.href} className="text-blue-700 hover:underline">
                             {s.supplierName} — {s.riskLevel} ({s.riskScore})
                           </Link>
                         </li>
@@ -312,7 +312,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                     <ul className="mt-2 space-y-2 text-sm font-bold">
                       {supplierIntelligence.topSavingsOpportunities.map((s) => (
                         <li key={s.supplierId}>
-                          <Link href={s.href} className="text-violet-700 hover:underline">
+                          <Link href={s.href} className="text-blue-700 hover:underline">
                             {s.supplierName} — {money(s.amount)}
                           </Link>
                         </li>
@@ -330,7 +330,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
             ) : null}
 
             {data.procurementAi ? (
-              <section className="rounded-[2rem] bg-gradient-to-r from-indigo-700 to-violet-800 p-6 text-white">
+              <section className="rounded-[2rem] bg-gradient-to-r from-indigo-700 to-blue-800 p-6 text-white">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <div className="text-xs font-black uppercase tracking-[0.16em] text-indigo-200">AI Procurement Manager</div>
@@ -386,7 +386,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 { label: "Recovery pipeline", value: String(recovery.openOpportunities), Icon: TrendingUp, href: "/recovery-pipeline" },
               ].map((card) => (
                 <Link key={card.label} href={card.href} className="rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] transition hover:shadow-md">
-                  <card.Icon className="text-violet-600" size={26} />
+                  <card.Icon className="text-blue-600" size={26} />
                   <div className="mt-3 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">{card.label}</div>
                   <div className="mt-1 text-2xl font-black text-slate-950">{card.value}</div>
                 </Link>

@@ -563,7 +563,7 @@ function SeverityBadge({ severity }: { severity: "critical" | "warning" | "info"
     critical: "border-rose-200 bg-rose-50 text-rose-700",
     warning: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     info: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
-    ok: "border-violet-200 bg-violet-50 text-violet-700",
+    ok: "border-blue-200 bg-blue-50 text-blue-700",
   };
   const labels = {
     critical: "Critical",

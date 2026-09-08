@@ -123,14 +123,14 @@ export default function ProcurementRecommendationDetailClient({
       }}
     >
       <section className="grid gap-6">
-            <Link href="/ai-procurement-manager" className="text-sm font-black text-violet-700">
+            <Link href="/ai-procurement-manager" className="text-sm font-black text-blue-700">
               ← Back to AI Procurement Manager
             </Link>
 
-            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <span className="rounded-full bg-violet-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-violet-800">
+                  <span className="rounded-full bg-blue-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-blue-800">
                     {recommendation.category}
                   </span>
                   <h1 className="mt-3 text-2xl font-black text-slate-900">{recommendation.title}</h1>
@@ -138,7 +138,7 @@ export default function ProcurementRecommendationDetailClient({
                 </div>
                 <div className="text-right">
                   <div className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">Potential benefit</div>
-                  <div className="text-3xl font-black text-[#7E22CE]">
+                  <div className="text-3xl font-black text-[#1D4ED8]">
                     {procurementMoney(recommendation.potential_benefit_annual)}/yr
                   </div>
                   <div className="mt-1 text-sm font-bold text-slate-500">
@@ -149,7 +149,7 @@ export default function ProcurementRecommendationDetailClient({
             </div>
 
             <div className="grid gap-6 xl:grid-cols-2">
-              <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+              <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
                 <h2 className="text-lg font-black text-slate-900">Explanation engine</h2>
                 <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
                   <div>
@@ -162,11 +162,11 @@ export default function ProcurementRecommendationDetailClient({
                   </div>
                   <div className="sm:col-span-2">
                     <dt className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Formula used</dt>
-                    <dd className="mt-1 font-mono text-xs font-bold text-violet-900">{recommendation.formula_expression}</dd>
+                    <dd className="mt-1 font-mono text-xs font-bold text-blue-900">{recommendation.formula_expression}</dd>
                   </div>
                   <div>
                     <dt className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Potential benefit</dt>
-                    <dd className="mt-1 font-bold text-[#7E22CE]">{procurementMoney(recommendation.potential_benefit_annual)}/yr</dd>
+                    <dd className="mt-1 font-bold text-[#1D4ED8]">{procurementMoney(recommendation.potential_benefit_annual)}/yr</dd>
                   </div>
                   <div>
                     <dt className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Confidence</dt>
@@ -209,7 +209,7 @@ export default function ProcurementRecommendationDetailClient({
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-              <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+              <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
                 <h3 className="font-black text-slate-900">Affected products</h3>
                 <ul className="mt-3 space-y-2 text-sm font-bold text-slate-700">
                   {recommendation.affected_products.length ? (
@@ -223,7 +223,7 @@ export default function ProcurementRecommendationDetailClient({
                   )}
                 </ul>
               </div>
-              <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+              <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
                 <h3 className="font-black text-slate-900">Affected suppliers</h3>
                 <ul className="mt-3 space-y-2 text-sm font-bold text-slate-700">
                   {recommendation.affected_suppliers.length ? (
@@ -239,12 +239,12 @@ export default function ProcurementRecommendationDetailClient({
               </div>
             </div>
 
-            <div className="rounded-[2rem] bg-[#A855F7]/10 p-6">
-              <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7E22CE]">Recommended action</div>
+            <div className="rounded-[2rem] bg-[#3B82F6]/10 p-6">
+              <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#1D4ED8]">Recommended action</div>
               <p className="mt-2 text-sm font-bold text-[#4D7C0F]">{recommendation.recommended_action}</p>
             </div>
 
-            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
               <h2 className="text-lg font-black text-slate-900">Workflow & impact</h2>
               <p className="mt-1 text-xs font-bold text-slate-500">New → Assigned → Under Review → Accepted / Rejected → Implemented → Closed</p>
 
@@ -350,11 +350,11 @@ export default function ProcurementRecommendationDetailClient({
                 Save tracking
               </button>
 
-              {message && <p className="mt-3 text-sm font-bold text-[#7E22CE]">{message}</p>}
+              {message && <p className="mt-3 text-sm font-bold text-[#1D4ED8]">{message}</p>}
               {errorMessage && <p className="mt-3 text-sm font-bold text-red-600">{errorMessage}</p>}
             </div>
 
-            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
               <h3 className="font-black text-slate-900">Evidence log</h3>
               <div className="mt-4 grid gap-3 md:grid-cols-3">
                 <select
@@ -400,7 +400,7 @@ export default function ProcurementRecommendationDetailClient({
               </ul>
             </div>
 
-            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
               <h3 className="font-black text-slate-900">Audit history</h3>
               <ul className="mt-3 space-y-2 text-xs font-bold text-slate-600">
                 {auditRows.length ? (

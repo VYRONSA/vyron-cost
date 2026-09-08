@@ -9,14 +9,14 @@ export default function DemoDataPage() {
           ["Ingredients", "Beef, chicken, flour, margarine, trays and labels"],
           ["Products", "Pepper Steak Pie and Chicken Mushroom Pie"],
         ].map(([title, text]) => (
-          <div key={title} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-            <h2 className="text-2xl font-black text-violet-700">{title}</h2>
+          <div key={title} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+            <h2 className="text-2xl font-black text-blue-700">{title}</h2>
             <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">{text}</p>
           </div>
         ))}
       </section>
 
-      <section className="mt-6 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <section className="mt-6 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <h2 className="text-2xl font-black text-slate-950">What to run in Supabase</h2>
         <p className="mt-3 text-sm font-semibold text-slate-600">
           Run this file from the pack: supabase/demo_pie_company_seed_data.sql

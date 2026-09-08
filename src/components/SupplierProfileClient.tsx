@@ -14,7 +14,7 @@ function riskColour(level: string) {
   if (level === "Critical") return "text-red-800 bg-red-50 border-red-200";
   if (level === "High") return "text-[var(--vyron-warning-fg)] bg-[var(--vyron-warning-bg)] border-[var(--vyron-warning-border)]";
   if (level === "Medium") return "text-[var(--vyron-warning-fg)] bg-[var(--vyron-warning-bg)] border-[var(--vyron-warning-border)]";
-  return "text-[#4D7C0F] bg-[#A855F7]/10 border-[#A855F7]/25";
+  return "text-[#4D7C0F] bg-[#3B82F6]/10 border-[#3B82F6]/25";
 }
 
 type ChartPeriod = "monthly" | "quarterly" | "yearly";
@@ -41,7 +41,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
       <section className="grid gap-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-violet-600">Supplier Profile</div>
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">Supplier Profile</div>
                 <h2 className="mt-1 text-3xl font-black text-slate-900">{s.supplierName}</h2>
                 <p className="mt-1 text-sm font-bold text-slate-500">
                   {s.category} · {s.isActive ? "Active" : "Inactive"} · {s.paymentTerms || "Terms on file"}
@@ -79,13 +79,13 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
               ))}
             </section>
 
-            <section className="rounded-[2rem] bg-gradient-to-br from-slate-900 to-violet-950 p-6 text-white">
+            <section className="rounded-[2rem] bg-gradient-to-br from-slate-900 to-blue-950 p-6 text-white">
               <h3 className="text-lg font-black">Supplier Scorecard</h3>
               <div className="mt-4 flex flex-wrap items-end gap-6">
                 <div>
-                  <div className="text-xs font-black uppercase text-violet-200">Overall Score</div>
+                  <div className="text-xs font-black uppercase text-blue-200">Overall Score</div>
                   <div className="text-5xl font-black">{profile.scorecard.overallScore}</div>
-                  <div className="text-sm text-violet-200">out of 100</div>
+                  <div className="text-sm text-blue-200">out of 100</div>
                 </div>
                 <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
                   {[
@@ -96,7 +96,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                     ["Risk (inverse)", 100 - profile.scorecard.riskScore],
                   ].map(([label, score]) => (
                     <div key={String(label)} className="rounded-xl bg-white/10 p-3">
-                      <div className="text-[10px] font-black uppercase text-violet-200">{label}</div>
+                      <div className="text-[10px] font-black uppercase text-blue-200">{label}</div>
                       <div className="mt-1 text-2xl font-black">{score}</div>
                     </div>
                   ))}
@@ -195,7 +195,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                       </div>
                       <div className="mt-2 flex flex-wrap gap-4 text-xs font-bold text-slate-600">
                         <span>Difference: {money(b.difference)}</span>
-                        <span className="text-[#7E22CE]">Potential saving: {money(b.potentialSaving)}/mo est.</span>
+                        <span className="text-[#1D4ED8]">Potential saving: {money(b.potentialSaving)}/mo est.</span>
                       </div>
                     </div>
                   ))
@@ -257,26 +257,26 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                       </li>
                     ))
                   ) : (
-                    <li className="text-sm font-bold text-[#7E22CE]">No elevated risk factors.</li>
+                    <li className="text-sm font-bold text-[#1D4ED8]">No elevated risk factors.</li>
                   )}
                 </ul>
               </div>
             </section>
 
-            <section className="rounded-[2rem] bg-[#A855F7]/10 p-6">
+            <section className="rounded-[2rem] bg-[#3B82F6]/10 p-6">
               <h3 className="text-lg font-black text-[#4D7C0F]">Savings Opportunities</h3>
               <div className="mt-4 space-y-2">
                 {profile.savingsOpportunities.map((o) => (
                   <div key={o.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-4">
                     <div>
-                      <div className="text-xs font-black uppercase text-[#7E22CE]">{o.type}</div>
+                      <div className="text-xs font-black uppercase text-[#1D4ED8]">{o.type}</div>
                       <div className="font-black text-slate-900">{o.title}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-black text-[#7E22CE]">{money(o.potentialAnnual)}/yr</div>
+                      <div className="font-black text-[#1D4ED8]">{money(o.potentialAnnual)}/yr</div>
                       <div className="text-xs font-bold text-slate-500">{o.confidence}% confidence</div>
                       {o.href ? (
-                        <Link href={o.href} className="text-xs font-black text-violet-700 hover:underline">
+                        <Link href={o.href} className="text-xs font-black text-blue-700 hover:underline">
                           Open in AI Procurement →
                         </Link>
                       ) : null}
@@ -288,15 +288,15 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
 
             <section className="rounded-[2rem] bg-white p-6 shadow-sm">
               <h3 className="text-lg font-black">Timeline</h3>
-              <ol className="mt-4 space-y-2 border-l-2 border-violet-200 pl-4">
+              <ol className="mt-4 space-y-2 border-l-2 border-blue-200 pl-4">
                 {profile.timeline.slice(0, 25).map((ev) => (
                   <li key={ev.id} className="relative text-sm">
-                    <span className="absolute -left-[1.35rem] top-1 h-2 w-2 rounded-full bg-violet-500" />
+                    <span className="absolute -left-[1.35rem] top-1 h-2 w-2 rounded-full bg-blue-500" />
                     <div className="text-[10px] font-black uppercase text-slate-400">
                       {ev.type} · {new Date(ev.at).toLocaleString("en-ZA")}
                     </div>
                     {ev.href ? (
-                      <Link href={ev.href} className="font-black text-violet-700 hover:underline">
+                      <Link href={ev.href} className="font-black text-blue-700 hover:underline">
                         {ev.title}
                       </Link>
                     ) : (
@@ -314,7 +314,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                 <ul className="mt-3 space-y-2">
                   {profile.documents.purchaseOrders.slice(0, 8).map((d) => (
                     <li key={d.id}>
-                      <Link href={d.href} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold hover:bg-violet-50">
+                      <Link href={d.href} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold hover:bg-blue-50">
                         <span>{d.label}</span>
                         <span>{money(d.total)}</span>
                       </Link>
@@ -328,7 +328,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                 <ul className="mt-3 space-y-2">
                   {profile.documents.invoices.slice(0, 8).map((d) => (
                     <li key={d.id}>
-                      <Link href={d.href} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold hover:bg-violet-50">
+                      <Link href={d.href} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold hover:bg-blue-50">
                         <span>{d.label}</span>
                         <span>{money(d.total)}</span>
                       </Link>
@@ -342,7 +342,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                 <ul className="mt-3 space-y-2">
                   {profile.documents.grns.slice(0, 8).map((d) => (
                     <li key={d.id}>
-                      <Link href={d.href} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold hover:bg-violet-50">
+                      <Link href={d.href} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold hover:bg-blue-50">
                         <span>{d.label}</span>
                         <span>{d.status}</span>
                       </Link>
@@ -356,7 +356,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                 <ul className="mt-3 space-y-2">
                   {profile.documents.contracts.slice(0, 8).map((d) => (
                     <li key={d.id}>
-                      <Link href={d.href} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold hover:bg-violet-50">
+                      <Link href={d.href} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold hover:bg-blue-50">
                         <span>{d.label}</span>
                         <span>{d.status}</span>
                       </Link>

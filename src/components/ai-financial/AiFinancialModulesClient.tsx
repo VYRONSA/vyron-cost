@@ -21,7 +21,7 @@ function RecCard({ rec }: { rec: AiRecommendation }) {
       <div className="mt-2 font-bold text-slate-500">Formula: {rec.formula}</div>
       <div className="font-bold text-slate-500">Confidence: {rec.confidence}%</div>
       {rec.href ? (
-        <Link href={rec.href} className="mt-2 inline-block font-black text-violet-700">
+        <Link href={rec.href} className="mt-2 inline-block font-black text-blue-700">
           Act →
         </Link>
       ) : null}
@@ -128,7 +128,7 @@ export function AiForecastClient({ forecast }: { forecast: AiFinancialIntelligen
               <tr key={l.key} className="border-t border-slate-100">
                 <td className="px-4 py-3 font-bold">
                   {l.href ? (
-                    <Link href={l.href} className="text-violet-700 hover:underline">
+                    <Link href={l.href} className="text-blue-700 hover:underline">
                       {l.label}
                     </Link>
                   ) : (
@@ -145,7 +145,7 @@ export function AiForecastClient({ forecast }: { forecast: AiFinancialIntelligen
       </div>
         <div className="rounded-2xl bg-[var(--vyron-warning-bg)] p-5">
         <div className="text-xs font-black uppercase text-[var(--vyron-warning-fg)]">Cost inflation (annual projection)</div>
-        <div className="mt-2 text-2xl font-black text-fuchsia-950">{money(forecast.costInflationAnnual)}</div>
+        <div className="mt-2 text-2xl font-black text-blue-950">{money(forecast.costInflationAnnual)}</div>
         <p className="mt-2 text-xs text-[var(--vyron-warning-fg)]">
           Supplier inflation driver: {forecast.supplierInflationPct.toFixed(1)}% · Recovery opportunity:{" "}
           {money(forecast.recoveryOpportunityAnnual)}
@@ -243,9 +243,9 @@ export function AiBenchmarksClient({
       }}
     >
       <section className="grid gap-10">
-        <div className="rounded-[2rem] border border-dashed border-violet-200 bg-violet-50/50 p-6">
-        <h2 className="font-black text-violet-950">Multi-company intelligence (architecture ready)</h2>
-        <p className="mt-2 text-sm text-violet-900">
+        <div className="rounded-[2rem] border border-dashed border-blue-200 bg-blue-50/50 p-6">
+        <h2 className="font-black text-blue-950">Multi-company intelligence (architecture ready)</h2>
+        <p className="mt-2 text-sm text-blue-900">
           Group ID: {multiCompany.groupId} · {multiCompany.companies.length} entit{multiCompany.companies.length === 1 ? "y" : "ies"} registered
         </p>
         <ul className="mt-4 grid gap-2 sm:grid-cols-2">

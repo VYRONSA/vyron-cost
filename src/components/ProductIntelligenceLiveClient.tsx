@@ -58,8 +58,8 @@ export default function ProductIntelligenceLiveClient() {
     >
       <section className="grid gap-6">
         <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-[2rem] border border-violet-100 bg-white p-5 shadow-sm">
-          <div className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-600">Products</div>
+        <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-sm">
+          <div className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600">Products</div>
           <div className="mt-2 text-3xl font-black text-slate-950">{products.length}</div>
         </div>
         <div className="rounded-[2rem] border border-red-100 bg-red-50/40 p-5 shadow-sm">
@@ -67,15 +67,15 @@ export default function ProductIntelligenceLiveClient() {
           <div className="mt-2 text-3xl font-black text-red-900">{erosionCount}</div>
           <div className="mt-1 text-xs font-semibold text-red-700">GP below 30%</div>
         </div>
-        <div className="rounded-[2rem] border border-[#A855F7]/20 bg-[#A855F7]/10 p-5 shadow-sm">
-          <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7E22CE]">Healthy Margins</div>
+        <div className="rounded-[2rem] border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-5 shadow-sm">
+          <div className="text-[10px] font-black uppercase tracking-[0.12em] text-[#1D4ED8]">Healthy Margins</div>
           <div className="mt-2 text-3xl font-black text-[#4D7C0F]">{products.length - erosionCount}</div>
         </div>
       </div>
 
       <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="min-w-[1000px]">
-          <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
+          <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
             <div className="col-span-2">Product</div>
             <div>Current Cost</div>
             <div>Selling Price</div>
@@ -114,7 +114,7 @@ export default function ProductIntelligenceLiveClient() {
                 </div>
                 <div>{formatMoney(row.currentCost)}</div>
                 <div>{formatMoney(row.sellingPrice)}</div>
-                <div className={`font-black ${row.marginErosion ? "text-red-700" : "text-[#7E22CE]"}`}>
+                <div className={`font-black ${row.marginErosion ? "text-red-700" : "text-[#1D4ED8]"}`}>
                   {row.gpPct.toFixed(1)}%
                 </div>
                 <div>{formatMoney(row.lastManufacturingCost)}</div>
@@ -128,7 +128,7 @@ export default function ProductIntelligenceLiveClient() {
 
       <p className="text-xs font-semibold text-slate-500">
         Linked workflow: manufacturing cost → finished goods → customer invoice → inventory reduction →{" "}
-        <Link href="/integrations/xero/sync-centre" className="text-violet-700 hover:underline">
+        <Link href="/integrations/xero/sync-centre" className="text-blue-700 hover:underline">
           Xero queue
         </Link>
         .

@@ -20,7 +20,7 @@ import {
 
 // min-h-[44px] keeps every control at a comfortable touch target on a phone.
 const INPUT_CLASS =
-  "mt-2 min-h-[44px] w-full rounded-xl border bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-violet-400 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+  "mt-2 min-h-[44px] w-full rounded-xl border bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-400 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
 
 const LOGO_POSITIONS: { value: LogoPosition; label: string }[] = [
   { value: "top_left", label: "Top Left" },
@@ -405,7 +405,7 @@ export default function ClientCompanySetupClient() {
         <div
           role="status"
           className={`fixed right-6 top-6 z-50 rounded-2xl px-5 py-3 text-sm font-bold text-white shadow-xl ${
-            toast.type === "success" ? "bg-violet-600" : "bg-red-600"
+            toast.type === "success" ? "bg-blue-600" : "bg-red-600"
           }`}
         >
           {toast.message}
@@ -419,7 +419,7 @@ export default function ClientCompanySetupClient() {
       ) : null}
 
       {brandingMessage ? (
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-900">
           {brandingMessage}
         </div>
       ) : null}
@@ -481,7 +481,7 @@ export default function ClientCompanySetupClient() {
         </div>
       </section>
 
-      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
+      <section className="grid gap-5 rounded-[2rem] border border-blue-100 bg-white p-7 shadow-sm md:grid-cols-2">
         <div className="md:col-span-2">
           <h2 className="text-lg font-black text-slate-950">Tax &amp; Legal Profile</h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">
@@ -507,7 +507,7 @@ export default function ClientCompanySetupClient() {
         <Field label="Website" dataField="website" value={profile.website} onChange={(v) => setProfile((p) => ({ ...p, website: v }))} className="md:col-span-2" />
       </section>
 
-      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
+      <section className="grid gap-5 rounded-[2rem] border border-blue-100 bg-white p-7 shadow-sm md:grid-cols-2">
         <div className="md:col-span-2">
           <h2 className="text-lg font-black text-slate-950">VAT</h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">
@@ -547,7 +547,7 @@ export default function ClientCompanySetupClient() {
         ) : null}
       </section>
 
-      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
+      <section className="grid gap-5 rounded-[2rem] border border-blue-100 bg-white p-7 shadow-sm md:grid-cols-2">
         <div className="md:col-span-2">
           <h2 className="text-lg font-black text-slate-950">Physical Address</h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">
@@ -579,10 +579,10 @@ export default function ClientCompanySetupClient() {
         ) : null}
       </section>
 
-      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
+      <section className="grid gap-5 rounded-[2rem] border border-blue-100 bg-white p-7 shadow-sm md:grid-cols-2">
         <div className="md:col-span-2">
           <h2 className="text-lg font-black text-slate-950">Postal Address</h2>
-          <label className="mt-3 inline-flex min-h-[44px] cursor-pointer items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50/50 px-4 py-2.5">
+          <label className="mt-3 inline-flex min-h-[44px] cursor-pointer items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50/50 px-4 py-2.5">
             <input
               type="checkbox"
               className="h-5 w-5"
@@ -609,7 +609,7 @@ export default function ClientCompanySetupClient() {
         ))}
       </section>
 
-      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
+      <section className="grid gap-5 rounded-[2rem] border border-blue-100 bg-white p-7 shadow-sm md:grid-cols-2">
         <div className="md:col-span-2">
           <h2 className="text-lg font-black text-slate-950">Contact Details</h2>
         </div>
@@ -632,13 +632,13 @@ export default function ClientCompanySetupClient() {
         />
       </section>
 
-      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-3">
+      <section className="grid gap-5 rounded-[2rem] border border-blue-100 bg-white p-7 shadow-sm md:grid-cols-3">
         <ReadOnlyField label="Xero Status" value={profile.xeroStatus} />
         <ReadOnlyField label="Package" value={profile.packageName} />
         <ReadOnlyField label="User Limit" value={String(profile.userLimit)} />
       </section>
 
-      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
+      <section className="grid gap-5 rounded-[2rem] border border-blue-100 bg-white p-7 shadow-sm md:grid-cols-2">
         <div className="md:col-span-2">
           <h2 className="text-lg font-black text-slate-950">Banking Details</h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">
@@ -660,19 +660,19 @@ export default function ClientCompanySetupClient() {
         />
       </section>
 
-      <section className="rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm">
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-7 shadow-sm">
         <h2 className="text-lg font-black text-slate-950">Active Modules</h2>
         <p className="mt-1 text-sm font-semibold text-slate-500">Modules included in your package. Contact VYRON to upgrade.</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {profile.activeModules.map((module) => (
-            <span key={module} className="rounded-xl bg-violet-50 px-3 py-2 text-xs font-black text-violet-800">
+            <span key={module} className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-800">
               {module}
             </span>
           ))}
         </div>
       </section>
 
-      <section className="grid gap-5 rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm md:grid-cols-2">
+      <section className="grid gap-5 rounded-[2rem] border border-blue-100 bg-white p-7 shadow-sm md:grid-cols-2">
         <h2 className="md:col-span-2 text-lg font-black text-slate-950">Company Branding</h2>
 
         <LogoUploadCard branding={branding} canEdit={canCompany} onBrandingChange={setBranding} onToast={showToast} />
@@ -688,8 +688,8 @@ export default function ClientCompanySetupClient() {
                   key={pos.value}
                   className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold transition ${
                     branding.logoPosition === pos.value
-                      ? "border-violet-400 bg-violet-50 text-violet-900"
-                      : "border-violet-100 text-slate-600 hover:border-violet-200"
+                      ? "border-blue-400 bg-blue-50 text-blue-900"
+                      : "border-blue-100 text-slate-600 hover:border-blue-200"
                   }`}
                 >
                   <input
@@ -698,7 +698,7 @@ export default function ClientCompanySetupClient() {
                     disabled={!canCompany}
                     checked={branding.logoPosition === pos.value}
                     onChange={() => setBranding((b) => ({ ...b, logoPosition: pos.value }))}
-                    className="accent-violet-600"
+                    className="accent-blue-600"
                   />
                   {pos.label}
                 </label>
@@ -862,7 +862,7 @@ export default function ClientCompanySetupClient() {
         />
       </section>
 
-      <section className="rounded-[2rem] border border-violet-100 bg-white p-7 shadow-sm">
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-7 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-black text-slate-950">Live Preview</h2>
           {previewLoading ? <span className="text-xs font-bold text-slate-400">Updating…</span> : null}
@@ -952,7 +952,7 @@ function Field({
         data-field={dataField}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className={INPUT_CLASS + (error ? " border-red-300" : " border-violet-100")}
+        className={INPUT_CLASS + (error ? " border-red-300" : " border-blue-100")}
       />
       {error ? <span className="mt-1.5 block text-[11px] font-bold text-red-600">{error}</span> : null}
       {!error && warning ? (
@@ -989,7 +989,7 @@ function SelectField({
         value={value}
         data-field={dataField}
         onChange={(e) => onChange(e.target.value)}
-        className={INPUT_CLASS + " border-violet-100"}
+        className={INPUT_CLASS + " border-blue-100"}
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

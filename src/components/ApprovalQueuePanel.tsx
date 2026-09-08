@@ -18,7 +18,7 @@ export default async function ApprovalQueuePanel() {
     <section className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-xs font-black uppercase tracking-[0.22em] text-[#7E22CE]">APPROVALS</div>
+          <div className="text-xs font-black uppercase tracking-[0.22em] text-[#1D4ED8]">APPROVALS</div>
           <h2 className="mt-2 text-2xl font-black text-[#F8FAFC]">Pending Queue</h2>
         </div>
         <div className="rounded-full bg-red-50 px-4 py-2 text-xs font-black text-red-700">ACTION REQUIRED</div>
@@ -38,7 +38,7 @@ export default async function ApprovalQueuePanel() {
                     ? "bg-red-100 text-red-700"
                     : approval.risk === "HIGH"
                       ? "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
-                      : "bg-[#A855F7]/12 text-[#7E22CE]"
+                      : "bg-[#3B82F6]/12 text-[#1D4ED8]"
                 }`}
               >
                 {approval.risk}
@@ -50,7 +50,7 @@ export default async function ApprovalQueuePanel() {
 
       <Link
         href="/approvals"
-        className="mt-6 inline-flex rounded-full bg-[#07110d] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#A855F7]"
+        className="mt-6 inline-flex rounded-full bg-[#07110d] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#3B82F6]"
       >
         Open Approvals
       </Link>

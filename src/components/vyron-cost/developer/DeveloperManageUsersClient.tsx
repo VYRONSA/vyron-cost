@@ -174,8 +174,8 @@ export default function DeveloperManageUsersClient({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-        <Link href="/developer/clients" className="inline-flex items-center gap-2 text-sm font-black text-violet-700">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <Link href="/developer/clients" className="inline-flex items-center gap-2 text-sm font-black text-blue-700">
           <ArrowLeft size={16} />
           Back to Client Directory
         </Link>
@@ -190,7 +190,7 @@ export default function DeveloperManageUsersClient({
         <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</div>
       ) : null}
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-black text-slate-900">Workspace users</h2>
           <button
@@ -204,8 +204,8 @@ export default function DeveloperManageUsersClient({
         </div>
 
         {inviteOpen ? (
-          <div className="mt-5 rounded-2xl border border-violet-100 bg-violet-50/40 p-5">
-            <h3 className="text-sm font-black uppercase tracking-[0.12em] text-violet-700">Invite User</h3>
+          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/40 p-5">
+            <h3 className="text-sm font-black uppercase tracking-[0.12em] text-blue-700">Invite User</h3>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <Field label="First Name" value={inviteForm.firstName} onChange={(v) => setInviteForm((c) => ({ ...c, firstName: v }))} />
               <Field label="Surname" value={inviteForm.surname} onChange={(v) => setInviteForm((c) => ({ ...c, surname: v }))} />
@@ -277,12 +277,12 @@ export default function DeveloperManageUsersClient({
                   <div className="font-semibold text-slate-700">{member.email}</div>
                   <div>
                     {member.role === "OWNER" ? (
-                      <span className="font-black text-violet-700">OWNER</span>
+                      <span className="font-black text-blue-700">OWNER</span>
                     ) : (
                       <select
                         value={member.role}
                         onChange={(e) => void changeRole(member.userId, e.target.value as WorkspaceRole)}
-                        className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-black text-violet-700 outline-none"
+                        className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-black text-blue-700 outline-none"
                       >
                         {ROLES.filter((r) => r !== "OWNER").map((role) => (
                           <option key={role} value={role}>
@@ -303,7 +303,7 @@ export default function DeveloperManageUsersClient({
                       Reset
                     </button>
                     {member.status === "Disabled" ? (
-                      <button type="button" onClick={() => void enableUser(member.userId)} className="rounded-xl border border-[#A855F7]/25 bg-[#A855F7]/12 px-3 py-2 text-xs font-black text-[#4D7C0F]">
+                      <button type="button" onClick={() => void enableUser(member.userId)} className="rounded-xl border border-[#3B82F6]/25 bg-[#3B82F6]/12 px-3 py-2 text-xs font-black text-[#4D7C0F]">
                         Enable
                       </button>
                     ) : member.role !== "OWNER" ? (
@@ -341,7 +341,7 @@ export default function DeveloperManageUsersClient({
       </section>
 
       <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-600">
-        <Mail size={14} className="mr-1 inline text-violet-600" />
+        <Mail size={14} className="mr-1 inline text-blue-600" />
         Invitation emails use Supabase Auth when service role is configured. Temporary passwords allow immediate login at /login.
       </div>
     </div>
@@ -373,7 +373,7 @@ function Field({
               type={type}
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
             />
           </label>
     </VyronPremiumPageShell>

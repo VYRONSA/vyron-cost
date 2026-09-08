@@ -123,9 +123,9 @@ export default function AiCostIntelligenceClient({
           <h2 className="text-xl font-black text-[#F8FAFC]">BOM cost movement</h2>
           <div className="mt-4 space-y-3">
             {intelligence.bomCostMovement.slice(0, 8).map((row) => (
-              <div key={row.productName} className="rounded-xl border border-violet-400/30 bg-violet-500/15 px-4 py-3">
-                <div className="font-black text-violet-200">{row.productName}</div>
-                <div className="text-sm font-semibold text-violet-300">
+              <div key={row.productName} className="rounded-xl border border-blue-400/30 bg-blue-500/15 px-4 py-3">
+                <div className="font-black text-blue-200">{row.productName}</div>
+                <div className="text-sm font-semibold text-blue-300">
                   {money(row.previousCost)} → {money(row.currentCost)} · {row.movementPct}% · {row.impact}
                 </div>
               </div>
@@ -134,7 +134,7 @@ export default function AiCostIntelligenceClient({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-[#A855F7]/20 border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
+      <section className="rounded-2xl border border-[#3B82F6]/20 border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
         <h2 className="text-xl font-black text-[#F8FAFC]">Suggested repricing & recovery</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {intelligence.repricingSuggestions.map((row) => (
@@ -143,7 +143,7 @@ export default function AiCostIntelligenceClient({
               <div className="text-sm font-semibold text-[#CBD5E1]">
                 Suggested price {money(row.suggestedPrice)} from {money(row.currentPrice)}
               </div>
-              <div className="mt-1 text-sm font-bold text-[#A855F7]">Recovery {money(row.monthlyRecovery)}/month</div>
+              <div className="mt-1 text-sm font-bold text-[#3B82F6]">Recovery {money(row.monthlyRecovery)}/month</div>
             </div>
           ))}
         </div>

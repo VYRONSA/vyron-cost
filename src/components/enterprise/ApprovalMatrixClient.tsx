@@ -28,12 +28,12 @@ export default function ApprovalMatrixClient({ data }: { data: ApprovalMatrixPay
     >
       <section className="grid gap-6">
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl bg-violet-50 p-5">
-                <div className="text-xs font-black uppercase text-violet-600">PO auto-approve below</div>
+              <div className="rounded-2xl bg-blue-50 p-5">
+                <div className="text-xs font-black uppercase text-blue-600">PO auto-approve below</div>
                 <div className="mt-2 text-2xl font-black">{money(data.poRules.autoApproveBelow)}</div>
               </div>
-              <div className="rounded-2xl bg-violet-50 p-5">
-                <div className="text-xs font-black uppercase text-violet-600">Supervisor threshold</div>
+              <div className="rounded-2xl bg-blue-50 p-5">
+                <div className="text-xs font-black uppercase text-blue-600">Supervisor threshold</div>
                 <div className="mt-2 text-2xl font-black">{money(data.poRules.supervisorApproveBelow)}</div>
               </div>
               <div className="rounded-2xl bg-slate-50 p-5">
@@ -50,7 +50,7 @@ export default function ApprovalMatrixClient({ data }: { data: ApprovalMatrixPay
                     .map((r) => (
                       <div key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-50 p-3 text-sm">
                         <span className="font-bold">{r.ruleName}</span>
-                        <span className="text-xs font-black text-violet-700">
+                        <span className="text-xs font-black text-blue-700">
                           L{r.approvalLevel} · {r.thresholdType} ≥ {r.thresholdValue} · {r.approverRole.replace(/_/g, " ")}
                         </span>
                       </div>

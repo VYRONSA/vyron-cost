@@ -99,7 +99,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
         ]}
       >
         {canCreate ? (
-          <Link href="/manufacturing/runs/new" className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-900 shadow-lg">
+          <Link href="/manufacturing/runs/new" className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-blue-900 shadow-lg">
             New Production Run
           </Link>
         ) : null}
@@ -150,7 +150,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
 
       <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="min-w-[1100px]">
-          <div className="grid grid-cols-9 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
+          <div className="grid grid-cols-9 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
             <div>Batch #</div>
             <div>Date</div>
             <div className="col-span-2">Product</div>
@@ -182,7 +182,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
                   key={run.id}
                   className="grid grid-cols-9 items-center border-t border-slate-100 px-5 py-4 text-sm"
                 >
-                  <div className="font-black text-violet-800">{run.run_number}</div>
+                  <div className="font-black text-blue-800">{run.run_number}</div>
                   <div className="text-slate-600">{formatDate(date)}</div>
                   <div className="col-span-2">
                     <div className="font-bold text-slate-900">{run.product_name_snapshot || run.bom_name_snapshot}</div>
@@ -198,7 +198,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
                         run.status === "Reversed"
                           ? "bg-red-100 text-red-800"
                           : run.status === "Completed"
-                            ? "bg-[#A855F7]/12 text-[#4D7C0F]"
+                            ? "bg-[#3B82F6]/12 text-[#4D7C0F]"
                             : "bg-slate-100 text-slate-700"
                       }`}
                     >
@@ -209,7 +209,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
                   <div className="flex flex-wrap gap-2">
                     <Link
                       href={`/manufacturing/runs/${run.id}`}
-                      className="rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-700 hover:bg-violet-100"
+                      className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700 hover:bg-blue-100"
                     >
                       Open
                     </Link>

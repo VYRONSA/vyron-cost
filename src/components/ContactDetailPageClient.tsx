@@ -43,7 +43,7 @@ export default function ContactDetailPageClient({ contact }: { contact: VyronCon
   }
 
   return (
-    <section className="mt-6 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+    <section className="mt-6 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-black text-slate-900">Contact Detail</h2>
         <Link href="/contacts" className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700">

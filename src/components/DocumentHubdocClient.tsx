@@ -125,12 +125,12 @@ type DemoDoc = {
 const starterDocs: DemoDoc[] = [];
 
 function statusClass(status: DocStatus) {
-  if (status === "Matched" || status === "Archived") return "bg-[#A855F7]/10 text-[#7E22CE]";
+  if (status === "Matched" || status === "Archived") return "bg-[#3B82F6]/10 text-[#1D4ED8]";
   if (status === "Error" || status === "Duplicate Risk") return "bg-red-50 text-red-700";
   if (status === "Needs Review") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   if (status === "Extracting" || status === "Uploading") return "bg-blue-50 text-blue-700";
-  if (status === "Stored" || status === "Uploaded") return "bg-[#A855F7]/10 text-[#7E22CE]";
-  return "bg-violet-50 text-violet-700";
+  if (status === "Stored" || status === "Uploaded") return "bg-[#3B82F6]/10 text-[#1D4ED8]";
+  return "bg-blue-50 text-blue-700";
 }
 
 function listTitle(view: HubListView) {
@@ -702,13 +702,13 @@ export default function DocumentHubdocClient({
       />
 
       {!hideHero ? (
-      <section className="relative overflow-hidden rounded-[2.6rem] border border-violet-100 bg-white p-8 shadow-[0_20px_70px_rgba(76,29,149,0.10)]">
-        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-violet-200/50 blur-3xl" />
-        <div className="absolute bottom-0 left-20 h-64 w-64 rounded-full bg-fuchsia-200/40 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[2.6rem] border border-blue-100 bg-white p-8 shadow-[0_20px_70px_rgba(30,58,138,0.10)]">
+        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-blue-200/50 blur-3xl" />
+        <div className="absolute bottom-0 left-20 h-64 w-64 rounded-full bg-blue-200/40 blur-3xl" />
 
         <div className="relative z-10 grid gap-8 xl:grid-cols-[1fr_0.9fr] xl:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-100 to-fuchsia-100 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-violet-700">
+            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-blue-700">
               <Sparkles size={15} />
               Document AI Diagnostics
             </div>
@@ -722,8 +722,8 @@ export default function DocumentHubdocClient({
                 ["Captured", String(docs.filter((d) => d.status === "Captured" || d.status === "Matched").length), "read by AI"],
                 ["Review", String(docs.filter((d) => d.status === "Needs Review").length), "needs attention"],
               ].map(([label, value, note]) => (
-                <div key={label} className="rounded-3xl bg-gradient-to-br from-white to-violet-50 p-5 shadow-sm">
-                  <div className="text-xs font-black uppercase tracking-[0.14em] text-violet-500">{label}</div>
+                <div key={label} className="rounded-3xl bg-gradient-to-br from-white to-blue-50 p-5 shadow-sm">
+                  <div className="text-xs font-black uppercase tracking-[0.14em] text-blue-500">{label}</div>
                   <div className="mt-2 text-4xl font-black text-slate-950">{value}</div>
                   <div className="mt-1 text-xs font-bold text-slate-400">{note}</div>
                 </div>
@@ -731,8 +731,8 @@ export default function DocumentHubdocClient({
             </div>
           </div>
 
-          <div className="rounded-[2.2rem] bg-gradient-to-br from-violet-700 via-fuchsia-600 to-indigo-800 p-6 text-white shadow-[0_18px_60px_rgba(59,130,246,0.28)]">
-            <div className="text-xs font-black uppercase tracking-[0.18em] text-violet-100">What changed</div>
+          <div className="rounded-[2.2rem] bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 p-6 text-white shadow-[0_18px_60px_rgba(59,130,246,0.28)]">
+            <div className="text-xs font-black uppercase tracking-[0.18em] text-blue-100">What changed</div>
             <h2 className="mt-2 text-2xl font-black">Shows the real extraction error.</h2>
 
             <div className="mt-6 grid gap-3">
@@ -748,7 +748,7 @@ export default function DocumentHubdocClient({
                   </div>
                   <div>
                     <div className="font-black">{step}</div>
-                    <div className="text-xs font-semibold text-violet-100">{note}</div>
+                    <div className="text-xs font-semibold text-blue-100">{note}</div>
                   </div>
                 </div>
               ))}
@@ -759,7 +759,7 @@ export default function DocumentHubdocClient({
       ) : null}
 
       {queue && mode === "documents" ? (
-        <section className="rounded-[2rem] border border-violet-100 bg-white p-5">
+        <section className="rounded-[2rem] border border-blue-100 bg-white p-5">
           <h3 className="text-sm font-black uppercase text-slate-500">Processing queue</h3>
           <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
             {(
@@ -772,8 +772,8 @@ export default function DocumentHubdocClient({
                 ["Failed", queue.failed],
               ] as const
             ).map(([label, value]) => (
-              <div key={label} className="rounded-xl bg-violet-50 px-3 py-2 text-center">
-                <div className="text-[10px] font-black uppercase text-violet-600">{label}</div>
+              <div key={label} className="rounded-xl bg-blue-50 px-3 py-2 text-center">
+                <div className="text-[10px] font-black uppercase text-blue-600">{label}</div>
                 <div className="text-xl font-black text-slate-950">{value}</div>
               </div>
             ))}
@@ -782,7 +782,7 @@ export default function DocumentHubdocClient({
       ) : null}
 
       {listView === "inbox" ? (
-      <section className="rounded-[2.2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <section className="rounded-[2.2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
           <h2 className="text-2xl font-black text-slate-950">Capture Document</h2>
           <p className="mt-1 text-xs font-semibold text-slate-500">
             Upload PDF/image — extraction opens full-screen review automatically.
@@ -791,9 +791,9 @@ export default function DocumentHubdocClient({
           <div
             onDrop={handleDrop}
             onDragOver={(event) => event.preventDefault()}
-            className="mt-6 rounded-[2rem] border-2 border-dashed border-violet-200 bg-violet-50/60 p-8 text-center transition hover:border-[var(--vyron-warning-border)] hover:bg-[var(--vyron-warning-bg)]"
+            className="mt-6 rounded-[2rem] border-2 border-dashed border-blue-200 bg-blue-50/60 p-8 text-center transition hover:border-[var(--vyron-warning-border)] hover:bg-[var(--vyron-warning-bg)]"
           >
-            <UploadCloud className="mx-auto text-violet-700" size={46} />
+            <UploadCloud className="mx-auto text-blue-700" size={46} />
             <div className="mt-4 text-xl font-black text-slate-950">Drop invoice here</div>
             <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
               Upload PDF/image. If extraction fails, the exact API/model/key error will now show.
@@ -801,7 +801,7 @@ export default function DocumentHubdocClient({
             <button
               type="button"
               onClick={openFilePicker}
-              className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black text-white shadow-lg shadow-violet-500/20"
+              className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-4 text-sm font-black text-white shadow-lg shadow-blue-500/20"
             >
               <Plus size={18} />
               Capture Document
@@ -811,7 +811,7 @@ export default function DocumentHubdocClient({
           {message ? <div className="mt-4 rounded-2xl bg-[var(--vyron-warning-bg)] px-5 py-4 text-sm font-black text-[var(--vyron-warning-fg)]">{message}</div> : null}
 
           <div className="mt-5 rounded-3xl bg-slate-950 p-5 text-white">
-            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-fuchsia-300">
+            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-blue-300">
               <Mail size={15} />
               Email Inbox
             </div>
@@ -823,7 +823,7 @@ export default function DocumentHubdocClient({
             </div>
             <a
               href="/email-invoice-inbox"
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#A855F7]/100 px-4 py-2 text-xs font-black text-[#F8FAFC]"
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#3B82F6]/100 px-4 py-2 text-xs font-black text-[#F8FAFC]"
             >
               Open email intake queue →
             </a>
@@ -831,7 +831,7 @@ export default function DocumentHubdocClient({
       </section>
       ) : null}
 
-      <section className="rounded-[2.2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <section className="rounded-[2.2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-black text-slate-950">{listTitle(listView)}</h2>
@@ -906,8 +906,8 @@ export default function DocumentHubdocClient({
                 </button>
               </>
             ) : null}
-            <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-              <Search size={18} className="text-violet-700" />
+            <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+              <Search size={18} className="text-blue-700" />
               <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search documents..." className="w-64 bg-transparent text-sm font-bold outline-none placeholder:text-slate-400" />
             </div>
           </div>
@@ -947,7 +947,7 @@ export default function DocumentHubdocClient({
 
         <EnterpriseScrollContainer className="rounded-3xl border border-slate-100">
           <table className="min-w-[960px] w-full text-left text-sm">
-            <thead className="bg-slate-950 text-xs font-black uppercase tracking-[0.14em] text-fuchsia-200">
+            <thead className="bg-slate-950 text-xs font-black uppercase tracking-[0.14em] text-blue-200">
               <tr>
                 <th className="w-10 px-3 py-3">
                   <input
@@ -979,9 +979,9 @@ export default function DocumentHubdocClient({
               {filtered.map((doc) => (
                 <tr
                   key={doc.storageDocumentId || `${doc.id}-${doc.fileName || ""}`}
-                  className={`border-t border-slate-100 hover:bg-violet-50/50 ${
+                  className={`border-t border-slate-100 hover:bg-blue-50/50 ${
                     doc.storageDocumentId && doc.storageDocumentId === activeHighlightId
-                      ? "bg-[var(--vyron-warning-bg)] ring-2 ring-fuchsia-400 ring-inset"
+                      ? "bg-[var(--vyron-warning-bg)] ring-2 ring-blue-400 ring-inset"
                       : ""
                   } ${doc.storageDocumentId ? "cursor-pointer" : ""}`}
                   onClick={() => {
@@ -1000,7 +1000,7 @@ export default function DocumentHubdocClient({
                     ) : null}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="font-black text-violet-700">{doc.id}</div>
+                    <div className="font-black text-blue-700">{doc.id}</div>
                     {doc.fileName ? <div className="mt-1 truncate text-[11px] font-bold text-slate-400">{doc.fileName}</div> : null}
                   </td>
                   <td className="px-4 py-3 font-bold text-slate-700">{doc.supplier}</td>
@@ -1019,7 +1019,7 @@ export default function DocumentHubdocClient({
                         <button
                           type="button"
                           onClick={() => openDocument(listView, doc.storageDocumentId!, router)}
-                          className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-3 py-2 text-xs font-black text-violet-700"
+                          className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-2 text-xs font-black text-blue-700"
                         >
                           {listView === "archive" || listView === "approved-today" ? "View archive" : "Open Review"}{" "}
                           <ArrowRight size={13} />

@@ -84,7 +84,7 @@ export default function DocumentSupervisorSettings() {
       <div>
         <Link
           href="/document-intelligence"
-          className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-violet-700"
+          className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-blue-700"
         >
           ← Back
           Document Intelligence
@@ -96,10 +96,10 @@ export default function DocumentSupervisorSettings() {
         </p>
       </div>
 
-      {message ? <p className="rounded-xl border border-[#A855F7]/25 bg-[#A855F7]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
+      {message ? <p className="rounded-xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
       {error ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800">{error}</p> : null}
 
-      <section className="rounded-[2rem] border border-violet-100 bg-white p-6 space-y-4">
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-6 space-y-4">
         <h3 className="text-sm font-black uppercase text-slate-500">Required fields & lines</h3>
         {toggles.map(({ key, label }) => (
           <label key={key} className="flex items-center gap-3 text-sm font-bold text-slate-700">
@@ -113,7 +113,7 @@ export default function DocumentSupervisorSettings() {
         ))}
       </section>
 
-      <section className="rounded-[2rem] border border-violet-100 bg-white p-6 grid gap-4">
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-6 grid gap-4">
         <h3 className="text-sm font-black uppercase text-slate-500">Thresholds</h3>
         {(
           [
@@ -141,7 +141,7 @@ export default function DocumentSupervisorSettings() {
         type="button"
         disabled={saving}
         onClick={() => void save()}
-        className="rounded-xl bg-violet-700 px-6 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+        className="rounded-xl bg-blue-700 px-6 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
       >
         {saving ? "Saving…" : "Save supervisor settings"}
       </button>

@@ -19,8 +19,8 @@ export default function GoodsReceiptHistoryPage() {
 
   return (
     <VyronCostAiShell hidePageHeader title="GRN History" subtitle="All posted goods received notes">
-      <section className="rounded-[2rem] border border-violet-100 bg-white p-6">
-        <Link href="/goods-receipts" className="text-xs font-black text-violet-700">
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-6">
+        <Link href="/goods-receipts" className="text-xs font-black text-blue-700">
           ← GRN Dashboard
         </Link>
         <div className="mt-4 space-y-2">
@@ -28,7 +28,7 @@ export default function GoodsReceiptHistoryPage() {
             <Link
               key={String(r.id)}
               href={`/goods-receipts/${r.id}`}
-              className="block rounded-xl border p-4 text-sm transition hover:bg-violet-50"
+              className="block rounded-xl border p-4 text-sm transition hover:bg-blue-50"
             >
               <div className="font-black">{String(r.grn_number)}</div>
               <div className="text-slate-600">

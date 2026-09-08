@@ -130,30 +130,30 @@ export default function GoodsReceiptDashboardClient() {
       actions={grnActions}
       showSpotlight={false}
     >
-      <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)] print:hidden">
+      <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_60px_rgba(30,58,138,0.08)] print:hidden">
         <VyronPremiumSectionHeading
           eyebrow="Search"
           title="Recent receipts"
           subtitle="Filter by GRN number, supplier, PO, receiver or status."
         />
 
-        <div className="mt-5 flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-          <Search size={18} className="text-violet-700" />
+        <div className="mt-5 flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+          <Search size={18} className="text-blue-700" />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search GRN number, supplier, PO, receiver or status…"
             className="w-full bg-transparent text-sm font-bold text-slate-800 outline-none placeholder:text-slate-400"
           />
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-violet-700">{filtered.length} shown</span>
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">{filtered.length} shown</span>
         </div>
       </div>
 
       {message ? <p className="rounded-2xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-warning-fg)]">{message}</p> : null}
 
-      <EnterpriseScrollContainer className="rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <EnterpriseScrollContainer className="rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <table className="min-w-[980px] w-full text-left text-sm">
-          <thead className="bg-[#2a2448] text-xs font-bold uppercase tracking-[0.12em] text-[#94A3B8]">
+          <thead className="bg-[#23304f] text-xs font-bold uppercase tracking-[0.12em] text-[#94A3B8]">
             <tr>
               <th className="px-4 py-3">GRN</th>
               <th className="px-4 py-3">Supplier</th>
@@ -185,20 +185,20 @@ export default function GoodsReceiptDashboardClient() {
               const id = text(row.id);
               const poId = text(row.purchase_order_id);
               return (
-                <tr key={id} className="border-t border-slate-100 hover:bg-violet-50/50">
-                  <td className="px-4 py-3 font-black text-violet-700">
+                <tr key={id} className="border-t border-slate-100 hover:bg-blue-50/50">
+                  <td className="px-4 py-3 font-black text-blue-700">
                     <Link href={`/goods-receipts/${id}`}>{text(row.grn_number || id)}</Link>
                   </td>
                   <td className="px-4 py-3 font-bold text-slate-700">{text(row.supplier_name_snapshot || "Supplier")}</td>
                   <td className="px-4 py-3">
-                    {poId ? <Link href={`/purchase-orders/${poId}`} className="font-black text-violet-700">Open PO</Link> : "—"}
+                    {poId ? <Link href={`/purchase-orders/${poId}`} className="font-black text-blue-700">Open PO</Link> : "—"}
                   </td>
                   <td className="px-4 py-3">{text(row.receipt_type || "receipt")}</td>
                   <td className="px-4 py-3 font-bold text-slate-700">{text(row.status || "Posted")}</td>
                   <td className="px-4 py-3">{text(row.received_at).slice(0, 16) || "—"}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
-                      <Link href={`/goods-receipts/${id}`} className="rounded-full bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">Open →</Link>
+                      <Link href={`/goods-receipts/${id}`} className="rounded-full bg-blue-50 px-3 py-2 text-xs font-black text-blue-700">Open →</Link>
                       {poId && canCreate ? <Link href={`/goods-receipts/new?po=${poId}`} className="rounded-full bg-[var(--vyron-warning-bg)] px-3 py-2 text-xs font-black text-[var(--vyron-warning-fg)]">Receive balance</Link> : null}
                     </div>
                   </td>

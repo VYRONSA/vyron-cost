@@ -119,8 +119,8 @@ export default function DocumentIntelligenceDashboard() {
 
   return (
     <div className="grid gap-6">
-      <section className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
-        <div className="text-xs font-black uppercase tracking-[0.14em] text-violet-600">Document Intelligence</div>
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
+        <div className="text-xs font-black uppercase tracking-[0.14em] text-blue-600">Document Intelligence</div>
         <p className="mt-1 text-sm font-semibold text-slate-500">
           Uploaded → Extracting → Captured → Needs Review → Approved → Archived
         </p>
@@ -136,8 +136,8 @@ export default function DocumentIntelligenceDashboard() {
             ["Recovery identified", stats?.potentialRecoveryIdentified ?? "—", "Open opportunities"],
             ["Open risks", stats?.openRiskCount ?? "—", "Procurement alerts"],
           ].map(([label, value, note]) => (
-            <div key={label} className="rounded-2xl bg-violet-50 p-4">
-              <div className="text-[10px] font-black uppercase tracking-[0.1em] text-violet-600">{label}</div>
+            <div key={label} className="rounded-2xl bg-blue-50 p-4">
+              <div className="text-[10px] font-black uppercase tracking-[0.1em] text-blue-600">{label}</div>
               <div className="mt-1 text-2xl font-black text-slate-950">{value}</div>
               <div className="mt-1 text-[11px] font-semibold text-slate-500">{note}</div>
             </div>
@@ -186,13 +186,13 @@ export default function DocumentIntelligenceDashboard() {
           ))}
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Link href="/document-intelligence/supplier-learning" className="text-xs font-black text-violet-700 hover:underline">
+          <Link href="/document-intelligence/supplier-learning" className="text-xs font-black text-blue-700 hover:underline">
             Supplier Learning →
           </Link>
-          <Link href="/document-intelligence/price-history/supplier" className="text-xs font-black text-violet-700 hover:underline">
+          <Link href="/document-intelligence/price-history/supplier" className="text-xs font-black text-blue-700 hover:underline">
             Price History screens →
           </Link>
-          <Link href="/document-intelligence/settings" className="text-xs font-black text-violet-700 hover:underline">
+          <Link href="/document-intelligence/settings" className="text-xs font-black text-blue-700 hover:underline">
             Supervisor settings →
           </Link>
         </div>
@@ -218,7 +218,7 @@ export default function DocumentIntelligenceDashboard() {
               Open Supplier Learning page
             </Link>
           </div>
-          <div className="rounded-[2rem] border border-violet-100 bg-white p-6">
+          <div className="rounded-[2rem] border border-blue-100 bg-white p-6">
             <h3 className="text-lg font-black text-slate-950">Supplier invoice learning</h3>
             <div className="mt-4 space-y-2">
               {(learning?.suppliers || []).map((row) => (
@@ -232,12 +232,12 @@ export default function DocumentIntelligenceDashboard() {
               ))}
             </div>
           </div>
-          <div className="rounded-[2rem] border border-violet-100 bg-white p-6">
+          <div className="rounded-[2rem] border border-blue-100 bg-white p-6">
             <h3 className="text-lg font-black text-slate-950">Top line mappings</h3>
             <div className="mt-4 max-h-[480px] space-y-2 overflow-y-auto">
               {(learning?.topMappings || []).map((row, index) => (
                 <div key={`${row.source_description}-${index}`} className="rounded-xl border border-slate-100 p-3 text-xs">
-                  <div className="font-black text-violet-800">{String(row.entity_name)}</div>
+                  <div className="font-black text-blue-800">{String(row.entity_name)}</div>
                   <div className="text-slate-600">{String(row.source_description)}</div>
                 </div>
               ))}
@@ -247,7 +247,7 @@ export default function DocumentIntelligenceDashboard() {
       ) : null}
 
       {utilityTab === "price-history" ? (
-        <section className="rounded-[2rem] border border-violet-100 bg-white p-6 overflow-x-auto">
+        <section className="rounded-[2rem] border border-blue-100 bg-white p-6 overflow-x-auto">
           <div className="mb-4 flex flex-wrap gap-2">
             {[
               ["Supplier", "/document-intelligence/price-history/supplier"],
@@ -255,7 +255,7 @@ export default function DocumentIntelligenceDashboard() {
               ["Packaging", "/document-intelligence/price-history/packaging"],
               ["Product", "/document-intelligence/price-history/product"],
             ].map(([label, href]) => (
-              <Link key={href} href={href} className="rounded-full bg-violet-100 px-4 py-2 text-xs font-black text-violet-800">
+              <Link key={href} href={href} className="rounded-full bg-blue-100 px-4 py-2 text-xs font-black text-blue-800">
                 {label} Price History
               </Link>
             ))}
@@ -299,7 +299,7 @@ export default function DocumentIntelligenceDashboard() {
       ) : null}
 
       {utilityTab === "rules" && rules ? (
-        <section className="rounded-[2rem] border border-violet-100 bg-white p-6 max-w-xl">
+        <section className="rounded-[2rem] border border-blue-100 bg-white p-6 max-w-xl">
           <div className="mb-4 flex justify-end">
             <Link
               href="/document-intelligence/settings"
@@ -343,7 +343,7 @@ export default function DocumentIntelligenceDashboard() {
             type="button"
             disabled={rulesSaving}
             onClick={() => void saveRules()}
-            className="mt-5 rounded-xl bg-violet-700 px-5 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
+            className="mt-5 rounded-xl bg-blue-700 px-5 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
           >
             {rulesSaving ? "Saving…" : "Save approval rules"}
           </button>

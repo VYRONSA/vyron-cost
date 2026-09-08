@@ -12,7 +12,7 @@ function riskClass(level: string) {
   if (level === "Critical") return "border-red-300 bg-red-50 text-red-800";
   if (level === "High") return "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   if (level === "Medium") return "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
-  return "border-[#A855F7]/30 bg-[#A855F7]/10 text-[#4D7C0F]";
+  return "border-[#3B82F6]/30 bg-[#3B82F6]/10 text-[#4D7C0F]";
 }
 
 export default function FinanceLeakageCentreClient({ centre }: { centre: FinanceLeakageCentre }) {
@@ -32,10 +32,10 @@ export default function FinanceLeakageCentreClient({ centre }: { centre: Finance
         ],
       }}
     >
-      <section className="mb-0 min-w-0 rounded-[2rem] border border-violet-200 bg-gradient-to-r from-violet-50 to-white p-6">
+      <section className="mb-0 min-w-0 rounded-[2rem] border border-blue-200 bg-gradient-to-r from-blue-50 to-white p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="text-xs font-black uppercase tracking-[0.16em] text-violet-600">Financial Leakage Centre</div>
+          <div className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">Financial Leakage Centre</div>
           <h2 className="mt-1 text-2xl font-black text-slate-900">Leakage risk score: {centre.leakageRiskScore}</h2>
           <p className="mt-2 text-sm font-semibold text-slate-600">
             Monthly exposure {money(centre.totalMonthlyExposure)} · Annual projected {money(centre.projectedAnnualImpact)}

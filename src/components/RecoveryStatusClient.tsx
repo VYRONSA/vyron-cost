@@ -143,8 +143,8 @@ export default function RecoveryStatusClient({
         ],
       }}
     >
-      <div className="mt-5 rounded-3xl bg-violet-50 p-5">
-        <div className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-violet-700">
+      <div className="mt-5 rounded-3xl bg-blue-50 p-5">
+        <div className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-blue-700">
         Recovery Tracker
         </div>
         <div className="flex flex-wrap gap-2">
@@ -156,7 +156,7 @@ export default function RecoveryStatusClient({
             className={`rounded-xl px-4 py-2 text-xs font-black ${
               status === item
                 ? "vyron-grad-surface text-white"
-                : "bg-white text-violet-700"
+                : "bg-white text-blue-700"
             }`}
           >
             {item}
@@ -259,7 +259,7 @@ export default function RecoveryStatusClient({
       </div>
 
       {message && (
-        <div className="mt-4 rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/12 px-4 py-3 text-sm font-bold text-[#7E22CE]">
+        <div className="mt-4 rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/12 px-4 py-3 text-sm font-bold text-[#1D4ED8]">
           {message}
         </div>
       )}

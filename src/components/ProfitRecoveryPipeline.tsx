@@ -15,9 +15,9 @@ function buildPipeline(kpis: LeakageKpis) {
     { label: "Food Cost", value: foodCost, color: "#64748B", bg: "#F8FAFC" },
     { label: "Packaging", value: packaging, color: "#475569", bg: "#F8FAFC" },
     { label: "Labour", value: labour, color: "#64748B", bg: "#F8FAFC" },
-    { label: "Wastage", value: wastage, color: "#C026D3", bg: "#FFFBEB" },
+    { label: "Wastage", value: wastage, color: "#B45309", bg: "#FFFBEB" },
     { label: "Leakage", value: leakage, color: "#EF4444", bg: "#FEF2F2" },
-    { label: "Recoverable Profit", value: recoverable, color: "#9333EA", bg: "#F0FDF4" },
+    { label: "Recoverable Profit", value: recoverable, color: "#047857", bg: "#F0FDF4" },
   ];
 }
 

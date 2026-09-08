@@ -43,7 +43,7 @@ export default function ClientBrandLockup({ variant = "dark", showPoweredBy = tr
         <div
           className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-2xl ${
             variant === "dark"
-              ? "bg-white/10 ring-1 ring-violet-300/25"
+              ? "bg-white/10 ring-1 ring-blue-300/25"
               : "bg-[rgba(79,70,229,0.06)] ring-1 ring-[rgba(15,23,42,0.07)]"
           }`}
           style={{ width: logoSize, height: logoSize }}
@@ -60,7 +60,7 @@ export default function ClientBrandLockup({ variant = "dark", showPoweredBy = tr
           {companyName}
         </div>
         {showPoweredBy && !isVyronOwn && (
-          <div className={`text-[10px] font-black uppercase tracking-[0.22em] ${variant === "dark" ? "text-fuchsia-300" : "text-[#2563EB]"}`}>
+          <div className={`text-[10px] font-black uppercase tracking-[0.22em] ${variant === "dark" ? "text-blue-300" : "text-[#2563EB]"}`}>
             powered by <span className={variant === "dark" ? "text-white" : "text-slate-950"}>VYRON COST</span>
           </div>
         )}

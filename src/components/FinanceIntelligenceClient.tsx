@@ -12,7 +12,7 @@ function riskClass(level: string) {
   if (level === "Critical") return "bg-red-100 text-red-800 border-red-200";
   if (level === "High") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)] border-[var(--vyron-warning-border)]";
   if (level === "Medium") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)] border-[var(--vyron-warning-border)]";
-  return "bg-[#A855F7]/12 text-[#4D7C0F] border-[#A855F7]/25";
+  return "bg-[#3B82F6]/12 text-[#4D7C0F] border-[#3B82F6]/25";
 }
 
 export default function FinanceIntelligenceClient({
@@ -57,10 +57,10 @@ export default function FinanceIntelligenceClient({
               ))}
             </div>
 
-            <div className="rounded-[2rem] bg-gradient-to-br from-slate-900 to-violet-950 p-8 text-white">
+            <div className="rounded-[2rem] bg-gradient-to-br from-slate-900 to-blue-950 p-8 text-white">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <div className="text-xs font-black uppercase text-violet-300">Leakage Risk Score</div>
+                  <div className="text-xs font-black uppercase text-blue-300">Leakage Risk Score</div>
                   <div className="mt-2 text-5xl font-black">{leakage.leakageRiskScore}</div>
                 </div>
                 <span className={`rounded-2xl border px-4 py-2 text-sm font-black ${riskClass(leakage.riskLevel)}`}>
@@ -69,15 +69,15 @@ export default function FinanceIntelligenceClient({
               </div>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div className="rounded-xl bg-white/10 p-4">
-                  <div className="text-[10px] font-black uppercase text-violet-200">Monthly exposure</div>
+                  <div className="text-[10px] font-black uppercase text-blue-200">Monthly exposure</div>
                   <div className="text-2xl font-black">{money(leakage.totalMonthlyExposure)}</div>
                 </div>
                 <div className="rounded-xl bg-white/10 p-4">
-                  <div className="text-[10px] font-black uppercase text-violet-200">Projected annual impact</div>
+                  <div className="text-[10px] font-black uppercase text-blue-200">Projected annual impact</div>
                   <div className="text-2xl font-black">{money(leakage.projectedAnnualImpact)}</div>
                 </div>
               </div>
-              <Link href="/financial-leakage" className="mt-6 inline-block text-sm font-black text-[#A855F7] hover:underline">
+              <Link href="/financial-leakage" className="mt-6 inline-block text-sm font-black text-[#3B82F6] hover:underline">
                 Open Financial Leakage Centre →
               </Link>
             </div>

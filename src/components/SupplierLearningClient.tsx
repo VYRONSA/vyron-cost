@@ -148,7 +148,7 @@ export default function SupplierLearningClient() {
               <div>
                 <Link
                   href="/document-intelligence"
-                  className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-violet-700 hover:text-violet-900"
+                  className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-blue-700 hover:text-blue-900"
                 >
                   ← Back
                   Document Intelligence
@@ -166,17 +166,17 @@ export default function SupplierLearningClient() {
               ) : null}
             </div>
 
-            {message ? <p className="rounded-xl border border-[#A855F7]/25 bg-[#A855F7]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
+            {message ? <p className="rounded-xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
             {error ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800">{error}</p> : null}
 
             <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-              <section className="rounded-[2rem] border border-violet-100 bg-white p-5">
+              <section className="rounded-[2rem] border border-blue-100 bg-white p-5">
                 <h3 className="text-sm font-black uppercase tracking-wider text-slate-500">Suppliers</h3>
                 <button
                   type="button"
                   onClick={() => setSelectedSupplier("")}
                   className={`mt-3 w-full rounded-xl px-3 py-2 text-left text-sm font-bold ${
-                    !selectedSupplier ? "bg-violet-100 text-violet-900" : "text-slate-700 hover:bg-slate-50"
+                    !selectedSupplier ? "bg-blue-100 text-blue-900" : "text-slate-700 hover:bg-slate-50"
                   }`}
                 >
                   All suppliers
@@ -188,7 +188,7 @@ export default function SupplierLearningClient() {
                       type="button"
                       onClick={() => setSelectedSupplier(row.supplierName)}
                       className={`w-full rounded-xl px-3 py-2 text-left text-sm ${
-                        selectedSupplier === row.supplierName ? "bg-violet-100 font-black text-violet-900" : "font-semibold text-slate-700 hover:bg-slate-50"
+                        selectedSupplier === row.supplierName ? "bg-blue-100 font-black text-blue-900" : "font-semibold text-slate-700 hover:bg-slate-50"
                       }`}
                     >
                       <div>{row.supplierName}</div>
@@ -203,7 +203,7 @@ export default function SupplierLearningClient() {
                 </div>
               </section>
 
-              <section className="rounded-[2rem] border border-violet-100 bg-white p-5 overflow-x-auto">
+              <section className="rounded-[2rem] border border-blue-100 bg-white p-5 overflow-x-auto">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <h3 className="text-sm font-black uppercase tracking-wider text-slate-500">Learned item mappings</h3>
                   <label className="flex items-center gap-2 text-xs font-bold text-slate-600">
@@ -235,7 +235,7 @@ export default function SupplierLearningClient() {
                         <td className="py-3 pr-3 font-semibold text-slate-800">{row.source_description}</td>
                         <td className="py-3 pr-3 text-slate-600">{row.source_sku || "—"}</td>
                         <td className="py-3 pr-3">
-                          <div className="font-black text-violet-800">{row.entity_name || "—"}</div>
+                          <div className="font-black text-blue-800">{row.entity_name || "—"}</div>
                           <div className="text-[11px] text-slate-400">{row.entity_type}</div>
                         </td>
                         <td className="py-3 pr-3">{row.unit || "—"}</td>

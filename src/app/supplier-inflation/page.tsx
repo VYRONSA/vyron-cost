@@ -22,8 +22,8 @@ export default async function SupplierInflationPage() {
           }}
         />
       ) : !hasWorkspaceData ? (
-        <div className="mb-6 rounded-[2rem] border border-violet-100 bg-white p-8 text-center shadow-sm">
-          <div className="text-xs font-black uppercase tracking-[0.14em] text-violet-600">Supplier inflation</div>
+        <div className="mb-6 rounded-[2rem] border border-blue-100 bg-white p-8 text-center shadow-sm">
+          <div className="text-xs font-black uppercase tracking-[0.14em] text-blue-600">Supplier inflation</div>
           <p className="mt-3 text-sm font-semibold text-slate-500">No data available</p>
         </div>
       ) : null}

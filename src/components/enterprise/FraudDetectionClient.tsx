@@ -44,7 +44,7 @@ export default function FraudDetectionClient({ alerts }: { alerts: FraudAlert[] 
                     <div className="text-right">
                       <div className="font-black text-red-600">{money(a.exposure)}</div>
                       {a.href ? (
-                        <Link href={a.href} className="text-xs font-black text-violet-700 hover:underline">
+                        <Link href={a.href} className="text-xs font-black text-blue-700 hover:underline">
                           Investigate →
                         </Link>
                       ) : null}

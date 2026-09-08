@@ -100,8 +100,8 @@ export default function PoLinkPanel({
   }
 
   return (
-    <section className="rounded-2xl border border-violet-200 bg-violet-50/50 p-4">
-      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-violet-800">
+    <section className="rounded-2xl border border-blue-200 bg-blue-50/50 p-4">
+      <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-blue-800">
         <Link2 size={14} />
         3-Way Match — Link Purchase Order
       </div>
@@ -120,7 +120,7 @@ export default function PoLinkPanel({
           </div>
           {match ? (
             <div className="rounded-xl bg-white p-3">
-              <div className="font-black text-violet-900">{match.matchStatus}</div>
+              <div className="font-black text-blue-900">{match.matchStatus}</div>
               <div className="mt-1">PO R{match.poTotal.toFixed(2)} vs Invoice R{match.invoiceTotal.toFixed(2)}</div>
               <div>Total variance: R{match.totalVariance.toFixed(2)}</div>
               <div>Qty variance: {match.qtyVariance}</div>
@@ -137,7 +137,7 @@ export default function PoLinkPanel({
             </span>
           ) : (
             <select
-              className="min-w-[220px] rounded-xl border border-violet-200 bg-white px-3 py-2 text-sm font-semibold"
+              className="min-w-[220px] rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm font-semibold"
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
             >
@@ -153,7 +153,7 @@ export default function PoLinkPanel({
             type="button"
             disabled={!selectedId || linking}
             onClick={() => void handleLink()}
-            className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
+            className="rounded-xl bg-blue-700 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
           >
             {linking ? "Linking…" : "Link PO"}
           </button>

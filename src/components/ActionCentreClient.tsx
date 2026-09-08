@@ -19,7 +19,7 @@ function ActionGroup({
       ? "bg-red-50 text-red-800"
       : tone === "amber"
         ? "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
-        : "bg-[#A855F7]/10 text-[#4D7C0F]";
+        : "bg-[#3B82F6]/10 text-[#4D7C0F]";
 
   return (
     <section className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
@@ -32,13 +32,13 @@ function ActionGroup({
           <Link
             key={item.id}
             href={item.href}
-            className="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 transition hover:border-[#A855F7]/25"
+            className="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 transition hover:border-[#3B82F6]/25"
           >
             <div>
               <div className="font-black text-[#F8FAFC]">{item.title}</div>
               <div className="mt-1 text-sm text-slate-500">{item.detail}</div>
             </div>
-            <ArrowUpRight size={18} className="shrink-0 text-[#7E22CE]" />
+            <ArrowUpRight size={18} className="shrink-0 text-[#1D4ED8]" />
           </Link>
         ))}
       </div>

@@ -34,18 +34,18 @@ export default function ClientWorkspaceTopBar() {
   if (!platformAdmin || !client) return null;
 
   return (
-    <div className="border-b border-violet-200 bg-gradient-to-r from-violet-700 to-fuchsia-600 px-4 py-3 text-white md:px-8">
+    <div className="border-b border-blue-200 bg-gradient-to-r from-blue-700 to-blue-600 px-4 py-3 text-white md:px-8">
       <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
             <Building2 size={18} />
           </div>
           <div>
-            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-100">
+            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-100">
               Client workspace · impersonation mode
             </div>
             <div className="text-sm font-black">{client.companyName}</div>
-            <div className="text-xs font-semibold text-violet-100">
+            <div className="text-xs font-semibold text-blue-100">
               {client.ownerEmail || "Owner"} · Workspace {client.id}
               {client.ownerUserId ? ` · Auth ${client.ownerUserId.slice(0, 8)}…` : ""}
             </div>
@@ -59,7 +59,7 @@ export default function ClientWorkspaceTopBar() {
               setClient(null);
               window.location.href = "/developer";
             }}
-            className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-black text-violet-800"
+            className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-black text-blue-800"
           >
             <LogOut size={14} />
             Return to VYRON DEV

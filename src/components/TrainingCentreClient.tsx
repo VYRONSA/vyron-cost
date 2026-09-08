@@ -39,7 +39,7 @@ export default function TrainingCentreClient() {
     >
       <section className="grid gap-6">
             <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-              <BookOpen size={34} className="text-[#A855F7]" />
+              <BookOpen size={34} className="text-[#3B82F6]" />
               <h2 className="mt-5 text-3xl font-black">Training Centre</h2>
               <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
                 Client-facing training for every step from setup to costing, recovery and reporting.
@@ -57,7 +57,7 @@ export default function TrainingCentreClient() {
             <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {sections.map(([title, detail]) => (
                 <div key={title} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                  <PlayCircle size={28} className="text-[#7E22CE]" />
+                  <PlayCircle size={28} className="text-[#1D4ED8]" />
                   <h3 className="mt-5 text-xl font-black text-[#F8FAFC]">{title}</h3>
                   <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">{detail}</p>
                 </div>

@@ -109,14 +109,14 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-violet-800 via-indigo-950 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(81,63,190,0.28)]">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#A855F7]/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-[#A855F7]/10 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-blue-800 via-indigo-950 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(29,78,216,0.28)]">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#3B82F6]/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-[#3B82F6]/10 blur-3xl" />
         <div className="relative grid gap-7 xl:grid-cols-[1.2fr_0.8fr] xl:items-center">
           <div>
             <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#CBD5E1]">Premium Procurement Detail</div>
             <h2 className="mt-5 text-4xl font-black tracking-[-0.04em] md:text-5xl">Purchase Order Intelligence</h2>
-            <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-violet-100">Track financial exposure, fulfilment status, linked GRNs, supplier invoices and approval history from one board-ready purchase order view.</p>
+            <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-blue-100">Track financial exposure, fulfilment status, linked GRNs, supplier invoices and approval history from one board-ready purchase order view.</p>
             <div className="mt-6 flex flex-wrap gap-3">
           <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">PO Value</span>
           <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-white/90">Fulfilment</span>
@@ -127,7 +127,7 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
           </div>
           <div className="grid gap-4">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-fuchsia-200">VYRON COST principle</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-200">VYRON COST principle</div>
               <p className="mt-3 text-lg font-black leading-snug text-white">&ldquo;PO, GRN and invoice must agree — variance is either margin or risk.&rdquo;</p>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
@@ -140,7 +140,7 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
       <section className="grid gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
         <div>
-          <Link href="/purchase-orders/list" className="text-xs font-black text-violet-700">
+          <Link href="/purchase-orders/list" className="text-xs font-black text-blue-700">
             ← PO List
           </Link>
           <h1 className="mt-2 text-3xl font-black text-slate-950">{String(po.po_number)}</h1>
@@ -176,29 +176,29 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
       {message ? <div className="rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-2 text-xs font-bold text-[var(--vyron-warning-fg)] print:hidden">{message}</div> : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
-          <div className="text-[10px] font-black uppercase text-violet-600">Subtotal</div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+          <div className="text-[10px] font-black uppercase text-blue-600">Subtotal</div>
           <div className="text-2xl font-black">{formatMoney(subtotal)}</div>
         </div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
-          <div className="text-[10px] font-black uppercase text-violet-600">VAT</div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+          <div className="text-[10px] font-black uppercase text-blue-600">VAT</div>
           <div className="text-2xl font-black">{formatMoney(vatAmount)}</div>
         </div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
-          <div className="text-[10px] font-black uppercase text-violet-600">PO Total</div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+          <div className="text-[10px] font-black uppercase text-blue-600">PO Total</div>
           <div className="text-2xl font-black">{formatMoney(Number(po.total || 0))}</div>
         </div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
-          <div className="text-[10px] font-black uppercase text-violet-600">Invoice Total</div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+          <div className="text-[10px] font-black uppercase text-blue-600">Invoice Total</div>
           <div className="text-2xl font-black">{formatMoney(Number(po.invoice_total || 0))}</div>
         </div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
-          <div className="text-[10px] font-black uppercase text-violet-600">Variance</div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+          <div className="text-[10px] font-black uppercase text-blue-600">Variance</div>
           <div className="text-2xl font-black text-red-600">{formatMoney(Number(po.variance || 0))}</div>
         </div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
-          <div className="text-[10px] font-black uppercase text-violet-600">Fulfillment</div>
-          <div className="text-lg font-black text-violet-800">{fulfillment}</div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+          <div className="text-[10px] font-black uppercase text-blue-600">Fulfillment</div>
+          <div className="text-lg font-black text-blue-800">{fulfillment}</div>
           <div className="text-xs font-semibold text-slate-500">Match: {String(po.match_status || "—")}</div>
         </div>
       </div>
@@ -212,24 +212,24 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
               type="button"
               disabled={pendingStatus === s}
               onClick={() => void setStatus(s)}
-              className="rounded-xl bg-violet-100 px-3 py-2 text-xs font-black text-violet-800 disabled:opacity-60"
+              className="rounded-xl bg-blue-100 px-3 py-2 text-xs font-black text-blue-800 disabled:opacity-60"
             >
               Mark {s}
             </button>
           ))}
       </div>
 
-      <div className="rounded-2xl border border-violet-100 bg-white p-4 text-sm font-semibold text-slate-700 print:hidden">
-        <div className="text-xs font-black uppercase tracking-[0.14em] text-violet-700">Supplier Details</div>
+      <div className="rounded-2xl border border-blue-100 bg-white p-4 text-sm font-semibold text-slate-700 print:hidden">
+        <div className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Supplier Details</div>
         <div className="mt-1">{String(po.supplier_name_snapshot || "—")}</div>
         <div className="text-slate-500">{supplierEmail || "No supplier email on file."}</div>
-        <div className="mt-3 text-xs font-black uppercase tracking-[0.14em] text-violet-700">Notes</div>
+        <div className="mt-3 text-xs font-black uppercase tracking-[0.14em] text-blue-700">Notes</div>
         <div className="mt-1 whitespace-pre-wrap text-slate-600">{String(po.notes || "No notes")}</div>
       </div>
 
-      <EnterpriseScrollContainer className="min-w-0 rounded-[2rem] border border-violet-100 bg-white">
+      <EnterpriseScrollContainer className="min-w-0 rounded-[2rem] border border-blue-100 bg-white">
         <table className="min-w-[880px] w-full text-left text-sm">
-          <thead className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100">
+          <thead className="bg-blue-800 text-xs font-black uppercase tracking-[0.14em] text-blue-100">
             <tr>
               <th className="px-4 py-3">Item</th>
               <th className="px-4 py-3">Type</th>
@@ -263,7 +263,7 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
       </EnterpriseScrollContainer>
 
       <div className="grid gap-6 lg:grid-cols-2 print:hidden">
-        <div className="rounded-[2rem] border border-violet-100 bg-white p-5">
+        <div className="rounded-[2rem] border border-blue-100 bg-white p-5">
           <h2 className="text-lg font-black text-slate-950">Linked goods receipts</h2>
           <div className="mt-3 space-y-2">
             {goodsReceipts.length ? (
@@ -271,9 +271,9 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
                 <Link
                   key={String(grn.id)}
                   href={`/goods-receipts/${grn.id}`}
-                  className="block rounded-xl border border-slate-100 px-4 py-3 text-sm hover:bg-violet-50"
+                  className="block rounded-xl border border-slate-100 px-4 py-3 text-sm hover:bg-blue-50"
                 >
-                  <div className="font-black text-violet-700">{String(grn.grn_number || grn.id)}</div>
+                  <div className="font-black text-blue-700">{String(grn.grn_number || grn.id)}</div>
                   <div className="text-xs text-slate-500">
                     {String(grn.receipt_type || "receipt")} · {String(grn.received_at || "").slice(0, 16)}
                   </div>
@@ -284,7 +284,7 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
             )}
           </div>
         </div>
-        <div className="rounded-[2rem] border border-violet-100 bg-white p-5">
+        <div className="rounded-[2rem] border border-blue-100 bg-white p-5">
           <h2 className="text-lg font-black text-slate-950">Linked supplier invoices</h2>
           <div className="mt-3 space-y-2">
             {linkedInvoices.length ? (
@@ -292,9 +292,9 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
                 <Link
                   key={String(doc.id)}
                   href={`/document-intelligence/${doc.id}`}
-                  className="block rounded-xl border border-slate-100 px-4 py-3 text-sm hover:bg-violet-50"
+                  className="block rounded-xl border border-slate-100 px-4 py-3 text-sm hover:bg-blue-50"
                 >
-                  <div className="font-black text-violet-700">{String(doc.invoice_number || doc.id)}</div>
+                  <div className="font-black text-blue-700">{String(doc.invoice_number || doc.id)}</div>
                   <div className="text-xs text-slate-500">
                     {String(doc.status || "review")} · {formatMoney(Number(doc.total || 0))}
                   </div>

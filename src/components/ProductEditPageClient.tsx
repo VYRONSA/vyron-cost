@@ -54,7 +54,7 @@ function productToForm(item: Product): ProductForm {
 }
 
 function premiumInputClass(canEdit: boolean) {
-  return `mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100 ${
+  return `mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 ${
     canEdit ? "bg-white" : "bg-slate-50 text-slate-500"
   }`;
 }
@@ -252,9 +252,9 @@ export default function ProductEditPageClient({
 
   return (
     <section className="grid gap-8">
-      <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-violet-800 via-indigo-900 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(81,63,190,0.28)]">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#A855F7]/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-[#A855F7]/10 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-blue-800 via-indigo-900 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(29,78,216,0.28)]">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#3B82F6]/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-[#3B82F6]/10 blur-3xl" />
         <div className="relative grid gap-7 xl:grid-cols-[1.15fr_0.85fr] xl:items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#CBD5E1]">
@@ -263,7 +263,7 @@ export default function ProductEditPageClient({
             <h2 className="mt-5 text-4xl font-black tracking-[-0.04em] md:text-5xl">
               Protect margin before it reaches the invoice.
             </h2>
-            <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-violet-100">
+            <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-blue-100">
               Manage selling price, true product cost, target gross profit, packaging, labour, overheads and wastage from one premium costing workspace.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
@@ -276,11 +276,11 @@ export default function ProductEditPageClient({
           </div>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#A855F7]">Margin discipline</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#3B82F6]">Margin discipline</div>
               <p className="mt-3 text-lg font-black leading-snug text-white">&ldquo;Revenue is vanity. Margin is sanity.&rdquo;</p>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-fuchsia-200">Cost intelligence</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-200">Cost intelligence</div>
               <p className="mt-3 text-sm font-semibold leading-6 text-slate-100">
                 Small cost leaks become large profit problems when products scale across stores, batches and invoices.
               </p>
@@ -292,11 +292,11 @@ export default function ProductEditPageClient({
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[
           { label: "Selling Price", value: formatMoney(Number(form.selling_price)), icon: TrendingUp, tone: "bg-white text-slate-950" },
-          { label: "Cost Price", value: formatMoney(Number(form.total_cost)), icon: Calculator, tone: "bg-violet-50 text-violet-800" },
-          { label: "Actual GP", value: `${gpPreview.toFixed(1)}%`, icon: LineChart, tone: isBelowTarget ? "bg-red-50 text-red-700" : "bg-[#A855F7]/10 text-[#7E22CE]" },
-          { label: "Suggested Price", value: formatMoney(suggestedPrice), icon: Target, tone: "bg-[#A855F7]/10 text-[#4D7C0F]" },
+          { label: "Cost Price", value: formatMoney(Number(form.total_cost)), icon: Calculator, tone: "bg-blue-50 text-blue-800" },
+          { label: "Actual GP", value: `${gpPreview.toFixed(1)}%`, icon: LineChart, tone: isBelowTarget ? "bg-red-50 text-red-700" : "bg-[#3B82F6]/10 text-[#1D4ED8]" },
+          { label: "Suggested Price", value: formatMoney(suggestedPrice), icon: Target, tone: "bg-[#3B82F6]/10 text-[#4D7C0F]" },
         ].map((card) => (
-          <div key={card.label} className={`rounded-[2rem] p-5 shadow-[0_18px_50px_rgba(81,63,190,0.08)] ${card.tone}`}>
+          <div key={card.label} className={`rounded-[2rem] p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)] ${card.tone}`}>
             <div className="flex items-center justify-between gap-3">
               <div className="text-[10px] font-black uppercase tracking-[0.16em] opacity-70">{card.label}</div>
               <card.icon size={20} className="opacity-70" />
@@ -313,10 +313,10 @@ export default function ProductEditPageClient({
       ) : null}
 
       <section className="grid gap-8 xl:grid-cols-[1.08fr_0.72fr]">
-        <div className="rounded-[2rem] border border-white bg-white p-7 shadow-[0_18px_55px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] border border-white bg-white p-7 shadow-[0_18px_55px_rgba(29,78,216,0.08)]">
           <div className="mb-7 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
                 <PackageCheck size={24} />
               </div>
               <div>
@@ -328,7 +328,7 @@ export default function ProductEditPageClient({
               </div>
             </div>
 
-            <Link href="/products" className="inline-flex items-center gap-2 rounded-2xl border border-violet-100 bg-violet-50 px-5 py-3 text-sm font-black text-violet-800">
+            <Link href="/products" className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-sm font-black text-blue-800">
               ← Back
             </Link>
           </div>
@@ -376,46 +376,46 @@ export default function ProductEditPageClient({
 
         <aside className="grid gap-6">
           <div className="relative overflow-hidden rounded-[2rem] bg-[#07110d] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-600/20 via-transparent to-[#A855F7]/10" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-[#3B82F6]/10" />
             <div className="relative">
-              <Calculator size={30} className="text-[#A855F7]" />
-              <div className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-[#A855F7]">Product Intelligence</div>
+              <Calculator size={30} className="text-[#3B82F6]" />
+              <div className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-[#3B82F6]">Product Intelligence</div>
               <div className="mt-3 text-5xl font-black">{gpPreview.toFixed(1)}%</div>
               <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
                 Current gross profit based on selling price and true cost price.
               </p>
-              <div className="mt-6 rounded-3xl border border-[#A855F7]/20 bg-white/5 p-5">
-                <div className="text-sm font-black text-[#A855F7]">Suggested Selling Price</div>
+              <div className="mt-6 rounded-3xl border border-[#3B82F6]/20 bg-white/5 p-5">
+                <div className="text-sm font-black text-[#3B82F6]">Suggested Selling Price</div>
                 <div className="mt-2 text-3xl font-black">{formatMoney(suggestedPrice)}</div>
                 <p className="mt-2 text-sm font-semibold leading-7 text-slate-300">Price needed to reach the selected target GP.</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-            <div className="text-xs font-black uppercase tracking-[0.16em] text-violet-600">Formula</div>
+          <div className="rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+            <div className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">Formula</div>
             <h3 className="mt-2 text-xl font-black text-slate-950">How VYRON Calculates GP</h3>
-            <div className="mt-4 rounded-2xl border border-violet-100 bg-white p-4 text-sm font-bold leading-7 text-slate-700">
+            <div className="mt-4 rounded-2xl border border-blue-100 bg-white p-4 text-sm font-bold leading-7 text-slate-700">
               <p>GP % =</p>
-              <p className="mt-1 text-lg font-black text-violet-800">(Selling Price − Cost Price) ÷ Selling Price × 100</p>
+              <p className="mt-1 text-lg font-black text-blue-800">(Selling Price − Cost Price) ÷ Selling Price × 100</p>
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-fuchsia-700 via-violet-800 to-slate-950 p-6 text-white shadow-[0_18px_55px_rgba(81,63,190,0.2)]">
+          <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-6 text-white shadow-[0_18px_55px_rgba(29,78,216,0.2)]">
             <div className="pointer-events-none absolute -right-10 top-8 h-36 w-36 rounded-full border border-white/10" />
-            <ShieldCheck size={26} className="text-[#A855F7]" />
-            <div className="mt-4 text-[10px] font-black uppercase tracking-[0.18em] text-fuchsia-200">Cost intelligence tip</div>
+            <ShieldCheck size={26} className="text-[#3B82F6]" />
+            <div className="mt-4 text-[10px] font-black uppercase tracking-[0.18em] text-blue-200">Cost intelligence tip</div>
             <p className="mt-3 text-lg font-black leading-snug">What gets measured gets protected.</p>
-            <p className="mt-3 text-sm font-semibold leading-6 text-violet-100">
+            <p className="mt-3 text-sm font-semibold leading-6 text-blue-100">
               A small increase in ingredients, labour or packaging can quietly erode margin across every invoice.
             </p>
           </div>
         </aside>
       </section>
 
-      <section className="rounded-[2rem] border border-white bg-white p-7 shadow-[0_18px_55px_rgba(81,63,190,0.08)]">
+      <section className="rounded-[2rem] border border-white bg-white p-7 shadow-[0_18px_55px_rgba(29,78,216,0.08)]">
         <div className="mb-6 flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/12 text-[#7E22CE]">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/12 text-[#1D4ED8]">
             <TrendingUp size={24} />
           </div>
           <div>
@@ -451,14 +451,14 @@ export default function ProductEditPageClient({
 
         <div className="mt-6 flex flex-wrap gap-3">
           {canEdit ? (
-            <button type="button" onClick={saveProduct} className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(29,107,255,0.28)] transition hover:from-violet-800 hover:to-fuchsia-700">
+            <button type="button" onClick={saveProduct} className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(29,107,255,0.28)] transition hover:from-blue-800 hover:to-blue-700">
               <Save size={18} />
               Save Product
             </button>
           ) : null}
 
           {canCreate ? (
-            <button type="button" onClick={duplicateProduct} className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-6 py-4 text-sm font-black text-violet-800 transition hover:bg-violet-100">
+            <button type="button" onClick={duplicateProduct} className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-6 py-4 text-sm font-black text-blue-800 transition hover:bg-blue-100">
               Duplicate Product
             </button>
           ) : null}
@@ -477,10 +477,10 @@ export default function ProductEditPageClient({
           ) : null}
         </div>
 
-        {message && <div className="mt-5 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-black text-[#7E22CE]">{message}</div>}
+        {message && <div className="mt-5 rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-4 text-sm font-black text-[#1D4ED8]">{message}</div>}
       </section>
 
-      <section className="rounded-[2rem] border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-7 shadow-[0_18px_55px_rgba(81,63,190,0.08)]">
+      <section className="rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-7 shadow-[0_18px_55px_rgba(29,78,216,0.08)]">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl vyron-grad-surface text-white">

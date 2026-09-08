@@ -159,9 +159,9 @@ export default function SupplierRegisterClient({
       }}
     >
       <section className="grid gap-6 xl:grid-cols-[0.75fr_1.35fr]">
-            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
                   <Plus size={22} />
                 </div>
                 <div>
@@ -180,7 +180,7 @@ export default function SupplierRegisterClient({
                   <input
                     value={form.supplier_name}
                     onChange={(event) => updateForm("supplier_name", event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
                   />
                 </label>
 
@@ -189,7 +189,7 @@ export default function SupplierRegisterClient({
                   <input
                     value={form.category}
                     onChange={(event) => updateForm("category", event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
                   />
                 </label>
 
@@ -198,7 +198,7 @@ export default function SupplierRegisterClient({
                   <input
                     value={form.contact_email}
                     onChange={(event) => updateForm("contact_email", event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
                   />
                 </label>
 
@@ -207,7 +207,7 @@ export default function SupplierRegisterClient({
                   <input
                     value={form.invoice_email}
                     onChange={(event) => updateForm("invoice_email", event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
                   />
                 </label>
 
@@ -217,7 +217,7 @@ export default function SupplierRegisterClient({
                     <input
                       value={form.risk_status}
                       onChange={(event) => updateForm("risk_status", event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
                     />
                   </label>
 
@@ -227,7 +227,7 @@ export default function SupplierRegisterClient({
                       type="number"
                       value={form.last_price_movement}
                       onChange={(event) => updateForm("last_price_movement", event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
                     />
                   </label>
                 </div>
@@ -235,7 +235,7 @@ export default function SupplierRegisterClient({
                 <button
                   type="button"
                   onClick={saveSupplier}
-                  className="rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-white"
+                  className="rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-white"
                 >
                   {editingId ? "Save Supplier" : "Add Supplier"}
                 </button>
@@ -251,14 +251,14 @@ export default function SupplierRegisterClient({
                 )}
 
                 {message && (
-                  <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#7E22CE]">
+                  <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#1D4ED8]">
                     {message}
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
               <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900">Supplier Register</h2>
@@ -266,8 +266,8 @@ export default function SupplierRegisterClient({
                     Search, open, edit and delete suppliers.
                   </p>
                 </div>
-                <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-                  <Search size={18} className="text-violet-700" />
+                <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+                  <Search size={18} className="text-blue-700" />
                   <input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
@@ -294,9 +294,9 @@ export default function SupplierRegisterClient({
                     <div className="font-bold text-slate-500">{item.category || "Uncategorised"}</div>
                     <div className="truncate font-bold text-slate-500">{item.contact_email || "—"}</div>
                     <div className="truncate font-bold text-slate-500">{item.invoice_email || "—"}</div>
-                    <div className="font-black text-violet-700">{item.risk_status || "Active"}</div>
+                    <div className="font-black text-blue-700">{item.risk_status || "Active"}</div>
                     <div>
-                      <Link href={`/suppliers/${item.id}`} className="font-black text-violet-700">
+                      <Link href={`/suppliers/${item.id}`} className="font-black text-blue-700">
                         Open →
                       </Link>
                     </div>
@@ -304,7 +304,7 @@ export default function SupplierRegisterClient({
                       <button
                         type="button"
                         onClick={() => startEdit(item)}
-                        className="rounded-xl bg-violet-50 p-2 text-violet-700"
+                        className="rounded-xl bg-blue-50 p-2 text-blue-700"
                       >
                         <Edit3 size={16} />
                       </button>

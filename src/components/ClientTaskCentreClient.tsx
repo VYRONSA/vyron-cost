@@ -44,7 +44,7 @@ export default function ClientTaskCentreClient() {
       }}
     >
       <div key={task} className="grid gap-4 rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] md:grid-cols-[60px_1fr_140px_120px] md:items-center">
-                    <button onClick={() => setDone((current) => ({ ...current, [task]: !checked }))} className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-[#A855F7]/100 text-white" : "bg-slate-100 text-slate-400"}`}>
+                    <button onClick={() => setDone((current) => ({ ...current, [task]: !checked }))} className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-[#3B82F6]/100 text-white" : "bg-slate-100 text-slate-400"}`}>
                       <CheckCircle2 size={24} />
                     </button>
                     <div>
@@ -52,7 +52,7 @@ export default function ClientTaskCentreClient() {
                       <div className="text-xs font-bold text-slate-500">{area}</div>
                     </div>
                     <div className="font-black text-[var(--vyron-warning-fg)]">{priority}</div>
-                    <div className={checked ? "font-black text-[#7E22CE]" : "font-black text-slate-500"}>{checked ? "Done" : "Open"}</div>
+                    <div className={checked ? "font-black text-[#1D4ED8]" : "font-black text-slate-500"}>{checked ? "Done" : "Open"}</div>
                   </div>
     </VyronPremiumPageShell>
   );

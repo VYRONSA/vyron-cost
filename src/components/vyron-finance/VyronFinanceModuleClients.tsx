@@ -193,9 +193,9 @@ export function ExecutiveFinanceClient({ data }: { data: VyronFinanceIntelligenc
       </div>
       <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {Object.entries(healthScores).map(([k, v]) => (
-          <div key={k} className="rounded-xl bg-violet-100 p-3 text-center">
-            <div className="text-[10px] font-black uppercase text-violet-800">{k}</div>
-            <div className="text-2xl font-black text-violet-950">{v}</div>
+          <div key={k} className="rounded-xl bg-blue-100 p-3 text-center">
+            <div className="text-[10px] font-black uppercase text-blue-800">{k}</div>
+            <div className="text-2xl font-black text-blue-950">{v}</div>
           </div>
         ))}
       </div>
@@ -229,9 +229,9 @@ export function BoardReportingClient({ packs }: { packs: VyronFinanceIntelligenc
 export function FoundationClient({ foundation }: { foundation: VyronFinanceIntelligencePayload["foundation"] }) {
   return (
     <section className="grid gap-6">
-      <div className="rounded-[2rem] border-2 border-violet-200 bg-violet-50 p-8">
-        <h2 className="text-2xl font-black text-violet-950">{foundation.productName} foundation</h2>
-        <p className="mt-2 text-sm text-violet-900">
+      <div className="rounded-[2rem] border-2 border-blue-200 bg-blue-50 p-8">
+        <h2 className="text-2xl font-black text-blue-950">{foundation.productName} foundation</h2>
+        <p className="mt-2 text-sm text-blue-900">
           Shared entity architecture from VYRON COST — integration ready: {foundation.integrationReady ? "Yes" : "No"}
         </p>
       </div>

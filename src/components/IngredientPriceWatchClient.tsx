@@ -45,13 +45,13 @@ export default function IngredientPriceWatchClient({ products }: { products: Pro
                 <div className="mt-3 text-4xl font-black text-[#F8FAFC]">{rows.length}</div>
               </div>
               <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Alert Rule</div>
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">Alert Rule</div>
                 <div className="mt-3 text-3xl font-black">Flag movement above 5%</div>
               </div>
             </section>
 
             <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="grid grid-cols-6 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">
+              <div className="grid grid-cols-6 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
                 <div className="col-span-2">Item / Product</div>
                 <div>Category</div>
                 <div>Movement</div>
@@ -64,7 +64,7 @@ export default function IngredientPriceWatchClient({ products }: { products: Pro
                   <div>{row.category}</div>
                   <div className={row.movement > 8 ? "font-black text-red-700" : "font-black text-[var(--vyron-warning-fg)]"}>{row.movement.toFixed(1)}%</div>
                   <div className="font-black">{money(row.exposure)}</div>
-                  <Link href={row.href} className="font-black text-[#7E22CE]">Open →</Link>
+                  <Link href={row.href} className="font-black text-[#1D4ED8]">Open →</Link>
                 </div>
               ))}
             </div>

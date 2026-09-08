@@ -393,7 +393,7 @@ export default function ManufacturingIntelligenceClient() {
     >
       <div className="mx-auto w-full max-w-[1400px] space-y-6">
       {!demoMode && batches.length === 0 ? (
-        <section className="rounded-[32px] border border-dashed border-violet-200 bg-violet-50/50 p-10 text-center">
+        <section className="rounded-[32px] border border-dashed border-blue-200 bg-blue-50/50 p-10 text-center">
           <h2 className="text-2xl font-black text-slate-950">No manufacturing batches yet</h2>
           <p className="mt-3 text-sm font-semibold text-slate-600">
             Create recipes and BOMs first, then record production batches to build finished goods stock.
@@ -408,7 +408,7 @@ export default function ManufacturingIntelligenceClient() {
         <Metric title="Reversed Batches" value={formatNumber(summary.reversed)} />
       </div>
 
-      <div className="rounded-[32px] border border-white/70 bg-white/85 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.10)]">
+      <div className="rounded-[32px] border border-white/70 bg-white/85 p-5 shadow-[0_18px_60px_rgba(30,58,138,0.10)]">
         <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
           <div>
             <h2 className="text-xl font-black text-slate-950">Manufacturing Control Centre</h2>
@@ -426,7 +426,7 @@ export default function ManufacturingIntelligenceClient() {
                   setForm(emptyForm);
                   setFormOpen((value) => !value);
                 }}
-                className="rounded-full bg-purple-700 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-purple-700/20"
+                className="rounded-full bg-blue-700 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-blue-700/20"
               >
                 {formOpen && !editingBatchId ? "Close Batch Queue" : "New Batch Queue"}
               </button>
@@ -444,7 +444,7 @@ export default function ManufacturingIntelligenceClient() {
               <button
                 type="button"
                 onClick={resetDemo}
-                className="rounded-full border border-purple-200 bg-white px-5 py-2.5 text-sm font-black text-purple-800"
+                className="rounded-full border border-blue-200 bg-white px-5 py-2.5 text-sm font-black text-blue-800"
               >
                 Reset Demo
               </button>
@@ -461,20 +461,20 @@ export default function ManufacturingIntelligenceClient() {
           </div>
         </div>
 
-        <div className="mt-5 rounded-[28px] border border-purple-100 bg-purple-50/70 p-5">
+        <div className="mt-5 rounded-[28px] border border-blue-100 bg-blue-50/70 p-5">
           <label className="block space-y-2 text-sm font-black text-slate-700">
             Supervisor correction / reversal reason
             <input
               value={supervisorReason}
               onChange={(event) => setSupervisorReason(event.target.value)}
-              className="w-full rounded-2xl border border-purple-100 bg-white px-4 py-3 text-sm font-bold outline-none"
+              className="w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold outline-none"
               placeholder="Example: Wrong actual quantity captured; approved correction by supervisor"
             />
           </label>
         </div>
 
         {formOpen ? (
-          <div className="mt-5 rounded-[28px] border border-purple-100 bg-purple-50/70 p-5">
+          <div className="mt-5 rounded-[28px] border border-blue-100 bg-blue-50/70 p-5">
             <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
                 <h3 className="text-lg font-black text-slate-950">
@@ -523,7 +523,7 @@ export default function ManufacturingIntelligenceClient() {
                 {batchLines.map((line, index) => (
                   <div key={line.id} className="rounded-3xl border border-white bg-white/85 p-4 shadow-sm">
                     <div className="grid gap-3 xl:grid-cols-[90px_1.2fr_1fr_1fr_1fr_1fr_190px] xl:items-end">
-                      <div className="rounded-2xl bg-purple-100 px-3 py-3 text-center text-sm font-black text-purple-800">
+                      <div className="rounded-2xl bg-blue-100 px-3 py-3 text-center text-sm font-black text-blue-800">
                         Line {index + 1}
                       </div>
                       <ProductSelect value={line.product} onChange={(value) => updateLine(line.id, { product: value })} />
@@ -537,7 +537,7 @@ export default function ManufacturingIntelligenceClient() {
                           <button
                             type="button"
                             onClick={() => duplicateLine(line)}
-                            className="rounded-full bg-purple-100 px-3 py-2 text-xs font-black text-purple-800"
+                            className="rounded-full bg-blue-100 px-3 py-2 text-xs font-black text-blue-800"
                           >
                             Duplicate
                           </button>
@@ -559,7 +559,7 @@ export default function ManufacturingIntelligenceClient() {
                     <button
                       type="button"
                       onClick={addLine}
-                      className="rounded-full border border-purple-200 bg-white px-5 py-2.5 text-sm font-black text-purple-800"
+                      className="rounded-full border border-blue-200 bg-white px-5 py-2.5 text-sm font-black text-blue-800"
                     >
                       Add Another Line
                     </button>
@@ -598,14 +598,14 @@ export default function ManufacturingIntelligenceClient() {
                 key={batch.id}
                 className="grid grid-cols-[90px_1.2fr_0.8fr_1fr_1fr_1fr_1fr_1fr_1.1fr_220px] items-center gap-3 rounded-3xl border border-slate-100 bg-white px-4 py-4 text-sm shadow-sm"
               >
-                <div className="font-black text-purple-700">{batch.batchNumber}</div>
+                <div className="font-black text-blue-700">{batch.batchNumber}</div>
                 <div className="font-black text-slate-950">{batch.product}</div>
                 <div className="font-semibold text-slate-600">{batch.batchDate}</div>
                 <div className="text-right font-bold">{formatNumber(batch.plannedQty)}</div>
                 <div className="text-right font-bold">{formatNumber(batch.actualQty)}</div>
                 <div className="text-right font-bold">{formatCurrency(batch.expectedCost)}</div>
                 <div className="text-right font-black">{formatCurrency(batch.actualCost)}</div>
-                <div className={`text-right font-black ${variance > 0 ? "text-rose-700" : "text-[#7E22CE]"}`}>{formatCurrency(variance)}</div>
+                <div className={`text-right font-black ${variance > 0 ? "text-rose-700" : "text-[#1D4ED8]"}`}>{formatCurrency(variance)}</div>
                 <div>
                   <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${statusClass(batch.status)}`}>
                     {batch.status}
@@ -659,10 +659,10 @@ export default function ManufacturingIntelligenceClient() {
         </div>
 
         <div className="mt-5 flex flex-wrap gap-3">
-          <Link href="/manufacturing/finished-goods" className="rounded-full bg-purple-700 px-5 py-2.5 text-sm font-black text-white">
+          <Link href="/manufacturing/finished-goods" className="rounded-full bg-blue-700 px-5 py-2.5 text-sm font-black text-white">
             Open Finished Goods
           </Link>
-          <Link href="/inventory" className="rounded-full border border-purple-200 bg-white px-5 py-2.5 text-sm font-black text-purple-800">
+          <Link href="/inventory" className="rounded-full border border-blue-200 bg-white px-5 py-2.5 text-sm font-black text-blue-800">
             Open Inventory
           </Link>
         </div>
@@ -674,8 +674,8 @@ export default function ManufacturingIntelligenceClient() {
 
 function Metric({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-[0_16px_50px_rgba(76,29,149,0.10)]">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-purple-700">{title}</p>
+    <div className="rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-[0_16px_50px_rgba(30,58,138,0.10)]">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">{title}</p>
       <p className="mt-3 truncate text-2xl font-black text-slate-950">{value}</p>
     </div>
   );
@@ -688,7 +688,7 @@ function ProductSelect({ value, onChange }: { value: string; onChange: (value: s
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-2xl border border-purple-100 bg-white px-4 py-3 text-sm font-bold outline-none"
+        className="w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold outline-none"
       >
         {products.map((item) => (
           <option key={item.name} value={item.name}>
@@ -708,7 +708,7 @@ function NumberField({ label, value, onChange }: { label: string; value: number;
         type="number"
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="w-full rounded-2xl border border-purple-100 bg-white px-4 py-3 text-sm font-bold outline-none"
+        className="w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold outline-none"
       />
     </label>
   );
@@ -716,7 +716,7 @@ function NumberField({ label, value, onChange }: { label: string; value: number;
 
 function InfoCard({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-3xl bg-purple-50 p-5 text-sm font-semibold leading-6 text-purple-950">
+    <div className="rounded-3xl bg-blue-50 p-5 text-sm font-semibold leading-6 text-blue-950">
       <p className="mb-2 font-black">{title}</p>
       {text}
     </div>
@@ -734,8 +734,8 @@ function ActionButton({
 }) {
   const tones = {
     indigo: "bg-indigo-100 text-indigo-800",
-    emerald: "bg-[#A855F7]/12 text-[#4D7C0F]",
-    purple: "bg-purple-100 text-purple-800",
+    emerald: "bg-[#3B82F6]/12 text-[#4D7C0F]",
+    purple: "bg-blue-100 text-blue-800",
     rose: "bg-rose-100 text-rose-800",
     slate: "bg-slate-100 text-slate-700",
   };
@@ -748,7 +748,7 @@ function ActionButton({
 }
 
 function statusClass(status: BatchStatus) {
-  if (status === "Completed") return "bg-[#A855F7]/12 text-[#4D7C0F]";
+  if (status === "Completed") return "bg-[#3B82F6]/12 text-[#4D7C0F]";
   if (status === "In Production") return "bg-indigo-100 text-indigo-800";
   if (status === "Reversed") return "bg-rose-100 text-rose-800";
   if (status === "Cancelled") return "bg-slate-200 text-slate-700";

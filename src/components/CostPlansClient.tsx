@@ -122,7 +122,7 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
 
         <div className="overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[980px]">
-            <div className="grid grid-cols-7 vyron-grad-deep px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#DDD6FE]">
+            <div className="grid grid-cols-7 vyron-grad-deep px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#BFDBFE]">
               <div className="col-span-2">Scenario</div>
               <div>Current</div>
               <div>Planned</div>
@@ -139,11 +139,11 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
                   </div>
                 </div>
                 <div>{formatMoney(plan.current_cost)}</div>
-                <div className="font-black text-violet-700">{formatMoney(plan.planned_cost)}</div>
+                <div className="font-black text-blue-700">{formatMoney(plan.planned_cost)}</div>
                 <div className="font-black text-red-600">{formatMoney(plan.variance)}</div>
                 <div>{formatMoney(plan.suggested_selling_price)}</div>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => startEdit(plan)} className="inline-flex items-center gap-1 rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-3 py-2 text-xs font-black text-[#7E22CE]">
+                  <button type="button" onClick={() => startEdit(plan)} className="inline-flex items-center gap-1 rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-3 py-2 text-xs font-black text-[#1D4ED8]">
                     <Edit3 size={14} />
                     Edit
                   </button>
@@ -190,21 +190,21 @@ export default function CostPlansClient({ initialPlans }: { initialPlans: CostPl
                 Formula: Planned Cost = Current BOM Cost × (1 + Supplier% + Labour% + Packaging%)
               </div>
               <div className="flex justify-between"><span>Planned cost</span><span className="font-black">{formatMoney(draft.planned_cost)}</span></div>
-              <div className="mt-2 flex justify-between"><span>Suggested price</span><span className="font-black text-violet-700">{formatMoney(draft.suggested_selling_price)}</span></div>
+              <div className="mt-2 flex justify-between"><span>Suggested price</span><span className="font-black text-blue-700">{formatMoney(draft.suggested_selling_price)}</span></div>
               <div className="mt-2 flex justify-between"><span>Impact</span><span className="font-black">{formatPlanImpact(draft)}</span></div>
               <div className="mt-3"><StatusPill tone={draft.status === "Review" ? "amber" : "emerald"}>{draft.status}</StatusPill></div>
             </div>
             {draft.product_id ? (
-              <Link href={`/products/${draft.product_id}`} className="text-sm font-black text-[#7E22CE]">
+              <Link href={`/products/${draft.product_id}`} className="text-sm font-black text-[#1D4ED8]">
                 Open affected product →
               </Link>
             ) : null}
-            <button type="button" onClick={saveEdit} className="rounded-2xl vyron-grad-deep px-5 py-3 text-sm font-black text-[#DDD6FE]">
+            <button type="button" onClick={saveEdit} className="rounded-2xl vyron-grad-deep px-5 py-3 text-sm font-black text-[#BFDBFE]">
               Save scenario
             </button>
           </div>
         )}
-        {message ? <div className="mt-4 rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-black text-[#7E22CE]">{message}</div> : null}
+        {message ? <div className="mt-4 rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3 text-sm font-black text-[#1D4ED8]">{message}</div> : null}
         </div>
       </section>
     </VyronPremiumPageShell>

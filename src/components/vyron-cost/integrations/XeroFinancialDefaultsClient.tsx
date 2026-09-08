@@ -265,7 +265,7 @@ export default function XeroFinancialDefaultsClient() {
           {mappingPanel.map((item) => (
             <div key={item.label} className="flex items-center justify-between rounded-lg border border-[#E2E8F0] px-3 py-2 text-sm">
               <span className="font-medium text-[#334155]">{item.label}</span>
-              <span className={`font-bold ${item.ok ? "text-violet-700" : "text-[var(--vyron-warning-fg)]"}`}>
+              <span className={`font-bold ${item.ok ? "text-blue-700" : "text-[var(--vyron-warning-fg)]"}`}>
                 {item.ok ? "Ready" : "Required"}
               </span>
             </div>

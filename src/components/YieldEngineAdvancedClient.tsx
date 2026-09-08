@@ -41,7 +41,7 @@ export default function YieldEngineAdvancedClient({
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.2fr]">
             <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
               <div className="mb-5 flex items-center gap-3">
-                <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-3 text-[#7E22CE]">
+                <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-3 text-[#1D4ED8]">
                   <Wheat size={22} />
                 </div>
                 <div>
@@ -56,7 +56,7 @@ export default function YieldEngineAdvancedClient({
                   <select
                     value={selectedId}
                     onChange={(event) => setSelectedId(event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none focus:border-violet-400"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none focus:border-blue-400"
                   >
                     {ingredients.map((ingredient) => (
                       <option key={ingredient.id} value={ingredient.id}>
@@ -71,7 +71,7 @@ export default function YieldEngineAdvancedClient({
                   <select
                     value={mode}
                     onChange={(event) => setMode(event.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none focus:border-violet-400"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none focus:border-blue-400"
                   >
                     <option value="standard">Standard</option>
                     <option value="prep_loss">Prep Loss</option>
@@ -85,21 +85,21 @@ export default function YieldEngineAdvancedClient({
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="text-sm font-black text-slate-600">
                     Raw Weight
-                    <input type="number" value={rawWeight} onChange={(event) => setRawWeight(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none focus:border-violet-400" />
+                    <input type="number" value={rawWeight} onChange={(event) => setRawWeight(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none focus:border-blue-400" />
                   </label>
 
                   <label className="text-sm font-black text-slate-600">
                     Final Usable Weight
-                    <input type="number" value={finalWeight} onChange={(event) => setFinalWeight(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none focus:border-violet-400" />
+                    <input type="number" value={finalWeight} onChange={(event) => setFinalWeight(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none focus:border-blue-400" />
                   </label>
                 </div>
 
                 <label className="text-sm font-black text-slate-600">
                   Raw Batch Cost
-                  <input type="number" value={rawCost} onChange={(event) => setRawCost(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none focus:border-violet-400" />
+                  <input type="number" value={rawCost} onChange={(event) => setRawCost(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none focus:border-blue-400" />
                 </label>
 
-                <button type="button" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
+                <button type="button" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#23304f]">
                   <Save size={18} />
                   Save Yield Rule Later
                 </button>
@@ -108,7 +108,7 @@ export default function YieldEngineAdvancedClient({
 
             <div className="rounded-[2rem] bg-[#07110d] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
               <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-[#A855F7]/12 p-3 text-[#A855F7]">
+                <div className="rounded-2xl bg-[#3B82F6]/12 p-3 text-[#3B82F6]">
                   <Calculator size={22} />
                 </div>
                 <div>
@@ -118,28 +118,28 @@ export default function YieldEngineAdvancedClient({
               </div>
 
               <div className="mt-8 grid gap-4 md:grid-cols-2">
-                <div className="rounded-[1.5rem] border border-[#A855F7]/20 bg-white/5 p-5">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A855F7]">Ingredient</div>
+                <div className="rounded-[1.5rem] border border-[#3B82F6]/20 bg-white/5 p-5">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#3B82F6]">Ingredient</div>
                   <div className="mt-2 text-2xl font-black">{selected?.ingredient_name || "None"}</div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-[#A855F7]/20 bg-white/5 p-5">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A855F7]">Yield Mode</div>
+                <div className="rounded-[1.5rem] border border-[#3B82F6]/20 bg-white/5 p-5">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#3B82F6]">Yield Mode</div>
                   <div className="mt-2"><StatusPill tone="emerald">{mode.replaceAll("_", " ")}</StatusPill></div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-[#A855F7]/20 bg-white/5 p-5">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A855F7]">Yield %</div>
+                <div className="rounded-[1.5rem] border border-[#3B82F6]/20 bg-white/5 p-5">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#3B82F6]">Yield %</div>
                   <div className="mt-2 text-4xl font-black">{yieldPercent.toFixed(1)}%</div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-[#A855F7]/20 bg-white/5 p-5">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A855F7]">True Usable Cost</div>
+                <div className="rounded-[1.5rem] border border-[#3B82F6]/20 bg-white/5 p-5">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#3B82F6]">True Usable Cost</div>
                   <div className="mt-2 text-4xl font-black">{formatMoney(trueCost)}</div>
                 </div>
               </div>
 
-              <div className="mt-6 rounded-[1.5rem] border border-[#A855F7]/20 bg-[#A855F7]/10 p-5 text-sm leading-7 text-slate-200">
+              <div className="mt-6 rounded-[1.5rem] border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-5 text-sm leading-7 text-slate-200">
                 Example: if rice increases from 10kg raw to 25kg cooked, yield is 250%. If avocado drops from 10kg whole to 6.5kg usable, yield is 65%. This is what protects the real product GP.
               </div>
             </div>

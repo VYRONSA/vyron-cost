@@ -172,7 +172,7 @@ export default function XeroSetupClient() {
           Loading workspace...
         </div>
       ) : active ? (
-        <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-800">
+        <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800">
           Mapping and connection scoped to workspace: <span className="font-black">{active.companyName}</span>
         </div>
       ) : (
@@ -185,7 +185,7 @@ export default function XeroSetupClient() {
         <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</div>
       ) : null}
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-black text-slate-950">Xero Connection</h2>
@@ -199,7 +199,7 @@ export default function XeroSetupClient() {
                 type="button"
                 onClick={connectXero}
                 disabled={isConnecting}
-                className="inline-flex items-center gap-2 rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Link2 size={16} />
                 {isConnecting ? "Connecting…" : "Connect Xero"}
@@ -217,7 +217,7 @@ export default function XeroSetupClient() {
             <button
               type="button"
               onClick={scrollToMapping}
-              className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-800"
+              className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-white px-5 py-3 text-sm font-black text-blue-800"
             >
               <Settings size={16} />
               Setup Mapping
@@ -244,9 +244,9 @@ export default function XeroSetupClient() {
         </div>
 
         {connection.pendingOrganisationSelection && connection.availableOrganisations?.length ? (
-          <div className="mt-6 rounded-2xl border border-violet-200 bg-violet-50 p-4">
-            <h3 className="text-sm font-black text-violet-900">Select Xero Organisation</h3>
-            <p className="mt-1 text-xs font-semibold text-violet-700">
+          <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+            <h3 className="text-sm font-black text-blue-900">Select Xero Organisation</h3>
+            <p className="mt-1 text-xs font-semibold text-blue-700">
               Multiple organisations were returned. Choose which Xero organisation belongs to this workspace.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -265,7 +265,7 @@ export default function XeroSetupClient() {
         ) : null}
 
         {oauthReady ? (
-          <p className="mt-4 text-xs font-semibold text-[#7E22CE]">
+          <p className="mt-4 text-xs font-semibold text-[#1D4ED8]">
             Xero OAuth is configured. Connect Xero redirects to login.xero.com for real authorisation.
           </p>
         ) : (
@@ -277,7 +277,7 @@ export default function XeroSetupClient() {
 
       <section
         ref={mappingRef}
-        className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]"
+        className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -302,7 +302,7 @@ export default function XeroSetupClient() {
               <input
                 value={mapping[key]}
                 onChange={(event) => setMapping((current) => ({ ...current, [key]: event.target.value }))}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-violet-400"
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-semibold outline-none focus:border-blue-400"
               />
             </label>
           ))}
@@ -313,7 +313,7 @@ export default function XeroSetupClient() {
         <button
           type="button"
           onClick={refresh}
-          className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-800"
+          className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-white px-5 py-3 text-sm font-black text-blue-800"
         >
           <RefreshCcw size={16} />
           Refresh
@@ -341,7 +341,7 @@ function InfoTile({
     status === "Connecting"
       ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
       : highlight
-        ? "border-[#A855F7]/25 bg-[#A855F7]/10 text-[#4D7C0F]"
+        ? "border-[#3B82F6]/25 bg-[#3B82F6]/10 text-[#4D7C0F]"
         : "border-slate-100 bg-slate-50 text-slate-900";
 
   return (

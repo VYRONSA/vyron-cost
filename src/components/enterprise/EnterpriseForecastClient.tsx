@@ -41,8 +41,8 @@ export default function EnterpriseForecastClient({ forecast }: { forecast: Enter
                 <div className="text-xs font-black uppercase text-red-700">Supplier inflation trend</div>
                 <div className="mt-2 text-3xl font-black text-red-800">{forecast.supplierInflationPct}%</div>
               </div>
-              <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-5">
-                <div className="text-xs font-black uppercase text-[#7E22CE]">Recovery opportunity (annual)</div>
+              <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-5">
+                <div className="text-xs font-black uppercase text-[#1D4ED8]">Recovery opportunity (annual)</div>
                 <div className="mt-2 text-3xl font-black text-[#4D7C0F]">{money(forecast.recoveryOpportunityAnnual)}</div>
               </div>
             </div>
@@ -52,7 +52,7 @@ export default function EnterpriseForecastClient({ forecast }: { forecast: Enter
                   <div>
                     <div className="font-black text-slate-900">{line.label}</div>
                     {line.href ? (
-                      <Link href={line.href} className="text-xs font-bold text-violet-600 hover:underline">
+                      <Link href={line.href} className="text-xs font-bold text-blue-600 hover:underline">
                         Drill down →
                       </Link>
                     ) : null}

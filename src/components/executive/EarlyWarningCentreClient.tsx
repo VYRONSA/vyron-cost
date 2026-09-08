@@ -296,8 +296,8 @@ export default function EarlyWarningCentreClient({
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <SummaryCard label="Critical Warnings" value={String(snapshot.summary.critical)} accent="#2563EB" />
-            <SummaryCard label="High Warnings" value={String(snapshot.summary.high)} accent="#A855F7" />
-            <SummaryCard label="Medium Warnings" value={String(snapshot.summary.medium)} accent="#C026D3" />
+            <SummaryCard label="High Warnings" value={String(snapshot.summary.high)} accent="#3B82F6" />
+            <SummaryCard label="Medium Warnings" value={String(snapshot.summary.medium)} accent="#2563EB" />
             <SummaryCard label="Low Warnings" value={String(snapshot.summary.low)} accent="#1D6BFF" />
             <SummaryCard
               label="Potential Exposure"
@@ -312,17 +312,17 @@ export default function EarlyWarningCentreClient({
           </section>
 
           {snapshot.warnings.length === 0 ? (
-            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-6">
+            <section className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
               <div className="flex items-start gap-3">
-                <Shield size={22} className="mt-0.5 shrink-0 text-violet-700" />
+                <Shield size={22} className="mt-0.5 shrink-0 text-blue-700" />
                 <div>
-                  <h2 className="text-lg font-bold text-violet-950">No Active Warnings Detected</h2>
-                  <p className="mt-2 text-sm font-medium leading-6 text-violet-900">
+                  <h2 className="text-lg font-bold text-blue-950">No Active Warnings Detected</h2>
+                  <p className="mt-2 text-sm font-medium leading-6 text-blue-900">
                     Current product, supplier, inventory, procurement, manufacturing, customer and Xero data show no
                     material early-warning signals.
                   </p>
-                  <p className="mt-3 text-sm font-medium text-violet-900">VYRON is monitoring:</p>
-                  <ul className="mt-2 space-y-1 text-sm font-medium text-violet-900">
+                  <p className="mt-3 text-sm font-medium text-blue-900">VYRON is monitoring:</p>
+                  <ul className="mt-2 space-y-1 text-sm font-medium text-blue-900">
                     <li>· Margin erosion and missing price/cost data</li>
                     <li>· Supplier price movement and procurement variances</li>
                     <li>· Inventory low stock, overstock and slow-moving items</li>
@@ -330,8 +330,8 @@ export default function EarlyWarningCentreClient({
                     <li>· Customer invoice GP and concentration</li>
                     <li>· Xero connection, mapping and sync queue health</li>
                   </ul>
-                  <p className="mt-3 text-sm font-medium text-violet-900">Additional data that improves detection:</p>
-                  <ul className="mt-2 space-y-1 text-sm font-medium text-violet-900">
+                  <p className="mt-3 text-sm font-medium text-blue-900">Additional data that improves detection:</p>
+                  <ul className="mt-2 space-y-1 text-sm font-medium text-blue-900">
                     <li>· Complete product costs, selling prices and BOM structures</li>
                     <li>· Supplier price history from GRNs and purchase orders</li>
                     <li>· Posted customer invoices and connected Xero sync</li>
@@ -405,7 +405,7 @@ export default function EarlyWarningCentreClient({
                   Gaps in products, BOMs, suppliers, customers, inventory and Xero that weaken early-warning detection.
                 </p>
                 {snapshot.dataQualityWarnings.length === 0 ? (
-                  <p className="mt-4 text-sm font-semibold text-violet-700">No data quality warnings on current records.</p>
+                  <p className="mt-4 text-sm font-semibold text-blue-700">No data quality warnings on current records.</p>
                 ) : (
                   <div className="mt-4 space-y-3">
                     {snapshot.dataQualityWarnings.map((warning) => (
@@ -652,7 +652,7 @@ function SeverityBadge({ severity }: { severity: WarningSeverity }) {
 
 function ConfidenceBadge({ confidence }: { confidence: EarlyWarningItem["confidence"] }) {
   const classes = {
-    High: "text-violet-700",
+    High: "text-blue-700",
     Medium: "text-[var(--vyron-warning-fg)]",
     Low: "text-[#64748B]",
   };

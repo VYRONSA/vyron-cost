@@ -50,7 +50,7 @@ export default function VyronLandingPage() {
       <header className="sticky top-0 z-20 border-b border-[#E2E8F0] bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-10">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl vyron-grad-deep text-xs font-black text-[#DDD6FE]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl vyron-grad-deep text-xs font-black text-[#BFDBFE]">
               VC
             </div>
             <div>
@@ -73,7 +73,7 @@ export default function VyronLandingPage() {
             </Link>
             <Link
               href="/api/demo-access?redirect=/dashboard"
-              className="rounded-xl bg-[#A78BFA] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[#0F172A]"
+              className="rounded-xl bg-[#60A5FA] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[#0F172A]"
             >
               View Demo
             </Link>
@@ -86,7 +86,7 @@ export default function VyronLandingPage() {
         <div className="relative mx-auto grid max-w-7xl gap-12 px-6 pb-12 pt-16 lg:grid-cols-2 lg:items-center lg:px-10 lg:pt-24">
           <div>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E2E8F0] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#64748B]">
-              <TrendingUp size={14} className="text-[#DDD6FE]" />
+              <TrendingUp size={14} className="text-[#BFDBFE]" />
               Enterprise Costing & Profit Protection
             </div>
             <h1 className="text-5xl font-black leading-[1.02] tracking-tight md:text-6xl lg:text-7xl">
@@ -114,7 +114,7 @@ export default function VyronLandingPage() {
               </Link>
               <Link
                 href="/api/demo-access?redirect=/dashboard"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#A78BFA] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#0F172A]"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#60A5FA] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#0F172A]"
               >
                 View Demo
                 <LayoutDashboard size={18} />
@@ -193,7 +193,7 @@ export default function VyronLandingPage() {
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#A78BFA] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#0F172A]"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#60A5FA] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#0F172A]"
             >
               Login
             </Link>

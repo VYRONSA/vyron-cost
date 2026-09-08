@@ -86,7 +86,7 @@ export default function StockLedgerClient() {
         <MetricCard title="Movement Value" value={loading ? "…" : formatCurrency(totalValue)} />
       </div>
 
-      <div className="rounded-[32px] border border-white/70 bg-white/85 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.10)] backdrop-blur-xl">
+      <div className="rounded-[32px] border border-white/70 bg-white/85 p-5 shadow-[0_18px_60px_rgba(30,58,138,0.10)] backdrop-blur-xl">
         <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-center">
           <VyronPremiumSectionHeading
             eyebrow="Movement register"
@@ -94,8 +94,8 @@ export default function StockLedgerClient() {
             subtitle="GRNs, manufacturing, sales invoices and adjustments in one auditable view."
           />
           <div className="flex flex-wrap gap-2 md:justify-end">
-            <button onClick={() => window.print()} className="rounded-full border border-purple-200 bg-white px-4 py-2 text-sm font-bold text-purple-800">Print</button>
-            <button onClick={() => exportCsv(movements)} className="rounded-full bg-purple-700 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-purple-700/20">Export CSV</button>
+            <button onClick={() => window.print()} className="rounded-full border border-blue-200 bg-white px-4 py-2 text-sm font-bold text-blue-800">Print</button>
+            <button onClick={() => exportCsv(movements)} className="rounded-full bg-blue-700 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-blue-700/20">Export CSV</button>
           </div>
         </div>
 
@@ -127,12 +127,12 @@ export default function StockLedgerClient() {
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
               {movements.map((movement) => (
-                <tr key={movement.id} className="hover:bg-purple-50/60">
+                <tr key={movement.id} className="hover:bg-blue-50/60">
                   <td className="px-4 py-3 font-semibold text-slate-800">{movement.movement_date}</td>
-                  <td className="px-4 py-3"><span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-black text-purple-800">{movementLabels[movement.movement_type] ?? movement.movement_type}</span></td>
+                  <td className="px-4 py-3"><span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-800">{movementLabels[movement.movement_type] ?? movement.movement_type}</span></td>
                   <td className="px-4 py-3 font-bold text-slate-950">{movement.item_name}</td>
-                  <td className="px-4 py-3"><Link className="font-bold text-purple-700 hover:underline" href={`/inventory-intelligence/traceability?ref=${movement.reference_number}`}>{movement.reference_number}</Link></td>
-                  <td className="px-4 py-3 text-right font-semibold text-[#7E22CE]">{movement.quantity_in ? formatNumber(movement.quantity_in) : "—"}</td>
+                  <td className="px-4 py-3"><Link className="font-bold text-blue-700 hover:underline" href={`/inventory-intelligence/traceability?ref=${movement.reference_number}`}>{movement.reference_number}</Link></td>
+                  <td className="px-4 py-3 text-right font-semibold text-[#1D4ED8]">{movement.quantity_in ? formatNumber(movement.quantity_in) : "—"}</td>
                   <td className="px-4 py-3 text-right font-semibold text-rose-700">{movement.quantity_out ? formatNumber(movement.quantity_out) : "—"}</td>
                   <td className="px-4 py-3 text-right font-semibold">{formatCurrency(movement.unit_cost)}</td>
                   <td className="px-4 py-3 text-right font-black">{formatCurrency(movement.total_value)}</td>
@@ -149,8 +149,8 @@ export default function StockLedgerClient() {
 
 function MetricCard({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-[0_16px_50px_rgba(76,29,149,0.10)]">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-purple-700">{title}</p>
+    <div className="rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-[0_16px_50px_rgba(30,58,138,0.10)]">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">{title}</p>
       <p className="mt-3 text-2xl font-black text-slate-950">{value}</p>
     </div>
   );

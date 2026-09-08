@@ -235,7 +235,7 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
         <Link href="/goods-receipts" className="rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-black text-white backdrop-blur-sm">
           GRN Dashboard
         </Link>
-        <Link href="/purchase-orders/list" className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-900 shadow-lg">
+        <Link href="/purchase-orders/list" className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-blue-900 shadow-lg">
           Purchase Orders
         </Link>
       </VyronPremiumHeroBanner>
@@ -267,13 +267,13 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
         title="Choose the source purchase order"
         subtitle="Search the PO, select it, then confirm the quantities that arrived."
       />
-      <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <div className="grid gap-4 lg:grid-cols-[1.2fr_1.2fr_220px]">
           <label className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">
             Search Purchase Orders
             <div className="mt-2 flex gap-2">
               <input
-                className="w-full rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-violet-500"
+                className="w-full rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-blue-500"
                 placeholder="Search PO number, supplier or status…"
                 value={poSearch}
                 onChange={(event) => setPoSearch(event.target.value)}
@@ -290,7 +290,7 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
           <label className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">
             Link GRN to Purchase Order
             <select
-              className="mt-2 w-full rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-violet-500"
+              className="mt-2 w-full rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-black text-slate-900 outline-none focus:border-blue-500"
               value={poId}
               onChange={(event) => {
                 const id = event.target.value;
@@ -318,20 +318,20 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <button type="button" onClick={() => setMode("full")} className={`rounded-2xl px-4 py-3 text-xs font-black ${receiptType === "full" ? "vyron-grad-surface text-white" : "bg-violet-50 text-violet-800"}`}>
+          <button type="button" onClick={() => setMode("full")} className={`rounded-2xl px-4 py-3 text-xs font-black ${receiptType === "full" ? "vyron-grad-surface text-white" : "bg-blue-50 text-blue-800"}`}>
             Full Receipt
           </button>
-          <button type="button" onClick={() => setMode("partial")} className={`rounded-2xl px-4 py-3 text-xs font-black ${receiptType === "partial" ? "vyron-grad-surface text-white" : "bg-violet-50 text-violet-800"}`}>
+          <button type="button" onClick={() => setMode("partial")} className={`rounded-2xl px-4 py-3 text-xs font-black ${receiptType === "partial" ? "vyron-grad-surface text-white" : "bg-blue-50 text-blue-800"}`}>
             Partial / Back Order
           </button>
-          <button type="button" onClick={() => void loadPo(poId)} disabled={!poId || loadingPo} className="rounded-2xl border border-violet-100 bg-white px-4 py-3 text-xs font-black text-violet-700 disabled:opacity-60">
+          <button type="button" onClick={() => void loadPo(poId)} disabled={!poId || loadingPo} className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-xs font-black text-blue-700 disabled:opacity-60">
             Reload PO Lines
           </button>
         </div>
 
         {po ? (
-          <div className="mt-5 rounded-2xl border border-violet-100 bg-violet-50 p-4 text-sm font-bold text-slate-700">
-            Source PO: <Link href={`/purchase-orders/${poId}`} className="text-violet-700 underline">{String(po.po_number)}</Link> · {String(po.supplier_name_snapshot || "Supplier")} · {lines.length} line(s)
+          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-slate-700">
+            Source PO: <Link href={`/purchase-orders/${poId}`} className="text-blue-700 underline">{String(po.po_number)}</Link> · {String(po.supplier_name_snapshot || "Supplier")} · {lines.length} line(s)
           </div>
         ) : null}
       </div>
@@ -344,16 +344,16 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
           ["Damaged", totals.damaged],
           ["Rejected", totals.rejected],
         ].map(([label, value]) => (
-          <div key={String(label)} className="rounded-2xl border border-violet-100 bg-white p-4">
-            <div className="text-[10px] font-black uppercase text-violet-600">{label}</div>
+          <div key={String(label)} className="rounded-2xl border border-blue-100 bg-white p-4">
+            <div className="text-[10px] font-black uppercase text-blue-600">{label}</div>
             <div className="mt-1 text-2xl font-black text-slate-950">{Number(value).toFixed(2)}</div>
           </div>
         ))}
       </div>
 
-      <EnterpriseScrollContainer className="rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <EnterpriseScrollContainer className="rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <table className="min-w-[940px] w-full text-left text-sm">
-          <thead className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100">
+          <thead className="bg-blue-800 text-xs font-black uppercase tracking-[0.14em] text-blue-100">
             <tr>
               <th className="px-4 py-3">Item</th>
               <th className="px-4 py-3">Ordered</th>
@@ -373,7 +373,7 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
                 <td className="px-4 py-3 font-black text-slate-900">{line.item_name}</td>
                 <td className="px-4 py-3">{line.ordered_qty}</td>
                 <td className="px-4 py-3">{line.already_received_qty}</td>
-                <td className="px-4 py-3 font-bold text-violet-700">{line.outstanding_qty}</td>
+                <td className="px-4 py-3 font-bold text-blue-700">{line.outstanding_qty}</td>
                 <td className="px-4 py-3"><input type="number" min={0} max={line.outstanding_qty} className="w-28 rounded-xl border px-3 py-2 font-bold" value={line.received_qty} onChange={(event) => updateLine(index, { received_qty: toNumber(event.target.value) })} /></td>
                 <td className="px-4 py-3"><input type="number" min={0} className="w-24 rounded-xl border px-3 py-2 font-bold" value={line.damaged_qty} onChange={(event) => updateLine(index, { damaged_qty: toNumber(event.target.value) })} /></td>
                 <td className="px-4 py-3"><input type="number" min={0} className="w-24 rounded-xl border px-3 py-2 font-bold" value={line.rejected_qty} onChange={(event) => updateLine(index, { rejected_qty: toNumber(event.target.value) })} /></td>
@@ -389,11 +389,11 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
       {errorMessage ? <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-black text-red-700">{errorMessage}</p> : null}
       <div className="flex flex-wrap gap-3">
         {canCreate ? (
-          <button type="button" disabled={saving || !poId || lines.length === 0} onClick={() => void handlePost()} className="rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-4 text-sm font-black text-[#F8FAFC] disabled:opacity-60">
+          <button type="button" disabled={saving || !poId || lines.length === 0} onClick={() => void handlePost()} className="rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-4 text-sm font-black text-[#F8FAFC] disabled:opacity-60">
             {saving ? "Posting…" : "Post Goods Receipt"}
           </button>
         ) : null}
-        <Link href="/goods-receipts" className="rounded-2xl border border-violet-100 bg-white px-6 py-4 text-sm font-black text-violet-700">GRN Dashboard</Link>
+        <Link href="/goods-receipts" className="rounded-2xl border border-blue-100 bg-white px-6 py-4 text-sm font-black text-blue-700">GRN Dashboard</Link>
       </div>
     </section>
   );

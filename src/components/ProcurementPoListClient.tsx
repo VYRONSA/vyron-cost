@@ -83,13 +83,13 @@ export default function ProcurementPoListClient({ initialStatus = "" }: { initia
           <Download size={16} /> Export CSV
         </button>
         {canCreate ? (
-          <Link href="/purchase-orders/new" className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-900 shadow-lg">
+          <Link href="/purchase-orders/new" className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-blue-900 shadow-lg">
             New PO
           </Link>
         ) : null}
       </VyronPremiumHeroBanner>
 
-      <div className="rounded-[2rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
       <VyronPremiumSectionHeading
         eyebrow="Filter"
         title="All purchase orders"
@@ -141,7 +141,7 @@ export default function ProcurementPoListClient({ initialStatus = "" }: { initia
                 <tr key={po.id} className="border-t">
                   <td className="py-3 font-black">{po.po_number}</td>
                   <td>{po.supplier_name_snapshot || "—"}</td>
-                  <td className="font-bold text-violet-700">{po.status}</td>
+                  <td className="font-bold text-blue-700">{po.status}</td>
                   <td>{formatMoney(Number(po.total || po.expected_total || 0))}</td>
                   <td>{formatMoney(Number(po.invoice_total || 0))}</td>
                   <td className={Number(po.variance) !== 0 ? "font-bold text-red-600" : ""}>
@@ -157,7 +157,7 @@ export default function ProcurementPoListClient({ initialStatus = "" }: { initia
                     )}
                   </td>
                   <td>
-                    <Link href={`/purchase-orders/${po.id}`} className="text-xs font-black text-violet-700 hover:underline">
+                    <Link href={`/purchase-orders/${po.id}`} className="text-xs font-black text-blue-700 hover:underline">
                       Open →
                     </Link>
                   </td>

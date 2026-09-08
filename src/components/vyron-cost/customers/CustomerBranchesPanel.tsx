@@ -41,7 +41,7 @@ type Draft = typeof EMPTY;
 
 const labelClass = "text-[10px] font-black uppercase tracking-[0.14em] text-slate-500";
 const inputClass =
-  "mt-1 min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-violet-400";
+  "mt-1 min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400";
 
 export default function CustomerBranchesPanel({
   customerId,
@@ -169,7 +169,7 @@ export default function CustomerBranchesPanel({
           <button
             type="button"
             onClick={openAdd}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-2.5 text-sm font-black text-white"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-2.5 text-sm font-black text-white"
           >
             <Plus size={16} /> Add Branch
           </button>
@@ -225,7 +225,7 @@ export default function CustomerBranchesPanel({
                         <button
                           type="button"
                           onClick={() => openEdit(branch)}
-                          className="min-h-[36px] rounded-xl bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-700"
+                          className="min-h-[36px] rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700"
                         >
                           Edit
                         </button>
@@ -419,7 +419,7 @@ export default function CustomerBranchesPanel({
                 type="button"
                 disabled={saving}
                 onClick={() => void save()}
-                className="min-h-[44px] rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-2.5 text-sm font-black text-white disabled:opacity-60"
+                className="min-h-[44px] rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-2.5 text-sm font-black text-white disabled:opacity-60"
               >
                 {saving ? "Saving…" : editing ? "Save branch" : "Add branch"}
               </button>

@@ -24,29 +24,29 @@ export default function VyronCostDataPage({
   return (
     <VyronCostAiShell title={title} subtitle={subtitle}>
       <section className="grid gap-5 md:grid-cols-4">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Records</div>
           <div className="mt-3 text-4xl font-black text-slate-900">{rows.length}</div>
           <div className="mt-2 text-sm font-bold text-[#84CC16]">Live data</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Review Items</div>
           <div className="mt-3 text-4xl font-black text-red-600">{reviewCount}</div>
           <div className="mt-2 text-sm font-bold text-slate-500">Needs attention</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Drilldowns</div>
-          <div className="mt-3 text-4xl font-black text-violet-700">{rows.length}</div>
+          <div className="mt-3 text-4xl font-black text-blue-700">{rows.length}</div>
           <div className="mt-2 text-sm font-bold text-slate-500">Click any row</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Status</div>
           <div className="mt-3 text-4xl font-black text-[#84CC16]">Live</div>
           <div className="mt-2 text-sm font-bold text-slate-500">Supabase first</div>
         </div>
       </section>
 
-      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-xl font-black text-slate-900">
             {type === "products"
@@ -81,11 +81,11 @@ export default function VyronCostDataPage({
                 <Link
                   key={row.id}
                   href={href}
-                  className="grid grid-cols-5 border-t border-slate-100 px-5 py-4 text-sm transition hover:bg-violet-50"
+                  className="grid grid-cols-5 border-t border-slate-100 px-5 py-4 text-sm transition hover:bg-blue-50"
                 >
                   <div className="font-black text-slate-900">{row.name}</div>
                   <div className="font-bold text-slate-500">{row.category || "—"}</div>
-                  <div className="font-black text-violet-700">{row.metric}</div>
+                  <div className="font-black text-blue-700">{row.metric}</div>
                   <div className="font-bold text-slate-600">{row.status}</div>
                   <div className="font-black text-slate-900">{row.impact}</div>
                 </Link>

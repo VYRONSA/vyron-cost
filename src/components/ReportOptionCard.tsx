@@ -29,7 +29,7 @@ export default function ReportOptionCard({
         <div
           className={`rounded-xl p-3 ${
             dark
-              ? "border border-white/15 bg-white/10 text-[#DDD6FE]"
+              ? "border border-white/15 bg-white/10 text-[#BFDBFE]"
               : "border border-[rgba(15,23,42,0.06)] bg-[rgba(79,70,229,0.06)] text-[#4F46E5]"
           }`}
         >
@@ -39,7 +39,7 @@ export default function ReportOptionCard({
         <div
           className={`rounded-full px-3 py-1 vyron-t-label text-[10px] ${
             dark
-              ? "border border-white/15 bg-white/10 text-[#DDD6FE]"
+              ? "border border-white/15 bg-white/10 text-[#BFDBFE]"
               : "border border-[rgba(79,70,229,0.18)] bg-[rgba(79,70,229,0.06)] text-[#4F46E5]"
           }`}
         >
@@ -50,7 +50,7 @@ export default function ReportOptionCard({
       <h3 className={`mt-5 vyron-t-title text-xl ${dark ? "text-[#F8FAFC]" : "text-[#0F172A]"}`}>{title}</h3>
       <p className={`mt-3 vyron-t-body text-sm ${dark ? "text-[#CBD5E1]" : "text-[#334155]"}`}>{description}</p>
 
-      <div className={`mt-6 inline-flex items-center gap-2 text-sm font-semibold ${dark ? "text-[#DDD6FE]" : "text-[#4F46E5]"}`}>
+      <div className={`mt-6 inline-flex items-center gap-2 text-sm font-semibold ${dark ? "text-[#BFDBFE]" : "text-[#4F46E5]"}`}>
         Open report
         <ArrowRight className="transition group-hover:translate-x-1" size={16} />
       </div>

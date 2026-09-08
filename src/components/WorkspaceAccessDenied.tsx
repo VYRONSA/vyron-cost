@@ -26,7 +26,7 @@ export default function WorkspaceAccessDenied({
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <Link
           href="/dashboard"
-          className="rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-6 py-3 text-sm font-black text-white"
+          className="rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-3 text-sm font-black text-white"
         >
           Go to Dashboard
         </Link>

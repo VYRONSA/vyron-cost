@@ -482,7 +482,7 @@ function KpiCard({
 
 function ProductMarginRow({ row }: { row: ProductIntelligenceRow }) {
   const variance = Number(row.gp_gap ?? 0);
-  const varianceClass = variance < 0 ? "text-[#2563EB]" : variance > 0 ? "text-violet-700" : "text-[#64748B]";
+  const varianceClass = variance < 0 ? "text-[#2563EB]" : variance > 0 ? "text-blue-700" : "text-[#64748B]";
   const productHref = row.product_id ? `/products/${row.product_id}` : "/products";
 
   return (

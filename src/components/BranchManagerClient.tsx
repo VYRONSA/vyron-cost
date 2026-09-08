@@ -103,7 +103,7 @@ export default function BranchManagerClient({
       <section className="grid gap-6 xl:grid-cols-[0.8fr_1.5fr]">
             <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
               <div className="mb-5 flex items-center gap-3">
-                <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-3 text-[#7E22CE]">
+                <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-3 text-[#1D4ED8]">
                   <Building2 size={22} />
                 </div>
                 <div>
@@ -124,7 +124,7 @@ export default function BranchManagerClient({
                   <label key={field} className="text-sm font-black text-slate-600">
                     {label}
                     <input
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-violet-400"
+                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400"
                       value={form[field as keyof typeof emptyForm]}
                       onChange={(event) => updateForm(field as keyof typeof emptyForm, event.target.value)}
                     />
@@ -134,20 +134,20 @@ export default function BranchManagerClient({
                 <button
                   type="button"
                   onClick={addBranch}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#23304f]"
                 >
                   <Plus size={18} />
                   Add Branch
                 </button>
 
-                {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#7E22CE]">{message}</div>}
+                {message && <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#1D4ED8]">{message}</div>}
               </div>
             </div>
 
             <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
               <h2 className="text-2xl font-black text-[#F8FAFC]">Branch Network</h2>
 
-              <div className="mt-5 rounded-[1.5rem] border border-[#A855F7]/20 bg-[#A855F7]/10 px-4 py-3">
+              <div className="mt-5 rounded-[1.5rem] border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3">
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}

@@ -88,8 +88,8 @@ export default function FinancialLeakageClient({ findings }: { findings: Leakage
       }}
     >
       <div className="min-w-0 space-y-5">
-        <div className="flex items-center gap-3 rounded-[1.5rem] border border-violet-100 bg-violet-50/50 px-4 py-3">
-        <Search size={20} className="shrink-0 text-violet-700" />
+        <div className="flex items-center gap-3 rounded-[1.5rem] border border-blue-100 bg-blue-50/50 px-4 py-3">
+        <Search size={20} className="shrink-0 text-blue-700" />
         <input
           value={search}
           onChange={(event) => {
@@ -104,10 +104,10 @@ export default function FinancialLeakageClient({ findings }: { findings: Leakage
         </div>
       </div>
 
-      <EnterpriseScrollContainer className="min-w-0 rounded-2xl border border-violet-100">
+      <EnterpriseScrollContainer className="min-w-0 rounded-2xl border border-blue-100">
         <table className="w-full min-w-[960px] border-collapse text-left text-sm">
           <thead>
-            <tr className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100">
+            <tr className="bg-blue-800 text-xs font-black uppercase tracking-[0.14em] text-blue-100">
               <th className="px-4 py-4">Type</th>
               <th className="px-4 py-4">Finding</th>
               <th className="px-4 py-4">Exposure</th>
@@ -126,7 +126,7 @@ export default function FinancialLeakageClient({ findings }: { findings: Leakage
 
               return (
                 <tr key={row.id} className="border-t border-slate-100 align-top">
-                  <td className="px-4 py-4 font-black text-violet-700">{row.finding_type}</td>
+                  <td className="px-4 py-4 font-black text-blue-700">{row.finding_type}</td>
                   <td className="max-w-[280px] px-4 py-4">
                     <div className="font-black text-slate-950">{row.title}</div>
                     <div className="mt-1 text-xs text-slate-500">{row.description}</div>
@@ -138,7 +138,7 @@ export default function FinancialLeakageClient({ findings }: { findings: Leakage
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <div className="font-black text-violet-700">{formatMoney(recovery)}</div>
+                    <div className="font-black text-blue-700">{formatMoney(recovery)}</div>
                     <div className="text-[11px] font-bold text-slate-400">
                       {duplicate ? "Once-off recoverable" : `${Math.round(recoveryRate(row) * 100)}% recoverable`}
                     </div>
@@ -151,7 +151,7 @@ export default function FinancialLeakageClient({ findings }: { findings: Leakage
                   <td className="px-4 py-4">
                     <Link
                       href={`/financial-leakage/${row.id}`}
-                      className="inline-flex rounded-full bg-violet-100 px-3 py-2 text-xs font-black text-violet-700"
+                      className="inline-flex rounded-full bg-blue-100 px-3 py-2 text-xs font-black text-blue-700"
                     >
                       Explain →
                     </Link>

@@ -32,7 +32,7 @@ export default async function SupplierDetailPage({ params }: { params: Promise<{
       </Link>
       <section className="grid gap-5 md:grid-cols-4">
         <div className="rounded-[2rem] bg-white p-6"><div className="text-xs font-black uppercase text-slate-400">Category</div><div className="mt-3 text-3xl font-black">{supplier.category}</div></div>
-        <div className="rounded-[2rem] bg-white p-6"><div className="text-xs font-black uppercase text-slate-400">Risk</div><div className="mt-3 text-3xl font-black text-violet-700">{supplier.risk_status}</div></div>
+        <div className="rounded-[2rem] bg-white p-6"><div className="text-xs font-black uppercase text-slate-400">Risk</div><div className="mt-3 text-3xl font-black text-blue-700">{supplier.risk_status}</div></div>
         <div className="rounded-[2rem] bg-white p-6"><div className="text-xs font-black uppercase text-slate-400">Movement</div><div className="mt-3 text-3xl font-black text-red-600">{Number(supplier.last_price_movement || 0).toFixed(1)}%</div></div>
         <div className="rounded-[2rem] bg-white p-6"><div className="text-xs font-black uppercase text-slate-400">Ingredients</div><div className="mt-3 text-3xl font-black">{linked.length}</div></div>
       </section>

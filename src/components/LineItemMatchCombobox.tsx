@@ -48,7 +48,7 @@ function MatchRow({
       ref={rowRef}
       type="button"
       onClick={onPick}
-      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-violet-50 ${active ? "bg-violet-50" : ""}`}
+      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-blue-50 ${active ? "bg-blue-50" : ""}`}
     >
       <span className="min-w-0 flex-1 truncate font-bold text-slate-900">{row.option.name}</span>
       <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${matchQualityClass(row.quality)}`}>
@@ -256,8 +256,8 @@ export default function LineItemMatchCombobox({
         onWheel={(e) => e.stopPropagation()}
       >
         <div className="shrink-0 border-b border-slate-200 bg-white p-2">
-          <div className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50/50 px-2 py-1.5 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-200">
-            <Search size={14} className="shrink-0 text-violet-600" />
+          <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50/50 px-2 py-1.5 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200">
+            <Search size={14} className="shrink-0 text-blue-600" />
             <input
               ref={searchInputRef}
               type="text"
@@ -336,7 +336,7 @@ export default function LineItemMatchCombobox({
               closeDropdown();
               onCreateIngredient();
             }}
-            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-black text-violet-700 hover:bg-violet-100"
+            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-black text-blue-700 hover:bg-blue-100"
           >
             <Plus size={13} />
             Create New Ingredient
@@ -402,8 +402,8 @@ export default function LineItemMatchCombobox({
           disabled || line.ignored
             ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-60"
             : open
-              ? "border-violet-400 ring-2 ring-violet-100"
-              : "border-slate-200 hover:border-violet-300"
+              ? "border-blue-400 ring-2 ring-blue-100"
+              : "border-slate-200 hover:border-blue-300"
         }`}
         aria-expanded={open}
         aria-haspopup="listbox"

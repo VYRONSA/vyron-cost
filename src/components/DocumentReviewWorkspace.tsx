@@ -46,7 +46,7 @@ const InvoiceDocumentViewer = dynamic(() => import("@/components/InvoiceDocument
 
 function confidenceTone(score: number | null) {
   if (score === null) return "bg-slate-200 text-slate-600";
-  if (score >= 85) return "bg-[#A855F7]/12 text-[#7E22CE]";
+  if (score >= 85) return "bg-[#3B82F6]/12 text-[#1D4ED8]";
   if (score >= 70) return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   return "bg-red-100 text-red-700";
 }
@@ -787,7 +787,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     );
   }
 
-  const inputClass = "w-full rounded-lg border px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:border-violet-400";
+  const inputClass = "w-full rounded-lg border px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:border-blue-400";
 
   /*
     The grid input, sized for scanning rather than for form-filling.
@@ -799,7 +799,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     the other. At px-2 py-0.5 with a text-xs input a row is ~30px, so sixteen
     lines fit in ~480px and both lists are fully visible together.
   */
-  const cellInput = "w-full rounded-md border px-1.5 py-0.5 text-xs font-bold text-slate-900 outline-none focus:border-violet-400";
+  const cellInput = "w-full rounded-md border px-1.5 py-0.5 text-xs font-bold text-slate-900 outline-none focus:border-blue-400";
   const cellPad = "px-1.5 py-0.5";
 
   const previewPanel =
@@ -1363,10 +1363,10 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
                   */
                   className={`cursor-pointer border-t border-slate-100 transition ${
                     activeLineId === line.id
-                      ? "bg-violet-100 ring-2 ring-inset ring-violet-400"
+                      ? "bg-blue-100 ring-2 ring-inset ring-blue-400"
                       : lineIndex % 2 === 1
-                        ? "bg-slate-50/70 hover:bg-violet-50/50"
-                        : "hover:bg-violet-50/50"
+                        ? "bg-slate-50/70 hover:bg-blue-50/50"
+                        : "hover:bg-blue-50/50"
                   }`}
                   onClick={() => focusLine(line, lineIndex)}
                   /*
@@ -1392,7 +1392,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
                       line.confidenceScore !== null && line.confidenceScore < 70
                         ? "bg-red-100 text-red-700"
                         : activeLineId === line.id
-                          ? "text-violet-700"
+                          ? "text-blue-700"
                           : "text-slate-400"
                     }`}
                   >
@@ -1451,7 +1451,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
               {draft.fields.invoiceNumber || documentId.slice(0, 8).toUpperCase()}
               <span className="font-semibold text-slate-500"> · {draft.fields.supplierName || "Supplier"}</span>
               {totalsSummary ? (
-                <span className="ml-2 text-[10px] font-bold text-violet-700">
+                <span className="ml-2 text-[10px] font-bold text-blue-700">
                   Invoice {formatMoney(draft.fields.total ?? totalsSummary.sumIncl, draft.fields.currency)}
                   {totalsSummary.hasMajorMismatch
                     ? " · mismatch"
@@ -1468,7 +1468,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
               type="button"
               onClick={() => void handleSaveDraft()}
               disabled={saving}
-              className="rounded-lg bg-violet-100 px-2.5 py-1 text-[10px] font-black text-violet-800 disabled:opacity-60"
+              className="rounded-lg bg-blue-100 px-2.5 py-1 text-[10px] font-black text-blue-800 disabled:opacity-60"
             >
               {saving ? "Saving…" : "Save Draft"}
             </button>
@@ -1491,14 +1491,14 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           </div>
         </div>
         {message || extractionInProgress ? (
-          <div className="mt-1 flex flex-wrap items-center gap-2 rounded bg-[#A855F7]/10 px-2 py-1 text-[10px] font-bold text-[#4D7C0F]">
+          <div className="mt-1 flex flex-wrap items-center gap-2 rounded bg-[#3B82F6]/10 px-2 py-1 text-[10px] font-bold text-[#4D7C0F]">
             <span>{message || "Extraction in progress…"}</span>
             {extractionInProgress ? (
               <button
                 type="button"
                 onClick={() => void retryExtraction()}
                 disabled={retryingExtraction}
-                className="rounded-md border border-violet-300 bg-white px-2 py-0.5 text-[10px] font-black text-violet-700 hover:bg-violet-50 disabled:opacity-50"
+                className="rounded-md border border-blue-300 bg-white px-2 py-0.5 text-[10px] font-black text-blue-700 hover:bg-blue-50 disabled:opacity-50"
               >
                 {retryingExtraction ? "Retrying…" : "Retry extraction"}
               </button>
@@ -1540,7 +1540,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
                 type="button"
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => setWorkspaceLayout("focus-invoice")}
-                className="text-[10px] font-black text-violet-700 underline"
+                className="text-[10px] font-black text-blue-700 underline"
               >
                 Focus Invoice
               </button>
@@ -1593,7 +1593,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
                 type="button"
                 disabled={savingIngredient}
                 onClick={() => void submitEditIngredient()}
-                className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
+                className="rounded-xl bg-blue-700 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
               >
                 {savingIngredient ? "Saving…" : "Save"}
               </button>
@@ -1635,7 +1635,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
                 type="button"
                 disabled={creatingEntity}
                 onClick={() => void submitCreateEntity()}
-                className="rounded-xl bg-violet-700 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
+                className="rounded-xl bg-blue-700 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
               >
                 {creatingEntity ? "Saving…" : "Save & Link"}
               </button>

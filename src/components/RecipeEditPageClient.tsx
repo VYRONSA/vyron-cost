@@ -133,13 +133,13 @@ export default function RecipeEditPageClient({
               <div className="grid gap-5">
                 <label className="text-sm font-black text-slate-600">
                   Recipe Name
-                  <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-violet-400" value={form.recipe_name} onChange={(event) => updateForm("recipe_name", event.target.value)} />
+                  <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-blue-400" value={form.recipe_name} onChange={(event) => updateForm("recipe_name", event.target.value)} />
                 </label>
 
                 <div className="grid gap-5 md:grid-cols-2">
                   <label className="text-sm font-black text-slate-600">
                     Recipe Type
-                    <select className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-violet-400" value={form.recipe_type} onChange={(event) => updateForm("recipe_type", event.target.value)}>
+                    <select className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-blue-400" value={form.recipe_type} onChange={(event) => updateForm("recipe_type", event.target.value)}>
                       <option>Finished Product</option>
                       <option>Sub Recipe</option>
                       <option>Prep Recipe</option>
@@ -149,7 +149,7 @@ export default function RecipeEditPageClient({
 
                   <label className="text-sm font-black text-slate-600">
                     Status
-                    <select className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-violet-400" value={form.status} onChange={(event) => updateForm("status", event.target.value)}>
+                    <select className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-blue-400" value={form.status} onChange={(event) => updateForm("status", event.target.value)}>
                       <option>Approved</option>
                       <option>Version Review</option>
                       <option>GP Risk</option>
@@ -161,32 +161,32 @@ export default function RecipeEditPageClient({
                 <div className="grid gap-5 md:grid-cols-4">
                   <label className="text-sm font-black text-slate-600">
                     Yield Qty
-                    <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-violet-400" value={form.yield_qty} onChange={(event) => updateForm("yield_qty", event.target.value)} />
+                    <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-blue-400" value={form.yield_qty} onChange={(event) => updateForm("yield_qty", event.target.value)} />
                   </label>
 
                   <label className="text-sm font-black text-slate-600">
                     Total Cost
-                    <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-violet-400" value={form.total_cost} onChange={(event) => updateForm("total_cost", event.target.value)} />
+                    <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-blue-400" value={form.total_cost} onChange={(event) => updateForm("total_cost", event.target.value)} />
                   </label>
 
                   <label className="text-sm font-black text-slate-600">
                     Selling Price
-                    <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-violet-400" value={form.selling_price} onChange={(event) => updateForm("selling_price", event.target.value)} />
+                    <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-blue-400" value={form.selling_price} onChange={(event) => updateForm("selling_price", event.target.value)} />
                   </label>
 
                   <label className="text-sm font-black text-slate-600">
                     Target GP %
-                    <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-violet-400" value={form.target_gp} onChange={(event) => updateForm("target_gp", event.target.value)} />
+                    <input type="number" className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-bold outline-none focus:border-blue-400" value={form.target_gp} onChange={(event) => updateForm("target_gp", event.target.value)} />
                   </label>
                 </div>
 
                 <label className="text-sm font-black text-slate-600">
                   Version Note
-                  <textarea className="mt-2 min-h-36 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-medium outline-none focus:border-violet-400" value={form.version_note} onChange={(event) => updateForm("version_note", event.target.value)} />
+                  <textarea className="mt-2 min-h-36 w-full rounded-2xl border border-slate-200 px-4 py-4 text-base font-medium outline-none focus:border-blue-400" value={form.version_note} onChange={(event) => updateForm("version_note", event.target.value)} />
                 </label>
 
                 <div className="flex flex-wrap gap-3">
-                  <button type="button" onClick={saveRecipe} className="inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-6 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#2a2448]">
+                  <button type="button" onClick={saveRecipe} className="inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-6 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#23304f]">
                     <Save size={18} />
                     Save Recipe
                   </button>
@@ -197,12 +197,12 @@ export default function RecipeEditPageClient({
                   </button>
                 </div>
 
-                {message && <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-4 text-sm font-black text-[#7E22CE]">{message}</div>}
+                {message && <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-4 text-sm font-black text-[#1D4ED8]">{message}</div>}
               </div>
             </div>
 
             <aside className="rounded-[2rem] bg-[#07110d] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-              <div className="text-xs font-black uppercase tracking-[0.25em] text-[#A855F7]">
+              <div className="text-xs font-black uppercase tracking-[0.25em] text-[#3B82F6]">
                 RECIPE GP PREVIEW
               </div>
 
@@ -212,8 +212,8 @@ export default function RecipeEditPageClient({
                 Current GP based on selling price and total cost.
               </div>
 
-              <div className="mt-6 rounded-3xl border border-[#A855F7]/20 bg-white/5 p-5">
-                <div className="text-sm font-black text-[#A855F7]">Suggested Selling Price</div>
+              <div className="mt-6 rounded-3xl border border-[#3B82F6]/20 bg-white/5 p-5">
+                <div className="text-sm font-black text-[#3B82F6]">Suggested Selling Price</div>
                 <div className="mt-2 text-3xl font-black">{formatMoney(suggestedPrice)}</div>
                 <div className="mt-2 text-sm leading-7 text-slate-300">
                   Price needed to reach the selected target GP.

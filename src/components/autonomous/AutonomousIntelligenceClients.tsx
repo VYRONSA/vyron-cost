@@ -13,7 +13,7 @@ import { VYRON_BTN, VYRON_STATUS, VYRON_SURFACE, VYRON_TABLE } from "@/component
 const BI_CARD = `${VYRON_SURFACE.dark} p-5 shadow-[0_2px_16px_rgba(0,0,0,0.14)]`;
 const BI_CARD_LG = `${VYRON_SURFACE.dark} p-6 shadow-[0_2px_16px_rgba(0,0,0,0.14)]`;
 const BI_NAV = `${VYRON_BTN.secondary} px-3 py-2 text-xs font-black`;
-const BI_HERO = `${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#1e1635] via-[#252040] to-[#1a1033] p-8`;
+const BI_HERO = `${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#101b35] via-[#1B2740] to-[#0e1733] p-8`;
 const BI_SECTION = "text-xl font-black text-[#F8FAFC]";
 
 export function money(n: number) {
@@ -73,7 +73,7 @@ export function CommandCentreClient({ data }: { data: AutonomousBusinessIntellig
       ]}
     >
       <div className={BI_HERO}>
-        <div className="text-xs font-black uppercase tracking-[0.18em] text-[#A855F7]">Business Health</div>
+        <div className="text-xs font-black uppercase tracking-[0.18em] text-[#3B82F6]">Business Health</div>
         <div className="mt-2 text-6xl font-black text-[#F8FAFC]">{data.businessHealth.overallScore}</div>
         <p className="mt-2 text-sm font-semibold text-[#CBD5E1]">Live autonomous score across all VYRON COST domains</p>
       </div>
@@ -82,11 +82,11 @@ export function CommandCentreClient({ data }: { data: AutonomousBusinessIntellig
           <Link
             key={d.key}
             href={d.href}
-            className={`rounded-[2rem] p-6 shadow-sm transition hover:border-violet-400/30 ${statusColor[d.status]}`}
+            className={`rounded-[2rem] p-6 shadow-sm transition hover:border-blue-400/30 ${statusColor[d.status]}`}
           >
             <div className="flex justify-between">
               <h3 className="font-black text-[#F8FAFC]">{d.label}</h3>
-              <span className={`text-xs font-black uppercase ${d.status === "healthy" ? "text-[#A855F7]" : d.status === "watch" ? "text-[var(--vyron-warning-fg)]" : "text-red-300"}`}>{d.status}</span>
+              <span className={`text-xs font-black uppercase ${d.status === "healthy" ? "text-[#3B82F6]" : d.status === "watch" ? "text-[var(--vyron-warning-fg)]" : "text-red-300"}`}>{d.status}</span>
             </div>
             <dl className="mt-4 space-y-2 text-sm">
               {d.metrics.map((m) => (
@@ -131,10 +131,10 @@ export function BusinessHealthClient({ health }: { health: AutonomousBusinessInt
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {items.map(([l, v]) => (
           <div key={String(l)} className={BI_CARD}>
-            <div className="text-xs font-black uppercase tracking-[0.12em] text-violet-300">{l}</div>
+            <div className="text-xs font-black uppercase tracking-[0.12em] text-blue-300">{l}</div>
             <div className="mt-2 text-3xl font-black text-[#F8FAFC]">{v}</div>
             <div className="mt-2 h-2 rounded-full border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150">
-              <div className="h-full rounded-full bg-violet-500" style={{ width: `${v}%` }} />
+              <div className="h-full rounded-full bg-blue-500" style={{ width: `${v}%` }} />
             </div>
           </div>
         ))}
@@ -171,7 +171,7 @@ export function EarlyWarningClient({ warnings }: { warnings: AutonomousBusinessI
                   <p className="mt-2 font-black text-red-300">{money(w.projectedImpact)} impact</p>
                   <ExplainBlock e={w} />
                   {w.href ? (
-                    <Link href={w.href} className="mt-2 inline-block text-xs font-black text-violet-300">
+                    <Link href={w.href} className="mt-2 inline-block text-xs font-black text-blue-300">
                       View →
                     </Link>
                   ) : null}
@@ -195,7 +195,7 @@ export function RootCauseClient({ causes }: { causes: AutonomousBusinessIntellig
     <div className="grid gap-4">
       {causes.map((c) => (
         <article key={c.id} className={BI_CARD_LG}>
-          <h3 className="font-black text-violet-300">{c.kpiLabel}</h3>
+          <h3 className="font-black text-blue-300">{c.kpiLabel}</h3>
           <dl className="mt-4 grid gap-3 text-sm md:grid-cols-2">
             <div>
               <dt className="font-black text-[#94A3B8]">What changed</dt>
@@ -236,10 +236,10 @@ export function DecisionsClient({ decisions }: { decisions: AutonomousBusinessIn
           <span className="text-xs font-black uppercase text-[#94A3B8]">{d.decisionType.replace(/_/g, " ")}</span>
           <h3 className="mt-1 font-black text-[#F8FAFC]">{d.title}</h3>
           <p className="mt-2 text-sm text-[#CBD5E1]">{d.rationale}</p>
-          <p className="mt-2 font-black text-[#A855F7]">{money(d.expectedBenefitAnnual)}/yr</p>
+          <p className="mt-2 font-black text-[#3B82F6]">{money(d.expectedBenefitAnnual)}/yr</p>
           <ExplainBlock e={d} />
           {d.href ? (
-            <Link href={d.href} className="mt-2 inline-block text-xs font-black text-violet-300">
+            <Link href={d.href} className="mt-2 inline-block text-xs font-black text-blue-300">
               Execute →
             </Link>
           ) : null}
@@ -298,9 +298,9 @@ export function OrgPerformanceClient({ rows }: { rows: AutonomousBusinessIntelli
     >
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {rows.map((r) => (
-        <Link key={r.roleArea} href={r.href} className={`${BI_CARD_LG} transition hover:border-violet-400/30`}>
+        <Link key={r.roleArea} href={r.href} className={`${BI_CARD_LG} transition hover:border-blue-400/30`}>
           <h3 className="font-black text-[#F8FAFC]">{r.roleArea}</h3>
-          <div className="mt-2 text-4xl font-black text-violet-300">{r.score}</div>
+          <div className="mt-2 text-4xl font-black text-blue-300">{r.score}</div>
           <ul className="mt-3 space-y-1 text-sm text-[#CBD5E1]">
             {r.highlights.map((h) => (
               <li key={h}>• {h}</li>
@@ -323,7 +323,7 @@ export function KnowledgeClient({ entries }: { entries: AutonomousBusinessIntell
     <div className="grid gap-4 md:grid-cols-2">
       {entries.map((k) => (
         <article key={k.id} className={BI_CARD}>
-          <h3 className="font-black text-violet-300">{k.domain}</h3>
+          <h3 className="font-black text-blue-300">{k.domain}</h3>
           <p className="mt-2 text-sm leading-7 text-[#CBD5E1]">{k.summary}</p>
           <ul className="mt-3 space-y-1 text-xs font-bold text-[#94A3B8]">
             {k.signals.map((s) => (
@@ -353,7 +353,7 @@ export function PredictiveRiskClient({ risks }: { risks: AutonomousBusinessIntel
           <p className="text-sm text-[#94A3B8]">{r.horizonDays}d horizon · {money(r.projectedImpact)}</p>
           <ExplainBlock e={r} />
           {r.href ? (
-            <Link href={r.href} className="mt-2 inline-block text-xs font-black text-violet-300">
+            <Link href={r.href} className="mt-2 inline-block text-xs font-black text-blue-300">
               Mitigate →
             </Link>
           ) : null}
@@ -380,7 +380,7 @@ export function ScorecardsClient({ cards }: { cards: AutonomousBusinessIntellige
             {cards
               .filter((c) => c.type === t)
               .map((c) => (
-                <Link key={c.entityLabel} href={c.href || "#"} className={`${BI_CARD} transition hover:border-violet-400/30`}>
+                <Link key={c.entityLabel} href={c.href || "#"} className={`${BI_CARD} transition hover:border-blue-400/30`}>
                   <div className="font-black text-[#F8FAFC]">{c.entityLabel}</div>
                   <div className="mt-2 text-3xl font-black text-[#F8FAFC]">{c.overallScore}</div>
                   {c.metrics.map((m) => (
@@ -445,7 +445,7 @@ export function StrategicClient({ s }: { s: AutonomousBusinessIntelligencePayloa
               <li key={o.title} className={`rounded-xl p-4 ${VYRON_STATUS.lime}`}>
                 <span className="font-black">{i + 1}. {o.title}</span>
                 <p className="text-sm opacity-90">{o.detail}</p>
-                <p className="font-black text-[#A855F7]">{money(o.value)}</p>
+                <p className="font-black text-[#3B82F6]">{money(o.value)}</p>
               </li>
             ))}
           </ol>
@@ -494,7 +494,7 @@ export function CopilotClient({ presets }: { presets: CopilotAnswer[] }) {
             type="button"
             disabled={busy}
             onClick={() => ask(p.question)}
-            className={`block w-full ${BI_CARD} text-left text-sm font-bold text-[#CBD5E1] transition hover:border-violet-400/30 disabled:opacity-50`}
+            className={`block w-full ${BI_CARD} text-left text-sm font-bold text-[#CBD5E1] transition hover:border-blue-400/30 disabled:opacity-50`}
           >
             {p.question}
           </button>

@@ -40,9 +40,9 @@ function recoveryRate(row: any) {
 function MiniSparkline({ tone = "violet" }: { tone?: "violet" | "blue" | "orange" | "pink" | "green" }) {
   const stroke =
     tone === "blue" ? "#2563eb" :
-    tone === "orange" ? "#a855f7" :
+    tone === "orange" ? "#3b82f6" :
     tone === "pink" ? "#ec4899" :
-    tone === "green" ? "#8b5cf6" :
+    tone === "green" ? "#3b82f6" :
     "#60a5fa";
 
   return (
@@ -62,12 +62,12 @@ function FunConfetti() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       <span className="absolute left-10 top-9 text-2xl text-pink-500">✦</span>
-      <span className="absolute left-28 top-4 text-xl text-fuchsia-400">✧</span>
-      <span className="absolute left-60 top-16 text-lg text-[#A855F7]">◆</span>
+      <span className="absolute left-28 top-4 text-xl text-blue-400">✧</span>
+      <span className="absolute left-60 top-16 text-lg text-[#3B82F6]">◆</span>
       <span className="absolute right-28 top-8 text-2xl text-blue-500">✦</span>
-      <span className="absolute right-52 top-20 text-xl text-fuchsia-500">⌁</span>
+      <span className="absolute right-52 top-20 text-xl text-blue-500">⌁</span>
       <span className="absolute bottom-8 left-32 text-lg text-[var(--vyron-warning-fg)]">✺</span>
-      <span className="absolute bottom-16 right-24 text-lg text-[#A855F7]">✦</span>
+      <span className="absolute bottom-16 right-24 text-lg text-[#3B82F6]">✦</span>
     </div>
   );
 }
@@ -129,15 +129,15 @@ export default async function FinancialLeakagePage() {
       detail: "Increase prices on underperforming items",
       value: kpis.recoverableMonthly * 2.1,
       tone: "text-[#84CC16]",
-      bg: "bg-[#A855F7]/10",
+      bg: "bg-[#3B82F6]/10",
     },
     {
       icon: Wallet,
       title: "Invoice & PO Anomalies",
       detail: "Duplicate, variance and misc. charges",
       value: kpis.duplicateInvoiceRisks * 12,
-      tone: "text-violet-600",
-      bg: "bg-violet-50",
+      tone: "text-blue-600",
+      bg: "bg-blue-50",
     },
   ];
 
@@ -146,11 +146,11 @@ export default async function FinancialLeakagePage() {
       subtitle="AI RECOVERY • MARGIN PROTECTION • PROFIT RECOVERY"
     >
       <FinanceLeakageCentreClient centre={leakageCentre} />
-      <section className="relative isolate overflow-hidden rounded-[2.8rem] border border-violet-100 bg-white p-8 shadow-[0_22px_70px_rgba(88,28,135,0.10)]">
+      <section className="relative isolate overflow-hidden rounded-[2.8rem] border border-blue-100 bg-white p-8 shadow-[0_22px_70px_rgba(30,58,138,0.10)]">
         <FunConfetti />
 
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-100 to-fuchsia-100 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-violet-700">
+          <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">
             <WandSparkles size={15} />
             Profit Recovery Live
           </div>
@@ -164,33 +164,33 @@ export default async function FinancialLeakagePage() {
           </p>
 
           <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-violet-700 to-indigo-950 p-6 text-white shadow-[0_18px_45px_rgba(29,107,255,0.28)]">
+            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 to-indigo-950 p-6 text-white shadow-[0_18px_45px_rgba(29,107,255,0.28)]">
               <MiniSparkline tone="violet" />
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs font-black uppercase tracking-[0.16em] text-violet-100">Potential Annual Recovery</div>
+                  <div className="text-xs font-black uppercase tracking-[0.16em] text-blue-100">Potential Annual Recovery</div>
                   <div className="mt-3 text-4xl font-black">{formatMoney(recoverable)}</div>
-                  <div className="mt-2 text-sm font-bold text-violet-100">● {formatMoney(kpis.recoverableMonthly)} per month</div>
+                  <div className="mt-2 text-sm font-bold text-blue-100">● {formatMoney(kpis.recoverableMonthly)} per month</div>
                 </div>
                 <div className="rounded-2xl bg-white/15 p-3"><Wallet size={28} /></div>
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-fuchsia-500 to-violet-800 p-6 text-white shadow-[0_18px_45px_rgba(217,70,239,0.22)]">
+            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-500 to-blue-800 p-6 text-white shadow-[0_18px_45px_rgba(37,99,235,0.22)]">
               <MiniSparkline tone="pink" />
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs font-black uppercase tracking-[0.16em] text-fuchsia-100">Recovery Score</div>
+                  <div className="text-xs font-black uppercase tracking-[0.16em] text-blue-100">Recovery Score</div>
                   <div className="mt-3 text-4xl font-black">{recoveryScore}<span className="text-xl">/100</span></div>
-                  <div className="mt-2 text-sm font-bold text-fuchsia-100">● Very Strong</div>
+                  <div className="mt-2 text-sm font-bold text-blue-100">● Very Strong</div>
                 </div>
-                <div className="relative flex h-16 w-16 items-center justify-center rounded-full border-[8px] border-[#A855F7]/30 bg-white/10 text-sm font-black">
+                <div className="relative flex h-16 w-16 items-center justify-center rounded-full border-[8px] border-[#3B82F6]/30 bg-white/10 text-sm font-black">
                   {recoveryScore}%
                 </div>
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-600 to-violet-800 p-6 text-white shadow-[0_18px_45px_rgba(37,99,235,0.22)]">
+            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-600 to-blue-800 p-6 text-white shadow-[0_18px_45px_rgba(37,99,235,0.22)]">
               <MiniSparkline tone="blue" />
               <div className="flex items-start justify-between">
                 <div>
@@ -218,27 +218,27 @@ export default async function FinancialLeakagePage() {
       </section>
 
       <section className="grid min-w-0 gap-6 lg:grid-cols-2 lg:items-start">
-        <div className="min-w-0 overflow-hidden rounded-[2.4rem] border border-violet-100 bg-white p-7 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+        <div className="min-w-0 overflow-hidden rounded-[2.4rem] border border-blue-100 bg-white p-7 shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
-              <div className="text-xs font-black uppercase tracking-[0.18em] text-violet-700">Recovery Funnel</div>
+              <div className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Recovery Funnel</div>
               <h2 className="mt-1 text-2xl font-black text-slate-950">From detected loss to recovered value</h2>
             </div>
-            <Sparkles className="shrink-0 text-fuchsia-500" />
+            <Sparkles className="shrink-0 text-blue-500" />
           </div>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 2xl:grid-cols-4">
             {[
-              [CircleDollarSign, "Detected", detected, "Total leakage identified", "bg-violet-100 text-violet-700"],
-              [ShieldAlert, "Recoverable", recoverable, "High confidence recovery", "bg-[#A855F7]/12 text-[#7E22CE]"],
+              [CircleDollarSign, "Detected", detected, "Total leakage identified", "bg-blue-100 text-blue-700"],
+              [ShieldAlert, "Recoverable", recoverable, "High confidence recovery", "bg-[#3B82F6]/12 text-[#1D4ED8]"],
               [ClipboardCheck, "Approved", approved, "Approved recovery actions", "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
               [Banknote, "Recovered", recovered, "Value already recovered", "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
             ].map(([Icon, label, value, detail, tone]: any) => (
               <div key={label} className="rounded-2xl bg-slate-50/60 p-4 text-center">
-                <div className={`mx-auto flex h-24 w-24 items-center justify-center rounded-full ${tone} shadow-[0_12px_30px_rgba(76,29,149,0.08)]`}>
+                <div className={`mx-auto flex h-24 w-24 items-center justify-center rounded-full ${tone} shadow-[0_12px_30px_rgba(30,58,138,0.08)]`}>
                   <Icon size={38} />
                 </div>
-                <div className="mt-4 text-sm font-black uppercase tracking-[0.12em] text-violet-700">{label}</div>
+                <div className="mt-4 text-sm font-black uppercase tracking-[0.12em] text-blue-700">{label}</div>
                 <div className="mt-2 text-2xl font-black text-slate-950">{formatMoney(Number(value))}</div>
                 <div className="mt-2 text-sm font-semibold leading-6 text-slate-500">{detail}</div>
               </div>
@@ -248,15 +248,15 @@ export default async function FinancialLeakagePage() {
           <div className="mt-8 flex items-center gap-4">
             <div className="h-4 flex-1 overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-[#A855F7]"
+                className="h-full rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-[#3B82F6]"
                 style={{ width: `${Math.max(12, recoveryProgress)}%` }}
               />
             </div>
-            <div className="text-sm font-black text-violet-700">Recovery Progress {recoveryProgress}%</div>
+            <div className="text-sm font-black text-blue-700">Recovery Progress {recoveryProgress}%</div>
           </div>
         </div>
 
-        <div className="rounded-[2.4rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+        <div className="rounded-[2.4rem] border border-blue-100 bg-white shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
           <div className="border-b border-slate-100 p-6">
             <div className="flex items-center gap-2">
               <div className="text-xl">✨</div>
@@ -268,7 +268,7 @@ export default async function FinancialLeakagePage() {
             {recommendationRows.map((item) => {
               const Icon = item.icon;
               return (
-                <Link key={item.title} href="/recovery-opportunities" className="flex items-center gap-4 px-6 py-4 transition hover:bg-violet-50/60">
+                <Link key={item.title} href="/recovery-opportunities" className="flex items-center gap-4 px-6 py-4 transition hover:bg-blue-50/60">
                   <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${item.bg} ${item.tone}`}>
                     <Icon size={24} />
                   </div>
@@ -285,13 +285,13 @@ export default async function FinancialLeakagePage() {
         </div>
       </section>
 
-      <section className="min-w-0 rounded-[2.4rem] border border-violet-100 bg-white p-7 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <section className="min-w-0 rounded-[2.4rem] border border-blue-100 bg-white p-7 shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <div className="text-xs font-black uppercase tracking-[0.18em] text-violet-700">Top Recovery Opportunities ☆</div>
+            <div className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Top Recovery Opportunities ☆</div>
             <h2 className="mt-1 text-2xl font-black text-slate-950">Highest value items to fix first</h2>
           </div>
-          <Link href="/recovery-opportunities" className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20">
+          <Link href="/recovery-opportunities" className="rounded-2xl vyron-grad-surface px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20">
             View all opportunities
           </Link>
         </div>
@@ -304,7 +304,7 @@ export default async function FinancialLeakagePage() {
               ["bg-red-50 text-red-600", "HIGH IMPACT"],
               ["bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]", "HIGH IMPACT"],
               ["bg-blue-50 text-blue-600", "MEDIUM IMPACT"],
-              ["bg-[#A855F7]/10 text-[#84CC16]", "MEDIUM IMPACT"],
+              ["bg-[#3B82F6]/10 text-[#84CC16]", "MEDIUM IMPACT"],
             ];
             const [tone, badge] = tones[index] || tones[0];
 
@@ -320,7 +320,7 @@ export default async function FinancialLeakagePage() {
                 <div className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-slate-500">{row.description}</div>
                 <div className="mt-4 text-2xl font-black text-red-600">{formatMoney(recovery)}</div>
                 <svg viewBox="0 0 160 30" className="mt-2 h-8 w-full">
-                  <path d="M2 24 C 25 18, 34 26, 51 14 S 76 5, 91 16 S 116 26, 136 11 S 149 4, 158 7" fill="none" stroke={index === 0 ? "#ef4444" : index === 1 ? "#a855f7" : index === 2 ? "#2563eb" : "#8b5cf6"} strokeWidth="3" strokeLinecap="round" />
+                  <path d="M2 24 C 25 18, 34 26, 51 14 S 76 5, 91 16 S 116 26, 136 11 S 149 4, 158 7" fill="none" stroke={index === 0 ? "#ef4444" : index === 1 ? "#60a5fa" : index === 2 ? "#1d4ed8" : "#6366f1"} strokeWidth="3" strokeLinecap="round" />
                 </svg>
               </Link>
             );
@@ -336,10 +336,10 @@ export default async function FinancialLeakagePage() {
         <AiFinancialIntelligenceFeed items={feed} />
       </section>
 
-      <section className="min-w-0 overflow-hidden rounded-[2.4rem] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <section className="min-w-0 overflow-hidden rounded-[2.4rem] border border-blue-100 bg-white p-6 shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="text-xs font-black uppercase tracking-[0.18em] text-violet-700">Detailed Recovery Opportunities</div>
+            <div className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Detailed Recovery Opportunities</div>
             <h2 className="mt-1 text-2xl font-black text-slate-950">Full recovery findings table</h2>
           </div>
           <div className="rounded-full vyron-grad-surface px-5 py-2 text-sm font-semibold text-white">

@@ -45,7 +45,7 @@ export default function VyronAcademyClient({ guides }: { guides: AcademyGuide[] 
                           ))}
                         </ol>
                         {g.href ? (
-                          <Link href={g.href} className="mt-4 inline-block text-sm font-black text-violet-700 hover:underline">
+                          <Link href={g.href} className="mt-4 inline-block text-sm font-black text-blue-700 hover:underline">
                             Open module →
                           </Link>
                         ) : null}

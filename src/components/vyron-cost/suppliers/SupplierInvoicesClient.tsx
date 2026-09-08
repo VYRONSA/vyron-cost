@@ -222,7 +222,7 @@ export default function SupplierInvoicesClient() {
           </Link>
           <Link
             href="/document-intelligence"
-            className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-4 py-2 text-xs font-black text-violet-800 transition hover:bg-violet-100"
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2 text-xs font-black text-blue-800 transition hover:bg-blue-100"
           >
             <FileSearch size={14} />
             Document Intelligence

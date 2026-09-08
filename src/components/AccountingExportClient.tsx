@@ -96,7 +96,7 @@ export default function AccountingExportClient() {
                       type="button"
                       disabled={!!busy}
                       onClick={() => runExport(job, "excel")}
-                      className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-50"
+                      className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-50"
                     >
                       {busy === `${job.id}-excel` ? "…" : "Excel"}
                     </button>

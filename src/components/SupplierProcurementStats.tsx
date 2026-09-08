@@ -33,8 +33,8 @@ export default function SupplierProcurementStats({ supplierId }: { supplierId: s
         ["Spend (year)", formatMoney(stats.spendThisYear)],
         ["Avg variance %", `${stats.averageVariancePercent}%`],
       ].map(([label, value]) => (
-        <div key={String(label)} className="rounded-2xl bg-violet-50 p-4">
-          <div className="text-[10px] font-black uppercase text-violet-600">{label}</div>
+        <div key={String(label)} className="rounded-2xl bg-blue-50 p-4">
+          <div className="text-[10px] font-black uppercase text-blue-600">{label}</div>
           <div className="mt-1 text-xl font-black text-slate-950">{value}</div>
         </div>
       ))}

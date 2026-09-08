@@ -149,7 +149,7 @@ export default function SupplierInvoiceBuilderClient({
       }}
     >
       <section className="grid gap-6">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
           <div className="grid gap-4 md:grid-cols-4">
             <input
               value={invoiceNumber}
@@ -198,21 +198,21 @@ export default function SupplierInvoiceBuilderClient({
             <b>VAT</b>
             <div className="text-3xl font-black">{formatMoney(totals.vat)}</div>
           </div>
-          <div className="rounded-[2rem] bg-[#A855F7]/10 p-5">
+          <div className="rounded-[2rem] bg-[#3B82F6]/10 p-5">
             <b>Total</b>
             <div className="text-3xl font-black text-[#84CC16]">{formatMoney(totals.total)}</div>
           </div>
         </div>
 
         {dup ? <div className="rounded-2xl bg-red-50 p-4 font-bold text-red-700">Duplicate risk detected.</div> : null}
-        {msg ? <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-4 font-bold text-[#7E22CE]">{msg}</div> : null}
+        {msg ? <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-4 font-bold text-[#1D4ED8]">{msg}</div> : null}
         {err ? <div className="rounded-2xl bg-red-50 p-4 font-bold text-red-700">{err}</div> : null}
 
         <div className="rounded-[2rem] bg-white p-5">
           <button
             type="button"
             onClick={() => setLines((c) => [...c, nl()])}
-            className="mb-4 flex gap-2 rounded-xl bg-violet-50 px-4 py-2 font-black text-violet-700"
+            className="mb-4 flex gap-2 rounded-xl bg-blue-50 px-4 py-2 font-black text-blue-700"
           >
             <Plus size={16} />
             Add Line

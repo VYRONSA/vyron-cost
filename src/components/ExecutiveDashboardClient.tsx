@@ -83,8 +83,8 @@ export default function ExecutiveDashboardClient({
 
   const cards: Array<{ label: string; value: string; note: string; Icon: LucideIcon; colour: string }> = [
     { label: "Monthly Leakage", value: money(leakage.estimatedMonthlyLeakage), note: "Detected leakage exposure", Icon: ShieldAlert, colour: "text-red-700" },
-    { label: "Potential Recovery", value: money(recovery), note: "Identify. Action. Recover.", Icon: Banknote, colour: "text-[#7E22CE]" },
-    { label: "Recovered This Year", value: money(annualRecovery), note: "Tracked recovered value", Icon: TrendingUp, colour: "text-violet-700" },
+    { label: "Potential Recovery", value: money(recovery), note: "Identify. Action. Recover.", Icon: Banknote, colour: "text-[#1D4ED8]" },
+    { label: "Recovered This Year", value: money(annualRecovery), note: "Tracked recovered value", Icon: TrendingUp, colour: "text-blue-700" },
     { label: "Open Opportunities", value: String(recoveryStats.openOpportunities), note: "Recovery tracking lifecycle", Icon: Factory, colour: "text-[var(--vyron-warning-fg)]" },
   ];
 
@@ -96,7 +96,7 @@ export default function ExecutiveDashboardClient({
   const recoveredItems = opportunities.filter((item) => (item.tracking_status || item.status) === "Recovered");
 
   function drawSectionTitle(doc: jsPDF, title: string, y: number) {
-    doc.setFillColor(91, 33, 182);
+    doc.setFillColor(29, 78, 216);
     doc.roundedRect(14, y - 6, 182, 10, 2, 2, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(11);
@@ -388,7 +388,7 @@ export default function ExecutiveDashboardClient({
         <button
           type="button"
           onClick={exportBoardPackPdf}
-          className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-violet-900 shadow-lg"
+          className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-blue-900 shadow-lg"
         >
           Export Executive Board Pack
         </button>
@@ -441,14 +441,14 @@ export default function ExecutiveDashboardClient({
             <button
               type="button"
               onClick={exportBoardPackPdf}
-              className="rounded-2xl bg-gradient-to-r from-violet-700 to-indigo-700 px-4 py-3 text-sm font-black text-white"
+              className="rounded-2xl bg-gradient-to-r from-blue-700 to-indigo-700 px-4 py-3 text-sm font-black text-white"
             >
               Export Executive Board Pack
             </button>
             <button
               type="button"
               onClick={exportRecoveryCsv}
-              className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-black text-violet-700"
+              className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-black text-blue-700"
             >
               Export Recovery CSV
             </button>
@@ -477,8 +477,8 @@ export default function ExecutiveDashboardClient({
                 VYRON has detected {money(leakage.estimatedMonthlyLeakage)} monthly leakage exposure and {belowTarget} products below target GP.
               </p>
             </div>
-            <div className="rounded-3xl bg-[#A855F7]/10 p-5">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#7E22CE]">Opportunity</div>
+            <div className="rounded-3xl bg-[#3B82F6]/10 p-5">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#1D4ED8]">Opportunity</div>
               <p className="mt-2 text-sm font-bold leading-7 text-[#4D7C0F]">
                 Potential recovery is {money(recoveryStats.potentialRecovery)} with {money(recoveryStats.recoveredRecovery)} already recovered.
               </p>
@@ -493,7 +493,7 @@ export default function ExecutiveDashboardClient({
         </div>
 
         <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-          <BrainCircuit size={34} className="text-[#A855F7]" />
+          <BrainCircuit size={34} className="text-[#3B82F6]" />
           <h2 className="mt-6 text-3xl font-black">Demo Close Path</h2>
           <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
             Show the prospect the Executive Dashboard, then click into Recovery and Product Profitability.
@@ -517,7 +517,7 @@ export default function ExecutiveDashboardClient({
             {recoveryStats.funnel.map((step) => (
               <div key={step.status} className="rounded-2xl bg-slate-50 p-4 text-center">
                 <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">{step.status}</div>
-                <div className="mt-2 text-2xl font-black text-violet-700">{step.count}</div>
+                <div className="mt-2 text-2xl font-black text-blue-700">{step.count}</div>
               </div>
             ))}
           </div>
@@ -532,7 +532,7 @@ export default function ExecutiveDashboardClient({
         </div>
       </section>
 
-      <section className="rounded-[2rem] bg-gradient-to-r from-indigo-700 to-violet-800 p-6 text-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <section className="rounded-[2rem] bg-gradient-to-r from-indigo-700 to-blue-800 p-6 text-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-indigo-200">
@@ -573,35 +573,35 @@ export default function ExecutiveDashboardClient({
       </section>
 
       {manufacturingStats ? (
-        <section className="rounded-[2rem] bg-violet-950 p-6 text-white shadow-[0_18px_55px_rgba(76,29,149,0.24)]">
+        <section className="rounded-[2rem] bg-blue-950 p-6 text-white shadow-[0_18px_55px_rgba(30,58,138,0.24)]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-violet-300">Manufacturing Intelligence</div>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-blue-300">Manufacturing Intelligence</div>
               <h3 className="mt-2 text-2xl font-black">Production cost · yield · finished goods</h3>
             </div>
-            <Link href="/manufacturing" className="rounded-2xl bg-violet-400 px-5 py-3 text-sm font-black text-violet-950">
+            <Link href="/manufacturing" className="rounded-2xl bg-blue-400 px-5 py-3 text-sm font-black text-blue-950">
               Open production →
             </Link>
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div className="rounded-2xl bg-white/10 p-4">
-              <div className="text-[10px] font-black uppercase text-violet-200">Production cost (MTD)</div>
+              <div className="text-[10px] font-black uppercase text-blue-200">Production cost (MTD)</div>
               <div className="mt-2 text-2xl font-black">{money(manufacturingStats.productionCost)}</div>
             </div>
             <div className="rounded-2xl bg-white/10 p-4">
-              <div className="text-[10px] font-black uppercase text-violet-200">Yield %</div>
+              <div className="text-[10px] font-black uppercase text-blue-200">Yield %</div>
               <div className="mt-2 text-3xl font-black">{manufacturingStats.yieldPct}%</div>
             </div>
             <div className="rounded-2xl bg-white/10 p-4">
-              <div className="text-[10px] font-black uppercase text-violet-200">Wastage %</div>
+              <div className="text-[10px] font-black uppercase text-blue-200">Wastage %</div>
               <div className="mt-2 text-3xl font-black">{manufacturingStats.wastagePct}%</div>
             </div>
             <div className="rounded-2xl bg-white/10 p-4">
-              <div className="text-[10px] font-black uppercase text-violet-200">Finished goods value</div>
+              <div className="text-[10px] font-black uppercase text-blue-200">Finished goods value</div>
               <div className="mt-2 text-2xl font-black">{money(manufacturingStats.finishedGoodsValue)}</div>
             </div>
             <div className="rounded-2xl bg-white/10 p-4">
-              <div className="text-[10px] font-black uppercase text-violet-200">Variances · efficiency</div>
+              <div className="text-[10px] font-black uppercase text-blue-200">Variances · efficiency</div>
               <div className="mt-2 text-xl font-black">
                 {manufacturingStats.productionVariances} · {manufacturingStats.productionEfficiency}%
               </div>
@@ -614,7 +614,7 @@ export default function ExecutiveDashboardClient({
         <section className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#A855F7]">Inventory Intelligence</div>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">Inventory Intelligence</div>
               <h3 className="mt-2 text-2xl font-black">Weighted average valuation · live ledger</h3>
             </div>
             <Link href="/inventory" className="rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-black text-[#F8FAFC]">

@@ -20,7 +20,7 @@ const M = VYRON_MASTER;
 function priorityClass(priority: string) {
   if (priority === "Critical") return "border-rose-200 bg-rose-50 text-rose-800";
   if (priority === "High") return "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
-  if (priority === "Medium") return "border-violet-200 bg-violet-50 text-violet-900";
+  if (priority === "Medium") return "border-blue-200 bg-blue-50 text-blue-900";
   return "border-slate-200 bg-slate-50 text-slate-700";
 }
 
@@ -202,7 +202,7 @@ export default function CostIntelligenceExecutiveClient({ companyName }: { compa
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <KpiCard label="Total Insights" value={loading ? "…" : String(stats?.totalInsights ?? 0)} icon={BrainCircuit} />
           <KpiCard label="Critical" value={loading ? "…" : String(stats?.criticalCount ?? 0)} accent="#2563EB" icon={AlertTriangle} />
-          <KpiCard label="High" value={loading ? "…" : String(stats?.highCount ?? 0)} accent="#C026D3" icon={AlertTriangle} />
+          <KpiCard label="High" value={loading ? "…" : String(stats?.highCount ?? 0)} accent="#2563EB" icon={AlertTriangle} />
           <KpiCard label="Medium" value={loading ? "…" : String(stats?.mediumCount ?? 0)} accent="#1D6BFF" icon={Sparkles} />
           <KpiCard label="Low" value={loading ? "…" : String(stats?.lowCount ?? 0)} accent="#64748B" icon={Sparkles} />
         </section>

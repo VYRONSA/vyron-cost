@@ -158,7 +158,7 @@ export default function XeroSyncCentreClient() {
         <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</div>
       ) : null}
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-2xl font-black text-slate-950">Xero Sync Queue</h2>
@@ -170,7 +170,7 @@ export default function XeroSyncCentreClient() {
             <button
               type="button"
               onClick={refresh}
-              className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-white px-4 py-2 text-xs font-black text-violet-800"
+              className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-white px-4 py-2 text-xs font-black text-blue-800"
             >
               <RefreshCcw size={14} />
               Refresh
@@ -194,7 +194,7 @@ export default function XeroSyncCentreClient() {
             </div>
             {rows.map((row) => (
               <div key={row.id} className="grid grid-cols-8 items-center gap-3 border-t border-slate-100 px-5 py-4 text-sm">
-                <div className="font-black text-violet-700">{row.type}</div>
+                <div className="font-black text-blue-700">{row.type}</div>
                 <div className="font-bold text-slate-700">{row.reference}</div>
                 <div className="col-span-2 font-semibold text-slate-800">{row.counterparty}</div>
                 <div>
@@ -233,10 +233,10 @@ export default function XeroSyncCentreClient() {
 
 function Metric({ title, value, tone = "default" }: { title: string; value: string; tone?: "default" | "good" | "warn" | "bad" }) {
   const toneClass =
-    tone === "good" ? "text-[#7E22CE]" : tone === "warn" ? "text-[var(--vyron-warning-fg)]" : tone === "bad" ? "text-rose-700" : "text-slate-950";
+    tone === "good" ? "text-[#1D4ED8]" : tone === "warn" ? "text-[var(--vyron-warning-fg)]" : tone === "bad" ? "text-rose-700" : "text-slate-950";
   return (
-    <div className="rounded-[1.75rem] border border-violet-100 bg-white p-5 shadow-sm">
-      <div className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-600">{title}</div>
+    <div className="rounded-[1.75rem] border border-blue-100 bg-white p-5 shadow-sm">
+      <div className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600">{title}</div>
       <div className={`mt-2 text-3xl font-black ${toneClass}`}>{value}</div>
     </div>
   );
@@ -244,8 +244,8 @@ function Metric({ title, value, tone = "default" }: { title: string; value: stri
 
 function StatusBadge({ status }: { status: XeroSyncStatus }) {
   const classes: Record<XeroSyncStatus, string> = {
-    Ready: "bg-violet-100 text-violet-800",
-    Synced: "bg-violet-100 text-violet-800",
+    Ready: "bg-indigo-100 text-indigo-800",
+    Synced: "bg-indigo-100 text-indigo-800",
     Failed: "bg-rose-100 text-rose-800",
     "Needs Review": "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Processing: "bg-blue-100 text-blue-800",

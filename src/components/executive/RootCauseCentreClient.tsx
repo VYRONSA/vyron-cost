@@ -287,7 +287,7 @@ export default function RootCauseCentreClient({
               value={String(snapshot.summary.criticalRootCauses)}
               accent="#2563EB"
             />
-            <SummaryCard label="High Impact Causes" value={String(snapshot.summary.highImpactCauses)} accent="#A855F7" />
+            <SummaryCard label="High Impact Causes" value={String(snapshot.summary.highImpactCauses)} accent="#3B82F6" />
             <SummaryCard label="Categories Affected" value={String(snapshot.summary.categoriesAffected)} accent="#1D6BFF" />
             <SummaryCard
               label="Estimated Exposure"
@@ -303,12 +303,12 @@ export default function RootCauseCentreClient({
           </section>
 
           {snapshot.investigations.length === 0 ? (
-            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-6">
+            <section className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
               <div className="flex items-start gap-3">
-                <Search size={22} className="mt-0.5 shrink-0 text-violet-700" />
+                <Search size={22} className="mt-0.5 shrink-0 text-blue-700" />
                 <div>
-                  <h2 className="text-lg font-bold text-violet-950">No significant root causes identified.</h2>
-                  <p className="mt-2 text-sm font-medium leading-6 text-violet-900">
+                  <h2 className="text-lg font-bold text-blue-950">No significant root causes identified.</h2>
+                  <p className="mt-2 text-sm font-medium leading-6 text-blue-900">
                     Current operational signals do not indicate material traceable root causes on available data.
                   </p>
                 </div>
@@ -661,7 +661,7 @@ function SeverityBadge({ severity }: { severity: RootCauseInvestigation["severit
 
 function ConfidenceBadge({ confidence }: { confidence: RootCauseInvestigation["confidence"] }) {
   const classes = {
-    High: "text-violet-700",
+    High: "text-blue-700",
     Medium: "text-[var(--vyron-warning-fg)]",
     Low: "text-[#64748B]",
   };

@@ -64,19 +64,19 @@ export default function SalesIntelligenceClient() {
         <ReportCard title="Top Products" rows={(report?.topProducts || []).map((row) => [row.product, formatCurrency(row.sales), ""])} />
       </section>
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <h3 className="text-xl font-black text-slate-900">Monthly Sales</h3>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           {(report?.monthlySales || []).map((row) => (
             <div key={row.month} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
               <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{row.month}</p>
-              <p className="mt-2 text-2xl font-black text-violet-700">{formatCurrency(row.sales)}</p>
+              <p className="mt-2 text-2xl font-black text-blue-700">{formatCurrency(row.sales)}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <h3 className="text-xl font-black text-slate-900">Invoice Trends</h3>
         <EnterpriseScrollContainer className="mt-4 rounded-3xl border border-slate-100">
           <table className="min-w-[720px] w-full text-left text-sm">
@@ -86,7 +86,7 @@ export default function SalesIntelligenceClient() {
             <tbody className="divide-y divide-slate-100">
               {(report?.invoiceTrends || []).map((row) => (
                 <tr key={row.invoiceNumber}>
-                  <td className="px-4 py-3 font-black text-violet-700">{row.invoiceNumber}</td>
+                  <td className="px-4 py-3 font-black text-blue-700">{row.invoiceNumber}</td>
                   <td className="px-4 py-3">{row.date}</td>
                   <td className="px-4 py-3">{row.status}</td>
                   <td className="px-4 py-3 text-right font-black">{formatCurrency(row.sales)}</td>
@@ -102,13 +102,13 @@ export default function SalesIntelligenceClient() {
 
 function ReportCard({ title, rows }: { title: string; rows: string[][] }) {
   return (
-    <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+    <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
       <h3 className="text-xl font-black text-slate-900">{title}</h3>
       <div className="mt-4 space-y-2">
         {rows.length ? rows.map((row) => (
           <div key={row[0]} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm">
             <span className="font-bold text-slate-800">{row[0]}</span>
-            <span className="font-black text-violet-700">{row[1]}</span>
+            <span className="font-black text-blue-700">{row[1]}</span>
           </div>
         )) : <p className="text-sm font-semibold text-slate-500">No data yet. Post customer invoices to populate this report.</p>}
       </div>

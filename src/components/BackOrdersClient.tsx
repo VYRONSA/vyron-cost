@@ -61,35 +61,35 @@ export default function BackOrdersClient() {
   return (
     <section className="grid gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <Link href="/purchase-orders" className="rounded-2xl border border-violet-100 bg-white px-4 py-2 text-sm font-black text-violet-700">
+        <Link href="/purchase-orders" className="rounded-2xl border border-blue-100 bg-white px-4 py-2 text-sm font-black text-blue-700">
           ← Back
         </Link>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-4 py-2 text-xs font-black text-violet-800"><Printer size={14} /> Print</button>
-          <button type="button" onClick={exportCsv} className="inline-flex items-center gap-2 rounded-xl bg-violet-50 px-4 py-2 text-xs font-black text-violet-800"><Download size={14} /> Export CSV</button>
+          <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2 text-xs font-black text-blue-800"><Printer size={14} /> Print</button>
+          <button type="button" onClick={exportCsv} className="inline-flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2 text-xs font-black text-blue-800"><Download size={14} /> Export CSV</button>
           <Link href="/goods-receipts/new" className="rounded-xl vyron-grad-surface px-4 py-2 text-xs font-semibold text-white">Receive Goods</Link>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Open Lines</div><div className="text-2xl font-black">{filtered.length}</div></div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Outstanding Qty</div><div className="text-2xl font-black">{filtered.reduce((s, r) => s + num(r.outstanding_qty), 0).toFixed(2)}</div></div>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4"><div className="text-[10px] font-black uppercase text-violet-600">Suppliers</div><div className="text-2xl font-black">{new Set(filtered.map((r) => String(r.supplier_name_snapshot || r.supplier_name || ""))).size}</div></div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><div className="text-[10px] font-black uppercase text-blue-600">Open Lines</div><div className="text-2xl font-black">{filtered.length}</div></div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><div className="text-[10px] font-black uppercase text-blue-600">Outstanding Qty</div><div className="text-2xl font-black">{filtered.reduce((s, r) => s + num(r.outstanding_qty), 0).toFixed(2)}</div></div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4"><div className="text-[10px] font-black uppercase text-blue-600">Suppliers</div><div className="text-2xl font-black">{new Set(filtered.map((r) => String(r.supplier_name_snapshot || r.supplier_name || ""))).size}</div></div>
       </div>
 
-      <div className="rounded-[2rem] border border-violet-100 bg-white p-4 print:hidden">
-        <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-          <Search size={18} className="text-violet-700" />
+      <div className="rounded-[2rem] border border-blue-100 bg-white p-4 print:hidden">
+        <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+          <Search size={18} className="text-blue-700" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search supplier, PO or item…" className="w-full bg-transparent text-sm font-bold text-slate-800 outline-none placeholder:text-slate-400" />
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-violet-700">{filtered.length}</span>
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-blue-700">{filtered.length}</span>
         </div>
       </div>
 
       {message ? <p className="rounded-xl bg-[var(--vyron-warning-bg)] px-4 py-3 text-sm font-black text-[var(--vyron-warning-fg)]">{message}</p> : null}
 
-      <EnterpriseScrollContainer className="rounded-[2rem] border border-violet-100 bg-white shadow-[0_18px_60px_rgba(76,29,149,0.08)]">
+      <EnterpriseScrollContainer className="rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <table className="min-w-[1050px] w-full text-left text-sm">
-          <thead className="bg-violet-800 text-xs font-black uppercase tracking-[0.14em] text-violet-100">
+          <thead className="bg-blue-800 text-xs font-black uppercase tracking-[0.14em] text-blue-100">
             <tr><th className="px-4 py-3">Supplier</th><th className="px-4 py-3">PO</th><th className="px-4 py-3">Item</th><th className="px-4 py-3">Outstanding</th><th className="px-4 py-3">Expected</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 print:hidden">Actions</th></tr>
           </thead>
           <tbody>
@@ -106,16 +106,16 @@ export default function BackOrdersClient() {
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
-      <tr key={String(row.id || index)} className="border-t border-slate-100 hover:bg-violet-50/50">
+      <tr key={String(row.id || index)} className="border-t border-slate-100 hover:bg-blue-50/50">
                         <td className="px-4 py-3 font-bold text-slate-900">{String(row.supplier_name_snapshot || row.supplier_name || "—")}</td>
-                        <td className="px-4 py-3 font-black text-violet-700">{poNumber}</td>
+                        <td className="px-4 py-3 font-black text-blue-700">{poNumber}</td>
                         <td className="px-4 py-3 font-bold">{String(row.item_name || "—")}</td>
                         <td className="px-4 py-3 font-black text-red-600">{num(row.outstanding_qty).toFixed(2)} {String(row.unit || "")}</td>
                         <td className="px-4 py-3">{String(row.expected_date || "—")}</td>
                         <td className="px-4 py-3"><span className="rounded-full bg-[var(--vyron-warning-bg)] px-3 py-1 text-[10px] font-black uppercase text-[var(--vyron-warning-fg)]">{String(row.status || "Open")}</span></td>
                         <td className="px-4 py-3 print:hidden">
                           <div className="flex flex-wrap gap-2">
-                            {poId ? <Link href={`/purchase-orders/${poId}`} className="rounded-full bg-violet-50 px-3 py-2 text-xs font-black text-violet-700">Open PO</Link> : null}
+                            {poId ? <Link href={`/purchase-orders/${poId}`} className="rounded-full bg-blue-50 px-3 py-2 text-xs font-black text-blue-700">Open PO</Link> : null}
                             {poId ? <Link href={`/goods-receipts/new?po=${poId}`} className="rounded-full bg-[var(--vyron-warning-bg)] px-3 py-2 text-xs font-black text-[var(--vyron-warning-fg)]">Receive Balance</Link> : null}
                           </div>
                         </td>

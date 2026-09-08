@@ -125,7 +125,7 @@ export default function CustomerDetailPageClient({ customer }: { customer: Custo
   }
 
   return (
-    <section className="mt-6 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+    <section className="mt-6 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-black text-slate-900">Customer Detail</h2>
         <Link href="/customers" className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700">
@@ -202,7 +202,7 @@ export default function CustomerDetailPageClient({ customer }: { customer: Custo
         </label>
       </div>
 
-      <div className="mt-8 rounded-2xl border border-violet-100 bg-violet-50/40 p-5">
+      <div className="mt-8 rounded-2xl border border-blue-100 bg-blue-50/40 p-5">
         <h2 className="text-base font-black text-slate-900">Tax &amp; Legal Details</h2>
         <p className="mt-1 text-sm font-semibold text-slate-600">
           A full tax invoice over R5,000 must show the recipient&rsquo;s name, address, and &mdash; where they are a
@@ -292,13 +292,13 @@ export default function CustomerDetailPageClient({ customer }: { customer: Custo
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href={`/customer-sales-orders?customerId=${customer.id}`}
-          className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-black text-violet-800"
+          className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-black text-blue-800"
         >
           View Sales Orders
         </Link>
         <Link
           href={`/customer-sales-orders?customerId=${customer.id}&create=1`}
-          className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-white px-5 py-3 text-sm font-black text-violet-800"
+          className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-5 py-3 text-sm font-black text-blue-800"
         >
           Create Sales Order
         </Link>

@@ -47,7 +47,7 @@ export default function ScenarioModellingClient({ initial }: { initial: Scenario
                     setInput(p.input);
                     runScenario(p.input);
                   }}
-                  className="rounded-xl bg-violet-100 px-4 py-2 text-xs font-black text-violet-900 hover:bg-violet-200 disabled:opacity-50"
+                  className="rounded-xl bg-blue-100 px-4 py-2 text-xs font-black text-blue-900 hover:bg-blue-200 disabled:opacity-50"
                 >
                   {p.label}
                 </button>
@@ -88,21 +88,21 @@ export default function ScenarioModellingClient({ initial }: { initial: Scenario
                   {impact.gpChangePts} pts
                 </div>
               </div>
-              <div className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 p-5">
-                <div className="text-xs font-black uppercase text-[#7E22CE]">Recovery</div>
+              <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-5">
+                <div className="text-xs font-black uppercase text-[#1D4ED8]">Recovery</div>
                 <div className="mt-2 text-2xl font-black">{money(impact.recoveryImpact)}/mo</div>
               </div>
               <div className="rounded-2xl bg-[var(--vyron-warning-bg)] p-5">
                 <div className="text-xs font-black uppercase text-[var(--vyron-warning-fg)]">Inventory</div>
                 <div className="mt-2 text-2xl font-black">{money(impact.inventoryImpact)}</div>
               </div>
-              <div className="rounded-2xl bg-violet-50 p-5">
-                <div className="text-xs font-black uppercase text-violet-700">Production cost</div>
+              <div className="rounded-2xl bg-blue-50 p-5">
+                <div className="text-xs font-black uppercase text-blue-700">Production cost</div>
                 <div className="mt-2 text-2xl font-black">{money(impact.productionCostImpact)}</div>
               </div>
             </div>
             <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-              <div className="text-xs font-black uppercase text-[#A855F7]">Annual profit impact</div>
+              <div className="text-xs font-black uppercase text-[#3B82F6]">Annual profit impact</div>
               <div className="mt-2 text-4xl font-black">{money(impact.annualProfitImpact)}</div>
               <ul className="mt-4 space-y-2 text-sm font-semibold text-slate-300">
                 {impact.narrative.map((n) => (

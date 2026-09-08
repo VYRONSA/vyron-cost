@@ -290,12 +290,12 @@ export default function AutonomousCommandCentreClient({
       ) : (
         <>
           {snapshot.isHealthy ? (
-            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-6">
+            <section className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
               <div className="flex items-start gap-3">
-                <Zap size={22} className="mt-0.5 shrink-0 text-violet-700" />
+                <Zap size={22} className="mt-0.5 shrink-0 text-blue-700" />
                 <div>
-                  <h2 className="text-lg font-bold text-violet-950">Business operating within expected thresholds.</h2>
-                  <p className="mt-2 text-sm font-medium leading-6 text-violet-900">
+                  <h2 className="text-lg font-bold text-blue-950">Business operating within expected thresholds.</h2>
+                  <p className="mt-2 text-sm font-medium leading-6 text-blue-900">
                     No critical warnings, risks, root causes, decisions or actions require immediate executive
                     intervention.
                   </p>
@@ -308,9 +308,9 @@ export default function AutonomousCommandCentreClient({
             <SummaryCard
               label="Health Score"
               value={snapshot.summary.healthScore != null ? `${snapshot.summary.healthScore}/100` : "—"}
-              accent="#8B5CF6"
+              accent="#3B82F6"
             />
-            <SummaryCard label="Active Warnings" value={String(snapshot.summary.activeWarnings)} accent="#A855F7" />
+            <SummaryCard label="Active Warnings" value={String(snapshot.summary.activeWarnings)} accent="#B45309" />
             <SummaryCard label="Forecast Risks" value={String(snapshot.summary.forecastRisks)} accent="#2563EB" />
             <SummaryCard label="Root Causes" value={String(snapshot.summary.rootCauses)} accent="#1D6BFF" />
             <SummaryCard label="Decisions" value={String(snapshot.summary.decisions)} accent="#3B82F6" />
@@ -440,8 +440,8 @@ export default function AutonomousCommandCentreClient({
               Action execution status derived from the Actions engine and dependency blockers.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <ReadinessCard label="Ready" value={snapshot.executionReadiness.ready} accent="#8B5CF6" />
-              <ReadinessCard label="Waiting" value={snapshot.executionReadiness.waiting} accent="#C026D3" />
+              <ReadinessCard label="Ready" value={snapshot.executionReadiness.ready} accent="#3B82F6" />
+              <ReadinessCard label="Waiting" value={snapshot.executionReadiness.waiting} accent="#2563EB" />
               <ReadinessCard label="Blocked" value={snapshot.executionReadiness.blocked} accent="#2563EB" />
               <ReadinessCard
                 label="Overall Readiness"
@@ -680,7 +680,7 @@ function BlockerCard({ blocker }: { blocker: AggregatedBlocker }) {
         <PriorityBadge priority={blocker.severity} />
         <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--vyron-warning-fg)]">{blocker.source}</span>
       </div>
-      <h3 className="mt-2 font-bold text-fuchsia-950">{blocker.blocker}</h3>
+      <h3 className="mt-2 font-bold text-blue-950">{blocker.blocker}</h3>
       <p className="mt-2 text-sm font-medium text-[var(--vyron-warning-fg)]">{blocker.resolutionPath}</p>
       {blocker.affectedItems.length > 0 ? (
         <ul className="mt-3 space-y-1 text-xs font-medium text-[var(--vyron-warning-fg)]">
@@ -745,7 +745,7 @@ function PriorityBadge({ priority }: { priority: CommandPriority }) {
 
 function ConfidenceBadge({ confidence }: { confidence: DecisionConfidence }) {
   const classes = {
-    High: "text-violet-700",
+    High: "text-blue-700",
     Medium: "text-[var(--vyron-warning-fg)]",
     Low: "text-[#64748B]",
   };

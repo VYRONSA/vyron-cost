@@ -277,7 +277,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
               ) : null}
       
               {stockMessage ? (
-                <p className="mt-4 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-bold text-violet-900">
+                <p className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-900">
                   {stockMessage}
                 </p>
               ) : null}
@@ -289,7 +289,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
                       type="button"
                       disabled={stockBusy}
                       onClick={() => void postStock(false)}
-                      className="rounded-full bg-violet-700 px-4 py-2 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+                      className="rounded-full bg-blue-700 px-4 py-2 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
                     >
                       Post Stock
                     </button>
@@ -317,7 +317,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
                 </div>
               ) : null}
       
-              <section className="mt-5 rounded-[24px] bg-white/90 p-5 shadow-xl shadow-violet-100">
+              <section className="mt-5 rounded-[24px] bg-white/90 p-5 shadow-xl shadow-blue-100">
                 <h2 className="text-xl font-black">Invoice lines</h2>
                 <EnterpriseScrollContainer mode="page" className="mt-4">
                   <table className="w-full min-w-[760px] text-left text-sm">
@@ -354,7 +354,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
 function StockStatusPill({ status }: { status: InvoiceStockPostingStatus }) {
   const classes: Record<InvoiceStockPostingStatus, string> = {
     "Not Posted": "bg-slate-100 text-slate-700",
-    Posted: "bg-[#A855F7]/12 text-[#4D7C0F]",
+    Posted: "bg-[#3B82F6]/12 text-[#4D7C0F]",
     Reversed: "bg-rose-100 text-rose-700",
   };
   return <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${classes[status]}`}>{status}</span>;

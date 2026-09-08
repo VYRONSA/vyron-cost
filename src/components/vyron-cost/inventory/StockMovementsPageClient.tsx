@@ -141,7 +141,7 @@ export default function StockMovementsPageClient() {
             onClick={() => setMode(action)}
             className={`rounded-2xl border px-4 py-5 text-left transition ${
               mode === action
-                ? "border-[#1D6BFF] bg-[#F5F3FF] shadow-sm"
+                ? "border-[#1D6BFF] bg-[#EFF6FF] shadow-sm"
                 : "border-[#E2E8F0] bg-white hover:border-[#93C5FD]"
             }`}
           >

@@ -14,7 +14,7 @@ function ScoreRing({ label, score, href }: { label: string; score: number; href?
       <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">{label}</div>
       <div className="mt-2 text-4xl font-black text-slate-950">{score}</div>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-        <div className="h-full rounded-full bg-violet-600" style={{ width: `${score}%` }} />
+        <div className="h-full rounded-full bg-blue-600" style={{ width: `${score}%` }} />
       </div>
     </div>
   );
@@ -34,8 +34,8 @@ export default function AiCfoCommandCentreClient({ data }: { data: AiFinancialIn
       }}
     >
       <section className="grid gap-10">
-            <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-950 p-8 text-white">
-              <div className="text-xs font-black uppercase tracking-[0.2em] text-violet-300">VYRON Intelligence Score</div>
+            <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-950 p-8 text-white">
+              <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VYRON Intelligence Score</div>
               <div className="mt-3 flex flex-wrap items-end gap-6">
                 <div className="text-6xl font-black">{scores.overallScore}</div>
                 <div className="text-sm font-semibold text-slate-300">Enterprise financial decision readiness · 0–100</div>
@@ -50,9 +50,9 @@ export default function AiCfoCommandCentreClient({ data }: { data: AiFinancialIn
                   ["Risk", scores.riskScore, "/risk-centre"],
                 ].map(([l, v, h]) => (
                   <div key={String(l)} className="rounded-xl bg-white/10 p-3">
-                    <div className="text-[10px] font-black uppercase text-violet-200">{l}</div>
+                    <div className="text-[10px] font-black uppercase text-blue-200">{l}</div>
                     <div className="text-2xl font-black">{v}</div>
-                    <Link href={String(h)} className="text-[10px] font-bold text-[#A855F7] hover:underline">
+                    <Link href={String(h)} className="text-[10px] font-bold text-[#3B82F6] hover:underline">
                       Drill down →
                     </Link>
                   </div>
@@ -120,7 +120,7 @@ export default function AiCfoCommandCentreClient({ data }: { data: AiFinancialIn
                         <p className="text-sm text-slate-600">{a.message}</p>
                       </div>
                       {a.href ? (
-                        <Link href={a.href} className="text-sm font-black text-violet-700">
+                        <Link href={a.href} className="text-sm font-black text-blue-700">
                           View →
                         </Link>
                       ) : null}
@@ -146,7 +146,7 @@ export default function AiCfoCommandCentreClient({ data }: { data: AiFinancialIn
                   <div className="text-xl font-black">{money(forecast.costInflationAnnual)}</div>
                 </div>
               </div>
-              <Link href="/enterprise/forecasting" className="mt-4 inline-block text-sm font-black text-violet-700">
+              <Link href="/enterprise/forecasting" className="mt-4 inline-block text-sm font-black text-blue-700">
                 Full forecasting →
               </Link>
             </section>

@@ -64,7 +64,7 @@ export default function ProductBomPanelClient({
                 <div className="text-xs font-black uppercase text-slate-400">Linked recipe</div>
                 <div className="mt-1 font-black">
                   {summary.linkedRecipe ? (
-                    <Link href={`/recipes/${summary.linkedRecipe.id}`} className="text-[#7E22CE]">
+                    <Link href={`/recipes/${summary.linkedRecipe.id}`} className="text-[#1D4ED8]">
                       {summary.linkedRecipe.recipe_name}
                     </Link>
                   ) : (
@@ -74,7 +74,7 @@ export default function ProductBomPanelClient({
               </div>
               <div className="rounded-xl bg-slate-50 px-4 py-3">
                 <div className="text-xs font-black uppercase text-slate-400">BOM cost</div>
-                <div className="mt-1 font-black text-violet-700">{formatMoney(summary.bomCost)}</div>
+                <div className="mt-1 font-black text-blue-700">{formatMoney(summary.bomCost)}</div>
               </div>
               <div className="rounded-xl bg-slate-50 px-4 py-3">
                 <div className="text-xs font-black uppercase text-slate-400">Calculated GP</div>
@@ -107,12 +107,12 @@ export default function ProductBomPanelClient({
                 Update cost from BOM
               </button>
               {summary.linkedRecipe ? (
-                <Link href={`/recipes/${summary.linkedRecipe.id}/edit`} className="rounded-xl vyron-grad-deep px-4 py-2 text-xs font-black text-[#DDD6FE]">
+                <Link href={`/recipes/${summary.linkedRecipe.id}/edit`} className="rounded-xl vyron-grad-deep px-4 py-2 text-xs font-black text-[#BFDBFE]">
                   Edit BOM
                 </Link>
               ) : null}
             </div>
-            {message ? <div className="mt-3 text-sm font-black text-[#7E22CE]">{message}</div> : null}
+            {message ? <div className="mt-3 text-sm font-black text-[#1D4ED8]">{message}</div> : null}
           </div>
     </VyronPremiumPageShell>
   );

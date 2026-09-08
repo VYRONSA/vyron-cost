@@ -1155,10 +1155,10 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
         </section>
       ) : null}
 
-      <section className="rounded-[32px] border border-violet-100 bg-white/90 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)] md:p-6">
+      <section className="rounded-[32px] border border-blue-100 bg-white/90 p-5 shadow-[0_18px_60px_rgba(30,58,138,0.08)] md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">Workspace</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Workspace</p>
             <h2 className="mt-1 text-xl font-black text-slate-950 md:text-2xl">{workspaceName}</h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">Invoice workspace actions and status controls.</p>
           </div>
@@ -1167,7 +1167,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
             <button
               type="button"
               onClick={() => setFormOpen((open) => !open)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-violet-500/20"
+              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-500/20"
             >
               <Plus size={17} />
               {formOpen ? "Close Invoice" : "Create Invoice"}
@@ -1176,7 +1176,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
             <button
               type="button"
               onClick={() => window.print()}
-              className="inline-flex items-center gap-2 rounded-2xl border border-violet-100 bg-white px-5 py-3 text-sm font-black text-violet-800"
+              className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 bg-white px-5 py-3 text-sm font-black text-blue-800"
             >
               <Printer size={17} />
               Print
@@ -1186,7 +1186,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
       </section>
 
       {invoices.length === 0 ? (
-        <section className="rounded-[32px] border border-dashed border-violet-200 bg-violet-50/50 p-8 text-center">
+        <section className="rounded-[32px] border border-dashed border-blue-200 bg-blue-50/50 p-8 text-center">
           <h2 className="text-2xl font-black text-slate-950">No customer invoices yet</h2>
           <p className="mt-3 text-sm font-semibold text-slate-600">
             Create your first invoice from this workspace. No demo invoices are shown.
@@ -1203,7 +1203,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
       </div>
 
       {formOpen && canCreate ? (
-        <section ref={formRef} className="rounded-[32px] border border-violet-100 bg-white/95 p-5 shadow-[0_18px_60px_rgba(76,29,149,0.08)] md:p-6">
+        <section ref={formRef} className="rounded-[32px] border border-blue-100 bg-white/95 p-5 shadow-[0_18px_60px_rgba(30,58,138,0.08)] md:p-6">
           <h2 className="text-2xl font-black text-slate-950">{editingInvoiceId ? "Edit Customer Invoice" : "Create Customer Invoice"}</h2>
 
           {/*
@@ -1215,7 +1215,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
             1366 screen uses its width instead of stacking.
           */}
           <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
-            <div className="rounded-[28px] border border-violet-100 bg-violet-50/40 p-5">
+            <div className="rounded-[28px] border border-blue-100 bg-blue-50/40 p-5">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="relative md:col-span-2">
                   <Input
@@ -1236,13 +1236,13 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                             key={customer.id}
                             type="button"
                             onClick={() => selectCustomer(customer)}
-                            className="flex w-full items-start justify-between gap-3 border-b border-violet-50 px-4 py-3 text-left transition hover:bg-violet-50"
+                            className="flex w-full items-start justify-between gap-3 border-b border-blue-50 px-4 py-3 text-left transition hover:bg-blue-50"
                           >
                             <span>
                               <span className="block text-sm font-black text-slate-950">{customer.name}</span>
                               <span className="block text-xs font-semibold text-slate-500">{customer.email || "No invoice email captured"}</span>
                             </span>
-                            <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-black text-violet-800">{customer.terms}</span>
+                            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-800">{customer.terms}</span>
                           </button>
                         ))
                       ) : (
@@ -1261,7 +1261,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                     <select
                       value={branchId}
                       onChange={(event) => setBranchId(event.target.value)}
-                      className="mt-1 min-h-[44px] w-full rounded-xl border border-violet-100 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-violet-400"
+                      className="mt-1 min-h-[44px] w-full rounded-xl border border-blue-100 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-blue-400"
                     >
                       {/*
                         A customer may invoice centrally as well as per site, so
@@ -1291,7 +1291,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                       setCustomerTerms(value);
                       setDueDate(addDays(invoiceDate, parseTermDays(value)));
                     }}
-                    className="mt-2 w-full rounded-2xl border border-violet-100 bg-white px-4 py-3 text-sm font-bold outline-none"
+                    className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold outline-none"
                   >
                     <option>COD</option>
                     <option>7 Days</option>
@@ -1303,7 +1303,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-violet-100 bg-white p-5">
+            <div className="rounded-[28px] border border-blue-100 bg-white p-5">
               <div className="grid gap-4 md:grid-cols-2">
                 <Input
                   label="Invoice Date"
@@ -1322,16 +1322,16 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
             </div>
           </div>
 
-          <div className="mt-6 rounded-[28px] border border-violet-100 bg-violet-50/30 p-4">
+          <div className="mt-6 rounded-[28px] border border-blue-100 bg-blue-50/30 p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">Finished goods to sell</p>
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Finished goods to sell</p>
                 <p className="text-sm font-semibold text-slate-500">Select finished products. Prices and costs fill automatically when product master data exists.</p>
               </div>
               {finishedGoods.length === 0 ? (
                 <span className="rounded-full bg-[var(--vyron-warning-bg)] px-2.5 py-1.5 text-xs font-black text-[var(--vyron-warning-fg)]">No finished goods master found yet</span>
               ) : (
-                <span className="rounded-full border border-[#A855F7]/25 bg-[#A855F7]/10 px-2.5 py-1.5 text-xs font-black text-[#7E22CE]">{finishedGoods.length} finished goods loaded</span>
+                <span className="rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-2.5 py-1.5 text-xs font-black text-[#1D4ED8]">{finishedGoods.length} finished goods loaded</span>
               )}
             </div>
 
@@ -1341,9 +1341,9 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                 const products = filteredFinishedGoods(line);
 
                 return (
-                  <div key={line.id} className="rounded-[24px] border border-violet-100 bg-white p-4">
+                  <div key={line.id} className="rounded-[24px] border border-blue-100 bg-white p-4">
                     <div className="grid gap-3 lg:grid-cols-[70px_minmax(220px,1fr)_90px_125px_125px_90px] lg:items-start">
-                      <div className="rounded-2xl bg-violet-100 px-3 py-3 text-center text-sm font-black text-violet-800">Line {index + 1}</div>
+                      <div className="rounded-2xl bg-blue-100 px-3 py-3 text-center text-sm font-black text-blue-800">Line {index + 1}</div>
 
                       <div className="relative">
                         {demoMode ? (
@@ -1365,7 +1365,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                                       key={product.id}
                                       type="button"
                                       onClick={() => selectFinishedGood(line.id, product)}
-                                      className="flex w-full items-start justify-between gap-3 border-b border-violet-50 px-4 py-3 text-left transition hover:bg-violet-50"
+                                      className="flex w-full items-start justify-between gap-3 border-b border-blue-50 px-4 py-3 text-left transition hover:bg-blue-50"
                                     >
                                       <span>
                                         <span className="block text-sm font-black text-slate-950">{product.name}</span>
@@ -1375,7 +1375,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                                       </span>
                                       <span className="text-right text-xs font-black text-slate-700">
                                         {money(product.sellingPrice)}
-                                        <span className="block text-[#7E22CE]">Cost {money(product.unitCost)}</span>
+                                        <span className="block text-[#1D4ED8]">Cost {money(product.unitCost)}</span>
                                       </span>
                                     </button>
                                   ))
@@ -1411,7 +1411,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                           onChange={(event) =>
                             updateLine(line.id, { taxTreatment: event.target.value as TaxTreatment })
                           }
-                          className="mt-2 w-full rounded-xl border border-violet-100 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:border-violet-400"
+                          className="mt-2 w-full rounded-xl border border-blue-100 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:border-blue-400"
                         >
                           {TAX_TREATMENTS.map((treatment) => (
                             <option key={treatment} value={treatment}>
@@ -1442,7 +1442,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                         <span>VAT: <b className="text-slate-950">{money(totals.vat)}</b></span>
                         <span>Line Total: <b className="text-slate-950">{money(totals.total)}</b></span>
                         <span>COGS: <b className="text-slate-950">{money(totals.cogs)}</b></span>
-                        <span>GP: <b className="text-[#7E22CE]">{money(totals.gp)}</b></span>
+                        <span>GP: <b className="text-[#1D4ED8]">{money(totals.gp)}</b></span>
                       </div>
                       <button
                         type="button"
@@ -1459,16 +1459,16 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-violet-100 bg-white p-4">
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-blue-100 bg-white p-4">
             <div className="flex flex-wrap gap-4 text-sm font-black text-slate-700">
               <span>Subtotal Excl VAT: <b className="text-slate-950">{money(draftTotals.excl)}</b></span>
               <span>VAT: <b className="text-slate-950">{money(draftTotals.vat)}</b></span>
               <span>Total Incl VAT: <b className="text-slate-950">{money(draftTotals.total)}</b></span>
               <span>COGS: <b className="text-slate-950">{money(draftTotals.cogs)}</b></span>
-              <span>GP: <b className="text-[#7E22CE]">{money(draftTotals.gp)}</b></span>
+              <span>GP: <b className="text-[#1D4ED8]">{money(draftTotals.gp)}</b></span>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={addLine} className="inline-flex items-center gap-2 rounded-2xl border border-violet-100 bg-white px-5 py-3 text-sm font-black text-violet-800">
+              <button type="button" onClick={addLine} className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 bg-white px-5 py-3 text-sm font-black text-blue-800">
                 <Plus size={17} />
                 Add Line
               </button>
@@ -1483,14 +1483,14 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
 
       <section
         ref={invoiceRegisterRef}
-        className="rounded-[24px] border border-white/70 bg-white/90 p-4 shadow-[0_18px_60px_rgba(76,29,149,0.08)]"
+        className="rounded-[24px] border border-white/70 bg-white/90 p-4 shadow-[0_18px_60px_rgba(30,58,138,0.08)]"
       >
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <h2 className="text-lg font-black text-slate-950">Invoice Register</h2>
           <p className="text-sm font-semibold text-slate-500">Draft, approve, email and mark invoices as paid.</p>
         </div>
 
-        <EnterpriseScrollContainer mode="page" className="rounded-[24px] border border-violet-100">
+        <EnterpriseScrollContainer mode="page" className="rounded-[24px] border border-blue-100">
           {/*
             A fixed layout with declared column widths.
 
@@ -1539,8 +1539,8 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
               {invoices.map((invoice) => {
                 const totals = displayInvoiceTotals(invoice);
                 return (
-                  <tr key={invoice.id} className="border-t border-violet-50">
-                    <td className="truncate px-3 py-2.5 font-black text-violet-700" title={invoice.invoiceNumber}>{invoice.invoiceNumber}</td>
+                  <tr key={invoice.id} className="border-t border-blue-50">
+                    <td className="truncate px-3 py-2.5 font-black text-blue-700" title={invoice.invoiceNumber}>{invoice.invoiceNumber}</td>
                     <td className="truncate px-3 py-2.5 font-black text-slate-950" title={invoice.customerName}>
                       {invoice.customerName}
                     </td>
@@ -1552,15 +1552,15 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                     <td className="whitespace-nowrap px-3 py-2.5"><StockPostingBadge status={invoice.stockPostingStatus || "Not Posted"} /></td>
                     <td className="px-3 py-2.5">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <button onClick={() => openInvoice(invoice.id)} className="rounded-xl bg-violet-50 px-2.5 py-1.5 text-xs font-black text-violet-800">View</button>
+                        <button onClick={() => openInvoice(invoice.id)} className="rounded-xl bg-blue-50 px-2.5 py-1.5 text-xs font-black text-blue-800">View</button>
                         {invoice.status === "Draft" && canApprove ? <button onClick={() => updateInvoiceStatus(invoice.id, "Approved")} className="rounded-xl bg-indigo-50 px-2.5 py-1.5 text-xs font-black text-indigo-800">Approve</button> : null}
                         {invoice.status === "Approved" && canEmail ? (
-                          <a onClick={() => updateInvoiceStatus(invoice.id, "Sent")} href={emailHref(invoice)} className="inline-flex items-center gap-1 rounded-xl bg-purple-50 px-2.5 py-1.5 text-xs font-black text-purple-800">
+                          <a onClick={() => updateInvoiceStatus(invoice.id, "Sent")} href={emailHref(invoice)} className="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1.5 text-xs font-black text-blue-800">
                             <Mail size={13} />
                             Email
                           </a>
                         ) : null}
-                        {invoice.status === "Sent" && canEdit ? <button onClick={() => updateInvoiceStatus(invoice.id, "Paid")} className="rounded-xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-2.5 py-1.5 text-xs font-black text-[#4D7C0F]">Paid</button> : null}
+                        {invoice.status === "Sent" && canEdit ? <button onClick={() => updateInvoiceStatus(invoice.id, "Paid")} className="rounded-xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-2.5 py-1.5 text-xs font-black text-[#4D7C0F]">Paid</button> : null}
                         {invoice.status !== "Paid" && invoice.status !== "Cancelled" && canEdit ? <button onClick={() => updateInvoiceStatus(invoice.id, "Cancelled")} className="rounded-xl bg-slate-100 px-2.5 py-1.5 text-xs font-black text-slate-700">Cancel</button> : null}
                         {canDelete ? <button onClick={() => deleteInvoice(invoice.id)} className="rounded-xl bg-rose-50 px-2.5 py-1.5 text-xs font-black text-rose-700">Delete</button> : null}
                       </div>
@@ -1590,11 +1590,11 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
       {selectedInvoice ? (
         <section
           ref={invoicePreviewRef}
-          className="rounded-[32px] border border-violet-100 bg-white p-6 shadow-[0_18px_60px_rgba(76,29,149,0.08)]"
+          className="rounded-[32px] border border-blue-100 bg-white p-6 shadow-[0_18px_60px_rgba(30,58,138,0.08)]"
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">Invoice Preview</p>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Invoice Preview</p>
               <h2 className="mt-1 text-3xl font-black text-slate-950">{selectedInvoice.invoiceNumber}</h2>
               <p className="mt-1 text-sm font-semibold text-slate-500">{selectedInvoice.customerName}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -1606,7 +1606,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                 ) : null}
               </div>
               {stockMessage ? (
-                <p className="mt-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-2 text-sm font-bold text-violet-900">
+                <p className="mt-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-900">
                   {stockMessage}
                 </p>
               ) : null}
@@ -1617,7 +1617,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                   type="button"
                   disabled={stockBusy}
                   onClick={() => void postInvoiceStock(selectedInvoice, false)}
-                  className="rounded-2xl bg-violet-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+                  className="rounded-2xl bg-blue-700 px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
                 >
                   Post Stock
                 </button>
@@ -1654,14 +1654,14 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                 <a
                   onClick={() => updateInvoiceStatus(selectedInvoice.id, "Sent")}
                   href={emailHref(selectedInvoice)}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-purple-50 px-5 py-3 text-sm font-black text-purple-800"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-blue-50 px-5 py-3 text-sm font-black text-blue-800"
                 >
                   <Mail size={17} />
                   Email
                 </a>
               ) : null}
               {selectedInvoice.status === "Sent" && canEdit ? (
-                <button onClick={() => updateInvoiceStatus(selectedInvoice.id, "Paid")} className="rounded-2xl border border-[#A855F7]/20 bg-[#A855F7]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
+                <button onClick={() => updateInvoiceStatus(selectedInvoice.id, "Paid")} className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
                   Mark Paid
                 </button>
               ) : null}
@@ -1677,7 +1677,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                 </button>
               ) : null}
               {demoMode ? (
-                <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-2xl border border-violet-100 bg-white px-5 py-3 text-sm font-black text-violet-800">
+                <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 bg-white px-5 py-3 text-sm font-black text-blue-800">
                   <Printer size={17} />
                   Print
                 </button>
@@ -1698,7 +1698,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
               {canCreate && selectedInvoice.status === "Draft" ? (
                 <button
                   onClick={() => void startEditingInvoice(selectedInvoice.id)}
-                  className="rounded-2xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 py-3 text-sm font-black text-white"
+                  className="rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-3 text-sm font-black text-white"
                 >
                   Edit Invoice
                 </button>
@@ -1707,9 +1707,9 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
             </div>
           </div>
 
-          <div className="mt-6 overflow-hidden rounded-[24px] border border-violet-100">
+          <div className="mt-6 overflow-hidden rounded-[24px] border border-blue-100">
             <table className="w-full text-left text-sm">
-              <thead className="bg-violet-50 text-xs font-black uppercase tracking-[0.12em] text-violet-800">
+              <thead className="bg-blue-50 text-xs font-black uppercase tracking-[0.12em] text-blue-800">
                 <tr>
                   <th className="whitespace-nowrap px-4 py-3">Description</th>
                   <th className="whitespace-nowrap px-4 py-3 text-right">Qty</th>
@@ -1722,7 +1722,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                 {selectedInvoice.lines.map((line) => {
                   const t = lineTotals(line);
                   return (
-                    <tr key={line.id} className="border-t border-violet-50">
+                    <tr key={line.id} className="border-t border-blue-50">
                       <td className="px-4 py-3 font-bold">{line.description}</td>
                       <td className="px-4 py-3 text-right font-bold">{line.qty}</td>
                       <td className="px-4 py-3 text-right font-bold">{money(line.unitPrice)}</td>
@@ -1743,8 +1743,8 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
 
 function Metric({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-[28px] border border-white/70 bg-white/90 p-5 shadow-[0_16px_50px_rgba(76,29,149,0.08)]">
-      <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">{title}</p>
+    <div className="rounded-[28px] border border-white/70 bg-white/90 p-5 shadow-[0_16px_50px_rgba(30,58,138,0.08)]">
+      <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">{title}</p>
       <p className="mt-3 truncate text-2xl font-black text-slate-950">{value}</p>
     </div>
   );
@@ -1771,7 +1771,7 @@ function Input({
         value={value}
         onFocus={onFocus}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-2xl border border-violet-100 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-violet-400"
+        className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-blue-400"
       />
     </label>
   );
@@ -1785,7 +1785,7 @@ function NumberInput({ label, value, onChange }: { label: string; value: number;
         type="number"
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="mt-2 w-full rounded-2xl border border-violet-100 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-violet-400"
+        className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-blue-400"
       />
     </label>
   );
@@ -1793,7 +1793,7 @@ function NumberInput({ label, value, onChange }: { label: string; value: number;
 
 function PickerBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute left-0 right-0 z-50 mt-2 max-h-72 overflow-y-auto rounded-2xl border border-violet-100 bg-white shadow-2xl shadow-violet-500/10">
+    <div className="absolute left-0 right-0 z-50 mt-2 max-h-72 overflow-y-auto rounded-2xl border border-blue-100 bg-white shadow-2xl shadow-blue-500/10">
       {children}
     </div>
   );
@@ -1805,7 +1805,7 @@ function StatusBadge({ status }: { status: InvoiceStatus }) {
     Approved: "bg-indigo-100 text-indigo-800",
     Posted: "bg-sky-100 text-sky-800",
     Sent: "bg-purple-100 text-purple-800",
-    Paid: "bg-[#A855F7]/12 text-[#4D7C0F]",
+    Paid: "bg-[#3B82F6]/12 text-[#4D7C0F]",
     Cancelled: "bg-slate-200 text-slate-700",
   };
 
@@ -1815,7 +1815,7 @@ function StatusBadge({ status }: { status: InvoiceStatus }) {
 function StockPostingBadge({ status }: { status: InvoiceStockPostingStatus }) {
   const classes: Record<InvoiceStockPostingStatus, string> = {
     "Not Posted": "bg-slate-100 text-slate-700",
-    Posted: "bg-[#A855F7]/12 text-[#4D7C0F]",
+    Posted: "bg-[#3B82F6]/12 text-[#4D7C0F]",
     Reversed: "bg-rose-100 text-rose-700",
   };
   return <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${classes[status]}`}>{status}</span>;

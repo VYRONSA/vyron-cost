@@ -27,13 +27,13 @@ export default function WorkspaceOnboardingDashboard({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[2rem] bg-white p-8 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
-        <div className="text-xs font-black uppercase tracking-[0.14em] text-violet-600">Workspace onboarding</div>
+      <section className="rounded-[2rem] bg-white p-8 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="text-xs font-black uppercase tracking-[0.14em] text-blue-600">Workspace onboarding</div>
         <h2 className="mt-3 text-4xl font-black text-slate-950">{EMPTY_WORKSPACE_ONBOARDING.title}</h2>
         <p className="mt-4 max-w-2xl text-sm font-semibold leading-7 text-slate-500">
           {EMPTY_WORKSPACE_ONBOARDING.message}
         </p>
-        <p className="mt-2 text-sm font-bold text-violet-700">{tradingName}</p>
+        <p className="mt-2 text-sm font-bold text-blue-700">{tradingName}</p>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -50,7 +50,7 @@ export default function WorkspaceOnboardingDashboard({
           <Link
             key={label}
             href={href}
-            className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition hover:border-violet-200 hover:bg-violet-50/40"
+            className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:bg-blue-50/40"
           >
             <div className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{label}</div>
             <div className="mt-2 text-3xl font-black text-slate-950">{value}</div>
@@ -68,7 +68,7 @@ export default function WorkspaceOnboardingDashboard({
           <Link
             key={href}
             href={href}
-            className="flex items-start gap-4 rounded-3xl border border-violet-100 bg-violet-50/50 p-5"
+            className="flex items-start gap-4 rounded-3xl border border-blue-100 bg-blue-50/50 p-5"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl vyron-grad-surface text-white">
               <Icon size={22} />
@@ -76,7 +76,7 @@ export default function WorkspaceOnboardingDashboard({
             <div>
               <div className="font-black text-slate-900">{title}</div>
               <div className="mt-1 text-sm font-semibold text-slate-600">{note}</div>
-              <span className="mt-3 inline-flex items-center gap-1 text-xs font-black text-violet-700">
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-black text-blue-700">
                 Open <ArrowRight size={14} />
               </span>
             </div>
@@ -84,9 +84,9 @@ export default function WorkspaceOnboardingDashboard({
         ))}
       </section>
 
-      <section className="rounded-[2rem] border border-dashed border-violet-200 bg-violet-50/40 p-6 text-sm font-semibold text-slate-600">
+      <section className="rounded-[2rem] border border-dashed border-blue-200 bg-blue-50/40 p-6 text-sm font-semibold text-slate-600">
         <div className="flex items-center gap-3">
-          <Building2 className="text-violet-700" size={22} />
+          <Building2 className="text-blue-700" size={22} />
           <span>This workspace is isolated. No Handcrafted or shared demo records are shown here.</span>
         </div>
       </section>

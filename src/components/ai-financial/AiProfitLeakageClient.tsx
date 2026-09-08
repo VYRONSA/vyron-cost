@@ -51,7 +51,7 @@ export default function AiProfitLeakageClient({ leakage }: { leakage: ProfitLeak
                       <td className="px-6 py-4 font-black text-red-700">{money(line.monthlyExposure)}</td>
                       <td className="px-6 py-4 font-semibold text-slate-700">{money(line.annualExposure)}</td>
                       <td className="px-6 py-4 text-right">
-                        <Link href={line.href} className="text-xs font-black text-violet-700 hover:underline">
+                        <Link href={line.href} className="text-xs font-black text-blue-700 hover:underline">
                           Investigate →
                         </Link>
                       </td>

@@ -24,7 +24,7 @@ export default function ActiveWorkspaceGuard() {
           <div className="flex items-center gap-3">
             <AlertTriangle className="text-[var(--vyron-warning-fg)]" size={22} />
             <div>
-              <div className="text-sm font-black text-fuchsia-950">
+              <div className="text-sm font-black text-blue-950">
                 Select a client workspace before processing transactions.
               </div>
               <div className="text-xs font-semibold text-[var(--vyron-warning-fg)]">

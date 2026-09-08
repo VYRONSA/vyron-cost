@@ -57,7 +57,7 @@ export default function DeveloperLoginClient() {
       <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-6 py-16">
         <ClientBrandLockup variant="light" size="lg" />
 
-        <div className="mt-12 rounded-[2rem] border border-violet-100 bg-white p-8 shadow-[0_24px_80px_rgba(76,29,149,0.10)]">
+        <div className="mt-12 rounded-[2rem] border border-blue-100 bg-white p-8 shadow-[0_24px_80px_rgba(30,58,138,0.10)]">
           <h1 className="text-2xl font-black">Developer access</h1>
           <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
             Sign in with your platform account. This login is separate from customer workspace login.
@@ -73,7 +73,7 @@ export default function DeveloperLoginClient() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="developer@vyron.ai"
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-violet-500"
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-500"
               />
             </div>
             <div>
@@ -85,7 +85,7 @@ export default function DeveloperLoginClient() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="Enter your password"
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-violet-500"
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-blue-500"
               />
             </div>
 
@@ -98,13 +98,13 @@ export default function DeveloperLoginClient() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-gradient-to-r from-violet-700 to-fuchsia-600 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-lg shadow-violet-500/20 disabled:opacity-60"
+              className="w-full rounded-xl bg-gradient-to-r from-blue-700 to-blue-600 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-lg shadow-blue-500/20 disabled:opacity-60"
             >
               {loading ? "Signing in..." : "Enter Developer Centre"}
             </button>
           </form>
 
-          <div className="mt-5 flex items-center justify-between text-xs font-black text-violet-700">
+          <div className="mt-5 flex items-center justify-between text-xs font-black text-blue-700">
             <Link href="/login">Customer login</Link>
             <Link href="/landing">Platform overview</Link>
           </div>

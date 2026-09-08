@@ -216,9 +216,9 @@ export default function SupplierManagerClient({ initialSuppliers }: { initialSup
       >
       <section className={`grid min-w-0 max-w-full grid-cols-1 gap-6 ${canCreate || canEdit ? "2xl:grid-cols-[minmax(0,340px)_minmax(0,1fr)_minmax(260px,340px)]" : "2xl:grid-cols-[minmax(0,1fr)_minmax(260px,340px)]"}`}>
       {canCreate || canEdit ? (
-      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700"><Plus size={22} /></div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700"><Plus size={22} /></div>
           <div>
             <h2 className="text-2xl font-black text-slate-900">{editingId ? "Edit Supplier" : "Add Supplier"}</h2>
             <p className="text-sm font-semibold text-slate-500">Supplier details, risk and contact information.</p>
@@ -242,17 +242,17 @@ export default function SupplierManagerClient({ initialSuppliers }: { initialSup
           >
             Save Supplier
           </button>
-          {message && <div className="rounded-2xl border border-[#A855F7]/25 bg-[#A855F7]/10 px-4 py-3 text-sm font-bold text-[#A855F7]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#3B82F6]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div>}
         </div>
       </div>
       ) : null}
 
-      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(81,63,190,0.08)]">
+      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
         <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h2 className="text-2xl font-black text-slate-900">Suppliers</h2>
-          <div className="flex min-w-0 max-w-full items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-            <Search size={18} className="shrink-0 text-violet-700" />
+          <div className="flex min-w-0 max-w-full items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+            <Search size={18} className="shrink-0 text-blue-700" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search suppliers..." className="min-w-0 w-full bg-transparent text-sm font-bold outline-none placeholder:text-slate-400 md:w-64" />
           </div>
         </div>
@@ -275,10 +275,10 @@ export default function SupplierManagerClient({ initialSuppliers }: { initialSup
             ) : null}
             {filtered.map((supplier) => (
               <div key={supplier.id} className="grid grid-cols-[220px_150px_130px_130px_160px] items-center border-t border-slate-100 px-5 py-4 text-sm">
-                <Link href={`/suppliers/${supplier.id}`} className="font-black text-violet-700">{supplier.supplier_name}</Link>
+                <Link href={`/suppliers/${supplier.id}`} className="font-black text-blue-700">{supplier.supplier_name}</Link>
                 <div className="font-bold text-slate-500">{supplier.category}</div>
-                <div className="font-black text-violet-700">{supplier.risk_status}</div>
-                <div className={`font-black ${Number(supplier.last_price_movement || 0) > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#A855F7]"}`}>{Number(supplier.last_price_movement || 0).toFixed(1)}%</div>
+                <div className="font-black text-blue-700">{supplier.risk_status}</div>
+                <div className={`font-black ${Number(supplier.last_price_movement || 0) > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#3B82F6]"}`}>{Number(supplier.last_price_movement || 0).toFixed(1)}%</div>
                 <div className="flex gap-2">
                   {canEdit ? (
                     <button onClick={() => edit(supplier)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Edit</button>

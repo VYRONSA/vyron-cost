@@ -72,8 +72,8 @@ export default function VyronCoreSimulationClient({ initialSimulations }: { init
       }}
     >
       <section className="grid gap-8">
-        <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-violet-950 to-indigo-950 p-8 text-white">
-        <div className="text-xs font-black uppercase tracking-[0.2em] text-violet-300">VYRON CORE</div>
+        <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-8 text-white">
+        <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VYRON CORE</div>
         <h2 className="mt-2 text-3xl font-black">Simulation Engine</h2>
         <p className="mt-2 max-w-2xl text-sm font-semibold text-slate-300">
           What-if workforce scenarios — overtime, headcount, attrition, field coverage and travel reduction.
@@ -128,7 +128,7 @@ export default function VyronCoreSimulationClient({ initialSimulations }: { init
           type="button"
           onClick={() => void runSimulation()}
           disabled={running}
-          className="mt-5 rounded-2xl bg-violet-700 px-6 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
+          className="mt-5 rounded-2xl bg-blue-700 px-6 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
         >
           {running ? "Running…" : "Run simulation"}
         </button>
@@ -149,13 +149,13 @@ export default function VyronCoreSimulationClient({ initialSimulations }: { init
                       {sim.scenarioType.replace(/_/g, " ")} · {new Date(sim.createdAt).toLocaleString("en-ZA")}
                     </div>
                   </div>
-                  <span className="rounded-full bg-[#A855F7]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]">{sim.status}</span>
+                  <span className="rounded-full bg-[#3B82F6]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]">{sim.status}</span>
                 </div>
                 <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {Object.entries(sim.outputResults).map(([key, value]) => (
                     <div key={key} className="rounded-xl bg-white px-3 py-2 text-sm">
                       <div className="text-[10px] font-black uppercase text-slate-400">{key.replace(/([A-Z])/g, " $1")}</div>
-                      <div className="font-black text-violet-700">{formatOutput(key, value)}</div>
+                      <div className="font-black text-blue-700">{formatOutput(key, value)}</div>
                     </div>
                   ))}
                 </div>

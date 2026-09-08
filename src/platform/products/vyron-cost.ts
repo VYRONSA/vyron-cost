@@ -19,7 +19,7 @@ export const VYRON_COST_PRODUCT: VyronProductDefinition = {
   tagline: "AI cost intelligence, procurement control and inventory accuracy.",
   theme: {
     primary: "#1D6BFF",
-    accent: "#7E22CE",
+    accent: "#1D4ED8",
     label: "COST",
   },
   packages: VYRON_COST_PACKAGES,

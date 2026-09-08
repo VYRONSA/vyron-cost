@@ -27,7 +27,7 @@ export default function BoardroomInsightsClient({ boardroom }: { boardroom: Boar
     >
       <section className="grid gap-10">
         <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-[2rem] bg-[#A855F7]/10 p-6">
+        <div className="rounded-[2rem] bg-[#3B82F6]/10 p-6">
           <div className="text-xs font-black uppercase text-[#4D7C0F]">Projected annual savings</div>
           <div className="mt-2 text-4xl font-black text-[#4D7C0F]">{money(boardroom.projectedAnnualSavings)}</div>
         </div>
@@ -48,7 +48,7 @@ export default function BoardroomInsightsClient({ boardroom }: { boardroom: Boar
                   <div className="font-black text-slate-900">{r.title}</div>
                   <p className="text-sm text-slate-600">{r.detail}</p>
                   {r.href ? (
-                    <Link href={r.href} className="mt-1 inline-block text-xs font-black text-violet-700">
+                    <Link href={r.href} className="mt-1 inline-block text-xs font-black text-blue-700">
                       View →
                     </Link>
                   ) : null}
@@ -69,12 +69,12 @@ export default function BoardroomInsightsClient({ boardroom }: { boardroom: Boar
                   <div className="font-black text-slate-900">{o.title}</div>
                   <p className="text-sm text-slate-600">{o.detail}</p>
                   {o.href ? (
-                    <Link href={o.href} className="mt-1 inline-block text-xs font-black text-violet-700">
+                    <Link href={o.href} className="mt-1 inline-block text-xs font-black text-blue-700">
                       View →
                     </Link>
                   ) : null}
                 </div>
-                <div className="text-right font-black text-[#7E22CE]">{money(o.value)}</div>
+                <div className="text-right font-black text-[#1D4ED8]">{money(o.value)}</div>
               </li>
             ))}
           </ol>
@@ -86,7 +86,7 @@ export default function BoardroomInsightsClient({ boardroom }: { boardroom: Boar
         <ul className="mt-4 space-y-3">
           {boardroom.strategicActions.map((action) => (
             <li key={action} className="flex gap-3 text-sm leading-7 text-slate-200">
-              <span className="text-violet-400">→</span>
+              <span className="text-blue-400">→</span>
               {action}
             </li>
           ))}

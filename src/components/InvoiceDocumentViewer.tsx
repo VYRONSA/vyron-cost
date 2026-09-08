@@ -61,7 +61,7 @@ function RegionOverlay({
   return (
     <div
       className={`pointer-events-none absolute rounded-sm border-2 transition-colors ${
-        active ? "border-fuchsia-500 bg-fuchsia-400/25 shadow-[0_0_0_2px_rgba(217,70,239,0.35)]" : "border-violet-400/50 bg-violet-400/10"
+        active ? "border-indigo-500 bg-indigo-400/30 shadow-[0_0_0_2px_rgba(99,102,241,0.45)]" : "border-blue-400/50 bg-blue-400/10"
       }`}
       style={{
         left: `${bbox.x * 100}%`,
@@ -243,10 +243,10 @@ export default function InvoiceDocumentViewer({
 
   const toolbar = (
     <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 bg-slate-50 px-2 py-2">
-      <button type="button" onClick={zoomOut} className="rounded-lg border border-slate-200 bg-white p-1.5 hover:bg-violet-50" title="Zoom out">
+      <button type="button" onClick={zoomOut} className="rounded-lg border border-slate-200 bg-white p-1.5 hover:bg-blue-50" title="Zoom out">
         <Minus size={14} />
       </button>
-      <button type="button" onClick={zoomIn} className="rounded-lg border border-slate-200 bg-white p-1.5 hover:bg-violet-50" title="Zoom in">
+      <button type="button" onClick={zoomIn} className="rounded-lg border border-slate-200 bg-white p-1.5 hover:bg-blue-50" title="Zoom in">
         <Plus size={14} />
       </button>
       <button type="button" onClick={() => setFitMode("width")} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-black">
@@ -261,7 +261,7 @@ export default function InvoiceDocumentViewer({
           type="button"
           onClick={() => applyZoomPreset(preset)}
           className={`rounded-lg border px-2 py-1 text-[10px] font-black ${
-            fitMode === "custom" && scale === preset ? "border-violet-500 bg-violet-100 text-violet-800" : "border-slate-200 bg-white"
+            fitMode === "custom" && scale === preset ? "border-blue-500 bg-blue-100 text-blue-800" : "border-slate-200 bg-white"
           }`}
         >
           {preset * 100}%
@@ -377,7 +377,7 @@ export default function InvoiceDocumentViewer({
               key={pageNum}
               type="button"
               onClick={() => goToPage(pageNum)}
-              className={`overflow-hidden rounded border-2 bg-white ${currentPage === pageNum ? "border-violet-600" : "border-slate-200"}`}
+              className={`overflow-hidden rounded border-2 bg-white ${currentPage === pageNum ? "border-blue-600" : "border-slate-200"}`}
               title={`Page ${pageNum}`}
             >
               <Page pageNumber={pageNum} width={56} renderTextLayer={false} renderAnnotationLayer={false} />
