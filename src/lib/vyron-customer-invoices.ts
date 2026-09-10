@@ -242,14 +242,21 @@ export async function listCustomerInvoices(supabase: SupabaseClient, companyId: 
 }
 
 export async function getCustomerInvoice(supabase: SupabaseClient, id: string, companyId?: string) {
+  /*
+   * A company-scoped read matches company_id in the query itself, and the row is
+   * checked again below. An invoice with a NULL company belongs to no tenant, so
+   * it satisfies no company's read — previously it satisfied every company's.
+   */
+  let invoiceQuery = supabase.from("vyron_customer_invoices").select("*").eq("id", id);
+  if (companyId) invoiceQuery = invoiceQuery.eq("company_id", companyId);
   const [{ data: invoice, error }, { data: lines, error: lineError }] = await Promise.all([
-    supabase.from("vyron_customer_invoices").select("*").eq("id", id).maybeSingle(),
+    invoiceQuery.maybeSingle(),
     supabase.from("vyron_customer_invoice_lines").select("*").eq("invoice_id", id).order("created_at"),
   ]);
   if (error) throw new Error(error.message);
   if (lineError) throw new Error(lineError.message);
   if (!invoice) return null;
-  if (companyId && invoice.company_id && invoice.company_id !== companyId) return null;
+  if (companyId && invoice.company_id !== companyId) return null;
   return { invoice: invoice as CustomerInvoiceRow, lines: (lines || []) as CustomerInvoiceLineRow[] };
 }
 

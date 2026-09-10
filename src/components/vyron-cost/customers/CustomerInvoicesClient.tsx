@@ -1092,6 +1092,24 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
     if (selectedInvoiceId === id) setSelectedInvoiceId(null);
   }
 
+  /*
+   * Sent is recorded only on purpose. The Mail App link opens the user's own
+   * email client and proves nothing was sent, so it no longer changes status.
+   * An invoice reaches Sent either when VYRON COST's own email is accepted by
+   * the provider (the server moves it), or when a user confirms here that they
+   * sent it themselves.
+   */
+  async function markInvoiceSent(invoice: CustomerInvoice) {
+    if (
+      !confirm(
+        `Mark invoice ${invoice.invoiceNumber} as Sent?\n\nOnly do this if you have already sent it to the customer yourself. VYRON COST has not emailed it.`
+      )
+    ) {
+      return;
+    }
+    await updateInvoiceStatus(invoice.id, "Sent");
+  }
+
   function emailHref(invoice: CustomerInvoice) {
     const subject = encodeURIComponent(`Invoice ${invoice.invoiceNumber} - ${invoice.customerName}`);
     const body = encodeURIComponent(invoiceEmailBody(invoice));
@@ -1570,10 +1588,13 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                         <button onClick={() => openInvoice(invoice.id)} className="rounded-xl bg-blue-50 px-2.5 py-1.5 text-xs font-black text-blue-800">View</button>
                         {invoice.status === "Draft" && canApprove ? <button onClick={() => updateInvoiceStatus(invoice.id, "Approved")} className="rounded-xl bg-indigo-50 px-2.5 py-1.5 text-xs font-black text-indigo-800">Approve</button> : null}
                         {invoice.status === "Approved" && canEmail ? (
-                          <a onClick={() => updateInvoiceStatus(invoice.id, "Sent")} href={emailHref(invoice)} className="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1.5 text-xs font-black text-blue-800">
-                            <Mail size={13} />
-                            Email
-                          </a>
+                          <>
+                            <a href={emailHref(invoice)} title="Opens your own email app. Does not attach the PDF and does not change the invoice status." className="inline-flex items-center gap-1 rounded-xl bg-blue-50 px-2.5 py-1.5 text-xs font-black text-blue-800">
+                              <Mail size={13} />
+                              Mail App
+                            </a>
+                            <button onClick={() => void markInvoiceSent(invoice)} className="rounded-xl bg-indigo-50 px-2.5 py-1.5 text-xs font-black text-indigo-800">Mark Sent</button>
+                          </>
                         ) : null}
                         {invoice.status === "Sent" && canEdit ? <button onClick={() => updateInvoiceStatus(invoice.id, "Paid")} className="rounded-xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-2.5 py-1.5 text-xs font-black text-[#4D7C0F]">Paid</button> : null}
                         {invoice.status !== "Paid" && invoice.status !== "Cancelled" && canEdit ? <button onClick={() => updateInvoiceStatus(invoice.id, "Cancelled")} className="rounded-xl bg-slate-100 px-2.5 py-1.5 text-xs font-black text-slate-700">Cancel</button> : null}
@@ -1666,14 +1687,22 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                 </button>
               ) : null}
               {selectedInvoice.status === "Approved" && canEmail ? (
-                <a
-                  onClick={() => updateInvoiceStatus(selectedInvoice.id, "Sent")}
-                  href={emailHref(selectedInvoice)}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-blue-50 px-5 py-3 text-sm font-black text-blue-800"
-                >
-                  <Mail size={17} />
-                  Email
-                </a>
+                <>
+                  <a
+                    href={emailHref(selectedInvoice)}
+                    title="Opens your own email app. Does not attach the PDF and does not change the invoice status."
+                    className="inline-flex items-center gap-2 rounded-2xl bg-blue-50 px-5 py-3 text-sm font-black text-blue-800"
+                  >
+                    <Mail size={17} />
+                    Open in Mail App
+                  </a>
+                  <button
+                    onClick={() => void markInvoiceSent(selectedInvoice)}
+                    className="rounded-2xl bg-indigo-50 px-5 py-3 text-sm font-black text-indigo-800"
+                  >
+                    Mark as Sent
+                  </button>
+                </>
               ) : null}
               {selectedInvoice.status === "Sent" && canEdit ? (
                 <button onClick={() => updateInvoiceStatus(selectedInvoice.id, "Paid")} className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
@@ -1702,6 +1731,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                   emailUrl={canEmail ? `/api/customer-invoices/${selectedInvoice.id}/email` : undefined}
                   fileName={`${selectedInvoice.invoiceNumber}.pdf`}
                   defaultRecipient={selectedInvoice.customerEmail}
+                  onEmailSent={() => void refreshSelectedInvoice(selectedInvoice.id)}
                 />
               )}
               {/*

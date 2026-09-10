@@ -425,20 +425,15 @@ export default function VyronMobilePurchaseOrderDetailWorkspace({ poId }: { poId
       const response = await fetch(`/api/purchase-orders/${poId}/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: supplierEmail,
-          subject: `Purchase Order ${po.po_number}`,
-          textBody: `Please find attached purchase order ${po.po_number}.`,
-          actor: "mobile-workspace",
-          ...body,
-        }),
+        // Subject, body and audit actor are decided by the server.
+        body: JSON.stringify({ to: supplierEmail, ...body }),
       });
       const json = await response.json().catch(() => ({ ok: false }));
       if (!json.ok) {
-        setMessage(json.error || "Email send failed.");
+        setMessage(json.error || "The email could not be sent. Please try again or contact your administrator.");
         return;
       }
-      setMessage(json.status === "sent" ? "Purchase order email sent." : "Purchase order email failed.");
+      setMessage("Purchase order email accepted for delivery.");
       await load();
     } finally {
       setBusyAction(null);

@@ -291,6 +291,32 @@ const REGISTER = [
       "Support library, not directly executable. Pure resolution with existsSync only — no network, no database, no writes. Exists so verification scripts import the shipped modules rather than copies, without rewriting production imports to suit a test.",
   },
   {
+    id: "document-email-test-hook",
+    file: "scripts/support/document-email-test-hook.mjs",
+    family: A,
+    purpose:
+      "Node module resolution hook that substitutes in-process doubles for the Supabase, workspace-session and workspace-company modules in the document email route tests.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a",
+    evidence:
+      "Support library, not directly executable. Pure resolution — no network, no database, no writes. The doubles it maps to live in scripts/support/document-email-test-stubs/ and read only a global the running test installs; the Supabase double is an in-memory store.",
+  },
+  {
+    id: "test-document-email",
+    file: "scripts/test-document-email.mjs",
+    family: A,
+    purpose:
+      "Regression test for customer invoice, sales order, purchase order and goods receipt email: Resend transport, PDF attachment, tenant ownership, recipient validation, safe errors and audit identity.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "restores globalThis.fetch in a finally block; asserted afterwards",
+    evidence:
+      "Imports the four shipped email routes via scripts/support/ts-alias-hook.mjs and scripts/support/document-email-test-hook.mjs. The database is an in-memory stand-in seeded with a disposable QA tenant; globalThis.fetch is replaced by a scripted Resend stub that refuses every other URL; a dummy key is set in-process and .env.local is never read. No database, no network, no email sent. Proves the request VYRON COST makes, not delivery.",
+  },
+  {
     id: "visual-capture",
     file: "scripts/visual-capture.mjs",
     family: A,

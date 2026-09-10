@@ -9,6 +9,8 @@ export type DocumentPdfActionsProps = {
   fileName: string;
   defaultRecipient?: string;
   className?: string;
+  /** Called after the email provider accepts the message, so the page can refresh document status. */
+  onEmailSent?: () => void;
 };
 
 async function fetchPdfBlob(pdfUrl: string) {
@@ -24,7 +26,7 @@ async function fetchPdfBlob(pdfUrl: string) {
  * Shared VYRON platform document toolbar — Print / Preview / Download / Email PDF,
  * backed by the real document PDF engine (not a browser screenshot).
  */
-export function DocumentPdfActions({ pdfUrl, emailUrl, fileName, defaultRecipient, className }: DocumentPdfActionsProps) {
+export function DocumentPdfActions({ pdfUrl, emailUrl, fileName, defaultRecipient, className, onEmailSent }: DocumentPdfActionsProps) {
   const [busy, setBusy] = useState<"print" | "preview" | "download" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
@@ -67,10 +69,16 @@ export function DocumentPdfActions({ pdfUrl, emailUrl, fileName, defaultRecipien
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ to: recipient.trim() }),
       });
-      const data = await response.json();
-      setSendResult(data.ok ? `Sent to ${recipient.trim()}.` : data.error || "Send failed.");
-    } catch (err) {
-      setSendResult(err instanceof Error ? err.message : "Send failed.");
+      const data = await response.json().catch(() => null);
+      if (data?.ok) {
+        // Accepted by the email provider for delivery — not confirmed as delivered.
+        setSendResult(`Email accepted for delivery to ${data.recipient || recipient.trim()}.`);
+        onEmailSent?.();
+      } else {
+        setSendResult(data?.error || "The email could not be sent. Please try again or contact your administrator.");
+      }
+    } catch {
+      setSendResult("The email could not be sent. Please try again or contact your administrator.");
     } finally {
       setSending(false);
     }

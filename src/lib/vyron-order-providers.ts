@@ -26,7 +26,11 @@ export type ProviderResult = {
   provider: string;
   reference: string | null;
   error: string | null;
+  /** Why an email did not go. Set by the email adapter only; absent on success. */
+  failure?: EmailFailure;
 };
+
+export type EmailFailure = "not_configured" | "timeout" | "unavailable" | "rejected";
 
 const notConfigured = (provider: string, missing: string[]): ProviderResult => ({
   status: "Not Configured",
@@ -50,22 +54,40 @@ export function emailProviderConfigured() {
   return missingVars([...EMAIL_VARS]).length === 0;
 }
 
+/** How long an email send may wait for Resend before it is abandoned as a timeout. */
+export const EMAIL_TIMEOUT_MS = 15_000;
+
+export type ProviderEmailAttachment = {
+  filename: string;
+  contentBase64: string;
+  contentType: string;
+};
+
 /**
  * Transactional email through Resend.
  *
  * VYRON_EMAIL_REPLY_TO is optional — without it a reply goes to the from
- * address, which is a reasonable default rather than a failure.
+ * address, which is a reasonable default rather than a failure. A caller that
+ * has resolved its own Reply-To passes `replyTo`; null means send without one.
+ *
+ * The request is bounded by a timeout, so a slow provider costs a Failed result
+ * rather than a serverless function hanging until the platform kills it.
  */
 export async function sendProviderEmail(input: {
   to: string;
   subject: string;
   html: string;
   text: string;
+  cc?: string[];
+  bcc?: string[];
+  replyTo?: string | null;
+  attachments?: ProviderEmailAttachment[];
+  timeoutMs?: number;
 }): Promise<ProviderResult> {
   const missing = missingVars([...EMAIL_VARS]);
-  if (missing.length) return notConfigured("resend", missing);
+  if (missing.length) return { ...notConfigured("resend", missing), failure: "not_configured" };
 
-  const replyTo = env("VYRON_EMAIL_REPLY_TO");
+  const replyTo = input.replyTo === undefined ? env("VYRON_EMAIL_REPLY_TO") : input.replyTo || "";
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -79,8 +101,20 @@ export async function sendProviderEmail(input: {
         subject: input.subject,
         html: input.html,
         text: input.text,
+        ...(input.cc?.length ? { cc: input.cc } : {}),
+        ...(input.bcc?.length ? { bcc: input.bcc } : {}),
         ...(replyTo ? { reply_to: [replyTo] } : {}),
+        ...(input.attachments?.length
+          ? {
+              attachments: input.attachments.map((attachment) => ({
+                filename: attachment.filename,
+                content: attachment.contentBase64,
+                content_type: attachment.contentType,
+              })),
+            }
+          : {}),
       }),
+      signal: AbortSignal.timeout(input.timeoutMs ?? EMAIL_TIMEOUT_MS),
     });
 
     const raw = await response.text();
@@ -88,9 +122,18 @@ export async function sendProviderEmail(input: {
     try { parsed = raw ? (JSON.parse(raw) as Record<string, unknown>) : {}; } catch { parsed = {}; }
 
     if (!response.ok) {
-      // Resend's own message, never the key that produced it.
-      const detail = typeof parsed.message === "string" ? parsed.message : `HTTP ${response.status}`;
-      return { status: "Failed", provider: "resend", reference: null, error: `Resend rejected the message: ${detail}` };
+      // Resend's own short message, never the raw body and never the key that
+      // produced it. Rate limiting and server errors are the provider being
+      // unavailable; any other refusal is the provider rejecting this message.
+      const detail = typeof parsed.message === "string" ? parsed.message.slice(0, 300) : "no message";
+      const unavailable = response.status === 429 || response.status >= 500;
+      return {
+        status: "Failed",
+        provider: "resend",
+        reference: null,
+        error: `Resend ${unavailable ? "was unavailable" : "rejected the message"} (HTTP ${response.status}): ${detail}`,
+        failure: unavailable ? "unavailable" : "rejected",
+      };
     }
     return {
       status: "Sent",
@@ -99,11 +142,15 @@ export async function sendProviderEmail(input: {
       error: null,
     };
   } catch (error) {
+    const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
     return {
       status: "Failed",
       provider: "resend",
       reference: null,
-      error: error instanceof Error ? `Could not reach Resend: ${error.message}` : "Could not reach Resend.",
+      error: timedOut
+        ? "Resend did not respond before the timeout."
+        : error instanceof Error ? `Could not reach Resend: ${error.message}` : "Could not reach Resend.",
+      failure: timedOut ? "timeout" : "unavailable",
     };
   }
 }
@@ -328,7 +375,6 @@ export function providerStatuses(): Record<"inApp" | "email" | "sms" | "whatsapp
   const emailMissing = missingVars([...EMAIL_VARS]);
   const smsMissing = missingVars([...SMS_VARS]);
   const whatsappMissing = missingVars([...WHATSAPP_VARS]);
-  const legacyWebhook = env("VYRON_EMAIL_WEBHOOK_URL");
 
   return {
     inApp: {
@@ -339,9 +385,7 @@ export function providerStatuses(): Record<"inApp" | "email" | "sms" | "whatsapp
     },
     email: emailMissing.length === 0
       ? { configured: true, provider: "Resend", missing: [], detail: `Sending from ${env("VYRON_EMAIL_FROM")}.` }
-      : legacyWebhook
-        ? { configured: true, provider: "Webhook", missing: [], detail: "Using the legacy VYRON email webhook. Set RESEND_API_KEY to move to Resend." }
-        : { configured: false, provider: null, missing: emailMissing, detail: `Not configured. Set ${emailMissing.join(" and ")}.` },
+      : { configured: false, provider: null, missing: emailMissing, detail: `Not configured. Set ${emailMissing.join(" and ")}.` },
     sms: smsMissing.length === 0
       ? { configured: true, provider: "Twilio", missing: [], detail: `Sending from ${env("TWILIO_FROM_NUMBER")}.` }
       : { configured: false, provider: null, missing: smsMissing, detail: `Not configured. Set ${smsMissing.join(", ")}.` },

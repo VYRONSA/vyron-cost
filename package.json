@@ -30,7 +30,8 @@
     "measure:workspace-density": "node scripts/measure-review-workspace-density.mjs",
     "certify:workflow": "node scripts/certify-production-workflow.mjs",
     "test:approval-safety": "node scripts/test-approval-safety.mjs",
-    "test:crop-fidelity": "node scripts/test-crop-fidelity.mjs"
+    "test:crop-fidelity": "node scripts/test-crop-fidelity.mjs",
+    "test:document-email": "node scripts/test-document-email.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",

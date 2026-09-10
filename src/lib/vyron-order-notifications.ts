@@ -1,8 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { sendDocumentEmail } from "@/lib/platform/documents/sendDocumentEmail";
 import {
   sendProviderEmail, sendProviderSms, sendProviderWhatsApp,
-  emailProviderConfigured, providerStatuses, toE164,
+  providerStatuses, toE164,
 } from "@/lib/vyron-order-providers";
 
 /**
@@ -17,9 +16,10 @@ import {
  * after the transitions the existing engine already performs; nothing here can
  * move an order.
  *
- * Channels are adapters over one shared transport. Email reuses the platform's
- * sendDocumentEmail. SMS and WhatsApp have no provider in this product yet, so
- * they record "Not Configured" and are never reported as sent.
+ * Channels are adapters over the providers in vyron-order-providers. Email goes
+ * through Resend, the same provider platform document emails use. A channel
+ * whose provider is not configured records "Not Configured" and is never
+ * reported as sent.
  */
 
 /* ------------------------------------------------------------------ events */
@@ -323,12 +323,11 @@ async function recordResult(
 /* ----------------------------------------------------------------- channels */
 
 /**
- * Email.
+ * Email through Resend. Without RESEND_API_KEY and VYRON_EMAIL_FROM this
+ * reports Not Configured and sends nothing.
  *
- * Resend is the provider. Where it is not configured but the older
- * VYRON_EMAIL_WEBHOOK_URL is, the legacy platform transport is used instead, so
- * an environment set up before Resend keeps working rather than silently going
- * quiet. With neither, this reports Not Configured and sends nothing.
+ * The former VYRON_EMAIL_WEBHOOK_URL fallback is gone: no receiver for it
+ * existed anywhere, so it could only ever have reported a send to nowhere.
  */
 async function deliverEmail(input: {
   to: string;
@@ -338,38 +337,12 @@ async function deliverEmail(input: {
   documentId: string;
   documentNumber: string;
 }) {
-  if (emailProviderConfigured()) {
-    return sendProviderEmail({
-      to: input.to,
-      subject: input.subject,
-      html: input.htmlBody,
-      text: input.textBody,
-    });
-  }
-
-  const result = await sendDocumentEmail({
-    documentType: "vyron-order-notification",
-    documentId: input.documentId,
-    documentNumber: input.documentNumber,
+  return sendProviderEmail({
     to: input.to,
     subject: input.subject,
-    textBody: input.textBody,
-    htmlBody: input.htmlBody,
+    html: input.htmlBody,
+    text: input.textBody,
   });
-  if (result.provider === "none") {
-    return {
-      status: "Not Configured" as DeliveryStatus,
-      provider: "none",
-      reference: null,
-      error: "Not configured: RESEND_API_KEY and VYRON_EMAIL_FROM are not set.",
-    };
-  }
-  return {
-    status: (result.status === "sent" ? "Sent" : "Failed") as DeliveryStatus,
-    provider: result.provider,
-    reference: result.messageId,
-    error: result.error,
-  };
 }
 
 /** SMS through Twilio. Reports Not Configured when credentials are absent. */
