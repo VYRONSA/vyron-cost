@@ -483,6 +483,8 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
    */
   const [branches, setBranches] = useState<{ id: string; branch_name: string; branch_code: string | null; is_active: boolean }[]>([]);
   const [branchId, setBranchId] = useState<string>("");
+  /** The saved branch of a draft being loaded, applied once its customer's branches arrive. */
+  const pendingBranchIdRef = useRef<string | null>(null);
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerVatNumber, setCustomerVatNumber] = useState("");
   const [customerTerms, setCustomerTerms] = useState("30 Days");
@@ -521,6 +523,13 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
     void branchesFor.then((list: { id: string; branch_name: string; branch_code: string | null; is_active: boolean }[]) => {
       if (cancelled) return;
       setBranches(list);
+      // A draft being edited keeps the branch it was saved with.
+      const pending = pendingBranchIdRef.current;
+      pendingBranchIdRef.current = null;
+      if (pending && list.some((branch) => String(branch.id) === pending)) {
+        setBranchId(pending);
+        return;
+      }
       // One branch is chosen for the operator, and stays changeable.
       setBranchId(list.length === 1 ? String(list[0].id) : "");
     });
@@ -744,6 +753,14 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
       return;
     }
 
+    /*
+     * The branch list reloads when the customer changes and would reset the
+     * branch, so the saved branch waits in a ref for that reload. It is also set
+     * directly, for when the customer is unchanged and no reload happens.
+     */
+    const savedBranchId = data.invoice.branch_id ? String(data.invoice.branch_id) : "";
+    pendingBranchIdRef.current = savedBranchId || null;
+    setBranchId(savedBranchId);
     setCustomerName(String(data.invoice.customer_name || ""));
     setCustomerId(data.invoice.customer_id ? String(data.invoice.customer_id) : null);
     setInvoiceDate(String(data.invoice.invoice_date || today()).slice(0, 10));
@@ -764,8 +781,6 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
     setEditingInvoiceId(id);
     setFormOpen(true);
     setSelectedInvoiceId(null);
-    // The branch selector reloads from the customer, so it is set afterwards.
-    setTimeout(() => setBranchId(data.invoice.branch_id ? String(data.invoice.branch_id) : ""), 900);
     requestAnimationFrame(() => formRef.current?.scrollIntoView({ block: "start", behavior: "auto" }));
   }
 

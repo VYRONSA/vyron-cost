@@ -62,6 +62,31 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const companyId = await resolveApiCompanyId();
     if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
 
+    if (Array.isArray(body.lines)) {
+      /*
+       * Editing a draft. Gated on the same permission that creates one — the
+       * existing model maps edit_customer_invoices onto invoices.create — and
+       * enforced here, not by whether the browser drew a button.
+       *
+       * Checked before the branch-only change below: the edit form always sends
+       * branchId (null when there is none), so testing for a branch first sent
+       * every edit down the branch-only path and silently dropped the lines,
+       * dates and notes while still answering ok.
+       */
+      await requireWorkspacePermission("invoices.create");
+      const invoice = await updateCustomerInvoice(supabase, companyId, id, {
+        customerId: body.customerId ?? body.customer_id,
+        customerName: body.customerName,
+        invoiceDate: body.invoiceDate,
+        dueDate: body.dueDate ?? body.due_date,
+        notes: body.notes,
+        pricesIncludeTax: body.pricesIncludeTax,
+        branchId: body.branchId ?? body.branch_id,
+        lines: body.lines,
+      });
+      return NextResponse.json({ ok: true, invoice });
+    }
+
     if (body.branchId !== undefined || body.branch_id !== undefined) {
       /*
        * Changing where a draft is billed is an edit, so it is gated on the edit
@@ -75,26 +100,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         id,
         body.branchId ?? body.branch_id ?? null
       );
-      return NextResponse.json({ ok: true, invoice });
-    }
-
-    if (Array.isArray(body.lines)) {
-      /*
-       * Editing a draft. Gated on the same permission that creates one — the
-       * existing model maps edit_customer_invoices onto invoices.create — and
-       * enforced here, not by whether the browser drew a button.
-       */
-      await requireWorkspacePermission("invoices.create");
-      const invoice = await updateCustomerInvoice(supabase, companyId, id, {
-        customerId: body.customerId ?? body.customer_id,
-        customerName: body.customerName,
-        invoiceDate: body.invoiceDate,
-        dueDate: body.dueDate ?? body.due_date,
-        notes: body.notes,
-        pricesIncludeTax: body.pricesIncludeTax,
-        branchId: body.branchId ?? body.branch_id,
-        lines: body.lines,
-      });
       return NextResponse.json({ ok: true, invoice });
     }
 
