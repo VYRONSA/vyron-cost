@@ -1,0 +1,46 @@
+diff --git a/src/lib/vyron-inventory-transactions.ts b/src/lib/vyron-inventory-transactions.ts
+index 27ce290..afb283e 100644
+--- a/src/lib/vyron-inventory-transactions.ts
++++ b/src/lib/vyron-inventory-transactions.ts
+@@ -214,6 +214,12 @@ export type PostInventoryTransactionInput = {
+   itemDescription?: string;
+   allowNegative?: boolean;
+   skipStockMovement?: boolean;
++  /**
++   * Ledger label for this movement. Defaults to the transaction type's label;
++   * a Receipt that is not a purchase (a production completion, the incoming
++   * leg of a transfer) says what it is instead.
++   */
++  movementType?: LedgerMovementType;
+ };
+ 
+ export async function postInventoryTransaction(
+@@ -291,7 +297,7 @@ export async function postInventoryTransaction(
+     await postStockMovement(supabase, {
+       companyId: input.companyId,
+       stockItemId,
+-      movementType: ledgerMovementType(input.transactionType),
++      movementType: input.movementType ?? ledgerMovementType(input.transactionType),
+       quantityIn: qtyIn,
+       quantityOut: qtyOut,
+       unitCost,
+@@ -399,6 +405,7 @@ export async function postInventoryTransfer(
+     referenceType: input.referenceType || "inventory_transfer",
+     referenceId: input.referenceId || transferGroupId,
+     referenceLabel: `Transfer in ← ${fromItem.description}`,
++    movementType: "Transfer",
+     notes: input.notes || null,
+     createdBy: input.createdBy,
+   });
+diff --git a/src/lib/vyron-manufacturing.ts b/src/lib/vyron-manufacturing.ts
+index 5bab883..5eb902d 100644
+--- a/src/lib/vyron-manufacturing.ts
++++ b/src/lib/vyron-manufacturing.ts
+@@ -1039,6 +1039,7 @@ export async function completeProductionRun(
+         referenceLabel: run.run_number,
+         createdBy: actor,
+         notes: `Production completion ${run.run_number}`,
++        movementType: "Production Completion",
+       });
+     } catch (fgErr) {
+       // Receiving the finished goods failed, so the raw materials go back.
