@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { normalizePermissionMap } from "@/lib/vyron-workspace-permissions";
+import { isKnownPackageName, KNOWN_PACKAGE_NAMES, packageModuleSummary } from "@/platform/managers/package-manager";
 import {
   composeAddress,
   addressHasContent,
@@ -241,12 +242,7 @@ function mapMember(profile: Record<string, unknown>, membership: Record<string, 
 }
 
 function packageModulesLabel(packageName: string) {
-  const pkg = packageName.toLowerCase();
-  if (pkg.includes("enterprise")) return ["All modules", "Advanced intelligence", "Multi-company", "API/integrations"];
-  if (pkg.includes("professional") || pkg.includes("demo")) {
-    return ["Dashboard", "Suppliers", "Costing", "Procurement", "Inventory", "Manufacturing", "Customers", "Xero"];
-  }
-  return ["Dashboard", "Suppliers", "Ingredients", "Products", "Recipes", "Basic reports"];
+  return packageModuleSummary(packageName);
 }
 
 const EMPTY_STRUCTURED_ADDRESS: StructuredAddress = {
@@ -778,6 +774,11 @@ export async function createClientWorkspace(input: CreateClientInput): Promise<{
   const adminEmail = input.admin.email.trim().toLowerCase();
 
   if (!companyName) throw new Error("Company name is required.");
+  // Only a package the platform recognises exactly: an unknown name would be
+  // stored and then silently licensed as Professional.
+  if (!isKnownPackageName(input.packageName)) {
+    throw new Error(`Unknown package "${input.packageName}". Allowed: ${KNOWN_PACKAGE_NAMES.join(", ")}.`);
+  }
   if (!input.admin.firstName.trim() || !input.admin.surname.trim()) {
     throw new Error("Primary administrator first name and surname are required.");
   }

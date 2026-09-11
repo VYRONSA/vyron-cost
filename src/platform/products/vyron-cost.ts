@@ -10,6 +10,7 @@ const VYRON_COST_PACKAGES: PackageId[] = [
   "professional",
   "enterprise",
   "multi_store_operations",
+  "full",
 ];
 
 export const VYRON_COST_PRODUCT: VyronProductDefinition = {

@@ -43,6 +43,7 @@ const PACKAGE_ICONS: Record<PackageId, typeof PackageOpen> = {
   professional: TrendingUp,
   enterprise: Crown,
   multi_store_operations: Store,
+  full: Sparkles,
 };
 
 const CAPABILITY_ICONS: Record<FeatureKey, typeof PackageOpen> = {

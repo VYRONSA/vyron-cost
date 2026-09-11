@@ -55,7 +55,7 @@ type ServerWorkspaceStatus = {
   xeroWorkspaceReady: boolean;
 };
 
-const PACKAGE_OPTIONS = ["Starter", "Professional", "Enterprise", "Demo", "Professional Demo"] as const;
+const PACKAGE_OPTIONS = ["Starter", "Professional", "Enterprise", "Demo", "Professional Demo", "Full"] as const;
 
 type WorkspaceOwner = {
   firstName: string;

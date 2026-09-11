@@ -21,7 +21,11 @@
  * Exits 0 on pass, 1 on failure.
  */
 
+import { register } from "node:module";
 import { resolveCompanyPackage, SYSTEM_DEFAULT_PACKAGE } from "../src/lib/platform/entitlement/EntitlementService.ts";
+
+// Resolves the "@/..." imports of the package and AI modules checked below.
+register("./support/migration-hook.mjs", import.meta.url);
 
 let passed = 0;
 const failures = [];
@@ -162,6 +166,82 @@ check("workspace status is reported for licensing decisions", setupOnly.workspac
 
 const suspended = await resolveCompanyPackage("c13", { client: fakeClient(ws("Enterprise", "Suspended"), null) });
 check("suspended workspace status is surfaced, not hidden", suspended.workspaceStatus === "Suspended", String(suspended.workspaceStatus));
+
+// ─── Package model: Full, and every existing package unchanged ─────────────
+const pm = await import("../src/platform/managers/package-manager.ts");
+const ai = await import("../src/lib/platform/ai/AiTierEnforcement.ts");
+const ctx = await import("../src/lib/vyron-workspace-context.ts");
+const sorted = (values) => [...values].sort().join(",");
+
+const STARTER_F = ["dashboard", "contacts", "customers", "suppliers", "ingredients", "finished_goods", "recipes", "import_centre", "reports"];
+const PROFESSIONAL_F = [...STARTER_F, "inventory", "procurement", "purchase_orders", "manufacturing", "xero_sync", "supplier_intelligence", "document_intelligence", "customer_invoices"];
+const ENTERPRISE_F = [...PROFESSIONAL_F, "forecasting", "cost_intelligence", "advanced_dashboards", "multi_company", "integrations", "developer_tools"];
+const MULTI_STORE_F = ["multi_store", "store_ordering", "stores", "store_performance", "dispatch_board", "production_planning", "store_forecasting"];
+const SUMMARY_STARTER = ["Dashboard", "Suppliers", "Ingredients", "Products", "Recipes", "Basic reports"];
+const SUMMARY_PRO = ["Dashboard", "Suppliers", "Costing", "Procurement", "Inventory", "Manufacturing", "Customers", "Xero"];
+const SUMMARY_ENT = ["All modules", "Advanced intelligence", "Multi-company", "API/integrations"];
+
+check("the platform recognises exactly 30 features", pm.FEATURE_KEYS.length === 30, String(pm.FEATURE_KEYS.length));
+check("the tier lists above cover all 30 features", sorted([...ENTERPRISE_F, ...MULTI_STORE_F]) === sorted(pm.FEATURE_KEYS));
+
+// Full
+const fullFeatures = pm.resolveWorkspaceFeatures("Full");
+check("Full grants all 30 features", sorted(fullFeatures) === sorted(pm.FEATURE_KEYS), sorted(fullFeatures));
+for (const feature of MULTI_STORE_F) check(`Full includes ${feature}`, pm.hasFeature("Full", feature));
+for (const feature of ["integrations", "developer_tools", "forecasting", "cost_intelligence", "advanced_dashboards", "multi_company", "xero_sync", "manufacturing"]) {
+  check(`Full includes ${feature}`, pm.hasFeature("Full", feature));
+}
+check("Full's base tier is Enterprise", pm.resolveBasePackageId("Full") === "enterprise", pm.resolveBasePackageId("Full"));
+check("Full resolves to the full package id", pm.resolvePackageId("Full") === "full", pm.resolvePackageId("Full"));
+check("Full does not resolve to Professional", pm.resolvePackageId("Full") !== "professional" && pm.resolveBasePackageId("Full") !== "professional");
+check("Full does not resolve to Starter", pm.resolvePackageId("Full") !== "starter" && pm.resolveBasePackageId("Full") !== "starter");
+check("Full is an explicit rule, not the multi-store name rule", pm.hasMultiStorePackage("Full") === false);
+const fullAi = ai.resolveTierAllowance("Full");
+check(
+  "Full AI allowance: 5,000 credits, 10,000 requests, $250 cap",
+  fullAi.packageId === "full" && fullAi.monthlyCredits === 5000 && fullAi.maxRequests === 10000 && fullAi.maxSpendUsd === 250,
+  JSON.stringify(fullAi)
+);
+check("Full module summary: All modules, including Multi-Store", pm.packageModuleSummary("Full")[0] === "All modules" && pm.packageModuleSummary("Full").includes("Multi-Store Operations"));
+check("packageIncludesFeature('full') covers every feature", pm.FEATURE_KEYS.every((feature) => pm.packageIncludesFeature("full", feature)));
+check("Full upgrade label names Full", pm.getUpgradeMessage("Full", "dashboard").includes("on Full"));
+check("Full is a known package name", pm.isKnownPackageName("Full"));
+check("public pricing is unchanged (Full is not listed)", !pm.getPackageComparisonRows().some((row) => row.packageId === "full") && pm.getPackageDefinitions().length === 4);
+const clientWith = (packageName) => ({ id: "ws-qa", companyName: "QA", tradingName: "QA", packageName, status: "Setup" });
+check("Full is not demo mode", ctx.isDemoWorkspace(clientWith("Full")) === false);
+
+// Existing packages — every value below is the behaviour before Full existed.
+const EXISTING = {
+  Starter: { base: "starter", id: "starter", features: STARTER_F, credits: 0, summary: SUMMARY_STARTER, demo: false },
+  Professional: { base: "professional", id: "professional", features: PROFESSIONAL_F, credits: 500, summary: SUMMARY_PRO, demo: false },
+  Enterprise: { base: "enterprise", id: "enterprise", features: ENTERPRISE_F, credits: 2500, summary: SUMMARY_ENT, demo: false },
+  Demo: { base: "professional", id: "professional", features: PROFESSIONAL_F, credits: 500, summary: SUMMARY_PRO, demo: true },
+  "Professional Demo": { base: "professional", id: "professional", features: PROFESSIONAL_F, credits: 500, summary: SUMMARY_PRO, demo: true },
+  // Includes its known, separately reported base-tier defect (Professional, not Enterprise).
+  "Multi-Store Operations": { base: "professional", id: "multi_store_operations", features: [...PROFESSIONAL_F, ...MULTI_STORE_F], credits: 5000, summary: SUMMARY_STARTER, demo: false },
+};
+for (const [name, want] of Object.entries(EXISTING)) {
+  check(`${name}: base tier unchanged`, pm.resolveBasePackageId(name) === want.base, pm.resolveBasePackageId(name));
+  check(`${name}: allowance id unchanged`, pm.resolvePackageId(name) === want.id, pm.resolvePackageId(name));
+  check(`${name}: features unchanged`, sorted(pm.resolveWorkspaceFeatures(name)) === sorted(want.features), sorted(pm.resolveWorkspaceFeatures(name)));
+  check(`${name}: AI allowance unchanged`, ai.resolveTierAllowance(name).monthlyCredits === want.credits, String(ai.resolveTierAllowance(name).monthlyCredits));
+  check(`${name}: module summary unchanged`, sorted(pm.packageModuleSummary(name)) === sorted(want.summary));
+  check(`${name}: demo mode unchanged`, ctx.isDemoWorkspace(clientWith(name)) === want.demo);
+}
+check("the five dropdown packages and Full are the known names", sorted(pm.KNOWN_PACKAGE_NAMES) === sorted(["Starter", "Professional", "Enterprise", "Demo", "Professional Demo", "Full"]));
+
+// Exact matching — nothing else is ever Full; unknown names behave as before.
+const unknownFeatures = sorted(pm.resolveWorkspaceFeatures("Gold"));
+check("an unknown name still resolves as Professional", pm.resolveBasePackageId("Gold") === "professional" && unknownFeatures === sorted(PROFESSIONAL_F));
+check("an unknown name is not a known package", !pm.isKnownPackageName("Gold"));
+for (const name of ["full", "FULL", "Full ", " Full", "Full Package", "Fullerton", "Full Demo", ""]) {
+  const label = JSON.stringify(name);
+  check(`${label} is not Full`, !pm.isFullPackage(name) && pm.resolvePackageId(name) !== "full" && pm.resolveWorkspaceFeatures(name).size !== 30);
+  check(`${label} is not a known package name`, !pm.isKnownPackageName(name));
+}
+for (const name of ["full", "FULL", "Full "]) {
+  check(`${JSON.stringify(name)} behaves exactly as an unknown name (Professional)`, sorted(pm.resolveWorkspaceFeatures(name)) === unknownFeatures && ai.resolveTierAllowance(name).monthlyCredits === 500);
+}
 
 // ─── Result ────────────────────────────────────────────────────────────────
 const rule = "-".repeat(74);

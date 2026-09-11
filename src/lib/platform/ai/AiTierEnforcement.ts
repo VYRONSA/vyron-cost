@@ -1,5 +1,5 @@
 import type { PackageId } from "@/platform/managers/package-manager";
-import { hasMultiStorePackage, resolveBasePackageId } from "@/platform/managers/package-manager";
+import { resolvePackageId } from "@/platform/managers/package-manager";
 import type { AiAllowanceStatus, AiTierAllowance } from "@/lib/platform/ai/AiUsageTypes";
 
 // Placeholder monthly AI caps per tier. 1 credit = $0.01 USD estimated cost.
@@ -9,10 +9,12 @@ export const AI_TIER_ALLOWANCES: Record<PackageId, AiTierAllowance> = {
   professional: { packageId: "professional", monthlyCredits: 500, maxSpendUsd: 25, maxRequests: 1000 },
   enterprise: { packageId: "enterprise", monthlyCredits: 2500, maxSpendUsd: 125, maxRequests: 5000 },
   multi_store_operations: { packageId: "multi_store_operations", monthlyCredits: 5000, maxSpendUsd: 250, maxRequests: 10000 },
+  // Full is the complete platform: explicitly the Multi-Store allowance.
+  full: { packageId: "full", monthlyCredits: 5000, maxSpendUsd: 250, maxRequests: 10000 },
 };
 
 export function resolveTierAllowance(packageName: string, override?: Partial<AiTierAllowance>): AiTierAllowance {
-  const packageId: PackageId = hasMultiStorePackage(packageName) ? "multi_store_operations" : resolveBasePackageId(packageName);
+  const packageId: PackageId = resolvePackageId(packageName);
   const base = AI_TIER_ALLOWANCES[packageId];
 
   // Only apply override keys that are actually set. A naive `{ ...base, ...override }`

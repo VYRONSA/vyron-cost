@@ -5,7 +5,7 @@
 
 export type VyronProductId = "vyron_cost" | "vyron_core" | "vyron_pay" | "vyron_farm" | "vyron_reach";
 
-export type PackageId = "starter" | "professional" | "enterprise" | "multi_store_operations";
+export type PackageId = "starter" | "professional" | "enterprise" | "multi_store_operations" | "full";
 
 /** @deprecated Use FeatureKey via hasFeature(). Kept for gradual migration. */
 export type PackageModuleKey =
@@ -92,6 +92,7 @@ const PACKAGE_LABELS: Record<PackageId, string> = {
   professional: "Professional",
   enterprise: "Enterprise",
   multi_store_operations: "Multi-Store Operations",
+  full: "Full",
 };
 
 const FEATURE_MIN_PACKAGE: Record<FeatureKey, PackageId> = {
@@ -185,6 +186,14 @@ const PACKAGE_DEFINITIONS: Record<PackageId, PackageDefinition> = {
       "production_planning",
       "store_forecasting",
     ],
+  },
+  full: {
+    id: "full",
+    label: PACKAGE_LABELS.full,
+    description: "The complete VYRON platform: everything in Enterprise plus every Multi-Store Operations capability.",
+    // Full introduces no feature of its own. It is granted every tier and the
+    // whole Multi-Store extension explicitly, by fullPackageFeatures().
+    features: [],
   },
 };
 
@@ -411,7 +420,28 @@ function packageNameIncludes(name: string, token: string): boolean {
   return name.toLowerCase().includes(token.toLowerCase());
 }
 
+/**
+ * The Full package — the complete VYRON platform.
+ *
+ * Recognised by EXACT match on the stored name "Full": case-sensitive, not
+ * trimmed, never by substring. No other name can become Full by accident, and
+ * no existing name changes behaviour.
+ */
+export const FULL_PACKAGE_NAME = "Full";
+
+export function isFullPackage(packageName: string | null | undefined): boolean {
+  return packageName === FULL_PACKAGE_NAME;
+}
+
+/** The exact package names a workspace may be created with. */
+export const KNOWN_PACKAGE_NAMES = ["Starter", "Professional", "Enterprise", "Demo", "Professional Demo", FULL_PACKAGE_NAME] as const;
+
+export function isKnownPackageName(packageName: string | null | undefined): boolean {
+  return (KNOWN_PACKAGE_NAMES as readonly string[]).includes(String(packageName ?? ""));
+}
+
 export function resolveBasePackageId(packageName: string): PackageId {
+  if (isFullPackage(packageName)) return "enterprise";
   const name = normalizePackageName(packageName).toLowerCase();
   if (packageNameIncludes(name, "starter")) return "starter";
   if (packageNameIncludes(name, "enterprise")) return "enterprise";
@@ -440,6 +470,7 @@ function featuresForBaseTier(baseTier: PackageId): Set<FeatureKey> {
 }
 
 export function resolveWorkspaceFeatures(packageName: string): Set<FeatureKey> {
+  if (isFullPackage(packageName)) return fullPackageFeatures();
   const baseTier = resolveBasePackageId(packageName);
   const features = featuresForBaseTier(baseTier);
 
@@ -450,6 +481,25 @@ export function resolveWorkspaceFeatures(packageName: string): Set<FeatureKey> {
   }
 
   return features;
+}
+
+/** Full: every standard tier (base Enterprise) plus the whole Multi-Store extension. */
+export function fullPackageFeatures(): Set<FeatureKey> {
+  const features = featuresForBaseTier("enterprise");
+  for (const feature of PACKAGE_DEFINITIONS.multi_store_operations.features) {
+    features.add(feature);
+  }
+  return features;
+}
+
+/**
+ * The package id allowance tables are keyed by: Full (exact) first, then the
+ * existing Multi-Store name rule, then the base tier. Unchanged for every
+ * name other than "Full".
+ */
+export function resolvePackageId(packageName: string): PackageId {
+  if (isFullPackage(packageName)) return "full";
+  return hasMultiStorePackage(packageName) ? "multi_store_operations" : resolveBasePackageId(packageName);
 }
 
 export function hasFeature(packageName: string, feature: FeatureKey): boolean {
@@ -519,7 +569,7 @@ export function getModuleTooltip(moduleKey: PackageModuleKey): string {
 }
 
 export function getUpgradeMessage(packageName: string, feature: FeatureKey): string {
-  const current = PACKAGE_LABELS[resolveBasePackageId(packageName)];
+  const current = isFullPackage(packageName) ? PACKAGE_LABELS.full : PACKAGE_LABELS[resolveBasePackageId(packageName)];
   const required = getUpgradePackageLabel(feature);
   return `${required} package required — your workspace is on ${current}. Contact VYRON to upgrade.`;
 }
@@ -745,6 +795,7 @@ export function getPremiumCapabilityCards(): Array<{ feature: FeatureKey; title:
 }
 
 export function packageIncludesFeature(packageId: PackageId, feature: FeatureKey): boolean {
+  if (packageId === "full") return fullPackageFeatures().has(feature);
   if (PACKAGE_DEFINITIONS[packageId].features.includes(feature)) return true;
   const minPackage = FEATURE_MIN_PACKAGE[feature];
   if (packageId === minPackage) return true;
@@ -804,4 +855,20 @@ export const MODULE_LABELS: Record<PackageModuleKey, string> = {
   multi_store: "Multi-Store Operations",
 };
 
-export type PackageTier = "Starter" | "Professional" | "Enterprise" | "Demo" | "Professional Demo";
+/**
+ * The short module summary shown for a workspace's package. Full is matched
+ * exactly; every other name keeps the summary it had before Full existed.
+ */
+export function packageModuleSummary(packageName: string): string[] {
+  if (isFullPackage(packageName)) {
+    return ["All modules", "Advanced intelligence", "Multi-company", "API/integrations", "Multi-Store Operations"];
+  }
+  const pkg = packageName.toLowerCase();
+  if (pkg.includes("enterprise")) return ["All modules", "Advanced intelligence", "Multi-company", "API/integrations"];
+  if (pkg.includes("professional") || pkg.includes("demo")) {
+    return ["Dashboard", "Suppliers", "Costing", "Procurement", "Inventory", "Manufacturing", "Customers", "Xero"];
+  }
+  return ["Dashboard", "Suppliers", "Ingredients", "Products", "Recipes", "Basic reports"];
+}
+
+export type PackageTier = "Starter" | "Professional" | "Enterprise" | "Demo" | "Professional Demo" | "Full";
