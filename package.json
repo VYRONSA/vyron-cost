@@ -31,7 +31,11 @@
     "certify:workflow": "node scripts/certify-production-workflow.mjs",
     "test:approval-safety": "node scripts/test-approval-safety.mjs",
     "test:crop-fidelity": "node scripts/test-crop-fidelity.mjs",
-    "test:document-email": "node scripts/test-document-email.mjs"
+    "test:document-email": "node scripts/test-document-email.mjs",
+    "test:data-migration": "node scripts/test-data-migration.mjs",
+    "test:food-sock-execute": "node scripts/test-food-sock-execute.mjs",
+    "migrate:food-sock": "node scripts/food-sock-migration.mjs",
+    "rehearse:food-sock": "node scripts/food-sock-rehearsal.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",

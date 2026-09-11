@@ -41,6 +41,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Client data-migration dry-run reports (contain client data; never committed)
+/.migration-reports/
+
 # Visual validation artefacts (regenerate: node scripts/visual-capture.mjs)
 visual-validation/
 backups/

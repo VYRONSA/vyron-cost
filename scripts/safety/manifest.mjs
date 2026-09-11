@@ -317,6 +317,70 @@ const REGISTER = [
       "Imports the four shipped email routes via scripts/support/ts-alias-hook.mjs and scripts/support/document-email-test-hook.mjs. The database is an in-memory stand-in seeded with a disposable QA tenant; globalThis.fetch is replaced by a scripted Resend stub that refuses every other URL; a dummy key is set in-process and .env.local is never read. No database, no network, no email sent. Proves the request VYRON COST makes, not delivery.",
   },
   {
+    id: "migration-hook",
+    file: "scripts/support/migration-hook.mjs",
+    family: A,
+    purpose: "Node module hook letting data-migration scripts import the shipped TypeScript modules: @/ file resolution, TypeScript compilation, and CommonJS shims for xlsx.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a",
+    evidence:
+      "Support library, not directly executable. Pure resolution and in-memory compilation with the project's own typescript — no network, no database, no writes.",
+  },
+  {
+    id: "test-data-migration",
+    file: "scripts/test-data-migration.mjs",
+    family: A,
+    purpose: "Regression test for the controlled data-migration rules: exact identity, TBC preservation, blank-never-overwrites, negative stock, copies and bundles, unit conversion, determinism and idempotency.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a",
+    evidence:
+      "Imports src/lib/data-migration via scripts/support/migration-hook.mjs and plans against SYNTHETIC fixtures only (a disposable 'QA Pantry' tenant). Reads no client file, no database, no network.",
+  },
+  {
+    id: "test-food-sock-execute",
+    file: "scripts/test-food-sock-execute.mjs",
+    family: A,
+    purpose:
+      "Regression test for the Food Sock migration executor and for purchasing, receiving and a production run on the imported data: refusals, tenant isolation, idempotency, restart, dependency blocking, demo scope.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit",
+    evidence:
+      "Runs the real executor, VYRON's writers and manufacturing engine against scripts/support/document-email-test-stubs/fake-supabase.mjs holding two synthetic tenants. No client data, no real database, no network.",
+  },
+  {
+    id: "food-sock-rehearsal",
+    file: "scripts/food-sock-rehearsal.mjs",
+    family: A,
+    purpose:
+      "Food Sock demo dress rehearsal: imports the demo scope of the client's files, purchases and receives the limiting component and runs production, then records the exact expected result for the real demo.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit; the expected-result record goes to the gitignored .migration-reports/",
+    evidence:
+      "Reads the client's files locally and runs the real executor, procurement and manufacturing engines against scripts/support/document-email-test-stubs/fake-supabase.mjs. No real database, no network.",
+  },
+  {
+    id: "food-sock-migration",
+    file: "scripts/food-sock-migration.mjs",
+    family: C,
+    purpose:
+      "Food Sock Meals Phase 1 migration: dry-run planner over the client's supplied files, and a gated executor that applies an approved plan to the Food Sock tenant.",
+    authentication: ["service-role"],
+    mutation: "persistent",
+    external: [],
+    cleanup:
+      "none by design — an execution writes the client's master data into their tenant. Every write is recorded in vyron_import_source_links and vyron_import_runs; nothing is ever deleted.",
+    evidence:
+      "Default mode is a dry run with no database access; --demo-report adds no access; --company and --validate add company-scoped SELECTs only. --execute refuses unless --company, --approve-plan-hash (which must equal the plan rebuilt against the tenant's current state) and VYRON_ACKNOWLEDGE_PRODUCTION_WRITE=1 are all present, and records tenant and global before/after counts for every table it can touch.",
+  },
+  {
     id: "visual-capture",
     file: "scripts/visual-capture.mjs",
     family: A,
