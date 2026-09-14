@@ -1,7 +1,6 @@
 import { getProductIntelligence } from "@/lib/vyron-product-intelligence-data";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
-
-const DEMO_TENANT_ID = "48002864-8800-4000-9000-000000000001";
+import { resolveEngineTenant } from "@/lib/vyron-engine-tenant";
 
 export type RecoveryCalcRow = {
   id: string;
@@ -47,9 +46,16 @@ function opportunityKey(prefix: string, id: string) {
   return `${prefix}-${id}`.toLowerCase();
 }
 
+/**
+ * Recompute and store (upsert) recovery calculations. Writes — so only ever for
+ * the verified session's own company (see resolveEngineTenant); with no verified
+ * company, or a requested company that is not it, nothing is read or written.
+ */
 export async function recomputeRecoveryIntelligenceV2(
-  tenantId = DEMO_TENANT_ID
+  requestedTenantId?: string | null
 ): Promise<RecoveryCalcRow[]> {
+  const tenantId = await resolveEngineTenant(requestedTenantId);
+  if (!tenantId) return [];
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
@@ -472,7 +478,9 @@ export async function recomputeRecoveryIntelligenceV2(
   }));
 }
 
-export async function getRecoveryCalculationsV2(tenantId = DEMO_TENANT_ID): Promise<RecoveryCalcRow[]> {
+export async function getRecoveryCalculationsV2(requestedTenantId?: string | null): Promise<RecoveryCalcRow[]> {
+  const tenantId = await resolveEngineTenant(requestedTenantId);
+  if (!tenantId) return [];
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
   const { data } = await supabase
@@ -498,8 +506,10 @@ export async function getRecoveryCalculationsV2(tenantId = DEMO_TENANT_ID): Prom
 
 export async function getRecoveryCalculationByKey(
   key: string,
-  tenantId = DEMO_TENANT_ID
+  requestedTenantId?: string | null
 ): Promise<RecoveryCalcRow | null> {
+  const tenantId = await resolveEngineTenant(requestedTenantId);
+  if (!tenantId) return null;
   const supabase = getSupabaseAdmin();
   if (!supabase) return null;
   const { data } = await supabase

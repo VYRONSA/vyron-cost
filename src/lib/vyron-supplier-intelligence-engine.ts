@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabase-server";
-import { workspaceScope } from "@/lib/vyron-workspace-scope";
+import { resolveEngineTenant } from "@/lib/vyron-engine-tenant";
 
 type PriceHistoryRow = {
   id: string;
@@ -76,8 +76,6 @@ export type ProcurementRiskAlert = {
   createdAt: string;
 };
 
-const DEMO_TENANT_ID = "48002864-8800-4000-9000-000000000001";
-
 function startOfMonthIso() {
   const now = new Date();
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -97,8 +95,8 @@ function calculateGpPercent(sellingPrice: number, cost: number) {
 export async function getSupplierPriceWidgetSummary(
   tenantId?: string | null
 ): Promise<SupplierPriceWidgetSummary> {
-  const scope = await workspaceScope();
-  const scopedTenantId = tenantId ?? scope.companyId ?? scope.tenantId;
+  // Verified company only: a caller-supplied tenant is a consistency check, never a selector.
+  const scopedTenantId = await resolveEngineTenant(tenantId);
   if (!scopedTenantId) {
     return {
       increasesThisMonth: 0,
@@ -189,7 +187,7 @@ export async function getSupplierPriceWidgetSummary(
 export async function getProductImpactFromRecentMovements(
   tenantId?: string | null
 ): Promise<ProductImpactRow[]> {
-  const scopedTenantId = tenantId ?? (await workspaceScope()).tenantId;
+  const scopedTenantId = await resolveEngineTenant(tenantId);
   if (!scopedTenantId) return [];
 
   const supabase = getSupabaseAdmin();
@@ -297,7 +295,7 @@ export async function getProductImpactFromRecentMovements(
 export async function getPhase4RecoveryInsights(
   tenantId?: string | null
 ): Promise<RecoveryOpportunityInsight[]> {
-  const scopedTenantId = tenantId ?? (await workspaceScope()).tenantId;
+  const scopedTenantId = await resolveEngineTenant(tenantId);
   if (!scopedTenantId) return [];
 
   const supabase = getSupabaseAdmin();
@@ -407,7 +405,7 @@ export async function getRecoveryInsightDrilldown(
   insightId: string,
   tenantId?: string | null
 ): Promise<RecoveryInsightDrilldown | null> {
-  const scopedTenantId = tenantId ?? (await workspaceScope()).tenantId;
+  const scopedTenantId = await resolveEngineTenant(tenantId);
   if (!scopedTenantId) return null;
 
   const supabase = getSupabaseAdmin();
@@ -454,7 +452,7 @@ export async function getRecoveryInsightDrilldown(
 export async function getProcurementRiskAlerts(
   tenantId?: string | null
 ): Promise<ProcurementRiskAlert[]> {
-  const scopedTenantId = tenantId ?? (await workspaceScope()).tenantId;
+  const scopedTenantId = await resolveEngineTenant(tenantId);
   if (!scopedTenantId) return [];
 
   const supabase = getSupabaseAdmin();

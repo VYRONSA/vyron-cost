@@ -7,6 +7,7 @@ import {
 } from "@/lib/vyron-procurement-ai-engine";
 import { formatMoney } from "@/lib/vyron-cost-product-data";
 import { unstable_noStore as noStore } from "next/cache";
+import { resolveEngineTenant } from "@/lib/vyron-engine-tenant";
 
 export type { ProcurementHealthScore } from "@/lib/vyron-procurement-ai-engine";
 
@@ -117,8 +118,6 @@ export type ProcurementExecutiveStats = {
   }>;
 };
 
-const DEMO_TENANT_ID = "48002864-8800-4000-9000-000000000001";
-
 export function procurementMoney(value: number | null | undefined) {
   return formatMoney(value || 0);
 }
@@ -165,12 +164,14 @@ function mapDbRow(
   };
 }
 
-async function getTrackingMap(keys: string[]) {
+async function getTrackingMap(keys: string[], tenantId: string) {
   const map = new Map<string, ProcurementTrackingSnapshot>();
   if (!supabase || !keys.length) return map;
+  // Keys are unique per company, not globally: scope to the company too.
   const { data, error } = await supabase
     .from("vyron_procurement_recommendation_tracking")
     .select("*")
+    .eq("tenant_id", tenantId)
     .in("recommendation_key", keys);
   if (isMissingProcurementTable(error)) return map;
   for (const row of data || []) {
@@ -196,47 +197,54 @@ function isMissingProcurementTable(error: { code?: string; message?: string } | 
   return String(error.message || "").includes("vyron_procurement_recommendations");
 }
 
+/**
+ * The verified session's company's recommendations. There is no default
+ * company: with no verified company this returns nothing (and regenerates
+ * nothing) — it used to read, and regenerate, a fixed tenant's.
+ */
 export async function getProcurementRecommendations(): Promise<ProcurementRecommendation[]> {
-  if (!supabase) return fallbackInMemoryRecommendations();
+  const tenantId = await resolveEngineTenant();
+  if (!tenantId) return [];
+  if (!supabase) return fallbackInMemoryRecommendations(tenantId);
 
   try {
     let { data, error } = await supabase
       .from("vyron_procurement_recommendations")
       .select("*")
-      .eq("tenant_id", DEMO_TENANT_ID)
+      .eq("tenant_id", tenantId)
       .order("potential_benefit_annual", { ascending: false });
 
-    if (isMissingProcurementTable(error)) return fallbackInMemoryRecommendations();
+    if (isMissingProcurementTable(error)) return fallbackInMemoryRecommendations(tenantId);
     if (error) throw error;
 
     if (!data?.length) {
       try {
-        await recomputeProcurementRecommendations();
+        await recomputeProcurementRecommendations(tenantId);
         const retry = await supabase
           .from("vyron_procurement_recommendations")
           .select("*")
-          .eq("tenant_id", DEMO_TENANT_ID)
+          .eq("tenant_id", tenantId)
           .order("potential_benefit_annual", { ascending: false });
-        if (isMissingProcurementTable(retry.error)) return fallbackInMemoryRecommendations();
+        if (isMissingProcurementTable(retry.error)) return fallbackInMemoryRecommendations(tenantId);
         data = retry.data;
       } catch {
-        return fallbackInMemoryRecommendations();
+        return fallbackInMemoryRecommendations(tenantId);
       }
     }
 
     const keys = (data || []).map((r) => String(r.recommendation_key));
-    const trackingMap = await getTrackingMap(keys);
+    const trackingMap = await getTrackingMap(keys, tenantId);
     return (data || []).map((row) =>
       mapDbRow(row as Record<string, unknown>, trackingMap.get(String(row.recommendation_key)))
     );
   } catch {
-    return fallbackInMemoryRecommendations();
+    return fallbackInMemoryRecommendations(tenantId);
   }
 }
 
-async function fallbackInMemoryRecommendations(): Promise<ProcurementRecommendation[]> {
+async function fallbackInMemoryRecommendations(tenantId: string): Promise<ProcurementRecommendation[]> {
   const { generateProcurementRecommendations } = await import("@/lib/vyron-procurement-ai-engine");
-  const generated = await recomputeProcurementRecommendations().catch(() => generateProcurementRecommendations());
+  const generated = await recomputeProcurementRecommendations(tenantId).catch(() => generateProcurementRecommendations(tenantId));
   return (generated as GeneratedProcurementRecommendation[]).map((row) =>
     mapDbRow(
       {
@@ -389,7 +397,9 @@ export async function saveProcurementTracking(
     .eq("recommendation_key", recommendationKey)
     .maybeSingle();
 
-  const tenantId = rec?.tenant_id || DEMO_TENANT_ID;
+  // No fallback company: an unknown (or ambiguous) key writes nothing.
+  if (!rec?.tenant_id) throw new Error("Recommendation not found.");
+  const tenantId = String(rec.tenant_id);
   const defaultExpected = Number(rec?.potential_benefit_annual || 0);
 
   const payload = {
@@ -449,7 +459,8 @@ export async function addProcurementEvidence(
     .select("tenant_id")
     .eq("recommendation_key", recommendationKey)
     .maybeSingle();
-  const tenantId = rec?.tenant_id || DEMO_TENANT_ID;
+  if (!rec?.tenant_id) throw new Error("Recommendation not found.");
+  const tenantId = String(rec.tenant_id);
   const { error } = await supabase.from("vyron_procurement_recommendation_evidence").insert({
     tenant_id: tenantId,
     recommendation_key: recommendationKey,

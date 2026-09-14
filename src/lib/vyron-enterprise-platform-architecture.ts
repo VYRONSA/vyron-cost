@@ -10,6 +10,8 @@ import { getComplianceDashboard, getRiskCentre, auditorGlobalSearch } from "@/li
 import { getProcurementExecutiveStats } from "@/lib/vyron-procurement-ai-data";
 import { getGlobalPermissionMatrix } from "@/lib/vyron-enterprise-global-permissions";
 import { unstable_noStore as noStore } from "next/cache";
+import { resolveEngineTenant } from "@/lib/vyron-engine-tenant";
+import { HANDCRAFTED_COMPANY_ID } from "@/lib/vyron-handcrafted-intelligence";
 
 export type ExplainableInsight = {
   id: string;
@@ -233,14 +235,30 @@ function unitFactor(unitKey: string, isPrimary: boolean) {
   return map[unitKey] || 0.35;
 }
 
-async function loadOrgUnits(companyId: string): Promise<OrgUnit[]> {
+/**
+ * The organisation units for the verified company.
+ *
+ * DEMO_GROUP_ID and the synthetic group from buildDemoOrgUnits are the demo
+ * sandbox's alone: they are used only when the verified company IS the sandbox
+ * company. Every other company gets its own group registry, or a single-company
+ * structure — never the demo group, whose units could name other companies.
+ */
+async function loadOrgUnits(requestedCompanyId: string): Promise<OrgUnit[]> {
+  const tenant = await resolveEngineTenant(requestedCompanyId);
+  if (!tenant) return [];
+  const companyId = tenant;
+  const isDemoSandbox = tenant === HANDCRAFTED_COMPANY_ID;
   const supabase = getSupabaseAdmin();
   if (supabase) {
-    const { data: units } = await supabase
-      .from("vyron_enterprise_org_units")
-      .select("id, unit_key, unit_label, unit_type, company_id, parent_unit_id, industry, metadata")
-      .eq("group_id", DEMO_GROUP_ID)
-      .eq("is_active", true);
+    const units = isDemoSandbox
+      ? (
+          await supabase
+            .from("vyron_enterprise_org_units")
+            .select("id, unit_key, unit_label, unit_type, company_id, parent_unit_id, industry, metadata")
+            .eq("group_id", DEMO_GROUP_ID)
+            .eq("is_active", true)
+        ).data
+      : null;
     if (units?.length) {
       return units.map((u) => ({
         id: String(u.id),
@@ -272,7 +290,18 @@ async function loadOrgUnits(companyId: string): Promise<OrgUnit[]> {
       ];
     }
   }
-  return buildDemoOrgUnits(companyId);
+  if (isDemoSandbox) return buildDemoOrgUnits(companyId);
+  return [
+    {
+      id: companyId,
+      unitKey: "company",
+      unitLabel: "This company",
+      unitType: "company",
+      companyId,
+      industry: "food_manufacturing",
+      isPrimary: true,
+    },
+  ];
 }
 
 function buildConsolidatedMetrics(base: {

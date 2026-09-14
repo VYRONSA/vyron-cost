@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { resolveEngineTenant } from "@/lib/vyron-engine-tenant";
 import { getProducts, calcSuggestedPrice, formatMoney } from "@/lib/vyron-cost-product-data";
 import { getSuppliers, getIngredients } from "@/lib/vyron-cost-core-data";
 import { getPhase4RecoveryInsights } from "@/lib/vyron-supplier-intelligence-engine";
@@ -112,17 +113,24 @@ function uuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
+/**
+ * The verified session's company's recovery opportunities. There is no default
+ * company: with no verified company this returns nothing and recomputes
+ * nothing — it used to read, and recompute, a fixed tenant's.
+ */
 export async function getRecoveryOpportunities(): Promise<RecoveryOpportunity[]> {
-  let v2Rows = await getRecoveryCalculationsV2();
+  const tenantId = await resolveEngineTenant();
+  if (!tenantId) return [];
+  let v2Rows = await getRecoveryCalculationsV2(tenantId);
   if (!v2Rows.length) {
     try {
-      v2Rows = await recomputeRecoveryIntelligenceV2();
+      v2Rows = await recomputeRecoveryIntelligenceV2(tenantId);
     } catch {
       v2Rows = [];
     }
   }
   if (v2Rows.length) {
-    const trackingByKey = await getRecoveryTrackingMap(v2Rows.map((row) => row.opportunity_key));
+    const trackingByKey = await getRecoveryTrackingMap(v2Rows.map((row) => row.opportunity_key), tenantId);
     return v2Rows.map((row) => ({
       id: row.opportunity_key,
       opportunity_key: row.opportunity_key,
@@ -158,12 +166,12 @@ export async function getRecoveryOpportunities(): Promise<RecoveryOpportunity[]>
     }));
   }
 
-  if (!supabase) return demoRecoveryOpportunities;
+  if (!supabase) return [];
 
   const { data, error } = await supabase
     .from("vyron_cost_recovery_opportunities")
     .select("*")
-    .eq("company_id", "48002864-8800-4000-9000-000000000001")
+    .eq("company_id", tenantId)
     .order("annual_saving", { ascending: false })
     .limit(500);
 
@@ -440,12 +448,14 @@ export async function getRecoveryTrackingByKey(opportunityKey: string): Promise<
   };
 }
 
-async function getRecoveryTrackingMap(opportunityKeys: string[]) {
+async function getRecoveryTrackingMap(opportunityKeys: string[], tenantId: string) {
   const map = new Map<string, RecoveryTrackingSnapshot>();
   if (!supabase || !opportunityKeys.length) return map;
+  // Keys are unique per company, not globally: scope to the company too.
   const { data } = await supabase
     .from("vyron_recovery_tracking")
     .select("*")
+    .eq("tenant_id", tenantId)
     .in("opportunity_key", opportunityKeys);
   for (const row of data || []) {
     map.set(String(row.opportunity_key), {
@@ -491,7 +501,9 @@ export async function saveRecoveryTracking(opportunityKey: string, input: Recove
     .eq("opportunity_key", opportunityKey)
     .maybeSingle();
 
-  const tenantId = calc?.tenant_id || "48002864-8800-4000-9000-000000000001";
+  // No fallback company: an unknown (or ambiguous) key writes nothing.
+  if (!calc?.tenant_id) throw new Error("Recovery opportunity not found.");
+  const tenantId = String(calc.tenant_id);
 
   const { error } = await supabase.from("vyron_recovery_tracking").upsert(
     {
@@ -541,7 +553,9 @@ export async function addRecoveryEvidence(
     .select("tenant_id")
     .eq("opportunity_key", opportunityKey)
     .maybeSingle();
-  const tenantId = calc?.tenant_id || "48002864-8800-4000-9000-000000000001";
+  // No fallback company: an unknown (or ambiguous) key writes nothing.
+  if (!calc?.tenant_id) throw new Error("Recovery opportunity not found.");
+  const tenantId = String(calc.tenant_id);
   const { error } = await supabase.from("vyron_recovery_evidence").insert({
     tenant_id: tenantId,
     opportunity_key: opportunityKey,

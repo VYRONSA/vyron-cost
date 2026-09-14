@@ -1,4 +1,5 @@
 import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 import { getExecutiveCommandCentreData } from "@/lib/vyron-executive-command-centre";
 import { getFinanceIntelligenceKpis, getFinanceLeakageCentre } from "@/lib/vyron-finance-intelligence";
@@ -656,6 +657,9 @@ export async function getAiFinancialIntelligence(
     { label: "Sales +25%", supplierPct: 0, packagingPct: 0, volumePct: 25 },
   ];
 
+  // Scenarios run through the shared engine, which accepts only the verified
+  // session's company, so the member's own company is passed explicitly.
+  const scenarioCompanyId = await resolveApiCompanyId();
   const strategicScenarios: StrategicScenario[] = await Promise.all(
     strategicInputs.map(async (s) => ({
       label: s.label,
@@ -664,7 +668,7 @@ export async function getAiFinancialIntelligence(
         supplierPriceIncreasePct: s.supplierPct,
         packagingIncreasePct: s.packagingPct,
         salesDecreasePct: s.volumePct < 0 ? Math.abs(s.volumePct) : s.volumePct > 0 ? -s.volumePct : 0,
-      }),
+      }, scenarioCompanyId),
     }))
   );
 

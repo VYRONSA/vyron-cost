@@ -1,6 +1,7 @@
 import { calculateGpPercent, getIngredients, getProducts } from "@/lib/vyron-cost-data";
 import { getFinanceLeakageCentre } from "@/lib/vyron-finance-intelligence";
 import { getRecoveryOpportunities } from "@/lib/vyron-cost-recovery-data";
+import { resolveEngineTenant } from "@/lib/vyron-engine-tenant";
 
 export type ScenarioInput = {
   supplierPriceIncreasePct: number;
@@ -19,18 +20,32 @@ export type ScenarioImpact = {
   narrative: string[];
 };
 
+function emptyScenarioImpact(): ScenarioImpact {
+  return {
+    currentGpPct: 0,
+    projectedGpPct: 0,
+    gpChangePts: 0,
+    recoveryImpact: 0,
+    inventoryImpact: 0,
+    productionCostImpact: 0,
+    annualProfitImpact: 0,
+    narrative: ["No verified company context: the scenario was not run."],
+  };
+}
+
 /**
- * Model one company. The /api/enterprise/scenarios route always passes the
- * company from the caller's verified session. The server-rendered scenario
- * page and the AI financial intelligence still call this without one and so
- * keep getFinanceLeakageCentre's fixed-tenant default; they are tracked with
- * the fixed-tenant page and helper review.
+ * Model the verified session's company. Every caller passes the company it
+ * resolved from the verified session; the engine accepts only that company
+ * (see resolveEngineTenant) and runs nothing otherwise. The leakage figures
+ * used to come from a fixed tenant whenever a caller passed none.
  */
-export async function runEnterpriseScenario(input: ScenarioInput, companyId?: string): Promise<ScenarioImpact> {
+export async function runEnterpriseScenario(input: ScenarioInput, companyId?: string | null): Promise<ScenarioImpact> {
+  const tenant = await resolveEngineTenant(companyId);
+  if (!tenant) return emptyScenarioImpact();
   const [products, ingredients, leakage, opportunities] = await Promise.all([
     getProducts(120),
     getIngredients(200),
-    getFinanceLeakageCentre(companyId),
+    getFinanceLeakageCentre(tenant),
     getRecoveryOpportunities(),
   ]);
 

@@ -2,8 +2,7 @@ import { getProductIntelligence } from "@/lib/vyron-product-intelligence-data";
 import { getRecoveryTrackingExecutiveStats } from "@/lib/vyron-cost-recovery-data";
 import { getSupplierPriceWidgetSummary } from "@/lib/vyron-supplier-intelligence-engine";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
-
-const DEMO_TENANT_ID = "48002864-8800-4000-9000-000000000001";
+import { resolveEngineTenant } from "@/lib/vyron-engine-tenant";
 
 export const PROCUREMENT_RECOMMENDATION_CATEGORIES = [
   "Price Increase",
@@ -109,8 +108,10 @@ function monthStartIso() {
 }
 
 export async function generateProcurementRecommendations(
-  tenantId = DEMO_TENANT_ID
+  requestedTenantId?: string | null
 ): Promise<GeneratedProcurementRecommendation[]> {
+  const tenantId = await resolveEngineTenant(requestedTenantId);
+  if (!tenantId) return [];
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
@@ -714,8 +715,10 @@ export async function generateProcurementRecommendations(
 }
 
 export async function importRecoveryOpportunitiesAsRecommendations(
-  tenantId = DEMO_TENANT_ID
+  requestedTenantId?: string | null
 ): Promise<GeneratedProcurementRecommendation[]> {
+  const tenantId = await resolveEngineTenant(requestedTenantId);
+  if (!tenantId) return [];
   const { getRecoveryOpportunities } = await import("@/lib/vyron-cost-recovery-data");
   const opportunities = await getRecoveryOpportunities();
   const out: GeneratedProcurementRecommendation[] = [];
@@ -760,9 +763,29 @@ export async function importRecoveryOpportunitiesAsRecommendations(
   return out;
 }
 
+function emptyProcurementHealthScore(): ProcurementHealthScore {
+  return {
+    overall: 0,
+    supplierRisk: 0,
+    priceStability: 0,
+    inventoryHealth: 0,
+    recoveryPerformance: 0,
+    poCompliance: 0,
+    invoiceCompliance: 0,
+    productionEfficiency: 0,
+    supplierConcentration: 0,
+    duplicateInvoices: 0,
+    marginTrends: 0,
+    costInflation: 0,
+    notes: ["No verified company context: nothing was computed."],
+  };
+}
+
 export async function computeProcurementHealthScore(
-  tenantId = DEMO_TENANT_ID
+  requestedTenantId?: string | null
 ): Promise<ProcurementHealthScore> {
+  const tenantId = await resolveEngineTenant(requestedTenantId);
+  if (!tenantId) return emptyProcurementHealthScore();
   const [widgets, recoveryStats, productIntel] = await Promise.all([
     getSupplierPriceWidgetSummary(tenantId),
     getRecoveryTrackingExecutiveStats(),
@@ -896,9 +919,15 @@ export async function computeProcurementHealthScore(
   };
 }
 
+/**
+ * Regenerate and store (upsert) procurement recommendations. Writes — so only
+ * ever for the verified session's own company (see resolveEngineTenant).
+ */
 export async function recomputeProcurementRecommendations(
-  tenantId = DEMO_TENANT_ID
+  requestedTenantId?: string | null
 ): Promise<GeneratedProcurementRecommendation[]> {
+  const tenantId = await resolveEngineTenant(requestedTenantId);
+  if (!tenantId) return [];
   const supabase = getSupabaseAdmin();
   const generated = await generateProcurementRecommendations(tenantId);
   if (!supabase || !generated.length) return generated;
