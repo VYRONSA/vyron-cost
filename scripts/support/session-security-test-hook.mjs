@@ -31,6 +31,8 @@ const STUBS = {
   "next/headers": "./session-security-test-stubs/next-headers.mjs",
   "@/lib/supabase-server": "./session-security-test-stubs/supabase-server.mjs",
   "@/lib/vyron-workspace-login": "./session-security-test-stubs/workspace-login.mjs",
+  // Opt-in: null unless the test supplies a stand-in (see the stub).
+  "@/lib/supabase": "./session-security-test-stubs/supabase-browser.mjs",
 };
 
 function resolveFile(base) {

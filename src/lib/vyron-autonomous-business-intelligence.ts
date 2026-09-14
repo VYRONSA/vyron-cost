@@ -1073,7 +1073,9 @@ export async function getAutonomousBusinessIntelligence(
   };
 }
 
-export async function answerVyronCopilot(question: string, companyId?: string | null): Promise<CopilotAnswer> {
+/** Answer for one company. The company is required and must come from the caller's verified session. */
+export async function answerVyronCopilot(question: string, companyId: string): Promise<CopilotAnswer> {
+  if (!String(companyId || "").trim()) throw new Error("A company is required for the copilot.");
   const data = await getAutonomousBusinessIntelligence(companyId);
   const match = data.copilotPresets.find((p) => p.question.toLowerCase() === question.toLowerCase());
   if (match) return match;

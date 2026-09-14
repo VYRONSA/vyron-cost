@@ -19,11 +19,18 @@ export type ScenarioImpact = {
   narrative: string[];
 };
 
-export async function runEnterpriseScenario(input: ScenarioInput): Promise<ScenarioImpact> {
+/**
+ * Model one company. The /api/enterprise/scenarios route always passes the
+ * company from the caller's verified session. The server-rendered scenario
+ * page and the AI financial intelligence still call this without one and so
+ * keep getFinanceLeakageCentre's fixed-tenant default; they are tracked with
+ * the fixed-tenant page and helper review.
+ */
+export async function runEnterpriseScenario(input: ScenarioInput, companyId?: string): Promise<ScenarioImpact> {
   const [products, ingredients, leakage, opportunities] = await Promise.all([
     getProducts(120),
     getIngredients(200),
-    getFinanceLeakageCentre(),
+    getFinanceLeakageCentre(companyId),
     getRecoveryOpportunities(),
   ]);
 
