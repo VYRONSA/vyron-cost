@@ -762,11 +762,11 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
               <dd className="font-black">{workspaceDebug.localCompanyId || "—"}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-slate-500">document.cookie contains vyron_cost_active_client</dt>
+              <dt className="text-slate-500">vyron_cost_active_client visible to page script (HttpOnly: expected no)</dt>
               <dd className="font-black">{workspaceDebug.hasActiveClientCookieDoc ? "yes" : "no"}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-slate-500">document.cookie contains vyron_workspace_user_session</dt>
+              <dt className="text-slate-500">vyron_workspace_user_session visible to page script (HttpOnly: expected no)</dt>
               <dd className="font-black">{workspaceDebug.hasSessionCookieDoc ? "yes" : "no"}</dd>
             </div>
           </dl>

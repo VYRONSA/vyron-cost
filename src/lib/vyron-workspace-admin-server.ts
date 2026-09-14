@@ -1,7 +1,5 @@
-import { parseCookieJsonValue } from "@/lib/vyron-workspace-cookie-parse";
-import { expandWorkspaceSessionFromCookie } from "@/lib/vyron-workspace-cookies";
-import { WORKSPACE_SESSION_KEY, type WorkspaceSession } from "@/lib/vyron-workspace-session";
-import { getServerActiveWorkspace } from "@/lib/vyron-workspace-server";
+import type { WorkspaceSession } from "@/lib/vyron-workspace-session";
+import { getServerActiveWorkspace, readVerifiedWorkspaceClaims } from "@/lib/vyron-workspace-server";
 import { getPackageModules } from "@/lib/vyron-package-manager";
 import {
   getWorkspace,
@@ -77,38 +75,15 @@ export async function assertAdminAccess(role: string) {
   }
 }
 
-function parseWorkspaceSession(raw: string | null | undefined): WorkspaceSession | null {
-  const parsed = parseCookieJsonValue<WorkspaceSession>(raw);
-  if (!parsed) return null;
-  const expanded = expandWorkspaceSessionFromCookie(parsed);
-  if (!expanded) return null;
-  return normalizeServerWorkspaceSession(expanded);
-}
-
-function normalizeServerWorkspaceSession(session: WorkspaceSession): WorkspaceSession {
-  const role = normalizeWorkspaceRole(session.role);
-  return {
-    ...session,
-    role,
-    permissions: resolveEffectivePermissions(role, session.permissions),
-  };
-}
-
 /**
  * Resolve a member's real role and permissions from the database.
  *
  * AUTHORISATION IS RESOLVED FROM THE DATABASE, NEVER FROM THE REQUEST.
  *
- * The workspace session cookie is not httpOnly, so anything in it can be edited
- * by the browser. Reading the role from it meant a member could grant
- * themselves OWNER, and OWNER bypasses every permission check. Reading the
- * permissions from it was impossible — they were never carried — so a member
- * with an explicitly granted permission fell back to their role's defaults and
- * was refused work they had been given rights to do.
- *
- * The cookie now identifies the member; the membership row decides what they
- * may do. Returns null when no active membership backs the cookie, so an
- * unverifiable session is refused rather than trusted.
+ * The signed session token says who the member is and which workspace they
+ * signed in to; the membership row decides what they may do. Returns null when
+ * no active membership backs the token, so a removed or disabled member is
+ * refused on their next request even though their token is still genuine.
  */
 async function resolveMembershipAuthorisation(
   workspaceId: string,
@@ -149,19 +124,28 @@ export async function getServerWorkspaceSession(): Promise<WorkspaceSession | nu
     return readWorkspaceSession();
   }
   try {
-    const { cookies } = await import("next/headers");
-    const cookieStore = await cookies();
-    const fromCookie = parseWorkspaceSession(cookieStore.get(WORKSPACE_SESSION_KEY)?.value);
-    if (!fromCookie) return null;
+    /*
+     * Identity comes only from a token this server signed. The cookie used to
+     * be JSON naming a userId and workspaceId, and was trusted as written:
+     * anyone who knew a member's ids could become that member.
+     */
+    const claims = await readVerifiedWorkspaceClaims();
+    if (!claims?.wid) return null;
 
-    const authorised = await resolveMembershipAuthorisation(
-      String(fromCookie.workspaceId || ""),
-      String(fromCookie.userId || "")
-    );
+    const authorised = await resolveMembershipAuthorisation(claims.wid, claims.sub);
     if (!authorised) return null;
 
-    // Identity from the cookie, authority from the database.
-    return { ...fromCookie, role: authorised.role as WorkspaceSession["role"], permissions: authorised.permissions };
+    // Identity from the signed token, authority from the database.
+    return {
+      userId: claims.sub,
+      email: "",
+      firstName: "Workspace",
+      surname: "User",
+      workspaceId: claims.wid,
+      companyId: null,
+      role: authorised.role as WorkspaceSession["role"],
+      permissions: authorised.permissions,
+    };
   } catch {
     return null;
   }

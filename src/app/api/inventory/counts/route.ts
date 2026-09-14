@@ -6,7 +6,6 @@ import {
   inventoryCompanyContextFromRequest,
   requireInventoryCompanyId,
 } from "@/lib/vyron-inventory-api-context";
-import { getAuthUserIdFromCookies } from "@/lib/vyron-workspace-auth";
 import {
   requireWorkspacePermission,
   workspaceAccessErrorResponse,
@@ -31,10 +30,15 @@ function entityTypeForCount(type: CountType) {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+/**
+ * Who is creating the count.
+ *
+ * The permission is always checked and the actor is the verified member. This
+ * used to take the actor from the auth cookie when one was present — which held
+ * the bare user id, so it could name anyone — and skipped the permission check
+ * entirely in that case.
+ */
 async function requireActorUserId() {
-  const authUserId = await getAuthUserIdFromCookies();
-  if (authUserId && UUID_RE.test(authUserId)) return authUserId;
-
   const session = await requireWorkspacePermission("inventory.counts.create");
   if (UUID_RE.test(session.userId)) return session.userId;
 

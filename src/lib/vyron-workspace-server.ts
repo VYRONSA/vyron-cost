@@ -3,12 +3,13 @@ import { isHandcraftedDataReady, isHandcraftedTenantEnabled } from "@/lib/handcr
 import { ACTIVE_CLIENT_KEY, readActiveClient, type ActiveClient } from "@/lib/vyron-developer-client";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { parseCookieJsonValue } from "@/lib/vyron-workspace-cookie-parse";
-import { expandActiveClientFromCookie, expandWorkspaceSessionFromCookie } from "@/lib/vyron-workspace-cookies";
+import { expandActiveClientFromCookie } from "@/lib/vyron-workspace-cookies";
 import {
   isHandcraftedSandboxWorkspace,
   lookupWorkspaceCompanyIdFromDatabase,
 } from "@/lib/vyron-workspace-company-resolution";
 import { WORKSPACE_SESSION_KEY } from "@/lib/vyron-workspace-session";
+import { verifyWorkspaceToken, type WorkspaceTokenClaims } from "@/lib/vyron-workspace-session-token";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -22,14 +23,45 @@ export function parseActiveClient(raw: string | null | undefined): ActiveClient 
   return expandActiveClientFromCookie(parsed);
 }
 
+/**
+ * The claims of the signed workspace session cookie, or null.
+ *
+ * The only place the session cookie is read. Nothing it contains is believed
+ * until the signature, purpose and lifetime check out; whether the member may
+ * still act is then decided against the database by getServerWorkspaceSession.
+ */
+export async function readVerifiedWorkspaceClaims(): Promise<WorkspaceTokenClaims | null> {
+  if (typeof window !== "undefined") return null;
+  try {
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    return verifyWorkspaceToken(cookieStore.get(WORKSPACE_SESSION_KEY)?.value, "ws");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The active-client display record, for the workspace the signed session is in.
+ *
+ * The cookie is written by the server but is display data — names, package,
+ * a companyId hint. It no longer chooses a workspace: it is returned only when
+ * it names the same workspace as a verified session, and whether the session
+ * came from a platform operator's Login As is taken from the signed session,
+ * not from the cookie.
+ */
 export async function getServerActiveWorkspace(): Promise<ActiveClient | null> {
   if (typeof window !== "undefined") {
     return readActiveClient();
   }
   try {
+    const claims = await readVerifiedWorkspaceClaims();
+    if (!claims?.wid) return null;
     const { cookies } = await import("next/headers");
     const cookieStore = await cookies();
-    return parseActiveClient(cookieStore.get(ACTIVE_CLIENT_KEY)?.value);
+    const client = parseActiveClient(cookieStore.get(ACTIVE_CLIENT_KEY)?.value);
+    if (!client || client.id !== claims.wid) return null;
+    return { ...client, impersonating: claims.imp === true };
   } catch {
     return null;
   }
@@ -101,20 +133,7 @@ export async function getWorkspaceCompanyId(): Promise<string | null> {
     return null;
   }
 
-  try {
-    const { cookies } = await import("next/headers");
-    const cookieStore = await cookies();
-    const raw = cookieStore.get(WORKSPACE_SESSION_KEY)?.value;
-    const parsed = parseCookieJsonValue<Parameters<typeof expandWorkspaceSessionFromCookie>[0]>(raw);
-    const session = parsed ? expandWorkspaceSessionFromCookie(parsed) : null;
-    const requestedFromSession = session?.companyId?.trim() || null;
-    if (requestedFromSession && isUuid(requestedFromSession) && requestedFromSession !== companyId) {
-      return null;
-    }
-  } catch {
-    // No cookie to disagree with; the database answer stands.
-  }
-
+  // The signed session carries no company; the workspace record is the answer.
   return companyId;
 }
 

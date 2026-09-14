@@ -1,14 +1,14 @@
 import type { NextResponse } from "next/server";
 import { ACTIVE_CLIENT_KEY, type ActiveClient } from "@/lib/vyron-developer-client";
 import { WORKSPACE_SESSION_KEY, type WorkspaceSession } from "@/lib/vyron-workspace-session";
-import type { WorkspaceUserRole } from "@/lib/vyron-workspace-permissions";
+import { signWorkspaceToken, WORKSPACE_SESSION_TTL_SECONDS } from "@/lib/vyron-workspace-session-token";
 
 export const WORKSPACE_AUTH_COOKIE_NAMES = [
   ACTIVE_CLIENT_KEY,
   WORKSPACE_SESSION_KEY,
 ] as const;
 
-const WORKSPACE_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+const WORKSPACE_COOKIE_MAX_AGE = WORKSPACE_SESSION_TTL_SECONDS;
 
 export type CompactActiveClientCookie = {
   id: string;
@@ -20,32 +20,24 @@ export type CompactActiveClientCookie = {
   impersonating?: boolean;
 };
 
-export type CompactWorkspaceSessionCookie = {
-  workspaceId: string;
-  /**
-   * Who the session belongs to.
-   *
-   * The cookie is not httpOnly and is therefore client-writable, so nothing in
-   * it may be trusted for authorisation. It carries identity only: the server
-   * looks the membership up and takes the role and permissions from the
-   * database. Without this field the server cannot tell which member is
-   * calling, which is why permissions previously fell back to role defaults.
-   */
-  userId: string;
-  companyId: string | null;
-  role: WorkspaceUserRole;
-};
-
 export function isProductionCookieEnvironment() {
   return process.env.NODE_ENV === "production";
 }
 
+/**
+ * Both workspace cookies are HttpOnly.
+ *
+ * No client script reads them — the shell learns its workspace from
+ * /api/workspace/status — so script has no reason to see them, and an injected
+ * script cannot lift the session. SameSite=Lax keeps them off cross-site
+ * POSTs; Secure in production.
+ */
 export function workspaceCookieOptions(maxAge: number = WORKSPACE_COOKIE_MAX_AGE) {
   return {
     path: "/",
     maxAge,
     sameSite: "lax" as const,
-    httpOnly: false,
+    httpOnly: true,
     secure: isProductionCookieEnvironment(),
   };
 }
@@ -86,46 +78,18 @@ export function expandActiveClientFromCookie(
   };
 }
 
-export function compactWorkspaceSessionForCookie(
-  session: WorkspaceSession,
-  workspaceId: string,
-  companyId: string | null
-): CompactWorkspaceSessionCookie {
-  return {
-    workspaceId,
-    userId: session.userId,
-    companyId,
-    role: session.role,
-  };
-}
-
-export function expandWorkspaceSessionFromCookie(
-  value: CompactWorkspaceSessionCookie | WorkspaceSession
-): WorkspaceSession | null {
-  if ("userId" in value && value.userId && "email" in value && value.email) {
-    return value as WorkspaceSession;
-  }
-
-  const compact = value as CompactWorkspaceSessionCookie;
-  if (!compact.workspaceId || !compact.role) {
-    return null;
-  }
-
-  return {
-    // Falls back to the old synthetic id for cookies issued before userId was
-    // carried; those sessions cannot be resolved against a membership and are
-    // rejected by the server rather than silently trusted.
-    userId: compact.userId || `workspace-${compact.workspaceId}`,
-    email: "",
-    firstName: "Workspace",
-    surname: "User",
-    workspaceId: compact.workspaceId,
-    companyId: compact.companyId ?? null,
-    role: compact.role,
-    permissions: {},
-  };
-}
-
+/**
+ * Writes the session and the active-client display cookie.
+ *
+ * The session cookie is a token this server signed (see
+ * vyron-workspace-session-token). It names the member and the workspace and
+ * nothing else: no role, no permissions, no company, all of which the server
+ * reads from the database on every request. It used to be JSON the browser
+ * could rewrite, which let anyone who knew a member's ids become them.
+ *
+ * The active-client cookie is display data. The server ignores it unless it
+ * names the same workspace as a verified session.
+ */
 export function setWorkspaceAuthCookiesOnResponse(
   response: NextResponse,
   client: ActiveClient,
@@ -133,11 +97,13 @@ export function setWorkspaceAuthCookiesOnResponse(
   maxAge: number = WORKSPACE_COOKIE_MAX_AGE
 ) {
   const options = workspaceCookieOptions(maxAge);
-  const clientCookie = compactActiveClientForCookie(client);
-  const sessionCookie = compactWorkspaceSessionForCookie(session, client.id, client.companyId ?? null);
+  const token = signWorkspaceToken(
+    { kind: "ws", userId: session.userId, workspaceId: client.id, impersonating: client.impersonating === true },
+    { ttlSeconds: maxAge }
+  );
 
-  response.cookies.set(ACTIVE_CLIENT_KEY, encodeCookieJson(clientCookie), options);
-  response.cookies.set(WORKSPACE_SESSION_KEY, encodeCookieJson(sessionCookie), options);
+  response.cookies.set(ACTIVE_CLIENT_KEY, encodeCookieJson(compactActiveClientForCookie(client)), options);
+  response.cookies.set(WORKSPACE_SESSION_KEY, token, options);
 
   return response;
 }
