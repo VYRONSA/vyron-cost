@@ -1,20 +1,30 @@
 import { getSupabaseAdmin } from "@/lib/supabase-server";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
 
-export async function fetchFinanceExportRows(
-  type:
-    | "invoices"
-    | "purchase-orders"
-    | "grns"
-    | "inventory-adjustments"
-    | "production-journals"
-    | "recovery-journals"
-    | "cost-updates"
-) {
+export const FINANCE_EXPORT_TYPES = [
+  "invoices",
+  "purchase-orders",
+  "grns",
+  "inventory-adjustments",
+  "production-journals",
+  "recovery-journals",
+  "cost-updates",
+] as const;
+
+export type FinanceExportType = (typeof FINANCE_EXPORT_TYPES)[number];
+
+/**
+ * One accounting export, for one company.
+ *
+ * The company is required and must come from the caller's verified session.
+ * This used to read VYRON_DEFAULT_TENANT_ID, a fixed id from the environment,
+ * so every caller got that company's rows whoever they were.
+ */
+export async function fetchFinanceExportRows(type: FinanceExportType, company: string) {
+  const companyId = String(company || "").trim();
+  if (!companyId) throw new Error("A company is required for a finance export.");
+
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
-
-  const companyId = VYRON_DEFAULT_TENANT_ID;
 
   if (type === "invoices") {
     const { data } = await supabase
