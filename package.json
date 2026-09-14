@@ -35,7 +35,8 @@
     "test:data-migration": "node scripts/test-data-migration.mjs",
     "test:food-sock-execute": "node scripts/test-food-sock-execute.mjs",
     "migrate:food-sock": "node scripts/food-sock-migration.mjs",
-    "rehearse:food-sock": "node scripts/food-sock-rehearsal.mjs"
+    "rehearse:food-sock": "node scripts/food-sock-rehearsal.mjs",
+    "test:bom-invoice-visibility": "node scripts/test-bom-invoice-visibility.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",

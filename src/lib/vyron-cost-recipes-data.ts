@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { calcGp, calcLineCost, calcSuggestedPrice } from "@/lib/vyron-cost-bom-data";
+import { createProduct } from "@/lib/vyron-cost-master-data";
 import {
   assertNoCircularBom,
   BomInUseError,
@@ -772,6 +773,115 @@ async function assertProductFree(
   throw new ProductAlreadyLinkedError(productId, owner, String(ownerBom.bom_name || "another BOM"));
 }
 
+/**
+ * The product a Finished Good BOM is sold as.
+ *
+ * Invoices, sales orders and the item lookup sell products, not BOMs. A
+ * Finished Good BOM saved without choosing a product used to be stored with
+ * product_id null and nothing behind it: it showed in the BOM list, but nobody
+ * in the company could put it on an invoice. It now always has one — the
+ * product already linked to it, else the one active unlinked product of
+ * exactly the same name (an existing master record is taken, not duplicated),
+ * else a new product in the BOM's own company.
+ *
+ * A Sub-BOM never comes here: it is not sold on its own.
+ */
+async function ensureFinishedGoodProduct(
+  supabase: SupabaseClient,
+  companyId: string,
+  bom: { id: string; name: string; category: string; sellingPrice: number; costPerUnit: number }
+): Promise<{ productId: string; source: "linked" | "same-name" | "created" }> {
+  const { data: linked, error: linkedError } = await supabase
+    .from("vyron_cost_products")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("linked_bom_id", bom.id)
+    .limit(1);
+  if (linkedError) throw new Error(linkedError.message);
+  if (linked?.[0]?.id) return { productId: String(linked[0].id), source: "linked" };
+
+  const name = bom.name.trim();
+  const { data: unlinked, error: unlinkedError } = await supabase
+    .from("vyron_cost_products")
+    .select("id, product_name, product_status")
+    .eq("company_id", companyId)
+    .is("linked_bom_id", null);
+  if (unlinkedError) throw new Error(unlinkedError.message);
+  const sameName = (unlinked || []).filter(
+    (row) =>
+      row.product_status !== "Archived" &&
+      String(row.product_name || "").trim().toLowerCase() === name.toLowerCase()
+  );
+  // Two candidates is ambiguous; guessing could attach the wrong product.
+  if (sameName.length === 1) return { productId: String(sameName[0].id), source: "same-name" };
+
+  const created = await createProduct(supabase, companyId, {
+    product_name: name,
+    product_category: bom.category,
+    selling_price: bom.sellingPrice,
+    total_cost: bom.costPerUnit,
+    linked_bom_id: bom.id,
+    product_status: "Active",
+  });
+  return { productId: created.id, source: "created" };
+}
+
+async function setBomProduct(supabase: SupabaseClient, companyId: string, bomId: string, productId: string) {
+  const { error } = await supabase
+    .from("vyron_cost_boms")
+    .update({ product_id: productId })
+    .eq("id", bomId)
+    .eq("company_id", companyId);
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Give an existing Finished Good BOM with no product the product it is sold as.
+ *
+ * For BOMs saved before every Finished Good got one. The BOM is not re-costed:
+ * the product takes the BOM's stored cost per unit, and the BOM row changes only
+ * in product_id. Returns null when there is nothing to do — no such BOM in this
+ * company, a Sub-BOM, an archived BOM, or one that already has its product.
+ */
+export async function linkMissingFinishedGoodProduct(
+  supabase: SupabaseClient,
+  companyId: string,
+  bomId: string
+): Promise<{ productId: string; source: "linked" | "same-name" | "created" } | null> {
+  const { data: bom, error } = await supabase
+    .from("vyron_cost_boms")
+    .select(
+      "id, bom_name, category, selling_price, total_cost, cost_per_unit, product_id, bom_purpose, status, selling_price_includes_vat"
+    )
+    .eq("company_id", companyId)
+    .eq("id", bomId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!bom || bom.product_id || bom.status === "Archived") return null;
+  if (normaliseBomPurpose(bom.bom_purpose) === "Sub-BOM") return null;
+
+  const costPerUnit = Number(bom.cost_per_unit || 0);
+  const result = await ensureFinishedGoodProduct(supabase, companyId, {
+    id: String(bom.id),
+    name: String(bom.bom_name || ""),
+    category: String(bom.category || "General"),
+    sellingPrice: Number(bom.selling_price || 0),
+    costPerUnit,
+  });
+  await setBomProduct(supabase, companyId, String(bom.id), result.productId);
+  await syncLinkedProducts(
+    supabase,
+    companyId,
+    String(bom.id),
+    Number(bom.total_cost || 0),
+    costPerUnit,
+    result.productId,
+    null,
+    await vatBasisFor(supabase, companyId, bom.selling_price_includes_vat === true)
+  );
+  return result;
+}
+
 export async function createRecipe(
   supabase: SupabaseClient,
   companyId: string,
@@ -838,18 +948,33 @@ export async function createRecipe(
   if (error) throw new Error(error.message);
 
   const savedLines = await insertRecipeLines(supabase, companyId, recipeId, lines);
+  let saved = data as Record<string, unknown>;
+  let productId = purpose === "Sub-BOM" ? null : input.product_id || null;
+  if (purpose !== "Sub-BOM" && !productId) {
+    productId = (
+      await ensureFinishedGoodProduct(supabase, companyId, {
+        id: recipeId,
+        name: input.recipe_name,
+        category: input.category || "General",
+        sellingPrice: Number(input.selling_price || 0),
+        costPerUnit: costs.costPerUnit,
+      })
+    ).productId;
+    await setBomProduct(supabase, companyId, recipeId, productId);
+    saved = { ...saved, product_id: productId };
+  }
   const linkedProducts = await syncLinkedProducts(
     supabase,
     companyId,
     recipeId,
     costs.totalCost,
     costs.costPerUnit,
-    purpose === "Sub-BOM" ? null : input.product_id,
+    productId,
     null,
     await vatBasisFor(supabase, companyId, includesVat)
   );
 
-  return { recipe: mapBomRow(data as Record<string, unknown>, savedLines), linkedProducts };
+  return { recipe: mapBomRow(saved, savedLines), linkedProducts };
 }
 
 export async function updateRecipe(
@@ -951,8 +1076,23 @@ export async function updateRecipe(
     savedLines = await insertRecipeLines(supabase, companyId, recipeId, lines);
   }
 
-  const nextProductId =
+  let nextProductId =
     purpose === "Sub-BOM" ? null : input.product_id !== undefined ? input.product_id : existing.product_id;
+  let saved = data as Record<string, unknown>;
+  // Clearing the product on a Finished Good keeps the one already linked to it.
+  if (purpose !== "Sub-BOM" && !nextProductId) {
+    nextProductId = (
+      await ensureFinishedGoodProduct(supabase, companyId, {
+        id: recipeId,
+        name: String(patch.bom_name || ""),
+        category: String(patch.category || "General"),
+        sellingPrice,
+        costPerUnit: costs.costPerUnit,
+      })
+    ).productId;
+    await setBomProduct(supabase, companyId, recipeId, nextProductId);
+    saved = { ...saved, product_id: nextProductId };
+  }
   const linkedProducts = await syncLinkedProducts(
     supabase,
     companyId,
@@ -964,7 +1104,7 @@ export async function updateRecipe(
     await vatBasisFor(supabase, companyId, includesVat)
   );
 
-  return { recipe: mapBomRow(data as Record<string, unknown>, savedLines), linkedProducts };
+  return { recipe: mapBomRow(saved, savedLines), linkedProducts };
 }
 
 export async function recalculateBomCosts(

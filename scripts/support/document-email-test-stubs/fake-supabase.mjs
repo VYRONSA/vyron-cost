@@ -48,6 +48,24 @@ export function createFakeSupabase(seed = {}, options = {}) {
       this.filters.push((row) => typeof row[column] === "string" && row[column].toLowerCase() === String(pattern).toLowerCase());
       return this;
     }
+    /** PostgREST `not`. Only `not(column, "is", null)` is needed so far; anything else fails loudly. */
+    not(column, operator, value) {
+      if (operator !== "is") throw new Error(`fake not: only "is" is supported ("${operator}")`);
+      this.filters.push((row) => (row[column] ?? null) !== value);
+      return this;
+    }
+    /** PostgREST `or` of `column.ilike.%text%` terms: a case-insensitive substring on any column. */
+    or(expression) {
+      const terms = String(expression).split(",").map((term) => {
+        const match = /^([a-z_]+)\.ilike\.%(.*)%$/i.exec(term.trim());
+        if (!match) throw new Error(`fake or: unsupported term "${term}"`);
+        return { column: match[1], needle: match[2].replace(/\\([%_])/g, "$1").toLowerCase() };
+      });
+      this.filters.push((row) =>
+        terms.some(({ column, needle }) => typeof row[column] === "string" && row[column].toLowerCase().includes(needle))
+      );
+      return this;
+    }
     order() { return this; }
     limit(count) { this.max = count; return this; }
     insert(payload) { this.op = "insert"; this.payload = payload; return this; }
