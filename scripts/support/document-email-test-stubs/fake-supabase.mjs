@@ -42,17 +42,30 @@ export function createFakeSupabase(seed = {}, options = {}) {
     gte(column, value) { this.filters.push((row) => row[column] !== null && row[column] !== undefined && row[column] >= value); return this; }
     lt(column, value) { this.filters.push((row) => row[column] !== null && row[column] !== undefined && row[column] < value); return this; }
     lte(column, value) { this.filters.push((row) => row[column] !== null && row[column] !== undefined && row[column] <= value); return this; }
-    /** Case-insensitive match. Only literal patterns are supported — a wildcard fails loudly. */
+    /** SQL ILIKE: LIKE, case-insensitive. % is any run of characters, _ is one character. */
     ilike(column, pattern) {
-      if (/[%_]/.test(String(pattern))) throw new Error(`fake ilike: wildcard patterns are not supported ("${pattern}")`);
-      this.filters.push((row) => typeof row[column] === "string" && row[column].toLowerCase() === String(pattern).toLowerCase());
+      const source = String(pattern).replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*").replace(/_/g, ".");
+      const regex = new RegExp(`^${source}$`, "is");
+      this.filters.push((row) => typeof row[column] === "string" && regex.test(row[column]));
       return this;
     }
-    /** PostgREST `not`. Only `not(column, "is", null)` is needed so far; anything else fails loudly. */
+    /** PostgREST `not`, for is / eq / in. SQL semantics: a NULL column matches neither side. Anything else fails loudly. */
     not(column, operator, value) {
-      if (operator !== "is") throw new Error(`fake not: only "is" is supported ("${operator}")`);
-      this.filters.push((row) => (row[column] ?? null) !== value);
-      return this;
+      if (operator === "is") {
+        this.filters.push((row) => (row[column] ?? null) !== value);
+        return this;
+      }
+      if (operator === "eq") {
+        this.filters.push((row) => row[column] !== null && row[column] !== undefined && row[column] !== value);
+        return this;
+      }
+      if (operator === "in") {
+        const list = (Array.isArray(value) ? value : String(value).replace(/^\(|\)$/g, "").split(","))
+          .map((v) => String(v).trim().replace(/^"|"$/g, ""));
+        this.filters.push((row) => row[column] !== null && row[column] !== undefined && !list.includes(String(row[column])));
+        return this;
+      }
+      throw new Error(`fake not: only "is", "eq" and "in" are supported ("${operator}")`);
     }
     /** PostgREST `or` of `column.ilike.%text%` terms: a case-insensitive substring on any column. */
     or(expression) {

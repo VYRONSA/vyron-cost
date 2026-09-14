@@ -286,7 +286,9 @@ export async function getFraudAlerts(companyId = VYRON_DEFAULT_TENANT_ID): Promi
   return alerts;
 }
 
-export async function auditorGlobalSearch(query: string, companyId = VYRON_DEFAULT_TENANT_ID): Promise<AuditorSearchResult[]> {
+/** Search one company. The company is required and must come from the caller's verified session. */
+export async function auditorGlobalSearch(query: string, companyId: string): Promise<AuditorSearchResult[]> {
+  if (!String(companyId || "").trim()) throw new Error("A company is required for auditor search.");
   const supabase = getSupabaseAdmin();
   const term = query.trim().toLowerCase();
   if (!term || !supabase) return [];

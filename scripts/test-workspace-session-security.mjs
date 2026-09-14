@@ -201,7 +201,14 @@ check("3. malformed JSON-looking session -> 401", (await lookup()).status === 40
 
 const token = inv.jar[SESSION] || "";
 const parts = token.split(".");
-const flip = (s) => (s ? s.slice(0, -1) + (s.endsWith("A") ? "B" : "A") : s);
+// Change a character in the middle of the signature. The last base64url character
+// of a 32-byte HMAC carries two padding bits, so changing it can leave the decoded
+// bytes identical — that was not a tamper at all, and made this check flaky.
+const flip = (s) => {
+  if (!s) return s;
+  const i = Math.floor(s.length / 2);
+  return s.slice(0, i) + (s[i] === "A" ? "B" : "A") + s.slice(i + 1);
+};
 browser({ ...inv.jar, [SESSION]: parts.length === 3 ? `${parts[0]}.${parts[1]}.${flip(parts[2])}` : `${token}x` });
 check("4. tampered signature -> 401", (await lookup()).status === 401);
 const forgedPayload = parts.length === 3

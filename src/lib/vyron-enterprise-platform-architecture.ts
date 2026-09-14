@@ -411,7 +411,17 @@ async function buildKnowledgeGraph(): Promise<{ nodes: KnowledgeGraphNode[]; edg
   return { nodes, edges };
 }
 
-export async function enterpriseGlobalSearch(query: string, companyId = VYRON_DEFAULT_TENANT_ID): Promise<EnterpriseSearchResult[]> {
+/**
+ * Search one company. The company is required and must come from the caller's
+ * verified session; it used to default to VYRON_DEFAULT_TENANT_ID. Results are
+ * labelled with that company's own name, not a fixed customer's.
+ */
+export async function enterpriseGlobalSearch(
+  query: string,
+  companyId: string,
+  companyLabel = "Your company"
+): Promise<EnterpriseSearchResult[]> {
+  if (!String(companyId || "").trim()) throw new Error("A company is required for enterprise search.");
   const term = query.trim().toLowerCase();
   if (!term) return [];
 
@@ -429,7 +439,7 @@ export async function enterpriseGlobalSearch(query: string, companyId = VYRON_DE
     label: r.label,
     detail: r.detail,
     href: r.href,
-    companyLabel: "Handcrafted Food Products",
+    companyLabel,
   }));
 
   for (const s of suppliers.filter((x) => x.supplier_name.toLowerCase().includes(term)).slice(0, 8)) {
@@ -439,7 +449,7 @@ export async function enterpriseGlobalSearch(query: string, companyId = VYRON_DE
       label: s.supplier_name,
       detail: `Spend ${money(s.current_spend)} · Risk ${s.supplier_risk_score}`,
       href: s.href,
-      companyLabel: "Handcrafted Food Products",
+      companyLabel,
     });
   }
 
@@ -450,7 +460,7 @@ export async function enterpriseGlobalSearch(query: string, companyId = VYRON_DE
       label: String(p.product_name),
       detail: `GP ${calculateGp(p)}% · ${money(Number(p.selling_price || 0))}`,
       href: `/products/${p.id}`,
-      companyLabel: "Handcrafted Food Products",
+      companyLabel,
     });
   }
 
@@ -461,7 +471,7 @@ export async function enterpriseGlobalSearch(query: string, companyId = VYRON_DE
       label: o.title,
       detail: `${o.tracking_status || o.status} · ${money(Number(o.potential_recovery || o.monthly_value || 0))}`,
       href: `/recovery-opportunities/${o.id}`,
-      companyLabel: "Handcrafted Food Products",
+      companyLabel,
     });
   }
 
@@ -472,7 +482,7 @@ export async function enterpriseGlobalSearch(query: string, companyId = VYRON_DE
       label: String(i.ingredient_name),
       detail: `${i.category} · ${money(Number(i.purchase_cost || 0))}`,
       href: "/ingredients",
-      companyLabel: "Handcrafted Food Products",
+      companyLabel,
     });
   }
 
@@ -835,7 +845,9 @@ export async function getEnterprisePlatformPayload(companyId = VYRON_DEFAULT_TEN
   };
 }
 
-export async function answerEnterpriseAi(question: string, companyId = VYRON_DEFAULT_TENANT_ID): Promise<EnterpriseAiAnswer> {
+/** Answer for one company. The company is required and must come from the caller's verified session. */
+export async function answerEnterpriseAi(question: string, companyId: string): Promise<EnterpriseAiAnswer> {
+  if (!String(companyId || "").trim()) throw new Error("A company is required for the enterprise assistant.");
   const data = await getEnterprisePlatformPayload(companyId);
   const match = data.enterpriseAi.find((a) => a.question.toLowerCase() === question.toLowerCase());
   if (match) return match;

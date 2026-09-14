@@ -38,7 +38,8 @@
     "rehearse:food-sock": "node scripts/food-sock-rehearsal.mjs",
     "test:bom-invoice-visibility": "node scripts/test-bom-invoice-visibility.mjs",
     "test:session-security": "node scripts/test-workspace-session-security.mjs",
-    "test:finance-export-security": "node scripts/test-finance-export-security.mjs"
+    "test:finance-export-security": "node scripts/test-finance-export-security.mjs",
+    "test:enterprise-api-security": "node scripts/test-enterprise-api-security.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",
