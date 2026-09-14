@@ -31,7 +31,8 @@
     "certify:workflow": "node scripts/certify-production-workflow.mjs",
     "test:approval-safety": "node scripts/test-approval-safety.mjs",
     "test:crop-fidelity": "node scripts/test-crop-fidelity.mjs",
-    "test:document-email": "node scripts/test-document-email.mjs"
+    "test:document-email": "node scripts/test-document-email.mjs",
+    "test:bom-invoice-visibility": "node scripts/test-bom-invoice-visibility.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",

@@ -85,7 +85,7 @@ const bomFieldGuide = [
   {
     title: "Linked Product",
     icon: "package" as const,
-    description: "Optionally connect this BOM to a finished product so costs sync automatically on save.",
+    description: "Connect this BOM to its finished product, or leave it for one to be created on save. Costs sync automatically.",
     example: "Handcrafted Chicken Pie",
   },
 ];
@@ -899,7 +899,7 @@ export default function BomBuilderClient({
                 <label className="block">
                   <span className={labelClass}>Finished Product</span>
                   <select disabled={readOnly} value={productId} onChange={(e) => setProductId(e.target.value)} className={inputClass}>
-                    <option value="">Select finished product (optional)</option>
+                    <option value="">New finished product — created from this BOM on save</option>
                     {products.map((product) => {
                       // A product belongs to one BOM. One already produced by a
                       // different BOM is listed but cannot be taken, so a copy
@@ -915,7 +915,7 @@ export default function BomBuilderClient({
                     })}
                   </select>
                   <FieldHint example="Handcrafted Chicken Pie">
-                    On save, linked product costs update from this BOM. A finished product is what production receives into stock.
+                    On save, linked product costs update from this BOM. With none chosen, a product of the same name is created, so the finished good can be invoiced and received into stock.
                   </FieldHint>
                 </label>
               ) : (
