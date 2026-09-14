@@ -41,7 +41,8 @@
     "test:finance-export-security": "node scripts/test-finance-export-security.mjs",
     "test:enterprise-api-security": "node scripts/test-enterprise-api-security.mjs",
     "test:enterprise-post-security": "node scripts/test-enterprise-post-security.mjs",
-    "test:enterprise-shared-engine-security": "node scripts/test-enterprise-shared-engine-security.mjs"
+    "test:enterprise-shared-engine-security": "node scripts/test-enterprise-shared-engine-security.mjs",
+    "test:server-page-tenant-security": "node scripts/test-server-page-tenant-security.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",

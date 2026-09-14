@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { requireEngineTenant } from "@/lib/vyron-engine-tenant";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 import { getExecutiveCommandCentreData } from "@/lib/vyron-executive-command-centre";
 import { getFinancialLeakageDashboard, getLeakageFindings } from "@/lib/vyron-leakage-intelligence-data";
@@ -202,7 +203,10 @@ export async function computeSpendTotals(supabase: SupabaseClient, companyId: st
   return { spendThisMonth: round2(spendMonth), spendThisYear: round2(spendYear) };
 }
 
-export async function getFinanceLeakageCentre(companyId = VYRON_DEFAULT_TENANT_ID): Promise<FinanceLeakageCentre> {
+export async function getFinanceLeakageCentre(requestedCompanyId?: string | null): Promise<FinanceLeakageCentre> {
+  // Inserts a leakage snapshot. It runs only for the verified session's company,
+  // checked before anything is read or written; there is no default company.
+  const companyId = await requireEngineTenant(requestedCompanyId);
   const [dashboard, findings, commandCentre, supabase] = await Promise.all([
     getFinancialLeakageDashboard(),
     getLeakageFindings(),
@@ -367,8 +371,11 @@ export async function getFinanceIntelligenceKpis(companyId = VYRON_DEFAULT_TENAN
 
 export async function buildBoardPackData(
   dateRangeLabel = "Current month to date",
-  companyId = VYRON_DEFAULT_TENANT_ID
+  requestedCompanyId?: string | null
 ): Promise<BoardPackData> {
+  // Inserts a board-pack audit row. It runs only for the verified session's company,
+  // checked before anything is read or written; there is no default company.
+  const companyId = await requireEngineTenant(requestedCompanyId);
   const supabase = getSupabaseAdmin();
   const [
     kpis,

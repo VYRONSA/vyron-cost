@@ -1,9 +1,11 @@
 import ExecutiveReportingClient from "@/components/ExecutiveReportingClient";
 import VyronCostShell from "@/components/VyronCostShell";
 import { buildBoardPackData, executiveReportCategories } from "@/lib/vyron-finance-intelligence";
+import { requireWorkspacePage } from "@/lib/vyron-workspace-page";
 
 export default async function ExecutiveReportingPage() {
-  const boardPack = await buildBoardPackData("Current month to date");
+  const { companyId } = await requireWorkspacePage("reports.view");
+  const boardPack = await buildBoardPackData("Current month to date", companyId);
 
   return (
     <VyronCostShell hidePageHeader title="Executive Reporting Centre"

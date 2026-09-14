@@ -2,9 +2,11 @@ import { AiForecastClient } from "@/components/ai-financial/AiFinancialModulesCl
 import VyronCostShell from "@/components/VyronCostShell";
 import { getAiFinancialIntelligence } from "@/lib/vyron-ai-financial-intelligence";
 import Link from "next/link";
+import { requireWorkspacePage } from "@/lib/vyron-workspace-page";
 
 export default async function AiForecastPage() {
-  const { forecast } = await getAiFinancialIntelligence();
+  const { companyId } = await requireWorkspacePage("reports.view");
+  const { forecast } = await getAiFinancialIntelligence(companyId);
 
   return (
     <VyronCostShell hidePageHeader title="AI Financial Forecasting" subtitle="30 · 90 · 365 DAYS · CASH · INFLATION · RECOVERY">

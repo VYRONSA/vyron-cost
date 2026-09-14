@@ -26,6 +26,7 @@ import {
   WandSparkles,
 } from "lucide-react";
 import Link from "next/link";
+import { requireWorkspacePage } from "@/lib/vyron-workspace-page";
 
 function recoveryRate(row: any) {
   const type = String(row.finding_type || "").toLowerCase();
@@ -73,11 +74,12 @@ function FunConfetti() {
 }
 
 export default async function FinancialLeakagePage() {
+  const { companyId } = await requireWorkspacePage("reports.view");
   const [kpis, feed, findings, leakageCentre] = await Promise.all([
     getLeakageKpis(),
     getAiFinancialFeed(),
     getLeakageFindingsForCommand(),
-    getFinanceLeakageCentre(),
+    getFinanceLeakageCentre(companyId),
   ]);
 
   const topFindings = [...findings]

@@ -67,16 +67,22 @@ export function createFakeSupabase(seed = {}, options = {}) {
       }
       throw new Error(`fake not: only "is", "eq" and "in" are supported ("${operator}")`);
     }
-    /** PostgREST `or` of `column.ilike.%text%` terms: a case-insensitive substring on any column. */
+    /**
+     * PostgREST `or` of `column.ilike.%text%` terms (a case-insensitive substring)
+     * and `column.eq.value` terms (an exact match), on any column.
+     */
     or(expression) {
       const terms = String(expression).split(",").map((term) => {
-        const match = /^([a-z_]+)\.ilike\.%(.*)%$/i.exec(term.trim());
-        if (!match) throw new Error(`fake or: unsupported term "${term}"`);
-        return { column: match[1], needle: match[2].replace(/\\([%_])/g, "$1").toLowerCase() };
+        const ilike = /^([a-z_]+)\.ilike\.%(.*)%$/i.exec(term.trim());
+        if (ilike) {
+          const needle = ilike[2].replace(/\\([%_])/g, "$1").toLowerCase();
+          return (row) => typeof row[ilike[1]] === "string" && row[ilike[1]].toLowerCase().includes(needle);
+        }
+        const eq = /^([a-z_]+)\.eq\.(.*)$/i.exec(term.trim());
+        if (eq) return (row) => row[eq[1]] !== undefined && row[eq[1]] !== null && String(row[eq[1]]) === eq[2];
+        throw new Error(`fake or: unsupported term "${term}"`);
       });
-      this.filters.push((row) =>
-        terms.some(({ column, needle }) => typeof row[column] === "string" && row[column].toLowerCase().includes(needle))
-      );
+      this.filters.push((row) => terms.some((matches) => matches(row)));
       return this;
     }
     order() { return this; }

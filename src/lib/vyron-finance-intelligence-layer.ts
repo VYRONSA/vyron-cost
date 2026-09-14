@@ -1,4 +1,4 @@
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { requireEngineTenant } from "@/lib/vyron-engine-tenant";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 import { calculateGpPercent, getIngredients, getProducts } from "@/lib/vyron-cost-data";
 import { getExecutiveCommandCentreData } from "@/lib/vyron-executive-command-centre";
@@ -574,8 +574,11 @@ function computeHealthScores(input: {
 }
 
 export async function getVyronFinanceIntelligence(
-  companyId = VYRON_DEFAULT_TENANT_ID
+  requestedCompanyId?: string | null
 ): Promise<VyronFinanceIntelligencePayload> {
+  // Inserts finance health and statement snapshots. It runs only for the verified session's company,
+  // checked before anything is read or written; there is no default company.
+  const companyId = await requireEngineTenant(requestedCompanyId);
   const supabase = getSupabaseAdmin();
 
   const [
@@ -853,7 +856,7 @@ export async function getVyronFinanceIntelligence(
 
 export async function answerCfoQuestion(
   question: string,
-  companyId = VYRON_DEFAULT_TENANT_ID
+  companyId?: string | null
 ): Promise<CfoAssistantAnswer> {
   const data = await getVyronFinanceIntelligence(companyId);
   const match = data.cfoAssistantPresets.find((p) => p.question.toLowerCase() === question.toLowerCase());

@@ -2,9 +2,11 @@ import FinanceIntelligenceClient from "@/components/FinanceIntelligenceClient";
 import VyronCostShell from "@/components/VyronCostShell";
 import { getFinanceIntelligenceKpis, getFinanceLeakageCentre } from "@/lib/vyron-finance-intelligence";
 import Link from "next/link";
+import { requireWorkspacePage } from "@/lib/vyron-workspace-page";
 
 export default async function FinanceIntelligencePage() {
-  const [kpis, leakage] = await Promise.all([getFinanceIntelligenceKpis(), getFinanceLeakageCentre()]);
+  const { companyId } = await requireWorkspacePage("reports.view");
+  const [kpis, leakage] = await Promise.all([getFinanceIntelligenceKpis(companyId), getFinanceLeakageCentre(companyId)]);
 
   return (
     <VyronCostShell hidePageHeader title="Finance Intelligence Centre"

@@ -2,9 +2,11 @@ import AiCfoCommandCentreClient from "@/components/ai-financial/AiCfoCommandCent
 import VyronCostShell from "@/components/VyronCostShell";
 import { getAiFinancialIntelligence } from "@/lib/vyron-ai-financial-intelligence";
 import Link from "next/link";
+import { requireWorkspacePage } from "@/lib/vyron-workspace-page";
 
 export default async function AiCfoCommandCentrePage() {
-  const data = await getAiFinancialIntelligence();
+  const { companyId } = await requireWorkspacePage("reports.view");
+  const data = await getAiFinancialIntelligence(companyId);
 
   return (
     <VyronCostShell hidePageHeader title="AI CFO Command Centre"

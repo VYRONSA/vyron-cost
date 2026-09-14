@@ -1,7 +1,6 @@
 import { HANDCRAFTED_COMPANY_ID } from "@/lib/vyron-handcrafted-intelligence";
 import { isHandcraftedDataReady, isHandcraftedTenantEnabled } from "@/lib/handcrafted-tenant";
 import { ACTIVE_CLIENT_KEY, readActiveClient, type ActiveClient } from "@/lib/vyron-developer-client";
-import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { parseCookieJsonValue } from "@/lib/vyron-workspace-cookie-parse";
 import { expandActiveClientFromCookie } from "@/lib/vyron-workspace-cookies";
 import {
@@ -67,9 +66,17 @@ export async function getServerActiveWorkspace(): Promise<ActiveClient | null> {
   }
 }
 
+/**
+ * Whether this request may be served the Handcrafted sandbox's demo data.
+ *
+ * Only a verified session whose workspace company IS the sandbox company
+ * qualifies. The active-client cookie's demo flags (demoMode, status, package
+ * name) are display data a browser can edit; they used to be enough on their
+ * own, so a real tenant could switch itself onto the sandbox's data.
+ */
 export async function shouldUseWorkspaceDemoData(): Promise<boolean> {
-  const client = await getServerActiveWorkspace();
-  return isHandcraftedTenantEnabled() && isHandcraftedDataReady() && isDemoWorkspace(client);
+  if (!isHandcraftedTenantEnabled() || !isHandcraftedDataReady()) return false;
+  return (await getWorkspaceCompanyId()) === HANDCRAFTED_COMPANY_ID;
 }
 
 /**
@@ -154,15 +161,12 @@ export async function getWorkspaceCompanyResolution() {
 }
 
 /**
- * The sandbox tenant, for a member verified to be in the demo workspace.
+ * The sandbox tenant, for a verified session whose workspace company is the
+ * sandbox company. The active-client cookie's demo flags do not count.
  *
  * Previously any cookie shaped like the demo workspace returned Handcrafted's
  * company id, which was a read straight into a live tenant.
  */
 export async function getWorkspaceTenantId(): Promise<string | null> {
-  const workspaceId = await authorisedWorkspaceId();
-  if (!workspaceId) return null;
-  const client = await getServerActiveWorkspace();
-  if (!client || client.id !== workspaceId || !isDemoWorkspace(client)) return null;
-  return HANDCRAFTED_COMPANY_ID;
+  return (await getWorkspaceCompanyId()) === HANDCRAFTED_COMPANY_ID ? HANDCRAFTED_COMPANY_ID : null;
 }

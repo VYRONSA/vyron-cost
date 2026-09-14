@@ -2,9 +2,11 @@ import { AiBudgetActualClient } from "@/components/ai-financial/AiFinancialModul
 import VyronCostShell from "@/components/VyronCostShell";
 import { getAiFinancialIntelligence } from "@/lib/vyron-ai-financial-intelligence";
 import Link from "next/link";
+import { requireWorkspacePage } from "@/lib/vyron-workspace-page";
 
 export default async function AiBudgetIntelligencePage() {
-  const { budgetActual } = await getAiFinancialIntelligence();
+  const { companyId } = await requireWorkspacePage("reports.view");
+  const { budgetActual } = await getAiFinancialIntelligence(companyId);
 
   return (
     <VyronCostShell hidePageHeader title="Budget vs Actual Intelligence" subtitle="VARIANCE · TREND · ROOT CAUSE · AI RECOMMENDATIONS">

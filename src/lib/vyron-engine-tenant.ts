@@ -36,3 +36,15 @@ export async function resolveEngineTenant(requested?: string | null): Promise<st
   if (asked && asked !== verified) return null;
   return verified;
 }
+
+/**
+ * resolveEngineTenant for helpers that write: no verified company is an error,
+ * raised before the helper reads or writes anything, instead of an empty
+ * result. The error type is loaded lazily so this module stays client-safe.
+ */
+export async function requireEngineTenant(requested?: string | null): Promise<string> {
+  const tenant = await resolveEngineTenant(requested);
+  if (tenant) return tenant;
+  const { WorkspaceAccessError } = await import("@/lib/vyron-workspace-access");
+  throw new WorkspaceAccessError("Workspace session required.", 401);
+}

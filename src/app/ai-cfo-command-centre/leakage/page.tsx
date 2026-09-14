@@ -2,9 +2,11 @@ import AiProfitLeakageClient from "@/components/ai-financial/AiProfitLeakageClie
 import VyronCostShell from "@/components/VyronCostShell";
 import { getAiFinancialIntelligence } from "@/lib/vyron-ai-financial-intelligence";
 import Link from "next/link";
+import { requireWorkspacePage } from "@/lib/vyron-workspace-page";
 
 export default async function AiProfitLeakagePage() {
-  const { leakage } = await getAiFinancialIntelligence();
+  const { companyId } = await requireWorkspacePage("reports.view");
+  const { leakage } = await getAiFinancialIntelligence(companyId);
 
   return (
     <VyronCostShell hidePageHeader title="Profit Leakage Intelligence" subtitle="MONTHLY · ANNUAL · RECOVERED · POTENTIAL · MISSED">

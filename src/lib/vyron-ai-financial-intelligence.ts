@@ -1,4 +1,4 @@
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
+import { requireEngineTenant } from "@/lib/vyron-engine-tenant";
 import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 import { getExecutiveCommandCentreData } from "@/lib/vyron-executive-command-centre";
@@ -397,9 +397,12 @@ function buildIndustryBenchmarks(
 }
 
 export async function getAiFinancialIntelligence(
-  companyId = VYRON_DEFAULT_TENANT_ID
+  requestedCompanyId?: string | null
 ): Promise<AiFinancialIntelligencePayload> {
   noStore();
+  // Inserts an intelligence score snapshot. It runs only for the verified session's company,
+  // checked before anything is read or written; there is no default company.
+  const companyId = await requireEngineTenant(requestedCompanyId);
   const supabase = getSupabaseAdmin();
 
   const [

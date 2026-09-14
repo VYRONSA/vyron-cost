@@ -1,9 +1,11 @@
 import BoardPackGeneratorClient from "@/components/BoardPackGeneratorClient";
 import VyronCostShell from "@/components/VyronCostShell";
 import { buildBoardPackData } from "@/lib/vyron-finance-intelligence";
+import { requireWorkspacePage } from "@/lib/vyron-workspace-page";
 
 export default async function BoardPackCentrePage() {
-  const pack = await buildBoardPackData("Current month to date");
+  const { companyId } = await requireWorkspacePage("reports.view");
+  const pack = await buildBoardPackData("Current month to date", companyId);
 
   return (
     <VyronCostShell hidePageHeader title="Board Pack Centre"

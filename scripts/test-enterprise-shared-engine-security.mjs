@@ -533,7 +533,7 @@ reseed();
 const sCross = await observe(() => scenarios.runEnterpriseScenario(INPUT, CO_B));
 check("F3. tenant A naming tenant B: refused (neutral), B never queried", !sCross.error && sCross.result?.currentGpPct === 0 && !sCross.vals.has(CO_B) && sCross.writes.length === 0, brief(sCross));
 const pageSrc = source("src/app/scenario-modelling/page.tsx");
-check("F4. the scenario-modelling page passes the verified company explicitly", /runEnterpriseScenario\([\s\S]*?await resolveApiCompanyId\(\)\s*\)/.test(pageSrc));
+check("F4. the scenario-modelling page passes the company from the verified-session gate explicitly", /const \{ companyId \} = await requireWorkspacePage\("reports\.view"\);/.test(pageSrc) && /runEnterpriseScenario\([\s\S]*?,\s*companyId\s*\)/.test(pageSrc) && !/resolveApiCompanyId|VYRON_DEFAULT_TENANT_ID/.test(pageSrc));
 const aiSrc = source("src/lib/vyron-ai-financial-intelligence.ts");
 check("F5. vyron-ai-financial-intelligence passes the verified company explicitly", /const scenarioCompanyId = await resolveApiCompanyId\(\)/.test(aiSrc) && /\},\s*scenarioCompanyId\)/.test(aiSrc));
 
