@@ -68,6 +68,7 @@ it — CI is explicitly out of scope for this phase.
 | **B** | None in Development/PAT | Safety report |
 | **C** | **Named approver per execution** (`--approver`) | Safety report `acknowledgement.approver` |
 | **D** | **Named approver + typed acknowledgement** naming the asset and environment | Safety report `acknowledgement.approver` and `.token` |
+| **P** | **Named approver + typed acknowledgement** naming the asset and PRODUCTION; only in a *verified* production environment (database allowlisted as production + an agreeing signal) | Safety report `acknowledgement.approver` and `.token` |
 
 **Quarantine outranks approval.** The 8 quarantined assets cannot be authorised by any approver at
 runtime. Lifting a quarantine is a reviewed change to `manifest.mjs`, owned by the programme owner.

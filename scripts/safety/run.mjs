@@ -216,7 +216,7 @@ async function main() {
   let acknowledgement = null;
 
   if (decision.verdict === "requires-approval") {
-    if (asset.family === "D") {
+    if (asset.family === "D" || asset.family === "P") {
       const check = checkAcknowledgement(asset, decision.effectiveEnvironment, options.acknowledge, options.approver);
       if (!check.ok) {
         if (!asJson) {

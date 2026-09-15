@@ -502,7 +502,7 @@ production-shaped integration credentials make it as dangerous as Production for
 | | |
 |---|---|
 | **Purpose** | Live customers. |
-| **Permitted** | Family A, with output redaction |
+| **Permitted** | Family A, with output redaction. Family P (controlled production data operation — not a validation asset) only when production is verified, with a named approver and typed acknowledgement |
 | **Prohibited** | B, C, D — absolutely, with no approval path |
 | **Service role** | By exception, named approver, time-boxed, logged |
 | **External integrations** | Never touched by any validation asset |

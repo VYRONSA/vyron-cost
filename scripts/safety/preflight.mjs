@@ -71,7 +71,7 @@ function printRegister() {
   out(`${"FAMILY".padEnd(8)}${"RISK".padEnd(16)}${"MUTATION".padEnd(13)}${"CLEANUP".padEnd(10)}${"EXTERNAL".padEnd(16)}ASSET`);
   out(rule);
 
-  for (const family of ["A", "B", "C", "D", "tooling"]) {
+  for (const family of ["A", "B", "C", "D", "P", "tooling"]) {
     for (const asset of assets.filter((a) => a.family === family)) {
       const marker = asset.quarantined ? " [QUARANTINED]" : "";
       out(
@@ -83,7 +83,7 @@ function printRegister() {
   out(rule);
   out(
     `Totals — A: ${counts.A} (${RISK_BY_FAMILY.A})   B: ${counts.B} (${RISK_BY_FAMILY.B})   ` +
-      `C: ${counts.C} (${RISK_BY_FAMILY.C})   D: ${counts.D} (${RISK_BY_FAMILY.D})   tooling: ${counts.tooling}`
+      `C: ${counts.C} (${RISK_BY_FAMILY.C})   D: ${counts.D} (${RISK_BY_FAMILY.D})   P: ${counts.P} (${RISK_BY_FAMILY.P})   tooling: ${counts.tooling}`
   );
   out(`Validation assets: ${counts.A + counts.B + counts.C + counts.D}   Registered total: ${assets.length}`);
   out("");

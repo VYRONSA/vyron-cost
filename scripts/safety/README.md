@@ -144,6 +144,7 @@ deterministic:
 | **B — Ephemeral** | LOW | Creates a complete tenant and removes it | Development, PAT |
 | **C — Persistent** | HIGH | Leaves data behind — by intent, omission, or an unhandled path | PAT only, with approval |
 | **D — External** | CRITICAL | Mutates something this repository cannot reverse | PAT only, with approval and an allowlisted target |
+| **P — Production data operation** | HIGH | Not a validation asset. Writes one client's data into one named production tenant, by design | VERIFIED Production only, with named approver and typed acknowledgement |
 
 Current population: **A: 15 · B: 8 · C: 17 · D: 10** (50 validation assets),
 plus 4 non-validation tooling scripts.

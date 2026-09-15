@@ -172,11 +172,32 @@ check(
 const unregistered = evaluateExecution("scripts/not-a-real-asset.mjs", { report: devReport });
 check("unregistered asset is blocked, not defaulted to safe", unregistered.verdict === "unregistered", unregistered.verdict);
 
+// Family P — controlled production data operation. Production must be PROVEN.
+const P_ASSET = "food-sock-migration";
+const prodVerified = describeEnvironment({ allowlist: RESOLVED_ALLOWLIST, inputs: inputs({ VYRON_ENV: "production", NEXT_PUBLIC_SUPABASE_URL: "https://prodproject.supabase.co" }) });
+const prodDbOnly = describeEnvironment({ allowlist: RESOLVED_ALLOWLIST, inputs: inputs({ NEXT_PUBLIC_SUPABASE_URL: "https://prodproject.supabase.co" }) });
+const prodDeclaredNoDb = describeEnvironment({ allowlist: RESOLVED_ALLOWLIST, inputs: inputs({ VYRON_ENV: "production", NEXT_PUBLIC_APP_URL: "https://app.example.com" }) });
+const prodSplit = describeEnvironment({ allowlist: RESOLVED_ALLOWLIST, inputs: inputs({ VYRON_ENV: "production", NEXT_PUBLIC_SUPABASE_URL: "https://devproject.supabase.co" }) });
+check("Family P prohibited when unverified (Rule 4 never authorises it)", evaluateExecution(P_ASSET, { report: unverifiedReport }).verdict === "prohibited");
+check("Family P prohibited on the database signal alone", evaluateExecution(P_ASSET, { report: prodDbOnly }).verdict === "prohibited");
+check("Family P prohibited when production is declared but the database is unidentified", evaluateExecution(P_ASSET, { report: prodDeclaredNoDb }).verdict === "prohibited");
+check("Family P prohibited when declaration and database disagree", evaluateExecution(P_ASSET, { report: prodSplit }).verdict === "prohibited");
+check("Family P prohibited in verified development", evaluateExecution(P_ASSET, { report: devReport }).verdict === "prohibited");
+check("Family P prohibited in verified PAT", evaluateExecution(P_ASSET, { report: patStrict }).verdict === "prohibited");
+check("Family P requires approval in verified production", evaluateExecution(P_ASSET, { report: prodVerified }).verdict === "requires-approval", evaluateExecution(P_ASSET, { report: prodVerified }).verdict);
+check("Family P acknowledgement is bound to the asset and PRODUCTION", acknowledgementToken(findAsset(P_ASSET), "production") === "RUN FOOD-SOCK-MIGRATION AGAINST PRODUCTION WITH NO-EXTERNAL");
+check("Family P without the acknowledgement is refused", checkAcknowledgement(findAsset(P_ASSET), "production", null, "named approver").ok === false);
+check("Family P acknowledgement typed for PAT does not authorise production", checkAcknowledgement(findAsset(P_ASSET), "production", acknowledgementToken(findAsset(P_ASSET), "pat"), "named approver").ok === false);
+check("Family P needs a named approver", checkAcknowledgement(findAsset(P_ASSET), "production", acknowledgementToken(findAsset(P_ASSET), "production"), null).ok === false);
+check("Family P records its irreversible operations", (IRREVERSIBLE_OPERATIONS[P_ASSET] || []).length > 0);
+check("verified production still prohibits Family C and permits Family A", evaluateExecution("test-permissions", { report: prodVerified }).verdict === "prohibited" && evaluateExecution("validate-schema-drift", { report: prodVerified }).verdict === "permitted");
+
 // ── 5. Register integrity ──────────────────────────────────────────────────
 const counts = familyCounts();
 const all = listAssets();
 check("register holds 67 assets", all.length === 67, String(all.length));
-check("63 validation assets", counts.A + counts.B + counts.C + counts.D === 63, String(counts.A + counts.B + counts.C + counts.D));
+check("62 validation assets", counts.A + counts.B + counts.C + counts.D === 62, String(counts.A + counts.B + counts.C + counts.D));
+check("1 controlled production data operation (Family P)", counts.P === 1, String(counts.P));
 check("4 non-validation tooling assets", counts.tooling === 4, String(counts.tooling));
 check("every asset has a purpose", all.every((a) => a.purpose && a.purpose.length > 10));
 check("every asset has evidence", all.every((a) => a.evidence && a.evidence.length > 10));

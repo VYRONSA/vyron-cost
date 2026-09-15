@@ -54,7 +54,7 @@ export function renderAcknowledgementRequest(asset, environment, options = {}) {
   const token = acknowledgementToken(asset, environment);
   const irreversible = asset?.irreversible || IRREVERSIBLE_OPERATIONS[asset?.id] || [];
 
-  const out = ["", rule, "  FAMILY D — EXPLICIT ACKNOWLEDGEMENT REQUIRED", rule];
+  const out = ["", rule, `  FAMILY ${asset?.family || "D"} — EXPLICIT ACKNOWLEDGEMENT REQUIRED`, rule];
   out.push(`  Asset:                    ${asset?.id || "(unregistered)"}`);
   out.push(`  Environment:              ${String(environment || "unknown").toUpperCase()}`);
   if (options.effectiveEnvironment && options.effectiveEnvironment !== environment) {

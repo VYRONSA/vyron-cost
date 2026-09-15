@@ -342,6 +342,15 @@ export function evaluateExecution(assetReference, options = {}) {
     return { report, asset, effectiveEnvironment, verdict: "prohibited", reasons };
   }
 
+  // Family P writes client data into production by design, so "unknown, treated
+  // as production" must never authorise it: production has to be PROVEN.
+  if (asset.family === "P" && !(report.verified && report.environment === "production")) {
+    reasons.push(
+      `Family P runs only in a VERIFIED production environment (the database allowlisted as production and at least one agreeing signal). Resolved: ${report.environment}, verified: ${report.verified ? "yes" : "no"}.`
+    );
+    return { report, asset, effectiveEnvironment, verdict: "prohibited", reasons };
+  }
+
   if (!asset.environments.includes(effectiveEnvironment)) {
     reasons.push(
       `Family ${asset.family} (${asset.risk}) is not permitted in ${effectiveEnvironment}. Permitted: ${asset.environments.join(", ") || "none"}.`

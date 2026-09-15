@@ -31,6 +31,7 @@ export const RISK_BY_FAMILY = {
   B: "LOW",
   C: "HIGH",
   D: "CRITICAL",
+  P: "HIGH",
   tooling: "NOT-VALIDATION",
 };
 
@@ -39,6 +40,7 @@ export const FAMILY_LABEL = {
   B: "B — Ephemeral",
   C: "C — Persistent",
   D: "D — External",
+  P: "P — Controlled production data operation",
   tooling: "Non-validation tooling",
 };
 
@@ -48,16 +50,23 @@ export const FAMILY_ENVIRONMENTS = {
   B: ["development", "pat"],
   C: ["pat"],
   D: ["pat"],
+  /**
+   * Family P is not a validation asset. It writes one client's data into one
+   * named production tenant BY DESIGN, and runs only where production is
+   * VERIFIED — never by Rule 4 substitution (see environment.mjs).
+   */
+  P: ["production"],
   tooling: ["development"],
 };
 
 /** Families requiring a named approver per execution (Plan Part 2). */
-export const FAMILY_REQUIRES_APPROVAL = { A: false, B: false, C: true, D: true, tooling: false };
+export const FAMILY_REQUIRES_APPROVAL = { A: false, B: false, C: true, D: true, P: true, tooling: false };
 
 const A = "A";
 const B = "B";
 const C = "C";
 const D = "D";
+const P = "P";
 
 /**
  * The asset register.
@@ -369,7 +378,7 @@ const REGISTER = [
   {
     id: "food-sock-migration",
     file: "scripts/food-sock-migration.mjs",
-    family: C,
+    family: P,
     purpose:
       "Food Sock Meals Phase 1 migration: dry-run planner over the client's supplied files, and a gated executor that applies an approved plan to the Food Sock tenant.",
     authentication: ["service-role"],
@@ -378,7 +387,7 @@ const REGISTER = [
     cleanup:
       "none by design — an execution writes the client's master data into their tenant. Every write is recorded in vyron_import_source_links and vyron_import_runs; nothing is ever deleted.",
     evidence:
-      "Default mode is a dry run with no database access; --demo-report adds no access; --company and --validate add company-scoped SELECTs only. --execute refuses unless --company, --approve-plan-hash (which must equal the plan rebuilt against the tenant's current state) and VYRON_ACKNOWLEDGE_PRODUCTION_WRITE=1 are all present, and records tenant and global before/after counts for every table it can touch.",
+      "Family P, not C: a client migration persists data by design into one named production tenant, which the PAT-only test-residue class C cannot describe. Default mode is a dry run with no database access; --demo-report adds no access; --company and --validate add company-scoped SELECTs only. --execute refuses unless --company, --approve-plan-hash (which must equal the plan rebuilt against the tenant's current state) and VYRON_ACKNOWLEDGE_PRODUCTION_WRITE=1 are all present, and records tenant and global before/after counts for every table it can touch.",
   },
   {
     id: "visual-capture",
@@ -917,6 +926,10 @@ export const FIXTURE_PATTERNS = {
  * audit's per-asset evidence.
  */
 export const IRREVERSIBLE_OPERATIONS = {
+  "food-sock-migration": [
+    "Writes one client's master data (suppliers, contacts, categories, stock items, products, BOMs, opening balances) into one production tenant. Nothing is deleted, and there is no teardown by design: removing it would be a separate reviewed operation.",
+    "Posts opening-balance stock movements that purchasing, production and costing immediately build on.",
+  ],
   "tmp-product-overrides-only-cert": [
     "Creates THREE real invoices in the connected Xero organisation (one per precedence step).",
     "Overwrites the tenant's company-wide Xero account mapping via save-defaults; the prior value is never captured.",
@@ -1061,7 +1074,7 @@ export function resolveManifest(reference, absolutePath) {
 
 /** Counts by family — used by the register report and by the Phase 1 evidence record. */
 export function familyCounts() {
-  const counts = { A: 0, B: 0, C: 0, D: 0, tooling: 0 };
+  const counts = { A: 0, B: 0, C: 0, D: 0, P: 0, tooling: 0 };
   for (const entry of REGISTER) counts[entry.family] += 1;
   return counts;
 }
