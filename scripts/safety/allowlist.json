@@ -21,6 +21,13 @@
   ],
   "version": 1,
   "supabaseProjects": {
+    "pnbstrqsrfoubdgcgimi": {
+      "environment": "production",
+      "unresolved": false,
+      "confirmedBy": "Gerhard",
+      "confirmedAt": "2026-09-15T10:21:00+02:00",
+      "evidence": "CURRENT LIVE production database (project name Vyron Cost New, created 2026-08-04). Confirmed by Gerhard 2026-09-15 10:21 SAST (+02:00) after a read-only forensic reconciliation: the canonical vyron-cost-ikiv deployment inlines NEXT_PUBLIC_SUPABASE_URL=pnbstrqsrfoubdgcgimi, its anon-key data counts match this project (192 suppliers, 94 products, 17 purchase orders), and it holds the real operational tenants. bzzlhzgfvnnwxjxvpzdk carries a stale Supabase PRODUCTION badge but is the older legacy/test project and is NOT current production."
+    },
     "bzzlhzgfvnnwxjxvpzdk": {
       "environment": "unknown",
       "unresolved": true,
