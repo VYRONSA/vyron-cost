@@ -6,6 +6,7 @@ import {
   type BranchSnapshot,
 } from "@/lib/vyron-customer-branches";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { round2, computeCostTotals } from "@/lib/vyron-invoice-cost-totals";
 import {
   listCustomerContactsAsCustomers,
   updateContactRoles,
@@ -104,10 +105,6 @@ export type CustomerInvoiceLineRow = {
   line_total_incl_tax: number | null;
 };
 
-function round2(n: number) {
-  return Math.round(n * 100) / 100;
-}
-
 function isMissingTableError(error: unknown) {
   if (!error || typeof error !== "object") return false;
   const message = String((error as { message?: string }).message || "").toLowerCase();
@@ -175,20 +172,6 @@ function toTaxEngineLines(lines: CustomerInvoiceLineInput[], defaultRate: number
  * discounts and rounded per line. Deriving it a second time from quantity x price
  * would disagree with the stored line figures the moment a discount is applied.
  */
-function computeCostTotals(lines: CustomerInvoiceLineInput[], salesValue: number) {
-  let cost = 0;
-  for (const line of lines) {
-    cost += Number(line.quantity) * Number(line.costPerUnit || 0);
-  }
-  const costValue = round2(cost);
-  const gp = round2(salesValue - costValue);
-  return {
-    cost_value: costValue,
-    gross_profit: gp,
-    gp_percentage: salesValue ? round2((gp / salesValue) * 100) : 0,
-  };
-}
-
 async function enrichInvoiceLinesFromProductMaster(
   supabase: SupabaseClient,
   companyId: string,

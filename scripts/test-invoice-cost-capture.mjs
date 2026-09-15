@@ -33,6 +33,11 @@ const baseSeed = () => ({
     { id: "p100", company_id: CO, product_name: "Genuine Cost 100", selling_price: 100, total_cost: 100, target_gp: 0 },
     { id: "p0", company_id: CO, product_name: "No Cost", selling_price: 100, total_cost: 0, target_gp: 40 },
     { id: "pb", company_id: CO_B, product_name: "Foreign Product", selling_price: 100, total_cost: 55, target_gp: 40 },
+  // The exact SI-65638071 shape: real product costs, selling price 10.90.
+  { id: "cmp", company_id: CO, product_name: "Chicken & Mushroom Pie 150g", selling_price: 10.9, total_cost: 5.11 },
+  { id: "psp", company_id: CO, product_name: "Pepper Steak Pie 150g", selling_price: 10.9, total_cost: 5.19 },
+  { id: "skp", company_id: CO, product_name: "Steak & Kidney Pie 150g", selling_price: 10.9, total_cost: 4.45 },
+  { id: "plp", company_id: CO, product_name: "Plain Steak Pie 150g", selling_price: 10.9, total_cost: 5.31 },
   ],
   vyron_customer_price_list_assignments: [],
   vyron_customer_price_list_items: [],
@@ -106,6 +111,23 @@ const costOf = (r, i = 0) => (r.lines[i] ? Number(r.lines[i].cost_per_unit) : Na
 {
   const r = await makeInvoice({ customerId: "cust-1", customerName: "Synthetic Co", lines: [{ productId: "p60", productName: "Margin 60", quantity: 10, sellingPrice: 100 }] });
   check("revenue is unchanged by the cost fix (line selling_price 100, qty 10)", !r.error && Number(r.lines[0].selling_price) === 100 && Number(r.lines[0].quantity) === 10);
+}
+
+// Case 8 — the exact SI-65638071 production failure shape: four pie lines, the
+// browser sends cost = selling price 10.90 on every line. The server must persist
+// each product's real cost, never 10.90, so the invoice reports true GP.
+{
+  const r = await makeInvoice({ customerId: "cust-1", customerName: "Synthetic Co", notes: "PROMENADE", lines: [
+    { productId: "cmp", productName: "Chicken & Mushroom Pie 150g", quantity: 96, sellingPrice: 10.9, costPerUnit: 10.9 },
+    { productId: "psp", productName: "Pepper Steak Pie 150g", quantity: 480, sellingPrice: 10.9, costPerUnit: 10.9 },
+    { productId: "skp", productName: "Steak & Kidney Pie 150g", quantity: 480, sellingPrice: 10.9, costPerUnit: 10.9 },
+    { productId: "plp", productName: "Plain Steak Pie 150g", quantity: 24, sellingPrice: 10.9, costPerUnit: 10.9 },
+  ] });
+  const costs = (r.lines || []).map((l) => Number(l.cost_per_unit)).sort((a, b) => a - b);
+  check("8. SI-65638071 shape -> each line persists its real product cost, none equals 10.90",
+    !r.error && r.lines.length === 4 && r.lines.every((l) => Number(l.cost_per_unit) !== 10.9) && costs.join(",") === "4.45,5.11,5.19,5.31",
+    r.error?.message || `costs=${costs.join(",")}`);
+  check("8b. SI-65638071 shape -> selling prices (revenue) unchanged at 10.90", !r.error && r.lines.every((l) => Number(l.selling_price) === 10.9));
 }
 
 console.log(`\n${checks - failures}/${checks} checks passed`);

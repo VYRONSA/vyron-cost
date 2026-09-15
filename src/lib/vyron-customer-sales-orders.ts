@@ -46,6 +46,8 @@ export type SalesOrderInput = {
   requestedDeliveryDate?: string | null;
   notes?: string;
   lines: SalesOrderLineInput[];
+  /** Trusted server callers only: keep an explicitly supplied line cost. Never set from a browser request. */
+  trustSuppliedCost?: boolean;
 };
 
 export type SalesOrderRow = {
@@ -812,7 +814,17 @@ async function enrichProductCosts(
   supabase: SupabaseClient,
   companyId: string,
   customerId: string | null | undefined,
-  lines: SalesOrderLineInput[]
+  lines: SalesOrderLineInput[],
+  /*
+   * cost_per_unit here becomes the invoice-line cost snapshot when the order is
+   * converted (convertSalesOrderToInvoice passes trustSuppliedCost: true), which
+   * the Gross Profit report reads as Cost of Sales. The browser has no genuine
+   * cost source — it only knows prices — so by default a supplied cost is
+   * IGNORED and the authoritative product cost is used. Equality of cost and
+   * selling price is never used as a heuristic; a real product whose cost equals
+   * its price is still taken from the master.
+   */
+  trustSuppliedCost = false
 ): Promise<SalesOrderLineInput[]> {
   const productIds = lines.map((line) => line.productId).filter(Boolean) as string[];
   if (!productIds.length) return lines;
@@ -829,11 +841,16 @@ async function enrichProductCosts(
   return lines.map((line) => {
     if (!line.productId) return line;
     const product = byId.get(line.productId);
-    if (!product) return line;
+    // A line naming a product that is not in the active company is rejected —
+    // never silently trusted with a browser-supplied cost (tenant isolation).
+    if (!product) throw new Error("Product not found for the active company.");
     return {
       ...line,
       description: line.description || String(product.product_name || ""),
-      costPerUnit: Number(line.costPerUnit || product.total_cost || 0),
+      costPerUnit:
+        trustSuppliedCost && Number(line.costPerUnit) > 0
+          ? Number(line.costPerUnit)
+          : Number(product.total_cost || 0),
       sellingPrice: Number(line.sellingPrice || product.selling_price || 0),
     };
   });
@@ -937,7 +954,7 @@ export async function saveCustomerSalesOrder(
   if (!input.customerName.trim()) throw new Error("Customer is required.");
   if (!Array.isArray(input.lines) || input.lines.length === 0) throw new Error("At least one line is required.");
 
-  const enrichedBase = await enrichProductCosts(supabase, companyId, input.customerId, input.lines);
+  const enrichedBase = await enrichProductCosts(supabase, companyId, input.customerId, input.lines, input.trustSuppliedCost === true);
   const enriched = await applyCustomerPriceList(supabase, companyId, input.customerId, enrichedBase);
 
   const mappedLines = enriched.map((line, index) => {

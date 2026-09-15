@@ -390,6 +390,20 @@ const REGISTER = [
       "Family P, not C: a client migration persists data by design into one named production tenant, which the PAT-only test-residue class C cannot describe. Default mode is a dry run with no database access; --demo-report adds no access; --company and --validate add company-scoped SELECTs only. --execute refuses unless --company, --approve-plan-hash (which must equal the plan rebuilt against the tenant's current state) and VYRON_ACKNOWLEDGE_PRODUCTION_WRITE=1 are all present, and records tenant and global before/after counts for every table it can touch.",
   },
   {
+    id: "kf-gp-correction",
+    file: "scripts/kf-gp-correction.mjs",
+    family: P,
+    purpose:
+      "Kingdom Foods historical Gross Profit correction: dry-run planner over the live tenant, and a gated executor that resets 283 posted invoice lines' cost_per_unit to the current product standard cost (a documented reconstruction) and recomputes the affected invoice headers.",
+    authentication: ["service-role"],
+    mutation: "persistent",
+    external: [],
+    cleanup:
+      "none by design — it corrects one client's own historical invoice costs in place. Every corrected line is recorded in vyron_cost_audit_logs and the run in vyron_import_runs with a full reversibility payload; nothing is deleted, and an authorised Family-P rollback can restore the pre-operation state from those records.",
+    evidence:
+      "Family P, not C: it writes one named production tenant's data by design and runs only in VERIFIED production. Default mode is a read-only dry run that rebuilds the plan and writes a gitignored approval artifact. --execute refuses unless --company is the Kingdom Foods tenant, --expect-database is the verified production ref matching .env.local, --approve-plan-hash equals the approved Phase 25 hash AND the plan rebuilt against current state, --approver is named, --acknowledge is the exact typed token, and VYRON_ACKNOWLEDGE_PRODUCTION_WRITE=1. It never touches selling prices, quantities, VAT, revenue, product costs, or any row outside the frozen plan, and is idempotent, restartable and reversible.",
+  },
+  {
     id: "visual-capture",
     file: "scripts/visual-capture.mjs",
     family: A,
@@ -929,6 +943,10 @@ export const IRREVERSIBLE_OPERATIONS = {
   "food-sock-migration": [
     "Writes one client's master data (suppliers, contacts, categories, stock items, products, BOMs, opening balances) into one production tenant. Nothing is deleted, and there is no teardown by design: removing it would be a separate reviewed operation.",
     "Posts opening-balance stock movements that purchasing, production and costing immediately build on.",
+  ],
+  "kf-gp-correction": [
+    "Overwrites the persisted cost_per_unit on 283 posted Kingdom Foods invoice lines with the current product standard cost (a reconstruction, not the original historical cost). The prior value (cost == selling price) is captured per line in vyron_cost_audit_logs and in the run's reversibility payload, so the change is reversible by an authorised Family-P rollback.",
+    "Recomputes cost_value, gross_profit and gp_percentage on the affected invoice headers via the application's computeCostTotals. sales_value, tax and quantities are untouched; the prior header values are captured for rollback.",
   ],
   "tmp-product-overrides-only-cert": [
     "Creates THREE real invoices in the connected Xero organisation (one per precedence step).",

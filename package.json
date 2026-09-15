@@ -45,7 +45,9 @@
     "test:server-page-tenant-security": "node scripts/test-server-page-tenant-security.mjs",
     "test:kingdom-foods-emergency-security": "node scripts/test-kingdom-foods-emergency-security.mjs",
     "test:invoice-cost-capture": "node scripts/test-invoice-cost-capture.mjs",
-    "test:customer-gp-report": "node scripts/test-customer-gp-report-margin.mjs"
+    "test:customer-gp-report": "node scripts/test-customer-gp-report-margin.mjs",
+    "test:kf-gp-correction": "node scripts/test-kf-gp-correction.mjs",
+    "test:sales-order-cost-capture": "node scripts/test-sales-order-cost-capture.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",
