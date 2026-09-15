@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import StatusPill from "@/components/StatusPill";
 import {
-  buildProductCostFields,
   calculateGpPercent,
   calculateLineCost,
   calculateSuggestedPrice,
@@ -13,9 +12,7 @@ import {
   isCostLineForProduct,
   Product,
   ProductCostLine,
-  sumProductCostLineTotal,
 } from "@/lib/vyron-cost-data";
-import { supabase } from "@/lib/supabase";
 
 const emptyLineForm = {
   line_type: "Ingredient",
@@ -26,28 +23,9 @@ const emptyLineForm = {
   wastage_percent: "0",
 };
 
-async function syncProductCostFromLines(
-  product: Product,
-  lineList: ProductCostLine[],
-  companyId: string
-) {
-  if (!supabase || companyId === "demo-company" || product.id.startsWith("product")) return;
-
-  const costPrice = sumProductCostLineTotal(lineList, product);
-  const derived = buildProductCostFields(
-    Number(product.selling_price),
-    Number(product.target_gp),
-    costPrice
-  );
-
-  await supabase
-    .from("vyron_cost_products")
-    .update({
-      ...derived,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", product.id)
-    .eq("company_id", companyId);
+/** A demo/in-memory product, edited locally without persistence. */
+function isDemoProduct(companyId: string, productId: string) {
+  return companyId === "demo-company" || productId.startsWith("product");
 }
 
 function inputClass() {
@@ -137,21 +115,32 @@ export default function ProductBOMManager({
       line_cost_imported: previewLineCost,
     };
 
-    if (supabase && companyId !== "demo-company") {
-      const { data, error } = await supabase
-        .from("vyron_cost_product_cost_lines")
-        .insert(payload)
-        .select("*")
-        .single();
-
-      if (error || !data) {
-        setMessage(error?.message || "Could not add product cost line.");
+    if (!isDemoProduct(companyId, product.id)) {
+      let data: ProductCostLine | null = null;
+      try {
+        const response = await fetch(`/api/products/${product.id}/cost-lines`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            line_type: payload.line_type,
+            line_name: payload.line_name,
+            quantity: payload.quantity,
+            unit: payload.unit,
+            unit_cost: payload.unit_cost,
+            wastage_percent: payload.wastage_percent,
+          }),
+        });
+        const json = await response.json().catch(() => null);
+        if (!response.ok || !json?.ok || !json.line) {
+          setMessage(json?.error || "Could not add product cost line.");
+          return;
+        }
+        data = json.line as ProductCostLine;
+      } catch {
+        setMessage("Could not add product cost line.");
         return;
       }
-
-      const nextLines = [...lines, data as ProductCostLine];
-      setLines(nextLines);
-      await syncProductCostFromLines(product, nextLines, companyId);
+      setLines([...lines, data]);
     } else {
       const nextLines = [
         ...lines,
@@ -172,13 +161,18 @@ export default function ProductBOMManager({
     const nextLines = lines.filter((line) => line.id !== id);
     setLines(nextLines);
 
-    if (supabase && !id.startsWith("pcl")) {
-      await supabase
-        .from("vyron_cost_product_cost_lines")
-        .delete()
-        .eq("id", id)
-        .eq("company_id", companyId);
-      await syncProductCostFromLines(product, nextLines, companyId);
+    if (!isDemoProduct(companyId, product.id) && !id.startsWith("pcl")) {
+      try {
+        const response = await fetch(`/api/products/${product.id}/cost-lines/${id}`, { method: "DELETE" });
+        const json = await response.json().catch(() => null);
+        if (!response.ok || !json?.ok) {
+          setMessage(json?.error || "Could not delete product cost line.");
+          setLines(lines);
+        }
+      } catch {
+        setMessage("Could not delete product cost line.");
+        setLines(lines);
+      }
     }
   }
 

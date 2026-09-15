@@ -6,14 +6,11 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import {
-  buildProductCostFields,
   calculateLineCost,
   formatMoney,
   Product,
   ProductCostLine,
-  sumProductCostLineTotal,
 } from "@/lib/vyron-cost-data";
-import { supabase } from "@/lib/supabase";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 type CostLineForm = {
@@ -65,31 +62,7 @@ export default function ProductCostLineEditPageClient({
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  async function syncParentProductCost() {
-    if (!supabase || companyId === "demo-company" || product.id.startsWith("product")) return;
-
-    const { data: rows } = await supabase
-      .from("vyron_cost_product_cost_lines")
-      .select("*")
-      .eq("company_id", companyId)
-      .eq("product_id", product.id);
-
-    const costPrice = sumProductCostLineTotal((rows || []) as ProductCostLine[], product);
-    const derived = buildProductCostFields(
-      Number(product.selling_price),
-      Number(product.target_gp),
-      costPrice
-    );
-
-    await supabase
-      .from("vyron_cost_products")
-      .update({
-        ...derived,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", product.id)
-      .eq("company_id", companyId);
-  }
+  const isDemoProduct = companyId === "demo-company" || product.id.startsWith("product");
 
   async function saveLine() {
     if (!canEditLine) {
@@ -115,19 +88,29 @@ export default function ProductCostLineEditPageClient({
       line_cost_imported: previewLineCost,
     };
 
-    if (supabase && companyId !== "demo-company" && !line.id.startsWith("pcl")) {
-      const { error } = await supabase
-        .from("vyron_cost_product_cost_lines")
-        .update(payload)
-        .eq("id", line.id)
-        .eq("company_id", companyId);
-
-      if (error) {
-        setMessage(error.message);
+    if (!isDemoProduct && !line.id.startsWith("pcl")) {
+      try {
+        const response = await fetch(`/api/products/${product.id}/cost-lines/${line.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            line_type: payload.line_type,
+            line_name: payload.line_name,
+            quantity: payload.quantity,
+            unit: payload.unit,
+            unit_cost: payload.unit_cost,
+            wastage_percent: payload.wastage_percent,
+          }),
+        });
+        const json = await response.json().catch(() => null);
+        if (!response.ok || !json?.ok) {
+          setMessage(json?.error || "Could not save product cost line.");
+          return;
+        }
+      } catch {
+        setMessage("Could not save product cost line.");
         return;
       }
-
-      await syncParentProductCost();
     }
 
     setMessage("Product cost line saved. Returning to product...");
@@ -139,13 +122,18 @@ export default function ProductCostLineEditPageClient({
       setMessage("You do not have permission to delete cost lines.");
       return;
     }
-    if (supabase && !line.id.startsWith("pcl")) {
-      await supabase
-        .from("vyron_cost_product_cost_lines")
-        .delete()
-        .eq("id", line.id)
-        .eq("company_id", companyId);
-      await syncParentProductCost();
+    if (!isDemoProduct && !line.id.startsWith("pcl")) {
+      try {
+        const response = await fetch(`/api/products/${product.id}/cost-lines/${line.id}`, { method: "DELETE" });
+        const json = await response.json().catch(() => null);
+        if (!response.ok || !json?.ok) {
+          setMessage(json?.error || "Could not delete product cost line.");
+          return;
+        }
+      } catch {
+        setMessage("Could not delete product cost line.");
+        return;
+      }
     }
 
     router.push(`/products/${product.id}/edit`);
