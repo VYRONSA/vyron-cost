@@ -193,7 +193,17 @@ async function enrichInvoiceLinesFromProductMaster(
   supabase: SupabaseClient,
   companyId: string,
   customerId: string | null | undefined,
-  lines: CustomerInvoiceLineInput[]
+  lines: CustomerInvoiceLineInput[],
+  /*
+   * The cost_per_unit persisted on an invoice line is the historical cost
+   * snapshot the Gross Profit report reads as Cost of Sales. The browser has no
+   * genuine cost source — it only knows prices — so by default a supplied cost
+   * is IGNORED and the authoritative product cost basis is used. A trusted
+   * server workflow (e.g. sales-order conversion, which carries the order's own
+   * cost snapshot) sets trustSuppliedCost to keep its explicit cost. Equality
+   * of cost and price is never used as a heuristic here.
+   */
+  trustSuppliedCost = false
 ): Promise<CustomerInvoiceLineInput[]> {
   const productIds = lines.map((line) => line.productId).filter(Boolean) as string[];
   if (!productIds.length) return lines;
@@ -211,7 +221,8 @@ async function enrichInvoiceLinesFromProductMaster(
     lines.map(async (line) => {
       if (!line.productId) return line;
       const product = byId.get(line.productId);
-      if (!product) return line;
+      // A line naming a product this company does not own is refused — never written cross-tenant.
+      if (!product) throw new Error("Product not found for the active company.");
       const customerPrice = await resolveCustomerProductPrice(supabase, companyId, {
         customerId,
         productId: line.productId,
@@ -222,7 +233,9 @@ async function enrichInvoiceLinesFromProductMaster(
         sellingPrice:
           Number(line.sellingPrice) > 0 ? Number(line.sellingPrice) : Number(customerPrice.sellingPrice || 0),
         costPerUnit:
-          Number(line.costPerUnit) > 0 ? Number(line.costPerUnit) : Number(customerPrice.costPerUnit || 0),
+          trustSuppliedCost && Number(line.costPerUnit) > 0
+            ? Number(line.costPerUnit)
+            : Number(customerPrice.costPerUnit || 0),
       };
     })
   );
@@ -275,6 +288,8 @@ export async function createCustomerInvoice(
     /** The customer's branch this invoice is for. Optional: many customers have none. */
     branchId?: string | null;
     lines: CustomerInvoiceLineInput[];
+    /** Trusted server callers only: keep an explicitly supplied line cost. Never set from a browser request. */
+    trustSuppliedCost?: boolean;
   }
 ) {
   let customerName = params.customerName.trim();
@@ -301,7 +316,8 @@ export async function createCustomerInvoice(
     supabase,
     companyId,
     params.customerId,
-    params.lines
+    params.lines,
+    params.trustSuppliedCost === true
   );
 
   for (const line of enrichedLines) {
@@ -401,6 +417,8 @@ export async function updateCustomerInvoice(
   companyId: string,
   invoiceId: string,
   params: {
+    /** Trusted server callers only: keep an explicitly supplied line cost. Never set from a browser request. */
+    trustSuppliedCost?: boolean;
     customerId?: string | null;
     customerName?: string;
     invoiceDate?: string;
@@ -441,7 +459,7 @@ export async function updateCustomerInvoice(
     params.branchId !== undefined ? params.branchId : loaded.invoice.branch_id
   );
 
-  const enrichedLines = await enrichInvoiceLinesFromProductMaster(supabase, companyId, customerId, params.lines);
+  const enrichedLines = await enrichInvoiceLinesFromProductMaster(supabase, companyId, customerId, params.lines, params.trustSuppliedCost === true);
 
   for (const line of enrichedLines) {
     if (!line.productId) continue;

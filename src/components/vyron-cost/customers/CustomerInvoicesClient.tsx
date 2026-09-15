@@ -820,7 +820,8 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
             productName: line.description.trim(),
             quantity: line.qty,
             sellingPrice: line.unitPrice,
-            costPerUnit: line.unitCost,
+            // Cost is captured server-side from the authoritative product cost basis;
+            // the browser has no genuine cost source, so it sends none.
             taxTreatment: line.taxTreatment,
             taxRate: line.vatRate,
           })),

@@ -43,7 +43,9 @@
     "test:enterprise-post-security": "node scripts/test-enterprise-post-security.mjs",
     "test:enterprise-shared-engine-security": "node scripts/test-enterprise-shared-engine-security.mjs",
     "test:server-page-tenant-security": "node scripts/test-server-page-tenant-security.mjs",
-    "test:kingdom-foods-emergency-security": "node scripts/test-kingdom-foods-emergency-security.mjs"
+    "test:kingdom-foods-emergency-security": "node scripts/test-kingdom-foods-emergency-security.mjs",
+    "test:invoice-cost-capture": "node scripts/test-invoice-cost-capture.mjs",
+    "test:customer-gp-report": "node scripts/test-customer-gp-report-margin.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",

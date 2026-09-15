@@ -1405,6 +1405,8 @@ export async function convertSalesOrderToInvoice(
     customerName: loaded.order.customer_name,
     notes: `Converted from Sales Order ${loaded.order.order_number}${actor ? ` by ${actor}` : ""}`,
     lines: invoiceLines,
+    // The sales order carries the cost snapshot captured when it was placed.
+    trustSuppliedCost: true,
   });
 
   for (const line of loaded.lines) {
