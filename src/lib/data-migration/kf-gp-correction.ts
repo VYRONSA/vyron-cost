@@ -44,8 +44,13 @@ import { round2, computeCostTotals } from "@/lib/vyron-invoice-cost-totals";
 export const KF_COMPANY_ID = "851d2acb-b5c5-43a6-9dfb-f7df93c4ce2b";
 /** The Supabase project proven to be live production (see production-supabase-db-is-pnb memory). */
 export const KF_PRODUCTION_DB_REF = "pnbstrqsrfoubdgcgimi";
-/** The hash approved in Phase 25. The executor refuses to write unless the live rebuild matches it. */
-export const APPROVED_PLAN_HASH = "c9b44af558e8df62ef41a3eebb9669eddf0015c5d59b97c8c10c4deb7c92fab5";
+/**
+ * The approved plan hash. The executor refuses to write unless the live rebuild
+ * matches it. Phase 25 approved c9b44af558e8… (283 lines); production then drifted
+ * as Kingdom Foods kept transacting, so Phase 28 re-froze the plan and Phase 29
+ * authorised this hash (287 lines / 66 invoices / 29 products; 3 exception lines).
+ */
+export const APPROVED_PLAN_HASH = "18f5de2a00ec1d5efeaf2f911b967f6c08304d1298db9a036143fcc7b91c5abf";
 /** The one basis this operation ever uses. Recorded on every write. */
 export const COST_BASIS = "CURRENT_STANDARD_COST";
 /** entity_type on the vyron_import_runs record; also the audit module_name. */
