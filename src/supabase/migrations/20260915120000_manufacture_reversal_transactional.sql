@@ -218,10 +218,18 @@ $$;
 
 -- (12) Security: not exposed to anon; the API route (service role) is the only
 -- intended caller, and the function itself validates company/run ownership.
+-- Supabase default privileges auto-grant EXECUTE on new public functions to
+-- anon, authenticated AND service_role. The route (service_role) is the only
+-- intended caller, so revoke anon + authenticated + public and keep service_role
+-- alone — a browser session must never invoke the reversal directly and bypass
+-- the route's permission / supervisor / reason gates.
 revoke all on function public.reverse_production_run(uuid, uuid, text, text) from public;
 do $$ begin
   if exists (select 1 from pg_roles where rolname = 'anon') then
     execute 'revoke all on function public.reverse_production_run(uuid, uuid, text, text) from anon';
+  end if;
+  if exists (select 1 from pg_roles where rolname = 'authenticated') then
+    execute 'revoke all on function public.reverse_production_run(uuid, uuid, text, text) from authenticated';
   end if;
   if exists (select 1 from pg_roles where rolname = 'service_role') then
     execute 'grant execute on function public.reverse_production_run(uuid, uuid, text, text) to service_role';
