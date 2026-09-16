@@ -26,10 +26,11 @@ export const FOOD_SOCK_COMPANY_ID = "e920c747-1d27-4d01-9e7c-182f9a7d0aa3";
 export const FOOD_SOCK_PRODUCTION_DB_REF = "pnbstrqsrfoubdgcgimi";
 export const CORRECTION_RPC = "apply_food_sock_cost_precision_correction";
 /**
- * The plan hash a named person approved. Null until that approval is pinned
- * here by a reviewed commit; while null, --execute refuses.
+ * The plan hash a named person approved; --execute refuses any other.
+ * Approved by Gerhard on 2026-09-16 (Phase 44): the READY dry run against
+ * production after migrations 20260917090000 and 20260917100000 were applied.
  */
-export const APPROVED_PLAN_HASH: string | null = null;
+export const APPROVED_PLAN_HASH: string | null = "e1e6a2a28cb94de7528f643eb896e04d4fa5ca614dd984cb76e3bc8ccb0c23f4";
 
 type IngredientTarget = { id: string; name: string; sourceKey: string; from: number; to: number };
 export const INGREDIENT_TARGETS: readonly IngredientTarget[] = [
