@@ -35,6 +35,8 @@
     "test:data-migration": "node scripts/test-data-migration.mjs",
     "test:food-sock-execute": "node scripts/test-food-sock-execute.mjs",
     "test:food-sock-validate": "node scripts/test-food-sock-validate.mjs",
+    "test:food-sock-cost-correction-pg": "node scripts/test-food-sock-cost-correction-pg.mjs",
+    "correct:food-sock-cost": "node scripts/food-sock-cost-correction.mjs",
     "migrate:food-sock": "node scripts/food-sock-migration.mjs",
     "rehearse:food-sock": "node scripts/food-sock-rehearsal.mjs",
     "test:bom-invoice-visibility": "node scripts/test-bom-invoice-visibility.mjs",

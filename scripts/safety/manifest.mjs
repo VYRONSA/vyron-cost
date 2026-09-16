@@ -403,6 +403,33 @@ const REGISTER = [
       "Family P, not C: a client migration persists data by design into one named production tenant, which the PAT-only test-residue class C cannot describe. Default mode is a dry run with no database access; --demo-report adds no access; --company and --validate add company-scoped SELECTs only. --execute refuses unless --company, --approve-plan-hash (which must equal the plan rebuilt against the tenant's current state) and VYRON_ACKNOWLEDGE_PRODUCTION_WRITE=1 are all present, and records tenant and global before/after counts for every table it can touch.",
   },
   {
+    id: "food-sock-cost-correction",
+    file: "scripts/food-sock-cost-correction.mjs",
+    family: P,
+    purpose:
+      "Food Sock cost-precision correction: dry-run planner over the live tenant and the client's product export, and a gated executor that sets two ingredient costs (Date Sticker 0.05 → 0.05064, Insert Sleeve 0.32 → 0.3164) and the Date Sticker stock valuation (average 0.0506 → 0.05064, value 2844.48 → 2846.73) in one transaction.",
+    authentication: ["service-role"],
+    mutation: "persistent",
+    external: [],
+    cleanup:
+      "none by design — it corrects one client's own imported costs in place. Every previous and new value is recorded in vyron_data_corrections (append-only), keyed by the correction, with the approver, reason and plan hash.",
+    evidence:
+      "Family P, not C: it writes one named production tenant's data by design and runs only in VERIFIED production. Default mode is a read-only dry run. --execute refuses unless --company is the Food Sock tenant, --expect-database is the verified production ref matching .env.local, an approved plan hash is pinned in src/lib/data-migration/food-sock-cost-correction.ts and equals both --approve-plan-hash and the plan rebuilt from current state, --approver and --reason are given, --acknowledge names that plan and tenant, and VYRON_ACKNOWLEDGE_PRODUCTION_WRITE=1. The database function apply_food_sock_cost_precision_correction() (migration 20260917100000) re-verifies every row and value under row locks, changes exactly three rows or nothing, and is idempotent. Proven by scripts/test-food-sock-cost-correction-pg.mjs.",
+  },
+  {
+    id: "test-food-sock-cost-correction-pg",
+    file: "scripts/test-food-sock-cost-correction-pg.mjs",
+    family: B,
+    purpose:
+      "PostgreSQL integration test for the Food Sock cost-precision correction and the ingredient cost-precision migration: exact values, refusals, rollback, concurrency, idempotency, grants, audit record, and the TypeScript tool's plan, gates and RPC call.",
+    authentication: ["none"],
+    mutation: "ephemeral",
+    external: [],
+    cleanup: "complete — every case drops and recreates the public schema of the disposable database it is given",
+    evidence:
+      "Runs the repository migrations 20260917090000 and 20260917100000 against a throwaway local PostgreSQL named by PGURL and refuses any non-localhost PGURL. Never reads .env.local, never reaches Supabase. Synthetic rows only.",
+  },
+  {
     id: "kf-gp-correction",
     file: "scripts/kf-gp-correction.mjs",
     family: P,
@@ -956,6 +983,10 @@ export const IRREVERSIBLE_OPERATIONS = {
   "food-sock-migration": [
     "Writes one client's master data (suppliers, contacts, categories, stock items, products, BOMs, opening balances) into one production tenant. Nothing is deleted, and there is no teardown by design: removing it would be a separate reviewed operation.",
     "Posts opening-balance stock movements that purchasing, production and costing immediately build on.",
+  ],
+  "food-sock-cost-correction": [
+    "Overwrites purchase_cost and true_unit_cost on two Food Sock ingredients (Date Sticker, Insert Sleeve) with the client's exact export costs. The prior values are captured in vyron_data_corrections.",
+    "Overwrites average_cost and inventory_value on the Food Sock Date Sticker stock item so its valuation equals its opening ledger value. The prior values are captured in vyron_data_corrections. BOM lines, products and every other row are left as they are; the function refuses if anything else changes.",
   ],
   "kf-gp-correction": [
     "Overwrites the persisted cost_per_unit on 283 posted Kingdom Foods invoice lines with the current product standard cost (a reconstruction, not the original historical cost). The prior value (cost == selling price) is captured per line in vyron_cost_audit_logs and in the run's reversibility payload, so the change is reversible by an authorised Family-P rollback.",
