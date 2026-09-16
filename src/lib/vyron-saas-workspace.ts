@@ -610,20 +610,37 @@ async function persistWorkspaceOwnerAuthState(
     throw new Error(error.message);
   }
 
-  try {
-    await supabase.from("vyron_cost_users").upsert(
-      {
-        company_id: input.companyId,
-        full_name: `${input.ownerDetails.firstName} ${input.ownerDetails.surname}`.trim(),
-        email: input.ownerDetails.email,
-        role: "OWNER",
-        status: input.memberStatus === "Disabled" ? "Inactive" : "Active",
-      },
-      { onConflict: "email" }
-    );
-  } catch {
-    // Optional legacy table.
-  }
+  await upsertOwnerRegistryEntry(supabase, {
+    companyId: input.companyId,
+    firstName: input.ownerDetails.firstName,
+    surname: input.ownerDetails.surname,
+    email: input.ownerDetails.email,
+    memberStatus: input.memberStatus,
+  });
+}
+
+/**
+ * The company's user-registry row for its owner: one row per (company_id,
+ * email), enforced by vyron_cost_users_company_email_key. Only this company's
+ * row is written, so provisioning one company never moves or overwrites a row
+ * belonging to another. Any failure is thrown — owner provisioning is not
+ * complete without it.
+ */
+async function upsertOwnerRegistryEntry(
+  supabase: SupabaseClient,
+  input: { companyId: string; firstName: string; surname: string; email: string; memberStatus: MemberStatus }
+) {
+  const { error } = await supabase.from("vyron_cost_users").upsert(
+    {
+      company_id: input.companyId,
+      full_name: `${input.firstName.trim()} ${input.surname.trim()}`.trim(),
+      email: input.email.trim().toLowerCase(),
+      role: "OWNER",
+      status: input.memberStatus === "Disabled" ? "Inactive" : "Active",
+    },
+    { onConflict: "company_id,email" }
+  );
+  if (error) throw new Error(`User registry save failed: ${error.message}`);
 }
 
 async function upsertOwnerMembership(
@@ -718,20 +735,13 @@ async function provisionWorkspaceOwner(
     status: auth.status,
   });
 
-  try {
-    await supabase.from("vyron_cost_users").upsert(
-      {
-        company_id: input.companyId,
-        full_name: `${input.admin.firstName.trim()} ${input.admin.surname.trim()}`,
-        email: adminEmail,
-        role: "OWNER",
-        status: auth.status === "Disabled" ? "Inactive" : "Active",
-      },
-      { onConflict: "email" }
-    );
-  } catch {
-    // Optional legacy table — do not block owner provisioning.
-  }
+  await upsertOwnerRegistryEntry(supabase, {
+    companyId: input.companyId,
+    firstName: input.admin.firstName,
+    surname: input.admin.surname,
+    email: adminEmail,
+    memberStatus: auth.status,
+  });
 
   return {
     authUserId: auth.userId,
