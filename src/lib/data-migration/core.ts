@@ -35,7 +35,18 @@ export type SourceRef = {
 export type PlanAction = "create" | "match" | "update" | "skip" | "exception";
 
 /** The rung of the identity ladder that produced a match. */
-export type MatchRule = "source_link" | "exact_sku" | "normalized_sku" | "normalized_name" | "approved_alias";
+export type MatchRule =
+  | "source_link"
+  | "exact_sku"
+  | "normalized_sku"
+  | "normalized_name"
+  | "approved_alias"
+  /** Categories: the executor's identity, exact category_name and category_type. */
+  | "exact_name"
+  /** Opening stock: the item's own stock item already holds an opening balance. */
+  | "existing_opening_balance"
+  /** BOMs: the one BOM of the finished product's linked row. */
+  | "existing_product_bom";
 
 export type IssueSeverity =
   /** Blocks the record. It is not written. */

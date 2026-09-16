@@ -133,10 +133,11 @@ export type TargetSnapshot = {
   /** Opening balances already posted, by stock item id. */
   openingBalanceStockItemIds: string[];
   sourceLinks: { source_system: string; source_entity: string; source_key: string; entity_type: string; entity_id: string }[];
+  categories: { id: string; category_name: string; category_type: string | null }[];
 };
 
 export function emptyTarget(companyId: string | null = null): TargetSnapshot {
-  return { companyId, suppliers: [], ingredients: [], products: [], boms: [], stockItems: [], openingBalanceStockItemIds: [], sourceLinks: [] };
+  return { companyId, suppliers: [], ingredients: [], products: [], boms: [], stockItems: [], openingBalanceStockItemIds: [], sourceLinks: [], categories: [] };
 }
 
 /* -------------------------------------------------------------- plan types */
@@ -676,7 +677,16 @@ export function buildFoodSockPlan(sources: FoodSockSources, target: TargetSnapsh
     const type = item.stage === "E_stock_items" ? "Ingredient" : "Product";
     const sourceKey = `category:${type}:${normalizeName(category)}`;
     if (!category || categoryItems.has(sourceKey)) continue;
-    categoryItems.set(sourceKey, { stage: "B_categories", sourceKey, sources: [], action: "create", proposed: { category_name: category, category_type: type }, issues: [] });
+    const proposed = { category_name: category, category_type: type };
+    // The executor's identity for a category: exact name and type in this tenant.
+    const existing = [...new Set((target.categories ?? []).filter((c) => c.category_name === category && c.category_type === type).map((c) => c.id))].sort();
+    if (existing.length > 1) {
+      categoryItems.set(sourceKey, { stage: "B_categories", sourceKey, sources: [], action: "exception", proposed, issues: [issue("exception", "ambiguous_target", `Matches ${existing.length} existing categories.`)] });
+    } else if (existing.length === 1) {
+      categoryItems.set(sourceKey, { stage: "B_categories", sourceKey, sources: [], action: "match", matchRule: "exact_name", targetId: existing[0], proposed, issues: [] });
+    } else {
+      categoryItems.set(sourceKey, { stage: "B_categories", sourceKey, sources: [], action: "create", proposed, issues: [] });
+    }
   }
   put("B_categories", [...categoryItems.values()]);
 
@@ -737,6 +747,27 @@ export function buildFoodSockPlan(sources: FoodSockSources, target: TargetSnapsh
   );
 
   /* ================================================================ I BOMs */
+  /*
+   * An existing BOM is found the way the executor finds it: through the BOM's
+   * source link while that BOM still exists, else as the one BOM of the
+   * finished product's linked row. A link to a removed BOM stays "create", so
+   * the executor fails it closed.
+   */
+  const hasException = (list: Issue[]) => list.some((i) => i.severity === "exception");
+  const bomLinks = linkMap("bom");
+  const finishedLinks = linkMap("product");
+  type ExistingBom =
+    | { status: "matched"; rule: "source_link" | "existing_product_bom"; bomId: string }
+    | { status: "ambiguous"; detail: string }
+    | { status: "none" };
+  const existingBom = (sourceKey: string, finishedKey: string): ExistingBom => {
+    const linked = bomLinks.get(sourceKey);
+    if (linked) return target.boms.some((b) => b.id === linked) ? { status: "matched", rule: "source_link", bomId: linked } : { status: "none" };
+    const productId = finishedLinks.get(finishedKey);
+    const ids = productId ? [...new Set(target.boms.filter((b) => b.product_id === productId).map((b) => b.id))].sort() : [];
+    if (ids.length > 1) return { status: "ambiguous", detail: `Its finished product already has ${ids.length} BOMs; none is chosen.` };
+    return ids.length === 1 ? { status: "matched", rule: "existing_product_bom", bomId: ids[0] } : { status: "none" };
+  };
   const bomItems: PlanItem[] = [];
   const bomByProductKey = new Map<string, PlanItem>();
   const productTargets = new Map<string, string[]>();
@@ -845,12 +876,15 @@ export function buildFoodSockPlan(sources: FoodSockSources, target: TargetSnapsh
     if (computedCost !== null && inflowFinishedCost !== null && inflowFinishedCost > 0 && !agrees(computedCost, inflowFinishedCost)) {
       issues.push(issue("warning", "cost_differs_from_inflow", `Computed BOM cost ${computedCost.toFixed(5)} vs inFlow product cost ${inflowFinishedCost}.`, "cost"));
     }
-    const blocking = issues.some((i) => i.severity === "exception");
+    const existing = hasException(issues) ? { status: "none" as const } : existingBom(group.sourceKey, `product:${finishedKey}`);
+    if (existing.status === "ambiguous") issues.push(issue("exception", "ambiguous_target", existing.detail));
+    const blocking = hasException(issues);
     const item: PlanItem = {
       stage: "I_boms",
       sourceKey: group.sourceKey,
       sources: refs,
-      action: blocking ? "exception" : target.boms.some((b) => normalizeName(b.bom_name) === normalizeName(label)) ? "match" : "create",
+      action: blocking ? "exception" : existing.status === "matched" ? "match" : "create",
+      ...(!blocking && existing.status === "matched" ? { matchRule: existing.rule, targetId: existing.bomId } : {}),
       classification: bundle ? "bundle" : /\bhalf\b/i.test(group.finishedName) ? "half_variant" : "finished_good_bom",
       proposed: {
         bom_name: displayName(resolution.product.name),
@@ -893,6 +927,34 @@ export function buildFoodSockPlan(sources: FoodSockSources, target: TargetSnapsh
   );
 
   /* ====================================================== K opening stock */
+  /*
+   * An opening balance already in the tenant is found the way the executor
+   * finds it: first through the balance's own source link (while its stock
+   * item still holds an opening balance), then through the item's product link
+   * to its stock item. A link whose balance is gone stays "create", so the
+   * executor fails it closed instead of the plan hiding it.
+   */
+  const stockLevelLinks = linkMap("stock_level");
+  const productLinks = linkMap("product");
+  const openingBalanceIds = new Set(target.openingBalanceStockItemIds ?? []);
+  const stockIdsByEntity = new Map<string, string[]>();
+  for (const stock of target.stockItems) {
+    if (!stock.entity_id) continue;
+    stockIdsByEntity.set(stock.entity_id, [...(stockIdsByEntity.get(stock.entity_id) || []), stock.id]);
+  }
+  type ExistingBalance =
+    | { status: "matched"; rule: "source_link" | "existing_opening_balance"; stockItemId: string }
+    | { status: "ambiguous"; detail: string }
+    | { status: "none" };
+  const existingOpeningBalance = (sourceKey: string, itemKey: string): ExistingBalance => {
+    const linked = stockLevelLinks.get(sourceKey);
+    if (linked) return openingBalanceIds.has(linked) ? { status: "matched", rule: "source_link", stockItemId: linked } : { status: "none" };
+    const entityId = productLinks.get(itemKey);
+    const stockIds = entityId ? [...new Set(stockIdsByEntity.get(entityId) || [])].sort() : [];
+    if (stockIds.length > 1) return { status: "ambiguous", detail: `The item has ${stockIds.length} stock items in this tenant; none is chosen.` };
+    if (stockIds.length === 1 && openingBalanceIds.has(stockIds[0])) return { status: "matched", rule: "existing_opening_balance", stockItemId: stockIds[0] };
+    return { status: "none" };
+  };
   const openingItems: PlanItem[] = sources.stockLevels.map((row) => {
     const sourceKey = `stock:${normalizeName(row.name)}|${normalizeName(row.location)}`;
     const resolution = resolveSourceProduct(index, row.sku, row.name);
@@ -959,7 +1021,7 @@ export function buildFoodSockPlan(sources: FoodSockSources, target: TargetSnapsh
         )
       );
     }
-    return {
+    const item: PlanItem = {
       stage: "K_opening_stock",
       sourceKey,
       sources: [row.ref],
@@ -978,9 +1040,14 @@ export function buildFoodSockPlan(sources: FoodSockSources, target: TargetSnapsh
       },
       issues: warnings,
     };
+    const existing = existingOpeningBalance(sourceKey, `product:${key}`);
+    if (existing.status === "ambiguous") {
+      return { ...item, action: "exception" as const, issues: [...warnings, issue("exception", "ambiguous_target", existing.detail)] };
+    }
+    return existing.status === "matched" ? { ...item, action: "match" as const, matchRule: existing.rule, targetId: existing.stockItemId } : item;
   });
   put("K_opening_stock", openingItems);
-  const openingByKey = new Map(openingItems.filter((i) => i.action === "create").map((i) => [String((i.proposed as Record<string, unknown>).product_key), i]));
+  const openingByKey = new Map(openingItems.filter((i) => i.action === "create" || i.action === "match").map((i) => [String((i.proposed as Record<string, unknown>).product_key), i]));
 
   /* ====================================================== L / M purchase orders */
   type Order = { number: string; lines: PurchaseOrderLineRecord[] };

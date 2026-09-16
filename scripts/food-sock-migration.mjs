@@ -168,26 +168,8 @@ async function countTables(sb, id) {
 }
 
 async function readTarget(id) {
-  const sb = await serviceClient();
-  const select = async (table, columns) => {
-    const { data, error } = await sb.from(table).select(columns).eq("company_id", id);
-    if (error) throw new Error(`${table}: ${error.message}`);
-    return data || [];
-  };
-  const target = emptyTarget(id);
-  target.suppliers = await select("vyron_cost_suppliers", "id, supplier_name");
-  target.ingredients = await select("vyron_cost_ingredients", "id, ingredient_name");
-  target.products = await select("vyron_cost_products", "id, product_name, sku");
-  target.boms = await select("vyron_cost_boms", "id, bom_name, product_id");
-  target.stockItems = await select("vyron_cost_stock_items", "id, item_code, entity_type, entity_id");
-  const ledger = await select("vyron_cost_stock_ledger", "stock_item_id, movement_type");
-  target.openingBalanceStockItemIds = [...new Set(ledger.filter((r) => r.movement_type === "Opening Balance").map((r) => r.stock_item_id))];
-  try {
-    target.sourceLinks = await select("vyron_import_source_links", "source_system, source_entity, source_key, entity_type, entity_id");
-  } catch (error) {
-    console.log(`  (source links unavailable: ${error.message} — treated as none)`);
-  }
-  return target;
+  const { readFoodSockTarget } = await import("../src/lib/data-migration/food-sock-target.ts");
+  return readFoodSockTarget(await serviceClient(), id, (message) => console.log(`  (${message})`));
 }
 
 console.log(execute ? `VYRON — Food Sock Meals migration — EXECUTE (scope ${scope}); planning first` : "VYRON — Food Sock Meals migration — DRY RUN (nothing is written)");
@@ -258,7 +240,9 @@ if (args.includes("--demo-report")) {
 
 /*
  * VALIDATE — read-only, after an import: the tenant must hold exactly what the
- * import was expected to create, and a re-plan must have nothing left to create.
+ * import was expected to create, and every record in the scope must be matched
+ * to an existing row by the executor's identity rules (none missing, none
+ * sharing a row).
  */
 if (args.includes("--validate")) {
   if (!companyId) {
@@ -266,8 +250,9 @@ if (args.includes("--validate")) {
     process.exit(2);
   }
   const { expectedImportRows } = await import("../src/lib/data-migration/food-sock-demo.ts");
-  const { selectExecutionItems } = await import("../src/lib/data-migration/food-sock-execute.ts");
-  const expected = expectedImportRows(buildFoodSockPlan(sources, emptyTarget(companyId)), scope);
+  const { reconcileImportedScope } = await import("../src/lib/data-migration/food-sock-validate.ts");
+  const expectedPlan = buildFoodSockPlan(sources, emptyTarget(companyId));
+  const expected = expectedImportRows(expectedPlan, scope);
   const sb = await serviceClient();
   let problems = 0;
   console.log(`\nVALIDATE tenant ${companyId} (read-only, scope ${scope}):`);
@@ -277,9 +262,15 @@ if (args.includes("--validate")) {
     if (!ok) problems += 1;
     console.log(`  ${ok ? "ok  " : "DIFF"} ${table.padEnd(30)} expected ${want}, found ${error ? `ERR ${error.message}` : count}`);
   }
-  const pending = Object.values(selectExecutionItems(plan, scope)).flat().filter((item) => item.action === "create");
-  console.log(`  ${pending.length ? "DIFF" : "ok  "} re-plan against the tenant has ${pending.length} record(s) still to create`);
-  if (pending.length) problems += 1;
+  const reconciliation = reconcileImportedScope(expectedPlan, plan, scope);
+  console.log("\n  Record reconciliation (scope record → existing row):");
+  for (const [stage, r] of Object.entries(reconciliation.stages)) {
+    const clean = !r.missing.length && !r.collisions.length;
+    if (!clean) problems += 1;
+    console.log(`  ${clean ? "ok  " : "DIFF"} ${stage.padEnd(30)} ${r.present} of ${r.expected} present, ${r.missing.length} missing, ${r.collisions.length} shared rows`);
+    for (const m of r.missing) console.log(`         missing ${m.sourceKey} (${m.action}): ${m.detail}`);
+    for (const c of r.collisions) console.log(`         shared row ${c.targetId}: ${c.sourceKeys.join(", ")}`);
+  }
   console.log(problems ? `\nVALIDATION FOUND ${problems} DIFFERENCE(S). Note: demo purchasing/production after the import legitimately adds ledger and audit rows.` : "\nVALIDATION PASSED.");
   process.exit(problems ? 1 : 0);
 }

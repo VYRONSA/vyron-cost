@@ -239,11 +239,16 @@ VYRON_ENV=production node scripts/food-sock-migration.mjs --sources <dir> \
   --company <ID> --expect-database <REF> --scope demo --validate
 ```
 
-Every table equals the forecast and the re-plan has 0 records to create. Run
-it before any demo transaction.
+Every table equals the forecast, and every stage of the record reconciliation
+reads `N of N present, 0 missing, 0 shared rows`: each scope record resolves to
+its own existing row by the executor's identity rules (source link; exact name
+and type for categories; the item's stock item for an opening balance; the
+finished product's BOM). Run it before any demo transaction.
 
-**6.11 Second dry run** — repeat 6.5: every record is a match, nothing to
-create. Do not execute this second plan.
+**6.11 Second dry run** — repeat 6.5: every demo-scope record is a match,
+nothing in the scope to create (records outside the demo scope still show as
+create). Its hash differs from the approved one because the tenant is no
+longer empty. Do not execute this second plan.
 
 No automated rollback exists and nothing is ever deleted by this tooling.
 Every imported row is identified by `vyron_import_source_links` and its run in
