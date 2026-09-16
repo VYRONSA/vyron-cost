@@ -363,6 +363,19 @@ const REGISTER = [
       "Runs the real executor, VYRON's writers and manufacturing engine against scripts/support/document-email-test-stubs/fake-supabase.mjs holding two synthetic tenants. No client data, no real database, no network.",
   },
   {
+    id: "test-food-sock-validate",
+    file: "scripts/test-food-sock-validate.mjs",
+    family: A,
+    purpose:
+      "Regression test for the Food Sock post-import validator: missing versus already-imported records (categories, opening balances, BOMs), re-runs, duplicate protection, tenant isolation and source-link identity.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit",
+    evidence:
+      "Runs the real planner, target reader, validator and executor against scripts/support/document-email-test-stubs/fake-supabase.mjs holding three synthetic tenants (shared fixture scripts/support/food-sock-qa-fixture.mjs). No client data, no real database, no network.",
+  },
+  {
     id: "food-sock-rehearsal",
     file: "scripts/food-sock-rehearsal.mjs",
     family: A,
