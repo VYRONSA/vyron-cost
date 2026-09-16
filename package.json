@@ -47,7 +47,9 @@
     "test:invoice-cost-capture": "node scripts/test-invoice-cost-capture.mjs",
     "test:customer-gp-report": "node scripts/test-customer-gp-report-margin.mjs",
     "test:kf-gp-correction": "node scripts/test-kf-gp-correction.mjs",
-    "test:sales-order-cost-capture": "node scripts/test-sales-order-cost-capture.mjs"
+    "test:sales-order-cost-capture": "node scripts/test-sales-order-cost-capture.mjs",
+    "test:manufacture-reversal-pg": "node scripts/test-manufacture-reversal-pg.mjs",
+    "test:manufacture-reversal-e2e": "node scripts/test-manufacture-reversal-e2e.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",

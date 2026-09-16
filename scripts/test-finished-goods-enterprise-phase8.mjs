@@ -54,7 +54,9 @@ async function json(path, options = {}, cookies = "") {
   } catch {
     data = { _raw: raw.slice(0, 1000) };
   }
-  return { status: response.status, ok: response.ok, data };
+  const setCookies = typeof response.headers.getSetCookie === "function" ? response.headers.getSetCookie() : [];
+  const cookieJar = setCookies.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
+  return { status: response.status, ok: response.ok, data, cookieJar };
 }
 
 async function createWorkspaceOwner(stamp, label) {
@@ -138,7 +140,7 @@ async function createWorkspaceOwner(stamp, label) {
     userId,
     companyId,
     workspaceId,
-    cookies: cookieHeader(login.data.client, login.data.session),
+    cookies: (login.cookieJar || cookieHeader(login.data.client, login.data.session)),
   };
 }
 
@@ -191,7 +193,7 @@ async function createWorkspaceUser(stamp, workspaceId, role) {
   return {
     email,
     userId,
-    cookies: cookieHeader(login.data.client, login.data.session),
+    cookies: (login.cookieJar || cookieHeader(login.data.client, login.data.session)),
   };
 }
 

@@ -38,7 +38,9 @@ async function json(path, options = {}, cookies = "") {
   } catch {
     data = { _raw: raw.slice(0, 500) };
   }
-  return { status: response.status, ok: response.ok, data };
+  const setCookies = typeof response.headers.getSetCookie === "function" ? response.headers.getSetCookie() : [];
+  const cookieJar = setCookies.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
+  return { status: response.status, ok: response.ok, data, cookieJar };
 }
 
 const checks = new Map();
@@ -128,7 +130,7 @@ async function main() {
       throw new Error(`Workspace login failed: ${login.data?.error || login.status}`);
     }
 
-    const cookies = cookieHeader(login.data.client, login.data.session);
+    const cookies = (login.cookieJar || cookieHeader(login.data.client, login.data.session));
     const authedHeaders = { "Content-Type": "application/json", Cookie: cookies };
 
     const createBom = await json(

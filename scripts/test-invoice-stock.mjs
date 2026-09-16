@@ -110,14 +110,18 @@ async function main() {
     throw membershipInsert.error;
   }
 
-  const ownerLogin = await fetch(`${base}/api/workspace/login`, {
+  const ownerLoginRes = await fetch(`${base}/api/workspace/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email: ownerEmail, password: ownerPassword }),
-  }).then((r) => r.json());
+  });
+  const ownerLogin = await ownerLoginRes.json();
   if (!ownerLogin.ok) throw new Error(`Owner login failed: ${ownerLogin.error}`);
 
-  const cookie = workspaceCookieHeader(ownerLogin.client, ownerLogin.session);
+  // Forward the genuine SIGNED cookies the login response set (real auth path),
+  // not an unsigned reconstruction the hardened auth rejects.
+  const setCookies = typeof ownerLoginRes.headers.getSetCookie === "function" ? ownerLoginRes.headers.getSetCookie() : [];
+  const cookie = setCookies.map((c) => c.split(";")[0]).filter(Boolean).join("; ") || workspaceCookieHeader(ownerLogin.client, ownerLogin.session);
   const headers = { "Content-Type": "application/json", Cookie: cookie };
 
   const productRes = await fetch(`${base}/api/products`, {

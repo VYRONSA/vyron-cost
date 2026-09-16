@@ -48,7 +48,13 @@ async function json(path, options = {}, cookies = "") {
   } catch {
     data = { _raw: raw.slice(0, 1200) };
   }
-  return { status: response.status, ok: response.ok, data };
+  // Capture the server's real Set-Cookie (the SIGNED workspace session + active
+  // client) so callers forward the genuine signed cookie, exactly as a browser
+  // would — rather than reconstructing an unsigned cookie the hardened auth
+  // rejects. This exercises the real signed-cookie authentication path.
+  const setCookies = typeof response.headers.getSetCookie === "function" ? response.headers.getSetCookie() : [];
+  const cookieJar = setCookies.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
+  return { status: response.status, ok: response.ok, data, cookieJar };
 }
 
 async function createWorkspaceOwner(stamp) {
@@ -129,7 +135,9 @@ async function createWorkspaceOwner(stamp) {
     userId,
     companyId,
     workspaceId,
-    cookies: cookieHeader(login.data.client, login.data.session),
+    // Use the genuine signed cookies the login response set, falling back to the
+    // legacy reconstruction only if the server set none.
+    cookies: login.cookieJar || cookieHeader(login.data.client, login.data.session),
   };
 }
 

@@ -73,7 +73,17 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
     const data = await res.json();
     setBusyId(null);
     if (!data.ok) {
-      setMessage(data.error || "Reversal failed.");
+      // A 409 dependency block carries produced/available/shortfall so the operator
+      // sees exactly why the run cannot be reversed, not just a generic failure.
+      if (res.status === 409 && data.details) {
+        const d = data.details;
+        setMessage(
+          `${data.error} Produced ${d.produced}, available ${d.available}, shortfall ${d.shortfall}` +
+            (d.downstreamIssues ? ` (${d.downstreamIssues} downstream stock movement(s) since production).` : ".")
+        );
+      } else {
+        setMessage(data.error || "Reversal failed.");
+      }
       return;
     }
     setMessage(`Batch ${run.run_number} reversed — inventory movements undone.`);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { reverseProductionRun } from "@/lib/vyron-manufacturing";
+import { reverseProductionRun, ManufactureReversalBlockedError } from "@/lib/vyron-manufacturing";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import {
   manufacturingCompanyContextFromRequest,
@@ -26,13 +26,27 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     await requireWorkspacePermission("manufacturing.runs.reverse");
     const companyId = await requireManufacturingCompanyId(supabase, manufacturingCompanyContextFromRequest(request, body));
+    // A reversal reason is mandatory and never defaulted — the audit trail must
+    // record WHY. Supervisor acknowledgement must be explicit, not assumed.
+    const reason = String(body.reason || "").trim();
+    if (!reason) {
+      return NextResponse.json({ ok: false, error: "A reversal reason is required." }, { status: 400 });
+    }
+    if (reason.length > 500) {
+      return NextResponse.json({ ok: false, error: "A reversal reason must be 500 characters or fewer." }, { status: 400 });
+    }
     const run = await reverseProductionRun(supabase, companyId, id, {
-      reason: String(body.reason || "Supervisor reversal"),
+      reason,
       actor: String(body.actor || "supervisor"),
-      supervisor: Boolean(body.supervisor ?? true),
+      supervisor: body.supervisor === true,
     });
     return NextResponse.json({ ok: true, run });
   } catch (error) {
+    if (error instanceof ManufactureReversalBlockedError) {
+      // Not an auth failure — the run is intact; reversal is blocked by downstream
+      // stock. Return a precise, non-destructive message the UI can show.
+      return NextResponse.json({ ok: false, error: error.message, details: error.details }, { status: 409 });
+    }
     return workspaceAccessErrorResponse(error, "Reverse failed.");
   }
 }

@@ -10,6 +10,22 @@ import {
 import { postInventoryTransaction } from "@/lib/vyron-inventory-transactions";
 import { explodeBomLines } from "@/lib/vyron-cost-sub-boms";
 
+/**
+ * Thrown when a completed run cannot be safely reversed because the finished
+ * goods it produced are no longer available (sold, transferred, consumed or
+ * otherwise issued). Carries the produced / available / shortfall figures so
+ * the caller can show a precise, non-destructive blocking message. The reversal
+ * never silently creates negative stock.
+ */
+export class ManufactureReversalBlockedError extends Error {
+  details: Record<string, unknown>;
+  constructor(message: string, details: Record<string, unknown>) {
+    super(message);
+    this.name = "ManufactureReversalBlockedError";
+    this.details = details;
+  }
+}
+
 export const PRODUCTION_STATUSES = ["Planned", "Approved", "In Production", "Completed", "Cancelled", "Reversed"] as const;
 export type ProductionStatus = (typeof PRODUCTION_STATUSES)[number];
 
@@ -990,7 +1006,19 @@ export async function completeProductionRun(
   const efficiency =
     Number(run.planned_cost) > 0 ? round2((Number(run.planned_cost) / Math.max(actualCost, 0.01)) * 100) : 100;
 
+  // Completion-time product-cost snapshot: capture product.total_cost as it is
+  // immediately BEFORE completion overwrites it, so a later reversal can restore
+  // that exact value. Captured once, here, never recalculated.
+  let previousProductTotalCost: number | null = null;
   if (run.product_id && actualQty > 0) {
+    const { data: priorProduct } = await supabase
+      .from("vyron_cost_products")
+      .select("total_cost")
+      .eq("id", run.product_id)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    previousProductTotalCost = priorProduct ? Number(priorProduct.total_cost || 0) : null;
+
     await supabase
       .from("vyron_cost_products")
       .update({ total_cost: costPerUnit })
@@ -1051,6 +1079,7 @@ export async function completeProductionRun(
     .from("vyron_cost_production_runs")
     .update({
       status: "Completed",
+      previous_product_total_cost: previousProductTotalCost,
       actual_qty: actualQty,
       yield_pct: yieldPct,
       yield_status: yieldStatus,
@@ -1117,183 +1146,64 @@ export async function completeProductionRun(
   return getProductionRun(supabase, runId, companyId);
 }
 
-async function findFinishedGoodForCompany(
-  supabase: SupabaseClient,
-  companyId: string,
-  productName: string,
-  productId?: string | null
-) {
-  if (productId) {
-    const byId = await supabase
-      .from("vyron_finished_goods")
-      .select("*")
-      .eq("id", productId)
-      .eq("company_id", companyId)
-      .maybeSingle();
-    if (!byId.error && byId.data) return byId.data;
-  }
-
-  const byName = await supabase
-    .from("vyron_finished_goods")
-    .select("*")
-    .eq("company_id", companyId)
-    .ilike("product_name", productName)
-    .limit(1)
-    .maybeSingle();
-  if (!byName.error && byName.data) return byName.data;
-
-  const loose = await supabase.from("vyron_finished_goods").select("*").ilike("product_name", productName).limit(5);
-  if (loose.error) return null;
-  const rows = loose.data || [];
-  if (!rows.some((row) => row.company_id != null && String(row.company_id).trim() !== "")) {
-    return null;
-  }
-  return rows.find((row) => row.company_id === companyId) || null;
-}
-
+/**
+ * Reverse a completed Manufacture Run by posting a compensating set of inventory
+ * transactions that exactly undo what the completion actually posted.
+ *
+ * This is NOT a delete and NOT a status flip: the original run and every original
+ * stock transaction remain intact and auditable; the run moves Completed →
+ * Reversed and a linked set of opposite transactions is created.
+ *
+ * Correctness guarantees:
+ *  - Reverses the ACTUAL posted transactions (vyron_cost_inventory_transactions
+ *    for this run), never a recalculation from the current BOM or product cost —
+ *    which may have changed since completion.
+ *  - Idempotent: a run reverses exactly once; a second call returns the already
+ *    reversed run instead of posting a second compensating set.
+ *  - Downstream-safe: if the finished goods have since been sold, transferred or
+ *    consumed, the reversal is blocked with a precise shortfall rather than
+ *    driving stock negative.
+ *  - Atomic in effect: compensations are tracked and rolled back if any post
+ *    fails, so a run is never left half-reversed (Postgres gives us no single
+ *    transaction across these posts; this matches completeProductionRun).
+ */
 export async function reverseProductionRun(
   supabase: SupabaseClient,
   companyId: string,
   runId: string,
   input: { reason: string; actor?: string; supervisor?: boolean }
 ) {
+  // Supervisor + reason gates (defence in depth; the route enforces them too).
   if (!input.supervisor) {
     throw new Error("Supervisor approval required to reverse a completed batch.");
   }
-
-  const run = await getProductionRun(supabase, runId, companyId);
-  if (!run) throw new Error("Production run not found.");
-  if (run.status !== "Completed") throw new Error(`Cannot reverse from status ${run.status}.`);
-
+  const reason = String(input.reason || "").trim();
+  if (!reason) throw new Error("A reversal reason is required.");
+  if (reason.length > 500) throw new Error("A reversal reason must be 500 characters or fewer.");
   const actor = input.actor || "supervisor";
-  const actualQty = Number(run.actual_qty || 0);
 
-  for (const line of run.lines || []) {
-    const actualLineQty = round4(Number(line.actual_qty || line.planned_qty || 0));
-    if (actualLineQty <= 0) continue;
-    const unitCost = Number(line.unit_cost || 0);
-    let stockItemId = line.stock_item_id;
-    if (!stockItemId) {
-      const stock = await resolveStockItemForLine(supabase, run.company_id, {
-        line_type: line.line_type,
-        ingredient_id: line.ingredient_id,
-        line_name: line.line_name,
-        unit: line.unit,
-        unit_cost: unitCost,
-      });
-      stockItemId = stock?.id as string | null;
-    }
-    if (stockItemId) {
-      await postStockMovement(supabase, {
-        companyId: run.company_id,
-        stockItemId,
-        movementType: "Production Reversal",
-        quantityIn: actualLineQty,
-        unitCost,
-        referenceType: "production_run_reversal",
-        referenceId: runId,
-        referenceLabel: run.run_number,
-        actor,
-        metadata: { reason: input.reason, line_name: line.line_name },
-      });
-      await writeInventoryAudit(supabase, {
-        companyId: run.company_id,
-        stockItemId,
-        eventType: "Production Reversal",
-        actor,
-        detail: `Restored ${actualLineQty} ${line.unit} — ${input.reason}`,
-        referenceType: "production_run",
-        referenceId: runId,
-      });
-    }
-
-    await supabase.from("vyron_stock_movements").insert({
-      company_id: run.company_id,
-      movement_date: new Date().toISOString().slice(0, 10),
-      item_type: isPackagingLineType(line.line_type) ? "packaging" : "raw_material",
-      item_id: String(line.ingredient_id || line.stock_item_id || line.id),
-      item_name: line.line_name,
-      movement_type: "MANUFACTURING_REVERSAL",
-      reference_number: run.run_number,
-      quantity_in: actualLineQty,
-      quantity_out: 0,
-      unit_cost: unitCost,
-      related_document_id: runId,
-      notes: input.reason,
-    });
-  }
-
-  if (run.product_id && actualQty > 0) {
-    const costPerUnit = Number(run.cost_per_unit || 0);
-    const { data: fgStock } = await supabase
-      .from("vyron_cost_stock_items")
-      .select("id")
-      .eq("company_id", run.company_id)
-      .eq("entity_type", "finished_goods")
-      .eq("entity_id", run.product_id)
-      .maybeSingle();
-    if (fgStock?.id) {
-      await postStockMovement(supabase, {
-        companyId: run.company_id,
-        stockItemId: fgStock.id as string,
-        movementType: "Production Reversal",
-        quantityOut: actualQty,
-        unitCost: costPerUnit,
-        referenceType: "production_run_reversal",
-        referenceId: runId,
-        referenceLabel: run.run_number,
-        actor,
-        metadata: { reason: input.reason },
-      });
-    }
-
-    const productName = String(run.product_name_snapshot || "Finished Good");
-    const fg = await findFinishedGoodForCompany(supabase, companyId, productName, run.product_id);
-    if (fg) {
-      const nextStock = round4(Number(fg.current_stock || 0) - actualQty);
-      const nextValue = round2(Math.max(0, nextStock) * costPerUnit);
-      await supabase
-        .from("vyron_finished_goods")
-        .update({ current_stock: nextStock, stock_value: nextValue, updated_at: new Date().toISOString() })
-        .eq("id", fg.id);
-    }
-
-    await supabase.from("vyron_stock_movements").insert({
-      company_id: run.company_id,
-      movement_date: new Date().toISOString().slice(0, 10),
-      item_type: "finished_good",
-      item_id: fg?.id || run.product_id,
-      item_name: productName,
-      movement_type: "MANUFACTURING_REVERSAL",
-      reference_number: run.run_number,
-      quantity_in: 0,
-      quantity_out: actualQty,
-      unit_cost: costPerUnit,
-      related_document_id: runId,
-      notes: input.reason,
-    });
-  }
-
-  await supabase
-    .from("vyron_cost_production_runs")
-    .update({
-      status: "Reversed",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", runId)
-    .eq("company_id", companyId);
-
-  await writeProductionAudit(supabase, {
-    companyId: run.company_id,
-    productionRunId: runId,
-    eventType: "Production Reversed",
-    actor,
-    detail: input.reason,
-    fieldName: "status",
-    oldValue: "Completed",
-    newValue: "Reversed",
+  // The ENTIRE reversal runs inside one PostgreSQL transaction — the
+  // reverse_production_run(...) function (migration 20260915120000). It is atomic
+  // (any failure rolls back every row), concurrency-safe (a row lock serialises
+  // simultaneous attempts), downstream/negative-stock safe, and it restores
+  // product.total_cost from the completion-time snapshot. This wrapper is the ONLY
+  // application entry point to a reversal; there is no second reversal code path.
+  const { data, error } = await supabase.rpc("reverse_production_run", {
+    p_company_id: companyId,
+    p_run_id: runId,
+    p_reason: reason,
+    p_actor: actor,
   });
+  if (error) throw new Error(error.message);
 
+  const result = (data || {}) as Record<string, unknown>;
+  if (result.status === "blocked") {
+    throw new ManufactureReversalBlockedError(
+      `${result.run_number || runId} cannot be reversed because ${Number(result.shortfall)} of the ${Number(result.produced)} produced unit(s) are no longer available (already sold, issued or consumed).`,
+      result
+    );
+  }
+  // "reversed" or "already_reversed": return the run in its final state.
   return getProductionRun(supabase, runId, companyId);
 }
 
