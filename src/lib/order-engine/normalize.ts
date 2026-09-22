@@ -108,6 +108,9 @@ export function candidateContentHash(candidate: OrderCandidate): string {
     requestedDeliveryDate: candidate.requestedDeliveryDate ?? null,
     currency: candidate.currency ?? null,
     supplied: candidate.supplied ?? null,
+    // Added later: included only when present, so earlier orders keep their hash.
+    ...(candidate.externalCustomerId ? { externalCustomerId: candidate.externalCustomerId } : {}),
+    ...(candidate.context ? { context: candidate.context } : {}),
     lines: candidate.lines.map((line) => ({
       ref: line.sourceLineReference ?? null,
       sku: line.sku ?? null,
@@ -119,6 +122,7 @@ export function candidateContentHash(candidate: OrderCandidate): string {
       taxAmount: line.taxAmount ?? null,
       lineTotal: line.lineTotal ?? null,
       productId: line.productId ?? null,
+      ...(line.externalProductId ? { externalProductId: line.externalProductId } : {}),
     })),
   });
 }

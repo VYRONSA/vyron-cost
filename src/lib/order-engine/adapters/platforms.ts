@@ -32,7 +32,12 @@ import { OrderSourceParseError, type OrderSourceAdapter } from "@/lib/order-engi
  *   are recorded for reference only.
  */
 
-export type PlatformOrderInput<T> = { storeKey: string; order: T };
+/**
+ * `purpose: "historical"` marks an export of past web-store sales (e.g. Metorik
+ * history). Such orders are external sales intelligence: the converter still
+ * produces the candidate faithfully, and intake refuses it.
+ */
+export type PlatformOrderInput<T> = { storeKey: string; order: T; purpose?: "fulfilment" | "historical" };
 
 type WooLineItem = {
   id?: number | string;
@@ -133,6 +138,11 @@ export function normalizeWooCommerceOrder(input: PlatformOrderInput<WooOrder>): 
   const shipping = toNumberOrNull(order.shipping_total) ?? sum((order.shipping_lines || []).map((l) => toNumberOrNull(l.total)));
   return {
     source: "woocommerce",
+    context: "B2C",
+    sourceChannel: `web_store:${storeKey}`,
+    catalogSystem: `woocommerce:${storeKey}`,
+    externalCustomerId: order.customer_id && String(order.customer_id) !== "0" ? String(order.customer_id) : null,
+    purpose: input.purpose ?? "fulfilment",
     sourceKey: `${storeKey}:order:${order.id}`,
     sourceReference: `WooCommerce ${storeKey}`,
     sourceStatus: status || null,
@@ -170,6 +180,8 @@ export function normalizeWooCommerceOrder(input: PlatformOrderInput<WooOrder>): 
         sourceLineReference: item.id !== undefined ? `line:${item.id}` : null,
         sku: cleanText(item.sku, 200),
         description: cleanText(item.name, 500),
+        externalProductId:
+          item.variation_id && String(item.variation_id) !== "0" ? `variation:${item.variation_id}` : item.product_id ? `product:${item.product_id}` : null,
         quantity: quantity === null ? Number.NaN : quantity,
         unitPrice,
         discountAmount: subtotal !== null && total !== null && subtotal > total ? Math.round((subtotal - total) * 100) / 100 : null,
@@ -197,6 +209,11 @@ export function normalizeShopifyOrder(input: PlatformOrderInput<ShopifyOrder>): 
   );
   return {
     source: "shopify",
+    context: "B2C",
+    sourceChannel: `web_store:${storeKey}`,
+    catalogSystem: `shopify:${storeKey}`,
+    externalCustomerId: order.customer?.id ? String(order.customer.id) : null,
+    purpose: input.purpose ?? "fulfilment",
     sourceKey: `${storeKey}:order:${order.id}`,
     sourceReference: `Shopify ${storeKey}`,
     sourceStatus: financial || null,
@@ -226,6 +243,7 @@ export function normalizeShopifyOrder(input: PlatformOrderInput<ShopifyOrder>): 
       const discount = allocated ?? toNumberOrNull(item.total_discount);
       return {
         sourceLineReference: item.id !== undefined ? `line:${item.id}` : null,
+        externalProductId: item.variant_id ? `variant:${item.variant_id}` : item.product_id ? `product:${item.product_id}` : null,
         sku: cleanText(item.sku, 200),
         description: cleanText(item.name || item.title, 500),
         quantity: quantity === null ? Number.NaN : quantity,

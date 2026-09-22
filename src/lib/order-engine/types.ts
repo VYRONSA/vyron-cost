@@ -23,8 +23,16 @@ export const INTAKE_STATUSES = [
 export type IntakeStatus = (typeof INTAKE_STATUSES)[number];
 
 export type MatchStatus = "PENDING" | "MATCHED" | "UNMATCHED" | "AMBIGUOUS";
-export type MatchRule = "manual" | "sku_exact" | "sku_normalized" | "customer_alias" | "alias" | "name_exact";
-export type CustomerMatchRule = "customer_id" | "identity_map" | "name_exact" | "sender_email";
+export type MatchRule = "manual" | "external_id" | "sku_exact" | "sku_normalized" | "customer_alias" | "alias" | "name_exact";
+export type CustomerMatchRule = "customer_id" | "external_id" | "identity_map" | "name_exact" | "sender_email" | "b2c_account";
+
+/**
+ * The business context an order arrives in. B2B: a trading customer ordering
+ * on account (PO, delivery rules, customer pricing). B2C: a web-store
+ * consumer order. Both enter the same canonical intake.
+ */
+export const ORDER_CONTEXTS = ["B2B", "B2C", "UNSPECIFIED"] as const;
+export type OrderContext = (typeof ORDER_CONTEXTS)[number];
 
 export type IssueSeverity = "error" | "warning" | "info";
 export type IssueCategory =
@@ -68,6 +76,10 @@ export type ExtractedFieldMeta = {
 /** Extraction metadata carried by an order or a line: field name → provenance. */
 export type ExtractionMeta = {
   method?: ExtractionMethod;
+  /** Overall confidence the extractor states for the whole order (document extraction). */
+  confidence?: ExtractionConfidence;
+  /** Which extractor produced the order, e.g. { name: "vendor-x", version: "2" }. */
+  extractor?: { name: string; version?: string | null } | null;
   fields?: Record<string, ExtractedFieldMeta>;
   /** Facts the source stated that have no column: shown to the approver, never acted on automatically. */
   sourceFacts?: { couponCodes?: string[]; refundedTotal?: number | null };
@@ -86,12 +98,35 @@ export type OrderCandidateLine = {
   lineTotal?: number | null;
   /** Only the manual adapter may carry a product the user explicitly chose. */
   productId?: string | null;
+  /** The product's id in the source system (e.g. a web-store product id), matched via vyron_import_source_links. */
+  externalProductId?: string | null;
+  /**
+   * Values exactly as written in the source, when an extractor normalised the
+   * fields above. Kept in the frozen source snapshot; never used for matching.
+   */
+  sourceValues?: { sku?: string | null; productName?: string | null; quantity?: string; price?: string };
   extraction?: ExtractionMeta | null;
 };
 
 /** The one shape every order source produces. */
 export type OrderCandidate = {
   source: OrderSource;
+  /** B2B / B2C. Omitted: the source's default (web stores B2C, account channels B2B). */
+  context?: OrderContext | null;
+  /** The concrete channel, e.g. "email", "web_store:<store key>", "manual", "csv_upload". */
+  sourceChannel?: string | null;
+  /**
+   * The system external ids belong to, as recorded in vyron_import_source_links
+   * (source_system). Required for external-id matching; never guessed.
+   */
+  catalogSystem?: string | null;
+  /** The customer's id in the source system, matched via vyron_import_source_links. */
+  externalCustomerId?: string | null;
+  /**
+   * "historical" orders (e.g. Metorik / WooCommerce history) are external sales
+   * intelligence, never intake: they are refused. Default "fulfilment".
+   */
+  purpose?: "fulfilment" | "historical";
   /** Idempotency key within (company, source). Required for every non-manual source. */
   sourceKey?: string | null;
   sourceReference?: string | null;
@@ -153,6 +188,11 @@ export type IntakeRow = {
   supplied_shipping_total: number | null;
   prices_include_tax: boolean | null;
   extraction: ExtractionMeta | Record<string, never>;
+  order_context?: OrderContext;
+  source_channel?: string | null;
+  extraction_confidence?: ExtractionConfidence | null;
+  /** What the source said, frozen at receipt (never edited). */
+  source_snapshot?: IntakeSourceSnapshot | Record<string, never>;
   status: IntakeStatus;
   validation: ValidationSnapshot | Record<string, never>;
   validation_hash: string | null;
@@ -192,8 +232,41 @@ export type IntakeLineRow = {
   matched_at: string | null;
   validation_status: "PENDING" | "OK" | "WARNING" | "ERROR";
   extraction: ExtractionMeta | Record<string, never>;
+  /** What the source said about this line, frozen at receipt (never edited). */
+  source_snapshot?: LineSourceSnapshot | Record<string, never>;
   created_at: string;
   updated_at: string;
+};
+
+/** The order header exactly as the source stated it. */
+export type IntakeSourceSnapshot = {
+  customer_name: string | null;
+  customer_reference: string | null;
+  external_customer_id: string | null;
+  catalog_system: string | null;
+  po_number: string | null;
+  external_order_number: string | null;
+  source_order_reference: string | null;
+  requested_delivery_date: string | null;
+  delivery_address: string | null;
+  currency: string | null;
+  prices_include_tax: boolean | null;
+  supplied: { subtotal: number | null; discount_total: number | null; tax_total: number | null; shipping_total: number | null; total: number | null };
+};
+
+/** One line exactly as the source stated it. */
+export type LineSourceSnapshot = {
+  source_sku: string | null;
+  source_product_name: string | null;
+  source_external_product_id: string | null;
+  source_quantity: number;
+  source_unit: string | null;
+  source_price: number | null;
+  source_discount: number | null;
+  source_tax: number | null;
+  source_line_total: number | null;
+  /** Quantity and price exactly as written, when the source wrote them differently from the parsed numbers. */
+  as_written?: { quantity?: string; price?: string };
 };
 
 export type IntakeEventRow = {
@@ -211,6 +284,35 @@ export type IntakeEventRow = {
 };
 
 export type MatchCandidate = { productId: string; productName: string; sku: string | null };
+
+/** One component of a product that must be produced (estimate from the product's BOM). */
+export type ProductionComponent = {
+  ingredientId: string | null;
+  name: string;
+  unit: string | null;
+  /** Required = shortfall × BOM quantity × (1 + wastage) ÷ BOM yield. */
+  required: number;
+  /** On hand for the component's stock item; null when it has no stock record or units differ. */
+  available: number | null;
+  shortfall: number | null;
+  note: string | null;
+};
+
+/** What producing a line's shortfall would take — shown, never acted on. */
+export type ProductionRequirement = {
+  lineNo: number;
+  productId: string;
+  productName: string | null;
+  quantityRequired: number;
+  availableFinished: number;
+  shortfall: number;
+  bomId: string | null;
+  bomName: string | null;
+  bomYield: number | null;
+  components: ProductionComponent[];
+  /** All stock-tracked components cover the requirement (null: not measurable). */
+  componentsAvailable: boolean | null;
+};
 
 export type LineEvaluation = {
   lineNo: number;
@@ -256,6 +358,25 @@ export type ValidationSnapshot = {
   counts: { errors: number; warnings: number; info: number };
   /** How many lines matched, and by which rule — shown on the order timeline. */
   matching: { matched: number; unmatched: number; ambiguous: number; byRule: Record<string, number> };
+  /** Order context at validation (B2B / B2C / UNSPECIFIED). */
+  context?: OrderContext;
+  /** Production required for lines stock cannot cover (estimate; nothing is produced). */
+  production?: ProductionRequirement[];
+  /** The tenant ordering settings applied. */
+  settings?: { b2cAccountConfigured: boolean; productNameMatching: "review" | "off"; duplicatePoAction: "warn" | "block"; minLeadTimeDays: number | null };
+};
+
+/** Tenant-scoped ordering settings (vyron_order_engine_settings). Every setting is conservative until set. */
+export type OrderEngineSettings = {
+  company_id: string;
+  b2c_customer_id: string | null;
+  product_name_matching: "review" | "off";
+  duplicate_po_action: "warn" | "block";
+  min_lead_time_days: number | null;
+  updated_by: string;
+  updated_by_name?: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 /** Optional customer (or company-default) ordering rules. Every rule is off unless set. */

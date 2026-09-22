@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveDefaultVatRate } from "@/lib/vyron-customer-invoices";
 import { saveCustomerSalesOrder, writeSalesOrderAudit } from "@/lib/vyron-customer-sales-orders";
-import { OrderEngineError, isUniqueViolation, raiseDbError } from "@/lib/order-engine/errors";
+import { OrderEngineError, isMissingRelation, isUniqueViolation, raiseDbError } from "@/lib/order-engine/errors";
 import {
   ACTION_FROM,
   ACTION_REQUIRES_REASON,
@@ -20,13 +20,16 @@ import type {
   IntakeEventRow,
   IntakeLineRow,
   IntakeRow,
+  IntakeSourceSnapshot,
   IntakeStatus,
+  LineSourceSnapshot,
   OrderCandidate,
   OrderCandidateLine,
+  OrderContext,
   OrderEngineActor,
   ValidationSnapshot,
 } from "@/lib/order-engine/types";
-import { ORDER_SOURCES } from "@/lib/order-engine/types";
+import { ORDER_CONTEXTS, ORDER_SOURCES } from "@/lib/order-engine/types";
 import { loadValidationContext, runValidators } from "@/lib/order-engine/validation";
 
 /**
@@ -49,6 +52,17 @@ const T_EVENTS = "vyron_order_intake_events";
 function assertCandidate(candidate: OrderCandidate): void {
   if (!candidate || typeof candidate !== "object") throw new OrderEngineError("INVALID_INPUT", "An order is required.");
   if (!ORDER_SOURCES.includes(candidate.source)) throw new OrderEngineError("INVALID_INPUT", `Unknown order source "${String(candidate.source)}".`);
+  // Historical sales (e.g. Metorik / WooCommerce history) are external sales
+  // intelligence. They are never turned into orders to fulfil here.
+  if (candidate.purpose === "historical") {
+    throw new OrderEngineError(
+      "INVALID_INPUT",
+      "Historical orders are not order intake. They stay in external sales history unless converted through a controlled process."
+    );
+  }
+  if (candidate.context && !ORDER_CONTEXTS.includes(candidate.context)) {
+    throw new OrderEngineError("INVALID_INPUT", `Unknown order context "${String(candidate.context)}".`);
+  }
   if (candidate.source !== "manual" && !cleanText(candidate.sourceKey)) {
     throw new OrderEngineError("INVALID_INPUT", `A ${candidate.source} order must carry its source identity (source key).`);
   }
@@ -95,6 +109,57 @@ function numOrNull(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** The line exactly as the source stated it — frozen at receipt. */
+export function lineSourceSnapshot(line: OrderCandidateLine): LineSourceSnapshot {
+  const written = line.sourceValues || {};
+  const asWritten: NonNullable<LineSourceSnapshot["as_written"]> = {};
+  if (written.quantity !== undefined) asWritten.quantity = String(written.quantity).slice(0, 60);
+  if (written.price !== undefined) asWritten.price = String(written.price).slice(0, 60);
+  return {
+    ...(Object.keys(asWritten).length ? { as_written: asWritten } : {}),
+    source_sku: written.sku !== undefined ? cleanText(written.sku, 200) : cleanText(line.sku, 200),
+    source_product_name: written.productName !== undefined ? cleanText(written.productName, 500) : cleanText(line.description, 500),
+    source_external_product_id: cleanText(line.externalProductId, 200),
+    source_quantity: round4(Number(line.quantity)),
+    source_unit: cleanText(line.unit, 40),
+    source_price: numOrNull(line.unitPrice),
+    source_discount: numOrNull(line.discountAmount),
+    source_tax: numOrNull(line.taxAmount),
+    source_line_total: numOrNull(line.lineTotal),
+  };
+}
+
+/** The header exactly as the source stated it — frozen at receipt. */
+export function intakeSourceSnapshot(candidate: OrderCandidate): IntakeSourceSnapshot {
+  return {
+    customer_name: cleanText(candidate.customerName, 300),
+    customer_reference: cleanText(candidate.customerReference ?? candidate.senderEmail, 300),
+    external_customer_id: cleanText(candidate.externalCustomerId, 200),
+    catalog_system: cleanText(candidate.catalogSystem, 120),
+    po_number: cleanText(candidate.customerPoNumber, 120),
+    external_order_number: cleanText(candidate.externalOrderNumber, 120),
+    source_order_reference: cleanText(candidate.sourceReference, 300),
+    requested_delivery_date: candidate.requestedDeliveryDate ? String(candidate.requestedDeliveryDate) : null,
+    delivery_address: cleanText(candidate.deliveryAddress, 1000),
+    currency: cleanText(candidate.currency, 10),
+    prices_include_tax: typeof candidate.pricesIncludeTax === "boolean" ? candidate.pricesIncludeTax : null,
+    supplied: {
+      subtotal: numOrNull(candidate.supplied?.subtotal),
+      discount_total: numOrNull(candidate.supplied?.discountTotal),
+      tax_total: numOrNull(candidate.supplied?.taxTotal),
+      shipping_total: numOrNull(candidate.supplied?.shippingTotal),
+      total: numOrNull(candidate.supplied?.total),
+    },
+  };
+}
+
+/** The context a source implies when the candidate does not state one. */
+export function defaultContextFor(source: OrderCandidate["source"]): OrderContext {
+  if (source === "woocommerce" || source === "shopify") return "B2C";
+  if (source === "api") return "UNSPECIFIED";
+  return "B2B";
+}
+
 function lineRowsFor(companyId: string, intakeId: string, lines: OrderCandidateLine[], actor: OrderEngineActor) {
   const now = new Date().toISOString();
   return lines.map((line, index) => ({
@@ -120,6 +185,7 @@ function lineRowsFor(companyId: string, intakeId: string, lines: OrderCandidateL
     matched_at: line.productId ? now : null,
     validation_status: "PENDING",
     extraction: line.extraction && typeof line.extraction === "object" ? line.extraction : {},
+    source_snapshot: lineSourceSnapshot(line),
     created_at: now,
     updated_at: now,
   }));
@@ -501,6 +567,10 @@ export async function receiveOrderCandidate(
       supplied_shipping_total: numOrNull(candidate.supplied?.shippingTotal),
       prices_include_tax: typeof candidate.pricesIncludeTax === "boolean" ? candidate.pricesIncludeTax : null,
       extraction: candidate.extraction && typeof candidate.extraction === "object" ? candidate.extraction : {},
+      order_context: candidate.context || defaultContextFor(candidate.source),
+      source_channel: cleanText(candidate.sourceChannel, 120) || candidate.source,
+      extraction_confidence: ["HIGH", "MEDIUM", "LOW"].includes(String(candidate.extraction?.confidence)) ? candidate.extraction!.confidence! : null,
+      source_snapshot: intakeSourceSnapshot(candidate),
       status: "RECEIVED",
       validation: {},
       blocking_issue_count: 0,
@@ -1341,7 +1411,59 @@ export type ExceptionRow = {
   title: string;
   message: string;
   action: string;
+  /** What the order said, where the issue has one value to show. */
+  originalValue: string | null;
+  /** What VOLORA expected or requires. */
+  expectedValue: string | null;
+  /** When the issue was raised (the validation run) and by whom. */
+  raisedAt: string | null;
+  raisedBy: string | null;
 };
+
+/** An inbound document that did not become an order. */
+export type DocumentExceptionRow = {
+  messageId: string;
+  channel: string;
+  receivedAt: string;
+  from: string | null;
+  subject: string | null;
+  code: "DOCUMENT_NEEDS_EXTRACTION" | "NO_ORDER_FOUND" | "DOCUMENT_FAILED";
+  severity: "error" | "warning";
+  documents: string[];
+  reason: string | null;
+  action: string;
+};
+
+function display(value: unknown): string | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "number") return String(Math.round(value * 10000) / 10000);
+  if (typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .filter(([, v]) => v !== null && v !== undefined)
+      .map(([k, v]) => `${k} ${display(v)}`)
+      .join(", ") || null;
+  }
+  return String(value);
+}
+
+/** The original and expected values an issue carries, in words. */
+export function issueValues(issue: { code: string; data?: Record<string, unknown> }): { originalValue: string | null; expectedValue: string | null } {
+  const d = issue.data || {};
+  switch (issue.code) {
+    case "PRICE_MISMATCH":
+      return { originalValue: display(d.supplied), expectedValue: display(d.expected) };
+    case "INSUFFICIENT_STOCK":
+      return { originalValue: `ordered ${display(d.ordered)}`, expectedValue: `available ${display(d.available)}` };
+    case "PRODUCTION_REQUIRED":
+      return { originalValue: `ordered ${display(d.ordered)}`, expectedValue: `produce ${display(d.quantity)}` };
+    case "LOW_MARGIN":
+      return { originalValue: null, expectedValue: `at least ${display(d.minimumPct)}% GP` };
+    case "EXTRACTION_LOW_CONFIDENCE":
+      return { originalValue: display(d.field), expectedValue: "confirmed value" };
+    default:
+      return { originalValue: display(d.original), expectedValue: display(d.expected) };
+  }
+}
 
 export type ResolutionRow = {
   intakeId: string;
@@ -1363,18 +1485,33 @@ export async function listExceptionCentre(
   supabase: SupabaseClient,
   companyId: string,
   options: { includeWarnings?: boolean } = {}
-): Promise<{ open: ExceptionRow[]; resolved: ResolutionRow[] }> {
+): Promise<{ open: ExceptionRow[]; resolved: ResolutionRow[]; documents: DocumentExceptionRow[] }> {
   const { issueDefinition } = await import("@/lib/order-engine/issue-catalog");
   const { data, error } = await supabase
     .from(T_INTAKES)
-    .select("id, intake_number, status, customer_name, source, created_at, validation")
+    .select("id, intake_number, status, customer_name, source, created_at, validation, validated_at")
     .eq("company_id", companyId)
     .in("status", ["EXCEPTION", "AWAITING_APPROVAL", "ON_HOLD"])
     .order("created_at", { ascending: false })
     .limit(200);
   if (error) raiseDbError(error, "List exceptions failed");
   const open: ExceptionRow[] = [];
-  for (const row of (data || []) as Array<Pick<IntakeRow, "id" | "intake_number" | "status" | "customer_name" | "source" | "created_at" | "validation">>) {
+  const openRows = (data || []) as Array<Pick<IntakeRow, "id" | "intake_number" | "status" | "customer_name" | "source" | "created_at" | "validation" | "validated_at">>;
+  // Who ran the validation that raised each order's issues.
+  const raisers = new Map<string, string>();
+  if (openRows.length) {
+    const { data: runs, error: runError } = await supabase
+      .from(T_EVENTS)
+      .select("intake_id, event_type, actor, actor_name, created_at")
+      .eq("company_id", companyId)
+      .in("intake_id", openRows.map((r) => r.id))
+      .in("event_type", ["VALIDATED", "RELEASED", "APPROVAL_REVALIDATION_CHANGED"]);
+    if (runError) raiseDbError(runError, "List exceptions failed");
+    for (const e of ((runs || []) as IntakeEventRow[]).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))) {
+      raisers.set(e.intake_id, e.actor_name || e.actor);
+    }
+  }
+  for (const row of openRows) {
     const snapshot = row.validation as ValidationSnapshot;
     for (const issue of snapshot?.issues || []) {
       if (issue.severity === "info") continue;
@@ -1395,6 +1532,9 @@ export async function listExceptionCentre(
         title: def?.title || issue.code,
         message: issue.message,
         action: def?.action || "Review the order.",
+        ...issueValues(issue),
+        raisedAt: row.validated_at ?? snapshot?.validatedAt ?? null,
+        raisedBy: raisers.get(row.id) ?? null,
       });
     }
   }
@@ -1426,5 +1566,45 @@ export async function listExceptionCentre(
     resolvedAt: e.created_at,
     remembered: Boolean((e.metadata as { remembered?: boolean })?.remembered),
   }));
-  return { open, resolved };
+
+  // Inbound documents that did not become orders.
+  const documents: DocumentExceptionRow[] = [];
+  const { data: messages, error: messageError } = await supabase
+    .from("vyron_order_source_messages")
+    .select("id, channel, received_at, from_address, subject, attachments, processing_status, processing_error")
+    .eq("company_id", companyId)
+    .in("processing_status", ["NEEDS_EXTRACTION", "NO_ORDER_FOUND", "FAILED"])
+    .order("received_at", { ascending: false })
+    .limit(100);
+  if (messageError && !isMissingRelation(messageError)) raiseDbError(messageError, "List documents failed");
+  for (const m of (messages || []) as Array<{
+    id: string;
+    channel: string;
+    received_at: string;
+    from_address: string | null;
+    subject: string | null;
+    attachments: Array<{ fileName?: string }> | null;
+    processing_status: string;
+    processing_error: string | null;
+  }>) {
+    const code = m.processing_status === "NEEDS_EXTRACTION" ? "DOCUMENT_NEEDS_EXTRACTION" : m.processing_status === "FAILED" ? "DOCUMENT_FAILED" : "NO_ORDER_FOUND";
+    documents.push({
+      messageId: m.id,
+      channel: m.channel,
+      receivedAt: m.received_at,
+      from: m.from_address,
+      subject: m.subject,
+      code,
+      severity: code === "NO_ORDER_FOUND" ? "warning" : "error",
+      documents: (m.attachments || []).map((a) => String(a.fileName || "attachment")),
+      reason: m.processing_error,
+      action:
+        code === "DOCUMENT_NEEDS_EXTRACTION"
+          ? "Enter the order manually from the document (New order), or process it through a document extractor."
+          : code === "DOCUMENT_FAILED"
+            ? "Open the message, correct the file with the customer if needed, and enter the order manually."
+            : "Check the message; if it is an order, enter it manually.",
+    });
+  }
+  return { open, resolved, documents };
 }

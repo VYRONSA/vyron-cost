@@ -3,14 +3,20 @@ import { resolveCustomerProductPrice } from "@/lib/vyron-customer-price-lists";
 import { loadReservedQuantities } from "@/lib/vyron-sales-order-reservations";
 import { isMissingRelation, raiseDbError } from "@/lib/order-engine/errors";
 import { createProductMatcher, loadProductsById, matchCustomer, type CustomerMatch, type ProductMatch, type ProductRecord } from "@/lib/order-engine/matching";
-import { round2, round4 } from "@/lib/order-engine/normalize";
+import { normalizeName, round2, round4 } from "@/lib/order-engine/normalize";
+import { loadOrderSettings, type EffectiveOrderSettings } from "@/lib/order-engine/settings";
 import type {
   CustomerOrderPolicy,
   ExtractionMeta,
   IntakeLineRow,
   IntakeRow,
+  IntakeSourceSnapshot,
   IssueCategory,
   LineEvaluation,
+  LineSourceSnapshot,
+  OrderContext,
+  ProductionComponent,
+  ProductionRequirement,
   ValidationIssue,
   ValidationSnapshot,
 } from "@/lib/order-engine/types";
@@ -43,9 +49,28 @@ export type ValidationContext = {
   lines: LineContext[];
   /** Other live intakes for the same customer and PO number. */
   samePoIntakes: Array<{ id: string; intake_number: string; status: string }>;
+  /** Other live intakes with the same external order number (any source). */
+  sameReferenceIntakes?: Array<{ id: string; intake_number: string; status: string; source: string }>;
   policy: { policy: CustomerOrderPolicy; scope: "customer" | "company" } | null;
+  /** Tenant ordering settings (defaults when absent). */
+  settings?: EffectiveOrderSettings;
+  context?: OrderContext;
+  /** BOM detail for products whose demand stock cannot cover. */
+  production?: Map<string, ProductionBom>;
   today: string;
 };
+
+/** A product's BOM, as needed to estimate a production requirement. */
+export type ProductionBom = {
+  bomId: string | null;
+  bomName: string | null;
+  yieldQty: number | null;
+  /** Set when no single BOM can be used (more than one). */
+  note: string | null;
+  lines: Array<{ ingredientId: string | null; name: string; quantity: number; unit: string | null; wastagePct: number; stockQty: number | null; stockUnit: string | null; hasStock: boolean }>;
+};
+
+const DEFAULT_SETTINGS: EffectiveOrderSettings = { b2cCustomerId: null, productNameMatching: "review", duplicatePoAction: "warn", minLeadTimeDays: null, configured: false };
 
 export type OrderValidator = {
   id: string;
@@ -258,7 +283,26 @@ const stockValidator: OrderValidator = {
         data: { ordered: entry.qty, available, onHand: stock.onHand, reservedElsewhere: stock.reservedElsewhere, shortfall },
       });
       if (entry.ctx.hasBom) {
-        issues.push({ code: "PRODUCTION_REQUIRED", severity: "info", category: "production", lineNo: entry.lineNos[0], message: `${name}: ${shortfall} to be produced — a BOM exists.`, data: { quantity: shortfall } });
+        const requirement = productionRequirementFor(ctx, entry.ctx.match.product!.id, entry.lineNos[0], entry.qty, available, shortfall);
+        issues.push({
+          code: "PRODUCTION_REQUIRED",
+          severity: "info",
+          category: "production",
+          lineNo: entry.lineNos[0],
+          message: `${name}: ${shortfall} to be produced — a BOM exists.`,
+          data: { quantity: shortfall, ordered: entry.qty, availableFinished: available, bom: requirement?.bomName ?? null },
+        });
+        if (requirement && requirement.componentsAvailable === false) {
+          const short = requirement.components.filter((c) => c.shortfall !== null && c.shortfall > 0);
+          issues.push({
+            code: "COMPONENT_SHORTAGE",
+            severity: "warning",
+            category: "production",
+            lineNo: entry.lineNos[0],
+            message: `${name}: producing ${shortfall} needs more ${short.map((c) => c.name).join(", ")} than is in stock (estimate from the BOM).`,
+            data: { components: short.map((c) => ({ name: c.name, required: c.required, available: c.available, shortfall: c.shortfall, unit: c.unit })) },
+          });
+        }
       } else if (entry.ctx.hasBom === false) {
         issues.push({ code: "NO_BOM_FOR_SHORTFALL", severity: "warning", category: "production", lineNo: entry.lineNos[0], message: `${name}: short ${shortfall} and no BOM exists to produce it.` });
       }
@@ -313,14 +357,38 @@ const commercialValidator: OrderValidator = {
     if (due && due < ctx.today) {
       issues.push({ code: "DELIVERY_DATE_PAST", severity: "warning", category: "commercial", message: `Requested delivery date ${due} is in the past.` });
     }
+    const settings = ctx.settings || DEFAULT_SETTINGS;
+    const duplicateSeverity = settings.duplicatePoAction === "block" ? ("error" as const) : ("warning" as const);
     if (ctx.samePoIntakes.length) {
       issues.push({
         code: "POSSIBLE_DUPLICATE_PO",
-        severity: "warning",
+        severity: duplicateSeverity,
         category: "commercial",
         message: `PO ${ctx.intake.customer_po_number} was already received for this customer (${ctx.samePoIntakes.map((row) => `${row.intake_number} ${row.status}`).join(", ")}).`,
-        data: { intakes: ctx.samePoIntakes },
+        data: { intakes: ctx.samePoIntakes, original: ctx.intake.customer_po_number },
       });
+    }
+    if (ctx.sameReferenceIntakes?.length) {
+      issues.push({
+        code: "POSSIBLE_DUPLICATE_ORDER",
+        severity: duplicateSeverity,
+        category: "commercial",
+        message: `Order reference ${ctx.intake.external_order_number} was already received (${ctx.sameReferenceIntakes.map((row) => `${row.intake_number} via ${row.source}, ${row.status}`).join("; ")}).`,
+        data: { intakes: ctx.sameReferenceIntakes, original: ctx.intake.external_order_number },
+      });
+    }
+    if (settings.minLeadTimeDays !== null && due) {
+      // Measured from the validation date: approval re-validates, so the check is always "from now".
+      const earliest = addDays(ctx.today, settings.minLeadTimeDays);
+      if (earliest && due < earliest) {
+        issues.push({
+          code: "DELIVERY_LEAD_TIME",
+          severity: "warning",
+          category: "commercial",
+          message: `Requested delivery ${due} is inside the ${settings.minLeadTimeDays}-day lead time (earliest ${earliest}).`,
+          data: { original: due, expected: `on or after ${earliest}` },
+        });
+      }
     }
     if (!ctx.lines.length) {
       issues.push({ code: "NO_LINES", severity: "error", category: "commercial", message: "The order has no lines." });
@@ -489,7 +557,95 @@ const extractionValidator: OrderValidator = {
   id: "extraction",
   category: "extraction",
   run(ctx) {
-    return [...extractionIssues(ctx.intake.extraction), ...ctx.lines.flatMap(({ line }) => extractionIssues(line.extraction, line.line_no))];
+    const issues = [...extractionIssues(ctx.intake.extraction), ...ctx.lines.flatMap(({ line }) => extractionIssues(line.extraction, line.line_no))];
+    // The extractor's own overall confidence for the document.
+    const overall = ctx.intake.extraction_confidence ?? (ctx.intake.extraction as ExtractionMeta | undefined)?.confidence ?? null;
+    if (overall === "LOW") {
+      issues.push({
+        code: "EXTRACTION_LOW_CONFIDENCE",
+        severity: "error",
+        category: "extraction",
+        message: "The document was read with low overall confidence — check every value against the original.",
+        data: { field: "order", confidence: "LOW" },
+      });
+    } else if (overall === "MEDIUM" && !issues.some((i) => i.code === "EXTRACTION_REVIEW" || i.code === "EXTRACTION_LOW_CONFIDENCE")) {
+      issues.push({ code: "EXTRACTION_REVIEW", severity: "warning", category: "extraction", message: "The document was read with medium confidence — check it against the original." });
+    }
+    return issues;
+  },
+};
+
+/** B2B / B2C: web orders from unknown customers need a business decision before they can be booked. */
+const contextValidator: OrderValidator = {
+  id: "context",
+  category: "customer",
+  run(ctx) {
+    const issues: ValidationIssue[] = [];
+    if (ctx.context === "B2C" && ctx.customer.status === "UNMATCHED" && !(ctx.settings || DEFAULT_SETTINGS).b2cCustomerId) {
+      issues.push({
+        code: "B2C_ACCOUNT_NOT_CONFIGURED",
+        severity: "error",
+        category: "customer",
+        message: "This web-store order is from a customer VOLORA does not know, and no B2C account has been chosen for web orders. It is not booked anywhere until a person decides.",
+      });
+    }
+    if (ctx.context === "UNSPECIFIED") {
+      issues.push({ code: "ORDER_CONTEXT_UNSPECIFIED", severity: "info", category: "customer", message: "The source did not say whether this is a trade (B2B) or web (B2C) order." });
+    }
+    return issues;
+  },
+};
+
+/** A corrected order is never silently different from what the customer sent. */
+const sourceChangeValidator: OrderValidator = {
+  id: "source_change",
+  category: "commercial",
+  run(ctx) {
+    const issues: ValidationIssue[] = [];
+    for (const { line } of ctx.lines) {
+      const snap = line.source_snapshot as LineSourceSnapshot | undefined;
+      if (!snap || !("source_quantity" in snap)) continue;
+      const changes: string[] = [];
+      if (Number.isFinite(Number(snap.source_quantity)) && round4(Number(snap.source_quantity)) !== round4(Number(line.quantity))) {
+        changes.push(`quantity ${snap.source_quantity} → ${line.quantity}`);
+      }
+      const original = snap.source_price === null || snap.source_price === undefined ? null : Number(snap.source_price);
+      const current = line.unit_price === null || line.unit_price === undefined ? null : Number(line.unit_price);
+      const samePrice = original === null ? current === null : current !== null && Math.abs(original - current) < PRICE_TOLERANCE;
+      if (!samePrice) changes.push(`price ${original ?? "none"} → ${current ?? "none"}`);
+      if (changes.length) {
+        issues.push({
+          code: "SOURCE_VALUE_CHANGED",
+          severity: "warning",
+          category: "commercial",
+          lineNo: line.line_no,
+          message: `Changed from what the customer sent: ${changes.join(", ")}.`,
+          data: { original: { quantity: snap.source_quantity, price: original }, current: { quantity: Number(line.quantity), price: current } },
+        });
+      }
+    }
+    const head = ctx.intake.source_snapshot as IntakeSourceSnapshot | undefined;
+    if (head && "po_number" in head) {
+      const changed: string[] = [];
+      if ((head.po_number ?? null) !== (ctx.intake.customer_po_number ?? null)) changed.push(`PO ${head.po_number ?? "none"} → ${ctx.intake.customer_po_number ?? "none"}`);
+      const sourceDate = head.requested_delivery_date ? String(head.requested_delivery_date).slice(0, 10) : null;
+      if (sourceDate !== (ctx.intake.requested_delivery_date ?? null)) {
+        changed.push(`delivery date ${sourceDate ?? "none"} → ${ctx.intake.requested_delivery_date ?? "none"}`);
+      }
+      if (changed.length) {
+        issues.push({
+          code: "SOURCE_VALUE_CHANGED",
+          severity: "warning",
+          category: "commercial",
+          message: `Changed from what the customer sent: ${changed.join(", ")}.`,
+          data: {
+            original: { po: head.po_number, requestedDeliveryDate: sourceDate },
+            current: { po: ctx.intake.customer_po_number, requestedDeliveryDate: ctx.intake.requested_delivery_date },
+          },
+        });
+      }
+    }
+    return issues;
   },
 };
 
@@ -505,6 +661,8 @@ export const VALIDATORS: readonly OrderValidator[] = [
   policyValidator,
   taxValidator,
   extractionValidator,
+  contextValidator,
+  sourceChangeValidator,
 ];
 
 // ---------------------------------------------------------------------------
@@ -599,7 +757,100 @@ export function runValidators(ctx: ValidationContext, validators: readonly Order
       ambiguous: ctx.lines.filter((l) => l.match.status === "AMBIGUOUS").length,
       byRule,
     },
+    context: ctx.context ?? "UNSPECIFIED",
+    production: productionRequirements(ctx),
+    settings: {
+      b2cAccountConfigured: Boolean((ctx.settings || DEFAULT_SETTINGS).b2cCustomerId),
+      productNameMatching: (ctx.settings || DEFAULT_SETTINGS).productNameMatching,
+      duplicatePoAction: (ctx.settings || DEFAULT_SETTINGS).duplicatePoAction,
+      minLeadTimeDays: (ctx.settings || DEFAULT_SETTINGS).minLeadTimeDays,
+    },
   };
+}
+
+function addDays(date: string, days: number): string | null {
+  const d = new Date(`${date}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Estimate what producing a shortfall takes, from the product's BOM:
+ * required = shortfall × BOM quantity × (1 + wastage) ÷ BOM yield. Units are
+ * compared only when the BOM line and the stock item state the same unit —
+ * nothing is converted. It is an estimate for planning; nothing is produced,
+ * reserved or purchased.
+ */
+function productionRequirementFor(
+  ctx: ValidationContext,
+  productId: string,
+  lineNo: number,
+  ordered: number,
+  availableFinished: number,
+  shortfall: number
+): ProductionRequirement | null {
+  const bom = ctx.production?.get(productId);
+  if (!bom) return null;
+  const lineCtx = ctx.lines.find((l) => l.match.product?.id === productId);
+  const yieldQty = bom.yieldQty && bom.yieldQty > 0 ? bom.yieldQty : 1;
+  const components: ProductionComponent[] = bom.note
+    ? []
+    : bom.lines.map((l) => {
+        const required = round4((shortfall * l.quantity * (1 + (l.wastagePct || 0) / 100)) / yieldQty);
+        const sameUnit = !l.unit || !l.stockUnit || normalizeName(l.unit) === normalizeName(l.stockUnit);
+        const available = l.hasStock && sameUnit ? l.stockQty : null;
+        const note = !l.ingredientId
+          ? "Not a stock-tracked component."
+          : !l.hasStock
+            ? "No stock record for this component."
+            : !sameUnit
+              ? `Units differ (BOM ${l.unit}, stock ${l.stockUnit}) — not compared.`
+              : null;
+        return {
+          ingredientId: l.ingredientId,
+          name: l.name,
+          unit: l.unit,
+          required,
+          available,
+          shortfall: available === null ? null : Math.max(0, round4(required - available)),
+          note,
+        };
+      });
+  const measured = components.filter((c) => c.available !== null);
+  return {
+    lineNo,
+    productId,
+    productName: lineCtx?.match.product?.product_name ?? null,
+    quantityRequired: ordered,
+    availableFinished: Math.max(0, availableFinished),
+    shortfall,
+    bomId: bom.bomId,
+    bomName: bom.bomName ?? bom.note,
+    bomYield: bom.yieldQty,
+    components,
+    componentsAvailable: bom.note || !measured.length ? null : measured.every((c) => (c.shortfall ?? 0) <= 0),
+  };
+}
+
+/** Production requirements for every product stock cannot cover. */
+function productionRequirements(ctx: ValidationContext): ProductionRequirement[] {
+  const demand = new Map<string, { qty: number; lineNo: number; stock: NonNullable<LineContext["stock"]> }>();
+  for (const lineCtx of ctx.lines) {
+    if (!lineCtx.match.product || !lineCtx.stock || !lineCtx.hasBom) continue;
+    const entry = demand.get(lineCtx.match.product.id) || { qty: 0, lineNo: lineCtx.line.line_no, stock: lineCtx.stock };
+    entry.qty = round4(entry.qty + Number(lineCtx.line.quantity || 0));
+    demand.set(lineCtx.match.product.id, entry);
+  }
+  const out: ProductionRequirement[] = [];
+  for (const [productId, entry] of demand) {
+    const available = round4((entry.stock.onHand ?? 0) - entry.stock.reservedElsewhere);
+    const shortfall = round4(entry.qty - available);
+    if (shortfall <= 0) continue;
+    const requirement = productionRequirementFor(ctx, productId, entry.lineNo, entry.qty, available, shortfall);
+    if (requirement) out.push(requirement);
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -685,27 +936,42 @@ export async function loadValidationContext(
   options: { today?: string } = {}
 ): Promise<ValidationContext> {
   const companyId = intake.company_id;
+  const settings = await loadOrderSettings(supabase, companyId);
+  const head = (intake.source_snapshot || {}) as Partial<IntakeSourceSnapshot>;
+  const context: OrderContext = (intake.order_context as OrderContext) || "UNSPECIFIED";
   // Only a person's explicit choice is carried forward as an id. An automatic
   // match is re-derived every run, so its rule (and any warning) is never lost.
-  const customer = await matchCustomer(supabase, companyId, {
+  let customer = await matchCustomer(supabase, companyId, {
     customerId: intake.customer_match_rule === "customer_id" ? intake.customer_id : null,
     customerName: intake.customer_name,
     senderEmail: intake.source === "email" ? intake.customer_reference : null,
     source: intake.source,
     customerReference: intake.customer_reference,
+    externalCustomerId: head.external_customer_id ?? null,
+    catalogSystem: head.catalog_system ?? null,
   });
+  // A web order from an unknown customer is booked against the company's B2C
+  // account — only when the company has chosen one.
+  if (customer.status === "UNMATCHED" && context === "B2C" && settings.b2cCustomerId) {
+    const account = await matchCustomer(supabase, companyId, { customerId: settings.b2cCustomerId });
+    if (account.status === "MATCHED") customer = { ...account, rule: "b2c_account", reason: "Web order booked against the company's B2C account." };
+  }
 
   const matcher = await createProductMatcher(supabase, companyId, {
     customerId: customer.customer?.id ?? null,
     rawSkus: lines.map((line) => line.raw_sku),
+    catalogSystem: head.catalog_system ?? null,
+    nameMatching: settings.productNameMatching,
   });
   const matches: ProductMatch[] = [];
   for (const line of lines) {
+    const snap = (line.source_snapshot || {}) as Partial<LineSourceSnapshot>;
     matches.push(
       await matcher.match({
         productId: line.match_rule === "manual" ? line.product_id : null,
         rawSku: line.raw_sku,
         rawDescription: line.raw_description,
+        externalProductId: snap.source_external_product_id ?? null,
       })
     );
   }
@@ -766,7 +1032,130 @@ export async function loadValidationContext(
       .map((row) => ({ id: row.id, intake_number: row.intake_number, status: row.status }));
   }
 
-  return { intake, customer, lines: lineContexts, samePoIntakes, policy, today: options.today || new Date().toISOString().slice(0, 10) };
+  let sameReferenceIntakes: NonNullable<ValidationContext["sameReferenceIntakes"]> = [];
+  if (intake.external_order_number) {
+    const { data, error } = await supabase
+      .from("vyron_order_intakes")
+      .select("id, intake_number, status, source, external_order_number")
+      .eq("company_id", companyId)
+      .eq("external_order_number", intake.external_order_number);
+    if (error) raiseDbError(error, "Duplicate reference lookup failed");
+    sameReferenceIntakes = ((data || []) as Array<{ id: string; intake_number: string; status: string; source: string }>)
+      .filter((row) => row.id !== intake.id && !["REJECTED", "CANCELLED"].includes(row.status))
+      .map((row) => ({ id: row.id, intake_number: row.intake_number, status: row.status, source: row.source }));
+  }
+
+  // BOM detail only for products whose demand stock cannot cover.
+  const demand = new Map<string, number>();
+  lineContexts.forEach((l) => {
+    if (l.match.product) demand.set(l.match.product.id, round4((demand.get(l.match.product.id) || 0) + Number(l.line.quantity || 0)));
+  });
+  const shortProducts = [...demand.entries()]
+    .filter(([id, qty]) => {
+      const s = stock.get(id);
+      return s && bom?.get(id) && qty > round4((s.onHand ?? 0) - s.reservedElsewhere);
+    })
+    .map(([id]) => id);
+  const production = await loadProductionBoms(supabase, companyId, shortProducts);
+
+  return {
+    intake,
+    customer,
+    lines: lineContexts,
+    samePoIntakes,
+    sameReferenceIntakes,
+    policy,
+    settings,
+    context,
+    production,
+    today: options.today || new Date().toISOString().slice(0, 10),
+  };
+}
+
+/** The BOM (and component stock) of each product, for production estimates. */
+async function loadProductionBoms(supabase: SupabaseClient, companyId: string, productIds: string[]): Promise<Map<string, ProductionBom>> {
+  const result = new Map<string, ProductionBom>();
+  if (!productIds.length) return result;
+  const { data: boms, error } = await supabase
+    .from("vyron_cost_boms")
+    .select("id, product_id, bom_name, yield_qty")
+    .eq("company_id", companyId)
+    .in("product_id", productIds);
+  if (error) {
+    if (isMissingRelation(error)) return result;
+    raiseDbError(error, "BOM lookup failed");
+  }
+  const byProduct = new Map<string, Array<{ id: string; bom_name: string | null; yield_qty: number | null }>>();
+  for (const row of (boms || []) as Array<{ id: string; product_id: string; bom_name: string | null; yield_qty: number | null }>) {
+    byProduct.set(String(row.product_id), [...(byProduct.get(String(row.product_id)) || []), row]);
+  }
+  const chosen = new Map<string, { id: string; bom_name: string | null; yield_qty: number | null }>();
+  for (const [productId, rows] of byProduct) {
+    if (rows.length === 1) chosen.set(productId, rows[0]);
+    else result.set(productId, { bomId: null, bomName: null, yieldQty: null, note: `${rows.length} BOMs exist for this product — no single BOM to estimate from.`, lines: [] });
+  }
+  const bomIds = [...chosen.values()].map((b) => b.id);
+  if (!bomIds.length) return result;
+  const { data: bomLines, error: lineError } = await supabase
+    .from("vyron_cost_bom_lines")
+    .select("bom_id, ingredient_id, line_name, quantity, unit, wastage_percent, line_type, sort_order")
+    .eq("company_id", companyId)
+    .in("bom_id", bomIds);
+  if (lineError) {
+    if (isMissingRelation(lineError)) return result;
+    raiseDbError(lineError, "BOM line lookup failed");
+  }
+  const lineRows = (bomLines || []) as Array<{
+    bom_id: string;
+    ingredient_id: string | null;
+    line_name: string | null;
+    quantity: number | null;
+    unit: string | null;
+    wastage_percent: number | null;
+    line_type: string | null;
+    sort_order: number | null;
+  }>;
+  const ingredientIds = [...new Set(lineRows.map((l) => l.ingredient_id).filter(Boolean) as string[])];
+  const componentStock = new Map<string, { qty: number; unit: string | null }>();
+  if (ingredientIds.length) {
+    const { data: items, error: stockError } = await supabase
+      .from("vyron_cost_stock_items")
+      .select("entity_id, qty_on_hand, unit")
+      .eq("company_id", companyId)
+      .eq("entity_type", "ingredient")
+      .in("entity_id", ingredientIds);
+    if (stockError && !isMissingRelation(stockError)) raiseDbError(stockError, "Component stock lookup failed");
+    for (const row of (items || []) as Array<{ entity_id: string; qty_on_hand: number | null; unit: string | null }>) {
+      const key = String(row.entity_id);
+      const existing = componentStock.get(key);
+      componentStock.set(key, { qty: round4((existing?.qty || 0) + Number(row.qty_on_hand || 0)), unit: existing?.unit ?? row.unit ?? null });
+    }
+  }
+  for (const [productId, b] of chosen) {
+    const own = lineRows
+      .filter((l) => l.bom_id === b.id && String(l.line_type || "ingredient").toLowerCase() !== "labour" && Number(l.quantity) > 0)
+      .sort((x, y) => Number(x.sort_order ?? 0) - Number(y.sort_order ?? 0));
+    result.set(productId, {
+      bomId: b.id,
+      bomName: b.bom_name,
+      yieldQty: b.yield_qty === null || b.yield_qty === undefined ? null : Number(b.yield_qty),
+      note: null,
+      lines: own.map((l) => {
+        const s = l.ingredient_id ? componentStock.get(l.ingredient_id) : undefined;
+        return {
+          ingredientId: l.ingredient_id,
+          name: String(l.line_name || "Component"),
+          quantity: Number(l.quantity),
+          unit: l.unit,
+          wastagePct: Number(l.wastage_percent || 0),
+          stockQty: s ? s.qty : null,
+          stockUnit: s ? s.unit : null,
+          hasStock: Boolean(s),
+        };
+      }),
+    });
+  }
+  return result;
 }
 
 export { loadProductsById, type ProductRecord };

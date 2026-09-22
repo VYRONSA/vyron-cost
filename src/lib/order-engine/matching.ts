@@ -12,6 +12,9 @@ import type { CustomerMatchRule, MatchCandidate, MatchRule, MatchStatus } from "
  *
  * Product ladder (docs/order-engine/VALIDATION_RULES.md):
  *   0 a product a person chose for this line
+ *   ½ the line's external product id, linked to exactly one product in
+ *     vyron_import_source_links for the order's catalogue system (a recorded
+ *     provenance link; no link → the next rung, never a guess)
  *   1 an approved alias for THIS customer's code or description — a recorded
  *     human decision for exactly this customer, so it outranks a coincidental
  *     SKU clash
@@ -20,7 +23,8 @@ import type { CustomerMatchRule, MatchCandidate, MatchRule, MatchStatus } from "
  *   5 exact normalised name — only when the line has no SKU (raised for review)
  * A line with a SKU that is not found is UNMATCHED; it never falls to a name.
  *
- * Customer ladder: a customer a person chose · a remembered source reference
+ * Customer ladder: a customer a person chose · the external customer id via
+ * vyron_import_source_links · a remembered source reference
  * (identity map) · exact normalised name · sender e-mail (e-mail source only,
  * raised for review). Names and e-mail are never used to MERGE customers —
  * only to find exactly one; more than one is AMBIGUOUS.
@@ -140,8 +144,40 @@ function decide(rule: MatchRule, found: ProductRecord[], reasonIfOne: string): P
 }
 
 export type ProductMatcher = {
-  match(line: { productId?: string | null; rawSku?: string | null; rawDescription?: string | null }): Promise<ProductMatch>;
+  match(line: { productId?: string | null; rawSku?: string | null; rawDescription?: string | null; externalProductId?: string | null }): Promise<ProductMatch>;
 };
+
+/**
+ * Entity ids linked to one external key in vyron_import_source_links, strictly
+ * inside the company and the stated source system. Absent table → none.
+ */
+export async function linkedEntityIds(
+  supabase: SupabaseClient,
+  companyId: string,
+  sourceSystem: string,
+  sourceEntity: string,
+  sourceKey: string,
+  entityTypes: string[]
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("vyron_import_source_links")
+    .select("entity_id, entity_type")
+    .eq("company_id", companyId)
+    .eq("source_system", sourceSystem)
+    .eq("source_entity", sourceEntity)
+    .eq("source_key", sourceKey);
+  if (error) {
+    if (isMissingRelation(error)) return [];
+    raiseDbError(error, "Source link lookup failed");
+  }
+  return [
+    ...new Set(
+      ((data || []) as Array<{ entity_id: string; entity_type: string }>)
+        .filter((row) => entityTypes.includes(String(row.entity_type)))
+        .map((row) => String(row.entity_id))
+    ),
+  ];
+}
 
 /**
  * A matcher for one order. Exact SKUs for every line are fetched in one query
@@ -150,7 +186,14 @@ export type ProductMatcher = {
 export async function createProductMatcher(
   supabase: SupabaseClient,
   companyId: string,
-  options: { customerId?: string | null; rawSkus?: Array<string | null | undefined> } = {}
+  options: {
+    customerId?: string | null;
+    rawSkus?: Array<string | null | undefined>;
+    /** The system external product ids belong to (vyron_import_source_links.source_system). */
+    catalogSystem?: string | null;
+    /** "off": the exact-name rung is never used (tenant setting). */
+    nameMatching?: "review" | "off";
+  } = {}
 ): Promise<ProductMatcher> {
   const exactSkus = [...new Set((options.rawSkus || []).filter((s): s is string => typeof s === "string" && s.trim() !== ""))];
   const exactBySku = new Map<string, ProductRecord[]>();
@@ -221,6 +264,14 @@ export async function createProductMatcher(
         return { status: "MATCHED", rule: "manual", product, candidates: [toCandidate(product)], reason: "Chosen by a person." };
       }
 
+      const externalId = String(line.externalProductId ?? "").trim();
+      const system = String(options.catalogSystem ?? "").trim();
+      if (externalId && system) {
+        const linked = await productsFor(await linkedEntityIds(supabase, companyId, system, "product", externalId, ["product"]));
+        const byExternal = decide("external_id", linked, `Linked to the source's product id ${externalId} (${system}).`);
+        if (byExternal) return byExternal;
+      }
+
       const key = aliasKeyFor(line);
       if (key && options.customerId) {
         const byCustomerAlias = decide("customer_alias", await productsFor(await aliasProducts(key, options.customerId)), "This customer's approved item code.");
@@ -254,6 +305,15 @@ export async function createProductMatcher(
       if (description.trim()) {
         const companyAlias = decide("alias", await productsFor(await aliasProducts(key!, null)), "Approved description alias.");
         if (companyAlias) return companyAlias;
+        if (options.nameMatching === "off") {
+          return {
+            status: "UNMATCHED",
+            rule: null,
+            product: null,
+            candidates: [],
+            reason: "The line has no SKU, and product-name matching is switched off for this company.",
+          };
+        }
         const target = normalizeName(description);
         const named = (await productsWhere(supabase, companyId, "product_name", "pattern", nameEqualityPattern(description))).filter(
           (row) => normalizeName(row.product_name) === target
@@ -310,7 +370,15 @@ async function customersWhere(
 export async function matchCustomer(
   supabase: SupabaseClient,
   companyId: string,
-  input: { customerId?: string | null; customerName?: string | null; senderEmail?: string | null; source?: string | null; customerReference?: string | null }
+  input: {
+    customerId?: string | null;
+    customerName?: string | null;
+    senderEmail?: string | null;
+    source?: string | null;
+    customerReference?: string | null;
+    externalCustomerId?: string | null;
+    catalogSystem?: string | null;
+  }
 ): Promise<CustomerMatch> {
   const toCandidates = (rows: CustomerRecord[]) => rows.map((row) => ({ id: row.id, name: row.customer_name ?? null }));
 
@@ -320,6 +388,21 @@ export async function matchCustomer(
       return { status: "MATCHED", rule: "customer_id", customer: rows[0], candidates: toCandidates(rows), reason: "Chosen by a person." };
     }
     return { status: "UNMATCHED", rule: null, customer: null, candidates: [], reason: "The chosen customer does not exist in this company." };
+  }
+
+  const externalId = String(input.externalCustomerId ?? "").trim();
+  const system = String(input.catalogSystem ?? "").trim();
+  if (externalId && system) {
+    const ids = await linkedEntityIds(supabase, companyId, system, "customer", externalId, ["customer"]);
+    if (ids.length) {
+      const rows = uniqueById((await Promise.all(ids.map((id) => customersWhere(supabase, companyId, "id", "eq", id)))).flat());
+      if (rows.length === 1) {
+        return { status: "MATCHED", rule: "external_id", customer: rows[0], candidates: toCandidates(rows), reason: `Linked to the source's customer id ${externalId} (${system}).` };
+      }
+      if (rows.length > 1) {
+        return { status: "AMBIGUOUS", rule: null, customer: null, candidates: toCandidates(rows), reason: "The source customer id is linked to more than one customer." };
+      }
+    }
   }
 
   const reference = identityKeyFor(input.customerReference);

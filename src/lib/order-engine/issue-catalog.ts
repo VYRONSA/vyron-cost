@@ -64,6 +64,13 @@ export const ISSUE_CATALOG: Record<string, IssueDefinition> = Object.fromEntries
     def({ code: "COUPON_APPLIED", title: "Coupon applied at source", category: "tax", severity: "info", source: "source", action: "None — line discounts already include it." }),
     def({ code: "EXTRACTION_REVIEW", title: "Read automatically — review", category: "extraction", severity: "warning", source: "source", action: "Check the extracted values against the original document." }),
     def({ code: "EXTRACTION_LOW_CONFIDENCE", title: "Uncertain extracted value", category: "extraction", severity: "error", source: "source", action: "Correct or confirm the value from the original document." }),
+    def({ code: "B2C_ACCOUNT_NOT_CONFIGURED", title: "No B2C account decided", category: "customer", severity: "error", source: "policy", action: "Choose the customer for this web order, or set the company's B2C account in Order rules once the business has decided how web orders are booked." }),
+    def({ code: "ORDER_CONTEXT_UNSPECIFIED", title: "B2B or B2C not stated", category: "customer", severity: "info", source: "source", action: "None — the source did not say whether this is a trade or a web order." }),
+    def({ code: "POSSIBLE_DUPLICATE_ORDER", title: "Order reference already received", category: "commercial", severity: "warning", source: "core", action: "Check the earlier order with the same reference before approving; reject this one if it is a repeat.", aka: ["DUPLICATE_ORDER"] }),
+    def({ code: "DELIVERY_LEAD_TIME", title: "Inside the lead time", category: "commercial", severity: "warning", source: "policy", action: "Confirm the delivery date can be met, or agree a later date with the customer." }),
+    def({ code: "COMPONENT_SHORTAGE", title: "Components short for production", category: "production", severity: "warning", source: "core", action: "Check component stock and purchasing before committing to the delivery date." }),
+    def({ code: "SOURCE_VALUE_CHANGED", title: "Changed from what the customer sent", category: "commercial", severity: "warning", source: "core", action: "Confirm the change was agreed with the customer; the original values are kept on the order." }),
+    def({ code: "DOCUMENT_NEEDS_EXTRACTION", title: "Document not read yet", category: "extraction", severity: "error", source: "source", action: "Enter the order manually from the document, or process it through a document extractor.", aka: ["UNSUPPORTED_DOCUMENT"] }),
   ].map((d) => [d.code, d])
 );
 
