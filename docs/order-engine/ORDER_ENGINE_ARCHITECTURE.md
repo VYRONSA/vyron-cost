@@ -222,7 +222,7 @@ they only translate.
 | CSV (strict headers) | IMPLEMENTED — uses the existing `vyron-csv-parser` (formula-injection neutralised) |
 | Email | IMPLEMENTED as a service boundary + deterministic test adapter; **no mailbox or provider is connected** |
 | WooCommerce / Shopify | IMPLEMENTED as pure normalisers of the platforms' documented order JSON; **not connected**, `connected: false`, no credentials anywhere |
-| XLSX | DESIGNED FOR LATER — same tabular mapper as CSV once the upload path is server-side |
+| XLSX | DESIGNED FOR LATER — same tabular mapper as CSV once the upload path is server-side (the UI asks for Excel to be saved as CSV) |
 | PDF | DESIGNED FOR LATER — §9 |
 | API / EDI | DESIGNED FOR LATER — §11 |
 
@@ -449,3 +449,49 @@ design and never become intakes or invoices.
    applied the Order Inbox answers "not yet enabled" rather than failing.
 3. Decide whether intake confirmation should trigger the existing staff
    notifications (`notifyOrderEvent`) — deliberately off today.
+
+## 18. Implementation map (handover)
+
+| Concern | File |
+|---|---|
+| Types | `src/lib/order-engine/types.ts` |
+| State machine, permissions per action, derived statuses | `src/lib/order-engine/lifecycle.ts` |
+| Deterministic matching (customer, product) | `src/lib/order-engine/matching.ts` |
+| Validators and the context loader | `src/lib/order-engine/validation.ts` |
+| Receive, edit, actions, handoff, audit, CAS | `src/lib/order-engine/service.ts` |
+| E-mail boundary (not connected) | `src/lib/order-engine/email-intake.ts`, `adapters/email.ts` |
+| Adapters | `src/lib/order-engine/adapters/{manual,csv,platforms,types}.ts` |
+| Route plumbing (auth → permission → company, actor) | `src/lib/order-engine/http.ts` |
+| API | `src/app/api/order-intake/{route.ts,[id]/route.ts,lookup/route.ts}` |
+| UI | `src/app/order-inbox/{page.tsx,new/page.tsx,[id]/page.tsx}`, `src/components/vyron-order-engine/*` |
+| Navigation | `src/lib/vyron-navigation.ts` (Customers → Order Inbox), `NAV_PATH_PERMISSIONS["/order-inbox"]` |
+| Change to existing engine | `saveCustomerSalesOrder` accepts optional trusted-server `newOrderId` and `auditActor`; every existing caller is unchanged |
+| Migration | `supabase/migrations/20260922120000_vyron_order_intake.sql` |
+
+## 19. Verification
+
+| Suite | Kind | Result (2026-09-22) |
+|---|---|---|
+| `npm run test:order-engine` | Family A — domain + real sales-order handoff, in-memory DB, two synthetic tenants | 171/171 |
+| `npm run test:order-engine-routes` | Family A — route handlers with the real session, membership and company resolution | 42/42 |
+| `npm run test:order-engine-migration-pg` | Family B — the migration on a throwaway local Postgres (created and dropped) | 33/33 |
+| Existing offline suites (19, incl. sales-order cost capture, session and tenant security) | regression | all pass |
+| `npm run typecheck` (web + mobile), `npm run build` | build | pass |
+| `npx eslint .` | lint | no new findings; the pre-existing repository baseline (285 errors / 6 407 warnings on `main`) is unchanged |
+
+Not verified: the screens have not been exercised in a browser. Running the app
+locally connects to the production database, which this work must not touch;
+the screens are covered by type-checking, the build, and the API tests they call.
+
+## 20. The demo workflow
+
+Against a database with the migration applied and a workspace that has
+customers and products with SKUs:
+
+1. Customers → **Order Inbox** → **New order** (or **Import CSV**; the page offers a template).
+2. Enter customer, PO, delivery date and lines with SKU, quantity and price → **Receive order**.
+3. **Validate order** → the order moves to *Awaiting approval* or *Exception*; every line shows the product it matched and by which rule, stock available net of reservations, the expected price, and (for approvers) expected margin.
+4. For an exception, choose the customer or product (ambiguous candidates are offered; otherwise search) → validate again.
+5. An approver acknowledges any warnings and **Approve and create sales order** — or holds, requests changes, or rejects with a reason.
+6. The order is *Confirmed*; the Downstream card links the Draft sales order. Picking, dispatch and invoicing continue in Sales Orders / Order Centre. Nothing was reserved, invoiced, e-mailed or posted to Xero.
+7. The audit trail lists every step with the member who took it.

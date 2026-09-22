@@ -317,7 +317,8 @@ const marginValidator: OrderValidator = {
           severity: "warning",
           category: "margin",
           lineNo: lineCtx.line.line_no,
-          message: `${product.product_name}: selling below the current product cost (${cost.toFixed(2)} per unit).`,
+          // No cost figure in the message: messages are shown to members who may not see cost.
+          message: `${product.product_name}: selling below the current product cost.`,
         });
       }
     }
