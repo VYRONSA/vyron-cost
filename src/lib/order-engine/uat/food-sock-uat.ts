@@ -34,7 +34,66 @@ export type UatCatalogue = {
   stockItems: Row[];
   boms: Row[];
   bomLines: Row[];
+  /**
+   * Optional parts of a snapshot taken from a NON-PRODUCTION environment: the
+   * tenant's own customers, customer pricing, ordering rules and pack sizes.
+   * When present the scenarios also prove customer pricing and rules against
+   * that data; when absent the fictional overlay is used on its own.
+   */
+  customers?: Array<{ id: string; customer_name: string | null; status?: string | null; active?: boolean | null }>;
+  priceLists?: Row[];
+  priceListVersions?: Row[];
+  priceListAssignments?: Row[];
+  priceListItems?: Array<{ id?: string; price_list_id: string; product_id: string; final_price: number | null; status?: string | null; effective_from?: string | null }>;
+  policies?: Row[];
+  packSizes?: Row[];
+  /** Where the snapshot came from — printed by the runner, never guessed. */
+  meta?: { source?: string | null; takenAt?: string | null; environment?: string | null };
 };
+
+export const SNAPSHOT_REQUIRED_KEYS = ["products", "stockItems", "boms", "bomLines"] as const;
+export const SNAPSHOT_OPTIONAL_KEYS = ["customers", "priceLists", "priceListVersions", "priceListAssignments", "priceListItems", "policies", "packSizes"] as const;
+
+/**
+ * Read a catalogue snapshot file (already exported from a NON-PRODUCTION
+ * environment) and re-home it onto the fictional UAT tenant. Nothing here
+ * connects to any database: the snapshot is supplied as a file.
+ */
+export function loadUatSnapshot(raw: unknown, companyId = FOOD_SOCK_UAT_COMPANY_ID): UatCatalogue {
+  if (!raw || typeof raw !== "object") throw new Error("A catalogue snapshot must be a JSON object.");
+  const input = raw as Record<string, unknown>;
+  for (const key of SNAPSHOT_REQUIRED_KEYS) {
+    if (!Array.isArray(input[key])) throw new Error(`Catalogue snapshot is missing "${key}".`);
+  }
+  if (!(input.products as unknown[]).length) throw new Error("Catalogue snapshot has no products.");
+  const rehome = (rows: unknown): Row[] => (Array.isArray(rows) ? rows.map((r) => ({ ...(r as Row), company_id: companyId })) : []);
+  const snapshot: UatCatalogue = {
+    products: rehome(input.products) as UatCatalogue["products"],
+    stockItems: rehome(input.stockItems),
+    boms: rehome(input.boms),
+    bomLines: rehome(input.bomLines),
+    meta: (input.meta as UatCatalogue["meta"]) || null || undefined,
+  };
+  for (const key of SNAPSHOT_OPTIONAL_KEYS) {
+    if (input[key] !== undefined && !Array.isArray(input[key])) throw new Error(`Catalogue snapshot: "${key}" must be a list.`);
+    if (Array.isArray(input[key])) (snapshot as Record<string, unknown>)[key] = rehome(input[key]);
+  }
+  return snapshot;
+}
+
+/** What a snapshot can prove, for the runner's banner. */
+export function snapshotCoverage(catalogue: UatCatalogue) {
+  return {
+    products: catalogue.products.length,
+    stockItems: catalogue.stockItems.length,
+    boms: catalogue.boms.length,
+    bomLines: catalogue.bomLines.length,
+    customers: catalogue.customers?.length ?? 0,
+    customerPrices: catalogue.priceListItems?.length ?? 0,
+    customerRules: catalogue.policies?.length ?? 0,
+    packSizes: catalogue.packSizes?.length ?? 0,
+  };
+}
 
 const id = (block: string, n: number) => `f5${block}0000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 
@@ -110,25 +169,51 @@ export function foodSockUatSeed(catalogue: UatCatalogue = fictionalFoodSockCatal
   const now = "2026-10-01T00:00:00Z";
   return {
     vyron_workspaces: [{ id: FOOD_SOCK_UAT_WORKSPACE_ID, company_id: companyId, company_name: "Food Sock UAT (fictional)", default_vat_rate: 15 }],
-    vyron_customers: Object.values(C).map((c) => ({ ...c, company_id: companyId })),
+    // The fictional UAT customers, plus any customers a snapshot supplied.
+    vyron_customers: [...Object.values(C).map((c) => ({ ...c, company_id: companyId })), ...(catalogue.customers || []).map((c) => ({ ...c, company_id: companyId }))],
     vyron_cost_products: catalogue.products.map((p) => ({ ...p, company_id: companyId })),
     vyron_cost_stock_items: catalogue.stockItems,
     vyron_cost_boms: catalogue.boms,
     vyron_cost_bom_lines: catalogue.bomLines,
-    vyron_cost_product_pack_sizes: [],
-    vyron_customer_price_list_assignments: [],
-    vyron_customer_price_list_items: [],
-    vyron_customer_price_lists: [],
-    vyron_customer_price_list_versions: [],
+    vyron_cost_product_pack_sizes: catalogue.packSizes || [],
+    vyron_customer_price_list_assignments: catalogue.priceListAssignments || [],
+    vyron_customer_price_list_items: (catalogue.priceListItems || []) as Row[],
+    vyron_customer_price_lists: catalogue.priceLists || [],
+    vyron_customer_price_list_versions: catalogue.priceListVersions || [],
     vyron_customer_branches: [],
     // Fictional rules for fictional customers — NOT Food Sock policies.
     vyron_customer_order_policies: [
       { id: id("9", 1), company_id: companyId, customer_id: C.chainStore.id, require_po: true, require_delivery_date: true, min_order_value: null, min_gp_pct: null, enforce_case_quantity: false, delivery_weekdays: null, order_cutoff_time: null, special_instructions: null, updated_by: "uat", created_at: now, updated_at: now },
       { id: id("9", 2), company_id: companyId, customer_id: C.tightMargin.id, require_po: false, require_delivery_date: false, min_order_value: null, min_gp_pct: 40, enforce_case_quantity: false, delivery_weekdays: null, order_cutoff_time: null, special_instructions: null, updated_by: "uat", created_at: now, updated_at: now },
+      ...(catalogue.policies || []),
     ],
+    // The UAT tenant has made the decisions a UAT run needs; the rest stay open.
     vyron_order_engine_settings: [
-      { company_id: companyId, b2c_customer_id: C.webAccount.id, product_name_matching: "review", duplicate_po_action: "warn", min_lead_time_days: null, updated_by: "uat", created_at: now, updated_at: now },
+      {
+        company_id: companyId,
+        b2c_customer_id: C.webAccount.id,
+        product_name_matching: "review",
+        duplicate_po_action: "warn",
+        min_lead_time_days: null,
+        web_orders_mode: "fulfil",
+        web_order_statuses: null,
+        web_prices_include_tax: null,
+        shipping_treatment: null,
+        sku_alignment: null,
+        creator_can_approve: null,
+        pdf_extractor: null,
+        updated_by: "uat",
+        created_at: now,
+        updated_at: now,
+      },
     ],
+    vyron_order_channel_settings: [
+      { id: id("8", 1), company_id: companyId, channel_key: "woocommerce:uat-store", label: "UAT web store", enabled: true, prices_include_tax: false, eligible_statuses: ["processing", "on-hold", "completed"], updated_by: "uat", created_at: now, updated_at: now },
+    ],
+    vyron_order_mailboxes: [
+      { id: id("a", 1), company_id: companyId, receiving_address: "orders@uat-foodsock.example", label: "UAT order inbox", provider: "uat", status: "ACTIVE", allowed_sender_domains: ["uat-retail-north.example"], allowed_senders: null, max_attachment_bytes: null, allowed_mime_types: null, require_verified_sender: false, updated_by: "uat", created_at: now, updated_at: now },
+    ],
+    vyron_order_document_extractions: [],
     vyron_import_source_links: [],
     vyron_customer_sales_orders: [],
     vyron_customer_sales_order_lines: [],
@@ -203,7 +288,40 @@ export function buildFoodSockUatScenarios(catalogue: UatCatalogue = fictionalFoo
     unitPrice,
   });
 
+  // When a snapshot supplies customer pricing, prove the contract price is the
+  // one the order is validated against.
+  const pricedCustomer = (() => {
+    const items = catalogue.priceListItems || [];
+    const assignments = (catalogue.priceListAssignments || []) as Array<Record<string, unknown>>;
+    for (const assignment of assignments) {
+      const listId = String(assignment.contract_price_list_id || assignment.default_price_list_id || "");
+      const customerId = String(assignment.customer_id || "");
+      const customer = (catalogue.customers || []).find((c) => c.id === customerId);
+      const item = items.find((i) => String(i.price_list_id) === listId && Number(i.final_price) > 0);
+      const product = item ? priced.find((p) => p.id === String(item.product_id)) : undefined;
+      if (customer?.customer_name && item && product) return { customer, product, price: Number(item.final_price) };
+    }
+    return null;
+  })();
+
   return [
+    ...(pricedCustomer
+      ? [
+          {
+            id: "snapshot-customer-pricing",
+            title: "Customer contract price is the price validated (snapshot pricing)",
+            input: {
+              kind: "candidate" as const,
+              candidate: base({
+                customerName: pricedCustomer.customer.customer_name!,
+                customerPoNumber: "UAT-PO-9001",
+                lines: [line(pricedCustomer.product, 2, pricedCustomer.price)],
+              }),
+            },
+            expect: { status: "AWAITING_APPROVAL" as const, codes: [], absent: ["PRICE_MISMATCH", "CUSTOMER_NOT_FOUND"] },
+          },
+        ]
+      : []),
     {
       id: "valid-b2b",
       title: "Valid B2B order (PO, delivery date, stocked product at list price)",

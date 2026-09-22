@@ -35,6 +35,12 @@ const extraction = await importFromRoot("src/lib/order-engine/extraction.ts");
 const settingsLib = await importFromRoot("src/lib/order-engine/settings.ts");
 const platforms = await importFromRoot("src/lib/order-engine/adapters/platforms.ts");
 const { receiveInboundEmail } = await importFromRoot("src/lib/order-engine/email-intake.ts");
+const connector = await importFromRoot("src/lib/order-engine/connectors/email-connector.ts");
+const mailboxes = await importFromRoot("src/lib/order-engine/mailboxes.ts");
+const security = await importFromRoot("src/lib/order-engine/email-security.ts");
+const decisions = await importFromRoot("src/lib/order-engine/decisions.ts");
+const pdf = await importFromRoot("src/lib/order-engine/extractors/pdf.ts");
+const csv = await importFromRoot("src/lib/order-engine/adapters/csv.ts");
 const { ISSUE_CATALOG } = await importFromRoot("src/lib/order-engine/issue-catalog.ts");
 const { createRequire } = await import("node:module");
 const ExcelJS = createRequire(pathToFileURL(path.join(ROOT, "package.json")).href)("exceljs");
@@ -513,6 +519,321 @@ section("No Food Sock identifiers in runtime logic");
   walk(path.join(ROOT, "src/app/api/order-intake"));
   const offenders = files.filter((f) => /e920c747-1d27-4d01-9e7c-182f9a7d0aa3/i.test(readFileSync(f, "utf8")));
   check("no hard-coded Food Sock company id in the Order Engine or its API", offenders.length === 0, offenders.join(", "));
+}
+
+
+// ---------------------------------------------------------------------------
+section("E-mail connector: the tenant comes from the receiving address");
+{
+  const db = newDb();
+  const MAILBOX = "orders@uat-foodsock.example";
+  const base = {
+    messageId: "<conn-1@uat.example>",
+    provider: "uat-provider",
+    from: "buyer@uat-retail-north.example",
+    to: [MAILBOX],
+    deliveredTo: MAILBOX,
+    subject: "PO UAT-PO-7001",
+    receivedAt: "2026-10-06T07:00:00Z",
+    bodyText: "Order attached.",
+    attachments: [],
+  };
+  const stocked = scenarios.find((x) => x.id === "valid-b2b").input.candidate.lines[0];
+  const csvText = `customer,po_number,requested_delivery_date,sku,description,quantity,unit_price\n${C.retailNorth.customer_name},UAT-PO-7001,2026-10-14,${stocked.sku},${stocked.description},12,${stocked.unitPrice}\n`;
+
+  const unknown = await connector.receiveConnectorMessage(db, { ...base, messageId: "<conn-unknown@uat.example>", deliveredTo: "nobody@elsewhere.example" }, CLERK);
+  check("an unknown receiving address is not processed and stores nothing", unknown.status === "NO_MAILBOX" && db.tables.vyron_order_source_messages.length === 0);
+
+  const resolved = await mailboxes.resolveMailboxByAddress(db, MAILBOX.toUpperCase());
+  check("the mailbox resolves the tenant (case-insensitively)", resolved?.companyId === CO);
+  db.tables.vyron_order_mailboxes[0].status = "DISABLED";
+  check("a disabled mailbox resolves to nothing", (await mailboxes.resolveMailboxByAddress(db, MAILBOX)) === null);
+  db.tables.vyron_order_mailboxes[0].status = "ACTIVE";
+
+  const accepted = await connector.receiveConnectorMessage(
+    db,
+    { ...base, attachments: [{ fileName: "po.csv", contentType: "text/csv", sizeBytes: csvText.length, text: csvText }] },
+    CLERK
+  );
+  check("an expected sender with a CSV becomes an order in the mailbox's company", accepted.status === "ACCEPTED" && accepted.companyId === CO && accepted.result.orders.length === 1);
+  const stored = db.tables.vyron_order_source_messages.find((m) => m.message_id === base.messageId);
+  check("the message records its mailbox and attachment provenance", stored?.mailbox_id === db.tables.vyron_order_mailboxes[0].id && stored.attachments[0].sha256 && stored.attachments[0].fileName === "po.csv");
+  check("the order keeps its link to the message it arrived in", accepted.result.orders[0].intake.source_message_id === stored.id);
+
+  const stranger = await connector.receiveConnectorMessage(
+    db,
+    { ...base, messageId: "<conn-2@uat.example>", from: "someone@not-a-customer.example", attachments: [{ fileName: "po.csv", contentType: "text/csv", sizeBytes: csvText.length, text: csvText }] },
+    CLERK
+  );
+  check("an unexpected sender is quarantined, never processed into an order", stranger.status === "QUARANTINED" && stranger.judgement.reasons.includes("SENDER_NOT_ALLOWED") && db.tables.vyron_order_intakes.length === 1);
+  const quarantined = db.tables.vyron_order_source_messages.find((m) => m.message_id === "<conn-2@uat.example>");
+  check("the quarantined message is stored with the reason", quarantined?.processing_status === "QUARANTINED" && String(quarantined.processing_error || "").includes("not an expected sender"));
+  const centre = await service.listExceptionCentre(db, CO);
+  check("it appears in the Exception Centre as held for review", centre.documents.some((d) => d.code === "EMAIL_NOT_ACCEPTED"));
+
+  const duplicate = await connector.receiveConnectorMessage(
+    db,
+    { ...base, messageId: "<conn-3@uat.example>", attachments: [{ fileName: "po-again.csv", contentType: "text/csv", sizeBytes: csvText.length, text: csvText }] },
+    CLERK
+  );
+  check("the same attachment under a new message id is held as a duplicate", duplicate.status === "QUARANTINED" && duplicate.judgement.reasons.includes("DUPLICATE_ATTACHMENT"));
+
+  const big = await connector.receiveConnectorMessage(
+    db,
+    { ...base, messageId: "<conn-4@uat.example>", attachments: [{ fileName: "huge.csv", contentType: "text/csv", sizeBytes: 40 * 1024 * 1024, text: "x" }] },
+    CLERK
+  );
+  check("an oversized attachment is held", big.status === "QUARANTINED" && big.judgement.reasons.includes("ATTACHMENT_NOT_ACCEPTED"));
+  const exe = await connector.receiveConnectorMessage(
+    db,
+    { ...base, messageId: "<conn-5@uat.example>", attachments: [{ fileName: "order.exe", contentType: "application/x-msdownload", sizeBytes: 10, text: "x" }] },
+    CLERK
+  );
+  check("an unsupported attachment type is held", exe.status === "QUARANTINED" && exe.judgement.reasons.includes("ATTACHMENT_NOT_ACCEPTED"));
+}
+
+section("E-mail security: sender verification is only ever reported, never assumed");
+{
+  const mailbox = { id: "m1", company_id: CO, receiving_address: "orders@uat-foodsock.example", status: "ACTIVE", allowed_sender_domains: ["uat-retail-north.example"], allowed_senders: null, max_attachment_bytes: null, allowed_mime_types: null, require_verified_sender: true, updated_by: "u" };
+  const message = { messageId: "<v1>", provider: "p", from: "buyer@uat-retail-north.example", to: [], receivedAt: "2026-10-06T07:00:00Z", attachments: [] };
+  const silent = security.judgeInboundEmail(message, mailbox);
+  check("no verification supplied → not accepted, and nothing is claimed", !silent.accept && silent.reasons.includes("SENDER_VERIFICATION_NOT_SUPPLIED") && silent.verification.stated === false && silent.verification.passed === null);
+  const failed = security.judgeInboundEmail({ ...message, verification: { spf: "fail", dkim: "pass", dmarc: "fail" } }, mailbox);
+  check("provider says verification failed → held", !failed.accept && failed.reasons.includes("SENDER_VERIFICATION_FAILED") && failed.verification.passed === false);
+  const passed = security.judgeInboundEmail({ ...message, verification: { spf: "pass", dkim: "pass", dmarc: "pass" } }, mailbox);
+  check("provider says it passed → accepted, and the result is recorded as the provider's", passed.accept && passed.verification.passed === true && passed.verification.spf === "pass");
+  const noPolicy = security.judgeInboundEmail(message, { ...mailbox, allowed_sender_domains: null, require_verified_sender: false });
+  check("a mailbox with no sender policy holds everything for a person", !noPolicy.accept && noPolicy.reasons.includes("SENDER_POLICY_NOT_SET"));
+}
+
+section("PDF: held until an extractor is configured");
+{
+  const db = newDb();
+  const MAILBOX = "orders@uat-foodsock.example";
+  const message = {
+    messageId: "<pdf-conn-1@uat.example>",
+    provider: "uat-provider",
+    from: "buyer@uat-retail-north.example",
+    to: [MAILBOX],
+    deliveredTo: MAILBOX,
+    subject: "PO UAT-PO-7002",
+    receivedAt: "2026-10-06T08:00:00Z",
+    attachments: [{ fileName: "UAT-PO-7002.pdf", contentType: "application/pdf", sizeBytes: 22000, sha256: "abc123" }],
+  };
+  check("no PDF extractor is registered in this build", pdf.listPdfExtractors().length === 0);
+  const held = await connector.receiveConnectorMessage(db, message, CLERK);
+  check("a PDF is accepted, held for extraction, and no order is invented", held.status === "ACCEPTED" && held.result.status === "NEEDS_EXTRACTION" && db.tables.vyron_order_intakes.length === 0);
+  const run = db.tables.vyron_order_document_extractions[0];
+  check("the attempt is recorded as NOT_CONFIGURED with the document's provenance", run?.status === "NOT_CONFIGURED" && run.provider === null && run.attachment_sha256 === "abc123" && run.attachment_name === "UAT-PO-7002.pdf");
+  check("nothing was normalised from the document", JSON.stringify(run.normalized) === "{}" && String(run.error).includes("No document extractor is configured"));
+  const centre = await service.listExceptionCentre(db, CO);
+  const doc = centre.documents.find((d) => d.code === "DOCUMENT_NEEDS_EXTRACTION");
+  check("the Exception Centre says the document was received but not read", Boolean(doc) && doc.documents.includes("UAT-PO-7002.pdf"));
+  const attempt = await pdf.extractDocument({ fileName: "x.pdf", contentType: "application/pdf", sizeBytes: 1, sha256: null }, { companyId: CO, extractorId: "acme-reader" });
+  check("a configured but unavailable extractor is reported, not faked", attempt.status === "NOT_CONFIGURED" && attempt.reason.includes("acme-reader"));
+}
+
+section("Web channel decisions");
+{
+  const wooOrder = (id) => ({ id, number: `W-${id}`, status: "processing", prices_include_tax: false, customer_id: 0, billing: { first_name: "Web", last_name: "Shopper" }, line_items: [{ id: 1, product_id: 1, sku: "UAT-FSD-007", name: "UAT Bone Broth 500ml", quantity: 1, subtotal: "58", total: "58" }] });
+  const receiveWeb = (db, id) => service.receiveOrderCandidate(db, CO, platforms.normalizeWooCommerceOrder({ storeKey: "uat-store", order: wooOrder(id) }), CLERK);
+
+  const undecided = newDb();
+  undecided.tables.vyron_order_engine_settings[0].web_orders_mode = null;
+  const heldOrder = await validate(undecided, (await receiveWeb(undecided, 81001)).intake.id);
+  check("web orders with no decision are received but blocked (never silently fulfilled)", heldOrder.intake.status === "EXCEPTION" && codesOf(heldOrder).includes("WEB_ORDERS_MODE_NOT_DECIDED"));
+
+  const historyOnly = newDb();
+  historyOnly.tables.vyron_order_engine_settings[0].web_orders_mode = "history_only";
+  let refused = null;
+  try {
+    await receiveWeb(historyOnly, 81002);
+  } catch (error) {
+    refused = error.message;
+  }
+  check("history-only: a web order is refused at intake", Boolean(refused) && refused.includes("historical") && historyOnly.tables.vyron_order_intakes.length === 0);
+
+  const disabled = newDb();
+  disabled.tables.vyron_order_channel_settings[0].enabled = false;
+  let channelRefused = null;
+  try {
+    await receiveWeb(disabled, 81003);
+  } catch (error) {
+    channelRefused = error.message;
+  }
+  check("a disabled channel is refused at intake", Boolean(channelRefused) && channelRefused.includes("not enabled"));
+
+  const wrongStatus = newDb();
+  const statusOrder = { ...wooOrder(81004), status: "pending" };
+  const statusDetail = await validate(wrongStatus, (await service.receiveOrderCandidate(wrongStatus, CO, platforms.normalizeWooCommerceOrder({ storeKey: "uat-store", order: statusOrder }), CLERK)).intake.id);
+  check("a store status the company does not fulfil is blocked", statusDetail.intake.status === "EXCEPTION" && codesOf(statusDetail).includes("WEB_STATUS_NOT_ELIGIBLE"));
+
+  const vatChannel = newDb();
+  vatChannel.tables.vyron_order_channel_settings[0].prices_include_tax = true;
+  const silentTax = { ...wooOrder(81005) };
+  delete silentTax.prices_include_tax;
+  const vatDetail = await validate(vatChannel, (await service.receiveOrderCandidate(vatChannel, CO, platforms.normalizeWooCommerceOrder({ storeKey: "uat-store", order: silentTax }), CLERK)).intake.id);
+  check("the channel's VAT basis applies when the order is silent", vatDetail.intake.status === "EXCEPTION" && codesOf(vatDetail).includes("PRICES_INCLUDE_TAX"));
+
+  const unknownVat = newDb();
+  unknownVat.tables.vyron_order_channel_settings[0].prices_include_tax = null;
+  const unknownDetail = await validate(unknownVat, (await service.receiveOrderCandidate(unknownVat, CO, platforms.normalizeWooCommerceOrder({ storeKey: "uat-store", order: silentTax }), CLERK)).intake.id);
+  check("an unknown VAT basis is raised, not assumed", codesOf(unknownDetail).includes("WEB_VAT_BASIS_UNKNOWN"));
+}
+
+section("CSV and Excel: nothing ambiguous is reinterpreted");
+{
+  const head = "customer,po_number,requested_delivery_date,sku,description,quantity,unit_price";
+  const parse = (text) => {
+    try {
+      return { ok: true, candidate: csv.parseCsvOrder({ text }) };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  };
+  const decimalComma = parse(`${head}\n${C.retailNorth.customer_name},PO-1,2026-10-14,UAT-FSD-007,Broth,10,"1,50"`);
+  check("a comma decimal is refused, not silently read as 150", !decimalComma.ok && decimalComma.error.includes("ambiguous"));
+  const grouped = parse(`${head}\n${C.retailNorth.customer_name},PO-1,2026-10-14,UAT-FSD-007,Broth,10,"1,234.50"`);
+  check("an unambiguous thousands separator is accepted", grouped.ok && grouped.candidate.lines[0].unitPrice === 1234.5);
+  const localDate = parse(`${head}\n${C.retailNorth.customer_name},PO-1,05/06/2026,UAT-FSD-007,Broth,10,58`);
+  check("an ambiguous date is refused with both readings explained", !localDate.ok && localDate.error.includes("5 June or 6 May"));
+  const unitQty = parse(`${head}\n${C.retailNorth.customer_name},PO-1,2026-10-14,UAT-FSD-007,Broth,10 cases,58`);
+  check("a quantity with a unit in it is refused", !unitQty.ok && unitQty.error.includes("not a plain number"));
+  const twoQty = parse(`customer,po_number,sku,quantity,qty,unit_price\nX,PO,SKU,1,2,3`);
+  check("two columns meaning the same thing are refused", !twoQty.ok && twoQty.error.includes("both mean quantity"));
+  const vatFlag = parse(`customer,prices_include_vat,sku,quantity,unit_price\nX,maybe,SKU,1,10`);
+  check("an unclear VAT flag is refused", !vatFlag.ok && vatFlag.error.includes("does not say clearly"));
+  const vatYes = parse(`customer,prices_include_vat,sku,quantity,unit_price\nX,yes,SKU,1,10`);
+  check("a clear VAT flag is carried onto the order", vatYes.ok && vatYes.candidate.pricesIncludeTax === true);
+  const currency = parse(`customer,currency,sku,quantity,unit_price\nX,Rand,SKU,1,10`);
+  check("a currency that is not a three-letter code is refused", !currency.ok && currency.error.includes("three-letter"));
+  const extra = parse(`customer,po_number,sku,quantity,unit_price,warehouse_note\nX,PO,SKU,1,10,leave at gate`);
+  check("columns the template does not define are reported, not silently ignored", extra.ok && extra.candidate.extraction.sourceFacts.unmappedColumns.includes("warehouse_note"));
+  const withTax = parse(`customer,sku,quantity,unit_price,vat,customer_reference\nX,SKU,2,10,3,ACC-9`);
+  check("VAT and customer reference columns are read", withTax.ok && withTax.candidate.lines[0].taxAmount === 3 && withTax.candidate.customerReference === "ACC-9");
+  const asWritten = parse(`${head}\n${C.retailNorth.customer_name},PO-1,2026-10-14,UAT-FSD-007,Broth,10,58.00`);
+  check("the file's own values are kept as written", asWritten.ok && asWritten.candidate.lines[0].sourceValues.price === "58.00");
+}
+
+section("Sales Order handoff: deeper audit");
+{
+  const db = newDb();
+  // A customer contract price that differs from the master price.
+  const stocked = scenarios.find((x) => x.id === "valid-b2b").input.candidate.lines[0];
+  const product = uat.fictionalFoodSockCatalogue().products.find((p) => p.sku === stocked.sku);
+  db.tables.vyron_customer_price_lists.push({ id: "f5d00000-0000-4000-8000-000000000001", company_id: CO, name: "UAT contract", status: "Active" });
+  db.tables.vyron_customer_price_list_items.push({ id: "f5d00000-0000-4000-8000-000000000002", company_id: CO, price_list_id: "f5d00000-0000-4000-8000-000000000001", product_id: product.id, final_price: 51, status: "Active", effective_from: "2026-01-01" });
+  db.tables.vyron_customer_price_list_assignments.push({ id: "f5d00000-0000-4000-8000-000000000003", company_id: CO, customer_id: C.retailNorth.id, contract_price_list_id: "f5d00000-0000-4000-8000-000000000001", status: "Active" });
+  const candidate = { ...byId.get("valid-b2b").input.candidate, lines: [{ ...stocked, unitPrice: null }], customerPoNumber: "UAT-PO-8001" };
+  const detail = await validate(db, (await service.receiveOrderCandidate(db, CO, candidate, CLERK)).intake.id);
+  check("with no price on the order, the customer's contract price is used", detail.intake.validation.lines[0].effectiveUnitPrice === 51 && detail.intake.validation.lines[0].priceSource);
+  const confirmed = await approve(db, detail);
+  const so = db.tables.vyron_customer_sales_orders[0];
+  const soLine = db.tables.vyron_customer_sales_order_lines[0];
+  check("the sales order carries the approved (contract) price, not the master price", Number(soLine.selling_price) === 51);
+  check("VAT comes from the workspace rate", Number(soLine.tax_rate) === 15);
+  check("the intake and sales order stay linked both ways", confirmed.intake.sales_order_id === so.id && String(so.notes).includes(confirmed.intake.intake_number));
+  check("no invoice, Xero queue entry, stock movement or reservation was created", db.tables.vyron_customer_invoices.length === 0 && db.tables.vyron_xero_sync_queue.length === 0 && db.tables.vyron_stock_movements.length === 0 && db.tables.vyron_customer_sales_order_allocations.length === 0);
+
+  // Retry after a partial failure: the sales order exists but has no lines.
+  const retryDb = newDb();
+  const retryDetail = await runScenario(retryDb, "valid-b2b");
+  const claimed = await service.performIntakeAction(retryDb, CO, retryDetail.intake.id, "approve", MANAGER, {
+    today: TODAY,
+    validationHash: retryDetail.intake.validation_hash,
+    acknowledgeWarnings: true,
+  }).catch((e) => e);
+  const orderId = retryDb.tables.vyron_customer_sales_orders[0]?.id;
+  retryDb.tables.vyron_customer_sales_order_lines = retryDb.tables.vyron_customer_sales_order_lines.filter((l) => l.sales_order_id !== orderId);
+  let retryError = null;
+  try {
+    await service.performIntakeAction(retryDb, CO, retryDetail.intake.id, "confirm", MANAGER, {});
+  } catch (error) {
+    retryError = error;
+  }
+  check("a half-written sales order is never silently completed on retry", claimed.intake?.status === "CONFIRMED" && retryError !== null);
+  check("and no second sales order is created", retryDb.tables.vyron_customer_sales_orders.length === 1);
+}
+
+section("Workflow boundaries: the Order Engine does not absorb downstream work");
+{
+  const engineFiles = [];
+  const walk = (dir) => {
+    for (const name of readdirSync(dir)) {
+      const full = path.join(dir, name);
+      if (statSync(full).isDirectory()) walk(full);
+      else if (/\.ts$/.test(name)) engineFiles.push(full);
+    }
+  };
+  walk(path.join(ROOT, "src/lib/order-engine"));
+  const downstream = ["vyron_customer_invoices", "vyron_customer_invoice_lines", "vyron_xero_sync_queue", "vyron_stock_movements", "vyron_cost_stock_ledger", "vyron_production_runs"];
+  const offenders = [];
+  for (const file of engineFiles) {
+    const text = readFileSync(file, "utf8");
+    for (const table of downstream) {
+      if (new RegExp(`from\\("${table}"\\)`).test(text)) offenders.push(`${path.basename(file)} → ${table}`);
+    }
+  }
+  check("the Order Engine never reads or writes invoices, Xero, stock ledger or production tables", offenders.length === 0, offenders.join(", "));
+  const serviceText = readFileSync(path.join(ROOT, "src/lib/order-engine/service.ts"), "utf8");
+  check("the handoff goes through the existing sales-order engine only", serviceText.includes("saveCustomerSalesOrder") && !serviceText.includes("insert into vyron_customer_sales_orders"));
+}
+
+section("Audit trail");
+{
+  const db = newDb();
+  const detail = await runScenario(db, "valid-b2b");
+  await approve(db, detail);
+  const events = db.tables.vyron_order_intake_events.filter((e) => e.intake_id === detail.intake.id);
+  const types = events.map((e) => e.event_type);
+  check("every transition is recorded (received → validated → approval requested → approved → confirmed)", ["RECEIVED", "VALIDATED", "APPROVAL_REQUESTED", "APPROVED", "CONFIRMED"].every((t) => types.includes(t)), types.join(","));
+  check("every event carries tenant, order, actor and timestamp", events.every((e) => e.company_id === CO && e.intake_id === detail.intake.id && e.actor && e.created_at));
+  const approved = events.find((e) => e.event_type === "APPROVED");
+  check("the approval records who, from which state, and the validation it was based on", approved.actor === MANAGER.userId && approved.from_status === "AWAITING_APPROVAL" && approved.to_status === "APPROVED" && approved.metadata.validationHash);
+  const confirmedEvent = events.find((e) => e.event_type === "CONFIRMED");
+  check("the handoff records the sales order it created", confirmedEvent.metadata.salesOrderId === db.tables.vyron_customer_sales_orders[0].id);
+  const held = await service.performIntakeAction(db, CO, (await runScenario(db, "unknown-sku")).intake.id, "cancel", MANAGER, { reason: "Customer withdrew the order." });
+  const cancel = db.tables.vyron_order_intake_events.filter((e) => e.intake_id === held.intake.id).find((e) => e.event_type === "CANCELLED");
+  check("a decision that needs a reason records it", cancel.detail === "Customer withdrew the order." && cancel.actor === MANAGER.userId);
+}
+
+section("Tenant isolation of the new configuration");
+{
+  const OTHER = "0b000000-0000-4000-8000-00000000c0de";
+  const db = newDb({
+    vyron_order_engine_settings: [{ company_id: OTHER, b2c_customer_id: null, product_name_matching: "off", duplicate_po_action: "block", min_lead_time_days: 5, web_orders_mode: "history_only", updated_by: "other", created_at: "2026-10-01T00:00:00Z", updated_at: "2026-10-01T00:00:00Z" }],
+    vyron_order_channel_settings: [{ id: "0b080000-0000-4000-8000-000000000001", company_id: OTHER, channel_key: "woocommerce:uat-store", label: "Other tenant store", enabled: false, prices_include_tax: true, eligible_statuses: ["nothing"], updated_by: "other", created_at: "2026-10-01T00:00:00Z", updated_at: "2026-10-01T00:00:00Z" }],
+    vyron_order_mailboxes: [{ id: "0b0a0000-0000-4000-8000-000000000001", company_id: OTHER, receiving_address: "orders@other-tenant.example", status: "ACTIVE", allowed_sender_domains: null, allowed_senders: null, max_attachment_bytes: null, allowed_mime_types: null, require_verified_sender: false, updated_by: "other", created_at: "2026-10-01T00:00:00Z", updated_at: "2026-10-01T00:00:00Z" }],
+  });
+  const ours = await settingsLib.loadOrderSettings(db, CO);
+  check("another tenant's settings never apply here", ours.duplicatePoAction === "warn" && ours.webOrdersMode === "fulfil" && ours.minLeadTimeDays === null);
+  const theirChannel = await settingsLib.loadChannelSettings(db, CO, "woocommerce:uat-store");
+  check("channels are per tenant (same key, different row)", theirChannel.enabled === true && theirChannel.prices_include_tax === false);
+  check("mailbox lists are per tenant", (await mailboxes.listMailboxes(db, CO)).every((m) => m.company_id === CO));
+  const theirs = await mailboxes.resolveMailboxByAddress(db, "orders@other-tenant.example");
+  check("an address resolves only to its own tenant", theirs?.companyId === OTHER);
+  let crossSave = null;
+  try {
+    await mailboxes.saveMailbox(db, CO, { receivingAddress: "orders@other-tenant.example" }, MANAGER);
+  } catch (error) {
+    crossSave = error.code;
+  }
+  check("one receiving address cannot be claimed by two companies", crossSave === "INVALID_INPUT", String(crossSave));
+  const register = await decisions.loadDecisionRegister(db, CO);
+  check("the decision register is per tenant", register.find((d) => d.id === "D1").state === "CONFIGURED" && register.find((d) => d.id === "D6").current.includes("Warns"));
+}
+
+section("Decision register");
+{
+  const db = newDb();
+  const register = await decisions.loadDecisionRegister(db, CO);
+  check("every decision D1-D12 is represented", register.length === 12 && register.map((d) => d.id).join(",") === "D1,D2,D3,D4,D5,D6,D7,D8,D9,D10,D11,D12");
+  check("an undecided decision says exactly what happens until it is made", register.filter((d) => d.state === "AWAITING_DECISION").every((d) => d.untilDecided.length > 10));
+  check("blocking decisions are marked as blocking", register.find((d) => d.id === "D12").blocks === true);
+  const bare = createFakeSupabase({ vyron_customers: [] });
+  const empty = await decisions.loadDecisionRegister(bare, CO);
+  check("with nothing configured, only the two safe defaults are decided", empty.filter((d) => d.state === "CONFIGURED").map((d) => d.id).join(",") === "D6,D7");
+  check("and nothing claims to be configured that is not", empty.find((d) => d.id === "D2").current === "Not decided" && empty.find((d) => d.id === "D1").current === "Not decided");
 }
 
 console.log(`\n${passed}/${passed + failed} checks passed${failed ? `\n${failed} FAILED` : ""}`);

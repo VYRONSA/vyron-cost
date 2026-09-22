@@ -72,6 +72,8 @@ const R = {
   policies: await importFromRoot("src/app/api/order-intake/policies/route.ts"),
   sources: await importFromRoot("src/app/api/order-intake/sources/route.ts"),
   settings: await importFromRoot("src/app/api/order-intake/settings/route.ts"),
+  channels: await importFromRoot("src/app/api/order-intake/channels/route.ts"),
+  mailboxes: await importFromRoot("src/app/api/order-intake/mailboxes/route.ts"),
 };
 
 async function login(email, password) {
@@ -115,6 +117,10 @@ const ENDPOINTS = [
   { name: "save policy", permission: "sales_orders.approve", run: (jar) => call(jar, R.policies.PUT, { method: "PUT", body: { customerId: null, requirePo: false } }) },
   { name: "read ordering settings", permission: "sales_orders.view", run: (jar) => call(jar, R.settings.GET) },
   { name: "save ordering settings", permission: "sales_orders.approve", run: (jar) => call(jar, R.settings.PUT, { method: "PUT", body: { duplicatePoAction: "warn" } }) },
+  { name: "read channels", permission: "sales_orders.view", run: (jar) => call(jar, R.channels.GET) },
+  { name: "save channel", permission: "sales_orders.approve", run: (jar) => call(jar, R.channels.PUT, { method: "PUT", body: { channelKey: "woocommerce:perm-test", enabled: false } }) },
+  { name: "read mailboxes", permission: "sales_orders.view", run: (jar) => call(jar, R.mailboxes.GET) },
+  { name: "save mailbox", permission: "sales_orders.approve", run: (jar) => call(jar, R.mailboxes.PUT, { method: "PUT", body: { receivingAddress: `orders+${Math.random().toString(16).slice(2)}@perm-test.example`, status: "DISABLED" } }) },
   { name: "sources", permission: "sales_orders.view", run: (jar) => call(jar, R.sources.GET) },
   { name: "lookup", permission: "sales_orders.view", run: (jar) => call(jar, R.lookup.GET, { url: "/api/order-intake/lookup?type=product&q=pie" }) },
 ];
@@ -170,6 +176,13 @@ console.log("\nTenant isolation of the new endpoints");
   check("…and cannot revoke one (404)", revokeB.status === 404 && !db.tables.vyron_order_product_aliases[0].revoked_at);
   const policyB = await call(jars.OTHER_OWNER, R.policies.PUT, { method: "PUT", body: { customerId: fixtures.DEMO_CUSTOMERS.bayStreet.id, requirePo: true } });
   check("…cannot set a policy for tenant A's customer (400)", policyB.status === 400);
+  const mailboxA = await call(jars.OWNER, R.mailboxes.PUT, { method: "PUT", body: { receivingAddress: "orders@tenant-a.example", status: "ACTIVE" } });
+  const stealB = await call(jars.OTHER_OWNER, R.mailboxes.PUT, { method: "PUT", body: { receivingAddress: "orders@tenant-a.example", status: "ACTIVE" } });
+  check("…cannot claim tenant A's receiving address (400)", mailboxA.status === 200 && stealB.status === 400);
+  const mailboxesB = await call(jars.OTHER_OWNER, R.mailboxes.GET);
+  check("…and sees none of tenant A's mailboxes", mailboxesB.status === 200 && (mailboxesB.json.mailboxes || []).length === 0);
+  const channelsB = await call(jars.OTHER_OWNER, R.channels.GET);
+  check("…and none of tenant A's channels", channelsB.status === 200 && (channelsB.json.channels || []).length === 0);
   const settingsB = await call(jars.OTHER_OWNER, R.settings.PUT, { method: "PUT", body: { b2cCustomerId: fixtures.DEMO_CUSTOMERS.bayStreet.id } });
   check("…cannot choose tenant A's customer as its B2C account (400)", settingsB.status === 400);
   const ownB = await call(jars.OTHER_OWNER, R.settings.PUT, { method: "PUT", body: { duplicatePoAction: "block" } });

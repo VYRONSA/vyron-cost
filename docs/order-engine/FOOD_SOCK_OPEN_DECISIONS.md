@@ -1,13 +1,17 @@
 # Food Sock — open business decisions (ordering)
 
-Decisions only Food Sock can make. The Order Engine does not guess any of them:
-each is a tenant setting or customer rule, starts in the safe state below, and
-stops the order where proceeding could change it materially. Set them in
-**Order Inbox → Order rules** once decided.
+Decisions only Food Sock can make. The same list is live in the product:
+**Order Inbox -> Order rules -> Decisions** shows each one as decided or
+awaiting, what it is configured as, and exactly what happens until it is
+decided. Production status: `FOOD_SOCK_PRODUCTION_READINESS.md`.
+
+The Order Engine guesses none of them: each is a tenant setting or customer
+rule, starts in the safe state below, and stops the order where proceeding
+could change it materially.
 
 | # | Decision | Where it is set | Until decided | Blocks? |
 |---|---|---|---|---|
-| D1 | Are web-store (WooCommerce / Shopify) orders **orders to fulfil** in VOLORA, or only historical sales? | connecting a store (not connected) | web orders are not received; history stays in the Insights dashboard | — |
+| D1 | Are web-store (WooCommerce / Shopify) orders **orders to fulfil** in VOLORA, or only historical sales? | Ordering settings → web-store orders | a web order is received but held (`WEB_ORDERS_MODE_NOT_DECIDED`); "history only" refuses it at intake | yes |
 | D2 | How B2C web orders are **booked**: one "web store" customer account, or per-customer accounts? | Ordering settings → B2C account | a web order from an unknown customer stops (`B2C_ACCOUNT_NOT_CONFIGURED`) | yes |
 | D3 | Do store prices **include VAT** (per store)? | stated by the store on each order | tax-inclusive orders stop until a person enters ex-tax prices (`PRICES_INCLUDE_TAX`) | yes |
 | D4 | How is **shipping** billed? | — | shipping is shown, not added to the sales order (`SHIPPING_NOT_CARRIED`) | warning |

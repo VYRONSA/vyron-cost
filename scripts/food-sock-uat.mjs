@@ -33,16 +33,13 @@ const platforms = await importFromRoot("src/lib/order-engine/adapters/platforms.
 
 const arg = process.argv.indexOf("--catalogue");
 let catalogue = uat.fictionalFoodSockCatalogue();
+let snapshotFile = null;
 if (arg !== -1) {
-  const file = process.argv[arg + 1];
-  if (!file) throw new Error("--catalogue needs a file path.");
-  const loaded = JSON.parse(readFileSync(file, "utf8"));
-  for (const key of ["products", "stockItems", "boms", "bomLines"]) {
-    if (!Array.isArray(loaded[key])) throw new Error(`Catalogue snapshot is missing "${key}".`);
-  }
-  // The snapshot is re-homed onto the in-memory UAT tenant; its own company ids are not used.
-  const rehome = (rows) => rows.map((r) => ({ ...r, company_id: uat.FOOD_SOCK_UAT_COMPANY_ID }));
-  catalogue = { products: rehome(loaded.products), stockItems: rehome(loaded.stockItems), boms: rehome(loaded.boms), bomLines: rehome(loaded.bomLines) };
+  snapshotFile = process.argv[arg + 1];
+  if (!snapshotFile) throw new Error("--catalogue needs a file path.");
+  // A snapshot is a FILE, exported beforehand from a non-production environment.
+  // This runner never connects to any database.
+  catalogue = uat.loadUatSnapshot(JSON.parse(readFileSync(snapshotFile, "utf8")));
 }
 
 const CO = uat.FOOD_SOCK_UAT_COMPANY_ID;
@@ -62,7 +59,22 @@ async function run(db, id) {
   return service.performIntakeAction(db, CO, intake.id, "validate", CLERK, { today: uat.FOOD_SOCK_UAT_TODAY });
 }
 
-console.log(`\nVOLORA — Food Sock UAT (${arg !== -1 ? "catalogue snapshot" : "fictional catalogue"}, in memory; nothing is written anywhere)\n`);
+const coverage = uat.snapshotCoverage(catalogue);
+const rule = "=".repeat(74);
+console.log(`\n${rule}`);
+console.log(snapshotFile ? "  SNAPSHOT / NON-PRODUCTION - Food Sock UAT" : "  FICTIONAL CATALOGUE / NON-PRODUCTION - Food Sock UAT");
+console.log(rule);
+if (snapshotFile) {
+  console.log(`  snapshot file : ${snapshotFile}`);
+  if (catalogue.meta?.source) console.log(`  source        : ${catalogue.meta.source}`);
+  if (catalogue.meta?.environment) console.log(`  environment   : ${catalogue.meta.environment}`);
+  if (catalogue.meta?.takenAt) console.log(`  taken at      : ${catalogue.meta.takenAt}`);
+}
+console.log(
+  `  covers        : ${coverage.products} products, ${coverage.stockItems} stock rows, ${coverage.boms} BOMs, ${coverage.bomLines} BOM lines, ` +
+    `${coverage.customers} snapshot customers, ${coverage.customerPrices} customer prices, ${coverage.customerRules} customer rules`
+);
+console.log("  orders        : fictional. In memory only - no database, no network, nothing written.\n");
 let mismatches = 0;
 for (const scenario of scenarios) {
   const db = createFakeSupabase(uat.foodSockUatSeed(catalogue));

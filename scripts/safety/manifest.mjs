@@ -512,7 +512,7 @@ const REGISTER = [
     file: "scripts/test-order-engine-food-sock.mjs",
     family: A,
     purpose:
-      "Food Sock ordering foundation (UAT): every Food Sock UAT scenario through the real Order Engine and sales-order engine — manual, web-store, e-mail CSV / XLSX / PDF and document-extraction intake, the canonical extraction contract, frozen source snapshots, external-id / SKU / name matching, duplicates, price, stock, production with BOM components, margin, customer rules, tenant ordering settings, the Exception Centre, approval, concurrent approval, the idempotent Sales Order handoff, B2B / B2C, historical-order refusal and tenant isolation.",
+      "Food Sock ordering foundation (UAT): the inbound e-mail connector boundary (tenant from the receiving address, sender and attachment policy, quarantine), the PDF extraction boundary (no provider registered), CSV / Excel ambiguity refusal, web-channel decisions, the decision register, and every Food Sock UAT scenario through the real Order Engine and sales-order engine — manual, web-store, e-mail CSV / XLSX / PDF and document-extraction intake, the canonical extraction contract, frozen source snapshots, external-id / SKU / name matching, duplicates, price, stock, production with BOM components, margin, customer rules, tenant ordering settings, the Exception Centre, approval, concurrent approval, the idempotent Sales Order handoff, B2B / B2C, historical-order refusal and tenant isolation.",
     authentication: ["none"],
     mutation: "none",
     external: [],

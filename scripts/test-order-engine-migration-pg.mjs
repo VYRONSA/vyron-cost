@@ -23,6 +23,7 @@ const ROOT = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const MIGRATION = readFileSync(path.join(ROOT, "supabase/migrations/20260922120000_vyron_order_intake.sql"), "utf8");
 const HARDENING = readFileSync(path.join(ROOT, "supabase/migrations/20260922130000_vyron_order_intake_hardening.sql"), "utf8");
 const FOOD_SOCK = readFileSync(path.join(ROOT, "supabase/migrations/20260923120000_vyron_order_engine_food_sock.sql"), "utf8");
+const CHANNELS = readFileSync(path.join(ROOT, "supabase/migrations/20260923140000_vyron_order_engine_channels.sql"), "utf8");
 
 const PGURL = process.env.PGURL || "";
 if (!PGURL) {
@@ -79,6 +80,10 @@ try {
   check("ordering-foundation migration applies", true);
   await db.query(FOOD_SOCK);
   check("ordering-foundation migration re-applies cleanly (idempotent)", true);
+  await db.query(CHANNELS);
+  check("channels / mailboxes migration applies", true);
+  await db.query(CHANNELS);
+  check("channels / mailboxes migration re-applies cleanly (idempotent)", true);
 
   const tables = [
     "vyron_order_source_messages",
@@ -89,9 +94,12 @@ try {
     "vyron_order_customer_identities",
     "vyron_customer_order_policies",
     "vyron_order_engine_settings",
+    "vyron_order_channel_settings",
+    "vyron_order_mailboxes",
+    "vyron_order_document_extractions",
   ];
   const rls = await db.query(`select relname, relrowsecurity from pg_class where relname = any($1)`, [tables]);
-  check("all eight tables exist", rls.rows.length === 8);
+  check("all eleven tables exist", rls.rows.length === 11);
   check("RLS enabled on every table", rls.rows.every((r) => r.relrowsecurity === true));
   const policies = await db.query(`select count(*)::int as n from pg_policies where tablename = any($1)`, [tables]);
   check("no policies (service role only)", policies.rows[0].n === 0);
@@ -235,6 +243,46 @@ try {
   check("unknown name-matching mode rejected", (await sqlState(...setting("44444444-4444-4444-8444-444444444441", "product_name_matching", "fuzzy"))) === "23514");
   check("unknown repeated-PO action rejected", (await sqlState(...setting("44444444-4444-4444-8444-444444444442", "duplicate_po_action", "merge"))) === "23514");
   check("lead time above 90 days rejected", (await sqlState(...setting("44444444-4444-4444-8444-444444444443", "min_lead_time_days", 120))) === "23514");
+
+  // ---- channels, mailboxes and document extractions ---------------------------------
+  const channel = (company, key, extra = "") =>
+    [`insert into vyron_order_channel_settings (company_id, channel_key, updated_by${extra ? ", " + extra.split("=")[0] : ""}) values ($1, $2, 'u'${extra ? ", " + extra.split("=")[1] : ""})`, [company, key]];
+  check("a channel is stored", (await sqlState(...channel(CO, "woocommerce:main"))) === null);
+  check("the same channel key twice in one company is rejected", (await sqlState(...channel(CO, "WooCommerce:Main"))) === "23505");
+  check("another company may use the same channel key", (await sqlState(...channel(CO_B, "woocommerce:main"))) === null);
+  check("a blank channel key is rejected", (await sqlState(...channel(CO, "   "))) === "23514");
+  check("too many eligible statuses rejected", (await sqlState(`insert into vyron_order_channel_settings (company_id, channel_key, updated_by, eligible_statuses) values ($1, 'x', 'u', $2)`, [CO, Array.from({ length: 41 }, (_, i) => `s${i}`)])) === "23514");
+
+  const mailbox = (company, address, extra) =>
+    extra
+      ? [`insert into vyron_order_mailboxes (company_id, receiving_address, updated_by, ${extra.column}) values ($1, $2, 'u', $3)`, [company, address, extra.value]]
+      : [`insert into vyron_order_mailboxes (company_id, receiving_address, updated_by) values ($1, $2, 'u')`, [company, address]];
+  check("a mailbox is stored", (await sqlState(...mailbox(CO, "orders@tenant-a.example"))) === null);
+  check("the same receiving address cannot be claimed twice, even by another company", (await sqlState(...mailbox(CO_B, "Orders@Tenant-A.example"))) === "23505");
+  check("an address without @ is rejected", (await sqlState(...mailbox(CO, "not-an-address"))) === "23514");
+  check("an unknown mailbox status is rejected", (await sqlState(...mailbox(CO, "s@t.example", { column: "status", value: "LISTENING" }))) === "23514");
+  check("an attachment limit above 50 MB is rejected", (await sqlState(...mailbox(CO, "big@t.example", { column: "max_attachment_bytes", value: 60_000_000 }))) === "23514");
+  const mailboxDefaults = (await db.query(`select status, require_verified_sender, allowed_sender_domains from vyron_order_mailboxes where receiving_address = 'orders@tenant-a.example'`)).rows[0];
+  check("a new mailbox is disabled with no sender policy until someone sets one", mailboxDefaults.status === "DISABLED" && mailboxDefaults.require_verified_sender === false && mailboxDefaults.allowed_sender_domains === null);
+
+  const msgForDoc = (await db.query(`insert into vyron_order_source_messages (company_id, channel, provider, message_id, received_at, processing_status) values ($1, 'email', 't', '<doc-1>', now(), 'NEEDS_EXTRACTION') returning id`, [CO])).rows[0].id;
+  const extraction = (company, message, name, status = "NOT_CONFIGURED") => [
+    `insert into vyron_order_document_extractions (company_id, source_message_id, attachment_name, status, created_by) values ($1, $2, $3, $4, 'u')`,
+    [company, message, name, status],
+  ];
+  check("an extraction attempt is recorded", (await sqlState(...extraction(CO, msgForDoc, "po.pdf"))) === null);
+  check("one attempt row per attachment of a message", (await sqlState(...extraction(CO, msgForDoc, "po.pdf"))) === "23505");
+  check("an unknown extraction status is rejected", (await sqlState(...extraction(CO, msgForDoc, "other.pdf", "GUESSED"))) === "23514");
+  check("an attempt cannot point at another company's message", (await sqlState(...extraction(CO_B, msgForDoc, "po.pdf"))) === "23503");
+  check("a message may be quarantined", (await sqlState(`insert into vyron_order_source_messages (company_id, channel, provider, message_id, received_at, processing_status) values ($1, 'email', 't', '<q-1>', now(), 'QUARANTINED')`, [CO])) === null);
+  check("deleting a message removes its extraction attempts", (await sqlState(`delete from vyron_order_source_messages where id = $1`, [msgForDoc])) === null && (await db.query(`select count(*)::int as n from vyron_order_document_extractions where source_message_id = $1`, [msgForDoc])).rows[0].n === 0);
+
+  const settingsDecision = (column, value) => [`insert into vyron_order_engine_settings (company_id, updated_by, ${column}) values ($1, 'u', $2)`, [`66666666-6666-4666-8666-66666666666${Math.floor(Math.random() * 9)}`, value]];
+  check("an unknown web-orders mode is rejected", (await sqlState(...settingsDecision("web_orders_mode", "maybe"))) === "23514");
+  check("an unknown shipping treatment is rejected", (await sqlState(...settingsDecision("shipping_treatment", "free"))) === "23514");
+  check("an unknown SKU alignment is rejected", (await sqlState(...settingsDecision("sku_alignment", "fuzzy"))) === "23514");
+  const undecided = (await db.query(`select web_orders_mode, web_prices_include_tax, shipping_treatment, sku_alignment, creator_can_approve, pdf_extractor from vyron_order_engine_settings where company_id = $1`, [CO])).rows[0];
+  check("every business decision starts NULL (not decided)", Object.values(undecided).every((v) => v === null));
 
   // ---- real concurrency on the compare-and-set and the source identity --------------
   const c1 = new pg.Client({ connectionString: url.toString() });
