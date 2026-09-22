@@ -1,5 +1,5 @@
-import VyronPublicLandingPage from "@/components/VyronPublicLandingPage";
+import VoloraLandingPage from "@/components/volora/VoloraLandingPage";
 
 export default function LandingPage() {
-  return <VyronPublicLandingPage />;
+  return <VoloraLandingPage />;
 }
