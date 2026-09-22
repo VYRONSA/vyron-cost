@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { VyronLogoMark } from "@/components/vyron-ui/VyronLogo";
+import { VoloraWordmark } from "@/components/vyron-ui/VyronLogo";
 import VyronOrderPortalClient from "@/components/vyron-order/VyronOrderPortalClient";
 import { getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
@@ -9,8 +9,8 @@ import { greetingFor } from "@/lib/vyron-order-greeting";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "VYRON ORDER",
-  description: "Customer ordering for VYRON COST.",
+  title: { absolute: "Ordering · VOLORA" },
+  description: "Customer ordering for VOLORA.",
 };
 
 /**
@@ -47,17 +47,19 @@ export default async function VyronOrderPage() {
   }
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center bg-slate-950 px-6 py-12">
-      <div className="w-full max-w-sm text-center">
-        <VyronLogoMark size={56} />
-        <h1 className="mt-4 text-2xl font-black tracking-[0.08em] text-white">
-          VYRON<span className="text-[#60a5fa]">ORDER</span>
+    <main className="volora-night volora-texture flex min-h-dvh flex-col items-center justify-center px-6 py-12">
+      <div className="flex w-full max-w-sm flex-col items-center text-center">
+        <h1 className="flex flex-col items-center gap-3">
+          <VoloraWordmark height={30} variant="onDark" title="VOLORA Order" />
+          <span className="rounded-md border border-[#F4C44E]/40 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.24em] text-[#F4C44E]">
+            Order
+          </span>
         </h1>
         <p className="mt-4 text-sm font-semibold text-white/70">
           Ordering happens through the link your supplier gave you.
         </p>
         <p className="mt-3 text-sm font-semibold text-white/50">
-          It looks like <span className="font-black text-white/80">vyron.order/your-supplier</span>. If you
+          It looks like <span className="font-black text-white/80">/order/your-supplier</span>. If you
           don&apos;t have it, ask them to send it to you again.
         </p>
       </div>

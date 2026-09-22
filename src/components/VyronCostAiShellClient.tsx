@@ -110,7 +110,7 @@ const developerSections: NavSection[] = [
       { label: "Client Directory", href: "/developer/clients", icon: Users },
       { label: "Client Setup", href: "/developer/setup", icon: Settings },
       { label: "Deployment Readiness", href: "/deployment-readiness", icon: Shield },
-      { label: "Back to VYRON COST App", href: "/dashboard", icon: Home },
+      { label: "Back to VOLORA App", href: "/dashboard", icon: Home },
     ],
   },
 ];
@@ -408,18 +408,18 @@ export default function VyronCostAiShellClient({
         nav.vyron-sidebar-nav::-webkit-scrollbar { width: 6px; }
         nav.vyron-sidebar-nav::-webkit-scrollbar-track { background: transparent; }
         nav.vyron-sidebar-nav::-webkit-scrollbar-thumb {
-          background: linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0.25));
+          background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.14));
           border-radius: 999px;
         }
         nav.vyron-sidebar-nav::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.45));
+          background: linear-gradient(180deg, rgba(244,196,78,0.7), rgba(244,196,78,0.45));
         }
       `}</style>
       <aside className={M.shellSidebar}>
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_42%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(244,196,78,0.08),transparent_42%)]" />
 
         <div className="relative flex min-h-0 flex-1 flex-col">
-          <div className="shrink-0 px-2 py-2">
+          <div className="shrink-0 px-2 pb-5 pt-2">
             <Logo developer={isDeveloperArea} />
           </div>
 
@@ -435,7 +435,7 @@ export default function VyronCostAiShellClient({
                 >
                   <dashboardNavItem.icon
                     size={20}
-                    className={isActivePath(pathname, dashboardNavItem.href) ? "text-[#1D4ED8]" : M.sidebarIcon}
+                    className={isActivePath(pathname, dashboardNavItem.href) ? M.sidebarIconActive : M.sidebarIcon}
                   />
                   <span className="min-w-0 flex-1 truncate">{dashboardNavItem.label}</span>
                 </Link>
@@ -524,6 +524,9 @@ export default function VyronCostAiShellClient({
                 <LogOut size={15} />
                 Logout / Exit Workspace
               </button>
+              <p className="mt-3 text-center text-[10px] font-medium tracking-[0.04em] text-[#93AEB9]/70">
+                A product of Vyronsoft (Pty) Ltd.
+              </p>
             </div>
           ) : null}
         </div>
@@ -550,7 +553,7 @@ export default function VyronCostAiShellClient({
               <div className={M.shellSearch}>
                 <Search size={17} className="shrink-0 text-[#64748B]" />
                 <input
-                  className="min-w-0 flex-1 bg-transparent text-sm font-medium text-[#0F172A] outline-none placeholder:text-[#64748B]"
+                  className="min-w-0 flex-1 bg-transparent text-sm font-medium text-[#0B202B] outline-none placeholder:text-[#64748B]"
                   placeholder="Search anything..."
                 />
                 <span className="shrink-0 rounded-md border border-[#E2E8F0] bg-white px-2 py-0.5 text-xs font-semibold text-[#64748B]">
@@ -566,7 +569,7 @@ export default function VyronCostAiShellClient({
                 {effectiveClient ? (
                   <div className={`hidden lg:block ${M.shellWorkspaceBadge}`}>
                     <div className="min-w-0 text-right">
-                      <div className="truncate text-sm font-bold text-[#0F172A]">{effectiveClient.companyName}</div>
+                      <div className="truncate text-sm font-bold text-[#0B202B]">{effectiveClient.companyName}</div>
                       <div className="truncate text-[11px] font-medium text-[#64748B]">
                         {effectiveClient.packageName || "Professional"} Package
                         {sessionEmail ? ` · ${sessionEmail}` : effectiveClient.ownerEmail ? ` · ${effectiveClient.ownerEmail}` : ""}
@@ -593,7 +596,7 @@ export default function VyronCostAiShellClient({
             ) : (
               <Link href="/dashboard" className={`${M.primaryBtn} h-10 shrink-0 px-4 text-sm`}>
                 <Home size={17} />
-                <span className="hidden sm:inline">Back to VYRON COST App</span>
+                <span className="hidden sm:inline">Back to VOLORA App</span>
               </Link>
             )}
           </div>

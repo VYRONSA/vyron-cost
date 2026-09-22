@@ -24,16 +24,16 @@ export async function generateMetadata({
   const supplier = tenant?.displayName || null;
 
   return {
-    title: supplier ? `VYRON ORDER · ${supplier}` : "VYRON ORDER",
+    title: { absolute: supplier ? `${supplier} · Ordering · VOLORA` : "Ordering · VOLORA" },
     description: supplier
-      ? `Place your order with ${supplier}. Powered by VYRON COST.`
-      : "Customer ordering for VYRON COST.",
-    applicationName: "VYRON ORDER",
+      ? `Place your order with ${supplier}. Powered by VOLORA.`
+      : "Customer ordering for VOLORA.",
+    applicationName: "VOLORA Order",
     // Per tenant, so the installed app opens this supplier's ordering page.
     manifest: tenant ? `/order/${tenant.slug}/manifest.webmanifest` : undefined,
     appleWebApp: {
       capable: true,
-      title: "VYRON ORDER",
+      title: "VOLORA Order",
       statusBarStyle: "default",
     },
     icons: {
@@ -47,7 +47,7 @@ export async function generateMetadata({
 }
 
 export const viewport: Viewport = {
-  themeColor: "#4F46E5",
+  themeColor: "#0B202B",
   colorScheme: "light",
   viewportFit: "cover",
 };

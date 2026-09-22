@@ -54,7 +54,7 @@ export function SeverityPill({ severity }: { severity: IssueSeverity }) {
 
 export function Card({ title, children, actions }: { title?: string; children: ReactNode; actions?: ReactNode }) {
   return (
-    <section className="w-full max-w-full min-w-0 rounded-3xl bg-white p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+    <section className="w-full max-w-full min-w-0 rounded-3xl bg-white p-5 shadow-[0_18px_60px_rgba(11,32,43,0.08)]">
       {title || actions ? (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           {title ? <h2 className="text-xs font-black uppercase tracking-[0.13em] text-slate-500">{title}</h2> : <span />}
@@ -71,10 +71,10 @@ export function KpiCard({ label, value, active, onClick }: { label: string; valu
     <button
       type="button"
       onClick={onClick}
-      className={`h-full w-full min-w-0 rounded-2xl bg-white p-4 text-left shadow-[0_12px_34px_rgba(15,23,42,0.08)] transition ${active ? "ring-2 ring-blue-500" : "hover:ring-1 hover:ring-slate-200"}`}
+      className={`h-full w-full min-w-0 rounded-2xl bg-white p-4 text-left shadow-[0_12px_34px_rgba(11,32,43,0.08)] transition ${active ? "ring-2 ring-[#E8B83F]" : "hover:ring-1 hover:ring-slate-200"}`}
     >
       <div className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">{label}</div>
-      <div className="mt-2 break-words text-2xl font-black text-slate-900">{value}</div>
+      <div className="volora-display mt-2 break-words text-2xl font-bold text-[#0B202B] tabular-nums">{value}</div>
     </button>
   );
 }
@@ -144,7 +144,7 @@ export function OrderEngineTabs({ active }: { active: "inbox" | "exceptions" | "
           key={tab.key}
           href={tab.href}
           aria-current={active === tab.key ? "page" : undefined}
-          className={`rounded-xl px-4 py-2 text-sm font-black ${active === tab.key ? "bg-white text-slate-900 shadow" : "text-slate-500 hover:text-slate-800"}`}
+          className={`rounded-xl px-4 py-2 text-sm font-black ${active === tab.key ? "bg-white text-[#0B202B] shadow shadow-[inset_0_-2px_0_#E8B83F]" : "text-slate-500 hover:text-slate-800"}`}
         >
           {tab.label}
         </a>

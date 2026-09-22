@@ -83,15 +83,19 @@ const vyronCostLanding = getProductLandingContent("vyron_cost");
 const pricingPlans = vyronCostLanding.pricingPlans;
 const premiumCapabilities = vyronCostLanding.premiumCapabilities;
 
+const NAV_ON_DARK = "text-sm font-semibold text-[#DDE7EB] transition hover:text-[#F4C44E]";
+const OUTLINE_ON_DARK =
+  "inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-transparent font-semibold text-white transition hover:border-[#F4C44E]/70 hover:text-[#F7C948]";
+
 function Logo() {
   return (
     <Link href="/" className="flex items-center gap-3">
-      <VyronLogoLockup variant="onLight" size={52} suffix="COST" />
+      <VyronLogoLockup variant="onDark" size={52} suffix="COST" />
     </Link>
   );
 }
 
-function MiniSparkline({ color = "#3B82F6" }: { color?: string }) {
+function MiniSparkline({ color = "#2C5A6B" }: { color?: string }) {
   return (
     <svg viewBox="0 0 180 42" className="absolute bottom-3 right-3 h-8 w-28 opacity-40 sm:h-10 sm:w-36">
       <path
@@ -191,47 +195,50 @@ export default function VyronPublicLandingPage() {
   return (
     <main className={M.page}>
       <div className="pointer-events-none fixed inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(29,107,255,0.07),transparent_42%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_12%,rgba(59,130,246,0.05),transparent_38%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(22,58,72,0.07),transparent_42%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_12%,rgba(44,90,107,0.05),transparent_38%)]" />
         <div
           className="absolute inset-0 opacity-[0.35]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(15,23,42,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.04) 1px, transparent 1px)",
+              "linear-gradient(rgba(11,32,43,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(11,32,43,0.04) 1px, transparent 1px)",
             backgroundSize: "48px 48px",
           }}
         />
       </div>
 
-      <header className={`relative z-10 ${M.publicHeader}`}>
+      <div className="volora-night volora-texture relative z-10 overflow-hidden">
+      <div className="pointer-events-none absolute -right-40 -top-40 h-[36rem] w-[36rem] rounded-full bg-[radial-gradient(circle,rgba(244,196,78,0.16),transparent_65%)]" />
+      <div className="pointer-events-none absolute -bottom-56 -left-40 h-[36rem] w-[36rem] rounded-full bg-[radial-gradient(circle,rgba(62,155,82,0.14),transparent_65%)]" />
+      <header className="relative z-10 border-b border-white/[0.07]">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-6 sm:py-6">
           <Logo />
           <nav className="hidden items-center gap-8 md:flex">
-            <a href="#modules" className={M.navLink}>
+            <a href="#modules" className={NAV_ON_DARK}>
               Platform
             </a>
-            <a href="#premium" className={M.navLink}>
+            <a href="#premium" className={NAV_ON_DARK}>
               Premium
             </a>
-            <a href="#workflow" className={M.navLink}>
+            <a href="#workflow" className={NAV_ON_DARK}>
               Workflow
             </a>
-            <a href="#value" className={M.navLink}>
+            <a href="#value" className={NAV_ON_DARK}>
               Outcomes
             </a>
-            <a href="#pricing" className={M.navLink}>
+            <a href="#pricing" className={NAV_ON_DARK}>
               Pricing
             </a>
           </nav>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <Link href="/login" className={`${M.secondaryBtn} px-4 py-2.5 text-xs sm:px-5 sm:py-3 sm:text-sm`}>
+            <Link href="/login" className={`${OUTLINE_ON_DARK} px-4 py-2.5 text-xs sm:px-5 sm:py-3 sm:text-sm`}>
               Sign In
             </Link>
             <Link
               href="/login"
               className={`${M.primaryBtn} px-4 py-2.5 text-xs sm:px-5 sm:py-3 sm:text-sm`}
             >
-              Open VYRON COST
+              Open VOLORA
             </Link>
           </div>
         </div>
@@ -240,16 +247,15 @@ export default function VyronPublicLandingPage() {
       {/* Hero */}
       <section className="relative z-10 mx-auto grid max-w-7xl gap-12 px-4 py-10 sm:px-6 sm:py-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-14">
         <div>
-          <div className={M.eyebrow}>
-            <Sparkles size={14} className="text-[#2563EB]" />
-            VYRON COST
+          <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F4C44E]">
+            Real data. Smarter decisions. Higher margins.
           </div>
 
-          <h1 className={`mt-5 text-4xl leading-[1.02] tracking-[-0.04em] sm:mt-6 sm:text-5xl lg:text-6xl ${M.heading}`}>
-            AI Cost Intelligence for Procurement, Inventory &amp; Manufacturing
+          <h1 className={`mt-5 text-4xl leading-[1.05] tracking-[-0.02em] sm:mt-6 sm:text-5xl lg:text-6xl ${M.headingOnDark}`}>
+            Turn every cost into a <span className="text-[#F4C44E]">more profitable</span> tomorrow.
           </h1>
 
-          <p className={`mt-5 max-w-2xl text-base leading-7 sm:mt-6 sm:text-lg sm:leading-8 ${M.body}`}>
+          <p className={`mt-5 max-w-2xl text-base leading-7 sm:mt-6 sm:text-lg sm:leading-8 ${M.bodyOnDark}`}>
             Control supplier pricing, purchase orders, ingredients, stock, recipes, manufacturing runs, finished goods and
             customer profitability from one intelligent platform.
           </p>
@@ -259,17 +265,17 @@ export default function VyronPublicLandingPage() {
               href="/login"
               className={`${M.primaryBtn} px-6 py-3.5 text-xs uppercase tracking-[0.1em] sm:px-7 sm:py-4 sm:text-sm`}
             >
-              Open VYRON COST <ArrowRight size={16} />
+              Open VOLORA <ArrowRight size={16} />
             </Link>
             <a
               href="#modules"
-              className={`${M.secondaryBtn} px-6 py-3.5 text-xs font-bold uppercase tracking-[0.1em] sm:px-7 sm:py-4 sm:text-sm`}
+              className={`${OUTLINE_ON_DARK} px-6 py-3.5 text-xs font-bold uppercase tracking-[0.1em] sm:px-7 sm:py-4 sm:text-sm`}
             >
               View Features
             </a>
             <Link
               href="/login"
-              className={`${M.ghostBtn} px-6 py-3.5 text-xs font-bold uppercase tracking-[0.1em] sm:px-7 sm:py-4 sm:text-sm`}
+              className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-xs font-bold uppercase tracking-[0.1em] text-[#DDE7EB] transition hover:text-white sm:px-7 sm:py-4 sm:text-sm"
             >
               Request Demo
             </Link>
@@ -282,24 +288,24 @@ export default function VyronPublicLandingPage() {
               ["PO → GRN", "Procurement chain", false],
               ["Xero", "Ledger ready", false],
             ].map(([value, label, accent]) => (
-              <LightCard key={String(label)} className="p-3 sm:p-4">
+              <div key={String(label)} className="volora-glass-dark rounded-2xl p-3 sm:p-4">
                 <div
-                  className={`break-words leading-tight text-xl sm:text-2xl ${accent ? M.accentKpiGradient : "font-black text-[#0F172A]"}`}
+                  className={`volora-display break-words leading-tight text-xl font-bold sm:text-2xl ${accent ? "text-[#F4C44E]" : "text-white"}`}
                 >
                   {value}
                 </div>
                 <div
-                  className={`mt-1 min-h-[30px] text-[10px] font-bold uppercase tracking-[0.12em] sm:min-h-[32px] sm:text-xs ${M.muted}`}
+                  className={`mt-1 min-h-[30px] text-[10px] font-bold uppercase tracking-[0.12em] sm:min-h-[32px] sm:text-xs ${M.mutedOnDark}`}
                 >
                   {label}
                 </div>
-              </LightCard>
+              </div>
             ))}
           </div>
         </div>
 
         <div className="relative">
-          <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-[#2563EB]/10 via-[#1D6BFF]/8 to-transparent blur-xl" />
+          <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-[#F4C44E]/10 via-transparent to-[#3E9B52]/10 blur-xl" />
           <div className={`relative p-4 sm:p-5 ${M.darkPanel}`}>
             <div className={`p-5 sm:p-6 ${M.darkPanelInner}`}>
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -323,7 +329,7 @@ export default function VyronPublicLandingPage() {
                       {label}
                     </div>
                     <div
-                      className={`mt-1 text-2xl sm:mt-2 sm:text-3xl ${accent ? M.accentKpi : "font-black text-[#F8FAFC]"}`}
+                      className={`mt-1 text-2xl font-black sm:mt-2 sm:text-3xl ${accent ? "text-[#F4C44E]" : "text-[#F8FAFC]"}`}
                     >
                       {value}
                     </div>
@@ -334,22 +340,22 @@ export default function VyronPublicLandingPage() {
 
             <div className="mt-4 grid gap-4 sm:mt-5 md:grid-cols-2">
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 sm:rounded-[1.5rem]">
-                <MiniSparkline color="#3B82F6" />
+                <MiniSparkline color="#F4C44E" />
                 <div className={`h-10 w-10 sm:h-12 sm:w-12 ${M.iconEmphasis}`}>
                   <Target size={22} />
                 </div>
                 <div className={`mt-4 text-[10px] font-bold uppercase tracking-[0.14em] sm:text-xs ${M.mutedOnDark}`}>
                   Suggested Price
                 </div>
-                <div className={`mt-1 text-3xl sm:text-4xl ${M.accentKpi}`}>R42.90</div>
+                <div className="mt-1 text-3xl font-black text-[#F4C44E] sm:text-4xl">R42.90</div>
                 <p className={`mt-2 text-xs leading-6 sm:text-sm ${M.bodyOnDark}`}>
                   BOM cost, packaging, labour, wastage and target GP in one view.
                 </p>
               </div>
 
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 sm:rounded-[1.5rem]">
-                <MiniSparkline />
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-[#1D6BFF]/20 text-blue-200 sm:h-12 sm:w-12 sm:rounded-2xl">
+                <MiniSparkline color="#55B968" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-[#3E9B52]/20 text-[#82CA8F] sm:h-12 sm:w-12 sm:rounded-2xl">
                   <BrainCircuit size={22} />
                 </div>
                 <div className={`mt-4 text-[10px] font-bold uppercase tracking-[0.14em] sm:text-xs ${M.mutedOnDark}`}>
@@ -364,6 +370,7 @@ export default function VyronPublicLandingPage() {
           </div>
         </div>
       </section>
+      </div>
 
       {/* Intelligence Modules */}
       <section id="modules" className={`relative z-10 py-14 sm:py-16 ${M.pageAlt}`}>
@@ -418,7 +425,7 @@ export default function VyronPublicLandingPage() {
             const Icon = CAPABILITY_ICONS[feature] || Sparkles;
             return (
             <LightCard key={feature} className="relative overflow-hidden">
-              <div className="absolute right-3 top-3 rounded-full border border-[#1D6BFF]/20 bg-[#1D6BFF]/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#1D6BFF]">
+              <div className="absolute right-3 top-3 rounded-full border border-[#1F4757]/20 bg-[#1F4757]/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-[#1F4757]">
                 {getUpgradePackageLabel(feature)}
               </div>
               <div className={`h-11 w-11 ${M.iconEmphasis}`}>
@@ -449,12 +456,12 @@ export default function VyronPublicLandingPage() {
                   <div className={isXero ? `h-10 w-10 ${M.iconXero}` : `h-10 w-10 ${M.iconSubtle}`}>
                     <Icon size={20} />
                   </div>
-                  <div className={`mt-3 text-xs font-bold sm:text-sm ${isXero ? "text-[#13B5EA]" : "text-[#0F172A]"}`}>
+                  <div className={`mt-3 text-xs font-bold sm:text-sm ${isXero ? "text-[#13B5EA]" : "text-[#0B202B]"}`}>
                     {step.label}
                   </div>
                 </LightCard>
                 {index < workflowSteps.length - 1 ? (
-                  <ArrowRight className="hidden shrink-0 text-[#1D6BFF]/50 sm:block" size={18} />
+                  <ArrowRight className="hidden shrink-0 text-[#1F4757]/50 sm:block" size={18} />
                 ) : null}
               </div>
             );
@@ -471,14 +478,14 @@ export default function VyronPublicLandingPage() {
               Outcomes your finance and operations teams can measure
             </h2>
             <p className={`mt-4 text-sm leading-7 sm:text-base ${M.muted}`}>
-              VYRON COST is an AI cost intelligence, procurement control and inventory accuracy platform — Xero-ready for
+              VOLORA is an AI cost intelligence, procurement control and inventory accuracy platform — Xero-ready for
               finance teams who need truth in margin, not spreadsheets.
             </p>
           </div>
           <div className="grid gap-3 sm:gap-4">
             {clientOutcomes.map((outcome) => (
               <div key={outcome} className={`flex items-start gap-3 p-4 ${M.lightCard}`}>
-                <CheckCircle2 className="mt-0.5 shrink-0 text-[#1D6BFF]" size={20} />
+                <CheckCircle2 className="mt-0.5 shrink-0 text-[#1F4757]" size={20} />
                 <span className={`text-sm leading-6 ${M.body}`}>{outcome}</span>
               </div>
             ))}
@@ -534,7 +541,7 @@ export default function VyronPublicLandingPage() {
                 */}
                 <div className="mt-2 min-h-[2.75rem]">
                   {plan.priceIncludes ? (
-                    <p className="text-sm font-bold text-[#0F172A]">{plan.priceIncludes}</p>
+                    <p className="text-sm font-bold text-[#0B202B]">{plan.priceIncludes}</p>
                   ) : null}
                   {plan.priceFootnote ? (
                     <p className={`mt-0.5 text-xs font-semibold ${M.muted}`}>{plan.priceFootnote}</p>
@@ -546,7 +553,7 @@ export default function VyronPublicLandingPage() {
                 <div className="mt-5 flex-1 space-y-2.5">
                   {plan.highlights.map((highlight) => (
                     <div key={highlight} className={`flex items-start gap-2.5 text-sm ${M.body}`}>
-                      <CheckCircle2 className="mt-0.5 shrink-0 text-[#1D6BFF]/70" size={16} />
+                      <CheckCircle2 className="mt-0.5 shrink-0 text-[#1F4757]/70" size={16} />
                       <span>{highlight}</span>
                     </div>
                   ))}
@@ -577,7 +584,7 @@ export default function VyronPublicLandingPage() {
             </div>
             <p className={`mt-2 text-sm leading-6 ${M.body}`}>
               {MULTI_STORE_COMMERCIALS.description} Multi-Store Operations includes{" "}
-              <span className="font-bold text-[#0F172A]">
+              <span className="font-bold text-[#0B202B]">
                 up to {MULTI_STORE_COMMERCIALS.includedLocations} locations
               </span>{" "}
               at {formatRand(MULTI_STORE_COMMERCIALS.monthlyPrice)} a month. Beyond that, each additional
@@ -594,9 +601,9 @@ export default function VyronPublicLandingPage() {
                 </thead>
                 <tbody>
                   {multiStorePriceExamples().map((row) => (
-                    <tr key={row.locations} className="border-b border-[rgba(15,23,42,0.06)] last:border-0">
+                    <tr key={row.locations} className="border-b border-[rgba(11,32,43,0.06)] last:border-0">
                       <td className={`px-3 py-2.5 text-sm font-semibold ${M.body}`}>{row.locationsLabel}</td>
-                      <td className="px-3 py-2.5 text-right text-sm font-black tabular-nums text-[#0F172A]">
+                      <td className="px-3 py-2.5 text-right text-sm font-black tabular-nums text-[#0B202B]">
                         {row.monthlyLabel}
                       </td>
                     </tr>
@@ -627,7 +634,7 @@ export default function VyronPublicLandingPage() {
       {/* CTA */}
       <section className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-6 sm:pb-20">
         <div className={`relative overflow-hidden rounded-[2rem] p-8 sm:rounded-[2.5rem] sm:p-12 ${M.darkPanel}`}>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(59,130,246,0.08),transparent_42%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(44,90,107,0.08),transparent_42%)]" />
           <div className="relative text-center">
             <div className={`inline-flex items-center gap-2 ${M.statusBrand}`}>
               <Users size={14} />
@@ -635,7 +642,7 @@ export default function VyronPublicLandingPage() {
             </div>
             <h2 className={`mt-6 text-3xl sm:text-4xl lg:text-5xl ${M.headingOnDark}`}>Ready to control your true cost?</h2>
             <p className={`mx-auto mt-4 max-w-2xl text-sm leading-7 sm:text-base ${M.mutedOnDark}`}>
-              Join manufacturers and multi-site operators using VYRON COST for AI cost intelligence, procurement control
+              Join manufacturers and multi-site operators using VOLORA for AI cost intelligence, procurement control
               and finished goods profitability.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
@@ -643,7 +650,7 @@ export default function VyronPublicLandingPage() {
                 href="/login"
                 className={`${M.primaryBtn} px-7 py-4 text-xs uppercase tracking-[0.1em] sm:text-sm`}
               >
-                Start VYRON COST <ArrowRight size={18} />
+                Start VOLORA <ArrowRight size={18} />
               </Link>
               <Link
                 href="/login"
@@ -656,12 +663,12 @@ export default function VyronPublicLandingPage() {
         </div>
 
         <footer className={`mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-[#E2E8F0] pt-8 text-xs font-medium ${M.muted}`}>
-          <div>© {new Date().getFullYear()} VYRON COST — AI Cost Intelligence Platform</div>
+          <div>© {new Date().getFullYear()} VOLORA — Profitability Intelligence · A product of Vyronsoft (Pty) Ltd.</div>
           <div className="flex gap-4">
-            <Link href="/login" className="hover:text-[#0F172A]">
+            <Link href="/login" className="hover:text-[#0B202B]">
               Sign In
             </Link>
-            <a href="#pricing" className="hover:text-[#0F172A]">
+            <a href="#pricing" className="hover:text-[#0B202B]">
               Pricing
             </a>
           </div>

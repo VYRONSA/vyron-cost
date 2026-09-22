@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, LogOut, UserRound, History, ShoppingBag, Download } from "lucide-react";
+import { ChevronDown, LogOut, History, ShoppingBag, Download } from "lucide-react";
 import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
-import { VyronLogoLockup, VyronLogoMark } from "@/components/vyron-ui/VyronLogo";
+import { PoweredByVolora, VoloraWordmark, VyronLogoLockup } from "@/components/vyron-ui/VyronLogo";
 import VyronOrderInstall, { useCanInstall } from "@/components/vyron-order/VyronOrderInstall";
 
 const M = VYRON_MASTER;
@@ -57,7 +57,7 @@ export default function VyronOrderShell({
 
   return (
     <main className={`${M.page} min-h-dvh`}>
-      <header className="sticky top-0 z-40 border-b border-[rgba(15,23,42,0.07)] bg-white/72 backdrop-blur-xl backdrop-saturate-150">
+      <header className="sticky top-0 z-40 border-b border-[rgba(11,32,43,0.07)] bg-white/72 backdrop-blur-xl backdrop-saturate-150">
         <div className={`mx-auto flex w-full ${ORDER_CONTENT_WIDTH} items-center justify-between gap-3 px-4 py-3 md:px-8`}>
           {/*
             The full lockup carries a tagline that crowds a 390px screen, so the
@@ -66,11 +66,10 @@ export default function VyronOrderShell({
           */}
           <span className="flex min-w-0 items-center">
             <span className="md:hidden">
-              <span className="flex items-center gap-2.5">
-                <VyronLogoMark size={32} />
-                <span className="text-[1.05rem] font-black leading-none tracking-[0.14em]">
-                  <span className="text-[#0F172A]">VYRON</span>
-                  <span className="text-[#0B54D6]">ORDER</span>
+              <span className="flex items-center gap-2">
+                <VoloraWordmark height={17} variant="onLight" />
+                <span className="rounded-md border border-[#0B202B]/25 px-1.5 py-0.5 text-[0.55rem] font-bold uppercase tracking-[0.18em] text-[#0B202B]">
+                  Order
                 </span>
               </span>
             </span>
@@ -81,7 +80,7 @@ export default function VyronOrderShell({
 
           <div className="flex shrink-0 items-center gap-2.5">
             <span className="hidden min-w-0 text-right lg:block">
-              <span className="block truncate text-sm font-bold text-[#0F172A]">{customerName}</span>
+              <span className="block truncate text-sm font-bold text-[#0B202B]">{customerName}</span>
               <span className="vyron-t-label block text-[10px] text-[#64748B]">Ordering workspace</span>
             </span>
 
@@ -101,17 +100,17 @@ export default function VyronOrderShell({
 
               {menuOpen ? (
                 <div className={`${M.lightCard} absolute right-0 z-50 mt-2 w-[min(17rem,calc(100vw-2rem))] overflow-hidden p-0`}>
-                  <div className="border-b border-[rgba(15,23,42,0.07)] px-4 py-3.5">
+                  <div className="border-b border-[rgba(11,32,43,0.07)] px-4 py-3.5">
                     <p className="vyron-t-label text-[10px] text-[#64748B]">Signed in as</p>
                     {/* Company identity only — never a tenant or customer id. */}
-                    <p className="mt-1 truncate text-sm font-bold text-[#0F172A]">{customerName}</p>
+                    <p className="mt-1 truncate text-sm font-bold text-[#0B202B]">{customerName}</p>
                   </div>
                   <div className="p-1.5">
                     {onNewOrder ? (
                       <button
                         type="button"
                         onClick={() => { setMenuOpen(false); onNewOrder(); }}
-                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-[#334155] transition hover:bg-[rgba(15,23,42,0.04)]"
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-[#334155] transition hover:bg-[rgba(11,32,43,0.04)]"
                       >
                         <ShoppingBag size={16} className="text-[#64748B]" /> New order
                       </button>
@@ -120,7 +119,7 @@ export default function VyronOrderShell({
                       <button
                         type="button"
                         onClick={() => { setMenuOpen(false); onOrders(); }}
-                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-[#334155] transition hover:bg-[rgba(15,23,42,0.04)]"
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-[#334155] transition hover:bg-[rgba(11,32,43,0.04)]"
                       >
                         <History size={16} className="text-[#64748B]" /> My orders
                       </button>
@@ -129,7 +128,7 @@ export default function VyronOrderShell({
                       <button
                         type="button"
                         onClick={() => { setMenuOpen(false); setInstallOpen(true); }}
-                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-[#334155] transition hover:bg-[rgba(15,23,42,0.04)]"
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-[#334155] transition hover:bg-[rgba(11,32,43,0.04)]"
                       >
                         <Download size={16} className="text-[#64748B]" /> Install app
                       </button>
@@ -149,7 +148,11 @@ export default function VyronOrderShell({
         </div>
       </header>
 
-      <div className={`mx-auto w-full ${ORDER_CONTENT_WIDTH} px-4 pb-20 pt-6 md:px-8 md:pt-8`}>{children}</div>
+      <div className={`mx-auto w-full ${ORDER_CONTENT_WIDTH} px-4 pb-10 pt-6 md:px-8 md:pt-8`}>{children}</div>
+
+      <footer className={`mx-auto flex w-full ${ORDER_CONTENT_WIDTH} justify-center px-4 pb-24 md:px-8 md:pb-10`}>
+        <PoweredByVolora />
+      </footer>
 
       <VyronOrderInstall open={installOpen} onClose={() => setInstallOpen(false)} />
     </main>
@@ -162,17 +165,18 @@ export function VyronOrderAuthShell({ children }: { children: React.ReactNode })
     <main className={`${M.page} flex min-h-dvh flex-col items-center justify-center px-4 py-10`}>
       <div className="w-full max-w-[26rem]">
         <div className="flex flex-col items-center text-center">
-          <VyronLogoMark size={60} />
-          <h1 className="mt-4 text-[1.6rem] font-black leading-none tracking-[0.14em]">
-            <span className="text-[#0F172A]">VYRON</span>
-            <span className="vyron-grad-text">ORDER</span>
+          <h1 className="flex flex-col items-center gap-3">
+            <VoloraWordmark height={30} variant="onLight" title="VOLORA Order" />
+            <span className="rounded-md border border-[#0B202B]/25 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.24em] text-[#0B202B]">
+              Order
+            </span>
           </h1>
-          <p className="mt-2.5 text-sm font-medium text-[#64748B]">Place your order in under a minute.</p>
+          <p className="mt-3 text-sm font-medium text-[#64748B]">Place your order in under a minute.</p>
         </div>
         {children}
       </div>
-      <p className="mt-8 flex items-center gap-1.5 text-[11px] font-semibold text-[#94A3B8]">
-        <UserRound size={12} /> Powered by VYRON COST
+      <p className="mt-8">
+        <PoweredByVolora />
       </p>
     </main>
   );

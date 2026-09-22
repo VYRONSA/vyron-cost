@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   BarChart3,
   BrainCircuit,
@@ -10,7 +11,6 @@ import {
   PackageCheck,
   ShieldCheck,
   ShoppingCart,
-  Sparkles,
   TrendingUp,
   TriangleAlert,
   Truck,
@@ -59,55 +59,43 @@ type DemoRecovery = { title: string; monthlyRecovery: number } | undefined;
 
 const M = VYRON_MASTER;
 
+const HERO_LINKS = [
+  { label: "Costing", href: "/product-profitability", icon: TrendingUp },
+  { label: "Inventory", href: "/inventory", icon: Warehouse },
+  { label: "Production", href: "/production-planning", icon: Factory },
+  { label: "Orders", href: "/order-inbox", icon: ShoppingCart },
+];
+
 function DashboardHero({ tradingName }: { tradingName: string }) {
   return (
-    <section className={M.dashboardHero}>
-      <div className="pointer-events-none absolute -right-8 top-8 h-40 w-40 rounded-full bg-[#1D6BFF]/10 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-6 left-1/4 h-32 w-32 rounded-full bg-[#3B82F6]/8 blur-2xl" />
+    <section className={`${M.dashboardHero} volora-texture`}>
+      <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(244,196,78,0.20),transparent_65%)]" />
+      <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(62,155,82,0.16),transparent_65%)]" />
 
-      <div className="relative p-6 md:p-8">
-        <div className={`p-5 md:p-6 ${M.dashboardHeroInner}`}>
-          <div className="flex min-w-0 max-w-3xl flex-col justify-center">
-            <div className={`inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#CBD5E1]`}>
-              <Sparkles size={13} className="text-[#3B82F6]" />
-              <span>
-                VYRON COST <span className="text-[#3B82F6]">Command Centre</span>
-              </span>
-            </div>
-
-            <div className={`mt-4 text-[11px] font-bold uppercase tracking-[0.2em] ${M.mutedOnDark}`}>{tradingName}</div>
-
-            <h1 className={`mt-2 break-words text-3xl leading-[1.12] tracking-[-0.03em] text-balance md:text-4xl ${M.headingOnDark}`}>
-              AI Cost Intelligence{" "}
-              <span className={M.gradientTextOnDark}>Command Centre</span>
-            </h1>
-
-            <p className={`mt-4 max-w-lg text-sm font-medium leading-6 ${M.bodyOnDark}`}>
-              Real-time recovery, supplier risk, inventory exposure and margin protection.
-            </p>
-
-            <div className="mt-5 grid max-w-xl gap-3">
-              <div className={`flex min-w-0 items-center justify-between gap-2 overflow-hidden ${M.dashboardHeroRow}`}>
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-[#1D6BFF]" />
-                  <span className={`min-w-0 break-words text-xs font-bold uppercase tracking-[0.1em] ${M.bodyOnDark}`}>
-                    Inventory Exposure
-                  </span>
-                </div>
-                <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-[#3B82F6]">Monitoring</span>
-              </div>
-              <div className={`flex min-w-0 items-center justify-between gap-2 overflow-hidden ${M.dashboardHeroRow}`}>
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-[#3B82F6]" />
-                  <span className={`min-w-0 break-words text-xs font-bold uppercase tracking-[0.1em] ${M.bodyOnDark}`}>
-                    Revenue Intelligence
-                  </span>
-                </div>
-                <span className={`shrink-0 text-xs font-bold uppercase tracking-wide ${M.mutedOnDark}`}>Live</span>
-              </div>
-            </div>
-          </div>
+      <div className="relative flex flex-col gap-6 p-6 md:p-8 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0 max-w-3xl">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[#F4C44E]">{tradingName}</div>
+          <h1 className={`mt-3 break-words text-3xl leading-[1.1] tracking-[-0.02em] text-balance md:text-[2.5rem] ${M.headingOnDark}`}>
+            Business Overview
+          </h1>
+          <span className="volora-rule mt-4" />
+          <p className={`mt-4 max-w-lg text-sm font-medium leading-6 ${M.bodyOnDark}`}>
+            Real-time cost, margin and operational intelligence.
+          </p>
         </div>
+
+        <nav aria-label="Quick links" className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 lg:w-[26rem]">
+          {HERO_LINKS.map(({ label, href, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className="volora-glass-dark flex min-w-0 items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold text-[#DDE7EB] transition hover:border-[#F4C44E]/40 hover:text-white"
+            >
+              <Icon size={15} className="shrink-0 text-[#F4C44E]" aria-hidden />
+              <span className="truncate">{label}</span>
+            </Link>
+          ))}
+        </nav>
       </div>
     </section>
   );
@@ -207,12 +195,12 @@ export default function DashboardPremiumClient({
       <section>
         <VyronSectionHeader title="Executive KPI Overview" />
         <VyronMetricGrid>
-          <VyronMetricCard label="Inventory Value" value={counts.inventoryValue > 0 ? formatCurrency(counts.inventoryValue) : "Monitoring"} note="Awaiting transactions" href="/inventory" tone={counts.inventoryValue > 0 ? "healthy" : "default"} icon={<Warehouse size={18} />} />
+          <VyronMetricCard label="Inventory Value" value={counts.inventoryValue > 0 ? formatCurrency(counts.inventoryValue) : "No data yet"} note="Awaiting transactions" href="/inventory" tone={counts.inventoryValue > 0 ? "healthy" : "default"} icon={<Warehouse size={18} />} />
           <VyronMetricCard label="Potential Recovery" value={topRecovery ? `R${topRecovery.monthlyRecovery.toLocaleString("en-ZA")}` : "No Recovery Yet"} note="Scanning pipeline" href="/financial-leakage" tone="warning" icon={<ShieldCheck size={18} />} />
-          <VyronMetricCard label="Average GP" value="Monitoring" note="Calibrating signals" href="/product-profitability" tone="healthy" icon={<TrendingUp size={18} />} />
+          <VyronMetricCard label="Average GP" value="Not available" note="Open product profitability" href="/product-profitability" tone="default" icon={<TrendingUp size={18} />} />
           <VyronMetricCard label="Supplier Risk" value={(risks?.length ?? 0) > 0 ? `${risks?.length ?? 0} Alerts` : "No Risk"} note="Monitoring" href="/supplier-intelligence" tone={(risks?.length ?? 0) > 0 ? "danger" : "healthy"} icon={<TriangleAlert size={18} />} />
-          <VyronMetricCard label="Active Products" value={counts.products > 0 ? String(counts.products) : "Awaiting Txns"} note="Monitoring" href="/products" tone={counts.products > 0 ? "healthy" : "default"} icon={<Package size={18} />} />
-          <VyronMetricCard label="Revenue" value={counts.customerInvoices > 0 ? String(counts.customerInvoices) : "Awaiting Txns"} note="Invoice feed" href="/customer-invoices" tone={counts.customerInvoices > 0 ? "healthy" : "default"} icon={<BarChart3 size={18} />} />
+          <VyronMetricCard label="Active Products" value={counts.products > 0 ? String(counts.products) : "No data yet"} note="Monitoring" href="/products" tone={counts.products > 0 ? "healthy" : "default"} icon={<Package size={18} />} />
+          <VyronMetricCard label="Revenue" value={counts.customerInvoices > 0 ? String(counts.customerInvoices) : "No data yet"} note="Invoice feed" href="/customer-invoices" tone={counts.customerInvoices > 0 ? "healthy" : "default"} icon={<BarChart3 size={18} />} />
         </VyronMetricGrid>
       </section>
 
@@ -566,7 +554,7 @@ export default function DashboardPremiumClient({
             <h2 className={`mt-2 text-2xl tracking-tight md:text-[1.65rem] ${M.heading}`}>Cost command layer</h2>
           </div>
           <div className={M.statusBrand}>
-            <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[#1D6BFF]" />
+            <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[#1F4757]" />
             AI Feed Active
           </div>
         </div>
@@ -580,11 +568,11 @@ export default function DashboardPremiumClient({
             <div key={label} className={`min-h-[136px] min-w-0 ${M.dashboardWidget}`}>
               <div className="flex items-center justify-between gap-3">
                 <div className={`flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] ${M.muted}`}>
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#1D6BFF]" />
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#1F4757]" />
                   {label}
                 </div>
                 <div className="rounded-full border border-[#E2E8F0] bg-[#F6F7FB] px-2.5 py-0.5 text-[10px] font-bold text-[#334155]">
-                  <span className="text-[#2563EB]">{confidence}</span> confidence
+                  <span className="text-[#1F4757]">{confidence}</span> confidence
                 </div>
               </div>
               <p className={`mt-3 text-sm font-medium leading-6 ${M.body}`}>{detail}</p>

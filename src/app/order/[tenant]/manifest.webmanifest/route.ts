@@ -40,18 +40,18 @@ export async function GET(
   });
 
   const manifest = {
-    name: "VYRON ORDER",
-    short_name: "VYRON ORDER",
+    name: "VOLORA Order",
+    short_name: "Ordering",
     id: base,
-    description: `Place your order with ${tenant.displayName}. Powered by VYRON COST.`,
+    description: `Place your order with ${tenant.displayName}. Powered by VOLORA.`,
     start_url: base,
     scope: base,
     display_override: ["standalone", "minimal-ui", "browser"],
     display: "standalone",
     orientation: "portrait",
     /* The wash the portal itself sits on, so the splash does not flash white. */
-    background_color: "#F4F6FE",
-    theme_color: "#4F46E5",
+    background_color: "#F7F8F6",
+    theme_color: "#0B202B",
     categories: ["business", "productivity", "shopping"],
     lang: "en-ZA",
     dir: "ltr",
