@@ -1,4 +1,4 @@
-VYRON COST — VYRON Customer Invoice Import Template
+VOLORA — Customer Invoice Import Template
 
 Columns:
   invoice_number
@@ -25,4 +25,4 @@ Instructions:
   - Dates use YYYY-MM-DD.
   - Monetary fields are numeric — do not enter currency symbols.
   - item_code is the source accounting-system item identifier.
-  - VYRON resolves item_code to a product using the company-specific Product Mapping.
+  - VOLORA resolves item_code to a product using the company-specific Product Mapping.

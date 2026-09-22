@@ -1,15 +1,15 @@
 {
-  "name": "VYRON COST",
-  "short_name": "VYRON",
+  "name": "VOLORA — Profitability Intelligence",
+  "short_name": "VOLORA",
   "id": "/dashboard",
-  "description": "Profit protection and cost intelligence powered by VYRON COST.",
+  "description": "Profitability Intelligence for manufacturing and food manufacturing businesses.",
   "start_url": "/dashboard",
   "scope": "/",
   "display_override": ["standalone", "window-controls-overlay", "minimal-ui", "browser"],
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#F8FAFD",
-  "theme_color": "#07111F",
+  "background_color": "#0B202B",
+  "theme_color": "#0B202B",
   "categories": ["business", "productivity", "finance"],
   "lang": "en-ZA",
   "dir": "ltr",
@@ -19,7 +19,7 @@
       "name": "Dashboard",
       "short_name": "Dashboard",
       "url": "/dashboard",
-      "description": "Open executive command centre"
+      "description": "Open the business overview"
     },
     {
       "name": "Purchase Orders",

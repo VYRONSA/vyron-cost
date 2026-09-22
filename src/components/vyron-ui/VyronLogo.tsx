@@ -1,16 +1,66 @@
-import { useId } from "react";
-
 /**
- * VYRON COST mark — the VyronSoft blade-V, rebuilt as vector.
+ * VOLORA — PROFITABILITY INTELLIGENCE brand mark.
  *
- * Two faceted blades converge on a single point: the left in chrome, the right in
- * brand blue and pitched higher, with a glowing ring behind them. Each blade is
- * split into a lit face and a shadowed face so the bevel survives at 24px, where a
- * flat silhouette would just read as a grey triangle.
+ * The wordmark is drawn as vector strokes rather than set in a web font, so it
+ * renders identically everywhere (sidebar, login, reports, print, PWA) and never
+ * waits on a font download. Its signature is the first O — a ring cut by a warm
+ * gold arc — and the final A drawn as a gold Λ.
+ *
+ * Export names (VyronLogoMark / VyronLogoLockup) are internal identifiers and
+ * are kept so every existing call site adopts the new brand unchanged.
  */
 
 export type VyronLogoVariant = "onDark" | "onLight";
 
+const GOLD = "#F4C44E";
+const GOLD_ON_LIGHT = "#C99A26";
+
+/** The VOLORA wordmark on its own. Height drives the size; width follows. */
+export function VoloraWordmark({
+  height = 28,
+  variant = "onDark",
+  className = "",
+  title = "VOLORA",
+}: {
+  height?: number;
+  variant?: VyronLogoVariant;
+  className?: string;
+  title?: string;
+}) {
+  const ink = variant === "onDark" ? "#FFFFFF" : "#0B202B";
+  const gold = variant === "onDark" ? GOLD : GOLD_ON_LIGHT;
+  const width = (height * 312) / 60;
+  return (
+    <svg
+      viewBox="0 0 312 60"
+      width={width}
+      height={height}
+      role="img"
+      aria-label={title}
+      className={className}
+      fill="none"
+      strokeWidth={4.6}
+      strokeLinejoin="miter"
+    >
+      <title>{title}</title>
+      {/* V */}
+      <path d="M3 8 L22.5 52 L42 8" stroke={ink} />
+      {/* O — ring with the gold arc */}
+      <circle cx="78" cy="30" r="21" stroke={ink} />
+      <path d="M85.18 10.27 A21 21 0 0 1 97.73 37.18" stroke={gold} strokeWidth={5.6} strokeLinecap="round" />
+      {/* L */}
+      <path d="M118 8 V51.7 H147" stroke={ink} />
+      {/* O */}
+      <circle cx="183" cy="30" r="21" stroke={ink} />
+      {/* R */}
+      <path d="M222 52 V10.3 H240 A11 11 0 0 1 240 32.3 H222 M238.5 32.3 L256 52" stroke={ink} />
+      {/* Λ — the gold A */}
+      <path d="M268.5 52 L288.5 8 L308.5 52" stroke={gold} />
+    </svg>
+  );
+}
+
+/** Square app mark: navy tile, the gold-arc O ring and a gold Λ. */
 export function VyronLogoMark({
   size = 56,
   className = "",
@@ -18,79 +68,29 @@ export function VyronLogoMark({
   size?: number;
   className?: string;
 }) {
-  // useId keeps every gradient/filter id unique — duplicate ids would make each
-  // mark on the page inherit whichever one rendered first.
-  const uid = useId().replace(/:/g, "");
-  const chrome = `chrome-${uid}`;
-  const chromeDark = `chrome-dark-${uid}`;
-  const blue = `blue-${uid}`;
-  const blueDark = `blue-dark-${uid}`;
-  const ring = `ring-${uid}`;
-  const glow = `glow-${uid}`;
-
   return (
     <div
-      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-[1.15rem] shadow-[0_6px_20px_rgba(4,18,45,0.38)] ${className}`.trim()}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-[1.1rem] shadow-[0_6px_20px_rgba(6,23,34,0.38)] ${className}`.trim()}
       style={{
         width: size,
         height: size,
-        // Deep blue-black, matching the VyronSoft artwork's ground — the chrome
-        // and the blue edge both need darkness to read as metal.
-        background: "radial-gradient(circle at 50% 42%, #0d2f66 0%, #061630 58%, #030b1c 100%)",
+        background: "radial-gradient(circle at 70% 20%, #163a48 0%, #0b202b 52%, #061722 100%)",
       }}
     >
-      <svg viewBox="0 0 64 64" width={size} height={size} role="img" aria-label="Vyron Cost" fill="none">
-        <defs>
-          <linearGradient id={chrome} x1="0" y1="0" x2="0.7" y2="1">
-            <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="45%" stopColor="#D5DEE9" />
-            <stop offset="100%" stopColor="#7E8DA1" />
-          </linearGradient>
-          <linearGradient id={chromeDark} x1="0" y1="0" x2="0.6" y2="1">
-            <stop offset="0%" stopColor="#9AA8BA" />
-            <stop offset="100%" stopColor="#55637a" />
-          </linearGradient>
-          <linearGradient id={blue} x1="0.1" y1="0" x2="0.9" y2="1">
-            <stop offset="0%" stopColor="#7FD8FF" />
-            <stop offset="40%" stopColor="#22A6FF" />
-            <stop offset="100%" stopColor="#0B4FD6" />
-          </linearGradient>
-          <linearGradient id={blueDark} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#1668D8" />
-            <stop offset="100%" stopColor="#06308F" />
-          </linearGradient>
-          <linearGradient id={ring} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#2FA8FF" stopOpacity="0.15" />
-            <stop offset="50%" stopColor="#6FD0FF" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="#2FA8FF" stopOpacity="0.15" />
-          </linearGradient>
-          <filter id={glow} x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="1.4" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        {/* Halo ring behind the blades */}
-        <circle cx="32" cy="31" r="20.5" stroke={`url(#${ring})`} strokeWidth="1.4" filter={`url(#${glow})`} />
-
-        {/* Left blade — chrome. Lit face, then the shadowed inner facet. */}
-        <path d="M11 14 L24.5 17.2 L32 53.5 Z" fill={`url(#${chrome})`} />
-        <path d="M24.5 17.2 L32 53.5 L27.4 30.5 Z" fill={`url(#${chromeDark})`} opacity="0.9" />
-
-        {/* Right blade — brand blue, pitched higher than the left, as in the original. */}
-        <path d="M53 10 L39.5 19 L32 53.5 Z" fill={`url(#${blue})`} />
-        <path d="M39.5 19 L32 53.5 L36.4 31 Z" fill={`url(#${blueDark})`} opacity="0.85" />
-
-        {/* Specular highlight down the blue blade's leading edge */}
-        <path d="M53 10 L50.4 12.4 L33.4 52 L32 53.5 Z" fill="#CFF0FF" opacity="0.75" filter={`url(#${glow})`} />
+      <svg viewBox="0 0 64 64" width={size} height={size} role="img" aria-label="VOLORA" fill="none">
+        <circle cx="32" cy="32" r="19" stroke="#FFFFFF" strokeWidth="3.4" />
+        <path d="M38.5 14.15 A19 19 0 0 1 49.85 38.5" stroke={GOLD} strokeWidth="4.4" strokeLinecap="round" />
+        <path d="M23.5 41 L32 22.5 L40.5 41" stroke={GOLD} strokeWidth="3.6" strokeLinejoin="miter" />
       </svg>
     </div>
   );
 }
 
+/**
+ * Lockup: wordmark over the PROFITABILITY INTELLIGENCE tagline. `size` keeps
+ * its historical meaning (the old mark's height) so call sites need no change;
+ * `suffix` other than "COST" shows a small context label (e.g. DEV).
+ */
 export function VyronLogoLockup({
   variant = "onLight",
   size = 56,
@@ -103,24 +103,50 @@ export function VyronLogoLockup({
   className?: string;
 }) {
   const onDark = variant === "onDark";
+  const wordHeight = Math.round(size * 0.46);
+  const label = suffix && suffix !== "COST" ? suffix : null;
 
   return (
-    <span className={`flex items-center gap-3 ${className}`.trim()}>
-      <VyronLogoMark size={size} />
-      <span className="min-w-0 leading-none">
-        {/* Set inline like VYRONSOFT: neutral "VYRON" + accented product word. */}
-        <span className="block whitespace-nowrap text-[1.35rem] font-black tracking-[0.16em]">
-          <span className={onDark ? "text-white" : "text-[#0F172A]"}>VYRON</span>
-          <span className={onDark ? "text-[#7FD8FF]" : "text-[#0B54D6]"}>{suffix}</span>
-        </span>
-        <span
-          className={`mt-1.5 block text-[0.52rem] font-bold uppercase tracking-[0.22em] ${
-            onDark ? "text-[#BFDBFE]" : "text-[#64748B]"
-          }`}
-        >
-          Smart Systems. Stronger Business.
-        </span>
+    <span className={`inline-flex min-w-0 flex-col items-start gap-1.5 ${className}`.trim()}>
+      <span className="flex items-center gap-2.5">
+        <VoloraWordmark height={wordHeight} variant={variant} />
+        {label ? (
+          <span
+            className={`rounded-md border px-1.5 py-0.5 text-[0.55rem] font-bold uppercase tracking-[0.18em] ${
+              onDark ? "border-[#F4C44E]/40 text-[#F4C44E]" : "border-[#0B202B]/25 text-[#0B202B]"
+            }`}
+          >
+            {label}
+          </span>
+        ) : null}
       </span>
+      <span
+        className={`block whitespace-nowrap text-[0.54rem] font-semibold uppercase tracking-[0.34em] ${
+          onDark ? "text-[#BCCDD5]" : "text-[#475569]"
+        }`}
+      >
+        Profitability Intelligence
+      </span>
+    </span>
+  );
+}
+
+/** "Powered by VOLORA" footer credit for customer-facing surfaces. */
+export function PoweredByVolora({
+  variant = "onLight",
+  className = "",
+}: {
+  variant?: VyronLogoVariant;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] ${
+        variant === "onDark" ? "text-[#BCCDD5]" : "text-[#64748B]"
+      } ${className}`.trim()}
+    >
+      Powered by
+      <VoloraWordmark height={11} variant={variant} />
     </span>
   );
 }

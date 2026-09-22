@@ -3,78 +3,95 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#07111F" />
-  <title>VYRON COST Offline</title>
+  <meta name="theme-color" content="#0B202B" />
+  <title>Offline · VOLORA</title>
   <style>
     :root {
-      color-scheme: light;
+      color-scheme: dark;
     }
     body {
       margin: 0;
       min-height: 100vh;
       display: grid;
       place-items: center;
-      background: radial-gradient(circle at 12% 15%, rgba(7,17,31,0.14), transparent 35%), radial-gradient(circle at 86% 8%, rgba(199,154,43,0.2), transparent 32%), linear-gradient(180deg, #f8fafd 0%, #e9eff7 100%);
-      font-family: "SF Pro Display", "Avenir Next", "Segoe UI", sans-serif;
-      color: #0f172a;
+      background:
+        radial-gradient(ellipse 80% 60% at 85% 0%, rgba(244, 196, 78, 0.12), transparent 60%),
+        radial-gradient(ellipse 70% 60% at 0% 100%, rgba(62, 155, 82, 0.12), transparent 62%),
+        linear-gradient(160deg, #0b202b 0%, #081c27 45%, #061722 100%);
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+      color: #e8eef1;
       padding: 24px;
       box-sizing: border-box;
     }
     .card {
       width: min(420px, 100%);
-      border: 1px solid rgba(255,255,255,0.9);
+      border: 1px solid rgba(255, 255, 255, 0.09);
       border-radius: 28px;
-      background: rgba(255,255,255,0.95);
-      box-shadow: 0 24px 52px rgba(12,23,41,0.15);
-      padding: 28px;
+      background: rgba(255, 255, 255, 0.045);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+      padding: 32px;
+    }
+    .tagline {
+      margin-top: 10px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.34em;
+      text-transform: uppercase;
+      color: #bccdd5;
     }
     .badge {
       display: inline-block;
+      margin-top: 28px;
       border-radius: 999px;
-      border: 1px solid #f3d58a;
-      background: #fff7e4;
-      color: #a87a17;
+      border: 1px solid rgba(244, 196, 78, 0.4);
+      color: #f4c44e;
       font-size: 10px;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      font-weight: 800;
-      padding: 7px 10px;
-    }
-    h1 {
-      margin: 14px 0 8px;
-      font-size: 32px;
-      letter-spacing: -0.04em;
-      line-height: 1.1;
+      font-weight: 700;
+      padding: 6px 10px;
     }
     p {
-      margin: 0;
-      color: #475569;
-      font-weight: 600;
-      line-height: 1.55;
+      margin: 14px 0 0;
+      color: #bccdd5;
+      font-weight: 500;
+      line-height: 1.6;
     }
     .action {
-      margin-top: 20px;
+      margin-top: 24px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       min-height: 44px;
       border-radius: 14px;
-      border: 1px solid #d8b24a;
-      background: #fff1cc;
-      color: #7a580c;
-      font-weight: 800;
-      padding: 0 16px;
+      background: linear-gradient(160deg, #f7c948 0%, #f4c44e 45%, #e8b83f 100%);
+      color: #061722;
+      font-weight: 700;
+      padding: 0 20px;
       text-decoration: none;
       font-size: 12px;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
+    }
+    .action:focus-visible {
+      outline: 2px solid #f7c948;
+      outline-offset: 3px;
     }
   </style>
 </head>
 <body>
   <main class="card">
+    <svg viewBox="0 0 312 60" width="146" height="28" role="img" aria-label="VOLORA" fill="none" stroke-width="4.6">
+      <path d="M3 8 L22.5 52 L42 8" stroke="#FFFFFF" />
+      <circle cx="78" cy="30" r="21" stroke="#FFFFFF" />
+      <path d="M85.18 10.27 A21 21 0 0 1 97.73 37.18" stroke="#F4C44E" stroke-width="5.6" stroke-linecap="round" />
+      <path d="M118 8 V51.7 H147" stroke="#FFFFFF" />
+      <circle cx="183" cy="30" r="21" stroke="#FFFFFF" />
+      <path d="M222 52 V10.3 H240 A11 11 0 0 1 240 32.3 H222 M238.5 32.3 L256 52" stroke="#FFFFFF" />
+      <path d="M268.5 52 L288.5 8 L308.5 52" stroke="#F4C44E" />
+    </svg>
+    <div class="tagline">Profitability Intelligence</div>
     <span class="badge">Offline</span>
-    <h1>VYRON COST</h1>
     <p>You are currently offline. Cached app assets are still available. Reconnect to resume live data and workspace updates.</p>
     <a class="action" href="/dashboard">Retry</a>
   </main>

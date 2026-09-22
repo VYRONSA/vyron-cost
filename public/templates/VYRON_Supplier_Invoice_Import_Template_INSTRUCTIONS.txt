@@ -1,4 +1,4 @@
-VYRON COST — VYRON Supplier Invoice Import Template
+VOLORA — Supplier Invoice Import Template
 
 Columns:
   invoice_number
