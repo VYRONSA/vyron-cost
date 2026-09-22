@@ -10,6 +10,24 @@
  */
 import { randomUUID } from "node:crypto";
 
+/**
+ * SQL LIKE pattern → RegExp. % is any run, _ is one character, and a backslash
+ * makes the next character literal — Postgres's default LIKE escape.
+ */
+function likeToRegex(pattern, flags) {
+  let source = "";
+  const text = String(pattern);
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === "\\" && i + 1 < text.length) {
+      source += text[++i].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    } else if (ch === "%") source += ".*";
+    else if (ch === "_") source += ".";
+    else source += ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  return new RegExp(`^${source}$`, flags);
+}
+
 export function createFakeSupabase(seed = {}, options = {}) {
   const tables = structuredClone(seed);
   const calls = {};
@@ -33,8 +51,7 @@ export function createFakeSupabase(seed = {}, options = {}) {
     is(column, value) { this.filters.push((row) => (row[column] ?? null) === value); return this; }
     /** SQL LIKE: % is any run of characters, _ is one character; case-sensitive. */
     like(column, pattern) {
-      const source = String(pattern).replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*").replace(/_/g, ".");
-      const regex = new RegExp(`^${source}$`, "s");
+      const regex = likeToRegex(pattern, "s");
       this.filters.push((row) => typeof row[column] === "string" && regex.test(row[column]));
       return this;
     }
@@ -44,8 +61,7 @@ export function createFakeSupabase(seed = {}, options = {}) {
     lte(column, value) { this.filters.push((row) => row[column] !== null && row[column] !== undefined && row[column] <= value); return this; }
     /** SQL ILIKE: LIKE, case-insensitive. % is any run of characters, _ is one character. */
     ilike(column, pattern) {
-      const source = String(pattern).replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*").replace(/_/g, ".");
-      const regex = new RegExp(`^${source}$`, "is");
+      const regex = likeToRegex(pattern, "is");
       this.filters.push((row) => typeof row[column] === "string" && regex.test(row[column]));
       return this;
     }

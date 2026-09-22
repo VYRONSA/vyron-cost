@@ -69,7 +69,8 @@ export function parseCsvOrder(input: CsvOrderInput): OrderCandidate {
   const cell = (record: string[], key: keyof typeof COLUMN_ALIASES): string | null => {
     const position = columns[key];
     if (position === undefined) return null;
-    return cleanText(neutraliseFormulaInjection(String(record[position] ?? "")).replace(/^'/, ""), 1000);
+    // Trim first so a leading space cannot hide a formula from the neutraliser.
+    return cleanText(neutraliseFormulaInjection(String(record[position] ?? "").trim()), 1000);
   };
 
   const headerValues: Partial<Record<(typeof HEADER_LEVEL)[number], string>> = {};

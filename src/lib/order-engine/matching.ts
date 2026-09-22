@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isMissingRelation, raiseDbError } from "@/lib/order-engine/errors";
-import { escapeLike, normalizeEmail, normalizeName, normalizeSku } from "@/lib/order-engine/normalize";
+import { escapeLike, nameEqualityPattern, normalizeEmail, normalizeName, normalizeSku } from "@/lib/order-engine/normalize";
 import type { CustomerMatchRule, MatchCandidate, MatchRule, MatchStatus } from "@/lib/order-engine/types";
 
 /**
@@ -14,9 +14,11 @@ import type { CustomerMatchRule, MatchCandidate, MatchRule, MatchStatus } from "
  * metacharacters escaped) for case-insensitive equality; the result is then
  * re-checked in code with the same normaliser. The database never returns a
  * "contains" superset, so no row limit can truncate a tenant catalogue.
- * Limitation (documented): a stored SKU or name with stray surrounding
- * whitespace is not found by the case-insensitive rung — a data-quality issue
- * that surfaces as UNMATCHED, never as a wrong match.
+ * Names are queried word by word (nameEqualityPattern), so differing runs of
+ * internal whitespace are still found; the in-code check keeps it an equality.
+ * Limitation (documented): a stored SKU or name with stray leading/trailing
+ * whitespace is not found — a data-quality issue that surfaces as UNMATCHED,
+ * never as a wrong match.
  */
 
 export type ProductRecord = {
@@ -70,11 +72,12 @@ async function productsWhere(
   supabase: SupabaseClient,
   companyId: string,
   column: "sku" | "product_name" | "id",
-  mode: "eq" | "ilike",
+  mode: "eq" | "ilike" | "pattern",
   value: string
 ): Promise<ProductRecord[]> {
   let query = supabase.from("vyron_cost_products").select(PRODUCT_COLUMNS).eq("company_id", companyId);
-  query = mode === "eq" ? query.eq(column, value) : query.ilike(column, escapeLike(value));
+  // eq: exact · ilike: case-insensitive equality (escaped, no wildcards) · pattern: a prepared nameEqualityPattern.
+  query = mode === "eq" ? query.eq(column, value) : query.ilike(column, mode === "pattern" ? value : escapeLike(value));
   const { data, error } = await query;
   if (error) raiseDbError(error, "Product lookup failed");
   return (data || []) as ProductRecord[];
@@ -193,7 +196,7 @@ export async function matchProductForLine(
   const description = String(line.rawDescription ?? "");
   if (description.trim()) {
     const target = normalizeName(description);
-    const named = (await productsWhere(supabase, companyId, "product_name", "ilike", description.trim())).filter(
+    const named = (await productsWhere(supabase, companyId, "product_name", "pattern", nameEqualityPattern(description))).filter(
       (row) => normalizeName(row.product_name) === target
     );
     const byName = decide("name_exact", uniqueById(named), "Exact product-name match (line has no SKU) — review.");
@@ -213,11 +216,11 @@ async function customersWhere(
   supabase: SupabaseClient,
   companyId: string,
   column: "customer_name" | "email" | "invoice_email" | "id",
-  mode: "eq" | "ilike",
+  mode: "eq" | "ilike" | "pattern",
   value: string
 ): Promise<CustomerRecord[]> {
   let query = supabase.from("vyron_customers").select("*").eq("company_id", companyId);
-  query = mode === "eq" ? query.eq(column, value) : query.ilike(column, escapeLike(value));
+  query = mode === "eq" ? query.eq(column, value) : query.ilike(column, mode === "pattern" ? value : escapeLike(value));
   const { data, error } = await query;
   if (error) {
     // invoice_email is a later column; a database without it simply has no such rung.
@@ -250,7 +253,7 @@ export async function matchCustomer(
   if (name.trim()) {
     const target = normalizeName(name);
     const rows = uniqueById(
-      (await customersWhere(supabase, companyId, "customer_name", "ilike", name.trim())).filter(
+      (await customersWhere(supabase, companyId, "customer_name", "pattern", nameEqualityPattern(name))).filter(
         (row) => normalizeName(row.customer_name) === target
       )
     );

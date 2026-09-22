@@ -27,6 +27,21 @@ export function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, (ch) => `\\${ch}`);
 }
 
+/**
+ * An ILIKE pattern for "equal after normalizeName": the words in order,
+ * separated by `%` so any run of whitespace between them is found, anchored at
+ * both ends (no leading or trailing wildcard). It returns a small superset —
+ * names that start with the first word and end with the last — which the
+ * caller MUST re-filter with normalizeName equality. It never widens a match.
+ */
+export function nameEqualityPattern(value: string): string {
+  return normalizeName(value)
+    .split(" ")
+    .filter(Boolean)
+    .map(escapeLike)
+    .join("%");
+}
+
 /** A trimmed string, or null when empty. */
 export function cleanText(value: unknown, maxLength = 500): string | null {
   if (value === null || value === undefined) return null;
