@@ -1,6 +1,6 @@
 /**
 
- * Shared colour/status tokens — aligned with VYRON_MASTER (Batch 4).
+ * Shared colour/status tokens — aligned with the VOLORA master tokens (VYRON_MASTER).
 
  * Prefer VYRON_MASTER from style-tokens.ts for new code.
 
@@ -16,15 +16,15 @@ const M = VYRON_MASTER;
 
 export const VYRON_TEXT = {
 
-  heading: "text-[#0F172A]",
+  heading: "text-[#0B202B]",
 
   body: "text-[#334155]",
 
   muted: "text-[#64748B]",
 
-  brand: "text-[#1D6BFF]",
+  brand: "text-[#163A48]",
 
-  lime: "text-[#1D6BFF]",
+  lime: "text-[#2F7C40]",
 
   warning: "vyron-metric-warning",
 
@@ -84,18 +84,18 @@ export const VYRON_SURFACE = {
 
 export const VYRON_POSITIVE_ON_LIGHT = "vyron-metric-success";
 
-export const VYRON_LIME_ON_LIGHT = "text-[#1D6BFF]";
+export const VYRON_LIME_ON_LIGHT = "text-[#1F4757]";
 
 
 
 export const VYRON_TABLE = {
   head: "bg-[#F6F7FB] text-[11px] font-bold uppercase tracking-[0.12em] text-[#475569]",
-  headOnDark: "bg-[#0A3BA8] text-[11px] font-bold uppercase tracking-[0.12em] text-[#CBD5E1]",
-  headAccent: "text-[#1D6BFF]",
+  headOnDark: "bg-[#0B202B] text-[11px] font-bold uppercase tracking-[0.12em] text-[#CBD5E1]",
+  headAccent: "text-[#1F4757]",
   row: "border-b border-[#E2E8F0] text-[#334155]",
   rowOnDark: "border-t border-white/10 text-[#E2E8F0] hover:bg-white/[0.04]",
   rowHover: "hover:bg-[#F8FAFC]",
-  surface: "overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)]",
+  surface: "overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_4px_20px_rgba(11,32,43,0.04)]",
   empty: "text-sm font-semibold text-[#64748B]",
   emptyOnDark: "text-sm font-semibold text-[#94A3B8]",
 } as const;

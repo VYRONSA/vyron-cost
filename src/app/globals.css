@@ -1,27 +1,172 @@
 @import "tailwindcss";
-/* Canonical, product-agnostic VYRON Enterprise Design Language. VYRON COST
-   supplies only its brand hues below; everything else is inherited. */
+/* Canonical, product-agnostic enterprise design language. VOLORA supplies its
+   brand tokens below; everything else is inherited. */
 @import "../styles/vyron-enterprise-design-language.css";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VOLORA — PROFITABILITY INTELLIGENCE · design tokens
+   ═══════════════════════════════════════════════════════════════════════════
+   The single visual foundation. Deep navy carries structure (shell, navigation,
+   heroes), warm gold carries action and brand, controlled green carries
+   positive / healthy / success, red is reserved for error and blocking.
+   Workspaces for tables, forms and reports stay light for legibility.
+
+   Tailwind's blue / indigo / sky scales are remapped to the VOLORA navy ramp and
+   emerald / green / lime to the VOLORA green ramp, so every existing utility
+   class adopts the brand without touching component markup. Rose / red stay
+   red (danger), amber stays amber (warning). */
+@theme {
+  --font-sans: var(--font-volora-body), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display: var(--font-volora-display), var(--font-volora-body), ui-sans-serif, system-ui, sans-serif;
+
+  --color-navy-50: #eef3f5;
+  --color-navy-100: #dde7eb;
+  --color-navy-200: #bccdd5;
+  --color-navy-300: #93aeb9;
+  --color-navy-400: #5f8595;
+  --color-navy-500: #37606f;
+  --color-navy-600: #1f4757;
+  --color-navy-700: #163a48;
+  --color-navy-800: #0f2d39;
+  --color-navy-900: #0b202b;
+  --color-navy-950: #061722;
+
+  --color-gold-50: #fff9e8;
+  --color-gold-100: #fdf0c7;
+  --color-gold-200: #fbe193;
+  --color-gold-300: #f7c948;
+  --color-gold-400: #f4c44e;
+  --color-gold-500: #e8b83f;
+  --color-gold-600: #c99a26;
+  --color-gold-700: #8a6510;
+  --color-gold-800: #6b4f0e;
+  --color-gold-900: #4a370b;
+  --color-gold-950: #2e2207;
+
+  --color-leaf-50: #eef8f0;
+  --color-leaf-100: #d7efdc;
+  --color-leaf-200: #b0dfb9;
+  --color-leaf-300: #82ca8f;
+  --color-leaf-400: #55b968;
+  --color-leaf-500: #43a95a;
+  --color-leaf-600: #3e9b52;
+  --color-leaf-700: #2f7c40;
+  --color-leaf-800: #255f33;
+  --color-leaf-900: #1c4727;
+  --color-leaf-950: #0f2a16;
+
+  /* Remaps: existing blue / indigo / sky utilities adopt VOLORA navy. */
+  --color-blue-50: #eef3f5;
+  --color-blue-100: #dde7eb;
+  --color-blue-200: #bccdd5;
+  --color-blue-300: #93aeb9;
+  --color-blue-400: #5f8595;
+  --color-blue-500: #37606f;
+  --color-blue-600: #1f4757;
+  --color-blue-700: #163a48;
+  --color-blue-800: #0f2d39;
+  --color-blue-900: #0b202b;
+  --color-blue-950: #061722;
+  --color-indigo-50: #eef3f5;
+  --color-indigo-100: #dde7eb;
+  --color-indigo-200: #bccdd5;
+  --color-indigo-300: #93aeb9;
+  --color-indigo-400: #5f8595;
+  --color-indigo-500: #37606f;
+  --color-indigo-600: #1f4757;
+  --color-indigo-700: #163a48;
+  --color-indigo-800: #0f2d39;
+  --color-indigo-900: #0b202b;
+  --color-indigo-950: #061722;
+  --color-sky-50: #eef3f5;
+  --color-sky-100: #dde7eb;
+  --color-sky-200: #bccdd5;
+  --color-sky-300: #93aeb9;
+  --color-sky-400: #5f8595;
+  --color-sky-500: #37606f;
+  --color-sky-600: #1f4757;
+  --color-sky-700: #163a48;
+  --color-sky-800: #0f2d39;
+  --color-sky-900: #0b202b;
+  --color-sky-950: #061722;
+  /* Remaps: existing emerald / green / lime utilities adopt VOLORA green. */
+  --color-emerald-50: #eef8f0;
+  --color-emerald-100: #d7efdc;
+  --color-emerald-200: #b0dfb9;
+  --color-emerald-300: #82ca8f;
+  --color-emerald-400: #55b968;
+  --color-emerald-500: #43a95a;
+  --color-emerald-600: #3e9b52;
+  --color-emerald-700: #2f7c40;
+  --color-emerald-800: #255f33;
+  --color-emerald-900: #1c4727;
+  --color-emerald-950: #0f2a16;
+  --color-green-50: #eef8f0;
+  --color-green-100: #d7efdc;
+  --color-green-200: #b0dfb9;
+  --color-green-300: #82ca8f;
+  --color-green-400: #55b968;
+  --color-green-500: #43a95a;
+  --color-green-600: #3e9b52;
+  --color-green-700: #2f7c40;
+  --color-green-800: #255f33;
+  --color-green-900: #1c4727;
+  --color-green-950: #0f2a16;
+  --color-lime-50: #eef8f0;
+  --color-lime-100: #d7efdc;
+  --color-lime-200: #b0dfb9;
+  --color-lime-300: #82ca8f;
+  --color-lime-400: #55b968;
+  --color-lime-500: #43a95a;
+  --color-lime-600: #3e9b52;
+  --color-lime-700: #2f7c40;
+  --color-lime-800: #255f33;
+  --color-lime-900: #1c4727;
+  --color-lime-950: #0f2a16;
+}
 
 /* Legacy dark-theme variables. These predate the design language and are kept
    only for the handful of components still reading them; the page default is
    now the enterprise light field below. */
 :root {
-  --vyron-card: #0d1730;
-  --vyron-card-mid: #14203a;
-  --vyron-card-elevated: #16233f;
-  --vyron-accent: #3b82f6;
-  --vyron-purple: #1d4ed8;
-  --vyron-violet: #1d6bff;
-  --vyron-orange: #60a5fa;
-  --vyron-lime: #3b82f6;
-  --vyron-text: #0f172a;
+  --vyron-card: #0b202b;
+  --vyron-card-mid: #0f2d39;
+  --vyron-card-elevated: #163a48;
+  --vyron-accent: #2c5a6b;
+  --vyron-purple: #163a48;
+  --vyron-violet: #1f4757;
+  --vyron-orange: #e8b83f;
+  --vyron-lime: #3e9b52;
+  --vyron-text: #0b202b;
   --vyron-body: #334155;
   --vyron-muted: #64748b;
-  --vyron-border: rgba(15, 23, 42, 0.07);
+  --vyron-border: rgba(11, 32, 43, 0.08);
   --vyron-danger: #be123c;
-  --background: #fbfcfe;
-  --foreground: #0f172a;
+  --background: #f7f8f6;
+  --foreground: #0b202b;
+
+  /* VOLORA core palette */
+  --volora-navy-950: #061722;
+  --volora-navy-900: #081c27;
+  --volora-navy-850: #0b202b;
+  --volora-navy-700: #163a48;
+  --volora-gold: #f4c44e;
+  --volora-gold-bright: #f7c948;
+  --volora-gold-deep: #e8b83f;
+  --volora-gold-ink: #8a6510; /* gold-family text that clears AA on white */
+  --volora-green: #3e9b52;
+  --volora-green-mid: #43a95a;
+  --volora-green-bright: #55b968;
+  --volora-paper: #f7f8f6;
+
+  /* Atmospheres */
+  --volora-night: radial-gradient(ellipse 80% 60% at 85% 0%, rgba(244, 196, 78, 0.10), transparent 60%),
+    radial-gradient(ellipse 70% 60% at 0% 100%, rgba(62, 155, 82, 0.10), transparent 62%),
+    linear-gradient(160deg, #0b202b 0%, #081c27 45%, #061722 100%);
+  --volora-workspace-wash: radial-gradient(ellipse 120% 70% at 82% -10%, rgba(244, 196, 78, 0.075), transparent 60%),
+    radial-gradient(ellipse 100% 60% at 8% 32%, rgba(22, 58, 72, 0.045), transparent 64%),
+    radial-gradient(ellipse 130% 80% at 50% 110%, rgba(62, 155, 82, 0.045), transparent 66%),
+    linear-gradient(168deg, #fbfbf9 0%, #f7f8f6 40%, #f4f6f5 70%, #f7f8f6 100%);
 }
 
 * { box-sizing: border-box; }
@@ -31,22 +176,20 @@
    and rendered near-black. The enterprise field is now the default. */
 html {
   min-height: 100%;
-  background: #fbfcfe;
+  background: #f7f8f6;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(ellipse 120% 70% at 78% -8%, rgba(79, 70, 229, 0.070), transparent 62%),
-    radial-gradient(ellipse 100% 60% at 12% 30%, rgba(29, 107, 255, 0.045), transparent 64%),
-    radial-gradient(ellipse 130% 80% at 50% 108%, rgba(29, 78, 216, 0.055), transparent 66%),
-    linear-gradient(168deg, #fbfcfe 0%, #f6f8fd 38%, #f4f5fc 68%, #f7f8fd 100%);
+    var(--volora-workspace-wash);
   background-attachment: fixed;
   background-size: 100% 100vh;
   color: var(--vyron-body);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Continuous branded workspace wash — colour distributed across the FULL
@@ -58,10 +201,7 @@ body {
   height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(ellipse 120% 70% at 78% -8%, rgba(79, 70, 229, 0.070), transparent 62%),
-    radial-gradient(ellipse 100% 60% at 12% 30%, rgba(29, 107, 255, 0.045), transparent 64%),
-    radial-gradient(ellipse 130% 80% at 50% 108%, rgba(29, 78, 216, 0.055), transparent 66%),
-    linear-gradient(168deg, #fbfcfe 0%, #f6f8fd 38%, #f4f5fc 68%, #f7f8fd 100%);
+    var(--volora-workspace-wash);
   background-attachment: fixed;
   background-size: 100% 100vh;
   color: #334155;
@@ -74,14 +214,15 @@ body {
   z-index: 50;
   isolation: isolate;
   background:
-    radial-gradient(ellipse 90% 40% at 20% -4%, rgba(255, 255, 255, 0.14), transparent 60%),
-    radial-gradient(ellipse 80% 50% at 90% 104%, rgba(59, 130, 246, 0.30), transparent 62%),
-    linear-gradient(170deg, #1d5fe8 0%, #3d3ab8 38%, #2a449e 72%, #20408c 100%);
-  border-right: 1px solid rgba(255, 255, 255, 0.10);
+    radial-gradient(ellipse 90% 34% at 12% -6%, rgba(244, 196, 78, 0.13), transparent 62%),
+    radial-gradient(ellipse 90% 45% at 100% 106%, rgba(62, 155, 82, 0.16), transparent 64%),
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 22px),
+    linear-gradient(175deg, #0b202b 0%, #081c27 46%, #061722 100%);
+  border-right: 1px solid rgba(244, 196, 78, 0.14);
   box-shadow: 1px 0 0 rgba(15, 23, 42, 0.04), 8px 0 40px rgba(15, 23, 42, 0.06);
 }
 
-/* Form controls that land inside the blue sidebar need on-blue defaults. */
+/* Form controls that land inside the navy sidebar need on-navy defaults. */
 .vyron-cost-shell-sidebar input,
 .vyron-cost-shell-sidebar select,
 .vyron-cost-shell-sidebar textarea {
@@ -89,7 +230,7 @@ body {
 }
 .vyron-cost-shell-sidebar input::placeholder,
 .vyron-cost-shell-sidebar textarea::placeholder {
-  color: rgba(224, 234, 255, 0.7);
+  color: rgba(220, 230, 235, 0.65);
   opacity: 1;
 }
 
@@ -125,10 +266,7 @@ body {
   position: relative;
   overflow-x: hidden;
   background:
-    radial-gradient(ellipse 120% 70% at 78% -8%, rgba(79, 70, 229, 0.070), transparent 62%),
-    radial-gradient(ellipse 100% 60% at 12% 30%, rgba(29, 107, 255, 0.045), transparent 64%),
-    radial-gradient(ellipse 130% 80% at 50% 108%, rgba(29, 78, 216, 0.055), transparent 66%),
-    linear-gradient(168deg, #fbfcfe 0%, #f6f8fd 38%, #f4f5fc 68%, #f7f8fd 100%);
+    var(--volora-workspace-wash);
 }
 
 .vyron-premium-workspace::before,
@@ -139,7 +277,7 @@ body {
   inset: 0;
   z-index: 0;
   background:
-    linear-gradient(118deg, transparent 0%, rgba(79, 70, 229, 0.022) 42%, transparent 78%);
+    linear-gradient(118deg, transparent 0%, rgba(244, 196, 78, 0.035) 42%, transparent 78%);
   opacity: 1;
 }
 
@@ -151,15 +289,12 @@ body {
 }
 
 html:has(.vyron-master-workspace) {
-  background: #f8fafc;
+  background: #f7f8f6;
 }
 
 html:has(.vyron-master-workspace) body {
   background:
-    radial-gradient(ellipse 120% 70% at 78% -8%, rgba(79, 70, 229, 0.070), transparent 62%),
-    radial-gradient(ellipse 100% 60% at 12% 30%, rgba(29, 107, 255, 0.045), transparent 64%),
-    radial-gradient(ellipse 130% 80% at 50% 108%, rgba(29, 78, 216, 0.055), transparent 66%),
-    linear-gradient(168deg, #fbfcfe 0%, #f6f8fd 38%, #f4f5fc 68%, #f7f8fd 100%);
+    var(--volora-workspace-wash);
   background-attachment: fixed;
   background-size: 100% 100vh;
   color: #334155;
@@ -173,12 +308,12 @@ html:has(.vyron-master-workspace) body {
   z-index: -1;
   border-radius: 2.5rem;
   background:
-    radial-gradient(circle at 92% 4%, rgba(59, 130, 246, 0.12), transparent 38%),
-    radial-gradient(circle at 50% 40%, rgba(29, 78, 216, 0.10), transparent 50%);
+    radial-gradient(circle at 92% 4%, rgba(244, 196, 78, 0.10), transparent 38%),
+    radial-gradient(circle at 50% 40%, rgba(22, 58, 72, 0.06), transparent 50%);
 }
 
 .vyron-executive-snapshot-card {
-  background: #14203a;
+  background: #0f2d39;
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--vyron-border);
@@ -200,7 +335,7 @@ button, input, select, textarea { font: inherit; }
 .vyron-text-muted { color: var(--vyron-muted); }
 .vyron-text-lime { color: var(--vyron-lime); }
 .vyron-text-warning { color: var(--vyron-orange); }
-.vyron-text-brand { color: #93c5fd; }
+.vyron-text-brand { color: #f4c44e; }
 
 .vyron-eyebrow {
   font-size: 0.6875rem;
@@ -213,19 +348,19 @@ button, input, select, textarea { font: inherit; }
 /* Legacy .vyron-status-* rules removed: unused, and `.vyron-status-warning`
    collided with the design language's semantic badge of the same name. */
 
-/* ── VYRON Master — public pages (landing, login) ── */
+/* ── Public pages (landing, login) ── */
 :root {
-  --vyron-master-page: #f8fafc;
+  --vyron-master-page: #f7f8f6;
   --vyron-master-page-alt: #f6f7fb;
   --vyron-master-page-muted: #eef2f7;
-  --vyron-master-navy: #07111f;
-  --vyron-master-navy-mid: #0b1220;
-  --vyron-master-navy-panel: #101827;
-  --vyron-master-blue: #1d6bff;
-  --vyron-master-blue-deep: #2563eb;
-  --vyron-master-blue-light: #3b82f6;
-  --vyron-master-blue-dark: #1d4ed8;
-  --vyron-master-text: #0f172a;
+  --vyron-master-navy: #061722;
+  --vyron-master-navy-mid: #081c27;
+  --vyron-master-navy-panel: #0b202b;
+  --vyron-master-blue: #1f4757;
+  --vyron-master-blue-deep: #163a48;
+  --vyron-master-blue-light: #2c5a6b;
+  --vyron-master-blue-dark: #0f2d39;
+  --vyron-master-text: #0b202b;
   --vyron-master-body: #334155;
   --vyron-master-muted: #64748b;
   --vyron-master-border: #e2e8f0;
@@ -238,10 +373,7 @@ html:has(.vyron-public-page) {
 
 html:has(.vyron-public-page) body {
   background:
-    radial-gradient(ellipse 120% 70% at 78% -8%, rgba(79, 70, 229, 0.070), transparent 62%),
-    radial-gradient(ellipse 100% 60% at 12% 30%, rgba(29, 107, 255, 0.045), transparent 64%),
-    radial-gradient(ellipse 130% 80% at 50% 108%, rgba(29, 78, 216, 0.055), transparent 66%),
-    linear-gradient(168deg, #fbfcfe 0%, #f6f8fd 38%, #f4f5fc 68%, #f7f8fd 100%);
+    var(--volora-workspace-wash);
   background-attachment: fixed;
   background-size: 100% 100vh;
   color: var(--vyron-master-body);
@@ -261,9 +393,9 @@ html:has(.vyron-public-page) body {
 .vyron-master-primary-btn {
   border-radius: 1rem;
   background: var(--vyron-grad-surface);
-  color: #fff;
+  color: #061722;
   font-weight: 700;
-  box-shadow: 0 8px 24px rgba(29, 107, 255, 0.22);
+  box-shadow: 0 8px 24px rgba(232, 184, 63, 0.28);
 }
 
 .vyron-master-light-card {
@@ -285,17 +417,34 @@ html:has(.vyron-public-page) body {
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: var(--vyron-master-navy-mid);
   color: #f8fafc;
-  box-shadow: 0 20px 60px rgba(7, 17, 31, 0.32);
+  box-shadow: 0 20px 60px rgba(6, 23, 34, 0.32);
 }
 
-/* ── VYRON COST brand identity ──
-   The only thing this product overrides. Atmosphere, type, spacing, elevation,
-   glass, motion, focus and status all come from the design language file. */
+/* ── VOLORA brand identity ──
+   Brand hooks, semantic success (VOLORA green), brand elevation and focus are
+   overridden here; spacing, glass, motion and the other status hues come from
+   the design language file. */
 :root {
-  --vyron-brand: #4f46e5;
-  --vyron-brand-strong: #3d3ab8;
-  --vyron-brand-wash: rgba(79, 70, 229, 0.06);
-  --vyron-brand-edge: rgba(79, 70, 229, 0.18);
+  --vyron-brand: #e8b83f;
+  --vyron-brand-strong: #163a48;
+  --vyron-brand-wash: rgba(244, 196, 78, 0.075);
+  --vyron-brand-edge: rgba(22, 58, 72, 0.16);
+
+  --vyron-success-fg: #2f7c40;
+  --vyron-success-bg: #eef8f0;
+  --vyron-success-border: #b0dfb9;
+  --vyron-success-solid: #3e9b52;
+  --vyron-success-on-deep: #82ca8f;
+
+  --vyron-elev-brand: 0 4px 12px rgba(232, 184, 63, 0.16), 0 16px 40px rgba(6, 23, 34, 0.10);
+  --vyron-focus-ring: 0 0 0 3px rgba(232, 184, 63, 0.38);
+}
+
+/* Display type: headings and KPI figures use the VOLORA display face. */
+.vyron-t-display,
+.vyron-t-title,
+.volora-display {
+  font-family: var(--font-display);
 }
 
 /* ── Table comfort (product-scoped) ──
@@ -316,7 +465,7 @@ html:has(.vyron-public-page) body {
 
 .vyron-cost-shell-main tbody tr[aria-selected="true"],
 .vyron-cost-shell-main tbody tr[data-selected="true"] {
-  background-color: rgba(79, 70, 229, 0.08);
+  background-color: rgba(244, 196, 78, 0.12);
   box-shadow: inset 3px 0 0 var(--vyron-brand);
 }
 
@@ -349,19 +498,19 @@ html:has(.vyron-public-page) body {
   scrollbar-gutter: stable;
 }
 
-/* ── Brand fade ──
-   Three tiers, because one gradient cannot serve every job. `accent` runs the
-   full fade and is only ever used where nothing sits on top of it. `surface`
-   keeps white text above 4:1 across the whole fill. `text` ends in a deep
-   navy rather than a light one, which would vanish on a white page. */
+/* ── VOLORA fades ──
+   `surface` is the primary action: warm gold carrying navy ink (white on gold
+   fails contrast, so the class forces navy). `accent` is decorative gold.
+   `text` is a deep navy fade for headings on light ground; `text-on-deep` is
+   the gold fade for headings on navy panels. `deep` is the navy hero ground. */
 :root {
-  --vyron-grad-accent: linear-gradient(135deg, #1d6bff 0%, #3b82f6 55%, #4f46e5 100%);
-  --vyron-grad-surface: linear-gradient(150deg, #1d6bff 0%, #4f46e5 30%, #1d4ed8 68%, #1e3a8a 100%);
-  --vyron-grad-text: linear-gradient(100deg, #1d6bff 0%, #2563eb 55%, #1e40af 100%);
-  --vyron-grad-deep: linear-gradient(155deg, #0a3ba8 0%, #3730a3 32%, #1e3a8a 68%, #172554 100%);
-  /* On-dark headline fade — light stops, since --vyron-grad-text's deep navy
-     disappears against the deep panels. */
-  --vyron-grad-text-on-deep: linear-gradient(100deg, #bfdbfe 0%, #c7d2fe 55%, #93c5fd 100%);
+  --vyron-grad-accent: linear-gradient(135deg, #f7c948 0%, #f4c44e 50%, #e8b83f 100%);
+  --vyron-grad-surface: linear-gradient(160deg, #f7c948 0%, #f4c44e 45%, #e8b83f 100%);
+  --vyron-grad-text: linear-gradient(100deg, #163a48 0%, #0f2d39 55%, #061722 100%);
+  --vyron-grad-deep: radial-gradient(ellipse 70% 90% at 100% 0%, rgba(244, 196, 78, 0.12), transparent 60%),
+    radial-gradient(ellipse 60% 80% at 0% 100%, rgba(62, 155, 82, 0.12), transparent 62%),
+    linear-gradient(155deg, #0f2d39 0%, #0b202b 40%, #081c27 72%, #061722 100%);
+  --vyron-grad-text-on-deep: linear-gradient(100deg, #f7c948 0%, #f4c44e 55%, #e8b83f 100%);
 }
 
 .vyron-grad-text-on-deep {
@@ -377,11 +526,18 @@ html:has(.vyron-public-page) body {
 
 .vyron-grad-surface {
   background-image: var(--vyron-grad-surface);
+  color: #061722 !important;
 }
 
-/* Hero/module panels — replaces the old #0B1220 navy so no black blocks remain.
-   Darker than --vyron-grad-surface because these carry small body copy: every
-   stop here clears 4:1 against white. */
+/* Existing markup pairs the primary fill with white ink; on gold that ink must
+   be navy to stay legible (WCAG AA). */
+.vyron-grad-surface [class*="text-white"],
+.vyron-grad-surface svg {
+  color: #061722 !important;
+}
+
+/* Hero/module panels — VOLORA navy with gold and green atmosphere; every stop
+   clears 4.5:1 against white body copy. */
 .vyron-grad-deep {
   background-image: var(--vyron-grad-deep);
 }
@@ -399,11 +555,12 @@ html:has(.vyron-public-page) body {
   color: transparent;
 }
 
-/* Sidebar selected state — deliberately lighter than the sidebar fade behind it,
-   so the active block still reads as "lifted" rather than blending in, but dark
-   enough to carry its white label at AA. */
+/* Sidebar selected state — a VOLORA green wash with a bright leading edge, so selection
+   is carried by shape (the edge) as well as colour. Keeps the white label at AA
+   on the navy sidebar. */
 .vyron-grad-active {
-  background-image: linear-gradient(120deg, #1e63ea 0%, #2e7bf0 100%);
+  background-image: linear-gradient(90deg, rgba(62, 155, 82, 0.34) 0%, rgba(62, 155, 82, 0.12) 100%);
+  box-shadow: inset 3px 0 0 #55b968;
 }
 
 /* ── Card system ──
@@ -454,28 +611,28 @@ html:has(.vyron-public-page) body {
    instead of competing with it, and body copy returns to full-contrast dark. */
 .vyron-band-blue .vyron-metric-card {
   background:
-    linear-gradient(150deg, rgba(29, 107, 255, 0.055) 0%, rgba(29, 78, 216, 0.06) 60%, rgba(59, 130, 246, 0.05) 100%),
+    linear-gradient(150deg, rgba(22, 58, 72, 0.04) 0%, rgba(244, 196, 78, 0.05) 100%),
     var(--vyron-glass-strong);
   border-color: var(--vyron-hairline-brand);
-  box-shadow: inset 3px 0 0 rgba(79, 70, 229, 0.55), var(--vyron-elev-2);
+  box-shadow: inset 3px 0 0 rgba(232, 184, 63, 0.75), var(--vyron-elev-2);
 }
 
 .vyron-band-blue .vyron-metric-card:hover {
-  border-color: rgba(79, 70, 229, 0.30);
-  box-shadow: inset 3px 0 0 rgba(79, 70, 229, 0.75), var(--vyron-elev-brand);
+  border-color: rgba(22, 58, 72, 0.26);
+  box-shadow: inset 3px 0 0 #e8b83f, var(--vyron-elev-brand);
 }
 
 .vyron-band-blue .vyron-metric-icon {
-  color: #4f46e5;
+  color: #163a48;
   opacity: 1;
 }
 
 .vyron-band-blue .vyron-upgrade-panel {
   background:
-    linear-gradient(150deg, rgba(29, 107, 255, 0.05) 0%, rgba(29, 78, 216, 0.055) 100%),
+    linear-gradient(150deg, rgba(22, 58, 72, 0.04) 0%, rgba(244, 196, 78, 0.045) 100%),
     var(--vyron-glass-strong);
   border-color: var(--vyron-hairline-brand);
-  box-shadow: inset 3px 0 0 rgba(79, 70, 229, 0.45), var(--vyron-elev-1);
+  box-shadow: inset 3px 0 0 rgba(232, 184, 63, 0.6), var(--vyron-elev-1);
 }
 
 /* Shared light surface cards (module framework) */
@@ -508,9 +665,9 @@ html:has(.vyron-public-page) body {
 .vyron-tablet-mode {
   position: relative;
   background:
-    radial-gradient(circle at 92% 4%, rgba(29, 107, 255, 0.04), transparent 34%),
-    radial-gradient(circle at 6% 20%, rgba(59, 130, 246, 0.03), transparent 30%),
-    linear-gradient(180deg, #f8fafc 0%, #f6f7fb 50%, #eef2f7 100%);
+    radial-gradient(circle at 92% 4%, rgba(244, 196, 78, 0.07), transparent 34%),
+    radial-gradient(circle at 6% 20%, rgba(22, 58, 72, 0.035), transparent 30%),
+    linear-gradient(180deg, #f9faf8 0%, #f7f8f6 50%, #f1f4f3 100%);
 }
 .vyron-tablet-bottomnav {
   padding-top: 0.85rem;
@@ -549,7 +706,7 @@ html:has(.vyron-public-page) body {
 .vyron-cost-shell-main input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
 .vyron-cost-shell-main select,
 .vyron-cost-shell-main textarea {
-  color: #0f172a;
+  color: #0b202b;
 }
 
 .vyron-cost-shell-main input::placeholder,
@@ -559,7 +716,7 @@ html:has(.vyron-public-page) body {
 }
 
 /* ==========================================================================
-   VYRON COST — report printing
+   Report printing
    --------------------------------------------------------------------------
    Reports are client deliverables: an operator prints one and hands it to an
    owner, a CFO or an auditor. Printing the application around the report wastes
@@ -686,4 +843,98 @@ html:has(.vyron-public-page) body {
     color: #475569;
     text-align: center;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VOLORA components
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Dark atmospheric ground — login, heroes, customer app header. */
+.volora-night {
+  background: var(--volora-night);
+  color: #e8eef1;
+}
+
+/* Subtle industrial line texture with a diagonal light sweep, layered over a
+   dark surface. */
+.volora-texture {
+  position: relative;
+  isolation: isolate;
+}
+.volora-texture::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 26px),
+    linear-gradient(115deg, transparent 30%, rgba(244, 196, 78, 0.06) 50%, transparent 70%);
+}
+
+/* Glass on navy. */
+.volora-glass-dark {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+}
+
+/* Gold hairline accent under a hero or section title. */
+.volora-rule {
+  display: block;
+  height: 2px;
+  width: 3rem;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #f7c948, rgba(232, 184, 63, 0));
+}
+
+/* Button primitives for new markup: primary gold, secondary navy outline.
+   Success and danger use the semantic status tokens. */
+.volora-btn-primary {
+  background-image: var(--vyron-grad-surface);
+  color: #061722;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(232, 184, 63, 0.28);
+}
+.volora-btn-primary:hover { filter: brightness(1.05); }
+.volora-btn-secondary {
+  border: 1px solid rgba(11, 32, 43, 0.28);
+  background: #ffffff;
+  color: #0b202b;
+  font-weight: 600;
+}
+.volora-btn-secondary:hover { border-color: #0b202b; }
+
+/* Loading skeleton — VOLORA shimmer. */
+.volora-skeleton {
+  background: linear-gradient(90deg, #eef1f0 0%, #f7f8f6 40%, #eef1f0 80%);
+  background-size: 200% 100%;
+  animation: volora-shimmer 1.4s ease-in-out infinite;
+  border-radius: 0.75rem;
+}
+@keyframes volora-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .volora-skeleton { animation: none; }
+}
+
+/* Tailwind's animate-pulse placeholders pick up the VOLORA neutral. */
+.animate-pulse.bg-slate-200,
+.animate-pulse .bg-slate-200 {
+  background-color: #e6ebea;
+}
+
+/* Accessible focus: a gold ring on every interactive control. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid #e8b83f;
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(244, 196, 78, 0.35);
+  color: #061722;
 }
