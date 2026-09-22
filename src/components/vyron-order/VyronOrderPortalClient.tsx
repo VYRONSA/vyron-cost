@@ -439,7 +439,7 @@ function SignIn({
 
   return (
     <VyronOrderAuthShell>
-      <p className="vyron-status vyron-status-info mx-auto mt-4 w-fit">{tenantName}</p>
+      <p className="mx-auto mt-4 w-fit rounded-full border border-[#163A48]/20 bg-[#163A48]/[0.06] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#163A48]">{tenantName}</p>
 
       <form onSubmit={submit} className={`${M.lightCard} mt-6 space-y-4 p-6`}>
         <label className="block">

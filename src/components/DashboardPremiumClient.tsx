@@ -84,15 +84,15 @@ function DashboardHero({ tradingName }: { tradingName: string }) {
           </p>
         </div>
 
-        <nav aria-label="Quick links" className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 lg:w-[26rem]">
+        <nav aria-label="Quick links" className="flex min-w-0 flex-wrap gap-2 lg:max-w-[30rem] lg:justify-end">
           {HERO_LINKS.map(({ label, href, icon: Icon }) => (
             <Link
               key={href}
               href={href}
-              className="volora-glass-dark flex min-w-0 items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold text-[#DDE7EB] transition hover:border-[#F4C44E]/40 hover:text-white"
+              className="volora-glass-dark flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-xs font-semibold text-[#DDE7EB] transition hover:border-[#F4C44E]/40 hover:text-white"
             >
               <Icon size={15} className="shrink-0 text-[#F4C44E]" aria-hidden />
-              <span className="truncate">{label}</span>
+              <span>{label}</span>
             </Link>
           ))}
         </nav>

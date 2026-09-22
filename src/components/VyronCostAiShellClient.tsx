@@ -567,7 +567,7 @@ export default function VyronCostAiShellClient({
             {!isDeveloperArea ? (
               <div className="flex shrink-0 items-center gap-2.5 md:gap-3">
                 {effectiveClient ? (
-                  <div className={`hidden lg:block ${M.shellWorkspaceBadge}`}>
+                  <div className={M.shellWorkspaceBadge}>
                     <div className="min-w-0 text-right">
                       <div className="truncate text-sm font-bold text-[#0B202B]">{effectiveClient.companyName}</div>
                       <div className="truncate text-[11px] font-medium text-[#64748B]">

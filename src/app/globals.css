@@ -938,3 +938,16 @@ html:has(.vyron-public-page) body {
   background: rgba(244, 196, 78, 0.35);
   color: #061722;
 }
+
+/* Legacy brand-blue accents (now #2C5A6B / #1F4757) were written for both light
+   and dark panels. On the navy panels they must lift to the VOLORA gold / mist
+   or they disappear. */
+:is(.vyron-grad-deep, .volora-night, .vyron-cost-shell-sidebar) :is(.text-\[\#2C5A6B\], .text-\[\#2c5a6b\]) {
+  color: #f4c44e;
+}
+:is(.vyron-grad-deep, .volora-night, .vyron-cost-shell-sidebar) :is(.text-\[\#1F4757\], .text-\[\#1f4757\], .text-\[\#163A48\], .text-\[\#163a48\]) {
+  color: #93aeb9;
+}
+:is(.vyron-grad-deep, .volora-night, .vyron-cost-shell-sidebar) :is(.text-\[\#5F8595\], .text-\[\#5f8595\]) {
+  color: #93aeb9;
+}

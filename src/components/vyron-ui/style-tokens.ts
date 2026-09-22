@@ -164,7 +164,7 @@ export const VYRON_MASTER = {
   shellSearch:
     "hidden h-10 min-w-0 max-w-xl flex-1 items-center gap-3 rounded-xl border border-[rgba(11,32,43,0.08)] bg-white/60 px-4 backdrop-blur transition hover:border-[rgba(11,32,43,0.12)] md:flex",
   shellWorkspaceBadge:
-    "hidden h-10 min-w-0 max-w-[340px] items-center rounded-xl border border-[rgba(11,32,43,0.08)] bg-white/70 px-4 backdrop-blur lg:flex",
+    "hidden h-10 min-w-0 max-w-[340px] items-center rounded-xl border border-[rgba(11,32,43,0.08)] bg-white/70 px-4 backdrop-blur 2xl:flex",
   shellTopbarBtn:
     "inline-flex h-10 shrink-0 items-center rounded-xl border border-[rgba(11,32,43,0.08)] bg-white/70 px-4 text-sm font-medium text-[#334155] shadow-[var(--vyron-elev-1)] backdrop-blur transition hover:border-[rgba(11,32,43,0.13)] hover:bg-white",
 
