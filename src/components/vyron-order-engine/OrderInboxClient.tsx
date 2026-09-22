@@ -188,7 +188,7 @@ export default function OrderInboxClient({ initialView, canCreate }: { initialVi
 
       {!result.notEnabled ? (
         <section className="grid grid-cols-2 gap-4 md:grid-cols-5">
-          <KpiCard label="Needs review" value={String(count("RECEIVED"))} active={view === "inbox"} onClick={() => changeView("inbox")} />
+          <KpiCard label="Open in the inbox" value={String(count("RECEIVED", "EXCEPTION", "AWAITING_APPROVAL", "ON_HOLD", "APPROVED"))} active={view === "inbox"} onClick={() => changeView("inbox")} />
           <KpiCard label="Exceptions" value={String(count("EXCEPTION"))} active={view === "exceptions"} onClick={() => changeView("exceptions")} />
           <KpiCard label="Awaiting approval" value={String(count("AWAITING_APPROVAL", "ON_HOLD"))} active={view === "approvals"} onClick={() => changeView("approvals")} />
           <KpiCard label="Approved, not handed off" value={String(count("APPROVED"))} active={view === "approved"} onClick={() => changeView("approved")} />

@@ -808,6 +808,7 @@ async function recordProductAlias(
     source_code_normalized: input.aliasKey,
     product_id: input.productId,
     created_by: input.actor.userId,
+    created_by_name: input.actor.name,
     source_intake_id: input.intakeId,
     created_at: new Date().toISOString(),
   });
@@ -845,6 +846,7 @@ async function recordCustomerIdentity(
     external_reference_normalized: key,
     customer_id: input.customerId,
     created_by: input.actor.userId,
+    created_by_name: input.actor.name,
     source_intake_id: input.intakeId,
     created_at: new Date().toISOString(),
   });
@@ -862,6 +864,7 @@ export type StandingMapping = {
   productId: string | null;
   source: string | null;
   createdBy: string;
+  createdByName: string | null;
   createdAt: string;
   revokedAt: string | null;
   revokedBy: string | null;
@@ -888,6 +891,7 @@ export async function listStandingMappings(supabase: SupabaseClient, companyId: 
       productId: row.product_id,
       source: null,
       createdBy: String(row.created_by),
+      createdByName: row.created_by_name ?? null,
       createdAt: String(row.created_at),
       revokedAt: row.revoked_at,
       revokedBy: row.revoked_by,
@@ -901,6 +905,7 @@ export async function listStandingMappings(supabase: SupabaseClient, companyId: 
       productId: null,
       source: row.source,
       createdBy: String(row.created_by),
+      createdByName: row.created_by_name ?? null,
       createdAt: String(row.created_at),
       revokedAt: row.revoked_at,
       revokedBy: row.revoked_by,

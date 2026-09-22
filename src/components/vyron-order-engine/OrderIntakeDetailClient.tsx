@@ -35,6 +35,7 @@ type Detail = {
 type LookupResult = { id: string; product_name?: string; customer_name?: string; sku?: string | null };
 type LoadResult = { kind: "ok"; detail: Detail } | { kind: "not_enabled" } | { kind: "error"; error: string };
 
+/** How a PRODUCT line was matched. */
 const RULE_LABEL: Record<string, string> = {
   manual: "Chosen by a person",
   sku_exact: "Exact SKU",
@@ -42,9 +43,13 @@ const RULE_LABEL: Record<string, string> = {
   customer_alias: "This customer's approved code",
   alias: "Approved alias",
   name_exact: "Exact name — review",
+};
+
+/** How the CUSTOMER was identified. An exact customer name is a normal match; only e-mail needs review. */
+const CUSTOMER_RULE_LABEL: Record<string, string> = {
   customer_id: "Chosen by a person",
   identity_map: "Remembered customer reference",
-  name_exact_customer: "Exact name",
+  name_exact: "Exact name",
   sender_email: "Sender e-mail — review",
 };
 
@@ -72,7 +77,7 @@ function timelineEntry(event: IntakeEventRow, salesOrderNumber: string | null): 
       const customer = m.customer as { matched?: boolean; rule?: string } | undefined;
       const matching = m.matching as { matched?: number; unmatched?: number; ambiguous?: number } | undefined;
       const parts = [
-        customer ? (customer.matched ? `customer matched (${RULE_LABEL[String(customer.rule)] || customer.rule})` : "customer not identified") : null,
+        customer ? (customer.matched ? `customer matched (${CUSTOMER_RULE_LABEL[String(customer.rule)] || customer.rule})` : "customer not identified") : null,
         matching ? `${matching.matched ?? 0} product(s) matched${matching.unmatched ? `, ${matching.unmatched} unmatched` : ""}${matching.ambiguous ? `, ${matching.ambiguous} ambiguous` : ""}` : null,
       ].filter(Boolean);
       return { label: event.event_type === "RELEASED" ? "Released from hold and re-validated" : "Validated", detail: parts.join(" · ") || event.detail, tone: "blue" };
@@ -509,7 +514,7 @@ function OrderSummary({ detail, busy, onResolveCustomer }: { detail: Detail; bus
             snapshot?.customer?.id ? (
               <span className="flex flex-wrap items-center gap-2">
                 {snapshot.customer.name}
-                {snapshot.customer.matchRule ? <Pill tone={snapshot.customer.matchRule === "sender_email" ? "amber" : "green"}>{RULE_LABEL[snapshot.customer.matchRule] || snapshot.customer.matchRule}</Pill> : null}
+                {snapshot.customer.matchRule ? <Pill tone={snapshot.customer.matchRule === "sender_email" ? "amber" : "green"}>{CUSTOMER_RULE_LABEL[snapshot.customer.matchRule] || snapshot.customer.matchRule}</Pill> : null}
               </span>
             ) : snapshot ? (
               <Pill tone="rose">Not identified</Pill>

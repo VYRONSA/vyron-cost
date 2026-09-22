@@ -272,6 +272,7 @@ export type CustomerOrderPolicy = {
   order_cutoff_time: string | null;
   special_instructions: string | null;
   updated_by: string;
+  updated_by_name?: string | null;
   created_at: string;
   updated_at: string;
 };

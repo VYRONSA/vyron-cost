@@ -80,7 +80,7 @@ export async function saveOrderPolicy(
   if (existing) {
     const { data, error } = await supabase
       .from("vyron_customer_order_policies")
-      .update({ ...fields, updated_by: actor.userId, updated_at: now })
+      .update({ ...fields, updated_by: actor.userId, updated_by_name: actor.name, updated_at: now })
       .eq("company_id", companyId)
       .eq("id", existing.id)
       .select("*");
@@ -89,7 +89,7 @@ export async function saveOrderPolicy(
   }
   const { data, error } = await supabase
     .from("vyron_customer_order_policies")
-    .insert({ id: randomUUID(), company_id: companyId, customer_id: customerId, ...fields, updated_by: actor.userId, created_at: now, updated_at: now })
+    .insert({ id: randomUUID(), company_id: companyId, customer_id: customerId, ...fields, updated_by: actor.userId, updated_by_name: actor.name, created_at: now, updated_at: now })
     .select("*")
     .single();
   if (error) raiseDbError(error, "Save order policy failed");

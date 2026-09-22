@@ -14,6 +14,7 @@ type Mapping = {
   customerName?: string | null;
   productName?: string | null;
   createdBy: string;
+  createdByName?: string | null;
   createdAt: string;
   revokedAt: string | null;
 };
@@ -182,7 +183,7 @@ export default function OrderRulesClient({ canManage }: { canManage: boolean }) 
                 <div>
                   <div className="font-black text-slate-900">{p.customer_name || `Customer ${p.customer_id}`}</div>
                   <div className="text-xs font-semibold text-slate-500">{describe(p)}</div>
-                  <div className="text-xs text-slate-400">Updated {when(p.updated_at)} by {p.updated_by}</div>
+                  <div className="text-xs text-slate-400">Updated {when(p.updated_at)} by {p.updated_by_name || p.updated_by}</div>
                 </div>
                 {canManage ? <SecondaryButton onClick={() => setForm(toForm(p, p.customer_id, p.customer_name || `customer ${p.customer_id}`))}>Edit</SecondaryButton> : null}
               </div>
@@ -274,7 +275,8 @@ export default function OrderRulesClient({ canManage }: { canManage: boolean }) 
                 <div>
                   <div className="flex items-center gap-2 font-black text-slate-900">
                     <Pill tone={m.kind === "product_alias" ? "blue" : "green"}>{m.kind === "product_alias" ? "Item code" : "Customer reference"}</Pill>
-                    {m.key}
+                    {m.key.replace(/^(sku|desc):/, "")}
+                    {m.key.startsWith("desc:") ? <span className="text-xs font-semibold text-slate-400">(description)</span> : null}
                   </div>
                   <div className="text-xs font-semibold text-slate-500">
                     {m.kind === "product_alias"
@@ -282,7 +284,7 @@ export default function OrderRulesClient({ canManage }: { canManage: boolean }) 
                       : `→ ${m.customerName || m.customerId} · ${m.source} orders`}
                   </div>
                   <div className="text-xs text-slate-400">
-                    Remembered {when(m.createdAt)} by {m.createdBy}
+                    Remembered {when(m.createdAt)} by {m.createdByName || m.createdBy}
                   </div>
                 </div>
                 {canManage ? (
