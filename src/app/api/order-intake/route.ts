@@ -8,12 +8,27 @@ import { listIntakes, receiveOrderCandidate, type IntakeListView } from "@/lib/o
 
 export const runtime = "nodejs";
 
-/** GET /api/order-intake?view=inbox|approvals|exceptions|done|all */
+/**
+ * GET /api/order-intake?view=inbox|approvals|exceptions|approved|confirmed|closed|all
+ *   &search=&source=&customerId=&from=YYYY-MM-DD&to=YYYY-MM-DD&issues=blocking|warnings&decidedBy=&limit=&offset=
+ */
 export async function GET(request: NextRequest) {
   try {
     const { supabase, companyId } = await orderRouteContext("sales_orders.view");
-    const view = (request.nextUrl.searchParams.get("view") || "inbox") as IntakeListView;
-    const result = await listIntakes(supabase, companyId, { view });
+    const q = request.nextUrl.searchParams;
+    const withIssues = q.get("issues");
+    const result = await listIntakes(supabase, companyId, {
+      view: (q.get("view") || "inbox") as IntakeListView,
+      limit: Number(q.get("limit") || 50),
+      offset: Number(q.get("offset") || 0),
+      search: q.get("search"),
+      source: q.get("source"),
+      customerId: q.get("customerId"),
+      from: q.get("from"),
+      to: q.get("to"),
+      withIssues: withIssues === "blocking" || withIssues === "warnings" ? withIssues : null,
+      decidedBy: q.get("decidedBy"),
+    });
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     return orderErrorResponse(error, "List orders failed.");

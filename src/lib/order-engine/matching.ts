@@ -10,15 +10,27 @@ import type { CustomerMatchRule, MatchCandidate, MatchRule, MatchStatus } from "
  * rung either resolves to exactly one record, reports AMBIGUOUS with the exact
  * candidates, or passes to the next rung. Every query is filtered by company.
  *
- * Queries use `eq` for exact values and `ilike` WITHOUT wildcards (with LIKE
- * metacharacters escaped) for case-insensitive equality; the result is then
- * re-checked in code with the same normaliser. The database never returns a
- * "contains" superset, so no row limit can truncate a tenant catalogue.
- * Names are queried word by word (nameEqualityPattern), so differing runs of
- * internal whitespace are still found; the in-code check keeps it an equality.
- * Limitation (documented): a stored SKU or name with stray leading/trailing
- * whitespace is not found — a data-quality issue that surfaces as UNMATCHED,
- * never as a wrong match.
+ * Product ladder (docs/order-engine/VALIDATION_RULES.md):
+ *   0 a product a person chose for this line
+ *   1 an approved alias for THIS customer's code or description — a recorded
+ *     human decision for exactly this customer, so it outranks a coincidental
+ *     SKU clash
+ *   2 exact SKU · 3 SKU ignoring case and surrounding spaces
+ *   4 an approved company-wide alias, then the accounting item-code mappings
+ *   5 exact normalised name — only when the line has no SKU (raised for review)
+ * A line with a SKU that is not found is UNMATCHED; it never falls to a name.
+ *
+ * Customer ladder: a customer a person chose · a remembered source reference
+ * (identity map) · exact normalised name · sender e-mail (e-mail source only,
+ * raised for review). Names and e-mail are never used to MERGE customers —
+ * only to find exactly one; more than one is AMBIGUOUS.
+ *
+ * Queries use `eq`, or `ilike` with LIKE metacharacters escaped and no
+ * wildcards (case-insensitive equality); names are queried word by word
+ * (nameEqualityPattern). Every result is re-checked in code with the same
+ * normaliser. Limitation (documented): a stored SKU or name with stray
+ * leading/trailing whitespace is not found — it surfaces as UNMATCHED, never
+ * as a wrong match.
  */
 
 export type ProductRecord = {
@@ -68,17 +80,32 @@ function uniqueById<T extends { id: string }>(rows: T[]): T[] {
   return [...seen.values()];
 }
 
+/** The key an approved alias is stored under: the SKU when the line has one, else its description. */
+export function aliasKeyFor(line: { rawSku?: string | null; rawDescription?: string | null }): string | null {
+  const sku = normalizeSku(line.rawSku);
+  if (sku) return `sku:${sku}`;
+  const description = normalizeName(line.rawDescription);
+  return description ? `desc:${description}` : null;
+}
+
+/** The key a remembered customer reference is stored under. */
+export function identityKeyFor(reference: unknown): string {
+  return String(reference ?? "").trim().toLowerCase();
+}
+
 async function productsWhere(
   supabase: SupabaseClient,
   companyId: string,
-  column: "sku" | "product_name" | "id",
-  mode: "eq" | "ilike" | "pattern",
+  column: "sku" | "product_name",
+  mode: "ilike" | "pattern",
   value: string
 ): Promise<ProductRecord[]> {
-  let query = supabase.from("vyron_cost_products").select(PRODUCT_COLUMNS).eq("company_id", companyId);
-  // eq: exact · ilike: case-insensitive equality (escaped, no wildcards) · pattern: a prepared nameEqualityPattern.
-  query = mode === "eq" ? query.eq(column, value) : query.ilike(column, mode === "pattern" ? value : escapeLike(value));
-  const { data, error } = await query;
+  // ilike: case-insensitive equality (escaped, no wildcards) · pattern: a prepared nameEqualityPattern.
+  const { data, error } = await supabase
+    .from("vyron_cost_products")
+    .select(PRODUCT_COLUMNS)
+    .eq("company_id", companyId)
+    .ilike(column, mode === "pattern" ? value : escapeLike(value));
   if (error) raiseDbError(error, "Product lookup failed");
   return (data || []) as ProductRecord[];
 }
@@ -91,34 +118,9 @@ export async function loadProductsById(
 ): Promise<Map<string, ProductRecord>> {
   const ids = [...new Set(productIds.filter(Boolean))];
   if (!ids.length) return new Map();
-  const { data, error } = await supabase
-    .from("vyron_cost_products")
-    .select(PRODUCT_COLUMNS)
-    .eq("company_id", companyId)
-    .in("id", ids);
+  const { data, error } = await supabase.from("vyron_cost_products").select(PRODUCT_COLUMNS).eq("company_id", companyId).in("id", ids);
   if (error) raiseDbError(error, "Product lookup failed");
   return new Map(((data || []) as ProductRecord[]).map((row) => [String(row.id), row]));
-}
-
-/** Approved aliases: vyron_customer_item_mappings.source_item_code → product. Absent table → no rung. */
-async function aliasProductIds(supabase: SupabaseClient, companyId: string, rawSku: string): Promise<string[] | null> {
-  const { data, error } = await supabase
-    .from("vyron_customer_item_mappings")
-    .select("source_item_code, product_id")
-    .eq("company_id", companyId)
-    .ilike("source_item_code", escapeLike(rawSku.trim()));
-  if (error) {
-    if (isMissingRelation(error)) return null;
-    raiseDbError(error, "Alias lookup failed");
-  }
-  const target = normalizeSku(rawSku);
-  return [
-    ...new Set(
-      ((data || []) as Array<{ source_item_code: string | null; product_id: string | null }>)
-        .filter((row) => row.product_id && normalizeSku(row.source_item_code) === target)
-        .map((row) => String(row.product_id))
-    ),
-  ];
 }
 
 function decide(rule: MatchRule, found: ProductRecord[], reasonIfOne: string): ProductMatch | null {
@@ -137,79 +139,149 @@ function decide(rule: MatchRule, found: ProductRecord[], reasonIfOne: string): P
   return null;
 }
 
+export type ProductMatcher = {
+  match(line: { productId?: string | null; rawSku?: string | null; rawDescription?: string | null }): Promise<ProductMatch>;
+};
+
 /**
- * Match one order line to a product. The ladder (docs §6):
- *   0 explicit product id (a person chose it) · 2 exact SKU · 3 normalised SKU ·
- *   4 approved alias · 5 exact normalised name, only when the line has no SKU.
- * A line that carries a SKU which is not found is UNMATCHED — it never falls
- * through to a name match.
+ * A matcher for one order. Exact SKUs for every line are fetched in one query
+ * up front; the rarer rungs are queried per line only when needed.
  */
-export async function matchProductForLine(
+export async function createProductMatcher(
   supabase: SupabaseClient,
   companyId: string,
-  line: { productId?: string | null; rawSku?: string | null; rawDescription?: string | null }
-): Promise<ProductMatch> {
-  if (line.productId) {
-    const byId = await loadProductsById(supabase, companyId, [line.productId]);
-    const product = byId.get(line.productId) || null;
-    if (!product) {
+  options: { customerId?: string | null; rawSkus?: Array<string | null | undefined> } = {}
+): Promise<ProductMatcher> {
+  const exactSkus = [...new Set((options.rawSkus || []).filter((s): s is string => typeof s === "string" && s.trim() !== ""))];
+  const exactBySku = new Map<string, ProductRecord[]>();
+  for (let i = 0; i < exactSkus.length; i += 200) {
+    const chunk = exactSkus.slice(i, i + 200);
+    const { data, error } = await supabase.from("vyron_cost_products").select(PRODUCT_COLUMNS).eq("company_id", companyId).in("sku", chunk);
+    if (error) raiseDbError(error, "Product lookup failed");
+    for (const row of (data || []) as ProductRecord[]) {
+      const key = String(row.sku);
+      exactBySku.set(key, [...(exactBySku.get(key) || []), row]);
+    }
+  }
+
+  let aliasTableMissing = false;
+  const aliasProducts = async (key: string, customerId: string | null): Promise<string[]> => {
+    if (aliasTableMissing) return [];
+    let query = supabase
+      .from("vyron_order_product_aliases")
+      .select("product_id, customer_id, source_code_normalized")
+      .eq("company_id", companyId)
+      .eq("source_code_normalized", key)
+      .is("revoked_at", null);
+    query = customerId ? query.eq("customer_id", customerId) : query.is("customer_id", null);
+    const { data, error } = await query;
+    if (error) {
+      if (isMissingRelation(error)) {
+        aliasTableMissing = true;
+        return [];
+      }
+      raiseDbError(error, "Alias lookup failed");
+    }
+    return [...new Set(((data || []) as Array<{ product_id: string }>).map((row) => String(row.product_id)))];
+  };
+
+  /** The accounting item-code mappings used by the invoice import. Absent table → no rung. */
+  const itemMappingProducts = async (rawSku: string): Promise<string[]> => {
+    const { data, error } = await supabase
+      .from("vyron_customer_item_mappings")
+      .select("source_item_code, product_id")
+      .eq("company_id", companyId)
+      .ilike("source_item_code", escapeLike(rawSku.trim()));
+    if (error) {
+      if (isMissingRelation(error)) return [];
+      raiseDbError(error, "Alias lookup failed");
+    }
+    const target = normalizeSku(rawSku);
+    return [
+      ...new Set(
+        ((data || []) as Array<{ source_item_code: string | null; product_id: string | null }>)
+          .filter((row) => row.product_id && normalizeSku(row.source_item_code) === target)
+          .map((row) => String(row.product_id))
+      ),
+    ];
+  };
+
+  const productsFor = async (ids: string[]) => {
+    const found = await loadProductsById(supabase, companyId, ids);
+    return ids.map((id) => found.get(id)).filter(Boolean) as ProductRecord[];
+  };
+
+  return {
+    async match(line) {
+      if (line.productId) {
+        const [product] = await productsFor([line.productId]);
+        if (!product) {
+          return { status: "UNMATCHED", rule: null, product: null, candidates: [], reason: "The chosen product does not exist in this company." };
+        }
+        return { status: "MATCHED", rule: "manual", product, candidates: [toCandidate(product)], reason: "Chosen by a person." };
+      }
+
+      const key = aliasKeyFor(line);
+      if (key && options.customerId) {
+        const byCustomerAlias = decide("customer_alias", await productsFor(await aliasProducts(key, options.customerId)), "This customer's approved item code.");
+        if (byCustomerAlias) return byCustomerAlias;
+      }
+
+      const rawSku = String(line.rawSku ?? "");
+      if (rawSku.trim()) {
+        const exact = decide("sku_exact", exactBySku.get(rawSku) || [], "Exact SKU match.");
+        if (exact) return exact;
+
+        const target = normalizeSku(rawSku);
+        const normalized = (await productsWhere(supabase, companyId, "sku", "ilike", rawSku.trim())).filter((row) => normalizeSku(row.sku) === target);
+        const byNormalized = decide("sku_normalized", uniqueById(normalized), "SKU match ignoring case and surrounding spaces.");
+        if (byNormalized) return byNormalized;
+
+        const aliasIds = [...new Set([...(await aliasProducts(key!, null)), ...(await itemMappingProducts(rawSku))])];
+        const byAlias = decide("alias", await productsFor(aliasIds), "Approved item-code alias.");
+        if (byAlias) return byAlias;
+
+        return {
+          status: "UNMATCHED",
+          rule: null,
+          product: null,
+          candidates: [],
+          reason: `No product in this company has SKU or approved alias "${rawSku.trim()}".`,
+        };
+      }
+
+      const description = String(line.rawDescription ?? "");
+      if (description.trim()) {
+        const companyAlias = decide("alias", await productsFor(await aliasProducts(key!, null)), "Approved description alias.");
+        if (companyAlias) return companyAlias;
+        const target = normalizeName(description);
+        const named = (await productsWhere(supabase, companyId, "product_name", "pattern", nameEqualityPattern(description))).filter(
+          (row) => normalizeName(row.product_name) === target
+        );
+        const byName = decide("name_exact", uniqueById(named), "Exact product-name match (line has no SKU) — review.");
+        if (byName) return byName;
+      }
+
       return {
         status: "UNMATCHED",
         rule: null,
         product: null,
         candidates: [],
-        reason: "The chosen product does not exist in this company.",
+        reason: rawSku.trim() || description.trim() ? "No exact match." : "The line has neither a SKU nor a description.",
       };
-    }
-    return { status: "MATCHED", rule: "manual", product, candidates: [toCandidate(product)], reason: "Chosen by a person." };
-  }
-
-  const rawSku = String(line.rawSku ?? "");
-  if (rawSku.trim()) {
-    const exact = decide("sku_exact", await productsWhere(supabase, companyId, "sku", "eq", rawSku), "Exact SKU match.");
-    if (exact) return exact;
-
-    const target = normalizeSku(rawSku);
-    const normalized = (await productsWhere(supabase, companyId, "sku", "ilike", rawSku.trim())).filter(
-      (row) => normalizeSku(row.sku) === target
-    );
-    const byNormalized = decide("sku_normalized", uniqueById(normalized), "SKU match ignoring case and surrounding spaces.");
-    if (byNormalized) return byNormalized;
-
-    const aliasIds = await aliasProductIds(supabase, companyId, rawSku);
-    if (aliasIds && aliasIds.length) {
-      const products = await loadProductsById(supabase, companyId, aliasIds);
-      const found = aliasIds.map((id) => products.get(id)).filter(Boolean) as ProductRecord[];
-      const byAlias = decide("alias", found, "Approved item-code alias.");
-      if (byAlias) return byAlias;
-    }
-
-    return {
-      status: "UNMATCHED",
-      rule: null,
-      product: null,
-      candidates: [],
-      reason: `No product in this company has SKU or approved alias "${rawSku.trim()}".`,
-    };
-  }
-
-  const description = String(line.rawDescription ?? "");
-  if (description.trim()) {
-    const target = normalizeName(description);
-    const named = (await productsWhere(supabase, companyId, "product_name", "pattern", nameEqualityPattern(description))).filter(
-      (row) => normalizeName(row.product_name) === target
-    );
-    const byName = decide("name_exact", uniqueById(named), "Exact product-name match (line has no SKU) — review.");
-    if (byName) return byName;
-  }
-
-  return {
-    status: "UNMATCHED",
-    rule: null,
-    product: null,
-    candidates: [],
-    reason: rawSku.trim() || description.trim() ? "No exact match." : "The line has neither a SKU nor a description.",
+    },
   };
+}
+
+/** Match one line (convenience wrapper; the loader uses a shared matcher per order). */
+export async function matchProductForLine(
+  supabase: SupabaseClient,
+  companyId: string,
+  line: { productId?: string | null; rawSku?: string | null; rawDescription?: string | null },
+  options: { customerId?: string | null } = {}
+): Promise<ProductMatch> {
+  const matcher = await createProductMatcher(supabase, companyId, { customerId: options.customerId, rawSkus: [line.rawSku] });
+  return matcher.match(line);
 }
 
 async function customersWhere(
@@ -231,13 +303,14 @@ async function customersWhere(
 }
 
 /**
- * Identify the customer (docs §5): explicit id · exact normalised name ·
- * sender e-mail (e-mail source only). More than one candidate is AMBIGUOUS.
+ * Identify the customer: a person's choice · a remembered source reference ·
+ * exact normalised name · sender e-mail (e-mail source only). More than one
+ * candidate is AMBIGUOUS. Nothing is ever merged or created.
  */
 export async function matchCustomer(
   supabase: SupabaseClient,
   companyId: string,
-  input: { customerId?: string | null; customerName?: string | null; senderEmail?: string | null }
+  input: { customerId?: string | null; customerName?: string | null; senderEmail?: string | null; source?: string | null; customerReference?: string | null }
 ): Promise<CustomerMatch> {
   const toCandidates = (rows: CustomerRecord[]) => rows.map((row) => ({ id: row.id, name: row.customer_name ?? null }));
 
@@ -249,13 +322,33 @@ export async function matchCustomer(
     return { status: "UNMATCHED", rule: null, customer: null, candidates: [], reason: "The chosen customer does not exist in this company." };
   }
 
+  const reference = identityKeyFor(input.customerReference);
+  if (reference && input.source) {
+    const { data, error } = await supabase
+      .from("vyron_order_customer_identities")
+      .select("customer_id")
+      .eq("company_id", companyId)
+      .eq("source", input.source)
+      .eq("external_reference_normalized", reference)
+      .is("revoked_at", null);
+    if (error && !isMissingRelation(error)) raiseDbError(error, "Customer identity lookup failed");
+    const ids = [...new Set(((data || []) as Array<{ customer_id: string }>).map((row) => String(row.customer_id)))];
+    if (ids.length) {
+      const rows = uniqueById((await Promise.all(ids.map((id) => customersWhere(supabase, companyId, "id", "eq", id)))).flat());
+      if (rows.length === 1) {
+        return { status: "MATCHED", rule: "identity_map", customer: rows[0], candidates: toCandidates(rows), reason: "Remembered customer reference." };
+      }
+      if (rows.length > 1) {
+        return { status: "AMBIGUOUS", rule: null, customer: null, candidates: toCandidates(rows), reason: "The customer reference is mapped to more than one customer." };
+      }
+    }
+  }
+
   const name = String(input.customerName ?? "");
   if (name.trim()) {
     const target = normalizeName(name);
     const rows = uniqueById(
-      (await customersWhere(supabase, companyId, "customer_name", "pattern", nameEqualityPattern(name))).filter(
-        (row) => normalizeName(row.customer_name) === target
-      )
+      (await customersWhere(supabase, companyId, "customer_name", "pattern", nameEqualityPattern(name))).filter((row) => normalizeName(row.customer_name) === target)
     );
     if (rows.length === 1) {
       return { status: "MATCHED", rule: "name_exact", customer: rows[0], candidates: toCandidates(rows), reason: "Exact customer-name match." };
@@ -272,9 +365,7 @@ export async function matchCustomer(
       customersWhere(supabase, companyId, "invoice_email", "ilike", email),
     ]);
     const rows = uniqueById(
-      [...byEmail, ...byInvoiceEmail].filter(
-        (row) => normalizeEmail(row.email) === email || normalizeEmail(row.invoice_email) === email
-      )
+      [...byEmail, ...byInvoiceEmail].filter((row) => normalizeEmail(row.email) === email || normalizeEmail(row.invoice_email) === email)
     );
     if (rows.length === 1) {
       return { status: "MATCHED", rule: "sender_email", customer: rows[0], candidates: toCandidates(rows), reason: "Sender e-mail belongs to exactly one customer." };

@@ -8,6 +8,8 @@ export type OrderEngineErrorCode =
   | "VALIDATION_FAILED"
   | "WARNINGS_NOT_ACKNOWLEDGED"
   | "HANDOFF_FAILED"
+  | "UNSUPPORTED_MEDIA_TYPE"
+  | "PAYLOAD_TOO_LARGE"
   | "NOT_ENABLED";
 
 const STATUS: Record<OrderEngineErrorCode, number> = {
@@ -20,6 +22,8 @@ const STATUS: Record<OrderEngineErrorCode, number> = {
   VALIDATION_FAILED: 409,
   WARNINGS_NOT_ACKNOWLEDGED: 409,
   HANDOFF_FAILED: 502,
+  UNSUPPORTED_MEDIA_TYPE: 415,
+  PAYLOAD_TOO_LARGE: 413,
   NOT_ENABLED: 503,
 };
 

@@ -1,16 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveCustomerProductPrice } from "@/lib/vyron-customer-price-lists";
+import { loadReservedQuantities } from "@/lib/vyron-sales-order-reservations";
 import { isMissingRelation, raiseDbError } from "@/lib/order-engine/errors";
-import {
-  loadProductsById,
-  matchCustomer,
-  matchProductForLine,
-  type CustomerMatch,
-  type ProductMatch,
-  type ProductRecord,
-} from "@/lib/order-engine/matching";
+import { createProductMatcher, loadProductsById, matchCustomer, type CustomerMatch, type ProductMatch, type ProductRecord } from "@/lib/order-engine/matching";
 import { round2, round4 } from "@/lib/order-engine/normalize";
 import type {
+  CustomerOrderPolicy,
+  ExtractionMeta,
   IntakeLineRow,
   IntakeRow,
   IssueCategory,
@@ -23,11 +19,12 @@ import type {
  * The validation framework.
  *
  * `loadValidationContext` does all reading (customer, product matches, prices,
- * stock, reservations, BOM presence, earlier intakes with the same PO) exactly
- * once. Validators are pure functions over that context: they never touch the
- * database, so each is testable on its own and adding a check is a new entry in
- * VALIDATORS. `error` blocks approval, `warning` must be acknowledged by the
- * approver, `info` is shown.
+ * stock and live reservations, BOM presence, pack sizes, the customer's order
+ * policy, earlier intakes with the same PO) exactly once. Validators are pure
+ * functions over that context: they never touch the database, so each is
+ * testable on its own and adding a check is a new entry in VALIDATORS.
+ * `error` blocks approval, `warning` must be acknowledged, `info` is shown.
+ * The meaning and required action of every code: issue-catalog.ts.
  */
 
 export type LineContext = {
@@ -37,6 +34,7 @@ export type LineContext = {
   priceError: string | null;
   stock: { onHand: number | null; reservedElsewhere: number; hasStockRecord: boolean } | null;
   hasBom: boolean | null;
+  unitsPerCase: number | null;
 };
 
 export type ValidationContext = {
@@ -45,6 +43,7 @@ export type ValidationContext = {
   lines: LineContext[];
   /** Other live intakes for the same customer and PO number. */
   samePoIntakes: Array<{ id: string; intake_number: string; status: string }>;
+  policy: { policy: CustomerOrderPolicy; scope: "customer" | "company" } | null;
   today: string;
 };
 
@@ -56,11 +55,11 @@ export type OrderValidator = {
 
 const PRICE_TOLERANCE = 0.005;
 const AMOUNT_TOLERANCE = 0.01;
+const WEEKDAY_NAMES = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 function netAmount(line: IntakeLineRow, unitPrice: number | null): number | null {
   if (unitPrice === null) return null;
-  const gross = Number(line.quantity) * unitPrice;
-  return round2(gross - Number(line.discount_amount || 0));
+  return round2(Number(line.quantity) * unitPrice - Number(line.discount_amount || 0));
 }
 
 /** The price the order will carry: what the customer stated, else what VYRON expects. */
@@ -68,6 +67,31 @@ function effectivePrice(ctx: LineContext): number | null {
   if (ctx.line.unit_price !== null && ctx.line.unit_price !== undefined) return Number(ctx.line.unit_price);
   if (ctx.expectedPrice && ctx.expectedPrice.sellingPrice > 0) return ctx.expectedPrice.sellingPrice;
   return null;
+}
+
+/** Net value and current cost of the lines whose cost is known. */
+function costedTotals(ctx: ValidationContext) {
+  let net = 0;
+  let cost = 0;
+  let subtotal: number | null = 0;
+  for (const lineCtx of ctx.lines) {
+    const lineNet = netAmount(lineCtx.line, effectivePrice(lineCtx));
+    if (lineNet === null) subtotal = null;
+    else if (subtotal !== null) subtotal = round2(subtotal + lineNet);
+    const unitCost = lineCtx.match.product?.total_cost;
+    if (lineNet !== null && unitCost !== null && unitCost !== undefined && Number(unitCost) > 0) {
+      net = round2(net + lineNet);
+      cost = round2(cost + Number(unitCost) * Number(lineCtx.line.quantity));
+    }
+  }
+  return { net, cost, subtotal };
+}
+
+function isoWeekday(date: string): number | null {
+  const d = new Date(`${date}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return null;
+  const day = d.getUTCDay();
+  return day === 0 ? 7 : day;
 }
 
 // ---------------------------------------------------------------------------
@@ -85,32 +109,16 @@ const customerValidator: OrderValidator = {
       return issues;
     }
     if (match.status === "AMBIGUOUS") {
-      issues.push({
-        code: "CUSTOMER_AMBIGUOUS",
-        severity: "error",
-        category: "customer",
-        message: `${match.reason} Choose the customer.`,
-        data: { candidates: match.candidates },
-      });
+      issues.push({ code: "CUSTOMER_AMBIGUOUS", severity: "error", category: "customer", message: `${match.reason} Choose the customer.`, data: { candidates: match.candidates } });
       return issues;
     }
     const customer = match.customer!;
     const status = String(customer.status || "").toLowerCase();
     if (customer.active === false || status === "inactive" || status === "archived") {
-      issues.push({
-        code: "CUSTOMER_INACTIVE",
-        severity: "error",
-        category: "customer",
-        message: `Customer ${customer.customer_name || customer.id} is not active.`,
-      });
+      issues.push({ code: "CUSTOMER_INACTIVE", severity: "error", category: "customer", message: `Customer ${customer.customer_name || customer.id} is not active.` });
     }
     if (customer.on_hold === true || status.includes("hold")) {
-      issues.push({
-        code: "CUSTOMER_ON_HOLD",
-        severity: "warning",
-        category: "customer",
-        message: `Customer ${customer.customer_name || customer.id} is on hold.`,
-      });
+      issues.push({ code: "CUSTOMER_ON_HOLD", severity: "warning", category: "customer", message: `Customer ${customer.customer_name || customer.id} is on hold.` });
     }
     if (match.rule === "sender_email") {
       issues.push({
@@ -134,14 +142,7 @@ const productValidator: OrderValidator = {
       if (match.status === "UNMATCHED") {
         issues.push({ code: "PRODUCT_UNMATCHED", severity: "error", category: "product", lineNo: line.line_no, message: match.reason });
       } else if (match.status === "AMBIGUOUS") {
-        issues.push({
-          code: "PRODUCT_AMBIGUOUS",
-          severity: "error",
-          category: "product",
-          lineNo: line.line_no,
-          message: `${match.reason} Choose the product.`,
-          data: { candidates: match.candidates },
-        });
+        issues.push({ code: "PRODUCT_AMBIGUOUS", severity: "error", category: "product", lineNo: line.line_no, message: `${match.reason} Choose the product.`, data: { candidates: match.candidates } });
       } else if (match.rule === "name_exact") {
         issues.push({
           code: "PRODUCT_MATCHED_BY_NAME",
@@ -154,13 +155,7 @@ const productValidator: OrderValidator = {
       if (match.product) {
         const earlier = seen.get(match.product.id);
         if (earlier !== undefined) {
-          issues.push({
-            code: "DUPLICATE_PRODUCT_LINE",
-            severity: "warning",
-            category: "product",
-            lineNo: line.line_no,
-            message: `Same product as line ${earlier} — confirm both lines are intended.`,
-          });
+          issues.push({ code: "DUPLICATE_PRODUCT_LINE", severity: "warning", category: "product", lineNo: line.line_no, message: `Same product as line ${earlier} — confirm both lines are intended.` });
         } else {
           seen.set(match.product.id, line.line_no);
         }
@@ -200,14 +195,9 @@ const priceValidator: OrderValidator = {
       }
       const supplied = line.unit_price === null || line.unit_price === undefined ? null : Number(line.unit_price);
       const expected = expectedPrice && expectedPrice.sellingPrice > 0 ? expectedPrice.sellingPrice : null;
+      const sourceLabel = expectedPrice ? expectedPrice.source.replace("_", " ") : "";
       if (supplied === null && expected === null) {
-        issues.push({
-          code: "PRICE_MISSING",
-          severity: "error",
-          category: "price",
-          lineNo: line.line_no,
-          message: "No price on the order and no customer or standard price in VYRON.",
-        });
+        issues.push({ code: "PRICE_MISSING", severity: "error", category: "price", lineNo: line.line_no, message: "No price on the order and no customer or standard price in VYRON." });
       } else if (supplied !== null && supplied < 0) {
         issues.push({ code: "PRICE_NEGATIVE", severity: "error", category: "price", lineNo: line.line_no, message: `Unit price ${supplied} is negative.` });
       } else if (supplied === 0) {
@@ -226,17 +216,11 @@ const priceValidator: OrderValidator = {
           severity: "warning",
           category: "price",
           lineNo: line.line_no,
-          message: `Order price ${supplied.toFixed(2)} differs from the ${expectedPrice!.source.replace("_", " ")} price ${expected.toFixed(2)}.`,
+          message: `Order price ${supplied.toFixed(2)} differs from the ${sourceLabel} price ${expected.toFixed(2)}.`,
           data: { supplied, expected, source: expectedPrice!.source },
         });
       } else if (supplied === null && expected !== null) {
-        issues.push({
-          code: "PRICE_FROM_VYRON",
-          severity: "info",
-          category: "price",
-          lineNo: line.line_no,
-          message: `No price on the order; the ${expectedPrice!.source.replace("_", " ")} price ${expected.toFixed(2)} will be used.`,
-        });
+        issues.push({ code: "PRICE_FROM_VYRON", severity: "info", category: "price", lineNo: line.line_no, message: `No price on the order; the ${sourceLabel} price ${expected.toFixed(2)} will be used.` });
       }
     }
     return issues;
@@ -274,22 +258,9 @@ const stockValidator: OrderValidator = {
         data: { ordered: entry.qty, available, onHand: stock.onHand, reservedElsewhere: stock.reservedElsewhere, shortfall },
       });
       if (entry.ctx.hasBom) {
-        issues.push({
-          code: "PRODUCTION_REQUIRED",
-          severity: "info",
-          category: "production",
-          lineNo: entry.lineNos[0],
-          message: `${name}: ${shortfall} to be produced — a BOM exists.`,
-          data: { quantity: shortfall },
-        });
+        issues.push({ code: "PRODUCTION_REQUIRED", severity: "info", category: "production", lineNo: entry.lineNos[0], message: `${name}: ${shortfall} to be produced — a BOM exists.`, data: { quantity: shortfall } });
       } else if (entry.ctx.hasBom === false) {
-        issues.push({
-          code: "NO_BOM_FOR_SHORTFALL",
-          severity: "warning",
-          category: "production",
-          lineNo: entry.lineNos[0],
-          message: `${name}: short ${shortfall} and no BOM exists to produce it.`,
-        });
+        issues.push({ code: "NO_BOM_FOR_SHORTFALL", severity: "warning", category: "production", lineNo: entry.lineNos[0], message: `${name}: short ${shortfall} and no BOM exists to produce it.` });
       }
     }
     return issues;
@@ -312,23 +283,22 @@ const marginValidator: OrderValidator = {
         continue;
       }
       if (net !== null && net < round2(cost * Number(lineCtx.line.quantity))) {
-        issues.push({
-          code: "NEGATIVE_MARGIN",
-          severity: "warning",
-          category: "margin",
-          lineNo: lineCtx.line.line_no,
-          // No cost figure in the message: messages are shown to members who may not see cost.
-          message: `${product.product_name}: selling below the current product cost.`,
-        });
+        // No cost figure in any margin message: messages are shown to members who may not see cost.
+        issues.push({ code: "NEGATIVE_MARGIN", severity: "warning", category: "margin", lineNo: lineCtx.line.line_no, message: `${product.product_name}: selling below the current product cost.` });
       }
     }
     if (notMeasured > 0) {
-      issues.push({
-        code: "MARGIN_NOT_MEASURED",
-        severity: "info",
-        category: "margin",
-        message: `Margin not measured for ${notMeasured} line(s): no product cost in VYRON.`,
-      });
+      issues.push({ code: "MARGIN_NOT_MEASURED", severity: "info", category: "margin", message: `Margin not measured for ${notMeasured} line(s): no product cost in VYRON.` });
+    }
+    const minGp = ctx.policy?.policy.min_gp_pct;
+    if (minGp !== null && minGp !== undefined) {
+      const { net, cost } = costedTotals(ctx);
+      if (net > 0) {
+        const gpPct = round2(((net - cost) / net) * 100);
+        if (gpPct < Number(minGp)) {
+          issues.push({ code: "LOW_MARGIN", severity: "warning", category: "margin", message: "Expected margin is below this customer's minimum.", data: { minimumPct: Number(minGp) } });
+        }
+      }
     }
     return issues;
   },
@@ -341,21 +311,14 @@ const commercialValidator: OrderValidator = {
     const issues: ValidationIssue[] = [];
     const due = ctx.intake.requested_delivery_date;
     if (due && due < ctx.today) {
-      issues.push({
-        code: "DELIVERY_DATE_PAST",
-        severity: "warning",
-        category: "commercial",
-        message: `Requested delivery date ${due} is in the past.`,
-      });
+      issues.push({ code: "DELIVERY_DATE_PAST", severity: "warning", category: "commercial", message: `Requested delivery date ${due} is in the past.` });
     }
     if (ctx.samePoIntakes.length) {
       issues.push({
         code: "POSSIBLE_DUPLICATE_PO",
         severity: "warning",
         category: "commercial",
-        message: `PO ${ctx.intake.customer_po_number} was already received for this customer (${ctx.samePoIntakes
-          .map((row) => `${row.intake_number} ${row.status}`)
-          .join(", ")}).`,
+        message: `PO ${ctx.intake.customer_po_number} was already received for this customer (${ctx.samePoIntakes.map((row) => `${row.intake_number} ${row.status}`).join(", ")}).`,
         data: { intakes: ctx.samePoIntakes },
       });
     }
@@ -378,30 +341,155 @@ const arithmeticValidator: OrderValidator = {
       const net = netAmount(line, supplied);
       if (net === null) complete = false;
       else computedSubtotal += net;
-      if (net !== null && line.line_total !== null && line.line_total !== undefined) {
-        if (Math.abs(Number(line.line_total) - net) > AMOUNT_TOLERANCE) {
+      if (net !== null && line.line_total !== null && line.line_total !== undefined && Math.abs(Number(line.line_total) - net) > AMOUNT_TOLERANCE) {
+        issues.push({
+          code: "LINE_TOTAL_MISMATCH",
+          severity: "warning",
+          category: "arithmetic",
+          lineNo: line.line_no,
+          message: `Stated line total ${Number(line.line_total).toFixed(2)} ≠ quantity × price − discount = ${net.toFixed(2)}.`,
+        });
+      }
+    }
+    const statedSubtotal = ctx.intake.supplied_subtotal;
+    if (complete && statedSubtotal !== null && statedSubtotal !== undefined && ctx.lines.length && Math.abs(Number(statedSubtotal) - round2(computedSubtotal)) > AMOUNT_TOLERANCE) {
+      issues.push({
+        code: "SUBTOTAL_MISMATCH",
+        severity: "warning",
+        category: "arithmetic",
+        message: `Stated subtotal ${Number(statedSubtotal).toFixed(2)} ≠ sum of lines ${round2(computedSubtotal).toFixed(2)}.`,
+      });
+    }
+    return issues;
+  },
+};
+
+/** Customer order policy rules — each runs only when the policy switches it on. */
+const policyValidator: OrderValidator = {
+  id: "policy",
+  category: "policy",
+  run(ctx) {
+    const issues: ValidationIssue[] = [];
+    const policy = ctx.policy?.policy;
+    if (!policy) return issues;
+    const who = ctx.policy!.scope === "customer" ? "this customer" : "your company's default ordering rules";
+    if (policy.require_po && !String(ctx.intake.customer_po_number || "").trim()) {
+      issues.push({ code: "MISSING_PO", severity: "error", category: "policy", message: `A PO number is required for ${who}.` });
+    }
+    if (policy.require_delivery_date && !ctx.intake.requested_delivery_date) {
+      issues.push({ code: "MISSING_DELIVERY_DATE", severity: "error", category: "policy", message: `A requested delivery date is required for ${who}.` });
+    }
+    if (policy.min_order_value !== null && policy.min_order_value !== undefined) {
+      const { subtotal } = costedTotals(ctx);
+      if (subtotal !== null && subtotal < Number(policy.min_order_value)) {
+        issues.push({
+          code: "BELOW_MINIMUM_ORDER",
+          severity: "warning",
+          category: "policy",
+          message: `Order value ${subtotal.toFixed(2)} is below the minimum order of ${Number(policy.min_order_value).toFixed(2)} for ${who}.`,
+        });
+      }
+    }
+    if (policy.delivery_weekdays?.length && ctx.intake.requested_delivery_date) {
+      const weekday = isoWeekday(ctx.intake.requested_delivery_date);
+      if (weekday && !policy.delivery_weekdays.includes(weekday)) {
+        issues.push({
+          code: "DELIVERY_DAY_NOT_ALLOWED",
+          severity: "warning",
+          category: "policy",
+          message: `${WEEKDAY_NAMES[weekday]} is not a delivery day for ${who} (${policy.delivery_weekdays.map((d) => WEEKDAY_NAMES[d]).join(", ")}).`,
+        });
+      }
+    }
+    if (policy.enforce_case_quantity) {
+      for (const lineCtx of ctx.lines) {
+        const perCase = lineCtx.unitsPerCase;
+        const quantity = Number(lineCtx.line.quantity);
+        if (perCase && perCase > 0 && quantity > 0 && Math.abs(quantity / perCase - Math.round(quantity / perCase)) > 1e-9) {
           issues.push({
-            code: "LINE_TOTAL_MISMATCH",
+            code: "CASE_QUANTITY",
             severity: "warning",
-            category: "arithmetic",
-            lineNo: line.line_no,
-            message: `Stated line total ${Number(line.line_total).toFixed(2)} ≠ quantity × price − discount = ${net.toFixed(2)}.`,
+            category: "policy",
+            lineNo: lineCtx.line.line_no,
+            message: `${quantity} is not a whole number of cases of ${perCase}.`,
           });
         }
       }
     }
-    const statedSubtotal = ctx.intake.supplied_subtotal;
-    if (complete && statedSubtotal !== null && statedSubtotal !== undefined && ctx.lines.length) {
-      if (Math.abs(Number(statedSubtotal) - round2(computedSubtotal)) > AMOUNT_TOLERANCE) {
-        issues.push({
-          code: "SUBTOTAL_MISMATCH",
-          severity: "warning",
-          category: "arithmetic",
-          message: `Stated subtotal ${Number(statedSubtotal).toFixed(2)} ≠ sum of lines ${round2(computedSubtotal).toFixed(2)}.`,
-        });
-      }
+    if (String(policy.special_instructions || "").trim()) {
+      issues.push({ code: "SPECIAL_INSTRUCTIONS", severity: "info", category: "policy", message: String(policy.special_instructions).trim() });
     }
     return issues;
+  },
+};
+
+/** What the source said about tax and shipping. Nothing is assumed: only stated facts are checked. */
+const taxValidator: OrderValidator = {
+  id: "tax",
+  category: "tax",
+  run(ctx) {
+    const issues: ValidationIssue[] = [];
+    if (ctx.intake.prices_include_tax === true) {
+      issues.push({
+        code: "PRICES_INCLUDE_TAX",
+        severity: "error",
+        category: "tax",
+        message: "The source states its prices include tax. Sales Orders price ex-tax and add tax on top — enter ex-tax prices and confirm the conversion.",
+      });
+    }
+    const facts = (ctx.intake.extraction as ExtractionMeta | undefined)?.sourceFacts;
+    if (facts?.refundedTotal && Number(facts.refundedTotal) > 0) {
+      issues.push({
+        code: "SOURCE_PARTIAL_REFUND",
+        severity: "warning",
+        category: "tax",
+        message: `The source has already refunded ${Number(facts.refundedTotal).toFixed(2)} on this order. The lines are shown as ordered; confirm what is still to be supplied.`,
+      });
+    }
+    if (facts?.couponCodes?.length) {
+      issues.push({ code: "COUPON_APPLIED", severity: "info", category: "tax", message: `Coupon(s) applied at source: ${facts.couponCodes.join(", ")}. Line discounts already include them.` });
+    }
+    const shipping = ctx.intake.supplied_shipping_total;
+    if (shipping !== null && shipping !== undefined && Number(shipping) > 0) {
+      issues.push({
+        code: "SHIPPING_NOT_CARRIED",
+        severity: "warning",
+        category: "tax",
+        message: `The source states a shipping charge of ${Number(shipping).toFixed(2)}. It is not added to the sales order.`,
+      });
+    }
+    return issues;
+  },
+};
+
+function extractionIssues(meta: ExtractionMeta | Record<string, never> | null | undefined, lineNo?: number): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  if (!meta || !("method" in meta || "fields" in meta)) return issues;
+  const m = meta as ExtractionMeta;
+  const automatic = m.method === "ai" || m.method === "ocr";
+  const uncertain = Object.entries(m.fields || {}).filter(([, f]) => f.confidence === "LOW");
+  for (const [field, f] of uncertain) {
+    issues.push({
+      code: "EXTRACTION_LOW_CONFIDENCE",
+      severity: "error",
+      category: "extraction",
+      lineNo,
+      message: `The ${field} was read with low confidence${f.source ? ` (${f.source})` : ""} — confirm it against the original.`,
+      data: { field, method: f.method, source: f.source ?? null },
+    });
+  }
+  if (automatic && !uncertain.length) {
+    issues.push({ code: "EXTRACTION_REVIEW", severity: "warning", category: "extraction", lineNo, message: `Read automatically (${m.method}) — check against the original document.` });
+  }
+  return issues;
+}
+
+/** AI / OCR output is a candidate: always reviewed, and uncertain values block. */
+const extractionValidator: OrderValidator = {
+  id: "extraction",
+  category: "extraction",
+  run(ctx) {
+    return [...extractionIssues(ctx.intake.extraction), ...ctx.lines.flatMap(({ line }) => extractionIssues(line.extraction, line.line_no))];
   },
 };
 
@@ -414,6 +502,9 @@ export const VALIDATORS: readonly OrderValidator[] = [
   marginValidator,
   commercialValidator,
   arithmeticValidator,
+  policyValidator,
+  taxValidator,
+  extractionValidator,
 ];
 
 // ---------------------------------------------------------------------------
@@ -434,12 +525,14 @@ export function runValidators(ctx: ValidationContext, validators: readonly Order
   let expectedCost = 0;
   let costedNet = 0;
   let marginNotMeasuredLines = 0;
+  const byRule: Record<string, number> = {};
 
   const lines: LineEvaluation[] = ctx.lines.map((lineCtx) => {
     const { line, match, expectedPrice, stock } = lineCtx;
     const price = effectivePrice(lineCtx);
     const net = netAmount(line, price);
     const product = match.product;
+    if (match.rule) byRule[match.rule] = (byRule[match.rule] || 0) + 1;
     const unitCost = product && product.total_cost !== null && Number(product.total_cost) > 0 ? Number(product.total_cost) : null;
     const lineCost = unitCost !== null ? round2(unitCost * Number(line.quantity)) : null;
     if (net === null) expectedSubtotal = null;
@@ -488,11 +581,8 @@ export function runValidators(ctx: ValidationContext, validators: readonly Order
   return {
     version: 1,
     validatedAt: new Date().toISOString(),
-    customer: {
-      id: ctx.customer.customer?.id ?? null,
-      name: ctx.customer.customer?.customer_name ?? null,
-      matchRule: ctx.customer.rule,
-    },
+    customer: { id: ctx.customer.customer?.id ?? null, name: ctx.customer.customer?.customer_name ?? null, matchRule: ctx.customer.rule },
+    policy: ctx.policy ? { id: ctx.policy.policy.id, scope: ctx.policy.scope } : null,
     issues,
     lines,
     totals: {
@@ -503,6 +593,12 @@ export function runValidators(ctx: ValidationContext, validators: readonly Order
       marginNotMeasuredLines,
     },
     counts,
+    matching: {
+      matched: ctx.lines.filter((l) => l.match.status === "MATCHED").length,
+      unmatched: ctx.lines.filter((l) => l.match.status === "UNMATCHED").length,
+      ambiguous: ctx.lines.filter((l) => l.match.status === "AMBIGUOUS").length,
+      byRule,
+    },
   };
 }
 
@@ -510,14 +606,9 @@ export function runValidators(ctx: ValidationContext, validators: readonly Order
 // Loading
 // ---------------------------------------------------------------------------
 
-async function loadStock(
-  supabase: SupabaseClient,
-  companyId: string,
-  productIds: string[]
-): Promise<Map<string, { onHand: number | null; reservedElsewhere: number; hasStockRecord: boolean }>> {
+async function loadStock(supabase: SupabaseClient, companyId: string, productIds: string[]) {
   const result = new Map<string, { onHand: number | null; reservedElsewhere: number; hasStockRecord: boolean }>();
   if (!productIds.length) return result;
-
   const { data: items, error } = await supabase
     .from("vyron_cost_stock_items")
     .select("entity_id, qty_on_hand")
@@ -525,26 +616,12 @@ async function loadStock(
     .eq("entity_type", "finished_goods")
     .in("entity_id", productIds);
   if (error && !isMissingRelation(error)) raiseDbError(error, "Stock lookup failed");
-
-  // Reservations held by existing sales orders. The sales-order engine does not
-  // net these today; the Order Engine does, so a shortage is not hidden.
-  const { data: reservations, error: reservationError } = await supabase
-    .from("vyron_customer_sales_order_allocations")
-    .select("product_id, reserved_qty")
-    .eq("company_id", companyId)
-    .eq("status", "Reserved")
-    .in("product_id", productIds);
-  if (reservationError && !isMissingRelation(reservationError)) raiseDbError(reservationError, "Reservation lookup failed");
-
+  // Only live sales orders hold stock (shared rule with the sales-order engine).
+  const reserved = await loadReservedQuantities(supabase, companyId, productIds);
   const onHand = new Map<string, number>();
   for (const row of (items || []) as Array<{ entity_id: string; qty_on_hand: number | null }>) {
     const key = String(row.entity_id);
     onHand.set(key, round4((onHand.get(key) || 0) + Number(row.qty_on_hand || 0)));
-  }
-  const reserved = new Map<string, number>();
-  for (const row of (reservations || []) as Array<{ product_id: string; reserved_qty: number | null }>) {
-    const key = String(row.product_id);
-    reserved.set(key, round4((reserved.get(key) || 0) + Number(row.reserved_qty || 0)));
   }
   for (const id of productIds) {
     result.set(id, { onHand: onHand.has(id) ? onHand.get(id)! : null, reservedElsewhere: reserved.get(id) || 0, hasStockRecord: onHand.has(id) });
@@ -554,17 +631,50 @@ async function loadStock(
 
 async function loadBomPresence(supabase: SupabaseClient, companyId: string, productIds: string[]): Promise<Map<string, boolean> | null> {
   if (!productIds.length) return new Map();
-  const { data, error } = await supabase
-    .from("vyron_cost_boms")
-    .select("product_id")
-    .eq("company_id", companyId)
-    .in("product_id", productIds);
+  const { data, error } = await supabase.from("vyron_cost_boms").select("product_id").eq("company_id", companyId).in("product_id", productIds);
   if (error) {
     if (isMissingRelation(error)) return null;
     raiseDbError(error, "BOM lookup failed");
   }
   const withBom = new Set(((data || []) as Array<{ product_id: string | null }>).map((row) => String(row.product_id)));
   return new Map(productIds.map((id) => [id, withBom.has(id)]));
+}
+
+async function loadPackSizes(supabase: SupabaseClient, companyId: string, productIds: string[]): Promise<Map<string, number>> {
+  if (!productIds.length) return new Map();
+  const { data, error } = await supabase
+    .from("vyron_cost_product_pack_sizes")
+    .select("product_id, units_per_box, confidence")
+    .eq("company_id", companyId)
+    .in("product_id", productIds);
+  if (error) {
+    if (isMissingRelation(error)) return new Map();
+    raiseDbError(error, "Pack size lookup failed");
+  }
+  // Only confirmed pack sizes are enforced; a provisional figure is not a rule.
+  return new Map(
+    ((data || []) as Array<{ product_id: string; units_per_box: number; confidence: string | null }>)
+      .filter((row) => (row.confidence || "Confirmed") === "Confirmed" && Number(row.units_per_box) > 0)
+      .map((row) => [String(row.product_id), Number(row.units_per_box)])
+  );
+}
+
+/** The customer's own policy, else the company default, else none. */
+export async function loadOrderPolicy(
+  supabase: SupabaseClient,
+  companyId: string,
+  customerId: string | null
+): Promise<{ policy: CustomerOrderPolicy; scope: "customer" | "company" } | null> {
+  const { data, error } = await supabase.from("vyron_customer_order_policies").select("*").eq("company_id", companyId);
+  if (error) {
+    if (isMissingRelation(error)) return null;
+    raiseDbError(error, "Order policy lookup failed");
+  }
+  const rows = (data || []) as CustomerOrderPolicy[];
+  const own = customerId ? rows.find((row) => row.customer_id === customerId) : undefined;
+  if (own) return { policy: own, scope: "customer" };
+  const fallback = rows.find((row) => row.customer_id === null || row.customer_id === undefined);
+  return fallback ? { policy: fallback, scope: "company" } : null;
 }
 
 /** Read everything validation needs, once. `today` is injectable for tests. */
@@ -581,13 +691,18 @@ export async function loadValidationContext(
     customerId: intake.customer_match_rule === "customer_id" ? intake.customer_id : null,
     customerName: intake.customer_name,
     senderEmail: intake.source === "email" ? intake.customer_reference : null,
+    source: intake.source,
+    customerReference: intake.customer_reference,
   });
 
-  // A person's earlier manual choice is kept (and re-verified inside the company).
+  const matcher = await createProductMatcher(supabase, companyId, {
+    customerId: customer.customer?.id ?? null,
+    rawSkus: lines.map((line) => line.raw_sku),
+  });
   const matches: ProductMatch[] = [];
   for (const line of lines) {
     matches.push(
-      await matchProductForLine(supabase, companyId, {
+      await matcher.match({
         productId: line.match_rule === "manual" ? line.product_id : null,
         rawSku: line.raw_sku,
         rawDescription: line.raw_description,
@@ -596,36 +711,44 @@ export async function loadValidationContext(
   }
 
   const productIds = [...new Set(matches.map((m) => m.product?.id).filter(Boolean) as string[])];
-  const [stock, bom] = await Promise.all([
+  const policy = await loadOrderPolicy(supabase, companyId, customer.customer?.id ?? null);
+  const [stock, bom, packSizes] = await Promise.all([
     loadStock(supabase, companyId, productIds),
     loadBomPresence(supabase, companyId, productIds),
+    policy?.policy.enforce_case_quantity ? loadPackSizes(supabase, companyId, productIds) : Promise.resolve(new Map<string, number>()),
   ]);
 
+  // One price lookup per product, not per line.
+  const priceCache = new Map<string, { expectedPrice: LineContext["expectedPrice"]; priceError: string | null }>();
   const lineContexts: LineContext[] = [];
   for (let index = 0; index < lines.length; index++) {
     const line = lines[index];
     const match = matches[index];
-    let expectedPrice: LineContext["expectedPrice"] = null;
-    let priceError: string | null = null;
+    let priced: { expectedPrice: LineContext["expectedPrice"]; priceError: string | null } = { expectedPrice: null, priceError: null };
     if (match.product) {
-      try {
-        const price = await resolveCustomerProductPrice(supabase, companyId, {
-          customerId: customer.customer?.id ?? null,
-          productId: match.product.id,
-          asOfDate: intake.order_date || undefined,
-        });
-        expectedPrice = { sellingPrice: Number(price.sellingPrice || 0), source: price.source, priceListId: price.priceListId };
-      } catch (error) {
-        priceError = error instanceof Error ? error.message : "Price lookup failed.";
+      const cached = priceCache.get(match.product.id);
+      if (cached) priced = cached;
+      else {
+        try {
+          const price = await resolveCustomerProductPrice(supabase, companyId, {
+            customerId: customer.customer?.id ?? null,
+            productId: match.product.id,
+            asOfDate: intake.order_date || undefined,
+          });
+          priced = { expectedPrice: { sellingPrice: Number(price.sellingPrice || 0), source: price.source, priceListId: price.priceListId }, priceError: null };
+        } catch (error) {
+          priced = { expectedPrice: null, priceError: error instanceof Error ? error.message : "Price lookup failed." };
+        }
+        priceCache.set(match.product.id, priced);
       }
     }
     lineContexts.push({
       line,
       match,
-      expectedPrice,
-      priceError,
+      ...priced,
       stock: match.product ? stock.get(match.product.id) || null : null,
       hasBom: match.product && bom ? bom.get(match.product.id) ?? false : null,
+      unitsPerCase: match.product ? packSizes.get(match.product.id) ?? null : null,
     });
   }
 
@@ -643,13 +766,7 @@ export async function loadValidationContext(
       .map((row) => ({ id: row.id, intake_number: row.intake_number, status: row.status }));
   }
 
-  return {
-    intake,
-    customer,
-    lines: lineContexts,
-    samePoIntakes,
-    today: options.today || new Date().toISOString().slice(0, 10),
-  };
+  return { intake, customer, lines: lineContexts, samePoIntakes, policy, today: options.today || new Date().toISOString().slice(0, 10) };
 }
 
 export { loadProductsById, type ProductRecord };

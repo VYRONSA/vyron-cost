@@ -2,40 +2,43 @@ import { NextRequest, NextResponse } from "next/server";
 import { WorkspaceAccessError } from "@/lib/vyron-workspace-access";
 import { OrderEngineError } from "@/lib/order-engine/errors";
 import { orderErrorResponse, orderRouteContext, readJsonBody } from "@/lib/order-engine/http";
-import {
-  ACTION_PERMISSION,
-  INTAKE_ACTIONS,
-  availableIntakeActions,
-  isEditable,
-  type IntakeAction,
-} from "@/lib/order-engine/lifecycle";
+import { issueDefinition } from "@/lib/order-engine/issue-catalog";
+import { ACTION_PERMISSION, INTAKE_ACTIONS, availableIntakeActions, isEditable, type IntakeAction } from "@/lib/order-engine/lifecycle";
+import { COST_PERMISSION, redactEventMetadata, redactValidation } from "@/lib/order-engine/redaction";
 import { editIntake, getIntakeDetail, performIntakeAction, type IntakeDetail, type IntakeEdit } from "@/lib/order-engine/service";
 
 export const runtime = "nodejs";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-/** Cost and margin are commercial data: shown only to people who can approve (as the Order Centre does). */
+/**
+ * Shape a detail for the viewer. Cost and margin (and margin messages) are
+ * shown only to members who can approve; every issue carries its catalogue
+ * title and required action.
+ */
 function present(detail: IntakeDetail, can: (permission: string) => boolean) {
-  const seeCost = can("sales_orders.approve");
-  const validation = detail.intake.validation as Record<string, unknown> & {
-    lines?: Array<Record<string, unknown>>;
-    totals?: Record<string, unknown>;
+  const seeCost = can(COST_PERMISSION);
+  const validation = redactValidation(detail.intake.validation, seeCost) as IntakeDetail["intake"]["validation"] & {
+    issues?: Array<{ code: string }>;
   };
-  const safeValidation =
-    seeCost || !validation?.lines
-      ? validation
-      : {
-          ...validation,
-          lines: validation.lines.map((line) => ({ ...line, unitCost: null, lineCost: null, lineGp: null })),
-          totals: { ...validation.totals, expectedCost: null, expectedGp: null, expectedGpPct: null },
-        };
+  const issues = (validation as { issues?: Array<{ code: string }> }).issues;
+  const withCatalog = issues
+    ? {
+        ...validation,
+        issues: issues.map((issue) => {
+          const def = issueDefinition(issue.code);
+          return { ...issue, title: def?.title || issue.code, action: def?.action || null, ruleSource: def?.source || null };
+        }),
+      }
+    : validation;
   return {
     ...detail,
-    intake: { ...detail.intake, validation: safeValidation },
+    intake: { ...detail.intake, validation: withCatalog },
+    events: detail.events.map((event) => ({ ...event, metadata: redactEventMetadata(event.metadata, seeCost) })),
     permissions: {
       canSeeCost: seeCost,
       canEdit: isEditable(detail.intake.status) && can("sales_orders.edit"),
+      canRemember: can("sales_orders.approve"),
       actions: availableIntakeActions(detail.intake.status, can),
     },
   };
@@ -59,15 +62,17 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const { supabase, companyId, actor, can } = await orderRouteContext("sales_orders.edit");
     const body = await readJsonBody(request);
     const edit: IntakeEdit = {};
-    const text = (key: keyof IntakeEdit) => {
-      if (key in body) (edit as Record<string, unknown>)[key] = body[key] === null ? null : String(body[key] ?? "");
-    };
-    for (const key of ["customerName", "customerPoNumber", "requestedDeliveryDate", "deliveryAddress", "contactName", "notes"] as const) text(key);
+    for (const key of ["customerName", "customerPoNumber", "requestedDeliveryDate", "deliveryAddress", "contactName", "notes"] as const) {
+      if (key in body) edit[key] = body[key] === null ? null : String(body[key] ?? "");
+    }
     if ("customerId" in body) edit.customerId = body.customerId ? String(body.customerId) : null;
+    if (body.rememberCustomerReference === true) edit.rememberCustomerReference = true;
+    if (body.confirmPricesExTax === true) edit.confirmPricesExTax = true;
     if (Array.isArray(body.resolveLines)) {
       edit.resolveLines = (body.resolveLines as Array<Record<string, unknown>>).map((r) => ({
         lineId: String(r?.lineId ?? ""),
         productId: String(r?.productId ?? ""),
+        remember: r?.remember === true,
       }));
     }
     if (Array.isArray(body.updateLines)) {
@@ -78,7 +83,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       }));
     }
     if (typeof body.expectedVersion === "number") edit.expectedVersion = body.expectedVersion;
-    const detail = await editIntake(supabase, companyId, id, edit, actor);
+    // Recording a standing mapping changes how future orders match: approvers only.
+    const detail = await editIntake(supabase, companyId, id, edit, actor, { canRemember: can("sales_orders.approve") });
     return NextResponse.json({ ok: true, ...present(detail, can) });
   } catch (error) {
     return orderErrorResponse(error, "Edit order failed.");

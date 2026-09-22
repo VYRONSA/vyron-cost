@@ -23,8 +23,8 @@ export const INTAKE_STATUSES = [
 export type IntakeStatus = (typeof INTAKE_STATUSES)[number];
 
 export type MatchStatus = "PENDING" | "MATCHED" | "UNMATCHED" | "AMBIGUOUS";
-export type MatchRule = "manual" | "sku_exact" | "sku_normalized" | "alias" | "name_exact";
-export type CustomerMatchRule = "customer_id" | "name_exact" | "sender_email";
+export type MatchRule = "manual" | "sku_exact" | "sku_normalized" | "customer_alias" | "alias" | "name_exact";
+export type CustomerMatchRule = "customer_id" | "identity_map" | "name_exact" | "sender_email";
 
 export type IssueSeverity = "error" | "warning" | "info";
 export type IssueCategory =
@@ -36,7 +36,10 @@ export type IssueCategory =
   | "production"
   | "margin"
   | "commercial"
-  | "arithmetic";
+  | "arithmetic"
+  | "policy"
+  | "tax"
+  | "extraction";
 
 export type ValidationIssue = {
   code: string;
@@ -45,6 +48,29 @@ export type ValidationIssue = {
   message: string;
   lineNo?: number;
   data?: Record<string, unknown>;
+};
+
+/**
+ * How a value was obtained. `ai` and `ocr` values are candidates only: they are
+ * always reviewed by a person and never approve anything by themselves.
+ */
+export type ExtractionMethod = "structured" | "manual" | "rule" | "ai" | "ocr";
+export type ExtractionConfidence = "HIGH" | "MEDIUM" | "LOW";
+
+/** Provenance of one extracted field (AI extraction contract, docs/order-engine/ORDER_SOURCE_ADAPTERS.md). */
+export type ExtractedFieldMeta = {
+  confidence: ExtractionConfidence;
+  method: ExtractionMethod;
+  /** Where in the source the value was read, e.g. "email body line 4", "page 1, table row 3". */
+  source?: string | null;
+};
+
+/** Extraction metadata carried by an order or a line: field name → provenance. */
+export type ExtractionMeta = {
+  method?: ExtractionMethod;
+  fields?: Record<string, ExtractedFieldMeta>;
+  /** Facts the source stated that have no column: shown to the approver, never acted on automatically. */
+  sourceFacts?: { couponCodes?: string[]; refundedTotal?: number | null };
 };
 
 /** One line exactly as a source adapter produced it. Nothing here is matched or priced. */
@@ -60,6 +86,7 @@ export type OrderCandidateLine = {
   lineTotal?: number | null;
   /** Only the manual adapter may carry a product the user explicitly chose. */
   productId?: string | null;
+  extraction?: ExtractionMeta | null;
 };
 
 /** The one shape every order source produces. */
@@ -88,8 +115,12 @@ export type OrderCandidate = {
     subtotal?: number | null;
     discountTotal?: number | null;
     taxTotal?: number | null;
+    shippingTotal?: number | null;
     total?: number | null;
   };
+  /** True when the source states its prices include tax. VYRON sales orders are priced ex-tax. */
+  pricesIncludeTax?: boolean | null;
+  extraction?: ExtractionMeta | null;
   lines: OrderCandidateLine[];
 };
 
@@ -119,6 +150,9 @@ export type IntakeRow = {
   supplied_discount_total: number | null;
   supplied_tax_total: number | null;
   supplied_total: number | null;
+  supplied_shipping_total: number | null;
+  prices_include_tax: boolean | null;
+  extraction: ExtractionMeta | Record<string, never>;
   status: IntakeStatus;
   validation: ValidationSnapshot | Record<string, never>;
   validation_hash: string | null;
@@ -157,6 +191,7 @@ export type IntakeLineRow = {
   matched_by: string | null;
   matched_at: string | null;
   validation_status: "PENDING" | "OK" | "WARNING" | "ERROR";
+  extraction: ExtractionMeta | Record<string, never>;
   created_at: string;
   updated_at: string;
 };
@@ -206,6 +241,8 @@ export type ValidationSnapshot = {
   version: 1;
   validatedAt: string;
   customer: { id: string | null; name: string | null; matchRule: CustomerMatchRule | null };
+  /** The customer order policy applied, if any (null: no policy — no customer rules were checked). */
+  policy: { id: string | null; scope: "customer" | "company" } | null;
   issues: ValidationIssue[];
   lines: LineEvaluation[];
   totals: {
@@ -217,6 +254,26 @@ export type ValidationSnapshot = {
     marginNotMeasuredLines: number;
   };
   counts: { errors: number; warnings: number; info: number };
+  /** How many lines matched, and by which rule — shown on the order timeline. */
+  matching: { matched: number; unmatched: number; ambiguous: number; byRule: Record<string, number> };
+};
+
+/** Optional customer (or company-default) ordering rules. Every rule is off unless set. */
+export type CustomerOrderPolicy = {
+  id: string;
+  company_id: string;
+  customer_id: string | null;
+  require_po: boolean;
+  require_delivery_date: boolean;
+  min_order_value: number | null;
+  min_gp_pct: number | null;
+  enforce_case_quantity: boolean;
+  delivery_weekdays: number[] | null;
+  order_cutoff_time: string | null;
+  special_instructions: string | null;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ApprovalStatus = "PENDING" | "ON_HOLD" | "APPROVED" | "REJECTED" | "NOT_APPLICABLE";

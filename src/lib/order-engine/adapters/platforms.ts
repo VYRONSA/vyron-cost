@@ -15,34 +15,72 @@ import { OrderSourceParseError, type OrderSourceAdapter } from "@/lib/order-engi
  * orders to fulfil, and turning them into sales orders would manufacture
  * invoices and GP.
  *
- * Decisions encoded:
- * - `storeKey` is required and prefixes the source key, because two stores can
- *   issue the same order id.
+ * Decisions encoded (docs/order-engine/ORDER_SOURCE_ADAPTERS.md):
+ * - `storeKey` is required and prefixes the source key: two stores can issue
+ *   the same order id.
  * - The platform's customer id / e-mail become `customerReference` only; a
  *   customer is never created and never matched by e-mail automatically here.
- * - Orders the platform already reports as cancelled/refunded/failed are refused.
- * - VAT basis is not assumed: platform totals are stored as supplied.
+ * - Orders the platform reports as cancelled / refunded / failed are refused.
+ * - VAT basis is NOT assumed. If the platform states its prices include tax,
+ *   the order is flagged and cannot be approved until a person confirms ex-tax
+ *   prices. Totals are stored exactly as supplied.
+ * - Shipping is not an order line. Its total is recorded and shown to the
+ *   approver; it is not carried to the sales order.
+ * - A partial refund already recorded on the platform is flagged, never netted.
+ * - Discounts: WooCommerce allocates coupon discounts to lines (subtotal −
+ *   total); Shopify's per-line `discount_allocations` are summed. Coupon codes
+ *   are recorded for reference only.
  */
 
 export type PlatformOrderInput<T> = { storeKey: string; order: T };
 
-type WooLineItem = { id?: number | string; product_id?: number | string; variation_id?: number | string; sku?: string; name?: string; quantity?: number | string; price?: number | string; subtotal?: string; total?: string; total_tax?: string };
+type WooLineItem = {
+  id?: number | string;
+  product_id?: number | string;
+  variation_id?: number | string;
+  sku?: string;
+  name?: string;
+  quantity?: number | string;
+  price?: number | string;
+  subtotal?: string;
+  subtotal_tax?: string;
+  total?: string;
+  total_tax?: string;
+};
 export type WooOrder = {
   id?: number | string;
   number?: string;
   status?: string;
   currency?: string;
   date_created?: string;
+  prices_include_tax?: boolean;
   customer_id?: number | string;
   customer_note?: string;
   billing?: { email?: string; company?: string; first_name?: string; last_name?: string };
   total?: string;
   total_tax?: string;
   discount_total?: string;
+  shipping_total?: string;
   line_items?: WooLineItem[];
+  shipping_lines?: Array<{ total?: string }>;
+  coupon_lines?: Array<{ code?: string; discount?: string }>;
+  refunds?: Array<{ id?: number | string; total?: string }>;
 };
 
-type ShopifyLineItem = { id?: number | string; product_id?: number | string; variant_id?: number | string; sku?: string | null; title?: string; name?: string; quantity?: number; price?: string; total_discount?: string };
+type ShopifyMoney = { shop_money?: { amount?: string; currency_code?: string } };
+type ShopifyLineItem = {
+  id?: number | string;
+  product_id?: number | string;
+  variant_id?: number | string;
+  sku?: string | null;
+  title?: string;
+  name?: string;
+  quantity?: number;
+  price?: string;
+  total_discount?: string;
+  discount_allocations?: Array<{ amount?: string }>;
+  tax_lines?: Array<{ price?: string }>;
+};
 export type ShopifyOrder = {
   id?: number | string;
   name?: string;
@@ -51,6 +89,7 @@ export type ShopifyOrder = {
   currency?: string;
   cancelled_at?: string | null;
   financial_status?: string;
+  taxes_included?: boolean;
   email?: string;
   note?: string | null;
   customer?: { id?: number | string; email?: string } | null;
@@ -58,11 +97,20 @@ export type ShopifyOrder = {
   total_tax?: string;
   total_discounts?: string;
   total_price?: string;
+  total_shipping_price_set?: ShopifyMoney;
+  shipping_lines?: Array<{ price?: string }>;
+  discount_codes?: Array<{ code?: string }>;
+  refunds?: Array<{ id?: number | string; transactions?: Array<{ amount?: string; kind?: string }> }>;
   line_items?: ShopifyLineItem[];
 };
 
 const WOO_REFUSED = new Set(["cancelled", "refunded", "failed", "trash", "checkout-draft"]);
 const SHOPIFY_REFUSED_FINANCIAL = new Set(["refunded", "voided"]);
+
+const sum = (values: Array<number | null>) => {
+  const present = values.filter((v): v is number => v !== null);
+  return present.length ? Math.round(present.reduce((a, b) => a + b, 0) * 100) / 100 : null;
+};
 
 function requireStoreKey(storeKey: string): string {
   const key = cleanText(storeKey, 100);
@@ -78,6 +126,11 @@ export function normalizeWooCommerceOrder(input: PlatformOrderInput<WooOrder>): 
   if (WOO_REFUSED.has(status)) throw new OrderSourceParseError(`WooCommerce order ${order.id} is ${status}; it is not an order to fulfil.`);
   const items = Array.isArray(order.line_items) ? order.line_items : [];
   if (!items.length) throw new OrderSourceParseError(`WooCommerce order ${order.id} has no line items.`);
+  const refunded = sum((order.refunds || []).map((r) => {
+    const t = toNumberOrNull(r.total);
+    return t === null ? null : Math.abs(t);
+  }));
+  const shipping = toNumberOrNull(order.shipping_total) ?? sum((order.shipping_lines || []).map((l) => toNumberOrNull(l.total)));
   return {
     source: "woocommerce",
     sourceKey: `${storeKey}:order:${order.id}`,
@@ -89,10 +142,20 @@ export function normalizeWooCommerceOrder(input: PlatformOrderInput<WooOrder>): 
     orderDate: toIsoDateOrNull(order.date_created),
     currency: cleanText(order.currency, 10),
     notes: cleanText(order.customer_note, 4000),
+    pricesIncludeTax: typeof order.prices_include_tax === "boolean" ? order.prices_include_tax : null,
     supplied: {
+      subtotal: sum(items.map((item) => toNumberOrNull(item.total))),
       discountTotal: toNumberOrNull(order.discount_total),
       taxTotal: toNumberOrNull(order.total_tax),
+      shippingTotal: shipping,
       total: toNumberOrNull(order.total),
+    },
+    extraction: {
+      method: "structured",
+      sourceFacts: {
+        couponCodes: (order.coupon_lines || []).map((c) => cleanText(c.code, 60)).filter((c): c is string => Boolean(c)),
+        refundedTotal: refunded,
+      },
     },
     lines: items.map((item) => {
       const quantity = toNumberOrNull(item.quantity);
@@ -102,9 +165,7 @@ export function normalizeWooCommerceOrder(input: PlatformOrderInput<WooOrder>): 
       // pre-discount unit price is subtotal ÷ quantity; the discount is carried
       // separately, so quantity × price − discount equals the line total once.
       const unitPrice =
-        subtotal !== null && quantity !== null && quantity > 0
-          ? Math.round((subtotal / quantity) * 10000) / 10000
-          : toNumberOrNull(item.price);
+        subtotal !== null && quantity !== null && quantity > 0 ? Math.round((subtotal / quantity) * 10000) / 10000 : toNumberOrNull(item.price);
       return {
         sourceLineReference: item.id !== undefined ? `line:${item.id}` : null,
         sku: cleanText(item.sku, 200),
@@ -129,6 +190,11 @@ export function normalizeShopifyOrder(input: PlatformOrderInput<ShopifyOrder>): 
   const items = Array.isArray(order.line_items) ? order.line_items : [];
   if (!items.length) throw new OrderSourceParseError(`Shopify order ${order.id} has no line items.`);
   const customerEmail = order.customer?.email || order.email;
+  const shipping =
+    toNumberOrNull(order.total_shipping_price_set?.shop_money?.amount) ?? sum((order.shipping_lines || []).map((l) => toNumberOrNull(l.price)));
+  const refunded = sum(
+    (order.refunds || []).flatMap((r) => (r.transactions || []).filter((t) => !t.kind || t.kind === "refund").map((t) => toNumberOrNull(t.amount)))
+  );
   return {
     source: "shopify",
     sourceKey: `${storeKey}:order:${order.id}`,
@@ -139,21 +205,33 @@ export function normalizeShopifyOrder(input: PlatformOrderInput<ShopifyOrder>): 
     orderDate: toIsoDateOrNull(order.created_at),
     currency: cleanText(order.currency, 10),
     notes: cleanText(order.note, 4000),
+    pricesIncludeTax: typeof order.taxes_included === "boolean" ? order.taxes_included : null,
     supplied: {
       subtotal: toNumberOrNull(order.subtotal_price),
       discountTotal: toNumberOrNull(order.total_discounts),
       taxTotal: toNumberOrNull(order.total_tax),
+      shippingTotal: shipping,
       total: toNumberOrNull(order.total_price),
+    },
+    extraction: {
+      method: "structured",
+      sourceFacts: {
+        couponCodes: (order.discount_codes || []).map((c) => cleanText(c.code, 60)).filter((c): c is string => Boolean(c)),
+        refundedTotal: refunded,
+      },
     },
     lines: items.map((item) => {
       const quantity = toNumberOrNull(item.quantity);
+      const allocated = sum((item.discount_allocations || []).map((d) => toNumberOrNull(d.amount)));
+      const discount = allocated ?? toNumberOrNull(item.total_discount);
       return {
         sourceLineReference: item.id !== undefined ? `line:${item.id}` : null,
         sku: cleanText(item.sku, 200),
         description: cleanText(item.name || item.title, 500),
         quantity: quantity === null ? Number.NaN : quantity,
         unitPrice: toNumberOrNull(item.price),
-        discountAmount: toNumberOrNull(item.total_discount) || null,
+        discountAmount: discount && discount > 0 ? discount : null,
+        taxAmount: sum((item.tax_lines || []).map((t) => toNumberOrNull(t.price))),
       };
     }),
   };

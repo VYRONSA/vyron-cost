@@ -32,6 +32,24 @@ export function createFakeSupabase(seed = {}, options = {}) {
   const tables = structuredClone(seed);
   const calls = {};
 
+  /*
+   * Opt-in unique constraints, so concurrency tests see what Postgres does:
+   *   options.unique = { table: [["col_a", "col_b"], { columns: [...], where: (row) => bool }] }
+   * As in SQL, a key containing NULL never conflicts. A violation returns
+   * { code: "23505" } and writes nothing.
+   */
+  const uniqueFor = (table) =>
+    (options.unique?.[table] || []).map((spec) => (Array.isArray(spec) ? { columns: spec, where: null } : spec));
+  const violates = (table, candidate, ignore) =>
+    uniqueFor(table).some(({ columns, where }) => {
+      if (where && !where(candidate)) return false;
+      if (columns.some((c) => candidate[c] === null || candidate[c] === undefined)) return false;
+      return (tables[table] || []).some(
+        (row) => row !== ignore && !(where && !where(row)) && columns.every((c) => row[c] === candidate[c])
+      );
+    });
+  const duplicateKey = (table) => ({ data: null, error: { code: "23505", message: `duplicate key value violates unique constraint on ${table}` } });
+
   class Query {
     constructor(table) {
       this.table = table;
@@ -103,6 +121,8 @@ export function createFakeSupabase(seed = {}, options = {}) {
     }
     order() { return this; }
     limit(count) { this.max = count; return this; }
+    /** PostgREST range: rows from..to inclusive (applied after the filters). */
+    range(from, to) { this.skip = from; this.max = to - from + 1; return this; }
     insert(payload) { this.op = "insert"; this.payload = payload; return this; }
     /** Insert, or update the row that shares every onConflict column. */
     upsert(payload, options = {}) { this.op = "upsert"; this.payload = payload; this.conflict = String(options.onConflict || "id").split(",").map((c) => c.trim()); return this; }
@@ -137,6 +157,13 @@ export function createFakeSupabase(seed = {}, options = {}) {
           created_at: new Date().toISOString(),
           ...item,
         }));
+        // All-or-nothing, like a single INSERT statement.
+        for (let i = 0; i < items.length; i++) {
+          const batchConflict = uniqueFor(this.table).some(({ columns, where }) =>
+            items.slice(0, i).some((other) => (!where || (where(other) && where(items[i]))) && columns.every((c) => items[i][c] !== null && items[i][c] !== undefined && other[c] === items[i][c]))
+          );
+          if (batchConflict || violates(this.table, items[i], null)) return duplicateKey(this.table);
+        }
         rows.push(...items);
         // insert(...).select().single() returns the one row, as Supabase does.
         if (this.mode === "single") return items.length === 1 ? { data: structuredClone(items[0]), error: null } : { data: null, error: { message: "expected exactly one row" } };
@@ -148,7 +175,13 @@ export function createFakeSupabase(seed = {}, options = {}) {
         tables[this.table] = rows.filter((row) => !matched.includes(row));
         return { data: structuredClone(matched), error: null };
       }
-      if (this.op === "update") for (const row of matched) Object.assign(row, this.payload);
+      if (this.op === "update") {
+        for (const row of matched) {
+          if (violates(this.table, { ...row, ...this.payload }, row)) return duplicateKey(this.table);
+        }
+        for (const row of matched) Object.assign(row, this.payload);
+      }
+      if (this.skip) matched = matched.slice(this.skip);
       if (this.max !== null) matched = matched.slice(0, this.max);
       if (this.mode === "maybe") {
         if (matched.length > 1) return { data: null, error: { message: "multiple rows returned" } };

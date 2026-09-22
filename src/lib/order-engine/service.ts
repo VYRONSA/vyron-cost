@@ -12,8 +12,10 @@ import {
   isEditable,
   type IntakeAction,
 } from "@/lib/order-engine/lifecycle";
-import { loadProductsById } from "@/lib/order-engine/matching";
+import { aliasKeyFor, identityKeyFor, loadProductsById } from "@/lib/order-engine/matching";
 import { candidateContentHash, cleanText, round4, stableHash, toIsoDateOrNull } from "@/lib/order-engine/normalize";
+import { emitOrderIntakeNotification, type OrderIntakeEvent } from "@/lib/order-engine/notifications";
+import { recordOrderEngineEvent } from "@/lib/order-engine/telemetry";
 import type {
   IntakeEventRow,
   IntakeLineRow,
@@ -117,9 +119,24 @@ function lineRowsFor(companyId: string, intakeId: string, lines: OrderCandidateL
     matched_by: line.productId ? actor.userId : null,
     matched_at: line.productId ? now : null,
     validation_status: "PENDING",
+    extraction: line.extraction && typeof line.extraction === "object" ? line.extraction : {},
     created_at: now,
     updated_at: now,
   }));
+}
+
+function notify(intake: IntakeRow, event: OrderIntakeEvent, extra: { salesOrderNumber?: string | null } = {}) {
+  return emitOrderIntakeNotification({
+    event,
+    companyId: intake.company_id,
+    intakeId: intake.id,
+    intakeNumber: intake.intake_number,
+    source: intake.source,
+    status: intake.status,
+    blockingIssues: intake.blocking_issue_count,
+    warnings: intake.warning_issue_count,
+    salesOrderNumber: extra.salesOrderNumber ?? null,
+  });
 }
 
 function newIntakeNumber(): string {
@@ -208,12 +225,15 @@ async function casUpdate(
   return rows[0];
 }
 
-export type IntakeListView = "inbox" | "approvals" | "exceptions" | "done" | "all";
+export type IntakeListView = "inbox" | "approvals" | "exceptions" | "approved" | "confirmed" | "closed" | "done" | "all";
 
 const VIEW_STATUSES: Record<IntakeListView, IntakeStatus[] | null> = {
   inbox: ["RECEIVED", "EXCEPTION", "AWAITING_APPROVAL", "ON_HOLD", "APPROVED"],
   approvals: ["AWAITING_APPROVAL", "ON_HOLD"],
   exceptions: ["EXCEPTION"],
+  approved: ["APPROVED"],
+  confirmed: ["CONFIRMED"],
+  closed: ["REJECTED", "CANCELLED"],
   done: ["CONFIRMED", "REJECTED", "CANCELLED"],
   all: null,
 };
@@ -233,30 +253,75 @@ export type IntakeListRow = Pick<
   | "blocking_issue_count"
   | "warning_issue_count"
   | "sales_order_id"
+  | "decision_by"
   | "created_at"
   | "updated_at"
 > & { line_count: number };
 
+export type IntakeListFilters = {
+  view?: IntakeListView;
+  limit?: number;
+  offset?: number;
+  /** Order number, customer PO, external order number or customer name. */
+  search?: string | null;
+  source?: string | null;
+  customerId?: string | null;
+  /** Received on or after / on or before (YYYY-MM-DD). */
+  from?: string | null;
+  to?: string | null;
+  withIssues?: "blocking" | "warnings" | null;
+  decidedBy?: string | null;
+};
+
+/**
+ * A search term safe to embed in a PostgREST `or` filter: letters, digits and
+ * a few order-number punctuation marks only — commas, parentheses and quotes
+ * (the filter grammar) and LIKE wildcards are removed.
+ */
+export function safeSearchTerm(value: unknown): string {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .replace(/[^\p{L}\p{N} ._/#-]/gu, "")
+    .trim()
+    .slice(0, 60);
+}
+
+const LIST_COLUMNS =
+  "id, intake_number, source, source_reference, external_order_number, customer_po_number, customer_id, customer_name, requested_delivery_date, status, blocking_issue_count, warning_issue_count, sales_order_id, decision_by, created_at, updated_at";
+
 export async function listIntakes(
   supabase: SupabaseClient,
   companyId: string,
-  options: { view?: IntakeListView; limit?: number } = {}
-): Promise<{ rows: IntakeListRow[]; counts: Record<IntakeStatus, number> }> {
+  options: IntakeListFilters = {}
+): Promise<{ rows: IntakeListRow[]; counts: Record<IntakeStatus, number>; hasMore: boolean; offset: number; limit: number }> {
   const view = options.view && options.view in VIEW_STATUSES ? options.view : "inbox";
-  const limit = Math.min(Math.max(Number(options.limit) || 100, 1), 200);
-  let query = supabase
-    .from(T_INTAKES)
-    .select(
-      "id, intake_number, source, source_reference, external_order_number, customer_po_number, customer_id, customer_name, requested_delivery_date, status, blocking_issue_count, warning_issue_count, sales_order_id, created_at, updated_at"
-    )
-    .eq("company_id", companyId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  const limit = Math.min(Math.max(Math.floor(Number(options.limit)) || 50, 1), 200);
+  const offset = Math.max(Math.floor(Number(options.offset)) || 0, 0);
+  let query = supabase.from(T_INTAKES).select(LIST_COLUMNS).eq("company_id", companyId);
   const statuses = VIEW_STATUSES[view];
   if (statuses) query = query.in("status", statuses);
-  const { data, error } = await query;
+  if (options.source && (ORDER_SOURCES as readonly string[]).includes(options.source)) query = query.eq("source", options.source);
+  if (options.customerId) query = query.eq("customer_id", options.customerId);
+  const from = toIsoDateOrNull(options.from);
+  const to = toIsoDateOrNull(options.to);
+  if (from) query = query.gte("created_at", `${from}T00:00:00.000Z`);
+  if (to) query = query.lte("created_at", `${to}T23:59:59.999Z`);
+  if (options.withIssues === "blocking") query = query.gt("blocking_issue_count", 0);
+  if (options.withIssues === "warnings") query = query.gt("warning_issue_count", 0);
+  if (options.decidedBy) query = query.eq("decision_by", options.decidedBy);
+  const term = safeSearchTerm(options.search);
+  if (term) {
+    const like = `%${term.replace(/_/g, "\\_")}%`;
+    query = query.or(
+      ["intake_number", "customer_po_number", "external_order_number", "customer_name"].map((column) => `${column}.ilike.${like}`).join(",")
+    );
+  }
+  // One extra row tells us whether there is a next page.
+  const { data, error } = await query.order("created_at", { ascending: false }).range(offset, offset + limit);
   if (error) raiseDbError(error, "List orders failed");
-  const rows = ((data || []) as IntakeListRow[]).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+  const all = ((data || []) as IntakeListRow[]).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+  const hasMore = all.length > limit;
+  const rows = all.slice(0, limit);
 
   const lineCounts = new Map<string, number>();
   if (rows.length) {
@@ -275,7 +340,7 @@ export async function listIntakes(
   }
 
   const counts = Object.fromEntries(
-    (["RECEIVED", "EXCEPTION", "AWAITING_APPROVAL", "ON_HOLD", "APPROVED", "CONFIRMED", "REJECTED", "CANCELLED"] as IntakeStatus[]).map((s) => [s, 0])
+    (["RECEIVED", "EXCEPTION", "AWAITING_APPROVAL", "ON_HOLD", "APPROVED", "CONFIRMED", "REJECTED", "CANCELLED"] as IntakeStatus[]).map((st) => [st, 0])
   ) as Record<IntakeStatus, number>;
   await Promise.all(
     (Object.keys(counts) as IntakeStatus[]).map(async (status) => {
@@ -289,7 +354,7 @@ export async function listIntakes(
     })
   );
 
-  return { rows: rows.map((row) => ({ ...row, line_count: lineCounts.get(row.id) || 0 })), counts };
+  return { rows: rows.map((row) => ({ ...row, line_count: lineCounts.get(row.id) || 0 })), counts, hasMore, offset, limit };
 }
 
 export type IntakeDetail = {
@@ -366,6 +431,7 @@ async function resolveDuplicate(
     type: "RECEIVE_DUPLICATE",
     detail: "The same source order was received again; no new order was created.",
   });
+  recordOrderEngineEvent("order.duplicate", { companyId: existing.company_id, intakeId: existing.id, intakeNumber: existing.intake_number, source: existing.source });
   return { intake: existing, lines: await loadLines(supabase, existing.company_id, existing.id), duplicate: true };
 }
 
@@ -432,6 +498,9 @@ export async function receiveOrderCandidate(
       supplied_discount_total: numOrNull(candidate.supplied?.discountTotal),
       supplied_tax_total: numOrNull(candidate.supplied?.taxTotal),
       supplied_total: numOrNull(candidate.supplied?.total),
+      supplied_shipping_total: numOrNull(candidate.supplied?.shippingTotal),
+      prices_include_tax: typeof candidate.pricesIncludeTax === "boolean" ? candidate.pricesIncludeTax : null,
+      extraction: candidate.extraction && typeof candidate.extraction === "object" ? candidate.extraction : {},
       status: "RECEIVED",
       validation: {},
       blocking_issue_count: 0,
@@ -470,6 +539,8 @@ export async function receiveOrderCandidate(
     detail: `Order received from ${candidate.source}${intake.source_reference ? ` (${intake.source_reference})` : ""} with ${lineRows.length} line(s).`,
     metadata: { source: candidate.source, sourceKey, contentHash, lineCount: lineRows.length },
   });
+  recordOrderEngineEvent("order.received", { companyId, intakeId: intake.id, intakeNumber: intake.intake_number, source: candidate.source, lines: lineRows.length });
+  await notify(intake, "ORDER_RECEIVED");
 
   return { intake, lines: await loadLines(supabase, companyId, intake.id), duplicate: false };
 }
@@ -486,11 +557,27 @@ export type IntakeEdit = {
   deliveryAddress?: string | null;
   contactName?: string | null;
   notes?: string | null;
-  /** Resolve a line to a product a person chose. */
-  resolveLines?: Array<{ lineId: string; productId: string }>;
+  /**
+   * Resolve a line to a product a person chose. `remember` also records an
+   * approved alias: this customer's item code (or description) → that product,
+   * used by future orders. Needs the caller's `canRemember`.
+   */
+  resolveLines?: Array<{ lineId: string; productId: string; remember?: boolean }>;
+  /** Remember the order's customer reference (e.g. a web-store customer id) → the chosen customer. */
+  rememberCustomerReference?: boolean;
+  /**
+   * A person confirms the line prices are now ex-tax (the source stated tax-
+   * inclusive prices and they have been converted). Clears PRICES_INCLUDE_TAX.
+   */
+  confirmPricesExTax?: boolean;
   /** Replace a line's quantity or price (as corrected with the customer). */
   updateLines?: Array<{ lineId: string; quantity?: number; unitPrice?: number | null }>;
   expectedVersion?: number;
+};
+
+export type EditOptions = {
+  /** The caller may record standing mappings (aliases, customer identities). */
+  canRemember?: boolean;
 };
 
 export async function editIntake(
@@ -498,9 +585,14 @@ export async function editIntake(
   companyId: string,
   id: string,
   edit: IntakeEdit,
-  actor: OrderEngineActor
+  actor: OrderEngineActor,
+  options: EditOptions = {}
 ): Promise<IntakeDetail> {
   const intake = await loadIntake(supabase, companyId, id);
+  const wantsMapping = Boolean(edit.rememberCustomerReference || edit.resolveLines?.some((r) => r.remember));
+  if (wantsMapping && !options.canRemember) {
+    throw new OrderEngineError("INVALID_INPUT", "Only a member who can approve orders may record a standing mapping.");
+  }
   if (!isEditable(intake.status)) {
     throw new OrderEngineError("INVALID_TRANSITION", `An order that is ${intake.status} cannot be edited.`);
   }
@@ -511,6 +603,10 @@ export async function editIntake(
   const byId = new Map(lines.map((line) => [line.id, line]));
   const changes: string[] = [];
   const header: Record<string, unknown> = {};
+  const resolutions: Array<
+    | { kind: "customer"; customerId: string; customerName: string }
+    | { kind: "line"; lineId: string; lineNo: number; productId: string; productName: string; remember: boolean; aliasKey: string | null }
+  > = [];
 
   if (edit.customerId !== undefined) {
     if (edit.customerId) {
@@ -525,6 +621,7 @@ export async function editIntake(
       header.customer_id = edit.customerId;
       header.customer_match_rule = "customer_id";
       changes.push(`customer set to ${String((data as { customer_name?: string }).customer_name || edit.customerId)}`);
+      resolutions.push({ kind: "customer", customerId: edit.customerId, customerName: String((data as { customer_name?: string }).customer_name || "") });
     } else {
       header.customer_id = null;
       header.customer_match_rule = null;
@@ -543,6 +640,11 @@ export async function editIntake(
       header[column] = cleanText(edit[key], max);
       changes.push(`${column.replace(/_/g, " ")} updated`);
     }
+  }
+  if (edit.confirmPricesExTax) {
+    if (intake.prices_include_tax !== true) throw new OrderEngineError("INVALID_INPUT", "This order's prices were not stated as tax-inclusive.");
+    header.prices_include_tax = false;
+    changes.push("line prices confirmed as ex-tax");
   }
   if (edit.requestedDeliveryDate !== undefined) {
     if (edit.requestedDeliveryDate && !toIsoDateOrNull(edit.requestedDeliveryDate)) {
@@ -575,6 +677,15 @@ export async function editIntake(
         },
         note: `line ${line.line_no} matched to ${product.product_name || product.id} by a person`,
       });
+      resolutions.push({
+        kind: "line",
+        lineId: line.id,
+        lineNo: line.line_no,
+        productId: product.id,
+        productName: String(product.product_name || ""),
+        remember: resolution.remember === true,
+        aliasKey: aliasKeyFor({ rawSku: line.raw_sku, rawDescription: line.raw_description }),
+      });
     }
   }
   for (const update of edit.updateLines || []) {
@@ -602,7 +713,21 @@ export async function editIntake(
     }
   }
 
-  if (!changes.length && !lineUpdates.length) throw new OrderEngineError("INVALID_INPUT", "Nothing to change.");
+  if (!changes.length && !lineUpdates.length && !edit.rememberCustomerReference) throw new OrderEngineError("INVALID_INPUT", "Nothing to change.");
+
+  // Standing mappings are checked before anything is written.
+  const mappingCustomerId = (header.customer_id as string | null | undefined) ?? intake.customer_id ?? null;
+  if (resolutions.some((r) => r.kind === "line" && r.remember)) {
+    if (!mappingCustomerId) throw new OrderEngineError("INVALID_INPUT", "Identify the customer before remembering their item codes.");
+    for (const r of resolutions) {
+      if (r.kind === "line" && r.remember && !r.aliasKey) throw new OrderEngineError("INVALID_INPUT", `Line ${r.lineNo} has no SKU or description to remember.`);
+    }
+  }
+  const identityKey = identityKeyFor(intake.customer_reference);
+  if (edit.rememberCustomerReference) {
+    if (!identityKey) throw new OrderEngineError("INVALID_INPUT", "This order carries no customer reference to remember.");
+    if (!mappingCustomerId) throw new OrderEngineError("INVALID_INPUT", "Choose the customer before remembering the reference.");
+  }
 
   // Header first, as the compare-and-set: a concurrent edit loses here, before any line changes.
   const updated = await casUpdate(supabase, intake, {
@@ -624,14 +749,185 @@ export async function editIntake(
     if (error) raiseDbError(error, "Update order line failed");
   }
 
+  const remembered: string[] = [];
+  for (const r of resolutions) {
+    if (r.kind !== "line" || !r.remember) continue;
+    await recordProductAlias(supabase, companyId, { customerId: mappingCustomerId!, aliasKey: r.aliasKey!, productId: r.productId, intakeId: id, actor });
+    remembered.push(`remembered ${r.aliasKey} → ${r.productName}`);
+  }
+  if (edit.rememberCustomerReference) {
+    await recordCustomerIdentity(supabase, companyId, { source: intake.source, reference: intake.customer_reference!, customerId: mappingCustomerId!, intakeId: id, actor });
+    remembered.push(`remembered customer reference for ${intake.source}`);
+  }
+
   await writeEvent(supabase, updated, actor, {
     type: "EDITED",
     from: intake.status,
     to: "RECEIVED",
-    detail: [...changes, ...lineUpdates.map((u) => u.note)].join("; "),
+    detail: [...changes, ...lineUpdates.map((u) => u.note), ...remembered].join("; "),
     metadata: { header: Object.keys(header), lines: lineUpdates.map((u) => ({ lineId: u.line.id, patch: u.patch })) },
   });
+  // One event per resolved exception, so "who resolved it, when" is answerable per line.
+  for (const r of resolutions) {
+    await writeEvent(supabase, updated, actor, {
+      type: r.kind === "customer" ? "CUSTOMER_RESOLVED" : "LINE_RESOLVED",
+      detail: r.kind === "customer" ? `Customer set to ${r.customerName || r.customerId}.` : `Line ${r.lineNo} matched to ${r.productName}${r.remember ? " (remembered for this customer)" : ""}.`,
+      metadata: r.kind === "customer" ? { customerId: r.customerId, remembered: Boolean(edit.rememberCustomerReference) } : { lineId: r.lineId, lineNo: r.lineNo, productId: r.productId, remembered: r.remember },
+    });
+  }
   return getIntakeDetail(supabase, companyId, id);
+}
+
+// ---------------------------------------------------------------------------
+// Standing mappings (recorded human decisions; revoke-only)
+// ---------------------------------------------------------------------------
+
+async function recordProductAlias(
+  supabase: SupabaseClient,
+  companyId: string,
+  input: { customerId: string; aliasKey: string; productId: string; intakeId: string; actor: OrderEngineActor }
+) {
+  const { data: existing, error } = await supabase
+    .from("vyron_order_product_aliases")
+    .select("id, product_id")
+    .eq("company_id", companyId)
+    .eq("customer_id", input.customerId)
+    .eq("source_code_normalized", input.aliasKey)
+    .is("revoked_at", null);
+  if (error) raiseDbError(error, "Alias lookup failed");
+  const live = (existing || []) as Array<{ id: string; product_id: string }>;
+  if (live.some((row) => row.product_id === input.productId)) return;
+  if (live.length) {
+    throw new OrderEngineError("CONFLICT", "This customer's code is already mapped to another product. Revoke that mapping first.");
+  }
+  const { error: insertError } = await supabase.from("vyron_order_product_aliases").insert({
+    id: randomUUID(),
+    company_id: companyId,
+    customer_id: input.customerId,
+    source_code: input.aliasKey.replace(/^(sku|desc):/, ""),
+    source_code_normalized: input.aliasKey,
+    product_id: input.productId,
+    created_by: input.actor.userId,
+    source_intake_id: input.intakeId,
+    created_at: new Date().toISOString(),
+  });
+  if (insertError) {
+    if (isUniqueViolation(insertError)) throw new OrderEngineError("CONFLICT", "Someone else just mapped this code. Reload and check.");
+    raiseDbError(insertError, "Record alias failed");
+  }
+}
+
+async function recordCustomerIdentity(
+  supabase: SupabaseClient,
+  companyId: string,
+  input: { source: string; reference: string; customerId: string; intakeId: string; actor: OrderEngineActor }
+) {
+  const key = identityKeyFor(input.reference);
+  const { data: existing, error } = await supabase
+    .from("vyron_order_customer_identities")
+    .select("id, customer_id")
+    .eq("company_id", companyId)
+    .eq("source", input.source)
+    .eq("external_reference_normalized", key)
+    .is("revoked_at", null);
+  if (error) raiseDbError(error, "Customer identity lookup failed");
+  const live = (existing || []) as Array<{ id: string; customer_id: string }>;
+  if (live.some((row) => row.customer_id === input.customerId)) return;
+  if (live.length) {
+    // Never silently re-point a reference: that would merge two customers' order histories.
+    throw new OrderEngineError("CONFLICT", "This customer reference is already mapped to another customer. Revoke that mapping first.");
+  }
+  const { error: insertError } = await supabase.from("vyron_order_customer_identities").insert({
+    id: randomUUID(),
+    company_id: companyId,
+    source: input.source,
+    external_reference: input.reference,
+    external_reference_normalized: key,
+    customer_id: input.customerId,
+    created_by: input.actor.userId,
+    source_intake_id: input.intakeId,
+    created_at: new Date().toISOString(),
+  });
+  if (insertError) {
+    if (isUniqueViolation(insertError)) throw new OrderEngineError("CONFLICT", "Someone else just mapped this reference. Reload and check.");
+    raiseDbError(insertError, "Record customer identity failed");
+  }
+}
+
+export type StandingMapping = {
+  kind: "product_alias" | "customer_identity";
+  id: string;
+  key: string;
+  customerId: string | null;
+  productId: string | null;
+  source: string | null;
+  createdBy: string;
+  createdAt: string;
+  revokedAt: string | null;
+  revokedBy: string | null;
+  sourceIntakeId: string | null;
+};
+
+export async function listStandingMappings(supabase: SupabaseClient, companyId: string, options: { includeRevoked?: boolean } = {}): Promise<StandingMapping[]> {
+  let aliases = supabase.from("vyron_order_product_aliases").select("*").eq("company_id", companyId);
+  let identities = supabase.from("vyron_order_customer_identities").select("*").eq("company_id", companyId);
+  if (!options.includeRevoked) {
+    aliases = aliases.is("revoked_at", null);
+    identities = identities.is("revoked_at", null);
+  }
+  const [a, i] = await Promise.all([aliases.limit(500), identities.limit(500)]);
+  if (a.error) raiseDbError(a.error, "List aliases failed");
+  if (i.error) raiseDbError(i.error, "List customer identities failed");
+  type Row = Record<string, string | null>;
+  return [
+    ...((a.data || []) as Row[]).map((row) => ({
+      kind: "product_alias" as const,
+      id: String(row.id),
+      key: String(row.source_code_normalized),
+      customerId: row.customer_id,
+      productId: row.product_id,
+      source: null,
+      createdBy: String(row.created_by),
+      createdAt: String(row.created_at),
+      revokedAt: row.revoked_at,
+      revokedBy: row.revoked_by,
+      sourceIntakeId: row.source_intake_id,
+    })),
+    ...((i.data || []) as Row[]).map((row) => ({
+      kind: "customer_identity" as const,
+      id: String(row.id),
+      key: String(row.external_reference_normalized),
+      customerId: row.customer_id,
+      productId: null,
+      source: row.source,
+      createdBy: String(row.created_by),
+      createdAt: String(row.created_at),
+      revokedAt: row.revoked_at,
+      revokedBy: row.revoked_by,
+      sourceIntakeId: row.source_intake_id,
+    })),
+  ].sort((x, y) => y.createdAt.localeCompare(x.createdAt));
+}
+
+/** Revoke (never delete) a standing mapping. Future validations stop using it; past orders keep their audit. */
+export async function revokeStandingMapping(
+  supabase: SupabaseClient,
+  companyId: string,
+  kind: StandingMapping["kind"],
+  id: string,
+  actor: OrderEngineActor
+): Promise<void> {
+  const table = kind === "product_alias" ? "vyron_order_product_aliases" : kind === "customer_identity" ? "vyron_order_customer_identities" : null;
+  if (!table) throw new OrderEngineError("INVALID_INPUT", "Unknown mapping type.");
+  const { data, error } = await supabase
+    .from(table)
+    .update({ revoked_at: new Date().toISOString(), revoked_by: actor.userId })
+    .eq("company_id", companyId)
+    .eq("id", id)
+    .is("revoked_at", null)
+    .select("id");
+  if (error) raiseDbError(error, "Revoke mapping failed");
+  if (!data || data.length !== 1) throw new OrderEngineError("NOT_FOUND", "Mapping not found, or already revoked.");
 }
 
 // ---------------------------------------------------------------------------
@@ -746,8 +1042,28 @@ export async function performIntakeAction(
           to === "EXCEPTION"
             ? `Validation found ${result.snapshot.counts.errors} blocking issue(s).`
             : `Validation passed with ${result.snapshot.counts.warnings} warning(s); awaiting approval.`,
-        metadata: { counts: result.snapshot.counts, codes: result.snapshot.issues.map((i) => i.code), validationHash: result.hash },
+        metadata: {
+          counts: result.snapshot.counts,
+          codes: result.snapshot.issues.map((i) => i.code),
+          validationHash: result.hash,
+          customer: { matched: Boolean(result.snapshot.customer.id), rule: result.snapshot.customer.matchRule },
+          matching: result.snapshot.matching,
+          policy: result.snapshot.policy,
+        },
       });
+      recordOrderEngineEvent(to === "EXCEPTION" ? "order.exception" : "order.awaiting_approval", {
+        companyId,
+        intakeId: id,
+        intakeNumber: intake.intake_number,
+        source: intake.source,
+        fromStatus: intake.status,
+        toStatus: to,
+        lines: lines.length,
+        errors: result.snapshot.counts.errors,
+        warnings: result.snapshot.counts.warnings,
+        codes: result.snapshot.issues.map((i) => i.code),
+      });
+      await notify(updated, to === "EXCEPTION" ? "ORDER_EXCEPTION" : "APPROVAL_REQUIRED");
       if (to === "EXCEPTION") {
         await writeEvent(supabase, updated, actor, {
           type: "EXCEPTION_RAISED",
@@ -784,6 +1100,7 @@ export async function performIntakeAction(
           detail: "Live data changed since the order was validated; approval was not given. Review the updated validation.",
           metadata: { codes: result.snapshot.issues.map((i) => i.code), validationHash: result.hash },
         });
+        recordOrderEngineEvent("order.approval_refused", { companyId, intakeId: id, intakeNumber: intake.intake_number, reason: "LIVE_DATA_CHANGED", toStatus: to });
         throw new OrderEngineError(
           to === "EXCEPTION" ? "VALIDATION_FAILED" : "CONFLICT",
           to === "EXCEPTION"
@@ -815,6 +1132,8 @@ export async function performIntakeAction(
           acknowledgedWarnings: warnings.map((w) => ({ code: w.code, lineNo: w.lineNo ?? null, message: w.message })),
         },
       });
+      recordOrderEngineEvent("order.approved", { companyId, intakeId: id, intakeNumber: intake.intake_number, source: intake.source, warnings: warnings.length });
+      await notify(approved, "ORDER_APPROVED");
       await handOff(supabase, approved, actor);
       break;
     }
@@ -827,6 +1146,8 @@ export async function performIntakeAction(
     case "hold": {
       const updated = await casUpdate(supabase, intake, { status: "ON_HOLD", decision_by: actor.userId, decision_at: now, decision_note: reason });
       await writeEvent(supabase, updated, actor, { type: "HELD", from: intake.status, to: "ON_HOLD", detail: reason! });
+      recordOrderEngineEvent("order.held", { companyId, intakeId: id, intakeNumber: intake.intake_number });
+      await notify(updated, "ORDER_ON_HOLD");
       break;
     }
 
@@ -849,12 +1170,15 @@ export async function performIntakeAction(
     case "reject": {
       const updated = await casUpdate(supabase, intake, { status: "REJECTED", decision_by: actor.userId, decision_at: now, decision_note: reason });
       await writeEvent(supabase, updated, actor, { type: "REJECTED", from: intake.status, to: "REJECTED", detail: reason! });
+      recordOrderEngineEvent("order.rejected", { companyId, intakeId: id, intakeNumber: intake.intake_number, fromStatus: intake.status });
+      await notify(updated, "ORDER_REJECTED");
       break;
     }
 
     case "cancel": {
       const updated = await casUpdate(supabase, intake, { status: "CANCELLED", decision_note: reason });
       await writeEvent(supabase, updated, actor, { type: "CANCELLED", from: intake.status, to: "CANCELLED", detail: reason! });
+      recordOrderEngineEvent("order.cancelled", { companyId, intakeId: id, intakeNumber: intake.intake_number, fromStatus: intake.status });
       break;
     }
   }
@@ -970,9 +1294,18 @@ async function handOff(supabase: SupabaseClient, intake: IntakeRow, actor: Order
       detail: `Handed to Sales Orders as ${order.order_number} (${order.status}). Nothing was reserved, invoiced or posted.`,
       metadata: { salesOrderId: order.id, salesOrderNumber: order.order_number, salesOrderStatus: order.status },
     });
+    recordOrderEngineEvent("order.handoff_succeeded", { companyId: intake.company_id, intakeId: intake.id, intakeNumber: intake.intake_number, salesOrderId: order.id });
+    await notify(confirmed, "ORDER_CONFIRMED", { salesOrderNumber: order.order_number });
   } catch (error) {
     if (error instanceof OrderEngineError && error.code !== "HANDOFF_FAILED") throw error;
     const message = error instanceof Error ? error.message : String(error);
+    // Two requests completing the same handoff: the pre-claimed id makes the
+    // second insert collide. That is a concurrency outcome, not a failure — the
+    // other request creates (or has created) the one sales order.
+    if (/duplicate key|already exists|23505/i.test(message)) {
+      throw new OrderEngineError("CONFLICT", "Another request is completing this order's handoff. Reload the order.");
+    }
+    recordOrderEngineEvent("order.handoff_failed", { companyId: intake.company_id, intakeId: intake.id, intakeNumber: intake.intake_number, reason: "HANDOFF_FAILED" });
     await writeEvent(supabase, intake, actor, {
       type: "HANDOFF_FAILED",
       from: "APPROVED",
@@ -982,4 +1315,111 @@ async function handOff(supabase: SupabaseClient, intake: IntakeRow, actor: Order
     }).catch(() => undefined);
     throw new OrderEngineError("HANDOFF_FAILED", `Approved, but the sales order could not be created: ${message} Fix the cause and choose Confirm to retry.`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Exception Centre
+// ---------------------------------------------------------------------------
+
+export type ExceptionRow = {
+  intakeId: string;
+  intakeNumber: string;
+  intakeStatus: IntakeStatus;
+  customerName: string | null;
+  source: string;
+  receivedAt: string;
+  lineNo: number | null;
+  code: string;
+  severity: "error" | "warning";
+  blocking: boolean;
+  category: string;
+  title: string;
+  message: string;
+  action: string;
+};
+
+export type ResolutionRow = {
+  intakeId: string;
+  intakeNumber: string | null;
+  type: "LINE_RESOLVED" | "CUSTOMER_RESOLVED";
+  detail: string | null;
+  resolvedBy: string;
+  resolvedByName: string | null;
+  resolvedAt: string;
+  remembered: boolean;
+};
+
+/**
+ * Every open blocking issue and warning across orders still in play, with
+ * what it means and what to do (issue-catalog.ts), plus the most recent
+ * resolutions — who resolved what, when.
+ */
+export async function listExceptionCentre(
+  supabase: SupabaseClient,
+  companyId: string,
+  options: { includeWarnings?: boolean } = {}
+): Promise<{ open: ExceptionRow[]; resolved: ResolutionRow[] }> {
+  const { issueDefinition } = await import("@/lib/order-engine/issue-catalog");
+  const { data, error } = await supabase
+    .from(T_INTAKES)
+    .select("id, intake_number, status, customer_name, source, created_at, validation")
+    .eq("company_id", companyId)
+    .in("status", ["EXCEPTION", "AWAITING_APPROVAL", "ON_HOLD"])
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) raiseDbError(error, "List exceptions failed");
+  const open: ExceptionRow[] = [];
+  for (const row of (data || []) as Array<Pick<IntakeRow, "id" | "intake_number" | "status" | "customer_name" | "source" | "created_at" | "validation">>) {
+    const snapshot = row.validation as ValidationSnapshot;
+    for (const issue of snapshot?.issues || []) {
+      if (issue.severity === "info") continue;
+      if (issue.severity === "warning" && options.includeWarnings === false) continue;
+      const def = issueDefinition(issue.code);
+      open.push({
+        intakeId: row.id,
+        intakeNumber: row.intake_number,
+        intakeStatus: row.status,
+        customerName: row.customer_name,
+        source: row.source,
+        receivedAt: row.created_at,
+        lineNo: issue.lineNo ?? null,
+        code: issue.code,
+        severity: issue.severity,
+        blocking: issue.severity === "error",
+        category: issue.category,
+        title: def?.title || issue.code,
+        message: issue.message,
+        action: def?.action || "Review the order.",
+      });
+    }
+  }
+  open.sort((a, b) => Number(b.blocking) - Number(a.blocking) || b.receivedAt.localeCompare(a.receivedAt));
+
+  const { data: events, error: eventError } = await supabase
+    .from(T_EVENTS)
+    .select("intake_id, event_type, detail, actor, actor_name, created_at, metadata")
+    .eq("company_id", companyId)
+    .in("event_type", ["LINE_RESOLVED", "CUSTOMER_RESOLVED"])
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (eventError) raiseDbError(eventError, "List resolutions failed");
+  const eventRows = ((events || []) as Array<IntakeEventRow>).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+  const ids = [...new Set(eventRows.map((e) => e.intake_id))];
+  const numbers = new Map<string, string>();
+  if (ids.length) {
+    const { data: intakes, error: intakeError } = await supabase.from(T_INTAKES).select("id, intake_number").eq("company_id", companyId).in("id", ids);
+    if (intakeError) raiseDbError(intakeError, "List resolutions failed");
+    for (const row of (intakes || []) as Array<{ id: string; intake_number: string }>) numbers.set(row.id, row.intake_number);
+  }
+  const resolved: ResolutionRow[] = eventRows.map((e) => ({
+    intakeId: e.intake_id,
+    intakeNumber: numbers.get(e.intake_id) || null,
+    type: e.event_type as ResolutionRow["type"],
+    detail: e.detail,
+    resolvedBy: e.actor,
+    resolvedByName: e.actor_name,
+    resolvedAt: e.created_at,
+    remembered: Boolean((e.metadata as { remembered?: boolean })?.remembered),
+  }));
+  return { open, resolved };
 }

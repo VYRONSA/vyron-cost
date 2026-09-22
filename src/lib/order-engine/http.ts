@@ -61,7 +61,33 @@ export function orderErrorResponse(error: unknown, fallback: string) {
   return workspaceAccessErrorResponse(error, fallback);
 }
 
+/** Largest body the Order Engine accepts: a 2 MB CSV plus JSON overhead. */
+export const MAX_BODY_BYTES = 3 * 1024 * 1024;
+
+/**
+ * Read a mutating request's JSON body.
+ *
+ * Defence in depth on top of the SameSite=Lax session cookie: the body must be
+ * declared application/json (a cross-site HTML form cannot send that without a
+ * CORS preflight, which this API never grants) and must not exceed
+ * MAX_BODY_BYTES. Malformed JSON is a 400, not an empty object.
+ */
 export async function readJsonBody(request: Request): Promise<Record<string, unknown>> {
-  const body = await request.json().catch(() => null);
-  return body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : {};
+  const contentType = String(request.headers.get("content-type") || "").toLowerCase();
+  if (!contentType.startsWith("application/json")) {
+    throw new OrderEngineError("UNSUPPORTED_MEDIA_TYPE", "Send the request as application/json.");
+  }
+  const declared = Number(request.headers.get("content-length") || 0);
+  if (declared > MAX_BODY_BYTES) throw new OrderEngineError("PAYLOAD_TOO_LARGE", "The request is too large.");
+  const text = await request.text();
+  if (text.length > MAX_BODY_BYTES) throw new OrderEngineError("PAYLOAD_TOO_LARGE", "The request is too large.");
+  if (!text.trim()) return {};
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    throw new OrderEngineError("INVALID_INPUT", "The request body is not valid JSON.");
+  }
+  if (!body || typeof body !== "object" || Array.isArray(body)) throw new OrderEngineError("INVALID_INPUT", "The request body must be a JSON object.");
+  return body as Record<string, unknown>;
 }

@@ -97,6 +97,8 @@ const seed = () => ({
   vyron_customer_sales_order_allocations: [
     { id: "al1", company_id: CO, sales_order_id: "so-old", product_id: "p-pie", reserved_qty: 80, status: "Reserved" },
     { id: "al2", company_id: CO, sales_order_id: "so-old2", product_id: "p-pie", reserved_qty: 500, status: "Converted" },
+    // A cancelled order never released its rows (the engine does not): they must not hold stock.
+    { id: "al3", company_id: CO, sales_order_id: "so-cancelled", product_id: "p-pie", reserved_qty: 900, status: "Reserved" },
   ],
   vyron_cost_boms: [{ id: "bom-pie", company_id: CO, product_id: "p-pie" }],
   vyron_customer_price_list_assignments: [],
@@ -106,7 +108,11 @@ const seed = () => ({
   vyron_customer_branches: [],
   vyron_customer_invoices: [],
   vyron_customer_invoice_lines: [],
-  vyron_customer_sales_orders: [],
+  vyron_customer_sales_orders: [
+    { id: "so-old", company_id: CO, order_number: "SO-OLD", status: "Picking" },
+    { id: "so-old2", company_id: CO, order_number: "SO-OLD2", status: "Invoiced" },
+    { id: "so-cancelled", company_id: CO, order_number: "SO-CXL", status: "Cancelled" },
+  ],
   vyron_customer_sales_order_lines: [],
   vyron_customer_sales_order_audit: [],
   vyron_cost_stock_ledger: [],
@@ -127,6 +133,8 @@ const manual = (overrides = {}) => ({
   ...overrides,
 });
 
+/** Sales orders created during the test — the seed holds three pre-existing ones (ids "so-…"). */
+const newOrders = (db) => db.tables.vyron_customer_sales_orders.filter((o) => !String(o.id).startsWith("so-"));
 const receive = (db, candidate, company = CO) => service.receiveOrderCandidate(db, company, candidate, CLERK);
 const act = (db, id, action, options = {}, actor = APPROVER, company = CO) =>
   service.performIntakeAction(db, company, id, action, actor, { today: TODAY, ...options });
@@ -315,7 +323,7 @@ section("Price, stock, production, margin, commercial, arithmetic");
   check("price mismatch → warning with both prices", find("PRICE_MISMATCH", 1)?.data?.supplied === 18 && find("PRICE_MISMATCH", 1)?.data?.expected === 20);
   check("no order price → VYRON price used (info)", find("PRICE_FROM_VYRON", 2)?.severity === "info");
   const pieStock = find("INSUFFICIENT_STOCK", 1);
-  check("stock is net of other orders' Reserved allocations only", pieStock?.data?.available === 20 && pieStock?.data?.reservedElsewhere === 80, JSON.stringify(pieStock?.data));
+  check("stock is net of live orders' Reserved allocations only (cancelled order's 900 ignored)", pieStock?.data?.available === 20 && pieStock?.data?.reservedElsewhere === 80, JSON.stringify(pieStock?.data));
   check("stock demand sums duplicate product lines (31 vs 20 → short 11)", pieStock?.data?.ordered === 31 && pieStock?.data?.shortfall === 11);
   check("shortfall with a BOM → production required (info)", find("PRODUCTION_REQUIRED", 1)?.severity === "info");
   check("shortfall without a BOM → warning", find("NO_BOM_FOR_SHORTFALL", 2)?.severity === "warning");
@@ -354,12 +362,12 @@ section("Approval workflow and handoff");
   check("approve against a stale validation → CONFLICT", wrongHash?.code === "CONFLICT");
   const noAck = await rejects(act(db, intake.id, "approve", { validationHash: validated.intake.validation_hash }));
   check("warnings must be acknowledged", noAck?.code === "WARNINGS_NOT_ACKNOWLEDGED" && noAck.details.codes.includes("PRICE_MISMATCH"));
-  check("refused approvals changed nothing", db.tables.vyron_order_intakes.find((r) => r.id === intake.id).status === "AWAITING_APPROVAL" && db.tables.vyron_customer_sales_orders.length === 0);
+  check("refused approvals changed nothing", db.tables.vyron_order_intakes.find((r) => r.id === intake.id).status === "AWAITING_APPROVAL" && newOrders(db).length === 0);
 
   const confirmed = await act(db, intake.id, "approve", { acknowledgeWarnings: true, validationHash: validated.intake.validation_hash, reason: "Price agreed by phone" });
   check("approved order is CONFIRMED", confirmed.intake.status === "CONFIRMED");
   check("decision recorded with the server actor", confirmed.intake.decision_by === APPROVER.userId && confirmed.intake.decision_note === "Price agreed by phone");
-  const so = db.tables.vyron_customer_sales_orders;
+  const so = newOrders(db);
   check("exactly one sales order created", so.length === 1);
   check("sales order id is the pre-claimed id", so[0].id === confirmed.intake.pending_sales_order_id && confirmed.intake.sales_order_id === so[0].id);
   check("sales order is a Draft", so[0].status === "Draft");
@@ -371,7 +379,7 @@ section("Approval workflow and handoff");
   const soAudit = db.tables.vyron_customer_sales_order_audit;
   check("sales-order audit uses the real actor", soAudit.some((a) => a.event_type === "CREATED_FROM_ORDER_INTAKE" && a.actor === APPROVER.userId) && soAudit.some((a) => a.event_type === "SALES_ORDER_CREATED" && a.actor === APPROVER.userId));
   check("nothing posted: no stock ledger, movements, invoices or Xero queue", db.tables.vyron_cost_stock_ledger.length === 0 && db.tables.vyron_stock_movements.length === 0 && db.tables.vyron_customer_invoices.length === 0 && db.tables.vyron_xero_sync_queue.length === 0);
-  check("nothing reserved", db.tables.vyron_customer_sales_order_allocations.length === 2);
+  check("nothing reserved", db.tables.vyron_customer_sales_order_allocations.length === 3);
   const approvedEvent = confirmed.events.find((e) => e.event_type === "APPROVED");
   check("approval event lists acknowledged warnings", approvedEvent?.metadata?.acknowledgedWarnings?.some((w) => w.code === "PRICE_MISMATCH"));
   check("audit trail in order", ["RECEIVED", "VALIDATED", "APPROVAL_REQUESTED", "APPROVED", "CONFIRMED"].every((t, i, arr) => {
@@ -381,7 +389,7 @@ section("Approval workflow and handoff");
   check("every event actor is a server actor", confirmed.events.every((e) => [CLERK.userId, APPROVER.userId].includes(e.actor)));
   check("derived statuses after handoff", confirmed.derived.approvalStatus === "APPROVED" && confirmed.derived.fulfilmentStatus === "NOT_STARTED" && confirmed.derived.invoiceStatus === "NOT_INVOICED");
   const twice = await rejects(act(db, intake.id, "approve", { acknowledgeWarnings: true, validationHash: validated.intake.validation_hash }));
-  check("a confirmed order cannot be approved again", twice?.code === "INVALID_TRANSITION" && db.tables.vyron_customer_sales_orders.length === 1);
+  check("a confirmed order cannot be approved again", twice?.code === "INVALID_TRANSITION" && newOrders(db).length === 1);
   const edit = await rejects(service.editIntake(db, CO, intake.id, { notes: "late" }, CLERK));
   check("a confirmed order cannot be edited", edit?.code === "INVALID_TRANSITION");
 }
@@ -397,7 +405,7 @@ section("Approval re-validates against live data");
   check("stock moved since review → approval refused (CONFLICT)", moved?.code === "CONFLICT");
   const after = await service.getIntakeDetail(db, CO, intake.id);
   check("the refreshed validation is stored for review", after.intake.validation_hash !== validated.intake.validation_hash && codes(after).includes("INSUFFICIENT_STOCK"));
-  check("no sales order created", db.tables.vyron_customer_sales_orders.length === 0);
+  check("no sales order created", newOrders(db).length === 0);
   db.tables.vyron_cost_products = db.tables.vyron_cost_products.filter((p) => p.id !== "p-pie");
   const gone = await rejects(act(db, intake.id, "approve", { validationHash: after.intake.validation_hash, acknowledgeWarnings: true }));
   const afterGone = await service.getIntakeDetail(db, CO, intake.id);
@@ -462,10 +470,10 @@ section("Handoff is idempotent and fails safely");
   const stuck = await service.getIntakeDetail(db, CO, intake.id);
   check("missing VAT setting → HANDOFF_FAILED, order stays APPROVED", failed?.code === "HANDOFF_FAILED" && stuck.intake.status === "APPROVED");
   check("handoff failure is audited", stuck.events.some((e) => e.event_type === "HANDOFF_FAILED"));
-  check("no sales order written", db.tables.vyron_customer_sales_orders.length === 0);
+  check("no sales order written", newOrders(db).length === 0);
   db.tables.vyron_workspaces[0].default_vat_rate = 15;
   const retried = await act(db, intake.id, "confirm");
-  check("confirm retries the handoff → CONFIRMED", retried.intake.status === "CONFIRMED" && db.tables.vyron_customer_sales_orders.length === 1);
+  check("confirm retries the handoff → CONFIRMED", retried.intake.status === "CONFIRMED" && newOrders(db).length === 1);
 
   // A crash after the sales order was written but before the intake was linked.
   const db2 = createFakeSupabase(seed());
@@ -477,7 +485,7 @@ section("Handoff is idempotent and fails safely");
   db2.tables.vyron_customer_sales_orders.push({ id: preClaimed, company_id: CO, order_number: "SO-CRASHED", status: "Draft" });
   db2.tables.vyron_customer_sales_order_lines.push({ id: "sol-x", company_id: CO, sales_order_id: preClaimed, product_id: "p-pie", quantity: 10 });
   const linked = await act(db2, second.intake.id, "confirm");
-  check("retry links the already-written order instead of creating another", linked.intake.sales_order_id === preClaimed && db2.tables.vyron_customer_sales_orders.length === 1);
+  check("retry links the already-written order instead of creating another", linked.intake.sales_order_id === preClaimed && newOrders(db2).length === 1);
   check("confirmed state requires the link", linked.intake.status === "CONFIRMED" && v2.intake.id === second.intake.id);
 
   const db3 = createFakeSupabase(seed());
@@ -516,7 +524,7 @@ section("Compare-and-set");
   };
   const lost = await rejects(act(db, intake.id, "approve", { validationHash: validated.intake.validation_hash }));
   check("a concurrent change makes the approval a CONFLICT", lost?.code === "CONFLICT");
-  check("the loser created no sales order", db.tables.vyron_customer_sales_orders.length === 0);
+  check("the loser created no sales order", newOrders(db).length === 0);
 }
 
 section("Tenant isolation");
