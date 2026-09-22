@@ -29,9 +29,13 @@ type Row = {
   customer_name: string | null;
   requested_delivery_date: string | null;
   status: IntakeStatus;
+  source_channel?: string | null;
+  extraction_confidence?: "HIGH" | "MEDIUM" | "LOW" | null;
   blocking_issue_count: number;
   warning_issue_count: number;
   sales_order_id: string | null;
+  created_by?: string | null;
+  decision_by?: string | null;
   created_at: string;
   line_count: number;
 };
@@ -252,13 +256,14 @@ export default function OrderInboxClient({ initialView, canCreate }: { initialVi
 
           <div className="mt-4 overflow-x-auto">
             <div className="min-w-[900px]">
-              <div className="grid grid-cols-[1.1fr_1.6fr_1fr_0.8fr_0.5fr_1.3fr_1fr] gap-3 border-b border-slate-100 pb-2 text-[10px] font-black uppercase tracking-[0.13em] text-slate-400">
+              <div className="grid grid-cols-[1.1fr_1.5fr_1fr_1fr_0.5fr_1.4fr_0.9fr_0.9fr] gap-3 border-b border-slate-100 pb-2 text-[10px] font-black uppercase tracking-[0.13em] text-slate-400">
                 <div>Order</div>
                 <div>Customer</div>
                 <div>PO / reference</div>
-                <div>Source</div>
+                <div>Source &amp; channel</div>
                 <div>Lines</div>
                 <div>Status</div>
+                <div>With</div>
                 <div>Received</div>
               </div>
               {loading ? <div className="py-8 text-center text-sm font-semibold text-slate-400">Loading…</div> : null}
@@ -270,20 +275,29 @@ export default function OrderInboxClient({ initialView, canCreate }: { initialVi
                   <Link
                     key={row.id}
                     href={`/order-inbox/${row.id}`}
-                    className="grid grid-cols-[1.1fr_1.6fr_1fr_0.8fr_0.5fr_1.3fr_1fr] items-center gap-3 border-b border-slate-50 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className="grid grid-cols-[1.1fr_1.5fr_1fr_1fr_0.5fr_1.4fr_0.9fr_0.9fr] items-center gap-3 border-b border-slate-50 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                   >
                     <div className="font-black text-slate-900">{row.intake_number}</div>
                     <div className="truncate">{row.customer_name || <span className="text-slate-400">Not stated</span>}</div>
                     <div className="truncate">{row.customer_po_number || row.external_order_number || "—"}</div>
-                    <div>
+                    <div className="min-w-0">
                       <Pill>{SOURCE_LABEL[row.source] || row.source}</Pill>
+                      {row.source_channel && row.source_channel !== row.source ? (
+                        <div className="mt-1 truncate text-[10px] font-bold text-slate-500">{row.source_channel}</div>
+                      ) : null}
                     </div>
                     <div>{row.line_count}</div>
                     <div className="flex flex-wrap items-center gap-1.5">
                       <IntakeStatusPill status={row.status} />
                       {row.blocking_issue_count > 0 ? <Pill tone="rose">{row.blocking_issue_count} blocking</Pill> : null}
                       {row.blocking_issue_count === 0 && row.warning_issue_count > 0 ? <Pill tone="amber">{row.warning_issue_count} warning</Pill> : null}
+                      {row.extraction_confidence ? (
+                        <Pill tone={row.extraction_confidence === "LOW" ? "rose" : row.extraction_confidence === "MEDIUM" ? "amber" : "blue"}>
+                          Read {row.extraction_confidence.toLowerCase()}
+                        </Pill>
+                      ) : null}
                     </div>
+                    <div className="truncate text-xs text-slate-500">{row.decision_by || row.created_by || "—"}</div>
                     <div className="text-xs text-slate-500">{when(row.created_at)}</div>
                   </Link>
                 ))}

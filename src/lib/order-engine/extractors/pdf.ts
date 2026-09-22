@@ -68,9 +68,14 @@ export function getPdfExtractor(id: string | null | undefined): PdfExtractor | n
  */
 export async function extractDocument(
   document: ExtractionDocument,
-  context: { companyId: string; extractorId: string | null }
+  context: { companyId: string; extractorId: string | null; channelActive?: boolean; inactiveReason?: string | null }
 ): Promise<ExtractionAttempt> {
   const at = new Date().toISOString();
+  // A registered provider is not an activated channel: until the tenant has
+  // activated PDF extraction, no document is sent anywhere.
+  if (context.channelActive === false) {
+    return { status: "NOT_CONFIGURED", provider: null, reason: context.inactiveReason || "The PDF channel is not active for this company.", at };
+  }
   const extractor = getPdfExtractor(context.extractorId);
   if (!extractor) {
     return {

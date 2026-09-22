@@ -122,6 +122,21 @@ const seed = () => ({
   vyron_order_intake_lines: [],
   vyron_order_intake_events: [],
   vyron_order_source_messages: [],
+  // The synthetic tenant's web stores have been activated (a channel is never
+  // live merely because an order arrives for it).
+  vyron_order_channel_settings: ["store-a", "store-other"].map((key, i) => ({
+    id: `ch-woo-${i}`, company_id: CO, channel_key: `woocommerce:${key}`, channel_type: "web_store", label: key,
+    enabled: true, prices_include_tax: null, eligible_statuses: null,
+    activation_state: "ACTIVE", activated_at: "2026-09-01T00:00:00Z", activated_by: "seed",
+    uat_passed_at: "2026-08-31T00:00:00Z", uat_reference: "SEED-UAT",
+    updated_by: "seed", created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z",
+  })).concat([{
+    id: "ch-shop-0", company_id: CO, channel_key: "shopify:store-b", channel_type: "web_store", label: "store-b",
+    enabled: true, prices_include_tax: null, eligible_statuses: null,
+    activation_state: "ACTIVE", activated_at: "2026-09-01T00:00:00Z", activated_by: "seed",
+    uat_passed_at: "2026-08-31T00:00:00Z", uat_reference: "SEED-UAT",
+    updated_by: "seed", created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z",
+  }]),
 });
 
 const manual = (overrides = {}) => ({

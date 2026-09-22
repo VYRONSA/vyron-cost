@@ -120,7 +120,47 @@ export function demoSeed(): Record<string, Array<Record<string, unknown>>> {
     vyron_order_engine_settings: [
       { company_id: CO, b2c_customer_id: null, product_name_matching: "review", duplicate_po_action: "warn", min_lead_time_days: null, web_orders_mode: "fulfil", updated_by: "demo", created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z" },
     ],
-    vyron_order_channel_settings: [],
+    // Both fictional stores have been through activation (configured, UAT
+    // passed, activated by a named person). Nothing is active merely because
+    // a channel row exists.
+    vyron_order_channel_settings: [
+      {
+        id: "0b0d0000-0000-4000-8000-000000000001",
+        company_id: CO,
+        channel_key: "woocommerce:demo-web",
+        channel_type: "web_store",
+        label: "Demo web store",
+        enabled: true,
+        prices_include_tax: null,
+        eligible_statuses: null,
+        activation_state: "ACTIVE",
+        activated_at: "2026-09-01T00:00:00Z",
+        activated_by: "demo",
+        uat_passed_at: "2026-08-31T00:00:00Z",
+        uat_reference: "DEMO-UAT",
+        updated_by: "demo",
+        created_at: "2026-09-01T00:00:00Z",
+        updated_at: "2026-09-01T00:00:00Z",
+      },
+      {
+        id: "0b0d0000-0000-4000-8000-000000000002",
+        company_id: CO,
+        channel_key: "shopify:demo-shop",
+        channel_type: "web_store",
+        label: "Demo Shopify store",
+        enabled: true,
+        prices_include_tax: null,
+        eligible_statuses: null,
+        activation_state: "ACTIVE",
+        activated_at: "2026-09-01T00:00:00Z",
+        activated_by: "demo",
+        uat_passed_at: "2026-08-31T00:00:00Z",
+        uat_reference: "DEMO-UAT",
+        updated_by: "demo",
+        created_at: "2026-09-01T00:00:00Z",
+        updated_at: "2026-09-01T00:00:00Z",
+      },
+    ],
     vyron_order_mailboxes: [],
     vyron_order_document_extractions: [],
   };

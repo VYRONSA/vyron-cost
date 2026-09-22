@@ -58,6 +58,7 @@ export async function PUT(request: NextRequest) {
         webPricesIncludeTax: typeof body.webPricesIncludeTax === "boolean" ? body.webPricesIncludeTax : null,
         shippingTreatment: typeof body.shippingTreatment === "string" ? body.shippingTreatment : null,
         skuAlignment: typeof body.skuAlignment === "string" ? body.skuAlignment : null,
+        refundTreatment: typeof body.refundTreatment === "string" ? body.refundTreatment : null,
         creatorCanApprove: typeof body.creatorCanApprove === "boolean" ? body.creatorCanApprove : null,
         pdfExtractor: typeof body.pdfExtractor === "string" ? body.pdfExtractor : null,
       },

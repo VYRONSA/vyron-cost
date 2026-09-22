@@ -73,6 +73,7 @@ const R = {
   sources: await importFromRoot("src/app/api/order-intake/sources/route.ts"),
   settings: await importFromRoot("src/app/api/order-intake/settings/route.ts"),
   channels: await importFromRoot("src/app/api/order-intake/channels/route.ts"),
+  activation: await importFromRoot("src/app/api/order-intake/activation/route.ts"),
   mailboxes: await importFromRoot("src/app/api/order-intake/mailboxes/route.ts"),
 };
 
@@ -119,6 +120,8 @@ const ENDPOINTS = [
   { name: "save ordering settings", permission: "sales_orders.approve", run: (jar) => call(jar, R.settings.PUT, { method: "PUT", body: { duplicatePoAction: "warn" } }) },
   { name: "read channels", permission: "sales_orders.view", run: (jar) => call(jar, R.channels.GET) },
   { name: "save channel", permission: "sales_orders.approve", run: (jar) => call(jar, R.channels.PUT, { method: "PUT", body: { channelKey: "woocommerce:perm-test", enabled: false } }) },
+  { name: "read channel activation", permission: "sales_orders.view", run: (jar) => call(jar, R.activation.GET) },
+  { name: "change channel activation", permission: "sales_orders.approve", run: (jar) => call(jar, R.activation.PUT, { method: "PUT", body: { channelType: "email", to: "CONFIGURED" } }) },
   { name: "read mailboxes", permission: "sales_orders.view", run: (jar) => call(jar, R.mailboxes.GET) },
   { name: "save mailbox", permission: "sales_orders.approve", run: (jar) => call(jar, R.mailboxes.PUT, { method: "PUT", body: { receivingAddress: `orders+${Math.random().toString(16).slice(2)}@perm-test.example`, status: "DISABLED" } }) },
   { name: "sources", permission: "sales_orders.view", run: (jar) => call(jar, R.sources.GET) },

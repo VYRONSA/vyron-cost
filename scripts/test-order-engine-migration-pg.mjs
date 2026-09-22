@@ -24,6 +24,7 @@ const MIGRATION = readFileSync(path.join(ROOT, "supabase/migrations/202609221200
 const HARDENING = readFileSync(path.join(ROOT, "supabase/migrations/20260922130000_vyron_order_intake_hardening.sql"), "utf8");
 const FOOD_SOCK = readFileSync(path.join(ROOT, "supabase/migrations/20260923120000_vyron_order_engine_food_sock.sql"), "utf8");
 const CHANNELS = readFileSync(path.join(ROOT, "supabase/migrations/20260923140000_vyron_order_engine_channels.sql"), "utf8");
+const ACTIVATION = readFileSync(path.join(ROOT, "supabase/migrations/20260924120000_vyron_order_channel_activation.sql"), "utf8");
 
 const PGURL = process.env.PGURL || "";
 if (!PGURL) {
@@ -84,6 +85,10 @@ try {
   check("channels / mailboxes migration applies", true);
   await db.query(CHANNELS);
   check("channels / mailboxes migration re-applies cleanly (idempotent)", true);
+  await db.query(ACTIVATION);
+  check("channel-activation migration applies", true);
+  await db.query(ACTIVATION);
+  check("channel-activation migration re-applies cleanly (idempotent)", true);
 
   const tables = [
     "vyron_order_source_messages",
@@ -252,6 +257,35 @@ try {
   check("another company may use the same channel key", (await sqlState(...channel(CO_B, "woocommerce:main"))) === null);
   check("a blank channel key is rejected", (await sqlState(...channel(CO, "   "))) === "23514");
   check("too many eligible statuses rejected", (await sqlState(`insert into vyron_order_channel_settings (company_id, channel_key, updated_by, eligible_statuses) values ($1, 'x', 'u', $2)`, [CO, Array.from({ length: 41 }, (_, i) => `s${i}`)])) === "23514");
+
+  // ---- channel activation -----------------------------------------------------------
+  const act = (company, key, columns = {}) => {
+    const names = Object.keys(columns);
+    const values = names.map((n) => columns[n]);
+    const placeholders = names.map((_, i) => `$${i + 3}`);
+    return [
+      `insert into vyron_order_channel_settings (company_id, channel_key, updated_by${names.length ? ", " + names.join(", ") : ""}) values ($1, $2, 'u'${placeholders.length ? ", " + placeholders.join(", ") : ""})`,
+      [company, key, ...values],
+    ];
+  };
+  const actDefaults = (await db.query(`select channel_type, activation_state, activated_at, activated_by, first_live_intake_id from vyron_order_channel_settings where company_id = $1 and channel_key = 'woocommerce:main'`, [CO])).rows[0];
+  check("a channel starts disabled, with no activation recorded", actDefaults.activation_state === "DISABLED" && actDefaults.activated_at === null && actDefaults.activated_by === null && actDefaults.first_live_intake_id === null);
+  check("an unknown channel type is rejected", (await sqlState(...act(CO, "a1", { channel_type: "carrier-pigeon" }))) === "23514");
+  check("an unknown activation state is rejected", (await sqlState(...act(CO, "a2", { activation_state: "LIVE" }))) === "23514");
+  check("active without a recorded activation is rejected", (await sqlState(...act(CO, "a3", { activation_state: "ACTIVE" }))) === "23514");
+  check("an activation time without a person is rejected", (await sqlState(...act(CO, "a4", { activated_at: "2026-10-01T00:00:00Z" }))) === "23514");
+  check("a person without an activation time is rejected", (await sqlState(...act(CO, "a5", { activated_by: "someone" }))) === "23514");
+  check("an activation with both is accepted", (await sqlState(...act(CO, "a6", { activation_state: "ACTIVE", activated_at: "2026-10-01T00:00:00Z", activated_by: "someone" }))) === null);
+  check("suspending without a reason is rejected", (await sqlState(...act(CO, "a7", { activation_state: "SUSPENDED" }))) === "23514");
+  check("suspending with a blank reason is rejected", (await sqlState(...act(CO, "a8", { activation_state: "SUSPENDED", suspended_reason: "   " }))) === "23514");
+  check("suspending with a reason is accepted", (await sqlState(...act(CO, "a9", { activation_state: "SUSPENDED", suspended_reason: "Provider outage" }))) === null);
+  const ownIntake = await insertIntake({ source_key: `first-live-${randomBytes(3).toString("hex")}` });
+  const foreignIntake = await insertIntake({ company_id: CO_B, source_key: `first-live-b-${randomBytes(3).toString("hex")}` });
+  check("the first live order must belong to the same company as the channel", (await sqlState(...act(CO, "a10", { first_live_intake_id: foreignIntake }))) === "23503");
+  check("…and its own order is accepted", (await sqlState(...act(CO, "a11", { first_live_intake_id: ownIntake }))) === null);
+
+  check("an unknown refund treatment is rejected", (await sqlState(`insert into vyron_order_engine_settings (company_id, updated_by, refund_treatment) values ($1, 'u', 'netted-silently')`, ["44444444-4444-4444-8444-44444444444f"])) === "23514");
+  check("a refund treatment from the list is accepted", (await sqlState(`insert into vyron_order_engine_settings (company_id, updated_by, refund_treatment) values ($1, 'u', 'credit_note')`, ["44444444-4444-4444-8444-44444444444e"])) === null);
 
   const mailbox = (company, address, extra) =>
     extra

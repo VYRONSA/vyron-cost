@@ -32,6 +32,7 @@ import type {
 import { ORDER_CONTEXTS, ORDER_SOURCES } from "@/lib/order-engine/types";
 import { loadValidationContext, runValidators } from "@/lib/order-engine/validation";
 import { loadChannelSettings, loadOrderSettings, webChannelDecision } from "@/lib/order-engine/settings";
+import { assertChannelActive, channelKeyForCandidate, channelTypeForSource, recordChannelActivity } from "@/lib/order-engine/activation";
 
 /**
  * The Order Engine service. Every function takes the company id resolved from
@@ -310,6 +311,7 @@ export type IntakeListRow = Pick<
   | "id"
   | "intake_number"
   | "source"
+  | "source_channel"
   | "source_reference"
   | "external_order_number"
   | "customer_po_number"
@@ -317,9 +319,11 @@ export type IntakeListRow = Pick<
   | "customer_name"
   | "requested_delivery_date"
   | "status"
+  | "extraction_confidence"
   | "blocking_issue_count"
   | "warning_issue_count"
   | "sales_order_id"
+  | "created_by"
   | "decision_by"
   | "created_at"
   | "updated_at"
@@ -354,7 +358,7 @@ export function safeSearchTerm(value: unknown): string {
 }
 
 const LIST_COLUMNS =
-  "id, intake_number, source, source_reference, external_order_number, customer_po_number, customer_id, customer_name, requested_delivery_date, status, blocking_issue_count, warning_issue_count, sales_order_id, decision_by, created_at, updated_at";
+  "id, intake_number, source, source_channel, source_reference, external_order_number, customer_po_number, customer_id, customer_name, requested_delivery_date, status, extraction_confidence, blocking_issue_count, warning_issue_count, sales_order_id, created_by, decision_by, created_at, updated_at";
 
 export async function listIntakes(
   supabase: SupabaseClient,
@@ -518,6 +522,9 @@ async function assertChannelAccepted(supabase: SupabaseClient, companyId: string
   if (!decision.receive && (settings.webOrdersMode === "history_only" || channel?.enabled === false)) {
     throw new OrderEngineError("INVALID_INPUT", decision.reason || "Web-store orders are not received for this company.");
   }
+  // Credentials and a channel row are not activation: a store hands orders over
+  // only once its channel has been activated.
+  await assertChannelActive(supabase, companyId, "web_store", channelKey);
 }
 
 /**
@@ -630,6 +637,12 @@ export async function receiveOrderCandidate(
     metadata: { source: candidate.source, sourceKey, contentHash, lineCount: lineRows.length },
   });
   recordOrderEngineEvent("order.received", { companyId, intakeId: intake.id, intakeNumber: intake.intake_number, source: candidate.source, lines: lineRows.length });
+  await recordChannelActivity(supabase, companyId, {
+    channelType: channelTypeForSource(candidate.source),
+    channelKey: channelKeyForCandidate(candidate),
+    ok: true,
+    intakeId: intake.id,
+  });
   await notify(intake, "ORDER_RECEIVED");
 
   return { intake, lines: await loadLines(supabase, companyId, intake.id), duplicate: false };
@@ -1422,7 +1435,11 @@ export type ExceptionRow = {
   intakeStatus: IntakeStatus;
   customerName: string | null;
   source: string;
+  /** The store, mailbox or file the order came through, when the source names one. */
+  sourceChannel: string | null;
   receivedAt: string;
+  /** Whose desk it is on now: the last person to decide, else whoever received it. */
+  owner: string | null;
   lineNo: number | null;
   code: string;
   severity: "error" | "warning";
@@ -1509,14 +1526,16 @@ export async function listExceptionCentre(
   const { issueDefinition } = await import("@/lib/order-engine/issue-catalog");
   const { data, error } = await supabase
     .from(T_INTAKES)
-    .select("id, intake_number, status, customer_name, source, created_at, validation, validated_at")
+    .select("id, intake_number, status, customer_name, source, source_channel, created_by, decision_by, created_at, validation, validated_at")
     .eq("company_id", companyId)
     .in("status", ["EXCEPTION", "AWAITING_APPROVAL", "ON_HOLD"])
     .order("created_at", { ascending: false })
     .limit(200);
   if (error) raiseDbError(error, "List exceptions failed");
   const open: ExceptionRow[] = [];
-  const openRows = (data || []) as Array<Pick<IntakeRow, "id" | "intake_number" | "status" | "customer_name" | "source" | "created_at" | "validation" | "validated_at">>;
+  const openRows = (data || []) as Array<
+    Pick<IntakeRow, "id" | "intake_number" | "status" | "customer_name" | "source" | "source_channel" | "created_by" | "decision_by" | "created_at" | "validation" | "validated_at">
+  >;
   // Who ran the validation that raised each order's issues.
   const raisers = new Map<string, string>();
   if (openRows.length) {
@@ -1543,7 +1562,9 @@ export async function listExceptionCentre(
         intakeStatus: row.status,
         customerName: row.customer_name,
         source: row.source,
+        sourceChannel: row.source_channel ?? null,
         receivedAt: row.created_at,
+        owner: row.decision_by || row.created_by || null,
         lineNo: issue.lineNo ?? null,
         code: issue.code,
         severity: issue.severity,

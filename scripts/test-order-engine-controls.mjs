@@ -52,7 +52,20 @@ const CO_B = "b0000000-0000-4000-8000-00000000000b";
 const CLERK = { userId: "clerk", name: "Clerk" };
 const BOSS = { userId: "manager", name: "Manager" };
 const input = (id) => DEMO_SCENARIOS.find((s) => s.id === id).input.candidate;
-const db0 = () => createFakeSupabase(demoSeed());
+/**
+ * The fictional tenant, with its web stores activated. A store that was never
+ * activated cannot hand orders over at all (activation.ts), which is proved on
+ * its own below; these scenarios are about what happens after that.
+ */
+const ACTIVATED_STORES = ["woocommerce:s", "woocommerce:other-store", "shopify:s"];
+const db0 = () => {
+  const seed = demoSeed();
+  const template = seed.vyron_order_channel_settings[0];
+  seed.vyron_order_channel_settings.push(
+    ...ACTIVATED_STORES.map((key, i) => ({ ...template, id: `ch-extra-${i}`, channel_key: key, label: key }))
+  );
+  return createFakeSupabase(seed);
+};
 const validate = (db, id, company = CO) => service.performIntakeAction(db, company, id, "validate", CLERK, { today: DEMO_TODAY });
 const receiveValidate = async (db, candidate, company = CO) => validate(db, (await service.receiveOrderCandidate(db, company, candidate, CLERK)).intake.id, company);
 const codes = (d) => d.intake.validation.issues.map((i) => i.code);

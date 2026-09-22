@@ -521,6 +521,19 @@ const REGISTER = [
       "Runs src/lib/order-engine on the fictional Food Sock UAT tenant (src/lib/order-engine/uat/food-sock-uat.ts — fictional catalogue, customers and rules, not Food Sock data) in scripts/support/document-email-test-stubs/fake-supabase.mjs. No client data, no real database, no network, no mailbox.",
   },
   {
+    id: "test-order-engine-activation",
+    file: "scripts/test-order-engine-activation.mjs",
+    family: A,
+    purpose:
+      "Order Engine channel activation: the stages (Disabled, Configured, Ready for UAT, UAT passed, Ready for activation, Active, Suspended) and the transitions between them, the readiness conditions for e-mail, PDF and web-store channels, that credentials alone never activate a channel, that a connector refuses to hand work in while its channel is not active, that channels are independent of one another, and that the first live order from a channel is raised to a person and invoices, posts, manufactures and reserves nothing.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit",
+    evidence:
+      "Runs src/lib/order-engine on the fictional Food Sock UAT tenant (src/lib/order-engine/uat/food-sock-uat.ts) in scripts/support/document-email-test-stubs/fake-supabase.mjs. No provider, no mailbox, no credential (the environment variables it reads are set to obvious test values and deleted again), no network, no client data.",
+  },
+  {
     id: "test-order-engine-migration-pg",
     file: "scripts/test-order-engine-migration-pg.mjs",
     family: B,

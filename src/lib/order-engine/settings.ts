@@ -22,6 +22,7 @@ const T_CHANNELS = "vyron_order_channel_settings";
 export type WebOrdersMode = "history_only" | "fulfil";
 export type ShippingTreatment = "not_carried" | "separate_line" | "absorbed";
 export type SkuAlignment = "source_equals_vyron" | "mapping_required";
+export type RefundTreatment = "never_netted" | "credit_note" | "reject_order";
 
 export type OrderEngineSettingsRow = {
   company_id: string;
@@ -36,6 +37,7 @@ export type OrderEngineSettingsRow = {
   sku_alignment: SkuAlignment | null;
   creator_can_approve: boolean | null;
   pdf_extractor: string | null;
+  refund_treatment: RefundTreatment | null;
   updated_by: string;
   updated_by_name?: string | null;
   created_at: string;
@@ -52,6 +54,7 @@ export type EffectiveOrderSettings = {
   skuAlignment: SkuAlignment | null;
   creatorCanApprove: boolean | null;
   pdfExtractor: string | null;
+  refundTreatment: RefundTreatment | null;
   minLeadTimeDays: number | null;
   /** Settings with a safe default that is itself a decision. */
   productNameMatching: "review" | "off";
@@ -69,6 +72,7 @@ export const DEFAULT_ORDER_SETTINGS: EffectiveOrderSettings = {
   skuAlignment: null,
   creatorCanApprove: null,
   pdfExtractor: null,
+  refundTreatment: null,
   minLeadTimeDays: null,
   productNameMatching: "review",
   duplicatePoAction: "warn",
@@ -87,6 +91,7 @@ function toEffective(row: OrderEngineSettingsRow | null): EffectiveOrderSettings
     skuAlignment: row.sku_alignment ?? null,
     creatorCanApprove: typeof row.creator_can_approve === "boolean" ? row.creator_can_approve : null,
     pdfExtractor: cleanText(row.pdf_extractor, 120),
+    refundTreatment: row.refund_treatment ?? null,
     minLeadTimeDays: row.min_lead_time_days === null || row.min_lead_time_days === undefined ? null : Number(row.min_lead_time_days),
     productNameMatching: row.product_name_matching === "off" ? "off" : "review",
     duplicatePoAction: row.duplicate_po_action === "block" ? "block" : "warn",
@@ -119,6 +124,7 @@ export type OrderSettingsInput = {
   skuAlignment?: string | null;
   creatorCanApprove?: boolean | null;
   pdfExtractor?: string | null;
+  refundTreatment?: string | null;
 };
 
 const oneOf = <T extends string>(value: unknown, allowed: readonly T[], label: string): T | null => {
@@ -158,6 +164,7 @@ export function normalizeSettingsInput(input: OrderSettingsInput) {
     sku_alignment: oneOf(input.skuAlignment, ["source_equals_vyron", "mapping_required"] as const, "SKU alignment"),
     creator_can_approve: typeof input.creatorCanApprove === "boolean" ? input.creatorCanApprove : null,
     pdf_extractor: cleanText(input.pdfExtractor, 120),
+    refund_treatment: oneOf(input.refundTreatment, ["never_netted", "credit_note", "reject_order"] as const, "Refund treatment"),
   };
 }
 
@@ -200,10 +207,24 @@ export type ChannelSettings = {
   id: string;
   company_id: string;
   channel_key: string;
+  /** manual | csv | xlsx | email | pdf | web_store (activation.ts owns the meaning). */
+  channel_type?: string | null;
   label: string | null;
   enabled: boolean;
   prices_include_tax: boolean | null;
   eligible_statuses: string[] | null;
+  /** Activation record — written only through activation.ts, never by a settings save. */
+  activation_state?: string | null;
+  activated_at?: string | null;
+  activated_by?: string | null;
+  suspended_reason?: string | null;
+  uat_passed_at?: string | null;
+  uat_reference?: string | null;
+  last_success_at?: string | null;
+  last_failure_at?: string | null;
+  last_failure_reason?: string | null;
+  first_live_intake_id?: string | null;
+  first_live_at?: string | null;
   updated_by: string;
   updated_by_name?: string | null;
   created_at: string;
@@ -229,11 +250,19 @@ export async function loadChannelSettings(supabase: SupabaseClient, companyId: s
 export async function saveChannelSettings(
   supabase: SupabaseClient,
   companyId: string,
-  input: { channelKey: string; label?: string | null; enabled?: boolean; pricesIncludeTax?: boolean | null; eligibleStatuses?: string[] | null },
+  input: {
+    channelKey: string;
+    channelType?: string | null;
+    label?: string | null;
+    enabled?: boolean;
+    pricesIncludeTax?: boolean | null;
+    eligibleStatuses?: string[] | null;
+  },
   actor: OrderEngineActor
 ): Promise<ChannelSettings[]> {
   const channelKey = cleanText(input.channelKey, 160);
   if (!channelKey) throw new OrderEngineError("INVALID_INPUT", "A channel key is required (for example \"woocommerce:main-store\").");
+  const channelType = oneOf(input.channelType, ["manual", "csv", "xlsx", "email", "pdf", "web_store"] as const, "Channel type") ?? "web_store";
   const now = new Date().toISOString();
   const values = {
     label: cleanText(input.label, 160),
@@ -245,9 +274,14 @@ export async function saveChannelSettings(
     updated_at: now,
   };
   const existing = await loadChannelSettings(supabase, companyId, channelKey);
+  if (existing?.activation_state === "ACTIVE" && values.enabled === false) {
+    throw new OrderEngineError("INVALID_INPUT", "This channel is active. Suspend it (with a reason) instead of switching it off here, so the change is recorded.");
+  }
   const { error } = existing
     ? await supabase.from(T_CHANNELS).update(values).eq("company_id", companyId).eq("id", existing.id)
-    : await supabase.from(T_CHANNELS).insert({ company_id: companyId, channel_key: channelKey, ...values, created_at: now });
+    : await supabase
+        .from(T_CHANNELS)
+        .insert({ company_id: companyId, channel_key: channelKey, channel_type: channelType, ...values, created_at: now });
   if (error) {
     if (isMissingRelation(error)) throw new OrderEngineError("NOT_ENABLED", "Channel settings are not enabled on this database yet.");
     raiseDbError(error, "Save channel settings failed");

@@ -13,6 +13,7 @@ type Settings = {
   webOrderStatuses: string[] | null;
   webPricesIncludeTax: boolean | null;
   shippingTreatment: "not_carried" | "separate_line" | "absorbed" | null;
+  refundTreatment: "never_netted" | "credit_note" | "reject_order" | null;
   skuAlignment: "source_equals_vyron" | "mapping_required" | null;
   creatorCanApprove: boolean | null;
   pdfExtractor: string | null;
@@ -223,6 +224,15 @@ export default function OrderSettingsCard({ canManage }: { canManage: boolean })
             </label>
           </div>
           <div className="grid gap-4">
+            <label>
+              <span className={LABEL}>Refunded web orders</span>
+              <select className={FIELD} disabled={disabled} value={draft.refundTreatment ?? ""} onChange={(e) => setDraft({ ...draft, refundTreatment: (e.target.value || null) as Settings["refundTreatment"] })}>
+                <option value="">Not decided — a refund is shown as a warning, never netted</option>
+                <option value="never_netted">Never netted — the refund is handled outside the order</option>
+                <option value="credit_note">A credit note is raised separately</option>
+                <option value="reject_order">The order is rejected and handled by a person</option>
+              </select>
+            </label>
             <label>
               <span className={LABEL}>Source SKUs (D9)</span>
               <select className={FIELD} disabled={disabled} value={draft.skuAlignment ?? ""} onChange={(e) => setDraft({ ...draft, skuAlignment: (e.target.value || null) as Settings["skuAlignment"] })}>

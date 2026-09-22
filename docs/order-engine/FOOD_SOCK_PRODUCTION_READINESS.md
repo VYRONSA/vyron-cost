@@ -21,11 +21,13 @@ answer or a provider.
 | Human approval with live re-validation | Done | suite | Approval cannot use a stale validation |
 | Sales Order handoff (idempotent, linked, priced, VAT) | Done | suite (incl. concurrency and retry) | No invoice, no Xero, no reservation, no second order |
 | B2B / B2C context and channel | Done | suite | Web orders from unknown customers stop until a B2C account is chosen |
-| Tenant isolation (orders, customers, products, pricing, exceptions, settings, mailboxes, channels, source links) | Done | suite + `test:order-engine-permissions` (25 endpoints × 10 roles + anonymous) + `test:server-page-tenant-security` | A tenant can only ever see its own data |
+| Tenant isolation (orders, customers, products, pricing, exceptions, settings, mailboxes, channels, source links) | Done | suite + `test:order-engine-permissions` (27 endpoints × 10 roles + anonymous) + `test:server-page-tenant-security` | A tenant can only ever see its own data |
 | Provenance (source message, attachment hashes, extraction attempts, audit trail) | Done | suite + PG test | Every transition records tenant, order, actor, time, from/to state and reason |
 | Tenant configuration model (D1–D12) with "not decided" as a first-class state | Done | suite (decision register) | A missing decision never becomes a business rule |
 | E-mail acceptance policy (sender, attachment type and size, duplicates, provider verification) | Done | suite | Unexpected mail is quarantined, never processed into an order |
 | UAT (14 scenarios, fictional; catalogue snapshot supported) | Done | `test:order-engine-food-sock`, `npm run uat:food-sock` | Fictional orders only; never written to Food Sock production |
+| Channel activation: per channel, in stages, with its own conditions | Done | `test:order-engine-activation`, `test:order-engine-migration-pg` | A channel never goes live because credentials exist; activation is recorded against a person |
+| First live order from a channel | Done | `test:order-engine-activation` | Raised to an approver by name; nothing invoices, posts, manufactures or reserves |
 
 ## 2. Waiting for Food Sock
 
@@ -51,12 +53,16 @@ in `FOOD_SOCK_OPEN_DECISIONS.md` and on the Order rules screen.
 
 | Item | Status | Dependency | Activation requirement | Safety requirement |
 |---|---|---|---|---|
-| Mailbox connector activation | Engineering | D12, a mail provider | A provider webhook that verifies the provider's own signature, then calls `receiveConnectorMessage`; the tenant comes from the receiving address only | Never resolve the tenant from message content; quarantine anything outside the mailbox policy |
-| PDF extractor activation | Engineering | D12, a provider | Register a provider implementing `PdfExtractor` and set it in Order rules | Extracted values stay candidates: confidence per field, LOW blocks approval, the original document and hash are kept |
-| Web-store connector (if D1 = fulfil) | Engineering | D1, store credentials | A store connector that calls the existing adapters; channel row enabled | Historical orders stay refused; only eligible statuses are fulfilled |
-| Production migrations | Engineering | schema review sign-off | Apply the four migrations through the Family P safety process | Reviewed in `MIGRATION_REVIEW.md`; no destructive step; rollback documented |
+| Mailbox connector activation | Engineering | D12, a mail provider | Stage 4 of `FOOD_SOCK_ACTIVATION_RUNBOOK.md`: a provider webhook that verifies the provider's own signature (secret from `VYRON_MAIL_WEBHOOK_SECRET`), then calls `receiveConnectorMessage`; the tenant comes from the receiving address only, and the e-mail channel must be Active | Never resolve the tenant from message content; quarantine anything outside the mailbox policy; no credential in the repository |
+| PDF extractor activation | Engineering | D12, a provider | Stage 5: register a provider implementing `PdfExtractor`, set it in Order rules, supply `VYRON_PDF_EXTRACTOR_KEY`, and activate the PDF channel | Extracted values stay candidates: confidence per field, LOW blocks approval, the original document and hash are kept |
+| Web-store connector (if D1 = fulfil) | Engineering | D1, store credentials | Stage 6: a store connector that calls the existing adapters, with the store's channel activated | Historical orders stay refused; only eligible statuses are fulfilled |
+| Production migrations | Engineering | schema review sign-off | Stage 3: apply the five migrations through the Family P safety process | Reviewed in `MIGRATION_REVIEW.md`; no destructive step; rollback documented |
 | Production UAT | Engineering | migrations applied to a non-production copy | Export a catalogue snapshot from that copy and run `npm run uat:food-sock -- --catalogue <file>` | Fictional orders only; never against production |
-| Production activation | Engineering | everything above | Merge the branch (auto-deploys), apply migrations, configure decisions, enable one channel at a time | Approval stays human; nothing invoices or posts to Xero automatically |
+| Production activation | Engineering | everything above | Stage 7: merge the branch (auto-deploys), apply migrations, configure decisions, then activate one channel at a time | Approval stays human; nothing invoices or posts to Xero automatically |
+
+The order of operations, the conditions each stage must meet and the inputs
+Food Sock must supply are in `FOOD_SOCK_ACTIVATION_RUNBOOK.md`; the tests that
+produce the evidence are in `FOOD_SOCK_UAT_PACK.md`.
 
 ## 4. What production activation does NOT include
 

@@ -23,6 +23,11 @@ could change it materially.
 | D10 | Which web-store **statuses** mean "ready to fulfil"? | store connection | cancelled / refunded / failed / draft are refused; everything else is received | — |
 | D11 | **Who approves**, and may the person who enters an order approve it? | workspace roles | any member with approve permission | — |
 | D12 | Which **inbox / channel** carries B2B orders, and which **document extractor** reads PDFs? | mailbox + extractor connection (none) | PDFs are held as "document not read yet" in the Exception Centre | yes (for that document) |
+| — | A refunded or partly refunded web order: **never netted**, a **credit note**, or **reject the order**? | Ordering settings → refunded web orders | the refund is recorded and raised as a warning; nothing is netted | warning |
+
+Each channel is also switched on by itself, in stages, once these are decided:
+`FOOD_SOCK_ACTIVATION_RUNBOOK.md`. A channel never becomes active because its
+credentials exist.
 
 Deliberately **not** decided by the engine:
 

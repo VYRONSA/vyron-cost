@@ -75,6 +75,14 @@ export const ISSUE_CATALOG: Record<string, IssueDefinition> = Object.fromEntries
     def({ code: "WEB_STATUS_NOT_ELIGIBLE", title: "Store status not fulfilled", category: "commercial", severity: "error", source: "policy", action: "Check the order in the store, or add this status to the channel's eligible statuses." }),
     def({ code: "WEB_VAT_BASIS_UNKNOWN", title: "Store VAT basis not stated", category: "tax", severity: "warning", source: "policy", action: "Set the channel's VAT basis in Order rules, or confirm the prices are ex-tax before approving." }),
     def({ code: "EMAIL_NOT_ACCEPTED", title: "E-mail held for review", category: "extraction", severity: "error", source: "source", action: "Check the sender and attachments; add the sender to the mailbox policy if the message is genuine." }),
+    def({
+      code: "FIRST_LIVE_ORDER_FROM_CHANNEL",
+      title: "First live order from this channel",
+      category: "commercial",
+      severity: "warning",
+      source: "policy",
+      action: "Check this order against what the customer actually sent before approving: it is the first one this channel has produced since it was activated.",
+    }),
   ].map((d) => [d.code, d])
 );
 

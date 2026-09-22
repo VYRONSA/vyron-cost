@@ -6,6 +6,7 @@ import { attachmentHash, judgeInboundEmail, type EmailJudgement, type SenderVeri
 import { resolveMailboxByAddress, type MailboxRow } from "@/lib/order-engine/mailboxes";
 import { receiveInboundEmail, type InboundEmailResult } from "@/lib/order-engine/email-intake";
 import { loadOrderSettings } from "@/lib/order-engine/settings";
+import { assertChannelActive, recordChannelActivity } from "@/lib/order-engine/activation";
 import { extractDocument } from "@/lib/order-engine/extractors/pdf";
 import { isPdfAttachment, type InboundEmailMessage } from "@/lib/order-engine/adapters/email";
 import type { OrderEngineActor } from "@/lib/order-engine/types";
@@ -41,6 +42,7 @@ export type ConnectorMessage = InboundEmailMessage & {
 
 export type ConnectorResult =
   | { status: "NO_MAILBOX"; reason: string }
+  | { status: "CHANNEL_NOT_ACTIVE"; companyId: string; mailboxId: string; reason: string }
   | { status: "QUARANTINED"; companyId: string; mailboxId: string; messageRowId: string; judgement: EmailJudgement }
   | { status: "ACCEPTED"; companyId: string; mailboxId: string; result: InboundEmailResult; judgement: EmailJudgement };
 
@@ -107,9 +109,17 @@ export async function recordDocumentExtraction(
   input: { messageRowId: string | null; fileName: string; contentType: string; sizeBytes: number; sha256: string | null; extractorId: string | null },
   actor: OrderEngineActor
 ): Promise<{ status: string; provider: string | null; reason: string | null }> {
+  let channelActive = true;
+  let inactiveReason: string | null = null;
+  try {
+    await assertChannelActive(supabase, companyId, "pdf");
+  } catch (error) {
+    channelActive = false;
+    inactiveReason = error instanceof OrderEngineError ? error.message : "The PDF channel is not active.";
+  }
   const attempt = await extractDocument(
     { fileName: input.fileName, contentType: input.contentType, sizeBytes: input.sizeBytes, sha256: input.sha256 },
-    { companyId, extractorId: input.extractorId }
+    { companyId, extractorId: input.extractorId, channelActive, inactiveReason }
   );
   const now = new Date().toISOString();
   const row = {
@@ -152,13 +162,31 @@ export async function receiveConnectorMessage(supabase: SupabaseClient, message:
     return { status: "NO_MAILBOX", reason: `No active mailbox is configured for ${deliveredTo}; the message was not processed.` };
   }
   const { mailbox, companyId } = resolved;
+
+  // A configured mailbox is not an activated channel. Until the e-mail channel
+  // is ACTIVE, nothing is processed and nothing is stored under the tenant.
+  try {
+    await assertChannelActive(supabase, companyId, "email");
+  } catch (error) {
+    const reason = error instanceof OrderEngineError ? error.message : "The e-mail channel is not active.";
+    await recordChannelActivity(supabase, companyId, { channelType: "email", ok: false, reason });
+    return { status: "CHANNEL_NOT_ACTIVE", companyId, mailboxId: mailbox.id, reason };
+  }
+
   const judgement = judgeInboundEmail(message, mailbox, { knownAttachmentHashes: await knownAttachmentHashes(supabase, companyId) });
   if (!judgement.accept) {
     const messageRowId = await quarantine(supabase, companyId, mailbox, message, judgement);
+    await recordChannelActivity(supabase, companyId, { channelType: "email", ok: false, reason: judgement.summary });
     return { status: "QUARANTINED", companyId, mailboxId: mailbox.id, messageRowId, judgement };
   }
 
   const result = await receiveInboundEmail(supabase, companyId, message, actor, { mailboxId: mailbox.id, verification: judgement.verification });
+  await recordChannelActivity(supabase, companyId, {
+    channelType: "email",
+    ok: result.status !== "FAILED",
+    reason: result.status === "FAILED" ? result.reason || "Intake failed" : null,
+    intakeId: result.orders[0]?.intake?.id ?? null,
+  });
 
   // A held PDF gets an extraction attempt on the record, so "why is this not an
   // order?" is answerable: no extractor configured, or the provider failed.

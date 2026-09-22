@@ -10,6 +10,8 @@ type OpenRow = {
   intakeStatus: string;
   customerName: string | null;
   source: string;
+  sourceChannel?: string | null;
+  owner?: string | null;
   receivedAt: string;
   lineNo: number | null;
   code: string;
@@ -167,6 +169,7 @@ export default function ExceptionCentreClient() {
                       <div className="text-xs text-slate-400">
                         {SOURCE_LABEL[row.source] || row.source} · {when(row.receivedAt)}
                       </div>
+                      {row.sourceChannel && row.sourceChannel !== row.source ? <div className="truncate text-[10px] font-bold text-slate-400">{row.sourceChannel}</div> : null}
                     </div>
                     <div className="truncate">{row.customerName || <span className="text-slate-400">Not stated</span>}</div>
                     <div>{row.lineNo ?? "—"}</div>
@@ -193,6 +196,7 @@ export default function ExceptionCentreClient() {
                     <div className="text-xs text-slate-500">
                       <div>{row.raisedBy || "—"}</div>
                       <div>{row.raisedAt ? when(row.raisedAt) : ""}</div>
+                      {row.owner ? <div className="text-slate-400">with {row.owner}</div> : null}
                     </div>
                   </Link>
                 ))}

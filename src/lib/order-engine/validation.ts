@@ -4,7 +4,8 @@ import { loadReservedQuantities } from "@/lib/vyron-sales-order-reservations";
 import { isMissingRelation, raiseDbError } from "@/lib/order-engine/errors";
 import { createProductMatcher, loadProductsById, matchCustomer, type CustomerMatch, type ProductMatch, type ProductRecord } from "@/lib/order-engine/matching";
 import { normalizeName, round2, round4 } from "@/lib/order-engine/normalize";
-import { DEFAULT_ORDER_SETTINGS, loadChannelSettings, loadOrderSettings, type ChannelSettings, type EffectiveOrderSettings } from "@/lib/order-engine/settings";
+import { DEFAULT_ORDER_SETTINGS, listChannelSettings, loadChannelSettings, loadOrderSettings, type ChannelSettings, type EffectiveOrderSettings } from "@/lib/order-engine/settings";
+import { channelTypeForSource } from "@/lib/order-engine/activation";
 import type {
   CustomerOrderPolicy,
   ExtractionMeta,
@@ -56,6 +57,12 @@ export type ValidationContext = {
   settings?: EffectiveOrderSettings;
   /** The channel's own settings, for a web-store order. */
   channel?: ChannelSettings | null;
+  /**
+   * Set when this intake is the first order its channel produced after being
+   * activated. The first one through a new path is always looked at by a
+   * person before it becomes a sales order.
+   */
+  firstLiveFromChannel?: { channelType: string; channelKey: string; activatedAt: string | null } | null;
   context?: OrderContext;
   /** BOM detail for products whose demand stock cannot cover. */
   production?: Map<string, ProductionBom>;
@@ -650,6 +657,28 @@ const contextValidator: OrderValidator = {
 };
 
 /** A corrected order is never silently different from what the customer sent. */
+/**
+ * The first order a newly activated channel produces is never waved through:
+ * an approver must acknowledge it by name, which is recorded on the order.
+ */
+const firstLiveOrderValidator: OrderValidator = {
+  id: "first_live_order",
+  category: "commercial",
+  run(ctx) {
+    const first = ctx.firstLiveFromChannel;
+    if (!first) return [];
+    return [
+      {
+        code: "FIRST_LIVE_ORDER_FROM_CHANNEL",
+        severity: "warning",
+        category: "commercial",
+        message: `First live order from the ${first.channelType} channel${first.channelKey && first.channelKey !== first.channelType ? ` (${first.channelKey})` : ""}${first.activatedAt ? `, activated ${first.activatedAt.slice(0, 10)}` : ""}. Check it against the customer's own order before approving.`,
+        data: { channelType: first.channelType, channelKey: first.channelKey, activatedAt: first.activatedAt },
+      },
+    ];
+  },
+};
+
 const sourceChangeValidator: OrderValidator = {
   id: "source_change",
   category: "commercial",
@@ -717,6 +746,7 @@ export const VALIDATORS: readonly OrderValidator[] = [
   webChannelValidator,
   contextValidator,
   sourceChangeValidator,
+  firstLiveOrderValidator,
 ];
 
 // ---------------------------------------------------------------------------
@@ -996,6 +1026,15 @@ export async function loadValidationContext(
     intake.source === "woocommerce" || intake.source === "shopify"
       ? await loadChannelSettings(supabase, companyId, head.catalog_system || intake.source)
       : null;
+  // Is this the first order its channel produced since activation?
+  const channelType = channelTypeForSource(intake.source);
+  const allChannels = await listChannelSettings(supabase, companyId);
+  const activationRow =
+    allChannels.find((row) => row.first_live_intake_id === intake.id) ||
+    null;
+  const firstLiveFromChannel = activationRow
+    ? { channelType: activationRow.channel_type || channelType, channelKey: activationRow.channel_key, activatedAt: activationRow.activated_at ?? null }
+    : null;
   const context: OrderContext = (intake.order_context as OrderContext) || "UNSPECIFIED";
   // Only a person's explicit choice is carried forward as an id. An automatic
   // match is re-derived every run, so its rule (and any warning) is never lost.
@@ -1125,6 +1164,7 @@ export async function loadValidationContext(
     policy,
     settings,
     channel,
+    firstLiveFromChannel,
     context,
     production,
     today: options.today || new Date().toISOString().slice(0, 10),
