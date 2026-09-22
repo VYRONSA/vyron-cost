@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sessionAuditActor } from "@/lib/vyron-audit-actor";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
 import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
@@ -16,13 +17,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
 
-  const body = await request.json().catch(() => ({}));
 
   try {
-    await requireWorkspacePermission("manufacturing.runs.create");
+    const session = await requireWorkspacePermission("manufacturing.runs.create");
     await requireWorkspacePermission("sales_orders.approve");
     const companyId = await requireApiCompanyId();
-    const result = await createProductionRunsForSalesOrder(supabase, companyId, id, String(body.actor || "user"));
+    const result = await createProductionRunsForSalesOrder(supabase, companyId, id, sessionAuditActor(session));
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     return workspaceAccessErrorResponse(error, "Create production run from sales order failed.");

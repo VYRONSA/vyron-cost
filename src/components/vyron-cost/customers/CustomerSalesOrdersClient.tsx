@@ -270,6 +270,24 @@ export default function CustomerSalesOrdersClient({
     if (selected) setCustomerName(selected.customer_name);
   }, [customerId, customerMap]);
 
+  /** Fill a line's price from the customer's price (POST /api/customer-price-lists/resolve). */
+  async function resolveLinePrice(lineId: string, productId: string | null | undefined) {
+    if (!productId) return;
+    try {
+      const res = await fetch("/api/customer-price-lists/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, customerId: customerId || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const price = Number(data?.resolved?.sellingPrice || 0);
+      if (!res.ok || !data?.ok || !(price > 0)) return;
+      setLines((current) => current.map((line) => (line.id === lineId && !line.selling_price ? { ...line, selling_price: price } : line)));
+    } catch {
+      // Left blank: the server resolves the same price when the order is saved.
+    }
+  }
+
   function setLine(index: number, patch: Partial<SalesOrderLine>) {
     setLines((current) => current.map((line, i) => (i === index ? { ...line, ...patch } : line)));
   }
@@ -514,16 +532,21 @@ export default function CustomerSalesOrdersClient({
                       defaultType="finished_goods"
                       placeholder="Search product..."
                       className="min-w-0"
-                      onSelect={(item) =>
+                      onSelect={(item) => {
+                        const productId = item.entityId || item.stockItemId;
+                        // The selling price is the customer's price (contract → default list →
+                        // product master), never the item's cost. Until it resolves the line has
+                        // no price; the server applies the same rule if it is saved blank.
                         setLine(index, {
-                          product_id: item.entityId || item.stockItemId,
+                          product_id: productId,
                           description: item.productName,
                           unit: item.unit,
-                          selling_price: item.currentCost,
+                          selling_price: 0,
                           cost_per_unit: item.currentCost,
                           tax_rate: item.vatRate ?? line.tax_rate,
-                        })
-                      }
+                        });
+                        void resolveLinePrice(line.id, productId);
+                      }}
                     />
                     <input value={line.description} onChange={(event) => setLine(index, { description: event.target.value })} placeholder="Description" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
                     <input type="number" value={line.quantity} onChange={(event) => setLine(index, { quantity: Number(event.target.value || 0) })} placeholder="Qty" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />

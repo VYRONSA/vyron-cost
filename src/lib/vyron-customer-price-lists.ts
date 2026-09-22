@@ -358,11 +358,24 @@ export async function resolveCustomerProductPrice(
       .in("price_list_id", candidatePriceListIds);
     if (itemError) throw new Error(itemError.message);
 
-    const valid = (items || []).find((row) => {
-      const start = row.effective_from ? String(row.effective_from) <= date : true;
-      const end = row.effective_to ? String(row.effective_to) >= date : true;
-      return start && end;
-    });
+    /*
+     * Deterministic choice: a contract price beats a default price, and within
+     * a list the most recently effective price wins. Until 2026-09-22 this took
+     * whichever valid row the database happened to return first, so when both
+     * lists priced the product the contract price was not guaranteed to apply.
+     */
+    const contractId = assignment?.contract_price_list_id || null;
+    const valid = (items || [])
+      .filter((row) => {
+        const start = row.effective_from ? String(row.effective_from) <= date : true;
+        const end = row.effective_to ? String(row.effective_to) >= date : true;
+        return start && end;
+      })
+      .sort((a, b) => {
+        const contractRank = Number(b.price_list_id === contractId) - Number(a.price_list_id === contractId);
+        if (contractRank !== 0) return contractRank;
+        return String(b.effective_from || "").localeCompare(String(a.effective_from || ""));
+      })[0];
 
     if (valid) {
       const source = valid.price_list_id === assignment?.contract_price_list_id ? "contract" : "default";

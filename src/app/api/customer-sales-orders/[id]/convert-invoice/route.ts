@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sessionAuditActor } from "@/lib/vyron-audit-actor";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
 import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
@@ -17,12 +18,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
 
-  const body = await request.json().catch(() => ({}));
 
   try {
-    await requireWorkspacePermission("sales_orders.convert");
+    const session = await requireWorkspacePermission("sales_orders.convert");
     const companyId = await requireApiCompanyId();
-    const result = await convertSalesOrderToInvoice(supabase, companyId, id, String(body.actor || "user"));
+    const result = await convertSalesOrderToInvoice(supabase, companyId, id, sessionAuditActor(session));
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     return workspaceAccessErrorResponse(error, "Convert to invoice failed.");

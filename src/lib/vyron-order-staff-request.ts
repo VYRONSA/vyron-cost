@@ -15,8 +15,9 @@ export async function requireStaffScope(permission: string) {
   if (!supabase) {
     return { ok: false as const, response: NextResponse.json({ ok: false, error: "Unavailable." }, { status: 503 }) };
   }
+  let session: Awaited<ReturnType<typeof requireWorkspacePermission>>;
   try {
-    await requireWorkspacePermission(permission);
+    session = await requireWorkspacePermission(permission);
   } catch {
     return { ok: false as const, response: NextResponse.json({ ok: false, error: "Not authorised." }, { status: 403 }) };
   }
@@ -24,7 +25,7 @@ export async function requireStaffScope(permission: string) {
   if (!companyId) {
     return { ok: false as const, response: NextResponse.json({ ok: false, error: "No workspace in context." }, { status: 401 }) };
   }
-  return { ok: true as const, supabase, companyId };
+  return { ok: true as const, supabase, companyId, session };
 }
 
 export function staffError(message: string, status = 400) {

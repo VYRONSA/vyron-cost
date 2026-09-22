@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sessionAuditActor } from "@/lib/vyron-audit-actor";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
 import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
 
   try {
-    await requireWorkspacePermission(body.id ? "sales_orders.edit" : "sales_orders.create");
+    const session = await requireWorkspacePermission(body.id ? "sales_orders.edit" : "sales_orders.create");
     const companyId = await requireApiCompanyId();
     const order = await saveCustomerSalesOrder(supabase, companyId, {
       id: body.id,
@@ -49,6 +50,7 @@ export async function POST(request: NextRequest) {
       requestedDeliveryDate: body.requestedDeliveryDate || null,
       notes: body.notes,
       lines: Array.isArray(body.lines) ? body.lines : [],
+      auditActor: sessionAuditActor(session),
     });
     return NextResponse.json({ ok: true, order });
   } catch (error) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sessionAuditActor } from "@/lib/vyron-audit-actor";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
 import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
@@ -41,19 +42,28 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const companyId = await requireApiCompanyId();
 
-    if (action === "submit") await requireWorkspacePermission("sales_orders.create");
-    else if (action === "approve") await requireWorkspacePermission("sales_orders.approve");
-    else if (action === "start_picking" || action === "pack") await requireWorkspacePermission("sales_orders.pick");
-    else if (action === "dispatch") await requireWorkspacePermission("sales_orders.dispatch");
-    else if (action === "cancel") await requireWorkspacePermission("sales_orders.edit");
-    else return NextResponse.json({ ok: false, error: "Unknown action." }, { status: 400 });
+    const permission =
+      action === "submit"
+        ? "sales_orders.create"
+        : action === "approve"
+          ? "sales_orders.approve"
+          : action === "start_picking" || action === "pack"
+            ? "sales_orders.pick"
+            : action === "dispatch"
+              ? "sales_orders.dispatch"
+              : action === "cancel"
+                ? "sales_orders.edit"
+                : null;
+    if (!permission) return NextResponse.json({ ok: false, error: "Unknown action." }, { status: 400 });
+    // The audit actor (and approved_by) is the verified member — never a request-body actor.
+    const session = await requireWorkspacePermission(permission);
 
     const order = await transitionCustomerSalesOrder(
       supabase,
       companyId,
       id,
       action as "submit" | "approve" | "start_picking" | "pack" | "dispatch" | "cancel",
-      String(body.actor || "user")
+      sessionAuditActor(session)
     );
     return NextResponse.json({ ok: true, order });
   } catch (error) {

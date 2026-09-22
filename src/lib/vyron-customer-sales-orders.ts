@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createCustomerInvoice, type CustomerInvoiceRow } from "@/lib/vyron-customer-invoices";
+import { loadReservedQuantities } from "@/lib/vyron-sales-order-reservations";
 import { resolveCustomerProductPrice } from "@/lib/vyron-customer-price-lists";
 import { createProductionRun } from "@/lib/vyron-manufacturing";
 import {
@@ -859,7 +860,13 @@ async function enrichProductCosts(
         trustSuppliedCost && Number(line.costPerUnit) > 0
           ? Number(line.costPerUnit)
           : Number(product.total_cost || 0),
-      sellingPrice: Number(line.sellingPrice || product.selling_price || 0),
+      /*
+       * A stated price is kept. A missing price is left for applyCustomerPriceList,
+       * which resolves contract → default price list → product master. Filling the
+       * master price here first (as this did until 2026-09-22) meant a customer's
+       * price list could never apply to a line without a price.
+       */
+      sellingPrice: Number(line.sellingPrice || 0),
     };
   });
 }
@@ -1111,7 +1118,26 @@ async function checkAndReserveStock(
   order: SalesOrderRow,
   lines: SalesOrderLineRow[]
 ) {
-  const pickingList = await buildPickingList(supabase, companyId, lines);
+  const grossPickingList = await buildPickingList(supabase, companyId, lines);
+  /*
+   * Stock already reserved by OTHER live sales orders is not available to this
+   * one. Until 2026-09-22 only gross on-hand was compared, so two orders could
+   * each reserve the same units. Reservations of cancelled or fully invoiced
+   * orders do not count (loadReservedQuantities); this order's own previous
+   * reservation is excluded because it is replaced below.
+   */
+  const reservedElsewhere = await loadReservedQuantities(
+    supabase,
+    companyId,
+    grossPickingList.map((line) => String(line.product_id || "")).filter(Boolean),
+    { excludeSalesOrderId: order.id }
+  );
+  const pickingList = grossPickingList.map((line) => {
+    if (!line.product_id) return line;
+    const available = round4(Number(line.available_qty || 0) - Number(reservedElsewhere.get(String(line.product_id)) || 0));
+    const shortfall = Math.max(0, round4(Number(line.required_qty || 0) - available));
+    return { ...line, available_qty: available, shortfall_qty: shortfall, pick_status: shortfall > 0 ? ("Short" as const) : ("Ready" as const) };
+  });
   const shortages = await buildSalesOrderShortages(supabase, companyId, pickingList);
   if (shortages.length) {
     const err = new Error("INSUFFICIENT_STOCK_FOR_APPROVAL") as Error & {

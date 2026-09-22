@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sessionAuditActor } from "@/lib/vyron-audit-actor";
 import { postCustomerInvoiceStock } from "@/lib/vyron-customer-invoices";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   const body = await request.json().catch(() => ({}));
   try {
-    await requireWorkspacePermission("invoices.reverse");
+    const session = await requireWorkspacePermission("invoices.reverse");
     const companyId = await resolveApiCompanyId();
     if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
 
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     const result = await postCustomerInvoiceStock(supabase, companyId, id, {
-      actor: String(body.actor || "user"),
+      actor: sessionAuditActor(session),
       allowOverride,
       updateInvoiceStatus: body.updateInvoiceStatus !== false,
     });

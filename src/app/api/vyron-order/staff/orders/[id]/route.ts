@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { sessionAuditActor } from "@/lib/vyron-audit-actor";
 import { requireStaffScope, staffError } from "@/lib/vyron-order-staff-request";
 import { getCustomerSalesOrder, transitionCustomerSalesOrder } from "@/lib/vyron-customer-sales-orders";
 import { requireWorkspacePermission } from "@/lib/vyron-workspace-access";
@@ -106,7 +107,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       guard.companyId,
       id,
       action as "approve" | "start_picking" | "pack" | "dispatch" | "cancel",
-      "VYRON ORDER CENTRE"
+      // The member who acted — previously a fixed Order Centre label, not the person.
+      sessionAuditActor(guard.session)
     );
 
     const event = eventForAction(action);

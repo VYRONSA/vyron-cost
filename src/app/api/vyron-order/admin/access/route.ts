@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 import { getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
+import { requireWorkspacePermission, WorkspaceAccessError } from "@/lib/vyron-workspace-access";
 import {
   listPortalAccess,
   setCustomerPortalPin,
@@ -21,17 +22,30 @@ export const runtime = "nodejs";
  * a hash or a salt, and no PIN value is written to a log or an audit detail.
  */
 
-async function scope() {
+/**
+ * Authentication, then permission, then company. Until 2026-09-22 this checked
+ * only that a workspace session existed, so any member — including view-only
+ * members — could set or replace a customer's portal PIN, suspend access, or
+ * change the public ordering link. Reading needs customers.view; every change
+ * needs customers.edit.
+ */
+async function scope(permission: "customers.view" | "customers.edit"): Promise<{ supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>; companyId: string } | NextResponse> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase) return NextResponse.json({ ok: false, error: "No workspace in context." }, { status: 401 });
+  try {
+    await requireWorkspacePermission(permission);
+  } catch (error) {
+    const status = error instanceof WorkspaceAccessError ? error.status : 401;
+    return NextResponse.json({ ok: false, error: status === 403 ? "Not authorised." : "No workspace in context." }, { status });
+  }
   const companyId = await getWorkspaceCompanyId();
-  if (!companyId) return null;
+  if (!companyId) return NextResponse.json({ ok: false, error: "No workspace in context." }, { status: 401 });
   return { supabase, companyId };
 }
 
 export async function GET() {
-  const context = await scope();
-  if (!context) return NextResponse.json({ ok: false, error: "No workspace in context." }, { status: 401 });
+  const context = await scope("customers.view");
+  if (context instanceof NextResponse) return context;
   try {
     const [access, tenant] = await Promise.all([
       listPortalAccess(context.supabase, context.companyId),
@@ -51,8 +65,8 @@ export async function GET() {
 
 /** Create or change this workspace's ordering link. */
 export async function PUT(request: NextRequest) {
-  const context = await scope();
-  if (!context) return NextResponse.json({ ok: false, error: "No workspace in context." }, { status: 401 });
+  const context = await scope("customers.edit");
+  if (context instanceof NextResponse) return context;
 
   const body = await request.json().catch(() => null);
   try {
@@ -70,8 +84,8 @@ export async function PUT(request: NextRequest) {
 
 /** Issue or replace a customer's PIN. The value is used and discarded. */
 export async function POST(request: NextRequest) {
-  const context = await scope();
-  if (!context) return NextResponse.json({ ok: false, error: "No workspace in context." }, { status: 401 });
+  const context = await scope("customers.edit");
+  if (context instanceof NextResponse) return context;
 
   const body = await request.json().catch(() => null);
   const customerId = String(body?.customerId || "").trim();
@@ -90,8 +104,8 @@ export async function POST(request: NextRequest) {
 
 /** Suspend or restore access without touching the credential. */
 export async function PATCH(request: NextRequest) {
-  const context = await scope();
-  if (!context) return NextResponse.json({ ok: false, error: "No workspace in context." }, { status: 401 });
+  const context = await scope("customers.edit");
+  if (context instanceof NextResponse) return context;
 
   const body = await request.json().catch(() => null);
   const customerId = String(body?.customerId || "").trim();
