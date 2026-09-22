@@ -71,6 +71,10 @@ export const ISSUE_CATALOG: Record<string, IssueDefinition> = Object.fromEntries
     def({ code: "COMPONENT_SHORTAGE", title: "Components short for production", category: "production", severity: "warning", source: "core", action: "Check component stock and purchasing before committing to the delivery date." }),
     def({ code: "SOURCE_VALUE_CHANGED", title: "Changed from what the customer sent", category: "commercial", severity: "warning", source: "core", action: "Confirm the change was agreed with the customer; the original values are kept on the order." }),
     def({ code: "DOCUMENT_NEEDS_EXTRACTION", title: "Document not read yet", category: "extraction", severity: "error", source: "source", action: "Enter the order manually from the document, or process it through a document extractor.", aka: ["UNSUPPORTED_DOCUMENT"] }),
+    def({ code: "WEB_ORDERS_MODE_NOT_DECIDED", title: "Web orders: fulfil or history not decided", category: "commercial", severity: "error", source: "policy", action: "Decide in Order rules whether web-store orders are fulfilled in VOLORA or kept as historical sales." }),
+    def({ code: "WEB_STATUS_NOT_ELIGIBLE", title: "Store status not fulfilled", category: "commercial", severity: "error", source: "policy", action: "Check the order in the store, or add this status to the channel's eligible statuses." }),
+    def({ code: "WEB_VAT_BASIS_UNKNOWN", title: "Store VAT basis not stated", category: "tax", severity: "warning", source: "policy", action: "Set the channel's VAT basis in Order rules, or confirm the prices are ex-tax before approving." }),
+    def({ code: "EMAIL_NOT_ACCEPTED", title: "E-mail held for review", category: "extraction", severity: "error", source: "source", action: "Check the sender and attachments; add the sender to the mailbox policy if the message is genuine." }),
   ].map((d) => [d.code, d])
 );
 

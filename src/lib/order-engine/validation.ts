@@ -4,7 +4,7 @@ import { loadReservedQuantities } from "@/lib/vyron-sales-order-reservations";
 import { isMissingRelation, raiseDbError } from "@/lib/order-engine/errors";
 import { createProductMatcher, loadProductsById, matchCustomer, type CustomerMatch, type ProductMatch, type ProductRecord } from "@/lib/order-engine/matching";
 import { normalizeName, round2, round4 } from "@/lib/order-engine/normalize";
-import { loadOrderSettings, type EffectiveOrderSettings } from "@/lib/order-engine/settings";
+import { DEFAULT_ORDER_SETTINGS, loadChannelSettings, loadOrderSettings, type ChannelSettings, type EffectiveOrderSettings } from "@/lib/order-engine/settings";
 import type {
   CustomerOrderPolicy,
   ExtractionMeta,
@@ -54,6 +54,8 @@ export type ValidationContext = {
   policy: { policy: CustomerOrderPolicy; scope: "customer" | "company" } | null;
   /** Tenant ordering settings (defaults when absent). */
   settings?: EffectiveOrderSettings;
+  /** The channel's own settings, for a web-store order. */
+  channel?: ChannelSettings | null;
   context?: OrderContext;
   /** BOM detail for products whose demand stock cannot cover. */
   production?: Map<string, ProductionBom>;
@@ -70,7 +72,7 @@ export type ProductionBom = {
   lines: Array<{ ingredientId: string | null; name: string; quantity: number; unit: string | null; wastagePct: number; stockQty: number | null; stockUnit: string | null; hasStock: boolean }>;
 };
 
-const DEFAULT_SETTINGS: EffectiveOrderSettings = { b2cCustomerId: null, productNameMatching: "review", duplicatePoAction: "warn", minLeadTimeDays: null, configured: false };
+const DEFAULT_SETTINGS: EffectiveOrderSettings = DEFAULT_ORDER_SETTINGS;
 
 export type OrderValidator = {
   id: string;
@@ -575,6 +577,57 @@ const extractionValidator: OrderValidator = {
   },
 };
 
+/** Web-store orders: the decisions a company must make before one can be approved. */
+const webChannelValidator: OrderValidator = {
+  id: "web_channel",
+  category: "commercial",
+  run(ctx) {
+    const issues: ValidationIssue[] = [];
+    if (ctx.intake.source !== "woocommerce" && ctx.intake.source !== "shopify") return issues;
+    const settings = ctx.settings || DEFAULT_SETTINGS;
+    if (!settings.webOrdersMode) {
+      issues.push({
+        code: "WEB_ORDERS_MODE_NOT_DECIDED",
+        severity: "error",
+        category: "commercial",
+        message: "It has not been decided whether web-store orders are fulfilled in VOLORA or kept as historical sales. The order is held until someone decides.",
+      });
+    }
+    const eligible = ctx.channel?.eligible_statuses ?? settings.webOrderStatuses ?? null;
+    const status = cleanStatus(ctx.intake.source_status);
+    if (eligible && status && !eligible.map((s) => s.toLowerCase()).includes(status)) {
+      issues.push({
+        code: "WEB_STATUS_NOT_ELIGIBLE",
+        severity: "error",
+        category: "commercial",
+        message: `The store status "${ctx.intake.source_status}" is not one this company fulfils (${eligible.join(", ")}).`,
+        data: { original: ctx.intake.source_status, expected: eligible.join(", ") },
+      });
+    }
+    // The store's stated VAT basis, when the order itself did not say.
+    const channelTax = ctx.channel?.prices_include_tax ?? settings.webPricesIncludeTax ?? null;
+    if (ctx.intake.prices_include_tax === null && channelTax === true) {
+      issues.push({
+        code: "PRICES_INCLUDE_TAX",
+        severity: "error",
+        category: "tax",
+        message: "This store is configured as pricing VAT-inclusive. Sales Orders price ex-tax — enter ex-tax prices and confirm the conversion.",
+      });
+    }
+    if (ctx.intake.prices_include_tax === null && channelTax === null) {
+      issues.push({
+        code: "WEB_VAT_BASIS_UNKNOWN",
+        severity: "warning",
+        category: "tax",
+        message: "Neither the order nor the channel states whether store prices include VAT. Confirm before approving.",
+      });
+    }
+    return issues;
+  },
+};
+
+const cleanStatus = (value: unknown) => String(value ?? "").trim().toLowerCase() || null;
+
 /** B2B / B2C: web orders from unknown customers need a business decision before they can be booked. */
 const contextValidator: OrderValidator = {
   id: "context",
@@ -661,6 +714,7 @@ export const VALIDATORS: readonly OrderValidator[] = [
   policyValidator,
   taxValidator,
   extractionValidator,
+  webChannelValidator,
   contextValidator,
   sourceChangeValidator,
 ];
@@ -938,6 +992,10 @@ export async function loadValidationContext(
   const companyId = intake.company_id;
   const settings = await loadOrderSettings(supabase, companyId);
   const head = (intake.source_snapshot || {}) as Partial<IntakeSourceSnapshot>;
+  const channel =
+    intake.source === "woocommerce" || intake.source === "shopify"
+      ? await loadChannelSettings(supabase, companyId, head.catalog_system || intake.source)
+      : null;
   const context: OrderContext = (intake.order_context as OrderContext) || "UNSPECIFIED";
   // Only a person's explicit choice is carried forward as an id. An automatic
   // match is re-derived every run, so its rule (and any warning) is never lost.
@@ -1066,6 +1124,7 @@ export async function loadValidationContext(
     sameReferenceIntakes,
     policy,
     settings,
+    channel,
     context,
     production,
     today: options.today || new Date().toISOString().slice(0, 10),

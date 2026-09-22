@@ -31,6 +31,7 @@ import type {
 } from "@/lib/order-engine/types";
 import { ORDER_CONTEXTS, ORDER_SOURCES } from "@/lib/order-engine/types";
 import { loadValidationContext, runValidators } from "@/lib/order-engine/validation";
+import { loadChannelSettings, loadOrderSettings, webChannelDecision } from "@/lib/order-engine/settings";
 
 /**
  * The Order Engine service. Every function takes the company id resolved from
@@ -502,6 +503,24 @@ async function resolveDuplicate(
 }
 
 /**
+ * Web-store orders are only received when the company has decided they are
+ * fulfilled in VOLORA ("history only" is refused outright, as is a disabled
+ * channel). A company that has decided nothing still receives the order — it
+ * is visible and stops at approval — because silently dropping a customer's
+ * order is worse than holding it.
+ */
+async function assertChannelAccepted(supabase: SupabaseClient, companyId: string, candidate: OrderCandidate): Promise<void> {
+  if (candidate.source !== "woocommerce" && candidate.source !== "shopify") return;
+  const settings = await loadOrderSettings(supabase, companyId);
+  const channelKey = cleanText(candidate.catalogSystem, 160) || candidate.source;
+  const channel = await loadChannelSettings(supabase, companyId, channelKey);
+  const decision = webChannelDecision(settings, channel);
+  if (!decision.receive && (settings.webOrdersMode === "history_only" || channel?.enabled === false)) {
+    throw new OrderEngineError("INVALID_INPUT", decision.reason || "Web-store orders are not received for this company.");
+  }
+}
+
+/**
  * Receive an order candidate from any source adapter. The same (source,
  * source key) with the same content returns the existing intake; with
  * different content it is refused — a changed external order is never
@@ -515,6 +534,7 @@ export async function receiveOrderCandidate(
   options: { sourceMessageId?: string | null } = {}
 ): Promise<ReceiveResult> {
   assertCandidate(candidate);
+  await assertChannelAccepted(supabase, companyId, candidate);
   const contentHash = candidateContentHash(candidate);
   const sourceKey = cleanText(candidate.sourceKey, 300);
 
@@ -1427,7 +1447,7 @@ export type DocumentExceptionRow = {
   receivedAt: string;
   from: string | null;
   subject: string | null;
-  code: "DOCUMENT_NEEDS_EXTRACTION" | "NO_ORDER_FOUND" | "DOCUMENT_FAILED";
+  code: "DOCUMENT_NEEDS_EXTRACTION" | "NO_ORDER_FOUND" | "DOCUMENT_FAILED" | "EMAIL_NOT_ACCEPTED";
   severity: "error" | "warning";
   documents: string[];
   reason: string | null;
@@ -1573,7 +1593,7 @@ export async function listExceptionCentre(
     .from("vyron_order_source_messages")
     .select("id, channel, received_at, from_address, subject, attachments, processing_status, processing_error")
     .eq("company_id", companyId)
-    .in("processing_status", ["NEEDS_EXTRACTION", "NO_ORDER_FOUND", "FAILED"])
+    .in("processing_status", ["NEEDS_EXTRACTION", "NO_ORDER_FOUND", "QUARANTINED", "FAILED"])
     .order("received_at", { ascending: false })
     .limit(100);
   if (messageError && !isMissingRelation(messageError)) raiseDbError(messageError, "List documents failed");
@@ -1587,7 +1607,14 @@ export async function listExceptionCentre(
     processing_status: string;
     processing_error: string | null;
   }>) {
-    const code = m.processing_status === "NEEDS_EXTRACTION" ? "DOCUMENT_NEEDS_EXTRACTION" : m.processing_status === "FAILED" ? "DOCUMENT_FAILED" : "NO_ORDER_FOUND";
+    const code =
+      m.processing_status === "NEEDS_EXTRACTION"
+        ? "DOCUMENT_NEEDS_EXTRACTION"
+        : m.processing_status === "QUARANTINED"
+          ? "EMAIL_NOT_ACCEPTED"
+          : m.processing_status === "FAILED"
+            ? "DOCUMENT_FAILED"
+            : "NO_ORDER_FOUND";
     documents.push({
       messageId: m.id,
       channel: m.channel,
@@ -1599,11 +1626,13 @@ export async function listExceptionCentre(
       documents: (m.attachments || []).map((a) => String(a.fileName || "attachment")),
       reason: m.processing_error,
       action:
-        code === "DOCUMENT_NEEDS_EXTRACTION"
-          ? "Enter the order manually from the document (New order), or process it through a document extractor."
-          : code === "DOCUMENT_FAILED"
-            ? "Open the message, correct the file with the customer if needed, and enter the order manually."
-            : "Check the message; if it is an order, enter it manually.",
+        code === "EMAIL_NOT_ACCEPTED"
+          ? "Check the sender and attachments. If the message is a genuine order, add the sender to the mailbox policy or enter the order manually."
+          : code === "DOCUMENT_NEEDS_EXTRACTION"
+            ? "Enter the order manually from the document (New order), or process it through a document extractor."
+            : code === "DOCUMENT_FAILED"
+              ? "Open the message, correct the file with the customer if needed, and enter the order manually."
+              : "Check the message; if it is an order, enter it manually.",
     });
   }
   return { open, resolved, documents };

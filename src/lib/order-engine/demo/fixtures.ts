@@ -115,6 +115,14 @@ export function demoSeed(): Record<string, Array<Record<string, unknown>>> {
     vyron_order_source_messages: [],
     vyron_order_product_aliases: [],
     vyron_order_customer_identities: [],
+    // The fictional tenant has decided that web-store orders are fulfilled in
+    // VOLORA; everything else is left undecided on purpose.
+    vyron_order_engine_settings: [
+      { company_id: CO, b2c_customer_id: null, product_name_matching: "review", duplicate_po_action: "warn", min_lead_time_days: null, web_orders_mode: "fulfil", updated_by: "demo", created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z" },
+    ],
+    vyron_order_channel_settings: [],
+    vyron_order_mailboxes: [],
+    vyron_order_document_extractions: [],
   };
 }
 

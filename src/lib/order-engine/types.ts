@@ -82,7 +82,7 @@ export type ExtractionMeta = {
   extractor?: { name: string; version?: string | null } | null;
   fields?: Record<string, ExtractedFieldMeta>;
   /** Facts the source stated that have no column: shown to the approver, never acted on automatically. */
-  sourceFacts?: { couponCodes?: string[]; refundedTotal?: number | null };
+  sourceFacts?: { couponCodes?: string[]; refundedTotal?: number | null; unmappedColumns?: string[] };
 };
 
 /** One line exactly as a source adapter produced it. Nothing here is matched or priced. */
@@ -366,18 +366,6 @@ export type ValidationSnapshot = {
   settings?: { b2cAccountConfigured: boolean; productNameMatching: "review" | "off"; duplicatePoAction: "warn" | "block"; minLeadTimeDays: number | null };
 };
 
-/** Tenant-scoped ordering settings (vyron_order_engine_settings). Every setting is conservative until set. */
-export type OrderEngineSettings = {
-  company_id: string;
-  b2c_customer_id: string | null;
-  product_name_matching: "review" | "off";
-  duplicate_po_action: "warn" | "block";
-  min_lead_time_days: number | null;
-  updated_by: string;
-  updated_by_name?: string | null;
-  created_at: string;
-  updated_at: string;
-};
 
 /** Optional customer (or company-default) ordering rules. Every rule is off unless set. */
 export type CustomerOrderPolicy = {
