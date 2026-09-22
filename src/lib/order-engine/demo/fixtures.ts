@@ -120,9 +120,11 @@ export function demoSeed(): Record<string, Array<Record<string, unknown>>> {
     vyron_order_engine_settings: [
       { company_id: CO, b2c_customer_id: null, product_name_matching: "review", duplicate_po_action: "warn", min_lead_time_days: null, web_orders_mode: "fulfil", updated_by: "demo", created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z" },
     ],
-    // Both fictional stores have been through activation (configured, UAT
-    // passed, activated by a named person). Nothing is active merely because
-    // a channel row exists.
+    // Both fictional stores are recorded as already activated so the demo has
+    // something to receive. The activation is marked as a FIXTURE: no person
+    // activated these and no UAT run produced the evidence. The rows still
+    // satisfy every rule a real activation must (an active channel carries who
+    // activated it and when), which test-order-engine-activation.mjs asserts.
     vyron_order_channel_settings: [
       {
         id: "0b0d0000-0000-4000-8000-000000000001",
@@ -135,9 +137,9 @@ export function demoSeed(): Record<string, Array<Record<string, unknown>>> {
         eligible_statuses: null,
         activation_state: "ACTIVE",
         activated_at: "2026-09-01T00:00:00Z",
-        activated_by: "demo",
+        activated_by: "FICTIONAL-DEMO-FIXTURE (not a person)",
         uat_passed_at: "2026-08-31T00:00:00Z",
-        uat_reference: "DEMO-UAT",
+        uat_reference: "FICTIONAL-DEMO-FIXTURE (no real UAT run)",
         updated_by: "demo",
         created_at: "2026-09-01T00:00:00Z",
         updated_at: "2026-09-01T00:00:00Z",
@@ -153,9 +155,9 @@ export function demoSeed(): Record<string, Array<Record<string, unknown>>> {
         eligible_statuses: null,
         activation_state: "ACTIVE",
         activated_at: "2026-09-01T00:00:00Z",
-        activated_by: "demo",
+        activated_by: "FICTIONAL-DEMO-FIXTURE (not a person)",
         uat_passed_at: "2026-08-31T00:00:00Z",
-        uat_reference: "DEMO-UAT",
+        uat_reference: "FICTIONAL-DEMO-FIXTURE (no real UAT run)",
         updated_by: "demo",
         created_at: "2026-09-01T00:00:00Z",
         updated_at: "2026-09-01T00:00:00Z",

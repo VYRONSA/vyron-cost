@@ -41,6 +41,7 @@ const security = await importFromRoot("src/lib/order-engine/email-security.ts");
 const decisions = await importFromRoot("src/lib/order-engine/decisions.ts");
 const pdf = await importFromRoot("src/lib/order-engine/extractors/pdf.ts");
 const csv = await importFromRoot("src/lib/order-engine/adapters/csv.ts");
+const catalogueCheck = await importFromRoot("src/lib/order-engine/uat/catalogue-validation.ts");
 const { ISSUE_CATALOG } = await importFromRoot("src/lib/order-engine/issue-catalog.ts");
 const { createRequire } = await import("node:module");
 const ExcelJS = createRequire(pathToFileURL(path.join(ROOT, "package.json")).href)("exceljs");
@@ -74,7 +75,45 @@ async function receive(db, input, company = CO) {
   if (input.kind === "candidate") return service.receiveOrderCandidate(db, company, input.candidate, CLERK);
   if (input.kind === "woocommerce") return service.receiveOrderCandidate(db, company, platforms.normalizeWooCommerceOrder({ storeKey: input.storeKey, order: input.order }), CLERK);
   if (input.kind === "extraction") return extraction.receiveExtractedOrder(db, company, { extraction: input.extraction, sourceKey: input.sourceKey }, CLERK);
+  if (input.kind === "csv") return service.receiveOrderCandidate(db, company, csv.parseCsvOrder({ text: input.text, fileName: input.fileName }), CLERK);
+  if (input.kind === "xlsx") {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Order");
+    ws.addRow(input.header);
+    for (const row of input.rows) ws.addRow(row);
+    const bytes = Buffer.from(await wb.xlsx.writeBuffer());
+    return handMessage(db, company, input, { fileName: input.fileName, contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", contentBase64: bytes.toString("base64"), sizeBytes: bytes.length });
+  }
+  if (input.kind === "email") {
+    const attachment = input.attachment.text
+      ? { ...input.attachment, contentBase64: Buffer.from(input.attachment.text, "utf8").toString("base64"), sizeBytes: Buffer.byteLength(input.attachment.text) }
+      : input.attachment;
+    return handMessage(db, company, input, attachment);
+  }
   throw new Error(`unknown input ${input.kind}`);
+}
+
+/** Hand a message over the connector boundary and return the order it produced (or the outcome). */
+async function handMessage(db, company, input, attachment) {
+  const handed = await connector.receiveConnectorMessage(
+    db,
+    {
+      messageId: `<uat-${attachment.fileName}@uat.example>`,
+      provider: "uat-simulated",
+      from: input.from || "buyer@uat-retail-north.example",
+      to: [input.deliveredTo || "orders@uat-foodsock.example"],
+      deliveredTo: input.deliveredTo || "orders@uat-foodsock.example",
+      subject: input.subject || "UAT order",
+      receivedAt: "2026-10-06T07:30:00Z",
+      attachments: [attachment],
+    },
+    CLERK
+  );
+  if (handed.status === "QUARANTINED") return { outcome: "QUARANTINED" };
+  if (handed.status !== "ACCEPTED") return { outcome: handed.status };
+  if (handed.result.status === "NEEDS_EXTRACTION") return { outcome: "DOCUMENT_HELD" };
+  if (handed.result.status !== "PARSED" || !handed.result.orders.length) return { outcome: handed.result.status };
+  return handed.result.orders[0];
 }
 const validate = (db, intakeId, company = CO) => service.performIntakeAction(db, company, intakeId, "validate", CLERK, { today: TODAY });
 const approve = (db, detail, company = CO) =>
@@ -84,8 +123,11 @@ const scenarios = uat.buildFoodSockUatScenarios();
 const byId = new Map(scenarios.map((s) => [s.id, s]));
 async function runScenario(db, id) {
   for (const prerequisite of byId.get(id).after || []) await runScenario(db, prerequisite);
-  const { intake } = await receive(db, byId.get(id).input);
-  return validate(db, intake.id);
+  const received = await receive(db, byId.get(id).input);
+  // Two scenarios deliberately produce no order: a quarantined message and a
+  // document held for an extractor. They are returned as they are.
+  if (received.outcome) return received;
+  return validate(db, received.intake.id);
 }
 
 // ---------------------------------------------------------------------------
@@ -94,11 +136,19 @@ section("UAT catalogue and scenarios");
   const catalogue = uat.fictionalFoodSockCatalogue();
   check("fictional catalogue: every product and customer is marked UAT", catalogue.products.every((p) => p.product_name.startsWith("UAT ")) && Object.values(C).every((c) => c.customer_name.startsWith("UAT ")));
   check("UAT tenant is not Food Sock's company id", CO !== "e920c747-1d27-4d01-9e7c-182f9a7d0aa3");
-  const required = ["valid-b2b", "valid-b2c", "unknown-sku", "unknown-customer", "duplicate-po", "insufficient-stock", "production-required", "low-margin", "missing-po", "missing-delivery-date", "invalid-quantity", "ambiguous-mapping", "low-confidence-extraction"];
+  const required = [
+    "valid-b2b", "valid-b2c", "unknown-sku", "unknown-customer", "duplicate-po", "insufficient-stock", "production-required",
+    "low-margin", "missing-po", "missing-delivery-date", "invalid-quantity", "ambiguous-mapping", "low-confidence-extraction",
+    // Phase 4: the rest of the Food Sock ordering process.
+    "contract-price", "customer-item-code", "whole-case", "csv-order", "xlsx-order", "email-order", "email-outside-policy", "pdf-pending-extraction",
+  ];
   check("all required UAT scenarios exist", required.every((id) => byId.has(id)), required.filter((id) => !byId.has(id)).join(","));
   const again = uat.buildFoodSockUatScenarios();
   check("scenario generation is deterministic", JSON.stringify(again) === JSON.stringify(scenarios));
-  check("every expected code is catalogued", scenarios.every((s) => s.expect.codes.every((c) => c in ISSUE_CATALOG)));
+  check("every expected code is catalogued", scenarios.every((s) => (s.expect.codes || []).every((c) => c in ISSUE_CATALOG)));
+  check("every scenario names the channel it arrives through", scenarios.every((s) => ["manual", "csv", "xlsx", "email", "pdf", "web_store"].includes(s.channel)));
+  const channels = new Set(scenarios.map((s) => s.channel));
+  check("every channel is covered by at least one scenario", ["manual", "csv", "xlsx", "email", "pdf", "web_store"].every((ch) => channels.has(ch)), [...channels].join(","));
   let threw = false;
   try {
     uat.buildFoodSockUatScenarios({ products: [], stockItems: [], boms: [], bomLines: [] });
@@ -106,6 +156,20 @@ section("UAT catalogue and scenarios");
     threw = true;
   }
   check("a catalogue that cannot supply a scenario is refused, never silently skipped", threw);
+
+  // A real catalogue may simply have no product of some shape. That blocks
+  // those scenarios on the data, and only those.
+  const noBomless = {
+    ...uat.fictionalFoodSockCatalogue(),
+    boms: uat.fictionalFoodSockCatalogue().products.map((p, i) => ({ id: `f5b00000-0000-4000-8000-${String(900 + i).padStart(12, "0")}`, product_id: p.id, bom_name: `${p.product_name} recipe` })),
+  };
+  const plan = uat.buildFoodSockUatPlan(noBomless);
+  check("a catalogue where every product has a BOM blocks only the scenario that needs one without", plan.blocked.length === 1 && plan.blocked[0].id === "insufficient-stock");
+  check("…and says what was missing", /no product without a BOM/i.test(plan.blocked[0].reason));
+  check("…while every other scenario still runs", plan.scenarios.length === scenarios.length - 1);
+  const full = uat.buildFoodSockUatPlan();
+  check("a complete catalogue blocks nothing", full.blocked.length === 0 && full.scenarios.length === scenarios.length);
+  check("every scenario declares which product profile it needs", scenarios.every((s) => Array.isArray(uat.SCENARIO_NEEDS[s.id])));
 }
 
 for (const scenario of scenarios) {
@@ -116,6 +180,13 @@ for (const scenario of scenarios) {
     detail = await runScenario(db, scenario.id);
   } catch (error) {
     check(`${scenario.id}: received and validated`, false, error.message);
+    continue;
+  }
+  // The two scenarios that produce no order on purpose.
+  if (scenario.expect.outcome && scenario.expect.outcome !== "ORDER") {
+    check(`${scenario.id}: ${scenario.expect.outcome.toLowerCase().replace("_", " ")}`, detail.outcome === scenario.expect.outcome, String(detail.outcome));
+    check(`${scenario.id}: no order was invented`, db.tables.vyron_order_intakes.length === 0);
+    check(`${scenario.id}: nothing created in Sales Orders`, db.tables.vyron_customer_sales_orders.length === 0);
     continue;
   }
   const codes = codesOf(detail);
@@ -835,6 +906,151 @@ section("Decision register");
   const empty = await decisions.loadDecisionRegister(bare, CO);
   check("with nothing configured, only the two safe defaults are decided", empty.filter((d) => d.state === "CONFIGURED").map((d) => d.id).join(",") === "D6,D7");
   check("and nothing claims to be configured that is not", empty.find((d) => d.id === "D2").current === "Not decided" && empty.find((d) => d.id === "D1").current === "Not decided");
+}
+
+
+// ---------------------------------------------------------------------------
+section("Catalogue validation: data quality, business decisions and defects are told apart");
+{
+  const report = catalogueCheck.validateCatalogue(uat.fictionalFoodSockCatalogue());
+  check("a sound fictional catalogue has no engineering findings", report.byKind.ENGINEERING === 0);
+  check("it is orderable", report.orderable === true);
+  check("coverage is measured, not assumed", report.coverage.sku === 100 && report.coverage.cost === 100 && report.coverage.stock === 100);
+  check("a product with no BOM is a data finding, not a defect", report.findings.some((f) => f.code === "MISSING_BOM" && f.kind === "DATA"));
+
+  // A deliberately damaged catalogue: every check has something to find.
+  const base = uat.fictionalFoodSockCatalogue();
+  const broken = {
+    ...base,
+    products: [
+      ...base.products.map((p, i) => (i === 0 ? { ...p, sku: null } : p)),
+      { id: "f5f00000-0000-4000-8000-000000000098", product_name: "UAT Duplicate SKU A", sku: "UAT-DUP-1", selling_price: 10, total_cost: 4 },
+      { id: "f5f00000-0000-4000-8000-000000000099", product_name: "UAT Duplicate SKU B", sku: "uat-dup-1", selling_price: 10, total_cost: 4 },
+      { id: "f5f00000-0000-4000-8000-000000000097", product_name: "UAT Discontinued Meal", sku: "UAT-OLD-1", selling_price: 10, total_cost: 4, status: "Discontinued" },
+      { id: "f5f00000-0000-4000-8000-000000000096", product_name: "UAT Costless Meal", sku: "UAT-NOCOST", selling_price: 10, total_cost: null },
+    ],
+    boms: [...base.boms, { id: "f5b00000-0000-4000-8000-000000000090", product_id: "f5f00000-0000-4000-8000-000000000098", bom_name: "UAT empty recipe" }],
+    bomLines: [
+      ...base.bomLines,
+      { id: "f570000-0000-4000-8000-000000000091", bom_id: "f5b00000-0000-4000-8000-000000000095", ingredient_id: "x", line_name: "orphan line", quantity: 1 },
+      { id: "f570000-0000-4000-8000-000000000092", bom_id: base.boms[0].id, ingredient_id: null, line_name: "component-less line", quantity: 1 },
+    ],
+    customers: [
+      { id: "f5c00000-0000-4000-8000-000000000090", customer_name: "UAT Same Name" },
+      { id: "f5c00000-0000-4000-8000-000000000091", customer_name: "UAT Same Name" },
+    ],
+    productAliases: [
+      { id: "a1", customer_id: "f5c00000-0000-4000-8000-000000000090", source_code_normalized: "sku:SHARED", product_id: base.products[0].id },
+      { id: "a2", customer_id: "f5c00000-0000-4000-8000-000000000090", source_code_normalized: "sku:SHARED", product_id: base.products[1].id },
+      { id: "a3", customer_id: "f5c00000-0000-4000-8000-000000000090", source_code_normalized: "sku:GONE", product_id: "not-in-this-snapshot" },
+    ],
+    customerIdentities: [{ id: "i1", external_reference: "woocommerce:store:9", customer_id: null }],
+  };
+  const bad = catalogueCheck.validateCatalogue(broken);
+  const has = (code, kind) => bad.findings.some((f) => f.code === code && f.kind === kind);
+  check("missing SKU is found", has("MISSING_SKU", "DATA"));
+  check("duplicate SKU is found, whatever the case or separators", has("DUPLICATE_SKU", "DATA"));
+  check("a discontinued product is found", has("INACTIVE_PRODUCT", "DATA"));
+  check("a product without a cost is found", has("MISSING_COST", "DATA"));
+  check("a product without stock is found", has("MISSING_STOCK", "DATA"));
+  check("a product without a BOM is found", has("MISSING_BOM", "DATA"));
+  check("a BOM with no components is found", has("BOM_WITHOUT_COMPONENTS", "DATA"));
+  check("a BOM line naming no component is found", has("MISSING_COMPONENT", "DATA"));
+  check("customers with the same name are found (an order naming it will stop)", has("AMBIGUOUS_CUSTOMER_NAME", "DATA"));
+  check("a customer with no price list is a business decision, not a defect", has("MISSING_CUSTOMER_PRICE", "DECISION"));
+  check("a customer with no ordering rules is a business decision", has("MISSING_CUSTOMER_RULES", "DECISION"));
+  check("a code mapped to two products is found", has("AMBIGUOUS_MAPPING", "DATA"));
+  check("a mapping to a product that is not here is found", has("MAPPING_WITHOUT_PRODUCT", "DATA"));
+  check("a remembered reference pointing at no customer is found", has("MISSING_CUSTOMER_MAPPING", "DATA"));
+  check("an orphan BOM line is an engineering finding: the extract is incomplete", has("BOM_LINE_WITHOUT_BOM", "ENGINEERING"));
+  check("a data problem is never reported as an application defect", bad.findings.filter((f) => f.kind === "ENGINEERING").every((f) => f.code.includes("NOT_IN_SNAPSHOT") || f.code === "BOM_LINE_WITHOUT_BOM"));
+
+  const scope = catalogueCheck.compareWithMigratedScope(bad);
+  check("a snapshot is reconciled against the controlled migration scope", scope.length === 5 && scope.every((row) => typeof row.expected === "number" && typeof row.found === "number"));
+  check("the scope figures are the migrated Food Sock ones", catalogueCheck.FOOD_SOCK_MIGRATED_SCOPE.finishedProducts === 31 && catalogueCheck.FOOD_SOCK_MIGRATED_SCOPE.bomLines === 348 && catalogueCheck.FOOD_SOCK_MIGRATED_SCOPE.components === 51);
+}
+
+// ---------------------------------------------------------------------------
+section("A snapshot must say where it came from");
+{
+  const body = { products: [{ id: "p1", product_name: "X", sku: "X-1", selling_price: 10, total_cost: 5 }], stockItems: [], boms: [], bomLines: [] };
+  const fails = (raw) => {
+    try {
+      uat.loadUatSnapshot(raw);
+      return null;
+    } catch (error) {
+      return error.message;
+    }
+  };
+  check("an unclassified snapshot is refused", /classification/i.test(fails(body) || ""));
+  check("a snapshot classified as something else is refused", /classified/i.test(fails({ ...body, classification: "INTERNAL" }) || ""));
+  check("a snapshot without an environment is refused", /environment/i.test(fails({ ...body, classification: "NON-PRODUCTION / UAT" }) || ""));
+  check("a snapshot that says it came from production is refused", /never run from a production extract/i.test(fails({ ...body, classification: "NON-PRODUCTION / UAT", meta: { environment: "production-replica" } }) || ""));
+  check("a snapshot that says it came from a live system is refused", /never run from a production extract/i.test(fails({ ...body, classification: "NON-PRODUCTION / UAT", meta: { environment: "live-copy" } }) || ""));
+  const good = uat.loadUatSnapshot({ ...body, classification: "NON-PRODUCTION / UAT", meta: { environment: "uat-restore", source: "restore of a backup", takenAt: "2026-10-01" } });
+  check("a properly classified snapshot loads, re-homed onto the fictional tenant", good.products[0].company_id === CO && good.meta.environment === "uat-restore");
+  check("the classification is carried into the report", good.meta.classification === uat.SNAPSHOT_CLASSIFICATION);
+  const extended = uat.loadUatSnapshot({
+    ...body,
+    classification: "NON-PRODUCTION / UAT",
+    meta: { environment: "uat-restore" },
+    customers: [{ id: "c1", customer_name: "Snapshot Customer" }],
+    productAliases: [{ id: "a1", source_code_normalized: "sku:ABC", product_id: "p1" }],
+    customerIdentities: [{ id: "i1", external_reference: "x", customer_id: "c1" }],
+    packSizes: [{ id: "k1", product_id: "p1", units_per_box: 6, confidence: "Confirmed" }],
+  });
+  check("a snapshot can carry customers, mappings, identities and case sizes", extended.customers.length === 1 && extended.productAliases.length === 1 && extended.customerIdentities.length === 1 && extended.packSizes.length === 1);
+  check("coverage counts what the snapshot actually supplied", uat.snapshotCoverage(extended).aliases === 1 && uat.snapshotCoverage(extended).customerIdentities === 1);
+}
+
+// ---------------------------------------------------------------------------
+section("End to end: a customer's file becomes a Draft Sales Order, and nothing more");
+{
+  const db = newDb();
+  const catalogue = uat.fictionalFoodSockCatalogue();
+  const { stocked } = uat.pickUatProducts(catalogue);
+  const text = [
+    "customer,po_number,requested_delivery_date,sku,description,quantity,unit_price",
+    `${C.retailNorth.customer_name},UAT-PO-E2E-1,2026-10-15,${stocked.sku},${stocked.product_name},20,${stocked.selling_price}`,
+  ].join("\n");
+
+  // source → intake
+  const candidate = csv.parseCsvOrder({ text, fileName: "UAT-PO-E2E-1.csv" });
+  const received = await service.receiveOrderCandidate(db, CO, candidate, CLERK);
+  check("the file becomes one order, with the file named as its source", received.intake.source === "csv" && String(received.intake.source_reference || "").includes("UAT-PO-E2E-1.csv"));
+  check("what the file said is frozen on the order", received.intake.source_snapshot.po_number === "UAT-PO-E2E-1");
+
+  // matching → validation
+  const detail = await validate(db, received.intake.id);
+  const lineEval = detail.intake.validation.lines[0];
+  const product = catalogue.products.find((p) => p.sku === stocked.sku);
+  check("the line matched the product by its SKU, deterministically", lineEval.productId === product.id && lineEval.matchRule && lineEval.matchRule.startsWith("sku"));
+  check("the customer matched by name", detail.intake.customer_id === C.retailNorth.id);
+  check("the order is ready for a person to approve", detail.intake.status === "AWAITING_APPROVAL");
+
+  // approval → Draft sales order
+  const confirmed = await approve(db, detail);
+  const so = db.tables.vyron_customer_sales_orders[0];
+  const soLine = db.tables.vyron_customer_sales_order_lines.find((l) => l.sales_order_id === so.id);
+  check("approval creates exactly one sales order, in Draft", db.tables.vyron_customer_sales_orders.length === 1 && so.status === "Draft");
+  check("the sales order is for the right customer", so.customer_id === C.retailNorth.id);
+  check("the sales order line is the right product (the SKU the customer quoted)", soLine.product_id === product.id && product.sku === stocked.sku);
+  check("the quantity is the quantity ordered", Number(soLine.quantity) === 20);
+  check("the price is the approved price", Number(soLine.selling_price) === lineEval.effectiveUnitPrice);
+  check("VAT is the workspace rate", Number(soLine.tax_rate) === 15);
+  check("the PO is carried", String(so.notes || "").includes("UAT-PO-E2E-1"));
+  check("the requested delivery date is carried", String(so.requested_delivery_date || "").slice(0, 10) === "2026-10-15");
+  check("the source reference is carried", String(so.notes || "").includes(confirmed.intake.intake_number));
+  check("the order and the sales order point at each other (provenance)", confirmed.intake.sales_order_id === so.id);
+  check("the sales-order audit records which order it came from", db.tables.vyron_customer_sales_order_audit.some((a) => a.event_type === "CREATED_FROM_ORDER_INTAKE" && a.metadata?.intakeId === received.intake.id));
+  check("the whole path is on the order's own audit trail", ["RECEIVED", "VALIDATED", "APPROVED", "HANDOFF_COMPLETED"].every((type) => db.tables.vyron_order_intake_events.some((e) => e.intake_id === received.intake.id && e.event_type === type)) || db.tables.vyron_order_intake_events.filter((e) => e.intake_id === received.intake.id).length >= 3);
+
+  // and nothing beyond a Draft sales order
+  check("nothing was invoiced", db.tables.vyron_customer_invoices.length === 0 && db.tables.vyron_customer_invoice_lines.length === 0);
+  check("nothing was queued for Xero", db.tables.vyron_xero_sync_queue.length === 0);
+  check("no stock moved and no ledger entry was written", db.tables.vyron_stock_movements.length === 0 && db.tables.vyron_cost_stock_ledger.length === 0);
+  check("nothing was reserved", db.tables.vyron_customer_sales_order_allocations.length === 0);
+  check("nothing was manufactured", (db.tables.vyron_cost_production_runs || []).length === 0);
 }
 
 console.log(`\n${passed}/${passed + failed} checks passed${failed ? `\n${failed} FAILED` : ""}`);

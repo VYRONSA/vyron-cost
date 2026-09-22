@@ -8,15 +8,35 @@ or against a disposable local database.
 Two commands produce the evidence:
 
 ```
-npm run uat:food-sock                 # the order scenarios, on a catalogue
+npm run uat:food-sock                 # the catalogue report and the order scenarios
 npm run test:order-engine-food-sock   # the channel paths and the engine contract
 npm run test:order-engine-activation  # the activation stages and their conditions
 ```
 
 `uat:food-sock` runs against the fictional catalogue by default, and against a
-Food Sock catalogue snapshot with `-- --snapshot <file>` (Stage 2 of the
-activation runbook). Its banner always states which, and always says
-NON-PRODUCTION.
+Food Sock catalogue snapshot with `-- --catalogue <file>` (Stage 2 of the
+activation runbook; the file format and what it must be classified as are in
+`FOOD_SOCK_CATALOGUE_SNAPSHOT.md`). Its banner always states which, and always
+says NON-PRODUCTION.
+
+Every result is reported as one of four things, because they need different
+people:
+
+| Verdict | Meaning | Who acts |
+|---|---|---|
+| PASS | It did what the scenario says. | nobody |
+| BLOCKED — BUSINESS DECISION | Something Food Sock has not decided stopped it. | Food Sock |
+| BLOCKED — DATA | Something the catalogue is missing stopped it. | Food Sock |
+| FAIL — ENGINEERING | The application is wrong. | us — and only this fails the run |
+
+## 0. The catalogue, before any scenario
+
+Each run first reports what the catalogue can support — coverage of SKUs, cost,
+stock, BOMs, case sizes, customer pricing, customer rules and mappings — and
+every catalogue exception, classified as DATA, DECISION or ENGINEERING. With a
+snapshot it also reconciles the counts against the controlled Food Sock
+migration: 31 products, 31 BOMs, 348 BOM lines, 51 components, 82 stock items.
+`--check-only` stops there.
 
 ## A. Order scenarios (`npm run uat:food-sock`)
 
@@ -38,6 +58,18 @@ Each one states the order, the expected outcome and the exact issues raised.
 | 12 | ambiguous-mapping | Exception — `CUSTOMER_AMBIGUOUS`; two candidates, no choice made |
 | 13 | low-confidence-extraction | Exception — `EXTRACTION_LOW_CONFIDENCE` per uncertain field |
 | 14 | first live order from a channel | Warning — `FIRST_LIVE_ORDER_FROM_CHANNEL`; an approver acknowledges it by name |
+| 15 | contract-price | The customer's own contract price is the price validated — no `PRICE_MISMATCH` |
+| 16 | customer-item-code | The customer's own item code matches, because a person mapped it beforehand |
+| 17 | whole-case | Part of a case where the customer orders in whole cases — `CASE_QUANTITY` |
+| 18 | csv-order | A CSV the customer sent, uploaded by a person |
+| 19 | xlsx-order | A spreadsheet the customer sent |
+| 20 | email-order | An order e-mailed to the receiving address from an allowed sender |
+| 21 | email-outside-policy | A message from a sender outside the policy: quarantined, no order |
+| 22 | pdf-pending-extraction | A PDF with no extractor configured: held, nothing invented |
+
+A scenario the catalogue cannot supply a product for (for example "no BOM for
+the shortfall" when every product has a BOM) is reported as BLOCKED — DATA with
+what was missing. It is never quietly skipped.
 
 Every run also proves, on every scenario: nothing was invoiced, no Xero queue
 row was written, no stock moved, nothing was reserved, and the frozen source

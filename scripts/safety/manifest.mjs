@@ -512,7 +512,7 @@ const REGISTER = [
     file: "scripts/test-order-engine-food-sock.mjs",
     family: A,
     purpose:
-      "Food Sock ordering foundation (UAT): the inbound e-mail connector boundary (tenant from the receiving address, sender and attachment policy, quarantine), the PDF extraction boundary (no provider registered), CSV / Excel ambiguity refusal, web-channel decisions, the decision register, and every Food Sock UAT scenario through the real Order Engine and sales-order engine — manual, web-store, e-mail CSV / XLSX / PDF and document-extraction intake, the canonical extraction contract, frozen source snapshots, external-id / SKU / name matching, duplicates, price, stock, production with BOM components, margin, customer rules, tenant ordering settings, the Exception Centre, approval, concurrent approval, the idempotent Sales Order handoff, B2B / B2C, historical-order refusal and tenant isolation.",
+      "Food Sock ordering foundation (UAT): the inbound e-mail connector boundary (tenant from the receiving address, sender and attachment policy, quarantine), the PDF extraction boundary (no provider registered), CSV / Excel ambiguity refusal, web-channel decisions, the decision register, and every Food Sock UAT scenario through the real Order Engine and sales-order engine — manual, web-store, e-mail CSV / XLSX / PDF and document-extraction intake, the canonical extraction contract, frozen source snapshots, external-id / SKU / name matching, duplicates, price, stock, production with BOM components, margin, customer rules, tenant ordering settings, the Exception Centre, approval, concurrent approval, the idempotent Sales Order handoff, B2B / B2C, historical-order refusal and tenant isolation; catalogue validation for a UAT snapshot (missing and duplicate SKUs, inactive products, missing cost, stock, BOM or components, ambiguous customers and mappings) with data findings, business decisions and defects told apart; the snapshot classification rules; and the whole path from a customer's file to a Draft sales order with every carried field checked.",
     authentication: ["none"],
     mutation: "none",
     external: [],
@@ -525,7 +525,7 @@ const REGISTER = [
     file: "scripts/test-order-engine-activation.mjs",
     family: A,
     purpose:
-      "Order Engine channel activation: the stages (Disabled, Configured, Ready for UAT, UAT passed, Ready for activation, Active, Suspended) and the transitions between them, the readiness conditions for e-mail, PDF and web-store channels, that credentials alone never activate a channel, that a connector refuses to hand work in while its channel is not active, that channels are independent of one another, and that the first live order from a channel is raised to a person and invoices, posts, manufactures and reserves nothing.",
+      "Order Engine channel activation: the stages (Disabled, Configured, Ready for UAT, UAT passed, Ready for activation, Active, Suspended) and the transitions between them, the readiness conditions for e-mail, PDF and web-store channels, that credentials alone never activate a channel, that a connector refuses to hand work in while its channel is not active, that channels are independent of one another, and that the first live order from a channel is raised to a person on every channel and cannot be approved without a named acknowledgement on the audit trail, and that a fixture's recorded activation is marked as fictional while still satisfying every rule a real activation must.",
     authentication: ["none"],
     mutation: "none",
     external: [],
@@ -1013,12 +1013,14 @@ const REGISTER = [
     id: "food-sock-uat",
     file: "scripts/food-sock-uat.mjs",
     family: "tooling",
-    purpose: "Food Sock UAT runner: the UAT scenarios end to end in memory, on the fictional catalogue or a supplied catalogue snapshot file, with approval and the Draft sales-order handoff shown.",
+    purpose:
+      "Food Sock UAT runner: catalogue coverage and quality (data findings, business decisions and defects told apart), reconciliation against the controlled Food Sock migration scope, then the UAT scenarios end to end in memory on the fictional catalogue or a supplied catalogue snapshot file, each result reported as PASS, BLOCKED — BUSINESS DECISION, BLOCKED — DATA or FAIL — ENGINEERING, with approval and the Draft sales-order handoff shown.",
     authentication: ["none"],
     mutation: "none",
     external: [],
     cleanup: "n/a — in-memory, discarded on exit",
-    evidence: "Runs the real Order Engine and sales-order engine against fake-supabase. Orders and customers are fictional; a catalogue snapshot is read from a local file and re-homed onto the in-memory UAT tenant. No database, no network.",
+    evidence:
+      "Runs the real Order Engine and sales-order engine against fake-supabase. Orders and customers are fictional; a catalogue snapshot is read from a LOCAL FILE (nothing here queries any tenant) and re-homed onto the in-memory UAT tenant, and is refused unless the file classifies itself NON-PRODUCTION / UAT and states a non-production environment. No database, no network, no mailbox, no provider.",
   },
   {
     id: "order-engine-demo",

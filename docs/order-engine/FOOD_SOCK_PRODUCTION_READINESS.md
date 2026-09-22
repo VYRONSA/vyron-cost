@@ -28,6 +28,7 @@ answer or a provider.
 | UAT (14 scenarios, fictional; catalogue snapshot supported) | Done | `test:order-engine-food-sock`, `npm run uat:food-sock` | Fictional orders only; never written to Food Sock production |
 | Channel activation: per channel, in stages, with its own conditions | Done | `test:order-engine-activation`, `test:order-engine-migration-pg` | A channel never goes live because credentials exist; activation is recorded against a person |
 | First live order from a channel | Done | `test:order-engine-activation` | Raised to an approver by name; nothing invoices, posts, manufactures or reserves |
+| Real-catalogue UAT: a classified snapshot, catalogue validation and a verdict per scenario | Done | `test:order-engine-food-sock`, `npm run uat:food-sock -- --catalogue <file>` | The snapshot is a file from a non-production source and must say so; data findings, business decisions and defects are told apart |
 
 ## 2. Waiting for Food Sock
 
@@ -57,12 +58,13 @@ in `FOOD_SOCK_OPEN_DECISIONS.md` and on the Order rules screen.
 | PDF extractor activation | Engineering | D12, a provider | Stage 5: register a provider implementing `PdfExtractor`, set it in Order rules, supply `VYRON_PDF_EXTRACTOR_KEY`, and activate the PDF channel | Extracted values stay candidates: confidence per field, LOW blocks approval, the original document and hash are kept |
 | Web-store connector (if D1 = fulfil) | Engineering | D1, store credentials | Stage 6: a store connector that calls the existing adapters, with the store's channel activated | Historical orders stay refused; only eligible statuses are fulfilled |
 | Production migrations | Engineering | schema review sign-off | Stage 3: apply the five migrations through the Family P safety process | Reviewed in `MIGRATION_REVIEW.md`; no destructive step; rollback documented |
-| Production UAT | Engineering | migrations applied to a non-production copy | Export a catalogue snapshot from that copy and run `npm run uat:food-sock -- --catalogue <file>` | Fictional orders only; never against production |
+| Production UAT | Waiting | a catalogue snapshot from a non-production copy | Stage 2: `npm run uat:food-sock -- --catalogue <file>` (format: `FOOD_SOCK_CATALOGUE_SNAPSHOT.md`) | Fictional orders only; a snapshot that is not classified NON-PRODUCTION / UAT is refused |
 | Production activation | Engineering | everything above | Stage 7: merge the branch (auto-deploys), apply migrations, configure decisions, then activate one channel at a time | Approval stays human; nothing invoices or posts to Xero automatically |
 
-The order of operations, the conditions each stage must meet and the inputs
-Food Sock must supply are in `FOOD_SOCK_ACTIVATION_RUNBOOK.md`; the tests that
-produce the evidence are in `FOOD_SOCK_UAT_PACK.md`.
+The order of operations and the conditions each stage must meet are in
+`FOOD_SOCK_ACTIVATION_RUNBOOK.md`; what Food Sock must supply is in
+`FOOD_SOCK_ACTIVATION_INPUTS.md`; the tests that produce the evidence are in
+`FOOD_SOCK_UAT_PACK.md`.
 
 ## 4. What production activation does NOT include
 

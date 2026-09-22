@@ -48,6 +48,7 @@ const connector = await importFromRoot("src/lib/order-engine/connectors/email-co
 const uat = await importFromRoot("src/lib/order-engine/uat/food-sock-uat.ts");
 const platforms = await importFromRoot("src/lib/order-engine/adapters/platforms.ts");
 const pdf = await importFromRoot("src/lib/order-engine/extractors/pdf.ts");
+const fixtures = await importFromRoot("src/lib/order-engine/demo/fixtures.ts");
 const extraction = await importFromRoot("src/lib/order-engine/extraction.ts");
 
 const { FOOD_SOCK_UAT_COMPANY_ID: CO, foodSockUatSeed, FOOD_SOCK_UAT_TODAY: UAT_TODAY, UAT_CUSTOMERS } = uat;
@@ -78,6 +79,31 @@ function readyTheStore(db) {
   settings.sku_alignment = "source_equals_vyron";
   settings.b2c_customer_id = UAT_CUSTOMERS.webAccount.id;
   process.env.VYRON_WEB_STORE_CREDENTIALS = "qa-only-not-a-real-credential";
+}
+
+/** The fictional catalogue product and customer the first-live scenarios use. */
+const PRODUCT = uat.pickUatProducts(uat.fictionalFoodSockCatalogue()).stocked;
+const BUYER = uat.UAT_CUSTOMERS.retailNorth.customer_name;
+
+/** An order e-mailed to the fictional receiving address, from an allowed sender. */
+async function emailOrder(db, messageId) {
+  const text = `customer,po_number,requested_delivery_date,sku,description,quantity,unit_price\n${BUYER},PO-FL-EMAIL,2026-10-20,${PRODUCT.sku},${PRODUCT.product_name},6,${PRODUCT.selling_price}\n`;
+  const handed = await connector.receiveConnectorMessage(
+    db,
+    {
+      messageId,
+      provider: "uat-simulated",
+      from: "buyer@uat-retail-north.example",
+      to: ["orders@uat-foodsock.example"],
+      deliveredTo: "orders@uat-foodsock.example",
+      subject: "PO-FL-EMAIL",
+      receivedAt: "2026-10-06T07:30:00Z",
+      attachments: [{ fileName: "PO-FL-EMAIL.csv", contentType: "text/csv", text, sizeBytes: Buffer.byteLength(text) }],
+    },
+    CLERK
+  );
+  if (handed.status !== "ACCEPTED" || handed.result.status !== "PARSED") throw new Error(`e-mail order not accepted: ${handed.status}/${handed.result?.status} ${handed.result?.reason || handed.reason || ""}`);
+  return handed.result.orders[0];
 }
 
 const stateOf = (db, key) => db.tables.vyron_order_channel_settings.find((r) => r.channel_key === key)?.activation_state;
@@ -314,6 +340,99 @@ section("PDF: what a provider must satisfy before it can be activated");
   list = await activation.loadChannelReadiness(db, CO);
   pdfChannel = readiness(list, "pdf");
   check("a configured extractor that is not in this deployment is reported, not faked", pdfChannel.requirements.find((r) => r.id === "provider_available").met === false);
+}
+
+// ---------------------------------------------------------------------------
+section("The first live order, channel by channel");
+{
+  // Every channel that a person activated records its first live order and
+  // raises it for review. A channel nobody activated (an in-app channel left
+  // on its default) has no activation record, so there is nothing to be the
+  // first order *since* — which is stated below, not left to be discovered.
+  const CHANNELS = [
+    { type: "web_store", key: STORE, arrive: (db) => service.receiveOrderCandidate(db, CO, platforms.normalizeWooCommerceOrder({ storeKey: "uat-store", order: { id: 8801, status: "processing", currency: "ZAR", date_created: "2026-10-06T09:00:00", billing: { email: "shopper@uat-web.example" }, line_items: [{ id: 1, sku: PRODUCT.sku, quantity: 4, price: Number(PRODUCT.selling_price) }] } }), CLERK) },
+    { type: "email", key: "email", arrive: (db) => emailOrder(db, "<first-live-email@uat.example>") },
+    { type: "manual", key: "manual", arrive: (db) => service.receiveOrderCandidate(db, CO, { source: "manual", customerName: BUYER, customerPoNumber: "PO-FL-1", requestedDeliveryDate: "2026-10-20", lines: [{ sku: PRODUCT.sku, quantity: 6, unitPrice: Number(PRODUCT.selling_price) }] }, CLERK) },
+    { type: "csv", key: "csv", arrive: (db) => service.receiveOrderCandidate(db, CO, { source: "csv", sourceKey: "PO-FL-2.csv#1", sourceReference: "PO-FL-2.csv", customerName: BUYER, customerPoNumber: "PO-FL-2", requestedDeliveryDate: "2026-10-20", lines: [{ sku: PRODUCT.sku, quantity: 6, unitPrice: Number(PRODUCT.selling_price) }] }, CLERK) },
+    { type: "xlsx", key: "xlsx", arrive: (db) => service.receiveOrderCandidate(db, CO, { source: "xlsx", sourceKey: "PO-FL-3.xlsx#1", sourceReference: "PO-FL-3.xlsx", customerName: BUYER, customerPoNumber: "PO-FL-3", requestedDeliveryDate: "2026-10-20", lines: [{ sku: PRODUCT.sku, quantity: 6, unitPrice: Number(PRODUCT.selling_price) }] }, CLERK) },
+  ];
+
+  for (const channel of CHANNELS) {
+    const db = db0({ keepActive: [STORE, "email"] });
+    readyTheStore(db);
+    process.env.VYRON_MAIL_WEBHOOK_SECRET = "qa-only-not-a-real-secret";
+    // An in-app channel is live by default with no activation record; activate
+    // it explicitly (through the same state machine) so it has one.
+    if (["manual", "csv", "xlsx"].includes(channel.type)) {
+      await activation.setChannelActivation(db, CO, { channelType: channel.channelType || channel.type, to: "SUSPENDED", reason: "Activating explicitly for this run" }, BOSS);
+      await activation.setChannelActivation(db, CO, { channelType: channel.type, to: "ACTIVE" }, BOSS);
+    }
+    const received = await channel.arrive(db);
+    const intakeId = received?.intake?.id || received;
+    const row = db.tables.vyron_order_channel_settings.find((r) => r.channel_key === channel.key);
+    check(`${channel.type}: the first live order is recorded on the channel`, row?.first_live_intake_id === intakeId && Boolean(row?.first_live_at));
+
+    const detail = await service.performIntakeAction(db, CO, intakeId, "validate", CLERK, { today: UAT_TODAY });
+    const codes = detail.intake.validation.issues.map((i) => i.code);
+    check(`${channel.type}: it is raised as the first order through this path`, codes.includes("FIRST_LIVE_ORDER_FROM_CHANNEL"));
+    const issue = detail.intake.validation.issues.find((i) => i.code === "FIRST_LIVE_ORDER_FROM_CHANNEL");
+    check(`${channel.type}: the warning names the channel and when it was activated`, issue.data?.channelType === channel.type && Boolean(issue.data?.activatedAt));
+
+    if (detail.intake.status === "AWAITING_APPROVAL") {
+      const bypass = await rejects(service.performIntakeAction(db, CO, intakeId, "approve", BOSS, { today: UAT_TODAY, validationHash: detail.intake.validation_hash }));
+      check(`${channel.type}: it cannot be approved without acknowledging the warning`, bypass?.code === "WARNINGS_NOT_ACKNOWLEDGED");
+      check(`${channel.type}: the refusal names the warning`, JSON.stringify(bypass?.details || {}).includes("FIRST_LIVE_ORDER_FROM_CHANNEL"));
+      const approved = await service.performIntakeAction(db, CO, intakeId, "approve", BOSS, { today: UAT_TODAY, validationHash: detail.intake.validation_hash, acknowledgeWarnings: true });
+      check(`${channel.type}: approving records who acknowledged it`, approved.intake.decision_by === BOSS.userId);
+      const event = db.tables.vyron_order_intake_events.find((e) => e.intake_id === intakeId && e.event_type === "APPROVED");
+      const acknowledged = JSON.stringify(event?.metadata?.acknowledgedWarnings || []);
+      check(`${channel.type}: the acknowledgement is on the audit trail, by name`, acknowledged.includes("FIRST_LIVE_ORDER_FROM_CHANNEL") && (event.actor === BOSS.userId || event.actor_name === BOSS.name));
+      check(`${channel.type}: approval still produced only a Draft sales order`, db.tables.vyron_customer_sales_orders.every((so) => so.status === "Draft") && db.tables.vyron_customer_invoices.length === 0 && db.tables.vyron_xero_sync_queue.length === 0);
+    } else {
+      check(`${channel.type}: it stopped for a person before any approval`, detail.intake.status === "EXCEPTION");
+    }
+
+    delete process.env.VYRON_MAIL_WEBHOOK_SECRET;
+  }
+
+  // A channel nobody activated keeps no first-live record, because there is no
+  // activation for an order to be the first since.
+  const plain = db0();
+  await service.receiveOrderCandidate(plain, CO, { source: "manual", customerName: BUYER, customerPoNumber: "PO-FL-9", requestedDeliveryDate: "2026-10-20", lines: [{ sku: PRODUCT.sku, quantity: 2, unitPrice: Number(PRODUCT.selling_price) }] }, CLERK);
+  check("an in-app channel left on its default records no activation and no first live order", !plain.tables.vyron_order_channel_settings.some((r) => r.channel_type === "manual"));
+}
+
+// ---------------------------------------------------------------------------
+section("Fictional fixtures cannot be mistaken for a real activation");
+{
+  // Seeds write channel rows directly — a fixture is a tenant that has already
+  // been through activation. Two things must hold: the rows say plainly that
+  // they are fixtures, and they satisfy every rule a real activation must.
+  const seeds = [
+    { name: "Food Sock UAT seed", rows: uat.foodSockUatSeed().vyron_order_channel_settings },
+    { name: "demo fixtures", rows: fixtures.demoSeed().vyron_order_channel_settings },
+  ];
+  for (const seed of seeds) {
+    const activeRows = seed.rows.filter((r) => r.activation_state === "ACTIVE");
+    check(`${seed.name}: has activated channels to run scenarios against`, activeRows.length > 0);
+    check(`${seed.name}: every activation says it is a fixture, not a person`, activeRows.every((r) => /FICTIONAL/i.test(String(r.activated_by))));
+    check(`${seed.name}: every UAT evidence reference says it is a fixture`, activeRows.every((r) => !r.uat_passed_at || /FICTIONAL/i.test(String(r.uat_reference))));
+    check(`${seed.name}: an active row still carries who activated it and when`, activeRows.every((r) => Boolean(r.activated_at) && Boolean(r.activated_by)));
+    check(`${seed.name}: no row is suspended without a reason`, seed.rows.filter((r) => r.activation_state === "SUSPENDED").every((r) => String(r.suspended_reason || "").trim()));
+    check(`${seed.name}: every state is one the engine knows`, seed.rows.every((r) => activation.ACTIVATION_STATES.includes(r.activation_state)));
+    check(`${seed.name}: every channel type is one the engine knows`, seed.rows.every((r) => activation.CHANNEL_TYPES.includes(r.channel_type)));
+  }
+
+  // The rules themselves are not relaxed inside a fixture tenant.
+  const db = db0();
+  delete process.env.VYRON_WEB_STORE_CREDENTIALS;
+  const jump = await rejects(activation.setChannelActivation(db, CO, { channelType: "web_store", channelKey: STORE, to: "ACTIVE" }, BOSS));
+  check("a fixture tenant cannot skip the stages either", jump?.code === "INVALID_TRANSITION");
+  await activation.setChannelActivation(db, CO, { channelType: "email", to: "CONFIGURED" }, BOSS);
+  await activation.setChannelActivation(db, CO, { channelType: "email", to: "READY_FOR_UAT" }, BOSS);
+  const noEvidence = await rejects(activation.setChannelActivation(db, CO, { channelType: "email", to: "UAT_PASSED" }, BOSS));
+  check("…nor record testing as passed without evidence", noEvidence?.code === "INVALID_INPUT");
+  check("the fictional tenant is not Food Sock's company id", CO !== "e920c747-1d27-4d01-9e7c-182f9a7d0aa3");
 }
 
 // ---------------------------------------------------------------------------

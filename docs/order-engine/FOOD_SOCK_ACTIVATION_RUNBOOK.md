@@ -63,12 +63,23 @@ for the channels about to be activated.
 
 ## Stage 2 — Non-production catalogue and UAT
 
-1. **Obtain a catalogue snapshot** — products, stock, BOMs and BOM lines, and
-   optionally customers, price lists and policies. Export only; no write.
-2. **Load it into an isolated environment** (`npm run uat:food-sock -- --snapshot <file>`).
-   The run is labelled SNAPSHOT / NON-PRODUCTION and never reaches production.
-3. **Run the UAT pack** — `FOOD_SOCK_UAT_PACK.md`, every scenario, including the
-   channel paths. All 14+ scenarios must behave as the pack says.
+1. **Obtain a catalogue snapshot** from a non-production copy — products, SKUs,
+   active or discontinued, cost, stock, BOMs and components, and where
+   available customers, customer pricing, ordering rules, pack sizes and
+   item-code mappings. Format: `FOOD_SOCK_CATALOGUE_SNAPSHOT.md`. It is a file,
+   produced by whoever holds that copy: nothing in VOLORA exports one, and
+   nothing here queries a live tenant.
+2. **Check the catalogue** — `npm run uat:food-sock -- --catalogue <file> --check-only`.
+   It reports coverage, reconciles the counts against the controlled migration
+   (31 products, 31 BOMs, 348 BOM lines, 51 components, 82 stock items) and
+   lists every catalogue exception as DATA, DECISION or ENGINEERING. A snapshot
+   that is not classified `NON-PRODUCTION / UAT`, or that says it came from
+   production, is refused.
+3. **Run the UAT pack** — `npm run uat:food-sock -- --catalogue <file>`;
+   `FOOD_SOCK_UAT_PACK.md` lists every scenario and channel. Each result is
+   PASS, BLOCKED — BUSINESS DECISION, BLOCKED — DATA or FAIL — ENGINEERING.
+   Nothing may be FAIL — ENGINEERING; everything blocked is a list for Food
+   Sock.
 
 Exit condition: the pack passes on Food Sock's own catalogue, and the run
 reference is recorded against each channel when its testing is marked passed.
@@ -185,6 +196,9 @@ the right VAT basis, with no invented values.
 ---
 
 ## Food Sock activation inputs required
+
+The same list, written for Food Sock rather than for engineering, is
+`FOOD_SOCK_ACTIVATION_INPUTS.md`.
 
 These cannot be derived from the code, the catalogue or this work. Engineering
 must not invent them, and none of them is needed before Stage 1.
