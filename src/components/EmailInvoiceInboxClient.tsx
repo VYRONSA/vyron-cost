@@ -96,11 +96,11 @@ export default function EmailInvoiceInboxClient() {
 
   return (
     <section className="grid gap-6">
-      <div className="rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-700 to-blue-800 p-6 text-white shadow-[0_18px_55px_rgba(29,107,255,0.24)]">
+      <div className="rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-700 to-blue-800 p-6 text-white shadow-[0_18px_55px_rgba(22,58,72,0.24)]">
         <MailCheck size={34} className="text-blue-200" />
         <h2 className="mt-5 text-3xl font-black">Email Invoice Inbox</h2>
         <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-blue-100">
-          Supplier invoices emailed to VYRON COST are queued here. Upload attachments to run extraction, supplier
+          Supplier invoices emailed to VOLORA are queued here. Upload attachments to run extraction, supplier
           matching, and approval in Document Intelligence.
         </p>
         <div className="mt-4 rounded-2xl bg-white/10 px-4 py-3 text-sm font-black text-white">invoices@vyroncost.co.za</div>
@@ -130,7 +130,7 @@ export default function EmailInvoiceInboxClient() {
         </Link>
       </div>
 
-      <div className="overflow-x-auto rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <div className="overflow-x-auto rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <div className="min-w-[720px]">
         <div className="grid grid-cols-5 bg-blue-800 px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-blue-100">
           <div>Source</div>

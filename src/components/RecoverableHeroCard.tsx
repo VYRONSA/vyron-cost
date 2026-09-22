@@ -5,7 +5,7 @@ import { LeakageKpis } from "@/lib/vyron-financial-command-data";
 
 export default function RecoverableHeroCard({ kpis }: { kpis: LeakageKpis }) {
   return (
-    <section className="mb-6 overflow-hidden rounded-[2.5rem] border border-[#123524]/10 bg-white p-8 shadow-[0_16px_50px_rgba(16,21,17,0.08)] md:p-10">
+    <section className="mb-6 overflow-hidden rounded-[2.5rem] border border-[#0B202B]/10 bg-white p-8 shadow-[0_16px_50px_rgba(16,21,17,0.08)] md:p-10">
       <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-[#ef4444]/10 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-[#ef4444]">
@@ -21,18 +21,18 @@ export default function RecoverableHeroCard({ kpis }: { kpis: LeakageKpis }) {
           </p>
         </div>
 
-        <div className="rounded-[2rem] border border-[#60A5FA]/40 bg-[#60A5FA]/12 p-7">
-          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-[#123524]">
+        <div className="rounded-[2rem] border border-[#5F8595]/40 bg-[#5F8595]/12 p-7">
+          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-[#0B202B]">
             <TrendingUp size={16} />
-            Recoverable With VYRON COST
+            Recoverable With VOLORA
           </div>
-          <div className="mt-4 text-4xl font-black text-[#123524] md:text-5xl">{formatMoney(kpis.recoverableAnnual)}</div>
+          <div className="mt-4 text-4xl font-black text-[#0B202B] md:text-5xl">{formatMoney(kpis.recoverableAnnual)}</div>
           <div className="mt-2 text-sm font-bold text-[#667085]">
             per year · {formatMoney(kpis.recoverableMonthly)} / month
           </div>
           <Link
             href="/recovery-opportunities"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#60A5FA] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#F8FAFC]"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#5F8595] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#F8FAFC]"
           >
             View Recovery
             <ArrowUpRight size={16} />

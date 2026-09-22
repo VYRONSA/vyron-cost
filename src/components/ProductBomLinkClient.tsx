@@ -102,11 +102,11 @@ export default function ProductBomLinkClient({
           </div>
           <div className="rounded-2xl bg-white p-4">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">GP</div>
-            <div className={`mt-1 text-2xl font-black ${gp < targetGp ? "text-red-600" : "text-[#84CC16]"}`}>{gp.toFixed(1)}%</div>
+            <div className={`mt-1 text-2xl font-black ${gp < targetGp ? "text-red-600" : "text-[#55B968]"}`}>{gp.toFixed(1)}%</div>
           </div>
           <div className="rounded-2xl bg-white p-4">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Suggested</div>
-            <div className="mt-1 text-2xl font-black text-[#84CC16]">{formatMoney(suggested)}</div>
+            <div className="mt-1 text-2xl font-black text-[#55B968]">{formatMoney(suggested)}</div>
           </div>
         </div>
       )}
@@ -114,7 +114,7 @@ export default function ProductBomLinkClient({
       {!canEdit ? (
         <p className="mt-4 text-sm font-bold text-[var(--vyron-success-fg)]">BOM linking is read-only for your role.</p>
       ) : null}
-      {message && <div className="mt-4 rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/12 px-4 py-3 text-sm font-bold text-[#1D4ED8]">{message}</div>}
+      {message && <div className="mt-4 rounded-2xl border border-[#2C5A6B]/25 bg-[#2C5A6B]/12 px-4 py-3 text-sm font-bold text-[#163A48]">{message}</div>}
       {errorMessage && <div className="mt-4 rounded-2xl bg-red-100 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div>}
     </div>
   );

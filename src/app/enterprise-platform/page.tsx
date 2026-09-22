@@ -7,7 +7,7 @@ export default async function EnterprisePlatformPage() {
   const { companyId } = await requireWorkspacePage("reports.view");
   const data = await getEnterprisePlatformPayload(companyId);
   return (
-    <VyronCostShell hidePageHeader title="Enterprise Platform" subtitle="MULTI-COMPANY · GROUP · BENCHMARKING · AI · VYRON SUITE">
+    <VyronCostShell hidePageHeader title="Enterprise Platform" subtitle="MULTI-COMPANY · GROUP · BENCHMARKING · AI · VOLORA Suite">
       <PlatformNav />
       <EnterpriseHubClient data={data} />
     </VyronCostShell>

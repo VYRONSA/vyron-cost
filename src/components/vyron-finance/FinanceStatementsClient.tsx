@@ -16,7 +16,7 @@ export default function FinanceStatementsClient({ statements }: { statements: Vy
       config={{
         visualVariant: "finance",
         title: "Finance Statements",
-        subtitle: "Premium VYRON COST workflow for finance statements.",
+        subtitle: "Premium VOLORA workflow for finance statements.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >

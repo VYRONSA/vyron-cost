@@ -56,7 +56,7 @@ export default function StorePerformanceClient() {
         ) : null}
 
         <section className={VYRON_MASTER.moduleDataSection}>
-          <h2 className="mb-4 text-lg font-black text-[#0F172A]">Store Rankings — This Month</h2>
+          <h2 className="mb-4 text-lg font-black text-[#0B202B]">Store Rankings — This Month</h2>
           <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
             <table className="min-w-full">
               <thead className={VYRON_TABLE.head}>
@@ -87,9 +87,9 @@ export default function StorePerformanceClient() {
                 ) : (
                   performance.map((row) => (
                     <tr key={row.store_id} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-                      <td className="px-4 py-3 font-black text-[#0F172A]">#{row.rank}</td>
+                      <td className="px-4 py-3 font-black text-[#0B202B]">#{row.rank}</td>
                       <td className="px-4 py-3">
-                        <div className="font-semibold text-[#0F172A]">{row.store_name}</div>
+                        <div className="font-semibold text-[#0B202B]">{row.store_name}</div>
                         <div className="text-xs text-[#64748B]">{row.store_code}</div>
                       </td>
                       <td className="px-4 py-3 text-right text-sm">{row.orders_this_month}</td>
@@ -111,7 +111,7 @@ export default function StorePerformanceClient() {
         </section>
 
         <section className={VYRON_MASTER.moduleDataSection}>
-          <h2 className="mb-4 text-lg font-black text-[#0F172A]">Store Scorecards — 90 Days</h2>
+          <h2 className="mb-4 text-lg font-black text-[#0B202B]">Store Scorecards — 90 Days</h2>
           <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
             <table className="min-w-full">
               <thead className={VYRON_TABLE.head}>
@@ -142,7 +142,7 @@ export default function StorePerformanceClient() {
                   scorecards.map((row) => (
                     <tr key={row.store_id} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
                       <td className="px-4 py-3">
-                        <div className="font-semibold text-[#0F172A]">{row.store_name}</div>
+                        <div className="font-semibold text-[#0B202B]">{row.store_name}</div>
                         <div className="text-xs text-[#64748B]">{row.store_code}</div>
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-bold">{formatStoreOrderMoney(row.revenue)}</td>

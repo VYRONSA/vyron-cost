@@ -24,29 +24,29 @@ export default function VyronCostDataPage({
   return (
     <VyronCostAiShell title={title} subtitle={subtitle}>
       <section className="grid gap-5 md:grid-cols-4">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Records</div>
           <div className="mt-3 text-4xl font-black text-slate-900">{rows.length}</div>
-          <div className="mt-2 text-sm font-bold text-[#84CC16]">Live data</div>
+          <div className="mt-2 text-sm font-bold text-[#55B968]">Live data</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Review Items</div>
           <div className="mt-3 text-4xl font-black text-red-600">{reviewCount}</div>
           <div className="mt-2 text-sm font-bold text-slate-500">Needs attention</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Drilldowns</div>
           <div className="mt-3 text-4xl font-black text-blue-700">{rows.length}</div>
           <div className="mt-2 text-sm font-bold text-slate-500">Click any row</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Status</div>
-          <div className="mt-3 text-4xl font-black text-[#84CC16]">Live</div>
+          <div className="mt-3 text-4xl font-black text-[#55B968]">Live</div>
           <div className="mt-2 text-sm font-bold text-slate-500">Supabase first</div>
         </div>
       </section>
 
-      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-xl font-black text-slate-900">
             {type === "products"

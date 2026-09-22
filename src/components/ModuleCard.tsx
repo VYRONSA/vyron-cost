@@ -17,9 +17,9 @@ export default function ModuleCard({
   return (
     <Link
       href={href}
-      className={`block cursor-pointer rounded-[2rem] p-6 shadow-[0_10px_40px_rgba(15,23,42,0.07)] transition hover:-translate-y-1 hover:shadow-[0_18px_55px_rgba(15,23,42,0.14)] ${
+      className={`block cursor-pointer rounded-[2rem] p-6 shadow-[0_10px_40px_rgba(11,32,43,0.07)] transition hover:-translate-y-1 hover:shadow-[0_18px_55px_rgba(11,32,43,0.14)] ${
         dark
-          ? "bg-[#07110d] text-white"
+          ? "bg-[#061722] text-white"
           : "border border-white bg-white text-slate-950"
       }`}
     >
@@ -27,15 +27,15 @@ export default function ModuleCard({
         <div
           className={
             dark
-              ? "rounded-2xl bg-[#3B82F6]/12 p-3 text-[#3B82F6]"
-              : "rounded-2xl bg-[#3B82F6]/10 p-3 text-[#1D4ED8]"
+              ? "rounded-2xl bg-[#2C5A6B]/12 p-3 text-[#2C5A6B]"
+              : "rounded-2xl bg-[#2C5A6B]/10 p-3 text-[#163A48]"
           }
         >
           <Icon size={22} />
         </div>
 
         <ArrowUpRight
-          className={dark ? "text-[#3B82F6]" : "text-[#84CC16]"}
+          className={dark ? "text-[#2C5A6B]" : "text-[#55B968]"}
           size={20}
         />
       </div>

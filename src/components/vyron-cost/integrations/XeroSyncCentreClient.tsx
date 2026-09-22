@@ -158,12 +158,12 @@ export default function XeroSyncCentreClient() {
         <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</div>
       ) : null}
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-2xl font-black text-slate-950">Xero Sync Queue</h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">
-              Approved VYRON COST transactions waiting for Xero ledger posting.
+              Approved VOLORA transactions waiting for Xero ledger posting.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -233,7 +233,7 @@ export default function XeroSyncCentreClient() {
 
 function Metric({ title, value, tone = "default" }: { title: string; value: string; tone?: "default" | "good" | "warn" | "bad" }) {
   const toneClass =
-    tone === "good" ? "text-[#1D4ED8]" : tone === "warn" ? "text-[var(--vyron-warning-fg)]" : tone === "bad" ? "text-rose-700" : "text-slate-950";
+    tone === "good" ? "text-[#163A48]" : tone === "warn" ? "text-[var(--vyron-warning-fg)]" : tone === "bad" ? "text-rose-700" : "text-slate-950";
   return (
     <div className="rounded-[1.75rem] border border-blue-100 bg-white p-5 shadow-sm">
       <div className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600">{title}</div>

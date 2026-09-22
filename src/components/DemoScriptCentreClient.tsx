@@ -28,12 +28,12 @@ export default function DemoScriptCentreClient() {
     <VyronPremiumPageShell
       config={{
         title: "Demo Script Centre",
-        subtitle: "Premium VYRON COST workflow for demo script centre.",
+        subtitle: "Premium VOLORA workflow for demo script centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+            <div className="rounded-[2rem] bg-[#061722] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
               <h2 className="text-3xl font-black">Demo Script Centre</h2>
               <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">Use this exact order in client meetings.</p>
               <button onClick={downloadScript} className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-black text-[#F8FAFC]">
@@ -43,7 +43,7 @@ export default function DemoScriptCentreClient() {
 
             <div className="grid gap-4">
               {script.map((line) => (
-                <div key={line} className="rounded-[2rem] bg-white p-5 text-lg font-black text-[#F8FAFC] shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+                <div key={line} className="rounded-[2rem] bg-white p-5 text-lg font-black text-[#F8FAFC] shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                   {line}
                 </div>
               ))}

@@ -238,11 +238,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         {[
           ["BOM Cost", formatMoney(cost), "text-slate-900"],
           ["Selling Price", formatMoney(price), "text-slate-900"],
-          ["Actual GP", `${actualGp.toFixed(1)}%`, actualGp < targetGp ? "text-red-600" : "text-[#84CC16]"],
+          ["Actual GP", `${actualGp.toFixed(1)}%`, actualGp < targetGp ? "text-red-600" : "text-[#55B968]"],
           ["Target GP", `${targetGp.toFixed(1)}%`, "text-blue-700"],
-          ["Suggested", formatMoney(suggestedPrice), "text-[#84CC16]"],
+          ["Suggested", formatMoney(suggestedPrice), "text-[#55B968]"],
         ].map(([label, value, cls]) => (
-          <div key={label} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <div key={label} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">{label}</div>
             <div className={`mt-3 text-3xl font-black ${cls}`}>{value}</div>
           </div>
@@ -250,7 +250,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </section>
 
       <section className="mt-5 grid gap-5 lg:grid-cols-3">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)] lg:col-span-1">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)] lg:col-span-1">
           <h2 className="text-xl font-black text-slate-900">Basic Information</h2>
           <div className="mt-4 space-y-2 text-sm font-semibold text-slate-600">
             <div><span className="font-black text-slate-800">Product:</span> {product.product_name}</div>
@@ -260,7 +260,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)] lg:col-span-1">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)] lg:col-span-1">
           <h2 className="text-xl font-black text-slate-900">Cost Information</h2>
           <div className="mt-4 space-y-2 text-sm font-semibold text-slate-600">
             <div><span className="font-black text-slate-800">Total Cost:</span> {formatMoney(cost)}</div>
@@ -269,7 +269,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)] lg:col-span-1">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)] lg:col-span-1">
           <h2 className="text-xl font-black text-slate-900">Pricing</h2>
           <div className="mt-4 space-y-2 text-sm font-semibold text-slate-600">
             <div><span className="font-black text-slate-800">Selling Price:</span> {formatMoney(price)}</div>
@@ -279,22 +279,22 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </section>
 
       <section className="mt-5 grid gap-5 md:grid-cols-3">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <h2 className="text-xl font-black text-slate-900">GP</h2>
           <div className="mt-3 text-3xl font-black text-slate-900">{actualGp.toFixed(1)}%</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Target GP</h2>
           <div className="mt-3 text-3xl font-black text-blue-700">{targetGp.toFixed(1)}%</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Actual GP</h2>
-          <div className={`mt-3 text-3xl font-black ${actualGp < targetGp ? "text-red-600" : "text-[#84CC16]"}`}>{actualGp.toFixed(1)}%</div>
+          <div className={`mt-3 text-3xl font-black ${actualGp < targetGp ? "text-red-600" : "text-[#55B968]"}`}>{actualGp.toFixed(1)}%</div>
         </div>
       </section>
 
       <section className="mt-5 grid gap-5 xl:grid-cols-2">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Recipe/BOM</h2>
           {bom ? (
             <div className="mt-5 rounded-3xl bg-blue-50 p-5">
@@ -312,7 +312,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <ProductBomLinkClient productId={product.id} currentBomId={product.linked_bom_id} sellingPrice={price} targetGp={targetGp} boms={boms} />
         </div>
 
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Ingredient Summary</h2>
           {detailData.ingredientSummary.length ? (
             <div className="mt-4 space-y-3">
@@ -339,7 +339,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         </div>
       </section>
 
-      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <h2 className="text-xl font-black text-slate-900">Inventory</h2>
         {detailData.inventory ? (
           <div className="mt-4 grid gap-3 md:grid-cols-4">
@@ -353,7 +353,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         )}
       </section>
 
-      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <h2 className="text-xl font-black text-slate-900">Sales Orders</h2>
         <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200">
           <table className="min-w-full text-sm">
@@ -396,7 +396,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </section>
 
       <section className="mt-5 grid gap-5 xl:grid-cols-2">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Production History</h2>
           {detailData.productionHistory.length ? (
             <div className="mt-4 space-y-3">
@@ -413,7 +413,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
 
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Purchase History</h2>
           {detailData.purchaseHistory.length ? (
             <div className="mt-4 space-y-3">
@@ -432,7 +432,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </section>
 
       <section className="mt-5 grid gap-5 xl:grid-cols-2">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <h2 className="text-xl font-black text-slate-900">AI Cost Intelligence</h2>
           {detailData.aiInsights.length ? (
             <div className="mt-4 space-y-3">
@@ -450,7 +450,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
 
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <h2 className="text-xl font-black text-slate-900">Audit History</h2>
           {detailData.auditHistory.length ? (
             <div className="mt-4 space-y-3">

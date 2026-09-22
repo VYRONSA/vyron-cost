@@ -131,7 +131,7 @@ export default function ProcurementRequisitionsClient() {
                   type="button"
                   onClick={() => setStatusFilter(status)}
                   className={`rounded-full px-3 py-1.5 text-xs font-bold ${
-                    statusFilter === status ? "bg-[#1D6BFF] text-white" : "bg-[#F1F5F9] text-[#64748B]"
+                    statusFilter === status ? "bg-[#1F4757] text-white" : "bg-[#F1F5F9] text-[#64748B]"
                   }`}
                 >
                   {status === "All" ? "All" : PROCUREMENT_REQUISITION_STATUS_LABELS[status as keyof typeof PROCUREMENT_REQUISITION_STATUS_LABELS] || status}
@@ -174,7 +174,7 @@ export default function ProcurementRequisitionsClient() {
                   {filtered.map((row) => (
                     <tr key={row.id} className={VYRON_TABLE.row}>
                       <td className="px-4 py-3">
-                        <Link href={`/procurement/${row.id}`} className="font-bold text-[#1D6BFF] hover:underline">
+                        <Link href={`/procurement/${row.id}`} className="font-bold text-[#1F4757] hover:underline">
                           {row.requisition_number}
                         </Link>
                       </td>

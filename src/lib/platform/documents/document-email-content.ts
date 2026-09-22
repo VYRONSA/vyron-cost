@@ -127,7 +127,7 @@ export function buildDocumentEmailContent(input: {
     `Please find attached ${label.toLowerCase()} ${number}${sender ? ` from ${sender}` : ""}.`,
     "",
     "Kind regards,",
-    sender || "VYRON COST",
+    sender || "VOLORA",
   ].join("\n");
 
   const html = [
@@ -135,7 +135,7 @@ export function buildDocumentEmailContent(input: {
     `<p>Please find attached ${escapeHtml(label.toLowerCase())} <strong>${escapeHtml(number)}</strong>${
       sender ? ` from ${escapeHtml(sender)}` : ""
     }.</p>`,
-    `<p>Kind regards,<br/>${escapeHtml(sender || "VYRON COST")}</p>`,
+    `<p>Kind regards,<br/>${escapeHtml(sender || "VOLORA")}</p>`,
   ].join("\n");
 
   return { subject, text, html };

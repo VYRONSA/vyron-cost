@@ -19,7 +19,7 @@ export default function DemoFlowPage() {
     <VyronCostAiShell hidePageHeader title="Client Demo Flow" subtitle="Use this page as the exact demo script for the prospect.">
       <section className="grid gap-5 md:grid-cols-4">
         {["15 min demo", "Show BOM", "Show GP", "Close Recovery"].map((item) => (
-          <div key={item} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <div key={item} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <div className="text-2xl font-black text-blue-700">{item}</div>
           </div>
         ))}
@@ -27,7 +27,7 @@ export default function DemoFlowPage() {
 
       <section className="mt-6 grid gap-5">
         {steps.map(({ title, href, Icon, text }, index) => (
-          <Link key={title} href={href} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)] transition hover:-translate-y-1">
+          <Link key={title} href={href} className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)] transition hover:-translate-y-1">
             <div className="grid gap-5 md:grid-cols-[64px_1fr_120px] md:items-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
                 <Icon size={28} />

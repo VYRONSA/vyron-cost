@@ -181,7 +181,7 @@ export default function ReportDocument({
   return (
     <div className="vyron-report-document flex min-w-0 flex-col gap-4">
       {/* ---------- report header: appears on screen, print and PDF ---------- */}
-      <header className="vyron-report-header rounded-[20px] border border-[rgba(15,23,42,0.10)] bg-white px-6 py-5 shadow-[0_10px_36px_rgba(15,23,42,0.06)]">
+      <header className="vyron-report-header rounded-[20px] border border-[rgba(11,32,43,0.10)] bg-white px-6 py-5 shadow-[0_10px_36px_rgba(11,32,43,0.06)]">
         <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
           <div className="min-w-0">
             <VyronLogoLockup variant="onLight" size={44} suffix="COST" />
@@ -207,7 +207,7 @@ export default function ReportDocument({
         </div>
 
         {activeFilters.length ? (
-          <p className="mt-4 border-t border-[rgba(15,23,42,0.08)] pt-3 text-xs font-bold uppercase tracking-[0.10em] text-slate-600">
+          <p className="mt-4 border-t border-[rgba(11,32,43,0.08)] pt-3 text-xs font-bold uppercase tracking-[0.10em] text-slate-600">
             {activeFilters.map((f) => `${f.label}: ${f.value}`).join("  |  ")}
           </p>
         ) : null}
@@ -215,7 +215,7 @@ export default function ReportDocument({
 
       {/* ---------- controls: never printed ---------- */}
       {controls || onRefresh || getExportPayload ? (
-        <section className="vyron-report-controls rounded-[20px] border border-[rgba(15,23,42,0.09)] bg-white/90 px-5 py-4">
+        <section className="vyron-report-controls rounded-[20px] border border-[rgba(11,32,43,0.09)] bg-white/90 px-5 py-4">
           <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
             <div className="flex min-w-0 flex-wrap items-end gap-3">{controls}</div>
             <div className="flex flex-wrap items-center gap-2">
@@ -224,7 +224,7 @@ export default function ReportDocument({
                   type="button"
                   onClick={onRefresh}
                   disabled={refreshing}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3.5 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3.5 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                 >
                   <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
                   Refresh
@@ -285,7 +285,7 @@ export default function ReportDocument({
           {summary.map((tile) => (
             <div
               key={tile.label}
-              className="rounded-2xl border border-[rgba(15,23,42,0.09)] bg-white px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
+              className="rounded-2xl border border-[rgba(11,32,43,0.09)] bg-white px-4 py-3 shadow-[0_10px_30px_rgba(11,32,43,0.05)]"
             >
               <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{tile.label}</p>
               <p className="mt-1 text-xl font-black text-slate-950">{tile.value}</p>
@@ -316,7 +316,7 @@ export default function ReportDocument({
           ) : null}
         </section>
       ) : isEmpty ? (
-        <section className="vyron-report-body rounded-[20px] border border-dashed border-[rgba(15,23,42,0.16)] bg-white px-6 py-12 text-center">
+        <section className="vyron-report-body rounded-[20px] border border-dashed border-[rgba(11,32,43,0.16)] bg-white px-6 py-12 text-center">
           <p className="text-base font-black text-slate-800">No data available</p>
           <p className="mx-auto mt-1 max-w-2xl text-sm font-semibold text-slate-500">{emptyMessage}</p>
         </section>
@@ -331,7 +331,7 @@ export default function ReportDocument({
         wrong. See globals.css.
       */}
       <footer className="vyron-report-footer" aria-hidden="true">
-        VYRON COST &middot; {companyName} &middot; {title}
+        VOLORA &middot; {companyName} &middot; {title}
         {periodText ? ` · ${periodText}` : ""} &middot; Generated {formatStamp(generatedAt)}
       </footer>
     </div>
@@ -341,7 +341,7 @@ export default function ReportDocument({
 /** Shared table wrapper: marks the grid for CSV capture and print pagination. */
 export function ReportTable({ children, minWidth = 1000 }: { children: ReactNode; minWidth?: number }) {
   return (
-    <div className="vyron-report-table-wrap w-full overflow-x-auto rounded-[18px] border border-[rgba(15,23,42,0.10)] bg-white">
+    <div className="vyron-report-table-wrap w-full overflow-x-auto rounded-[18px] border border-[rgba(11,32,43,0.10)] bg-white">
       <table data-report-table className="w-full text-left text-sm" style={{ minWidth }}>
         {children}
       </table>

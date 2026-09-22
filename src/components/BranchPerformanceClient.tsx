@@ -12,14 +12,14 @@ export default function BranchPerformanceClient({ branches }: { branches: Branch
     <VyronPremiumPageShell
       config={{
         title: "Branch Performance",
-        subtitle: "Premium VYRON COST workflow for branch performance.",
+        subtitle: "Premium VOLORA workflow for branch performance.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
             <section className="grid gap-5 md:grid-cols-3">
               {branches.slice(0, 3).map((branch) => (
-                <div key={branch.id} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+                <div key={branch.id} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                   <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{branch.branch_name}</div>
                   <div className="mt-3 text-4xl font-black text-[#F8FAFC]">{Number(branch.leakage_score || 0).toFixed(0)}</div>
                   <p className="mt-2 text-sm font-bold text-slate-500">Leakage score · {branch.risk_level}</p>
@@ -27,8 +27,8 @@ export default function BranchPerformanceClient({ branches }: { branches: Branch
               ))}
             </section>
 
-            <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+            <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+              <div className="grid grid-cols-7 bg-[#061722] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
                 <div className="col-span-2">Branch</div>
                 <div>Spend</div>
                 <div>Wastage</div>

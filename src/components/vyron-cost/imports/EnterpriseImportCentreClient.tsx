@@ -201,23 +201,23 @@ export default function EnterpriseImportCentreClient({
       <section className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3">
           <div className="text-xs font-bold uppercase tracking-wide text-[#64748B]">Total Import Types</div>
-          <div className="mt-1 text-2xl font-black text-[#0F172A]">{summary.totalImportTypes}</div>
+          <div className="mt-1 text-2xl font-black text-[#0B202B]">{summary.totalImportTypes}</div>
         </div>
         <div className="rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3">
           <div className="text-xs font-bold uppercase tracking-wide text-[#64748B]">Successful Today</div>
-          <div className="mt-1 text-2xl font-black text-[#0F172A]">{summary.successfulImportsToday}</div>
+          <div className="mt-1 text-2xl font-black text-[#0B202B]">{summary.successfulImportsToday}</div>
         </div>
         <div className="rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3">
           <div className="text-xs font-bold uppercase tracking-wide text-[#64748B]">Failed Today</div>
-          <div className="mt-1 text-2xl font-black text-[#0F172A]">{summary.failedImportsToday}</div>
+          <div className="mt-1 text-2xl font-black text-[#0B202B]">{summary.failedImportsToday}</div>
         </div>
         <div className="rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3">
           <div className="text-xs font-bold uppercase tracking-wide text-[#64748B]">Imports Running</div>
-          <div className="mt-1 text-2xl font-black text-[#0F172A]">{summary.importsRunning}</div>
+          <div className="mt-1 text-2xl font-black text-[#0B202B]">{summary.importsRunning}</div>
         </div>
         <div className="rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3">
           <div className="text-xs font-bold uppercase tracking-wide text-[#64748B]">Last Import Executed</div>
-          <div className="mt-1 text-sm font-black text-[#0F172A]">{formatDate(summary.lastImportExecuted)}</div>
+          <div className="mt-1 text-sm font-black text-[#0B202B]">{formatDate(summary.lastImportExecuted)}</div>
         </div>
       </section>
 
@@ -230,16 +230,16 @@ export default function EnterpriseImportCentreClient({
           <article key={card.id} className="rounded-[2rem] border border-[#E2E8F0] bg-white p-6 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-black text-[#0F172A]">{card.name}</h2>
+                <h2 className="text-lg font-black text-[#0B202B]">{card.name}</h2>
                 <p className="mt-2 text-sm font-medium leading-6 text-[#64748B]">{card.description}</p>
               </div>
-              <Upload size={20} className="text-[#1D4ED8]" />
+              <Upload size={20} className="text-[#163A48]" />
             </div>
 
             <dl className="mt-5 grid gap-2 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm">
               <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                 <dt className="font-bold text-[#64748B]">Last Run</dt>
-                <dd className="font-black text-[#0F172A]">{formatDate(snapshot.lastImportDate)}</dd>
+                <dd className="font-black text-[#0B202B]">{formatDate(snapshot.lastImportDate)}</dd>
               </div>
               <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                 <dt className="font-bold text-[#64748B]">Status</dt>
@@ -247,11 +247,11 @@ export default function EnterpriseImportCentreClient({
               </div>
               <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                 <dt className="font-bold text-[#64748B]">Records Imported</dt>
-                <dd className="font-black text-[#0F172A]">{formatRecords(snapshot.recordsImported)}</dd>
+                <dd className="font-black text-[#0B202B]">{formatRecords(snapshot.recordsImported)}</dd>
               </div>
               <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                 <dt className="font-bold text-[#64748B]">Imported By</dt>
-                <dd className="font-black text-[#0F172A]">{snapshot.importedBy || "System"}</dd>
+                <dd className="font-black text-[#0B202B]">{snapshot.importedBy || "System"}</dd>
               </div>
             </dl>
 
@@ -259,7 +259,7 @@ export default function EnterpriseImportCentreClient({
               {importEnabled ? (
                 <Link
                   href={card.actions.importHref as string}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl vyron-grad-deep px-4 py-2.5 text-sm font-black text-[#BFDBFE]"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl vyron-grad-deep px-4 py-2.5 text-sm font-black text-[#BCCDD5]"
                 >
                   Import
                   <ArrowRight size={14} />
@@ -295,7 +295,7 @@ export default function EnterpriseImportCentreClient({
                 <div className="mt-3 space-y-2">
                   {snapshot.history.slice(0, 3).map((entry) => (
                     <div key={`${entry.date}-${entry.user}-${entry.records}`} className="rounded-xl bg-[#F8FAFC] p-3 text-xs">
-                      <div className="font-black text-[#0F172A]">{formatDate(entry.date)}</div>
+                      <div className="font-black text-[#0B202B]">{formatDate(entry.date)}</div>
                       <div className="mt-1 text-[#64748B]">User: {entry.user}</div>
                       <div className="text-[#64748B]">Records: {formatRecords(entry.records)}</div>
                       <div className="mt-1">{statusBadge(entry.status)}</div>

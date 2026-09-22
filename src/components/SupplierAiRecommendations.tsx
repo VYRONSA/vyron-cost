@@ -52,7 +52,7 @@ export default function SupplierAiRecommendations({
       </div>
       {inflationNote ? <p className="mt-3 text-sm font-bold text-[var(--vyron-warning-fg)]">{inflationNote}</p> : null}
       {savings > 0 ? (
-        <p className="mt-2 text-sm font-bold text-[#1D4ED8]">Potential savings: {procurementMoney(savings)}/year</p>
+        <p className="mt-2 text-sm font-bold text-[#163A48]">Potential savings: {procurementMoney(savings)}/year</p>
       ) : null}
       <ul className="mt-4 space-y-3">
         {recs.slice(0, 5).map((r) => (
@@ -63,7 +63,7 @@ export default function SupplierAiRecommendations({
             >
               <div className="flex flex-wrap justify-between gap-2">
                 <span className="text-xs font-black uppercase text-blue-600">{r.category}</span>
-                <span className="text-sm font-black text-[#1D4ED8]">{procurementMoney(r.potential_benefit_annual)}/yr</span>
+                <span className="text-sm font-black text-[#163A48]">{procurementMoney(r.potential_benefit_annual)}/yr</span>
               </div>
               <div className="mt-1 font-bold text-slate-900">{r.title}</div>
               <p className="mt-1 text-xs font-semibold text-slate-600">{r.recommended_action}</p>

@@ -481,9 +481,9 @@ export default function ClientUserSetupClient() {
                   const granted = group.permissions.filter((permission) => invitePermissions[permission.key]).length;
                   const all = granted === group.permissions.length;
                   return (
-                    <div key={group.label} className="min-w-0 rounded-xl border border-[rgba(15,23,42,0.07)] bg-white p-3.5">
+                    <div key={group.label} className="min-w-0 rounded-xl border border-[rgba(11,32,43,0.07)] bg-white p-3.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-xs font-black text-[#0F172A]">{group.label}</span>
+                        <span className="truncate text-xs font-black text-[#0B202B]">{group.label}</span>
                         <button
                           type="button"
                           onClick={() =>
@@ -493,7 +493,7 @@ export default function ClientUserSetupClient() {
                               return next;
                             })
                           }
-                          className="inline-flex h-11 shrink-0 items-center rounded-lg px-2.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#4F46E5] transition hover:bg-[var(--vyron-brand-wash)]"
+                          className="inline-flex h-11 shrink-0 items-center rounded-lg px-2.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#1F4757] transition hover:bg-[var(--vyron-brand-wash)]"
                         >
                           {all ? "None" : "All"}
                         </button>
@@ -508,7 +508,7 @@ export default function ClientUserSetupClient() {
                             <label
                               key={permission.key}
                               className={`flex min-h-[2.25rem] cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 transition ${
-                                on ? "bg-[var(--vyron-brand-wash)]" : "hover:bg-[rgba(15,23,42,0.03)]"
+                                on ? "bg-[var(--vyron-brand-wash)]" : "hover:bg-[rgba(11,32,43,0.03)]"
                               }`}
                             >
                               <span
@@ -516,7 +516,7 @@ export default function ClientUserSetupClient() {
                                 className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
                                   on
                                     ? "border-transparent vyron-grad-surface text-white"
-                                    : "border-[rgba(15,23,42,0.18)] bg-white"
+                                    : "border-[rgba(11,32,43,0.18)] bg-white"
                                 }`}
                               >
                                 {on ? <Check size={13} strokeWidth={3} /> : null}
@@ -529,7 +529,7 @@ export default function ClientUserSetupClient() {
                                   setInvitePermissions((current) => ({ ...current, [permission.key]: e.target.checked }))
                                 }
                               />
-                              <span className={`min-w-0 text-xs ${on ? "font-bold text-[#0F172A]" : "font-medium text-[#334155]"}`}>
+                              <span className={`min-w-0 text-xs ${on ? "font-bold text-[#0B202B]" : "font-medium text-[#334155]"}`}>
                                 {permission.label}
                               </span>
                             </label>
@@ -632,16 +632,16 @@ function Modal({
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-end justify-center bg-[rgba(7,17,31,0.45)] backdrop-blur-sm sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-[200] flex items-end justify-center bg-[rgba(6,23,34,0.45)] backdrop-blur-sm sm:items-center sm:p-4">
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-[rgba(15,23,42,0.07)] bg-white shadow-[var(--vyron-elev-4)] sm:max-h-[90vh] sm:rounded-2xl ${
+        className={`flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-[rgba(11,32,43,0.07)] bg-white shadow-[var(--vyron-elev-4)] sm:max-h-[90vh] sm:rounded-2xl ${
           wide ? "sm:max-w-4xl" : "sm:max-w-2xl"
         }`}
       >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[rgba(15,23,42,0.07)] px-5 py-4 md:px-6">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[rgba(11,32,43,0.07)] px-5 py-4 md:px-6">
           <div className="min-w-0">
             <h3 className={`text-lg ${M.heading}`}>{title}</h3>
             {subtitle ? (
@@ -652,7 +652,7 @@ function Modal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#64748B] transition hover:bg-[rgba(15,23,42,0.05)] hover:text-[#0F172A]"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#64748B] transition hover:bg-[rgba(11,32,43,0.05)] hover:text-[#0B202B]"
           >
             <X size={18} />
           </button>
@@ -661,7 +661,7 @@ function Modal({
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6">{children}</div>
 
         {footer ? (
-          <div className="shrink-0 border-t border-[rgba(15,23,42,0.07)] bg-[rgba(15,23,42,0.02)] px-5 py-4 md:px-6">
+          <div className="shrink-0 border-t border-[rgba(11,32,43,0.07)] bg-[rgba(11,32,43,0.02)] px-5 py-4 md:px-6">
             {footer}
           </div>
         ) : null}
@@ -674,7 +674,7 @@ function Modal({
 /** A titled block inside a modal, so a long form reads as sections. */
 function Section({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border border-[rgba(15,23,42,0.07)] bg-[rgba(15,23,42,0.02)] p-4 md:p-5">
+    <section className="rounded-xl border border-[rgba(11,32,43,0.07)] bg-[rgba(11,32,43,0.02)] p-4 md:p-5">
       <h4 className={`${M.label} text-[11px]`}>{title}</h4>
       {note ? <p className="mt-1 text-xs font-medium text-[#64748B]">{note}</p> : null}
       <div className="mt-3.5">{children}</div>

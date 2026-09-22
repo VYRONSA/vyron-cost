@@ -81,14 +81,14 @@ export default function SupplierInflationImpactClient({ rows }: { rows: Supplier
       }}
     >
       <section className="grid gap-6">
-        <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
+        <div className="rounded-[2rem] bg-[#061722] p-6 text-white">
         <div className="text-xs font-black uppercase tracking-[0.2em] text-red-300">Annual Supplier Impact</div>
         <div className="mt-2 text-3xl font-black">{formatMoney(totalAnnual)}</div>
       </div>
 
-      <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3">
-          <Search size={20} className="text-[#1D4ED8]" />
+      <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+        <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-4 py-3">
+          <Search size={20} className="text-[#163A48]" />
           <input
             value={search}
             onChange={(e) => {
@@ -101,9 +101,9 @@ export default function SupplierInflationImpactClient({ rows }: { rows: Supplier
         </div>
       </div>
 
-        <div className="overflow-x-auto rounded-[2rem] border border-white bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="overflow-x-auto rounded-[2rem] border border-white bg-white shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <div className="min-w-[1100px]">
-          <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+          <div className="grid grid-cols-7 bg-[#061722] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
             <div>Supplier</div>
             <div>Current</div>
             <div>Previous</div>
@@ -128,7 +128,7 @@ export default function SupplierInflationImpactClient({ rows }: { rows: Supplier
                 </StatusPill>
               </div>
               <div>
-                <Link href="/action-centre" className="inline-flex items-center gap-1 rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-3 py-2 text-xs font-black text-[#1D4ED8]">
+                <Link href="/action-centre" className="inline-flex items-center gap-1 rounded-full border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-3 py-2 text-xs font-black text-[#163A48]">
                   {row.recommended_action}
                   <ArrowUpRight size={14} />
                 </Link>

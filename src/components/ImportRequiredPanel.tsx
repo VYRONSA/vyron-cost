@@ -17,7 +17,7 @@ export default function ImportRequiredPanel() {
           </p>
           <Link
             href="/import-costings"
-            className="mt-4 inline-flex rounded-full bg-[#07110d] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#3B82F6]"
+            className="mt-4 inline-flex rounded-full bg-[#061722] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[#2C5A6B]"
           >
             Import instructions
           </Link>

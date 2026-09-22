@@ -27,9 +27,9 @@ export default function BoardroomInsightsClient({ boardroom }: { boardroom: Boar
     >
       <section className="grid gap-10">
         <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-[2rem] bg-[#3B82F6]/10 p-6">
-          <div className="text-xs font-black uppercase text-[#4D7C0F]">Projected annual savings</div>
-          <div className="mt-2 text-4xl font-black text-[#4D7C0F]">{money(boardroom.projectedAnnualSavings)}</div>
+        <div className="rounded-[2rem] bg-[#2C5A6B]/10 p-6">
+          <div className="text-xs font-black uppercase text-[#2F7C40]">Projected annual savings</div>
+          <div className="mt-2 text-4xl font-black text-[#2F7C40]">{money(boardroom.projectedAnnualSavings)}</div>
         </div>
         <div className="rounded-[2rem] bg-red-50 p-6">
           <div className="text-xs font-black uppercase text-red-800">Projected annual cost increases</div>
@@ -74,7 +74,7 @@ export default function BoardroomInsightsClient({ boardroom }: { boardroom: Boar
                     </Link>
                   ) : null}
                 </div>
-                <div className="text-right font-black text-[#1D4ED8]">{money(o.value)}</div>
+                <div className="text-right font-black text-[#163A48]">{money(o.value)}</div>
               </li>
             ))}
           </ol>

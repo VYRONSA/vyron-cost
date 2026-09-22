@@ -14,7 +14,7 @@ export default function AiProfitLeakageClient({ leakage }: { leakage: ProfitLeak
       config={{
         visualVariant: "recovery",
         title: "Ai Profit Leakage",
-        subtitle: "Premium VYRON COST workflow for ai profit leakage.",
+        subtitle: "Premium VOLORA workflow for ai profit leakage.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >

@@ -7,7 +7,7 @@ export default async function PlatformFoundationPage() {
   const { companyId } = await requireWorkspacePage("reports.view");
   const { platformFoundation } = await getEnterprisePlatformPayload(companyId);
   return (
-    <VyronCostShell hidePageHeader title="Platform Foundation" subtitle="VYRON COST · FINANCE · PAY · CORE · MAINT · FARM">
+    <VyronCostShell hidePageHeader title="Platform Foundation" subtitle="VOLORA · FINANCE · PAY · CORE · MAINT · FARM">
       <PlatformNav />
       <FoundationClient foundation={platformFoundation} />
     </VyronCostShell>

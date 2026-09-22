@@ -28,18 +28,18 @@ export default function ExecutiveSummaryPanel({
   const highestOpportunity = opportunityLabels[recovery[0]?.opportunity || ""] || "Price Optimisation";
 
   const rows = [
-    { label: "Profit Protection Score", value: `${score}/100`, tone: score >= 70 ? "text-[#2563EB]" : "text-[var(--vyron-warning-fg)]" },
+    { label: "Profit Protection Score", value: `${score}/100`, tone: score >= 70 ? "text-[#1F4757]" : "text-[var(--vyron-warning-fg)]" },
     { label: "Highest Risk", value: highestRisk, tone: "text-[#EF4444]" },
-    { label: "Highest Opportunity", value: highestOpportunity, tone: "text-[#0F172A]" },
-    { label: "Recoverable Value", value: formatCompactAnnual(kpis.recoverableAnnual), tone: "text-[#2563EB]" },
-    { label: "Management Actions Required", value: String(kpis.pendingActions), tone: "text-[#1D6BFF]" },
+    { label: "Highest Opportunity", value: highestOpportunity, tone: "text-[#0B202B]" },
+    { label: "Recoverable Value", value: formatCompactAnnual(kpis.recoverableAnnual), tone: "text-[#1F4757]" },
+    { label: "Management Actions Required", value: String(kpis.pendingActions), tone: "text-[#1F4757]" },
   ];
 
   return (
     <VyronSurfaceCard elevated className="flex h-full flex-col p-4 md:p-5">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="vyron-section-label">Executive Summary</div>
-        <Link href="/action-centre" className="text-[10px] font-black uppercase tracking-[0.12em] text-[#64748B] hover:text-[#0F172A]">
+        <Link href="/action-centre" className="text-[10px] font-black uppercase tracking-[0.12em] text-[#64748B] hover:text-[#0B202B]">
           Actions →
         </Link>
       </div>

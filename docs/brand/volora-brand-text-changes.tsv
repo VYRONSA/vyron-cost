@@ -1,0 +1,403 @@
+action	file	line	before	after	reason
+CHANGED	src/app/action-centre/page.tsx	13	"The highest-value actions VYRON COST recommends right now."	"The highest-value actions VOLORA recommends right now."	user-visible brand text
+CHANGED	src/app/admin/branding-designer/page.tsx	9	"Configure the branding every VYRON document and report inherits — logo, colours, and document text."	"Configure the branding every VOLORA document and report inherits — logo, colours, and document text."	user-visible brand text
+CHANGED	src/app/ai-assistant/page.tsx	6	"VYRON AI Assistant"	"VOLORA AI Assistant"	user-visible brand text
+CHANGED	src/app/ai-cfo-command-centre/page.tsx	13	"VYRON INTELLIGENCE · FINANCIAL HEALTH · LEAKAGE · NARRATIVES · ALERTS"	"VOLORA Intelligence · FINANCIAL HEALTH · LEAKAGE · NARRATIVES · ALERTS"	user-visible brand text
+CHANGED	src/app/api/ask-vyron/route.ts	32	"Ask VYRON request failed."	"Ask VOLORA request failed."	user-visible brand text
+KEPT	src/app/api/inventory/finished-goods/export/route.ts	70	"VYRON Client"		tenant-name fallback in an export (tenant data)
+CHANGED	src/app/api/training-manual/route.ts	24	"VYRON COST — TRAINING MANUAL"	"VOLORA — TRAINING MANUAL"	user-visible brand text
+CHANGED	src/app/api/training-manual/route.ts	40	'attachment; filename="VYRON-COST-Training-Manual.pdf"'	'attachment; filename="VOLORA-Training-Manual.pdf"'	user-visible brand text
+CHANGED	src/app/api/vyron-core/command-centre/route.ts	17	"VYRON CORE command centre load failed."	"VOLORA Core command centre load failed."	user-visible brand text
+CHANGED	src/app/api/workspace/login/route.ts	14	"No workspace is linked to this login. Contact your VYRON administrator."	"No workspace is linked to this login. Contact your VOLORA administrator."	user-visible brand text
+CHANGED	src/app/api/workspace/restore-session/route.ts	14	"No workspace is linked to this login. Contact your VYRON administrator."	"No workspace is linked to this login. Contact your VOLORA administrator."	user-visible brand text
+CHANGED	src/app/ask-vyron/page.tsx	15	"Ask VYRON"	"Ask VOLORA"	user-visible brand text
+CHANGED	src/app/client-demo-script/page.tsx	5	"Exact words and flow to use when presenting VYRON COST."	"Exact words and flow to use when presenting VOLORA."	user-visible brand text
+CHANGED	src/app/client-demo-script/page.tsx	10	Most businesses know what they sell for, but not what every product truly costs today. VYRON COST connects suppliers, ingredients, BOMs, products, purchase orde	Most businesses know what they sell for, but not what every product truly costs today. VOLORA connects suppliers, ingredients, BOMs, products, purchase orders a	user-visible brand text
+CHANGED	src/app/client-proposal/page.tsx	15	VYRON COST creates a live costing and profit intelligence platform across products, suppliers and invoices.	VOLORA creates a live costing and profit intelligence platform across products, suppliers and invoices.	user-visible brand text
+CHANGED	src/app/customer-portal-access/page.tsx	11	"WHO CAN ORDER THROUGH VYRON ORDER, AND WHAT THEY SIGN IN WITH."	"WHO CAN ORDER THROUGH VOLORA Order, AND WHAT THEY SIGN IN WITH."	user-visible brand text
+CHANGED	src/app/dashboard/page.tsx	28	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/app/email-invoice-inbox/page.tsx	6	"EMAIL TO VYRON · PDF QUEUE · REVIEW ROUTING"	"EMAIL TO VOLORA · PDF QUEUE · REVIEW ROUTING"	user-visible brand text
+CHANGED	src/app/enterprise-platform/ai-assistant/page.tsx	10	"VYRON Enterprise AI"	"VOLORA Enterprise AI"	user-visible brand text
+CHANGED	src/app/enterprise-platform/foundation/page.tsx	10	"VYRON COST · FINANCE · PAY · CORE · MAINT · FARM"	"VOLORA · FINANCE · PAY · CORE · MAINT · FARM"	user-visible brand text
+CHANGED	src/app/enterprise-platform/page.tsx	10	"MULTI-COMPANY · GROUP · BENCHMARKING · AI · VYRON SUITE"	"MULTI-COMPANY · GROUP · BENCHMARKING · AI · VOLORA Suite"	user-visible brand text
+CHANGED	src/app/financial-leakage/page.tsx	165	VYRON COST turns supplier movement, low GP products, invoice issues and wastage into a colourful, easy-to-action recovery plan.           	VOLORA turns supplier movement, low GP products, invoice issues and wastage into a colourful, easy-to-action recovery plan.           	user-visible brand text
+CHANGED	src/app/go-live-readiness/page.tsx	5	"Final checklist before calling VYRON COST ready for a paying client."	"Final checklist before calling VOLORA ready for a paying client."	user-visible brand text
+CHANGED	src/app/implementation-plan/page.tsx	5	"Simple rollout plan for a new VYRON COST client."	"Simple rollout plan for a new VOLORA client."	user-visible brand text
+CHANGED	src/app/integrations/xero/page.tsx	21	"Connect VYRON COST to Xero for accounting-ready customers, suppliers, invoices, purchase bills and sync audit visibility."	"Connect VOLORA to Xero for accounting-ready customers, suppliers, invoices, purchase bills and sync audit visibility."	user-visible brand text
+CHANGED	src/app/inventory-intelligence/page.tsx	17	"Open the operational stock pages without leaving the VYRON COST shell."	"Open the operational stock pages without leaving the VOLORA shell."	user-visible brand text
+CHANGED	src/app/login/LoginClient.tsx	53	Sign in to your VYRON COST workspace with the email and password provided by your administrator.           	Sign in to your VOLORA workspace with the email and password provided by your administrator.           	user-visible brand text
+CHANGED	src/app/order/page.tsx	12	"VYRON ORDER"	"VOLORA Order"	user-visible brand text
+CHANGED	src/app/order/page.tsx	13	"Customer ordering for VYRON COST."	"Customer ordering for VOLORA."	user-visible brand text
+CHANGED	src/app/order/page.tsx	54	VYRON	VOLORA	user-visible brand text
+CHANGED	src/app/order/[tenant]/manifest.webmanifest/route.ts	43	"VYRON ORDER"	"VOLORA Order"	user-visible brand text
+CHANGED	src/app/order/[tenant]/manifest.webmanifest/route.ts	44	"VYRON ORDER"	"VOLORA Order"	user-visible brand text
+CHANGED	src/app/order/[tenant]/manifest.webmanifest/route.ts	46	}. Powered by VYRON COST.`	}. Powered by VOLORA.`	user-visible brand text
+CHANGED	src/app/order/[tenant]/page.tsx	27	`VYRON ORDER · ${	`VOLORA Order · ${	user-visible brand text
+CHANGED	src/app/order/[tenant]/page.tsx	27	"VYRON ORDER"	"VOLORA Order"	user-visible brand text
+CHANGED	src/app/order/[tenant]/page.tsx	29	}. Powered by VYRON COST.`	}. Powered by VOLORA.`	user-visible brand text
+CHANGED	src/app/order/[tenant]/page.tsx	30	"Customer ordering for VYRON COST."	"Customer ordering for VOLORA."	user-visible brand text
+CHANGED	src/app/order/[tenant]/page.tsx	31	"VYRON ORDER"	"VOLORA Order"	user-visible brand text
+CHANGED	src/app/order/[tenant]/page.tsx	36	"VYRON ORDER"	"VOLORA Order"	user-visible brand text
+CHANGED	src/app/order-centre/page.tsx	11	"VYRON Order Centre"	"VOLORA Order Centre"	user-visible brand text
+CHANGED	src/app/order-centre/page.tsx	12	"CUSTOMER ORDERS FROM VYRON ORDER, IN THE EXISTING SALES-ORDER ENGINE."	"CUSTOMER ORDERS FROM VOLORA Order, IN THE EXISTING SALES-ORDER ENGINE."	user-visible brand text
+CHANGED	src/app/order-centre/[id]/page.tsx	16	"VYRON ORDER CENTRE"	"VOLORA Order Centre"	user-visible brand text
+CHANGED	src/app/pilot-setup-plan/page.tsx	20	Compare VYRON COST calculations to current costing sheets.	Compare VOLORA calculations to current costing sheets.	user-visible brand text
+CHANGED	src/app/platform-overview/page.tsx	5	"What VYRON COST Does"	"What VOLORA Does"	user-visible brand text
+CHANGED	src/app/pricing/page.tsx	5	"Client-facing pricing structure for VYRON COST."	"Client-facing pricing structure for VOLORA."	user-visible brand text
+CHANGED	src/app/recovery-opportunities/[id]/page.tsx	64	"This opportunity was detected from current VYRON COST data."	"This opportunity was detected from current VOLORA data."	user-visible brand text
+CHANGED	src/app/training/page.tsx	16	"Simple training guide for using VYRON COST from start to finish."	"Simple training guide for using VOLORA from start to finish."	user-visible brand text
+CHANGED	src/app/training/page.tsx	18	Open VYRON COST Academy →       	Open VOLORA Academy →       	user-visible brand text
+CHANGED	src/app/vyron-academy/page.tsx	7	"VYRON COST Academy"	"VOLORA Academy"	user-visible brand text
+CHANGED	src/app/vyron-core/command-centre/page.tsx	15	"VYRON CORE Executive Command Centre"	"VOLORA Core Executive Command Centre"	user-visible brand text
+CHANGED	src/components/AccountingExportClient.tsx	26	"VYRON FINANCE"	"VOLORA Finance"	user-visible brand text
+CHANGED	src/components/AccountingExportClient.tsx	74	"Premium VYRON COST workflow for accounting export."	"Premium VOLORA workflow for accounting export."	user-visible brand text
+CHANGED	src/components/ActionCentreClient.tsx	54	"Premium VYRON COST workflow for action centre."	"Premium VOLORA workflow for action centre."	user-visible brand text
+CHANGED	src/components/ActiveClientBanner.tsx	64	Return to VYRON DEV             	Return to VOLORA DEV             	user-visible brand text
+CHANGED	src/components/admin/AiUsageDashboardClient.tsx	15	"Ask VYRON"	"Ask VOLORA"	user-visible brand text
+KEPT	src/components/admin/BrandingDesignerClient.tsx	26	"VYRON Indigo"		tenant document colour preset name (may be stored)
+CHANGED	src/components/admin/ClientCompanySetupClient.tsx	645	Printed on invoices so customers know where to pay. SARS does not require these on a tax invoice, and they             are shown nowhere else in VYRON COST.    	Printed on invoices so customers know where to pay. SARS does not require these on a tax invoice, and they             are shown nowhere else in VOLORA.        	user-visible brand text
+CHANGED	src/components/admin/ClientCompanySetupClient.tsx	665	Modules included in your package. Contact VYRON to upgrade.	Modules included in your package. Contact VOLORA to upgrade.	user-visible brand text
+CHANGED	src/components/admin/ClientImportCentreClient.tsx	114	"Enter an accounting item code and choose a VYRON product."	"Enter an accounting item code and choose a VOLORA product."	user-visible brand text
+CHANGED	src/components/admin/ClientImportCentreClient.tsx	301	"Premium VYRON COST workflow for client import centre."	"Premium VOLORA workflow for client import centre."	user-visible brand text
+CHANGED	src/components/admin/ClientImportCentreClient.tsx	354	"Download Standard VYRON Customer Invoice Template"	"Download Standard VOLORA Customer Invoice Template"	user-visible brand text
+CHANGED	src/components/admin/ClientImportCentreClient.tsx	356	"Download Standard VYRON Supplier Invoice Template"	"Download Standard VOLORA Supplier Invoice Template"	user-visible brand text
+CHANGED	src/components/admin/ClientImportCentreClient.tsx	452	Accounting item code to VYRON product. Saved per company and reused by every future import.                   	Accounting item code to VOLORA product. Saved per company and reused by every future import.                   	user-visible brand text
+CHANGED	src/components/admin/ClientImportCentreClient.tsx	466	Select VYRON product…	Select VOLORA product…	user-visible brand text
+CHANGED	src/components/ai-financial/AiCfoCommandCentreClient.tsx	32	"Premium VYRON COST workflow for ai cfo command centre."	"Premium VOLORA workflow for ai cfo command centre."	user-visible brand text
+CHANGED	src/components/ai-financial/AiCfoCommandCentreClient.tsx	38	VYRON Intelligence Score	VOLORA Intelligence Score	user-visible brand text
+CHANGED	src/components/ai-financial/AiProfitLeakageClient.tsx	17	"Premium VYRON COST workflow for ai profit leakage."	"Premium VOLORA workflow for ai profit leakage."	user-visible brand text
+CHANGED	src/components/AiAssistantClient.tsx	46	VYRON AI Workspace	VOLORA AI Workspace	user-visible brand text
+CHANGED	src/components/AiAssistantClient.tsx	58	"Ask VYRON anything about margin, suppliers, recipes..."	"Ask VOLORA anything about margin, suppliers, recipes..."	user-visible brand text
+CHANGED	src/components/AiOperatorActionsClient.tsx	26	These are the action routes VYRON AI can guide or execute next. This turns the assistant from answer-only into operator-ready.         	These are the action routes VOLORA AI can guide or execute next. This turns the assistant from answer-only into operator-ready.         	user-visible brand text
+CHANGED	src/components/AiOperatorActionsClient.tsx	37	"Premium VYRON COST workflow for ai operator actions."	"Premium VOLORA workflow for ai operator actions."	user-visible brand text
+CHANGED	src/components/AlertsCentreClient.tsx	54	"Premium VYRON COST workflow for alerts centre."	"Premium VOLORA workflow for alerts centre."	user-visible brand text
+CHANGED	src/components/ApprovalCentreClient.tsx	76	"Premium VYRON COST workflow for approval centre."	"Premium VOLORA workflow for approval centre."	user-visible brand text
+CHANGED	src/components/ArchiveInvoiceDetailClient.tsx	261	"Premium VYRON COST workflow for archive invoice detail."	"Premium VOLORA workflow for archive invoice detail."	user-visible brand text
+CHANGED	src/components/AuditLogsClient.tsx	18	"VYRON Admin"	"VOLORA Admin"	user-visible brand text
+CHANGED	src/components/AuditLogsClient.tsx	19	"VYRON AI"	"VOLORA AI"	user-visible brand text
+CHANGED	src/components/AuditLogsClient.tsx	20	"VYRON AI"	"VOLORA AI"	user-visible brand text
+CHANGED	src/components/AuditLogsClient.tsx	21	"VYRON AI"	"VOLORA AI"	user-visible brand text
+CHANGED	src/components/AuditLogsClient.tsx	22	"VYRON Admin"	"VOLORA Admin"	user-visible brand text
+CHANGED	src/components/AuditLogsClient.tsx	38	"Premium VYRON COST workflow for audit logs."	"Premium VOLORA workflow for audit logs."	user-visible brand text
+CHANGED	src/components/autonomous/AutonomousIntelligenceClients.tsx	43	"Ask VYRON"	"Ask VOLORA"	user-visible brand text
+CHANGED	src/components/autonomous/AutonomousIntelligenceClients.tsx	66	"VYRON Autonomous Command Centre"	"VOLORA Autonomous Command Centre"	user-visible brand text
+CHANGED	src/components/autonomous/AutonomousIntelligenceClients.tsx	78	Live autonomous score across all VYRON COST domains	Live autonomous score across all VOLORA domains	user-visible brand text
+CHANGED	src/components/autonomous/AutonomousIntelligenceClients.tsx	320	"Domain summaries, live signals and explainable business knowledge across VYRON COST."	"Domain summaries, live signals and explainable business knowledge across VOLORA."	user-visible brand text
+CHANGED	src/components/autonomous/AutonomousIntelligenceClients.tsx	480	"Ask VYRON — Autonomous Copilot"	"Ask VOLORA — Autonomous Copilot"	user-visible brand text
+CHANGED	src/components/autonomous/AutonomousIntelligenceClients.tsx	504	Ask VYRON	Ask VOLORA	user-visible brand text
+CHANGED	src/components/autonomous/AutonomousPremiumShell.tsx	14	"Signals link to the VYRON COST pages where work gets done."	"Signals link to the VOLORA pages where work gets done."	user-visible brand text
+CHANGED	src/components/BackOrdersClient.tsx	105	"Premium VYRON COST workflow for back orders."	"Premium VOLORA workflow for back orders."	user-visible brand text
+CHANGED	src/components/BoardPackCentreClient.tsx	10	"VYRON COST BOARD PACK"	"VOLORA BOARD PACK"	user-visible brand text
+CHANGED	src/components/BoardPackCentreClient.tsx	32	"Premium VYRON COST workflow for board pack centre."	"Premium VOLORA workflow for board pack centre."	user-visible brand text
+CHANGED	src/components/BomBuilderClient.tsx	833	Set selling price and target GP — VYRON calculates actual GP and suggested price from your lines.                 	Set selling price and target GP — VOLORA calculates actual GP and suggested price from your lines.                 	user-visible brand text
+CHANGED	src/components/BranchIntelligenceClient.tsx	43	"Premium VYRON COST workflow for branch intelligence."	"Premium VOLORA workflow for branch intelligence."	user-visible brand text
+CHANGED	src/components/BranchManagerClient.tsx	99	"Premium VYRON COST workflow for branch manager."	"Premium VOLORA workflow for branch manager."	user-visible brand text
+CHANGED	src/components/BranchPerformanceClient.tsx	15	"Premium VYRON COST workflow for branch performance."	"Premium VOLORA workflow for branch performance."	user-visible brand text
+CHANGED	src/components/BulkImportCentreClient.tsx	33	"Premium VYRON COST workflow for bulk import centre."	"Premium VOLORA workflow for bulk import centre."	user-visible brand text
+CHANGED	src/components/ClientBrandLockup.tsx	32	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/components/ClientBrandLockup.tsx	64	VYRON COST	VOLORA	user-visible brand text
+CHANGED	src/components/ClientOnboardingWizardClient.tsx	36	"Premium VYRON COST workflow for client onboarding wizard."	"Premium VOLORA workflow for client onboarding wizard."	user-visible brand text
+CHANGED	src/components/ClientProposalStudioClient.tsx	10	"VYRON COST — Handcrafted Foods Proposal"	"VOLORA — Handcrafted Foods Proposal"	user-visible brand text
+CHANGED	src/components/ClientProposalStudioClient.tsx	34	"Premium VYRON COST workflow for client proposal studio."	"Premium VOLORA workflow for client proposal studio."	user-visible brand text
+CHANGED	src/components/ClientProposalStudioClient.tsx	42	VYRON COST will help Handcrafted Foods identify product margin leakage, supplier price movement, invoice risk and recoverable profit.	VOLORA will help Handcrafted Foods identify product margin leakage, supplier price movement, invoice risk and recoverable profit.	user-visible brand text
+CHANGED	src/components/ClientTaskCentreClient.tsx	42	"Premium VYRON COST workflow for client task centre."	"Premium VOLORA workflow for client task centre."	user-visible brand text
+CHANGED	src/components/ClientWorkspaceTopBar.tsx	65	Return to VYRON DEV           	Return to VOLORA DEV           	user-visible brand text
+CHANGED	src/components/CommercialLaunchCentreClient.tsx	24	"Premium VYRON COST workflow for commercial launch centre."	"Premium VOLORA workflow for commercial launch centre."	user-visible brand text
+CHANGED	src/components/CostingLineEditPageClient.tsx	89	"Premium VYRON COST workflow for costing line edit page."	"Premium VOLORA workflow for costing line edit page."	user-visible brand text
+CHANGED	src/components/CustomerPricingImpactClient.tsx	31	"Premium VYRON COST workflow for customer pricing impact."	"Premium VOLORA workflow for customer pricing impact."	user-visible brand text
+CHANGED	src/components/DashboardPremiumClient.tsx	74	VYRON COST 	VOLORA 	user-visible brand text
+CHANGED	src/components/DemoReadinessClient.tsx	34	"Premium VYRON COST workflow for demo readiness."	"Premium VOLORA workflow for demo readiness."	user-visible brand text
+CHANGED	src/components/DemoSampleBanner.tsx	33	VYRON COST	VOLORA	user-visible brand text
+CHANGED	src/components/DemoScriptCentreClient.tsx	31	"Premium VYRON COST workflow for demo script centre."	"Premium VOLORA workflow for demo script centre."	user-visible brand text
+CHANGED	src/components/DocumentHubdocClient.tsx	819	Supplier invoices emailed to VYRON COST appear in the email intake queue for upload and extraction.             	Supplier invoices emailed to VOLORA appear in the email intake queue for upload and extraction.             	user-visible brand text
+CHANGED	src/components/DocumentIntelligenceClient.tsx	80	VYRON COST Document Intelligence	VOLORA Document Intelligence	user-visible brand text
+CHANGED	src/components/DocumentIntelligenceClient.tsx	82	Email invoices and purchase orders directly to VYRON COST and let AI extract, match and flag risks. Upload PDF or           image files now; email inbox intake 	Email invoices and purchase orders directly to VOLORA and let AI extract, match and flag risks. Upload PDF or           image files now; email inbox intake is c	user-visible brand text
+CHANGED	src/components/EmailInvoiceInboxClient.tsx	103	Supplier invoices emailed to VYRON COST are queued here. Upload attachments to run extraction, supplier           matching, and approval in Document Intelligenc	Supplier invoices emailed to VOLORA are queued here. Upload attachments to run extraction, supplier           matching, and approval in Document Intelligence.  	user-visible brand text
+CHANGED	src/components/enterprise/ApprovalMatrixClient.tsx	25	"Premium VYRON COST workflow for approval matrix."	"Premium VOLORA workflow for approval matrix."	user-visible brand text
+CHANGED	src/components/enterprise/AuditorWorkspaceClient.tsx	39	"Premium VYRON COST workflow for auditor workspace."	"Premium VOLORA workflow for auditor workspace."	user-visible brand text
+CHANGED	src/components/enterprise/BudgetDashboardClient.tsx	21	"Premium VYRON COST workflow for budget dashboard."	"Premium VOLORA workflow for budget dashboard."	user-visible brand text
+CHANGED	src/components/enterprise/ComplianceCentreClient.tsx	14	"Premium VYRON COST workflow for compliance centre."	"Premium VOLORA workflow for compliance centre."	user-visible brand text
+CHANGED	src/components/enterprise/ContractsClient.tsx	16	"Premium VYRON COST workflow for contracts."	"Premium VOLORA workflow for contracts."	user-visible brand text
+CHANGED	src/components/enterprise/EnterpriseForecastClient.tsx	22	"Premium VYRON COST workflow for enterprise forecast."	"Premium VOLORA workflow for enterprise forecast."	user-visible brand text
+CHANGED	src/components/enterprise/FraudDetectionClient.tsx	24	"Premium VYRON COST workflow for fraud detection."	"Premium VOLORA workflow for fraud detection."	user-visible brand text
+CHANGED	src/components/enterprise/RiskCentreClient.tsx	19	"Premium VYRON COST workflow for risk centre."	"Premium VOLORA workflow for risk centre."	user-visible brand text
+CHANGED	src/components/enterprise/RolePermissionMatrixClient.tsx	14	"Premium VYRON COST workflow for role permission matrix."	"Premium VOLORA workflow for role permission matrix."	user-visible brand text
+CHANGED	src/components/enterprise/ScenarioModellingClient.tsx	35	"Premium VYRON COST workflow for scenario modelling."	"Premium VOLORA workflow for scenario modelling."	user-visible brand text
+CHANGED	src/components/enterprise/VyronAcademyClient.tsx	30	"Vyron Academy"	"VOLORA Academy"	user-visible brand text
+CHANGED	src/components/enterprise/VyronAcademyClient.tsx	31	"Premium VYRON COST workflow for vyron academy."	"Premium VOLORA workflow for vyron academy."	user-visible brand text
+CHANGED	src/components/enterprise-platform/EnterprisePlatformClients.tsx	405	VYRON Enterprise AI	VOLORA Enterprise AI	user-visible brand text
+CHANGED	src/components/executive/AskVyronClient.tsx	184	"Could not load intelligence sources for Ask VYRON."	"Could not load intelligence sources for Ask VOLORA."	user-visible brand text
+CHANGED	src/components/executive/AskVyronClient.tsx	236	"Ask VYRON request failed."	"Ask VOLORA request failed."	user-visible brand text
+CHANGED	src/components/executive/AskVyronClient.tsx	250	"Ask VYRON request failed."	"Ask VOLORA request failed."	user-visible brand text
+CHANGED	src/components/executive/AskVyronClient.tsx	277	VYRON Intelligence Assistant               	VOLORA Intelligence Assistant               	user-visible brand text
+CHANGED	src/components/executive/AskVyronClient.tsx	279	Ask VYRON	Ask VOLORA	user-visible brand text
+CHANGED	src/components/executive/AskVyronClient.tsx	329	Ask VYRON answers from the active company workspace only. Log in to a company workspace or select a client             from Developer → Clients.           	Ask VOLORA answers from the active company workspace only. Log in to a company workspace or select a client             from Developer → Clients.           	user-visible brand text
+CHANGED	src/components/executive/AskVyronClient.tsx	363	"Ask VYRON"	"Ask VOLORA"	user-visible brand text
+CHANGED	src/components/executive/AskVyronClient.tsx	494	Modules Ask VYRON can currently read from this workspace.             	Modules Ask VOLORA can currently read from this workspace.             	user-visible brand text
+CHANGED	src/components/executive/AskVyronClient.tsx	534	Ask VYRON currently answers from available workspace intelligence only. It does not invent values and does               not execute actions without approval. T	Ask VOLORA currently answers from available workspace intelligence only. It does not invent values and does               not execute actions without approval. 	user-visible brand text
+CHANGED	src/components/executive/AskVyronClient.tsx	543	VYRON needs more operational data to answer this properly.               	VOLORA needs more operational data to answer this properly.               	user-visible brand text
+CHANGED	src/components/executive/AutonomousCommandCentreClient.tsx	517	"Ask VYRON"	"Ask VOLORA"	user-visible brand text
+CHANGED	src/components/executive/BusinessHealthCentreClient.tsx	222	Load operational data so VYRON COST can score financial, cost, inventory, procurement, production and             customer health from real records.           	Load operational data so VOLORA can score financial, cost, inventory, procurement, production and             customer health from real records.           	user-visible brand text
+CHANGED	src/components/executive/EarlyWarningCentreClient.tsx	267	Load operational data so VYRON COST can detect margin, supplier, inventory, procurement, manufacturing,             customer and Xero risks.           	Load operational data so VOLORA can detect margin, supplier, inventory, procurement, manufacturing,             customer and Xero risks.           	user-visible brand text
+CHANGED	src/components/executive/EarlyWarningCentreClient.tsx	324	VYRON is monitoring:	VOLORA is monitoring:	user-visible brand text
+CHANGED	src/components/executive/ExecutionCentreClient.tsx	651	"Ask VYRON"	"Ask VOLORA"	user-visible brand text
+CHANGED	src/components/executive/ExecutiveBoardroomClient.tsx	369	Connect products, suppliers, procurement, inventory and invoices so VYRON COST can build executive signals.           	Connect products, suppliers, procurement, inventory and invoices so VOLORA can build executive signals.           	user-visible brand text
+CHANGED	src/components/ExecutiveCommandCentreClient.tsx	72	"Premium VYRON COST workflow for executive command centre."	"Premium VOLORA workflow for executive command centre."	user-visible brand text
+CHANGED	src/components/ExecutiveCommandCentreClient.tsx	101	VYRON COST	VOLORA	user-visible brand text
+CHANGED	src/components/ExecutiveDashboardClient.tsx	119	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/components/ExecutiveDashboardClient.tsx	477	VYRON has detected 	VOLORA has detected 	user-visible brand text
+CHANGED	src/components/ExecutiveReportingClient.tsx	95	"How VYRON packages evidence"	"How VOLORA packages evidence"	user-visible brand text
+CHANGED	src/components/FinalDemoChecklistClient.tsx	31	"Premium VYRON COST workflow for final demo checklist."	"Premium VOLORA workflow for final demo checklist."	user-visible brand text
+CHANGED	src/components/FinanceIntelligenceClient.tsx	42	"Premium VYRON COST workflow for finance intelligence."	"Premium VOLORA workflow for finance intelligence."	user-visible brand text
+CHANGED	src/components/ForecastScenarioSimulatorClient.tsx	40	"Premium VYRON COST workflow for forecast scenario simulator."	"Premium VOLORA workflow for forecast scenario simulator."	user-visible brand text
+CHANGED	src/components/GoLiveCommandCentreClient.tsx	37	"Premium VYRON COST workflow for go live command centre."	"Premium VOLORA workflow for go live command centre."	user-visible brand text
+CHANGED	src/components/GoodsReceiptDashboardClient.tsx	68	"VYRON COST GRN summary"	"VOLORA GRN summary"	user-visible brand text
+CHANGED	src/components/GPRecoveryPlannerClient.tsx	28	"Premium VYRON COST workflow for gprecovery planner."	"Premium VOLORA workflow for gprecovery planner."	user-visible brand text
+CHANGED	src/components/ImplementationTimelineClient.tsx	17	"Premium VYRON COST workflow for implementation timeline."	"Premium VOLORA workflow for implementation timeline."	user-visible brand text
+CHANGED	src/components/IngredientEditPageClient.tsx	148	"Premium VYRON COST workflow for ingredient edit page."	"Premium VOLORA workflow for ingredient edit page."	user-visible brand text
+CHANGED	src/components/IngredientImpactClient.tsx	49	"Premium VYRON COST workflow for ingredient impact."	"Premium VOLORA workflow for ingredient impact."	user-visible brand text
+CHANGED	src/components/IngredientManagerClient.tsx	376	No ingredients yet. Start by adding ingredients, linking suppliers, then build BOMs so VYRON can protect your product margins.               	No ingredients yet. Start by adding ingredients, linking suppliers, then build BOMs so VOLORA can protect your product margins.               	user-visible brand text
+CHANGED	src/components/IngredientPriceWatchClient.tsx	33	"Premium VYRON COST workflow for ingredient price watch."	"Premium VOLORA workflow for ingredient price watch."	user-visible brand text
+CHANGED	src/components/IngredientRegisterClient.tsx	175	"Premium VYRON COST workflow for ingredient register."	"Premium VOLORA workflow for ingredient register."	user-visible brand text
+CHANGED	src/components/InventoryStockListClient.tsx	185	"How VYRON values stock"	"How VOLORA values stock"	user-visible brand text
+CHANGED	src/components/InvoiceAiCentreClient.tsx	49	"Premium VYRON COST workflow for invoice ai centre."	"Premium VOLORA workflow for invoice ai centre."	user-visible brand text
+CHANGED	src/components/InvoiceExceptionCentreClient.tsx	17	"Premium VYRON COST workflow for invoice exception centre."	"Premium VOLORA workflow for invoice exception centre."	user-visible brand text
+CHANGED	src/components/InvoiceForensicsClient.tsx	51	"Premium VYRON COST workflow for invoice forensics."	"Premium VOLORA workflow for invoice forensics."	user-visible brand text
+CHANGED	src/components/InvoiceProcessingQueueClient.tsx	78	"Premium VYRON COST workflow for invoice processing queue."	"Premium VOLORA workflow for invoice processing queue."	user-visible brand text
+CHANGED	src/components/MarginBridgeClient.tsx	27	"Premium VYRON COST workflow for margin bridge."	"Premium VOLORA workflow for margin bridge."	user-visible brand text
+CHANGED	src/components/MarketReadinessDashboardClient.tsx	21	"Premium VYRON COST workflow for market readiness dashboard."	"Premium VOLORA workflow for market readiness dashboard."	user-visible brand text
+CHANGED	src/components/MarketReadinessDashboardClient.tsx	39	VYRON COST is positioned as an AI Profit Recovery & Cost Intelligence Platform for food manufacturers, not just a costing calculator.               	VOLORA is positioned as an AI Profit Recovery & Cost Intelligence Platform for food manufacturers, not just a costing calculator.               	user-visible brand text
+CHANGED	src/components/PlaceholderPage.tsx	11	} module is currently under development inside the VYRON COST platform.`	} module is currently under development inside the VOLORA platform.`	user-visible brand text
+CHANGED	src/components/PlaceholderPage.tsx	19	This module will become part of the VYRON COST enterprise profit intelligence ecosystem.         	This module will become part of the VOLORA enterprise profit intelligence ecosystem.         	user-visible brand text
+CHANGED	src/components/PricingApprovalCentreClient.tsx	43	"Premium VYRON COST workflow for pricing approval centre."	"Premium VOLORA workflow for pricing approval centre."	user-visible brand text
+CHANGED	src/components/ProcurementPoDetailClient.tsx	130	VYRON COST principle	VOLORA principle	user-visible brand text
+CHANGED	src/components/ProcurementPoFormClient.tsx	196	VYRON COST principle	VOLORA principle	user-visible brand text
+CHANGED	src/components/ProcurementRecommendationDetailClient.tsx	121	"Premium VYRON COST workflow for procurement recommendation detail."	"Premium VOLORA workflow for procurement recommendation detail."	user-visible brand text
+CHANGED	src/components/ProductBomPanelClient.tsx	54	"Premium VYRON COST workflow for product bom panel."	"Premium VOLORA workflow for product bom panel."	user-visible brand text
+CHANGED	src/components/ProductCostLineEditPageClient.tsx	147	"Premium VYRON COST workflow for product cost line edit page."	"Premium VOLORA workflow for product cost line edit page."	user-visible brand text
+CHANGED	src/components/ProductEditPageClient.tsx	326	Define the commercial product, selling price and costing assumptions used by VYRON COST.                 	Define the commercial product, selling price and costing assumptions used by VOLORA.                 	user-visible brand text
+CHANGED	src/components/ProductEditPageClient.tsx	397	How VYRON Calculates GP	How VOLORA Calculates GP	user-visible brand text
+CHANGED	src/components/ProductEditPageClient.tsx	493	Every cost line below contributes to the final cost price, GP percentage and suggested selling price. This is where VYRON turns operational detail into financia	Every cost line below contributes to the final cost price, GP percentage and suggested selling price. This is where VOLORA turns operational detail into financi	user-visible brand text
+CHANGED	src/components/ProductIntelligenceClient.tsx	50	"Premium VYRON COST workflow for product intelligence."	"Premium VOLORA workflow for product intelligence."	user-visible brand text
+CHANGED	src/components/ProductionIntelligenceClient.tsx	17	"Premium VYRON COST workflow for production intelligence."	"Premium VOLORA workflow for production intelligence."	user-visible brand text
+CHANGED	src/components/ProductionPlanningClient.tsx	30	"Premium VYRON COST workflow for production planning."	"Premium VOLORA workflow for production planning."	user-visible brand text
+CHANGED	src/components/ProductLaunchChecklistClient.tsx	30	"Premium VYRON COST workflow for product launch checklist."	"Premium VOLORA workflow for product launch checklist."	user-visible brand text
+CHANGED	src/components/ProductProfitabilityCentreClient.tsx	51	"Premium VYRON COST workflow for product profitability centre."	"Premium VOLORA workflow for product profitability centre."	user-visible brand text
+CHANGED	src/components/ProductProfitabilityClient.tsx	59	"Premium VYRON COST workflow for product profitability."	"Premium VOLORA workflow for product profitability."	user-visible brand text
+CHANGED	src/components/PurchaseOrderBuilderClient.tsx	30	"Premium VYRON COST workflow for purchase order builder."	"Premium VOLORA workflow for purchase order builder."	user-visible brand text
+CHANGED	src/components/PurchaseOrderFormClient.tsx	153	"Premium VYRON COST workflow for purchase order form."	"Premium VOLORA workflow for purchase order form."	user-visible brand text
+CHANGED	src/components/PurchaseOrderIntelligenceClient.tsx	20	"Premium VYRON COST workflow for purchase order intelligence."	"Premium VOLORA workflow for purchase order intelligence."	user-visible brand text
+CHANGED	src/components/PurchaseOrderListClient.tsx	30	"Premium VYRON COST workflow for purchase order list."	"Premium VOLORA workflow for purchase order list."	user-visible brand text
+CHANGED	src/components/PurchaseOrdersClient.tsx	74	"Premium VYRON COST workflow for purchase orders."	"Premium VOLORA workflow for purchase orders."	user-visible brand text
+CHANGED	src/components/PurchaseOrderSettingsClient.tsx	88	"Premium VYRON COST workflow for purchase order settings."	"Premium VOLORA workflow for purchase order settings."	user-visible brand text
+CHANGED	src/components/pwa/PwaRuntime.tsx	171	"VYRON COST installed successfully."	"VOLORA installed successfully."	user-visible brand text
+CHANGED	src/components/pwa/PwaRuntime.tsx	310	Install VYRON	Install VOLORA	user-visible brand text
+CHANGED	src/components/RecipeCostDrilldownClient.tsx	27	"Premium VYRON COST workflow for recipe cost drilldown."	"Premium VOLORA workflow for recipe cost drilldown."	user-visible brand text
+CHANGED	src/components/RecipeDetailClient.tsx	376	"Premium VYRON COST workflow for recipe detail."	"Premium VOLORA workflow for recipe detail."	user-visible brand text
+CHANGED	src/components/RecipeEditPageClient.tsx	114	"Premium VYRON COST workflow for recipe edit page."	"Premium VOLORA workflow for recipe edit page."	user-visible brand text
+CHANGED	src/components/RecoverableHeroCard.tsx	27	Recoverable With VYRON COST           	Recoverable With VOLORA           	user-visible brand text
+CHANGED	src/components/RecoveryApprovalsClient.tsx	48	"Premium VYRON COST workflow for recovery approvals."	"Premium VOLORA workflow for recovery approvals."	user-visible brand text
+CHANGED	src/components/RecoveryOpportunityDetailClient.tsx	30	"Premium VYRON COST workflow for recovery opportunity detail."	"Premium VOLORA workflow for recovery opportunity detail."	user-visible brand text
+CHANGED	src/components/reports/ReportDocument.tsx	334	VYRON COST &middot; 	VOLORA &middot; 	user-visible brand text
+CHANGED	src/components/SalesPriceListBuilderClient.tsx	53	"Premium VYRON COST workflow for sales price list builder."	"Premium VOLORA workflow for sales price list builder."	user-visible brand text
+CHANGED	src/components/SavingsTrackerClient.tsx	35	"Premium VYRON COST workflow for savings tracker."	"Premium VOLORA workflow for savings tracker."	user-visible brand text
+CHANGED	src/components/StockImpactSimulatorClient.tsx	25	"Premium VYRON COST workflow for stock impact simulator."	"Premium VOLORA workflow for stock impact simulator."	user-visible brand text
+CHANGED	src/components/SupplierEditPageClient.tsx	128	VYRON COST principle	VOLORA principle	user-visible brand text
+CHANGED	src/components/SupplierEditPageClient.tsx	207	VYRON Invoice Email             	VOLORA Invoice Email             	user-visible brand text
+CHANGED	src/components/SupplierEditPageClient.tsx	261	Suppliers can forward invoices to the VYRON COST invoice email for future AI extraction.           	Suppliers can forward invoices to the VOLORA invoice email for future AI extraction.           	user-visible brand text
+CHANGED	src/components/SupplierInvoiceListClient.tsx	18	"Premium VYRON COST workflow for supplier invoice list."	"Premium VOLORA workflow for supplier invoice list."	user-visible brand text
+CHANGED	src/components/SupplierLearningClient.tsx	142	"Premium VYRON COST workflow for supplier learning."	"Premium VOLORA workflow for supplier learning."	user-visible brand text
+CHANGED	src/components/SupplierLinkedIngredientsClient.tsx	61	"Premium VYRON COST workflow for supplier linked ingredients."	"Premium VOLORA workflow for supplier linked ingredients."	user-visible brand text
+CHANGED	src/components/SupplierNegotiationPackClient.tsx	31	"Premium VYRON COST workflow for supplier negotiation pack."	"Premium VOLORA workflow for supplier negotiation pack."	user-visible brand text
+CHANGED	src/components/SupplierProfileClient.tsx	37	"Premium VYRON COST workflow for supplier profile."	"Premium VOLORA workflow for supplier profile."	user-visible brand text
+CHANGED	src/components/SupplierRegisterClient.tsx	157	"Premium VYRON COST workflow for supplier register."	"Premium VOLORA workflow for supplier register."	user-visible brand text
+CHANGED	src/components/TrainingCentreClient.tsx	12	"Ask VYRON which products are below GP, which suppliers increased prices and what to do today."	"Ask VOLORA which products are below GP, which suppliers increased prices and what to do today."	user-visible brand text
+CHANGED	src/components/TrainingCentreClient.tsx	17	"VYRON COST — Handcrafted Foods Demo Manual"	"VOLORA — Handcrafted Foods Demo Manual"	user-visible brand text
+CHANGED	src/components/TrainingCentreClient.tsx	36	"Premium VYRON COST workflow for training centre."	"Premium VOLORA workflow for training centre."	user-visible brand text
+CHANGED	src/components/TrainingManualClient.tsx	32	"Premium VYRON COST workflow for training manual."	"Premium VOLORA workflow for training manual."	user-visible brand text
+CHANGED	src/components/TrainingManualClient.tsx	40	VYRON COST Training Manual	VOLORA Training Manual	user-visible brand text
+CHANGED	src/components/UnitEconomicsDashboardClient.tsx	21	"Premium VYRON COST workflow for unit economics dashboard."	"Premium VOLORA workflow for unit economics dashboard."	user-visible brand text
+CHANGED	src/components/vyron-core/VyronCoreCommandCentreClient.tsx	67	"VYRON CORE"	"VOLORA Core"	user-visible brand text
+CHANGED	src/components/vyron-core/VyronCoreCommandCentreClient.tsx	102	VYRON CORE	VOLORA Core	user-visible brand text
+CHANGED	src/components/vyron-core/VyronCoreForecastingClient.tsx	27	"VYRON CORE"	"VOLORA Core"	user-visible brand text
+CHANGED	src/components/vyron-core/VyronCoreForecastingClient.tsx	41	VYRON CORE	VOLORA Core	user-visible brand text
+CHANGED	src/components/vyron-core/VyronCoreSimulationClient.tsx	62	"VYRON CORE"	"VOLORA Core"	user-visible brand text
+CHANGED	src/components/vyron-core/VyronCoreSimulationClient.tsx	76	VYRON CORE	VOLORA Core	user-visible brand text
+CHANGED	src/components/vyron-cost/customers/CustomerInvoicesClient.tsx	441	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/components/vyron-cost/customers/CustomerInvoicesClient.tsx	1106	} as Sent?\n\nOnly do this if you have already sent it to the customer yourself. VYRON COST has not emailed it.`	} as Sent?\n\nOnly do this if you have already sent it to the customer yourself. VOLORA has not emailed it.`	user-visible brand text
+CHANGED	src/components/vyron-cost/customers/CustomersClient.tsx	300	"Customer master, invoice routing, payment terms, revenue history and GP movement — the commercial front door of VYRON COST."	"Customer master, invoice routing, payment terms, revenue history and GP movement — the commercial front door of VOLORA."	user-visible brand text
+CHANGED	src/components/vyron-cost/customers/CustomerStatementsClient.tsx	103	"Statements from VYRON COST keep a consistent commercial record."	"Statements from VOLORA keep a consistent commercial record."	user-visible brand text
+CHANGED	src/components/vyron-cost/developer/DeveloperClient.tsx	1287	"High-level overview of VYRON COST client workspaces and platform control."	"High-level overview of VOLORA client workspaces and platform control."	user-visible brand text
+CHANGED	src/components/vyron-cost/developer/DeveloperClient.tsx	1338	"Return to the active VYRON COST tenant view"	"Return to the active VOLORA tenant view"	user-visible brand text
+CHANGED	src/components/vyron-cost/developer/DeveloperClient.tsx	1417	"Search and manage existing VYRON COST client workspaces."	"Search and manage existing VOLORA client workspaces."	user-visible brand text
+CHANGED	src/components/vyron-cost/developer/DeveloperClient.tsx	1794	"Create and onboard a new VYRON COST client workspace."	"Create and onboard a new VOLORA client workspace."	user-visible brand text
+CHANGED	src/components/vyron-cost/developer/DeveloperManageUsersClient.tsx	366	"Premium VYRON COST workflow for developer manage users."	"Premium VOLORA workflow for developer manage users."	user-visible brand text
+CHANGED	src/components/vyron-cost/developer/DeveloperShell.tsx	43	"Back to VYRON COST App"	"Back to VOLORA App"	user-visible brand text
+CHANGED	src/components/vyron-cost/developer/DeveloperShell.tsx	148	Back to VYRON COST App	Back to VOLORA App	user-visible brand text
+CHANGED	src/components/vyron-cost/integrations/XeroIntegrationClient.tsx	704	Connect VYRON COST to Xero once an active company workspace is selected.               	Connect VOLORA to Xero once an active company workspace is selected.               	user-visible brand text
+CHANGED	src/components/vyron-cost/integrations/XeroIntegrationClient.tsx	817	Connect VYRON COST to Xero for accounting-ready customers, suppliers, invoices, purchase bills and sync                 audit visibility.               	Connect VOLORA to Xero for accounting-ready customers, suppliers, invoices, purchase bills and sync                 audit visibility.               	user-visible brand text
+CHANGED	src/components/vyron-cost/integrations/XeroSetupClient.tsx	193	VYRON COST sends approved accounting-ready transactions to Xero. Xero remains the ledger.             	VOLORA sends approved accounting-ready transactions to Xero. Xero remains the ledger.             	user-visible brand text
+CHANGED	src/components/vyron-cost/integrations/XeroSyncCentreClient.tsx	166	Approved VYRON COST transactions waiting for Xero ledger posting.             	Approved VOLORA transactions waiting for Xero ledger posting.             	user-visible brand text
+CHANGED	src/components/vyron-cost/intelligence/CostIntelligenceCentreClient.tsx	188	Load products, BOM links, supplier costs and target GP so VYRON COST can analyse margin pressure.           	Load products, BOM links, supplier costs and target GP so VOLORA can analyse margin pressure.           	user-visible brand text
+CHANGED	src/components/vyron-cost/ModulePageShell.tsx	50	"Drill into linked VYRON COST modules"	"Drill into linked VOLORA modules"	user-visible brand text
+CHANGED	src/components/vyron-finance/CfoAssistantClient.tsx	33	"Premium VYRON COST workflow for cfo assistant."	"Premium VOLORA workflow for cfo assistant."	user-visible brand text
+CHANGED	src/components/vyron-finance/FinanceImportsClient.tsx	48	"Premium VYRON COST workflow for finance imports."	"Premium VOLORA workflow for finance imports."	user-visible brand text
+CHANGED	src/components/vyron-finance/FinanceStatementsClient.tsx	19	"Premium VYRON COST workflow for finance statements."	"Premium VOLORA workflow for finance statements."	user-visible brand text
+CHANGED	src/components/vyron-finance/ManagementAccountsClient.tsx	13	"Premium VYRON COST workflow for management accounts."	"Premium VOLORA workflow for management accounts."	user-visible brand text
+CHANGED	src/components/vyron-finance/VyronFinanceHubClient.tsx	15	"Vyron Finance Hub"	"VOLORA Finance Hub"	user-visible brand text
+CHANGED	src/components/vyron-finance/VyronFinanceHubClient.tsx	16	"Premium VYRON COST workflow for vyron finance hub."	"Premium VOLORA workflow for vyron finance hub."	user-visible brand text
+CHANGED	src/components/vyron-finance/VyronFinanceHubClient.tsx	22	VYRON FINANCE Intelligence Layer	VOLORA Finance Intelligence Layer	user-visible brand text
+CHANGED	src/components/vyron-finance/VyronFinanceHubClient.tsx	25	Overall financial health · feeds VYRON FINANCE	Overall financial health · feeds VOLORA Finance	user-visible brand text
+CHANGED	src/components/vyron-finance/VyronFinanceModuleClients.tsx	184	VYRON COST intelligence scores (feeds FINANCE)	VOLORA intelligence scores (feeds FINANCE)	user-visible brand text
+CHANGED	src/components/vyron-finance/VyronFinanceModuleClients.tsx	235	Shared entity architecture from VYRON COST — integration ready: 	Shared entity architecture from VOLORA — integration ready: 	user-visible brand text
+CHANGED	src/components/vyron-finance/VyronFinanceShared.tsx	76	"VYRON FINANCE"	"VOLORA Finance"	user-visible brand text
+CHANGED	src/components/vyron-mobile/VyronMobileShell.tsx	105	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/components/vyron-mobile/VyronMobileShell.tsx	334	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/components/vyron-order/CustomerPortalAccessClient.tsx	184	VYRON ORDER               	VOLORA Order               	user-visible brand text
+CHANGED	src/components/vyron-order/CustomerPortalAccessClient.tsx	191	Manage which customers can access VYRON ORDER.               	Manage which customers can access VOLORA Order.               	user-visible brand text
+CHANGED	src/components/vyron-order/CustomerPortalAccessClient.tsx	422	Cannot sign in to VYRON ORDER yet	Cannot sign in to VOLORA Order yet	user-visible brand text
+CHANGED	src/components/vyron-order/OrderCentreClient.tsx	136	VYRON ORDER               	VOLORA Order               	user-visible brand text
+CHANGED	src/components/vyron-order/OrderCentreClient.tsx	146	Customer orders, live from the VYRON COST sales-order engine.               	Customer orders, live from the VOLORA sales-order engine.               	user-visible brand text
+CHANGED	src/components/vyron-order/OrderCentreClient.tsx	257	Customer orders placed through VYRON ORDER arrive here the moment they are submitted.           	Customer orders placed through VOLORA Order arrive here the moment they are submitted.           	user-visible brand text
+CHANGED	src/components/vyron-order/StaffNotificationBell.tsx	179	Open VYRON ORDER CENTRE           	Open VOLORA Order Centre           	user-visible brand text
+CHANGED	src/components/vyron-order/VyronOrderInstall.tsx	123	"Install VYRON ORDER"	"Install VOLORA Order"	user-visible brand text
+CHANGED	src/components/vyron-order/VyronOrderInstall.tsx	134	VYRON	VOLORA	user-visible brand text
+CHANGED	src/components/vyron-order/VyronOrderInstall.tsx	152	VYRON ORDER is installed on this device.           	VOLORA Order is installed on this device.           	user-visible brand text
+CHANGED	src/components/vyron-order/VyronOrderInstall.tsx	174	Tap Add — it appears as VYRON ORDER	Tap Add — it appears as VOLORA Order	user-visible brand text
+CHANGED	src/components/vyron-order/VyronOrderInstall.tsx	193	"Install VYRON ORDER"	"Install VOLORA Order"	user-visible brand text
+CHANGED	src/components/vyron-order/VyronOrderPortalClient.tsx	278	Loading VYRON ORDER…	Loading VOLORA Order…	user-visible brand text
+CHANGED	src/components/vyron-order/VyronOrderShell.tsx	72	VYRON	VOLORA	user-visible brand text
+CHANGED	src/components/vyron-order/VyronOrderShell.tsx	167	VYRON	VOLORA	user-visible brand text
+CHANGED	src/components/vyron-order/VyronOrderShell.tsx	175	Powered by VYRON COST       	Powered by VOLORA       	user-visible brand text
+CHANGED	src/components/vyron-order-engine/OrderIntakeCreateClient.tsx	110	Record the order exactly as the customer sent it. VYRON then matches the customer and products by exact identifiers only — anything it           cannot match w	Record the order exactly as the customer sent it. VOLORA then matches the customer and products by exact identifiers only — anything it           cannot match 	user-visible brand text
+CHANGED	src/components/vyron-order-engine/OrderIntakeDetailClient.tsx	346	line(s): no product cost in VYRON.	line(s): no product cost in VOLORA.	user-visible brand text
+CHANGED	src/components/vyron-order-engine/OrderIntakeDetailClient.tsx	452	From here the existing VYRON workflow takes over: approval and stock reservation, picking, dispatch and invoicing in Sales Orders and the Order                 	From here the existing VOLORA workflow takes over: approval and stock reservation, picking, dispatch and invoicing in Sales Orders and the Order                	user-visible brand text
+CHANGED	src/components/vyron-order-engine/OrderIntakeDetailClient.tsx	512	"Customer in VYRON"	"Customer in VOLORA"	user-visible brand text
+CHANGED	src/components/vyron-order-engine/OrderIntakeDetailClient.tsx	613	VYRON product	VOLORA product	user-visible brand text
+CHANGED	src/components/vyron-order-engine/OrderIntakeDetailClient.tsx	691	"Blank = VYRON price"	"Blank = VOLORA price"	user-visible brand text
+CHANGED	src/components/vyron-platform/ExportCentreDialog.tsx	124	VYRON COST standard reusable Export Centre.	VOLORA standard reusable Export Centre.	user-visible brand text
+CHANGED	src/components/vyron-premium/VyronPremiumPageShell.tsx	90	"Premium VYRON COST Workspace"	"Premium VOLORA Workspace"	user-visible brand text
+CHANGED	src/components/VyronCostAiShellClient.tsx	113	"Back to VYRON COST App"	"Back to VOLORA App"	user-visible brand text
+CHANGED	src/components/VyronCostAiShellClient.tsx	596	Back to VYRON COST App	Back to VOLORA App	user-visible brand text
+CHANGED	src/components/VyronCostAiStyleDashboard.tsx	39	Ask VYRON AI anything...	Ask VOLORA AI anything...	user-visible brand text
+CHANGED	src/components/VyronCostAiStyleDashboard.tsx	182	VYRON AI Assistant	VOLORA AI Assistant	user-visible brand text
+CHANGED	src/components/VyronCostSidebar.tsx	43	VYRON COST	VOLORA	user-visible brand text
+CHANGED	src/components/VyronLandingPage.tsx	57	VYRON COST	VOLORA	user-visible brand text
+CHANGED	src/components/VyronLandingPage.tsx	93	VYRON COST               	VOLORA               	user-visible brand text
+CHANGED	src/components/VyronLandingPage.tsx	98	VYRON COST is built for food manufacturers, multi-site producers and finance teams who need live BOM               costing, supplier intelligence, invoice and P	VOLORA is built for food manufacturers, multi-site producers and finance teams who need live BOM               costing, supplier intelligence, invoice and PO co	user-visible brand text
+CHANGED	src/components/VyronLandingPage.tsx	126	What VYRON COST does	What VOLORA does	user-visible brand text
+CHANGED	src/components/VyronLandingPage.tsx	181	Live costing intelligence · powered by VYRON COST	Live costing intelligence · powered by VOLORA	user-visible brand text
+CHANGED	src/components/VyronLandingPage.tsx	191	Email invoices and purchase orders directly to VYRON COST and let AI extract, match and flag risks.           	Email invoices and purchase orders directly to VOLORA and let AI extract, match and flag risks.           	user-visible brand text
+CHANGED	src/components/VyronLandingPage.tsx	218	Handcrafted Food Products · powered by VYRON COST       	Handcrafted Food Products · powered by VOLORA       	user-visible brand text
+CHANGED	src/components/VyronPublicLandingPage.tsx	234	Open VYRON COST             	Open VOLORA             	user-visible brand text
+CHANGED	src/components/VyronPublicLandingPage.tsx	245	VYRON COST           	VOLORA           	user-visible brand text
+CHANGED	src/components/VyronPublicLandingPage.tsx	262	Open VYRON COST 	Open VOLORA 	user-visible brand text
+CHANGED	src/components/VyronPublicLandingPage.tsx	474	VYRON COST is an AI cost intelligence, procurement control and inventory accuracy platform — Xero-ready for               finance teams who need truth in margin	VOLORA is an AI cost intelligence, procurement control and inventory accuracy platform — Xero-ready for               finance teams who need truth in margin, no	user-visible brand text
+CHANGED	src/components/VyronPublicLandingPage.tsx	638	Join manufacturers and multi-site operators using VYRON COST for AI cost intelligence, procurement control               and finished goods profitability.      	Join manufacturers and multi-site operators using VOLORA for AI cost intelligence, procurement control               and finished goods profitability.          	user-visible brand text
+CHANGED	src/components/VyronPublicLandingPage.tsx	646	Start VYRON COST 	Start VOLORA 	user-visible brand text
+CHANGED	src/components/VyronPublicLandingPage.tsx	659	VYRON COST — AI Cost Intelligence Platform	VOLORA — AI Cost Intelligence Platform	user-visible brand text
+CHANGED	src/components/WasteControlCentreClient.tsx	17	"Premium VYRON COST workflow for waste control centre."	"Premium VOLORA workflow for waste control centre."	user-visible brand text
+CHANGED	src/components/WhatIfSimulatorClient.tsx	12	"Premium VYRON COST workflow for what if simulator."	"Premium VOLORA workflow for what if simulator."	user-visible brand text
+CHANGED	src/components/WorkspaceAccessDenied.tsx	20	You do not have permission to access this area of VYRON COST.         	You do not have permission to access this area of VOLORA.         	user-visible brand text
+CHANGED	src/components/YieldEngineAdvancedClient.tsx	37	"Premium VYRON COST workflow for yield engine advanced."	"Premium VOLORA workflow for yield engine advanced."	user-visible brand text
+KEPT	src/lib/data-migration/food-sock-execute.ts	380	"Cost is not resolved; not written (VYRON would store 0)."		Food Sock migration technical text (safety-tested; historical technical reference)
+KEPT	src/lib/data-migration/food-sock-execute.ts	421	"Selling price is not resolved; not written (VYRON would store 0)."		Food Sock migration technical text (safety-tested; historical technical reference)
+KEPT	src/lib/data-migration/food-sock-plan.ts	168	"none — VYRON has no product image field; deferred"		Food Sock migration technical text (safety-tested; historical technical reference)
+KEPT	src/lib/data-migration/food-sock-plan.ts	447	"No Food Sock tenant exists. It must be created through the VYRON admin flow (createClientWorkspace) once the name and owner are approved; nothing below is writ		Food Sock migration technical text (safety-tested; historical technical reference)
+KEPT	src/lib/data-migration/food-sock-plan.ts	555	} decimals; VYRON would round it.`		Food Sock migration technical text (safety-tested; historical technical reference)
+KEPT	src/lib/data-migration/food-sock-plan.ts	583	"Not written: VYRON would store its cost as 0. Supply the cost first."		Food Sock migration technical text (safety-tested; historical technical reference)
+KEPT	src/lib/data-migration/food-sock-plan.ts	642	"Not written: VYRON would store the selling price as 0. Supply the price and its VAT basis first."		Food Sock migration technical text (safety-tested; historical technical reference)
+KEPT	src/lib/data-migration/food-sock-plan.ts	744	"VYRON has no product image field and the URL is an inFlow-hosted file; the association is recorded, nothing is written."		Food Sock migration technical text (safety-tested; historical technical reference)
+KEPT	src/lib/data-migration/food-sock-plan.ts	844	} decimals; VYRON would round it.`		Food Sock migration technical text (safety-tested; historical technical reference)
+KEPT	src/lib/data-migration/food-sock-plan.ts	869	"Its components are finished goods. VYRON production explodes sub-BOMs down to raw materials, so a bundle would consume ingredients instead of the finished pack		Food Sock migration technical text (safety-tested; historical technical reference)
+KEPT	src/lib/data-migration/food-sock-plan.ts	1019	} decimals; VYRON stores ${		Food Sock migration technical text (safety-tested; historical technical reference)
+KEPT	src/lib/document-intelligence-v2/supplier-invoice-extractor.ts	24	"You are VYRON CORE Supplier Invoice Extraction V2."		invoice extraction AI prompt — subsystem frozen
+KEPT	src/lib/order-engine/demo/fixtures.ts	170	"PRICE_FROM_VYRON"		no brand token (identifier / demo company name / Vyronsoft)
+CHANGED	src/lib/order-engine/demo/fixtures.ts	175	"Bay Street Deli asks for a lamb pie VYRON does not make — nothing is guessed."	"Bay Street Deli asks for a lamb pie VOLORA does not make — nothing is guessed."	user-visible brand text
+CHANGED	src/lib/order-engine/demo/fixtures.ts	182	"Bay Street Deli's order states R30 for beef pies; VYRON's price is R38."	"Bay Street Deli's order states R30 for beef pies; VOLORA's price is R38."	user-visible brand text
+CHANGED	src/lib/order-engine/demo/fixtures.ts	324	"An order states its VAT; VYRON records it and the sales order applies the workspace VAT rate."	"An order states its VAT; VOLORA records it and the sales order applies the workspace VAT rate."	user-visible brand text
+CHANGED	src/lib/order-engine/demo/fixtures.ts	335	"Product with no cost in VYRON"	"Product with no cost in VOLORA"	user-visible brand text
+CHANGED	src/lib/order-engine/demo/fixtures.ts	357	"Two tarts carry the same SKU in VYRON's master data — the engine lists both and asks."	"Two tarts carry the same SKU in VOLORA's master data — the engine lists both and asks."	user-visible brand text
+CHANGED	src/lib/order-engine/issue-catalog.ts	43	"Price differs from VYRON's price"	"Price differs from VOLORA's price"	user-visible brand text
+KEPT	src/lib/order-engine/issue-catalog.ts	44	"PRICE_FROM_VYRON"		no brand token (identifier / demo company name / Vyronsoft)
+CHANGED	src/lib/order-engine/issue-catalog.ts	44	"Price taken from VYRON"	"Price taken from VOLORA"	user-visible brand text
+CHANGED	src/lib/order-engine/issue-catalog.ts	50	"None — some products have no cost in VYRON."	"None — some products have no cost in VOLORA."	user-visible brand text
+CHANGED	src/lib/order-engine/validation.ts	200	"No price on the order and no customer or standard price in VYRON."	"No price on the order and no customer or standard price in VOLORA."	user-visible brand text
+KEPT	src/lib/order-engine/validation.ts	223	"PRICE_FROM_VYRON"		no brand token (identifier / demo company name / Vyronsoft)
+CHANGED	src/lib/order-engine/validation.ts	291	} line(s): no product cost in VYRON.`	} line(s): no product cost in VOLORA.`	user-visible brand text
+KEPT	src/lib/platform/branding/BrandingRepository.ts	66	"VYRON Client"		tenant document-branding default (tenant data)
+CHANGED	src/lib/platform/documents/document-email-content.ts	130	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/lib/platform/documents/document-email-content.ts	138	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/lib/platform/documents/vyron-document-pdf-engine.ts	151	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/lib/platform/entitlement/EntitlementService.ts	244	"Unknown VYRON product."	"Unknown VOLORA product."	user-visible brand text
+CHANGED	src/lib/vyron-ai-assistant.ts	296	"VYRON analysed your live costing data and surfaced the highest-impact actions."	"VOLORA analysed your live costing data and surfaced the highest-impact actions."	user-visible brand text
+KEPT	src/lib/vyron-approval-data.ts	93	"VYRON COST"		requested_by value written to the approvals table (data)
+CHANGED	src/lib/vyron-ask-vyron.ts	268	"VYRON needs more operational data to answer this properly."	"VOLORA needs more operational data to answer this properly."	user-visible brand text
+CHANGED	src/lib/vyron-ask-vyron.ts	309	"Ask VYRON guidance"	"Ask VOLORA guidance"	user-visible brand text
+CHANGED	src/lib/vyron-ask-vyron.ts	899	"Select an active workspace before asking VYRON business questions."	"Select an active workspace before asking VOLORA business questions."	user-visible brand text
+CHANGED	src/lib/vyron-ask-vyron.ts	900	"Ask VYRON answers from the active company workspace only — no default tenant fallback."	"Ask VOLORA answers from the active company workspace only — no default tenant fallback."	user-visible brand text
+CHANGED	src/lib/vyron-board-pack-export.ts	29	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/lib/vyron-board-pack-export.ts	179	"VYRON COST BOARD PACK"	"VOLORA BOARD PACK"	user-visible brand text
+KEPT	src/lib/vyron-document-extraction.ts	1166	`You are VYRON COST Document AI Engine. Extract the COMPLETE contents of this supplier invoice from the document image/PDF. Read the visual document only — ne		invoice extraction AI prompt — subsystem frozen
+KEPT	src/lib/vyron-enterprise-data.ts	262	"VYRON AI"		seeded demo data values
+KEPT	src/lib/vyron-enterprise-platform-architecture.ts	200	"Vyron Foods Group"		no brand token (identifier / demo company name / Vyronsoft)
+CHANGED	src/lib/vyron-enterprise-platform-architecture.ts	522	"VYRON FINANCE Intelligence"	"VOLORA Finance Intelligence"	user-visible brand text
+CHANGED	src/lib/vyron-enterprise-platform-architecture.ts	820	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/lib/vyron-enterprise-platform-architecture.ts	821	"VYRON FINANCE"	"VOLORA Finance"	user-visible brand text
+CHANGED	src/lib/vyron-enterprise-platform-architecture.ts	822	"VYRON PAY"	"VOLORA Pay"	user-visible brand text
+CHANGED	src/lib/vyron-enterprise-platform-architecture.ts	823	"VYRON CORE"	"VOLORA Core"	user-visible brand text
+CHANGED	src/lib/vyron-enterprise-platform-architecture.ts	824	"VYRON MAINT"	"VOLORA Maint"	user-visible brand text
+CHANGED	src/lib/vyron-enterprise-platform-architecture.ts	825	"VYRON FARM"	"VOLORA Farm"	user-visible brand text
+KEPT	src/lib/vyron-enterprise-platform-architecture.ts	852	"Vyron Foods Group"		no brand token (identifier / demo company name / Vyronsoft)
+KEPT	src/lib/vyron-enterprise-platform-architecture.ts	858	"Vyron Foods Group"		no brand token (identifier / demo company name / Vyronsoft)
+CHANGED	src/lib/vyron-export-centre.ts	57	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/lib/vyron-finance-intelligence-layer.ts	793	"VYRON FINANCE"	"VOLORA Finance"	user-visible brand text
+CHANGED	src/lib/vyron-import-centre.ts	59	"Map accounting item codes to existing VYRON products"	"Map accounting item codes to existing VOLORA products"	user-visible brand text
+CHANGED	src/lib/vyron-import-centre.ts	64	"One row maps one accounting item code to one existing VYRON product."	"One row maps one accounting item code to one existing VOLORA product."	user-visible brand text
+CHANGED	src/lib/vyron-import-centre.ts	91	"VYRON standard customer invoice format — one row per invoice line"	"VOLORA standard customer invoice format — one row per invoice line"	user-visible brand text
+CHANGED	src/lib/vyron-import-centre.ts	146	"VYRON resolves item_code to a product using the company-specific Product Mapping."	"VOLORA resolves item_code to a product using the company-specific Product Mapping."	user-visible brand text
+CHANGED	src/lib/vyron-import-centre.ts	152	"VYRON standard supplier invoice format — one row per invoice line"	"VOLORA standard supplier invoice format — one row per invoice line"	user-visible brand text
+CHANGED	src/lib/vyron-navigation.ts	185	"Ask VYRON"	"Ask VOLORA"	user-visible brand text
+CHANGED	src/lib/vyron-ops-scan-validation.ts	138	"Barcode not recognised in VYRON COST inventory."	"Barcode not recognised in VOLORA inventory."	user-visible brand text
+CHANGED	src/lib/vyron-order-notifications.ts	380	} — VYRON ORDER`	} — VOLORA Order`	user-visible brand text
+CHANGED	src/lib/vyron-order-notifications.ts	394	` <div style="margin:0;padding:24px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">   <div style	` <div style="margin:0;padding:24px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">   <div style	user-visible brand text
+CHANGED	src/lib/vyron-order-notifications.ts	418	}" style="display:block;margin-top:24px;padding:14px;background:#0b202b;color:#ffffff;text-align:center;text-decoration:none;border-radius:12px;font-size:13px;f	}" style="display:block;margin-top:24px;padding:14px;background:#0b202b;color:#ffffff;text-align:center;text-decoration:none;border-radius:12px;font-size:13px;f	user-visible brand text
+CHANGED	src/lib/vyron-order-notifications.ts	440	} — VYRON ORDER`	} — VOLORA Order`	user-visible brand text
+CHANGED	src/lib/vyron-order-notifications.ts	454	"VYRON ORDER"	"VOLORA Order"	user-visible brand text
+KEPT	src/lib/vyron-order-notifications.ts	511	"VYRON ORDER CENTRE"		recipient_name written to the delivery table (data)
+CHANGED	src/lib/vyron-order-notifications.ts	616	"VYRON ORDER test notification"	"VOLORA Order test notification"	user-visible brand text
+CHANGED	src/lib/vyron-order-notifications.ts	618	"This is a VYRON ORDER test notification.\n\nNo order was created. If you received this, order notifications will reach you at this address."	"This is a VOLORA Order test notification.\n\nNo order was created. If you received this, order notifications will reach you at this address."	user-visible brand text
+CHANGED	src/lib/vyron-order-notifications.ts	619	` <div style="margin:0;padding:24px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">   <div style	` <div style="margin:0;padding:24px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">   <div style	user-visible brand text
+CHANGED	src/lib/vyron-order-notifications.ts	639	"VYRON ORDER: this is a test notification. No order was created."	"VOLORA Order: this is a test notification. No order was created."	user-visible brand text
+CHANGED	src/lib/vyron-order-notifications.ts	644	"VYRON ORDER: this is a test notification. No order was created."	"VOLORA Order: this is a test notification. No order was created."	user-visible brand text
+CHANGED	src/lib/vyron-order-notifications.ts	645	"VYRON ORDER"	"VOLORA Order"	user-visible brand text
+KEPT	src/lib/vyron-order-providers.ts	382	"VYRON"		provider identifier returned by the status API
+KEPT	src/lib/vyron-pie-demo.ts	38	"Vyron Pie Co"		seeded demo data values
+KEPT	src/lib/vyron-pie-demo.ts	43	"Vyron Pie Co"		seeded demo data values
+KEPT	src/lib/vyron-pie-demo.ts	44	"Vyron Pie Manufacturing"		seeded demo data values
+KEPT	src/lib/vyron-pie-demo.ts	230	"VYRON AI"		seeded demo data values
+KEPT	src/lib/vyron-pie-demo.ts	246	"VYRON AI"		seeded demo data values
+KEPT	src/lib/vyron-pie-demo.ts	262	"VYRON AI"		seeded demo data values
+KEPT	src/lib/vyron-pie-demo.ts	278	"VYRON AI"		seeded demo data values
+CHANGED	src/lib/vyron-recovery-detail.ts	64	} finished products are below target GP. VYRON COST calculated avoidable margin loss from GP gap × estimated monthly sales.`	} finished products are below target GP. VOLORA calculated avoidable margin loss from GP gap × estimated monthly sales.`	user-visible brand text
+CHANGED	src/lib/vyron-recovery-detail.ts	169	"VYRON COST identified an avoidable monthly loss from imported costing and intelligence rules."	"VOLORA identified an avoidable monthly loss from imported costing and intelligence rules."	user-visible brand text
+CHANGED	src/lib/vyron-recovery-detail.ts	173	"VYRON COST intelligence engine · Handcrafted tenant"	"VOLORA intelligence engine · Handcrafted tenant"	user-visible brand text
+CHANGED	src/lib/vyron-report-context.ts	13	"VYRON COST Workspace"	"VOLORA Workspace"	user-visible brand text
+CHANGED	src/lib/vyron-report-pdf-export.ts	13	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/lib/vyron-v1-navigation.ts	150	"Ask VYRON"	"Ask VOLORA"	user-visible brand text
+KEPT	src/lib/vyron-workflow-trace.ts	83	`[VYRON] ${		developer log prefix (internal technical)
+CHANGED	src/lib/vyron-workforce-digital-twin.ts	407	`VYRON CORE workforce twin shows ${	`VOLORA Core workforce twin shows ${	user-visible brand text
+CHANGED	src/lib/vyron-workspace-login.ts	157	"No workspace is linked to this login. Contact your VYRON administrator."	"No workspace is linked to this login. Contact your VOLORA administrator."	user-visible brand text
+CHANGED	src/lib/vyron-workspace-login.ts	176	"No workspace is linked to this login. Contact your VYRON administrator."	"No workspace is linked to this login. Contact your VOLORA administrator."	user-visible brand text
+CHANGED	src/lib/vyron-workspace-login.ts	184	"No workspace is linked to this login. Contact your VYRON administrator."	"No workspace is linked to this login. Contact your VOLORA administrator."	user-visible brand text
+CHANGED	src/platform/managers/package-manager.ts	193	"The complete VYRON platform: everything in Enterprise plus every Multi-Store Operations capability."	"The complete VOLORA platform: everything in Enterprise plus every Multi-Store Operations capability."	user-visible brand text
+CHANGED	src/platform/managers/package-manager.ts	256	"Payroll cost intelligence for VYRON PAY tenants."	"Payroll cost intelligence for VOLORA Pay tenants."	user-visible brand text
+CHANGED	src/platform/managers/package-manager.ts	263	"Agricultural yield and supply intelligence for VYRON FARM."	"Agricultural yield and supply intelligence for VOLORA Farm."	user-visible brand text
+CHANGED	src/platform/managers/package-manager.ts	574	}. Contact VYRON to upgrade.`	}. Contact VOLORA to upgrade.`	user-visible brand text
+CHANGED	src/platform/managers/package-manager.ts	642	"VYRON ORDER customer ordering"	"VOLORA Order customer ordering"	user-visible brand text
+CHANGED	src/platform/products/vyron-core.ts	5	"VYRON CORE"	"VOLORA Core"	user-visible brand text
+CHANGED	src/platform/products/vyron-cost.ts	18	"VYRON COST"	"VOLORA"	user-visible brand text
+CHANGED	src/platform/products/vyron-farm.ts	5	"VYRON FARM"	"VOLORA Farm"	user-visible brand text
+CHANGED	src/platform/products/vyron-pay.ts	5	"VYRON PAY"	"VOLORA Pay"	user-visible brand text
+CHANGED	src/platform/products/vyron-pay.ts	7	"Payments, collections and finance operations for VYRON tenants."	"Payments, collections and finance operations for VOLORA tenants."	user-visible brand text
+CHANGED	src/platform/products/vyron-reach.ts	5	"VYRON REACH"	"VOLORA Reach"	user-visible brand text

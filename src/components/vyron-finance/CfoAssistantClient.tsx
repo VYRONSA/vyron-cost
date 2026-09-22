@@ -30,7 +30,7 @@ export default function CfoAssistantClient({ presets }: { presets: CfoAssistantA
       config={{
         visualVariant: "finance",
         title: "Cfo Assistant",
-        subtitle: "Premium VYRON COST workflow for cfo assistant.",
+        subtitle: "Premium VOLORA workflow for cfo assistant.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >

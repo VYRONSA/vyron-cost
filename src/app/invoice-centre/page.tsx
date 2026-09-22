@@ -6,10 +6,10 @@ import VyronCostShell from "@/components/VyronCostShell";
 export default function Page() {
   return (
     <VyronCostShell hidePageHeader title="Invoice Centre" subtitle="Open invoice queue and invoice AI workflow.">
-      <section className="mb-6 rounded-[2rem] border border-white bg-white p-7 shadow-[0_10px_40px_rgba(15,23,42,0.07)]">
+      <section className="mb-6 rounded-[2rem] border border-white bg-white p-7 shadow-[0_10px_40px_rgba(11,32,43,0.07)]">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-3xl font-black text-[#07110d]">Invoice Centre</h2>
+            <h2 className="text-3xl font-black text-[#061722]">Invoice Centre</h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500">
               This page now contains real clickable navigation blocks. The next pack will add module-specific working actions.
             </p>

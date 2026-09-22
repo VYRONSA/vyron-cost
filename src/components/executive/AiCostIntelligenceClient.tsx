@@ -134,16 +134,16 @@ export default function AiCostIntelligenceClient({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-[#3B82F6]/20 border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
+      <section className="rounded-2xl border border-[#2C5A6B]/20 border-[rgba(11,32,43,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 p-6 shadow-sm">
         <h2 className="text-xl font-black text-[#F8FAFC]">Suggested repricing & recovery</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {intelligence.repricingSuggestions.map((row) => (
-            <div key={row.productName} className="rounded-xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 px-4 py-3">
+            <div key={row.productName} className="rounded-xl border border-[rgba(11,32,43,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 px-4 py-3">
               <div className="font-black text-[#F8FAFC]">{row.productName}</div>
               <div className="text-sm font-semibold text-[#CBD5E1]">
                 Suggested price {money(row.suggestedPrice)} from {money(row.currentPrice)}
               </div>
-              <div className="mt-1 text-sm font-bold text-[#3B82F6]">Recovery {money(row.monthlyRecovery)}/month</div>
+              <div className="mt-1 text-sm font-bold text-[#2C5A6B]">Recovery {money(row.monthlyRecovery)}/month</div>
             </div>
           ))}
         </div>

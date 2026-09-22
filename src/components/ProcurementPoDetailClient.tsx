@@ -109,9 +109,9 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-blue-800 via-indigo-950 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(29,78,216,0.28)]">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#3B82F6]/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-[#3B82F6]/10 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-blue-800 via-indigo-950 to-slate-950 p-8 text-white shadow-[0_24px_70px_rgba(22,58,72,0.28)]">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#2C5A6B]/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-[#2C5A6B]/10 blur-3xl" />
         <div className="relative grid gap-7 xl:grid-cols-[1.2fr_0.8fr] xl:items-center">
           <div>
             <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#CBD5E1]">Premium Procurement Detail</div>
@@ -127,7 +127,7 @@ export default function ProcurementPoDetailClient({ poId }: { poId: string }) {
           </div>
           <div className="grid gap-4">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-200">VYRON COST principle</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-200">VOLORA principle</div>
               <p className="mt-3 text-lg font-black leading-snug text-white">&ldquo;PO, GRN and invoice must agree — variance is either margin or risk.&rdquo;</p>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">

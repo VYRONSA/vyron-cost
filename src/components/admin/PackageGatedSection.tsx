@@ -41,7 +41,7 @@ export default function PackageGatedSection({
         <p className="mt-2 text-xs font-medium text-[#94A3B8]">
           Upgrade to {getUpgradePackageLabel(feature)} to unlock live {title.toLowerCase()} widgets.
         </p>
-        <Link href="/admin/company-setup" className="mt-4 inline-flex text-sm font-bold text-[#1D6BFF]">
+        <Link href="/admin/company-setup" className="mt-4 inline-flex text-sm font-bold text-[#1F4757]">
           View upgrade options →
         </Link>
       </div>

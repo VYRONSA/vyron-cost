@@ -25,7 +25,7 @@ export default function ClientTaskCentreClient() {
 
   return (
     <section className="grid gap-6">
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <div className="flex gap-3">
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add client task..." className="flex-1 rounded-2xl border px-4 py-3 font-bold outline-none" />
           <button onClick={addTask} className="inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 font-black text-[#F8FAFC]"><Plus size={17} /> Add</button>
@@ -39,12 +39,12 @@ export default function ClientTaskCentreClient() {
     <VyronPremiumPageShell
       config={{
         title: "Client Task Centre",
-        subtitle: "Premium VYRON COST workflow for client task centre.",
+        subtitle: "Premium VOLORA workflow for client task centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
-      <div key={task} className="grid gap-4 rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] md:grid-cols-[60px_1fr_140px_120px] md:items-center">
-                    <button onClick={() => setDone((current) => ({ ...current, [task]: !checked }))} className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-[#3B82F6]/100 text-white" : "bg-slate-100 text-slate-400"}`}>
+      <div key={task} className="grid gap-4 rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(11,32,43,0.06)] md:grid-cols-[60px_1fr_140px_120px] md:items-center">
+                    <button onClick={() => setDone((current) => ({ ...current, [task]: !checked }))} className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-[#2C5A6B]/100 text-white" : "bg-slate-100 text-slate-400"}`}>
                       <CheckCircle2 size={24} />
                     </button>
                     <div>
@@ -52,7 +52,7 @@ export default function ClientTaskCentreClient() {
                       <div className="text-xs font-bold text-slate-500">{area}</div>
                     </div>
                     <div className="font-black text-[var(--vyron-warning-fg)]">{priority}</div>
-                    <div className={checked ? "font-black text-[#1D4ED8]" : "font-black text-slate-500"}>{checked ? "Done" : "Open"}</div>
+                    <div className={checked ? "font-black text-[#163A48]" : "font-black text-slate-500"}>{checked ? "Done" : "Open"}</div>
                   </div>
     </VyronPremiumPageShell>
   );

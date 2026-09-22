@@ -71,37 +71,37 @@ export default function PurchaseOrdersClient({
     <VyronPremiumPageShell
       config={{
         title: "Purchase Orders",
-        subtitle: "Premium VYRON COST workflow for purchase orders.",
+        subtitle: "Premium VOLORA workflow for purchase orders.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <>
           <section className="grid gap-6">
             <div className="grid gap-5 md:grid-cols-4">
-              <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+              <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Open POs</div>
                 <div className="mt-3 text-4xl font-black text-[#F8FAFC]">{openCount}</div>
               </div>
-              <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+              <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Total PO Value</div>
-                <div className="mt-3 text-4xl font-black text-[#1D4ED8]">
+                <div className="mt-3 text-4xl font-black text-[#163A48]">
                   {formatMoney(orders.reduce((sum, po) => sum + Number(po.expected_total || 0), 0))}
                 </div>
               </div>
-              <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+              <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Invoice Variance</div>
                 <div className="mt-3 text-4xl font-black text-red-600">{formatMoney(varianceTotal)}</div>
               </div>
               <Link
                 href="/purchase-orders/new"
-                className="flex items-center justify-center gap-2 rounded-[2rem] bg-[#07110d] p-6 text-sm font-black text-[#3B82F6] transition hover:bg-[#0d1a12]"
+                className="flex items-center justify-center gap-2 rounded-[2rem] bg-[#061722] p-6 text-sm font-black text-[#2C5A6B] transition hover:bg-[#0d1a12]"
               >
                 <Plus size={18} />
                 Create New PO
               </Link>
             </div>
 
-            <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+            <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
               <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <div>
                   <h2 className="text-2xl font-black text-[#F8FAFC]">Purchase Order Register</h2>
@@ -127,7 +127,7 @@ export default function PurchaseOrdersClient({
 
               <div className="overflow-x-auto rounded-3xl border border-slate-100">
                 <div className="min-w-[1100px]">
-                  <div className="grid grid-cols-8 bg-[#07111A] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#BFDBFE]">
+                  <div className="grid grid-cols-8 bg-[#07111A] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#BCCDD5]">
                     <div>PO Number</div>
                     <div>Supplier</div>
                     <div>Status</div>
@@ -141,7 +141,7 @@ export default function PurchaseOrdersClient({
                   {filtered.map((po) => (
                     <div key={po.id} className="grid grid-cols-8 items-center border-t border-slate-100 px-5 py-4 text-sm">
                       <div>
-                        <Link href={`/purchase-orders/${po.id}`} className="font-black text-[#F8FAFC] hover:text-[#1D4ED8]">
+                        <Link href={`/purchase-orders/${po.id}`} className="font-black text-[#F8FAFC] hover:text-[#163A48]">
                           {po.po_number}
                         </Link>
                       </div>
@@ -157,7 +157,7 @@ export default function PurchaseOrdersClient({
                         {formatMoney(Number(po.variance || 0))}
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <Link href={`/purchase-orders/${po.id}`} className="inline-flex items-center gap-1 rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-3 py-2 text-xs font-black text-[#1D4ED8]">
+                        <Link href={`/purchase-orders/${po.id}`} className="inline-flex items-center gap-1 rounded-full border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-3 py-2 text-xs font-black text-[#163A48]">
                           <Edit3 size={14} />
                           Open
                         </Link>
@@ -181,7 +181,7 @@ export default function PurchaseOrdersClient({
                 </div>
               </div>
 
-              {message ? <div className="mt-4 rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3 text-sm font-black text-[#1D4ED8]">{message}</div> : null}
+              {message ? <div className="mt-4 rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-4 py-3 text-sm font-black text-[#163A48]">{message}</div> : null}
             </div>
           </section>
           <ConfirmDeleteDialog

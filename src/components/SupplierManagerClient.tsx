@@ -216,7 +216,7 @@ export default function SupplierManagerClient({ initialSuppliers }: { initialSup
       >
       <section className={`grid min-w-0 max-w-full grid-cols-1 gap-6 ${canCreate || canEdit ? "2xl:grid-cols-[minmax(0,340px)_minmax(0,1fr)_minmax(260px,340px)]" : "2xl:grid-cols-[minmax(0,1fr)_minmax(260px,340px)]"}`}>
       {canCreate || canEdit ? (
-      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <div className="mb-5 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700"><Plus size={22} /></div>
           <div>
@@ -242,13 +242,13 @@ export default function SupplierManagerClient({ initialSuppliers }: { initialSup
           >
             Save Supplier
           </button>
-          {message && <div className="rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#3B82F6]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-4 py-3 text-sm font-bold text-[#2C5A6B]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div>}
         </div>
       </div>
       ) : null}
 
-      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h2 className="text-2xl font-black text-slate-900">Suppliers</h2>
           <div className="flex min-w-0 max-w-full items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
@@ -278,7 +278,7 @@ export default function SupplierManagerClient({ initialSuppliers }: { initialSup
                 <Link href={`/suppliers/${supplier.id}`} className="font-black text-blue-700">{supplier.supplier_name}</Link>
                 <div className="font-bold text-slate-500">{supplier.category}</div>
                 <div className="font-black text-blue-700">{supplier.risk_status}</div>
-                <div className={`font-black ${Number(supplier.last_price_movement || 0) > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#3B82F6]"}`}>{Number(supplier.last_price_movement || 0).toFixed(1)}%</div>
+                <div className={`font-black ${Number(supplier.last_price_movement || 0) > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#2C5A6B]"}`}>{Number(supplier.last_price_movement || 0).toFixed(1)}%</div>
                 <div className="flex gap-2">
                   {canEdit ? (
                     <button onClick={() => edit(supplier)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Edit</button>

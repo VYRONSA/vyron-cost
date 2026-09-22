@@ -5,10 +5,10 @@ const M = VYRON_MASTER;
 
 export function VyronFooterStrip() {
   const items = [
-    { label: "Reduce Cost Leakage", icon: Wallet, color: "text-[#2563EB]" },
-    { label: "Improve Accuracy", icon: Target, color: "text-[#1D6BFF]" },
-    { label: "Increase Margins", icon: TrendingUp, color: "text-[#3B82F6]" },
-    { label: "Drive Performance", icon: BarChart3, color: "text-[#3B82F6]" },
+    { label: "Reduce Cost Leakage", icon: Wallet, color: "text-[#1F4757]" },
+    { label: "Improve Accuracy", icon: Target, color: "text-[#1F4757]" },
+    { label: "Increase Margins", icon: TrendingUp, color: "text-[#2C5A6B]" },
+    { label: "Drive Performance", icon: BarChart3, color: "text-[#2C5A6B]" },
   ];
 
   return (

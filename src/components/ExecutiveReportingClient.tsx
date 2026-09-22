@@ -92,7 +92,7 @@ export default function ExecutiveReportingClient({
         />
         <VyronPremiumFormulaCard
           eyebrow="Export layer"
-          title="How VYRON packages evidence"
+          title="How VOLORA packages evidence"
           formulas={[
             { label: "PDF", formula: "Board-ready executive pack" },
             { label: "Excel", formula: "Working analysis for finance teams" },

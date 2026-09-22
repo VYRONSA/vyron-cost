@@ -145,12 +145,12 @@ export default function IngredientEditPageClient({ ingredient }: { ingredient: C
       config={{
         visualVariant: "ingredients",
         title: "Ingredient Edit Page",
-        subtitle: "Premium VYRON COST workflow for ingredient edit page.",
+        subtitle: "Premium VOLORA workflow for ingredient edit page.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="mx-auto max-w-4xl">
-            <div className="rounded-[1.75rem] border border-slate-200/80 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+            <div className="rounded-[1.75rem] border border-slate-200/80 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
               <Link href="/ingredients" className="mb-5 inline-flex items-center gap-2 text-sm font-black text-blue-700">
                 ← Back
               </Link>
@@ -170,9 +170,9 @@ export default function IngredientEditPageClient({ ingredient }: { ingredient: C
                   <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">True Unit Cost</div>
                   <div className="mt-1 text-3xl font-black text-blue-700">{formatMoney(previewTrueCost)}</div>
                 </div>
-                <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-4">
+                <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-4">
                   <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Movement</div>
-                  <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-red-600" : "text-[#1D4ED8]"}`}>
+                  <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-red-600" : "text-[#163A48]"}`}>
                     {movement.toFixed(1)}%
                   </div>
                 </div>
@@ -334,7 +334,7 @@ export default function IngredientEditPageClient({ ingredient }: { ingredient: C
                   ) : null}
                 </div>
 
-                {message && <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-4 text-sm font-black text-[#1D4ED8]">{message}</div>}
+                {message && <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-5 py-4 text-sm font-black text-[#163A48]">{message}</div>}
               </div>
             </div>
           </section>

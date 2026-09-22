@@ -24,7 +24,7 @@ export default function VyronCoreForecastingClient({ data }: { data: VyronCoreCo
     <VyronPremiumPageShell
       config={{
         visualVariant: "finance",
-        badge: "VYRON CORE",
+        badge: "VOLORA Core",
         title: "Workforce Forecast Command Centre",
         subtitle: "Review labour, leakage, productivity, attrition, and health forecasts from digital twin signals.",
         outcomes: ["Anticipate workforce cost pressure", "Forecast attrition and productivity trends", "Align labour planning to risk forecasts"],
@@ -38,7 +38,7 @@ export default function VyronCoreForecastingClient({ data }: { data: VyronCoreCo
     >
       <section className="grid gap-8">
         <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-8 text-white">
-        <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VYRON CORE</div>
+        <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VOLORA Core</div>
         <h2 className="mt-2 text-3xl font-black">Workforce Forecasting</h2>
         <p className="mt-2 max-w-2xl text-sm font-semibold text-slate-300">
           Labour cost, productivity, attrition, leakage and health forecasts from the digital twin foundation.
@@ -51,13 +51,13 @@ export default function VyronCoreForecastingClient({ data }: { data: VyronCoreCo
           const chartData = rows.map((r) => ({ label: r.periodLabel, value: r.forecastValue }));
           const isMoney = type === "labour_cost" || type === "leakage";
           return (
-            <section key={type} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+            <section key={type} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
               <h3 className="text-xl font-black text-slate-950">{FORECAST_LABELS[type] || type}</h3>
               <div className="mt-4 h-36">
                 <ExecutiveSparkChart
                   data={chartData}
                   height={120}
-                  colour={type === "attrition" ? "#3b82f6" : "#1d6bff"}
+                  colour={type === "attrition" ? "#2c5a6b" : "#1f4757"}
                   variant="line"
                   formatValue={(n) => (isMoney ? money(n) : `${n.toFixed(1)}${type === "productivity" || type === "workforce_health" ? "%" : type === "attrition" ? "%" : ""}`)}
                 />
@@ -79,11 +79,11 @@ export default function VyronCoreForecastingClient({ data }: { data: VyronCoreCo
         })}
       </div>
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <h3 className="text-xl font-black text-slate-950">Attrition forecast curve</h3>
         <p className="mt-1 text-sm font-semibold text-slate-500">6-month attrition probability trend from twin attrition signals</p>
         <div className="mt-6 h-48">
-          <ExecutiveSparkChart data={data.attritionForecast} height={160} colour="#3b82f6" variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
+          <ExecutiveSparkChart data={data.attritionForecast} height={160} colour="#2c5a6b" variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
         </div>
       </section>
 

@@ -22,7 +22,7 @@ export default function PremiumMobileSearch({
     <section className={`${MOBILE_TYPOGRAPHY.family} px-4 sm:px-5`}>
       <PremiumMobileCard tone="default" className="p-4">
         <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Search</div>
-        <div className="flex min-h-14 items-center gap-3 rounded-[1.1rem] border border-slate-200 bg-white px-4 py-3 shadow-[0_8px_20px_rgba(15,23,42,0.05)]">
+        <div className="flex min-h-14 items-center gap-3 rounded-[1.1rem] border border-slate-200 bg-white px-4 py-3 shadow-[0_8px_20px_rgba(11,32,43,0.05)]">
           <Search size={18} className="text-slate-400" />
           <input
             aria-label={placeholder}

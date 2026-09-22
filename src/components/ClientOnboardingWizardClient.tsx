@@ -19,7 +19,7 @@ export default function ClientOnboardingWizardClient() {
 
   return (
     <section className="grid gap-6">
-      <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+      <div className="rounded-[2rem] bg-[#061722] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
         <h2 className="text-3xl font-black">Client Onboarding Wizard</h2>
         <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
           Use this checklist to onboard the first client without missing suppliers, ingredients, BOMs, products or recovery.
@@ -33,15 +33,15 @@ export default function ClientOnboardingWizardClient() {
     <VyronPremiumPageShell
       config={{
         title: "Client Onboarding Wizard",
-        subtitle: "Premium VYRON COST workflow for client onboarding wizard.",
+        subtitle: "Premium VOLORA workflow for client onboarding wizard.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
-      <div key={title} className="grid gap-4 rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] md:grid-cols-[70px_1fr_180px] md:items-center">
+      <div key={title} className="grid gap-4 rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(11,32,43,0.06)] md:grid-cols-[70px_1fr_180px] md:items-center">
                     <button
                       type="button"
                       onClick={() => setDone((current) => ({ ...current, [title]: !checked }))}
-                      className={`flex h-14 w-14 items-center justify-center rounded-2xl ${checked ? "bg-[#3B82F6]/100 text-white" : "bg-slate-100 text-slate-400"}`}
+                      className={`flex h-14 w-14 items-center justify-center rounded-2xl ${checked ? "bg-[#2C5A6B]/100 text-white" : "bg-slate-100 text-slate-400"}`}
                     >
                       <CheckCircle2 size={26} />
                     </button>
@@ -50,7 +50,7 @@ export default function ClientOnboardingWizardClient() {
                       <h3 className="mt-1 text-xl font-black text-[#F8FAFC]">{title}</h3>
                       <p className="mt-1 text-sm font-semibold text-slate-500">{detail}</p>
                     </div>
-                    <Link href={href} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
+                    <Link href={href} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-5 py-3 text-sm font-black text-[#2F7C40]">
                       Open <ArrowRight size={16} />
                     </Link>
                   </div>

@@ -8,7 +8,7 @@ export default function VyronPageHelpCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-[2rem] border border-blue-100 bg-blue-50/70 p-5 shadow-[0_10px_30px_rgba(29,78,216,0.06)]">
+    <div className="rounded-[2rem] border border-blue-100 bg-blue-50/70 p-5 shadow-[0_10px_30px_rgba(22,58,72,0.06)]">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-blue-700">
           <Lightbulb size={20} />

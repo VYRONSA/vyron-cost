@@ -701,7 +701,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Xero Integration</h1>
               <p className={`mt-2 max-w-3xl text-sm font-medium leading-6 ${M.bodyOnDark}`}>
-                Connect VYRON COST to Xero once an active company workspace is selected.
+                Connect VOLORA to Xero once an active company workspace is selected.
               </p>
             </div>
           </div>
@@ -814,7 +814,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Xero Integration</h1>
               <p className={`mt-2 max-w-3xl text-sm font-medium leading-6 ${M.bodyOnDark}`}>
-                Connect VYRON COST to Xero for accounting-ready customers, suppliers, invoices, purchase bills and sync
+                Connect VOLORA to Xero for accounting-ready customers, suppliers, invoices, purchase bills and sync
                 audit visibility.
               </p>
             </div>
@@ -901,9 +901,9 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       <section className={M.moduleDataSection}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold text-[#0F172A]">Connection status</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Connection status</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
-              Workspace: <span className="font-bold text-[#0F172A]">{displayWorkspaceName}</span>
+              Workspace: <span className="font-bold text-[#0B202B]">{displayWorkspaceName}</span>
               {workspaceCtx.companyLinked ? (
                 <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-800">
                   Company linked
@@ -1020,8 +1020,8 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
         ) : null}
 
         {isPendingOrganisation && connection.availableOrganisations?.length ? (
-          <div className="mt-5 rounded-2xl border border-[#1D6BFF]/25 bg-[#1D6BFF]/8 p-4">
-            <h3 className="text-sm font-bold text-[#0F172A]">Select Xero organisation</h3>
+          <div className="mt-5 rounded-2xl border border-[#1F4757]/25 bg-[#1F4757]/8 p-4">
+            <h3 className="text-sm font-bold text-[#0B202B]">Select Xero organisation</h3>
             <p className="mt-1 text-xs font-medium text-[#64748B]">
               Multiple organisations were returned. Choose one — sync stays disabled until an organisation is selected.
             </p>
@@ -1044,7 +1044,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       <section className={M.moduleDataSection}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold text-[#0F172A]">Sync actions</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Sync actions</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Queue and immediately sync to Xero. Customer invoices export as ACCREC in{" "}
               {syncConfig.invoiceStatus || "DRAFT"} status (never auto-approved).
@@ -1119,7 +1119,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
 
       <div className="grid gap-6 xl:grid-cols-2">
         <section className={M.moduleDataSection}>
-          <h2 className="text-xl font-bold text-[#0F172A]">Sync configuration</h2>
+          <h2 className="text-xl font-bold text-[#0B202B]">Sync configuration</h2>
           <p className="mt-1 text-sm font-medium text-[#64748B]">Outbound and inbound sync scope for this workspace.</p>
           <div className="mt-4 space-y-4">
             <div>
@@ -1179,7 +1179,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
         <section className={M.moduleDataSection}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-bold text-[#0F172A]">Company financial defaults</h2>
+              <h2 className="text-xl font-bold text-[#0B202B]">Company financial defaults</h2>
               <p className="mt-1 text-sm font-medium text-[#64748B]">
                 These persisted company defaults are the active mapping layer for accounting exports in Phase 2.
               </p>
@@ -1217,7 +1217,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
           <div className="mt-4 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm text-[#334155]">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="font-bold text-[#0F172A]">Chart of Accounts</p>
+                <p className="font-bold text-[#0B202B]">Chart of Accounts</p>
                 <p className="mt-1 text-xs font-medium text-[#64748B]">
                   {accountCatalog.syncedAt
                     ? `Synced ${new Date(accountCatalog.syncedAt).toLocaleString()} from Xero (${accountCatalog.accounts.length} accounts).`
@@ -1268,7 +1268,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       <section className={M.moduleDataSection}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold text-[#0F172A]">Sync queue</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Sync queue</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Company-scoped queue — retry, cancel, and open source records.
             </p>
@@ -1304,7 +1304,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
               ) : (
                 queueRows.map((row) => (
                   <tr key={row.id} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-                    <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{row.type}</td>
+                    <td className="px-4 py-3 font-semibold text-[#1F4757]">{row.type}</td>
                     <td className="px-4 py-3 font-medium text-[#334155]">{row.reference}</td>
                     <td className="px-4 py-3 text-[#334155]">{row.counterparty}</td>
                     <td className="px-4 py-3">
@@ -1320,7 +1320,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
                           <button
                             type="button"
                             onClick={() => void syncQueueItem(row.id, row.status === "Failed" ? "retry" : "sync")}
-                            className="rounded-lg bg-[#1D6BFF] px-2 py-1 text-xs font-bold text-white"
+                            className="rounded-lg bg-[#1F4757] px-2 py-1 text-xs font-bold text-white"
                           >
                             <UploadCloud size={12} className="inline" /> Sync
                           </button>
@@ -1345,7 +1345,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
                           </a>
                         ) : null}
                         {sourceHref(row) ? (
-                          <Link href={sourceHref(row)!} className="rounded-lg px-2 py-1 text-xs font-bold text-[#1D6BFF]">
+                          <Link href={sourceHref(row)!} className="rounded-lg px-2 py-1 text-xs font-bold text-[#1F4757]">
                             Source
                           </Link>
                         ) : null}
@@ -1360,7 +1360,7 @@ export default function XeroIntegrationClient({ initialWorkspace }: XeroIntegrat
       </section>
 
       <section className={M.moduleDataSection}>
-        <h2 className="text-xl font-bold text-[#0F172A]">Debug / audit trail</h2>
+        <h2 className="text-xl font-bold text-[#0B202B]">Debug / audit trail</h2>
         <p className="mt-1 text-sm font-medium text-[#64748B]">
           Latest OAuth and connection events for this workspace (connect, callback, token exchange, tenants, org
           selection, errors).
@@ -1404,14 +1404,14 @@ function InfoTile({ label, value, xero }: { label: string; value: string; xero?:
   return (
     <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">{label}</div>
-      <div className={`mt-1 break-words text-sm font-bold ${xero ? "text-[#13B5EA]" : "text-[#0F172A]"}`}>{value}</div>
+      <div className={`mt-1 break-words text-sm font-bold ${xero ? "text-[#13B5EA]" : "text-[#0B202B]"}`}>{value}</div>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: XeroSyncStatus }) {
   const classes: Record<string, string> = {
-    Ready: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
+    Ready: "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]",
     Synced: "border-blue-200 bg-blue-50 text-blue-700",
     Failed: "border-rose-200 bg-rose-50 text-rose-700",
     "Needs Review": "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",

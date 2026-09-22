@@ -384,7 +384,7 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
         <div className="flex flex-wrap gap-2">
           <Link
             href="/supplier-invoices"
-            className="inline-flex items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-4 py-2 text-xs font-black text-slate-700 transition hover:bg-white"
+            className="inline-flex items-center gap-2 rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 px-4 py-2 text-xs font-black text-slate-700 transition hover:bg-white"
           >
             <ArrowLeft size={14} />
             All invoices
@@ -478,7 +478,7 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
               <select
                 value={headerDraft.supplierId}
                 onChange={(event) => setHeaderDraft({ ...headerDraft, supplierId: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+                className="mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
               >
                 {suppliers.map((supplier) => (
                   <option key={supplier.id} value={supplier.id}>
@@ -492,7 +492,7 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
               <input
                 value={headerDraft.invoiceNumber}
                 onChange={(event) => setHeaderDraft({ ...headerDraft, invoiceNumber: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+                className="mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
               />
             </label>
             <label>
@@ -501,7 +501,7 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
                 type="date"
                 value={headerDraft.invoiceDate}
                 onChange={(event) => setHeaderDraft({ ...headerDraft, invoiceDate: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+                className="mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
               />
             </label>
             <label>
@@ -509,7 +509,7 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
               <select
                 value={headerDraft.status}
                 onChange={(event) => setHeaderDraft({ ...headerDraft, status: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+                className="mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
               >
                 {STATUSES.map((status) => (
                   <option key={status} value={status}>
@@ -523,7 +523,7 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
               <input
                 value={headerDraft.sourceType}
                 onChange={(event) => setHeaderDraft({ ...headerDraft, sourceType: event.target.value })}
-                className="mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+                className="mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
               />
             </label>
             <label className="md:col-span-2 lg:col-span-3">
@@ -534,7 +534,7 @@ export default function SupplierInvoiceDetailClient({ invoiceId }: { invoiceId: 
                 value={headerDraft.notes}
                 onChange={(event) => setHeaderDraft({ ...headerDraft, notes: event.target.value })}
                 rows={2}
-                className="mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+                className="mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
               />
             </label>
             <div className="flex flex-wrap gap-2 md:col-span-2 lg:col-span-3">

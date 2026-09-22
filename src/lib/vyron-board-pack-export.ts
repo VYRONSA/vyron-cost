@@ -26,7 +26,7 @@ export function exportBoardPackPdf(pack: BoardPackData) {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(26);
-  doc.text("VYRON COST", 14, 32);
+  doc.text("VOLORA", 14, 32);
   doc.setFontSize(14);
   doc.text("Executive Board Pack", 14, 44);
   doc.setFontSize(10);
@@ -176,7 +176,7 @@ export function exportBoardPackExcel(pack: BoardPackData) {
 }
 
 export function exportBoardPackCsv(pack: BoardPackData) {
-  const lines: string[] = ["VYRON COST BOARD PACK", ""];
+  const lines: string[] = ["VOLORA BOARD PACK", ""];
   for (const [name, rows] of Object.entries(packToSheets(pack))) {
     lines.push(`## ${name}`);
     for (const row of rows) {

@@ -84,7 +84,7 @@ export default function CustomerIntelligenceClient() {
       </div>
 
       {customers.length > 0 ? (
-        <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <VyronPremiumSectionHeading
             eyebrow="Detail"
             title="Customer GP intelligence"
@@ -97,7 +97,7 @@ export default function CustomerIntelligenceClient() {
                 <div className="font-black text-slate-950">{customer.name}</div>
                 <div className="text-right font-black">{formatCurrency(customer.revenue)}</div>
                 <div className="text-right font-bold">{formatCurrency(customer.cogs)}</div>
-                <div className="text-right font-black text-[#1D4ED8]">{formatCurrency(customer.gp)}</div>
+                <div className="text-right font-black text-[#163A48]">{formatCurrency(customer.gp)}</div>
                 <div className="text-right font-black">{customer.gpPct}%</div>
                 <div className="font-bold text-blue-700">{customer.topProduct}</div>
               </div>
@@ -116,7 +116,7 @@ export default function CustomerIntelligenceClient() {
 
 function Metric({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+    <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
       <div className="text-xs font-black uppercase tracking-[0.12em] text-blue-600">{title}</div>
       <div className="mt-2 text-3xl font-black text-slate-950">{value}</div>
     </div>

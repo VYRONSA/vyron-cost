@@ -37,7 +37,7 @@ export default function BoardPackGeneratorClient({ pack }: { pack: BoardPackData
         ],
       }}
     >
-      <section className="rounded-[2rem] bg-[#07110d] p-8 text-white">
+      <section className="rounded-[2rem] bg-[#061722] p-8 text-white">
         <h2 className="text-2xl font-black">Generate Executive Board Pack</h2>
       <p className="mt-2 text-sm text-slate-300">
         {pack.meta.companyName} · Boardroom-ready PDF, Excel and CSV with procurement, inventory, manufacturing, supplier,

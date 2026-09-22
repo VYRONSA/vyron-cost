@@ -34,7 +34,7 @@ export default function PremiumMobileKpiCarousel({
               tone="raised"
               className="group relative min-w-[82%] snap-start overflow-hidden p-5 sm:min-w-[360px]"
             >
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(7,17,31,0.07),transparent_48%)]" />
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(6,23,34,0.07),transparent_48%)]" />
 
               <div className="relative flex items-start justify-between gap-3">
                 <div>
@@ -42,7 +42,7 @@ export default function PremiumMobileKpiCarousel({
                   <div className="mt-2 text-[2.15rem] font-black tracking-[-0.05em] text-slate-950">{item.value}</div>
                   <div className="mt-1 text-sm font-semibold text-slate-500">{item.note}</div>
                 </div>
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl vyron-grad-surface text-white shadow-[0_14px_30px_rgba(7,17,31,0.24)]">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl vyron-grad-surface text-white shadow-[0_14px_30px_rgba(6,23,34,0.24)]">
                   <Icon size={23} />
                 </div>
               </div>

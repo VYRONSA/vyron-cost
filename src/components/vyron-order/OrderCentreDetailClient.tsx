@@ -156,15 +156,15 @@ export default function OrderCentreDetailClient({ orderId }: { orderId: string }
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <div>
                 <p className={M.label}>Placed</p>
-                <p className="mt-0.5 text-sm font-bold text-[#0F172A]">{formatStamp(String(order.created_at || ""))}</p>
+                <p className="mt-0.5 text-sm font-bold text-[#0B202B]">{formatStamp(String(order.created_at || ""))}</p>
               </div>
               <div>
                 <p className={M.label}>Delivery</p>
-                <p className="mt-0.5 text-sm font-bold text-[#0F172A]">{formatDate(order.requested_delivery_date ? String(order.requested_delivery_date) : null)}</p>
+                <p className="mt-0.5 text-sm font-bold text-[#0B202B]">{formatDate(order.requested_delivery_date ? String(order.requested_delivery_date) : null)}</p>
               </div>
               <div>
                 <p className={M.label}>Total</p>
-                <p className="mt-0.5 text-sm font-black tabular-nums text-[#0F172A]">{money(total)}</p>
+                <p className="mt-0.5 text-sm font-black tabular-nums text-[#0B202B]">{money(total)}</p>
               </div>
             </div>
 
@@ -193,30 +193,30 @@ export default function OrderCentreDetailClient({ orderId }: { orderId: string }
                 <tbody>
                   {data.lines.map((line, i) => (
                     <tr key={`${String(line.id || i)}`} className={M.tableRow}>
-                      <td className="px-4 py-3 text-sm font-bold text-[#0F172A]">{String(line.description || "")}</td>
+                      <td className="px-4 py-3 text-sm font-bold text-[#0B202B]">{String(line.description || "")}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums text-[#334155]">{Number(line.quantity || 0)}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums text-[#334155]">{money(Number(line.selling_price || 0))}</td>
                       {data.maySeeCosting ? (
                         <td className="px-4 py-3 text-right text-sm font-semibold tabular-nums text-[#64748B]">{money(Number(line.cost_per_unit || 0))}</td>
                       ) : null}
-                      <td className="px-4 py-3 text-right text-sm font-black tabular-nums text-[#0F172A]">{money(Number(line.line_total || 0))}</td>
+                      <td className="px-4 py-3 text-right text-sm font-black tabular-nums text-[#0B202B]">{money(Number(line.line_total || 0))}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <div className="space-y-1.5 border-t border-[rgba(15,23,42,0.07)] bg-[rgba(15,23,42,0.03)] px-4 py-4">
+            <div className="space-y-1.5 border-t border-[rgba(11,32,43,0.07)] bg-[rgba(11,32,43,0.03)] px-4 py-4">
               <div className="flex justify-between text-sm font-semibold text-[#64748B]">
                 <span>Subtotal</span><span className="tabular-nums">{money(Number(order.subtotal || 0))}</span>
               </div>
               <div className="flex justify-between text-sm font-semibold text-[#64748B]">
                 <span>VAT</span><span className="tabular-nums">{money(Number(order.vat_amount || 0))}</span>
               </div>
-              <div className="flex justify-between border-t border-[rgba(15,23,42,0.07)] pt-2 text-base font-black text-[#0F172A]">
+              <div className="flex justify-between border-t border-[rgba(11,32,43,0.07)] pt-2 text-base font-black text-[#0B202B]">
                 <span>Total</span><span className="tabular-nums">{money(total)}</span>
               </div>
               {data.maySeeCosting ? (
-                <div className="mt-2 flex flex-wrap justify-between gap-2 border-t border-[rgba(15,23,42,0.07)] pt-2 text-xs font-bold text-[#64748B]">
+                <div className="mt-2 flex flex-wrap justify-between gap-2 border-t border-[rgba(11,32,43,0.07)] pt-2 text-xs font-bold text-[#64748B]">
                   <span>Cost {money(Number(order.cost_value || 0))}</span>
                   <span>GP {money(Number(order.gross_profit || 0))} ({Number(order.gp_percentage || 0).toFixed(1)}%)</span>
                 </div>
@@ -292,7 +292,7 @@ export default function OrderCentreDetailClient({ orderId }: { orderId: string }
               <ul className="mt-3 space-y-2.5">
                 {data.audit.map((a, i) => (
                   <li key={i} className="text-xs">
-                    <p className="font-black text-[#0F172A]">{String(a.event_type || "")}</p>
+                    <p className="font-black text-[#0B202B]">{String(a.event_type || "")}</p>
                     <p className="mt-0.5 font-semibold text-[#64748B]">
                       {String(a.actor || "system")}
                       {a.to_status ? ` → ${String(a.to_status)}` : ""} · {formatStamp(String(a.created_at || ""))}

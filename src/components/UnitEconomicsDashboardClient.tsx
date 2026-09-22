@@ -18,13 +18,13 @@ export default function UnitEconomicsDashboardClient({ products }: { products: P
     <VyronPremiumPageShell
       config={{
         title: "Unit Economics Dashboard",
-        subtitle: "Premium VYRON COST workflow for unit economics dashboard.",
+        subtitle: "Premium VOLORA workflow for unit economics dashboard.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
             <div className="overflow-hidden rounded-[2rem] bg-white">
-              <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase text-[#3B82F6]">
+              <div className="grid grid-cols-7 bg-[#061722] px-5 py-4 text-xs font-black uppercase text-[#2C5A6B]">
                 <div className="col-span-2">Product</div>
                 <div>Selling</div>
                 <div>Cost</div>
@@ -37,7 +37,7 @@ export default function UnitEconomicsDashboardClient({ products }: { products: P
                   <div className="col-span-2 font-black">{row.product.product_name}</div>
                   <div>{money(row.product.selling_price)}</div>
                   <div>{money(row.product.total_cost)}</div>
-                  <div className="font-black text-[#1D4ED8]">{money(row.unitProfit)}</div>
+                  <div className="font-black text-[#163A48]">{money(row.unitProfit)}</div>
                   <div>{row.gp.toFixed(1)}%</div>
                   <div>{Number(row.product.monthly_units_estimate || 0).toFixed(0)}</div>
                 </div>

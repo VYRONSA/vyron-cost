@@ -61,7 +61,7 @@ function buildGpRecoveryDetail(
     ...base,
     monthly_saving: monthly,
     annual_saving: monthly * 12,
-    whyDetected: `${below.length} finished products are below target GP. VYRON COST calculated avoidable margin loss from GP gap × estimated monthly sales.`,
+    whyDetected: `${below.length} finished products are below target GP. VOLORA calculated avoidable margin loss from GP gap × estimated monthly sales.`,
     formulaName: "Below-target GP recovery",
     formulaExpression: "Potential Recovery = (Target GP margin gap × monthly product sales) × 12",
     formulaWorkedExample: `Monthly avoidable loss ≈ ${formatMoney(monthly)} → Annual = ${formatMoney(monthly)} × 12 = ${formatMoney(monthly * 12)}`,
@@ -166,11 +166,11 @@ function enrichOpportunity(
   const monthly = base.monthly_saving;
   return {
     ...base,
-    whyDetected: "VYRON COST identified an avoidable monthly loss from imported costing and intelligence rules.",
+    whyDetected: "VOLORA identified an avoidable monthly loss from imported costing and intelligence rules.",
     formulaName: "Standard recovery",
     formulaExpression: "Potential Recovery = estimated avoidable monthly loss × 12",
     formulaWorkedExample: `${formatMoney(monthly)} × 12 = ${formatMoney(monthly * 12)}`,
-    dataSource: "VYRON COST intelligence engine · Handcrafted tenant",
+    dataSource: "VOLORA intelligence engine · Handcrafted tenant",
     confidencePercent: confidenceFromDifficulty(base.difficulty),
     recommendedAction: base.action,
     productsAffected: [],

@@ -17,7 +17,7 @@ export default function WorkspaceAccessDenied({
       </div>
       <h2 className="text-3xl font-black tracking-tight text-slate-950">Access Denied</h2>
       <p className="mt-3 max-w-xl text-sm font-semibold text-slate-600">
-        You do not have permission to access this area of VYRON COST.
+        You do not have permission to access this area of VOLORA.
         {permission ? ` Required: ${permission}.` : ""}
       </p>
       {pathname ? (

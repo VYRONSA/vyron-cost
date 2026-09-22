@@ -10,5 +10,5 @@ import { getServerActiveWorkspace } from "@/lib/vyron-workspace-server";
  */
 export async function getReportCompanyName(): Promise<string> {
   const workspace = await getServerActiveWorkspace();
-  return workspace?.companyName || workspace?.tradingName || "VYRON COST Workspace";
+  return workspace?.companyName || workspace?.tradingName || "VOLORA Workspace";
 }

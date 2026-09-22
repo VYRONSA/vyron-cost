@@ -32,7 +32,7 @@ export default function ScenarioModellingClient({ initial }: { initial: Scenario
     <VyronPremiumPageShell
       config={{
         title: "Scenario Modelling",
-        subtitle: "Premium VYRON COST workflow for scenario modelling.",
+        subtitle: "Premium VOLORA workflow for scenario modelling.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -84,12 +84,12 @@ export default function ScenarioModellingClient({ initial }: { initial: Scenario
                 <div className="mt-2 text-2xl font-black">
                   {impact.currentGpPct}% → {impact.projectedGpPct}%
                 </div>
-                <div className={impact.gpChangePts < 0 ? "text-red-600 font-bold" : "text-[#84CC16] font-bold"}>
+                <div className={impact.gpChangePts < 0 ? "text-red-600 font-bold" : "text-[#55B968] font-bold"}>
                   {impact.gpChangePts} pts
                 </div>
               </div>
-              <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-5">
-                <div className="text-xs font-black uppercase text-[#1D4ED8]">Recovery</div>
+              <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-5">
+                <div className="text-xs font-black uppercase text-[#163A48]">Recovery</div>
                 <div className="mt-2 text-2xl font-black">{money(impact.recoveryImpact)}/mo</div>
               </div>
               <div className="rounded-2xl bg-[var(--vyron-warning-bg)] p-5">
@@ -101,8 +101,8 @@ export default function ScenarioModellingClient({ initial }: { initial: Scenario
                 <div className="mt-2 text-2xl font-black">{money(impact.productionCostImpact)}</div>
               </div>
             </div>
-            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-              <div className="text-xs font-black uppercase text-[#3B82F6]">Annual profit impact</div>
+            <div className="rounded-[2rem] bg-[#061722] p-6 text-white">
+              <div className="text-xs font-black uppercase text-[#2C5A6B]">Annual profit impact</div>
               <div className="mt-2 text-4xl font-black">{money(impact.annualProfitImpact)}</div>
               <ul className="mt-4 space-y-2 text-sm font-semibold text-slate-300">
                 {impact.narrative.map((n) => (

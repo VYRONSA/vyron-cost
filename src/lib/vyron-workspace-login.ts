@@ -154,7 +154,7 @@ export async function resolveWorkspaceSessionForAuthUser(authUserId: string): Pr
   if (profileError) throw new Error(profileError.message);
 
   if (!profile?.id) {
-    throw new Error("No workspace is linked to this login. Contact your VYRON administrator.");
+    throw new Error("No workspace is linked to this login. Contact your VOLORA administrator.");
   }
   if (String(profile.status) === "Disabled") {
     throw new Error("This account is disabled. Contact your workspace administrator.");
@@ -173,7 +173,7 @@ export async function resolveWorkspaceSessionForAuthUser(authUserId: string): Pr
   });
 
   if (!activeMemberships.length) {
-    throw new Error("No workspace is linked to this login. Contact your VYRON administrator.");
+    throw new Error("No workspace is linked to this login. Contact your VOLORA administrator.");
   }
 
   const membership = activeMemberships[0] as Record<string, unknown>;
@@ -181,7 +181,7 @@ export async function resolveWorkspaceSessionForAuthUser(authUserId: string): Pr
   const workspaceId = String(workspaceRow.id);
   const workspace = await getWorkspace(workspaceId);
   if (!workspace) {
-    throw new Error("No workspace is linked to this login. Contact your VYRON administrator.");
+    throw new Error("No workspace is linked to this login. Contact your VOLORA administrator.");
   }
 
   const members = await listWorkspaceMembers(workspaceId);

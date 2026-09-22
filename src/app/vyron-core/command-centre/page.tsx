@@ -12,7 +12,7 @@ export default async function VyronCoreCommandCentrePage() {
   const data = await getVyronCoreCommandCentreData(supabase, VYRON_DEFAULT_TENANT_ID);
 
   return (
-    <VyronCostShell hidePageHeader title="VYRON CORE Executive Command Centre"
+    <VyronCostShell hidePageHeader title="VOLORA Core Executive Command Centre"
       subtitle="WORKFORCE DIGITAL TWIN · LABOUR · PRODUCTIVITY · HEALTH · RISK · LEAKAGE"
     >
       <VyronCoreNav />

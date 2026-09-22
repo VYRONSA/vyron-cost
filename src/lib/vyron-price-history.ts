@@ -54,7 +54,7 @@ export function priceMovementLabel(movement: PriceMovement | null | undefined) {
 
 export function priceMovementClass(movement: PriceMovement | null | undefined) {
   if (movement === "increase") return "bg-red-100 text-red-800";
-  if (movement === "decrease") return "bg-[#3B82F6]/12 text-[#4D7C0F]";
+  if (movement === "decrease") return "bg-[#2C5A6B]/12 text-[#2F7C40]";
   return "bg-slate-100 text-slate-700";
 }
 

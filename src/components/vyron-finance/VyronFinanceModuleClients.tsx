@@ -181,7 +181,7 @@ export function ExecutiveFinanceClient({ data }: { data: VyronFinanceIntelligenc
         ))}
       </div>
       <div className="rounded-[2rem] bg-slate-50 p-6">
-        <h3 className="font-black">VYRON COST intelligence scores (feeds FINANCE)</h3>
+        <h3 className="font-black">VOLORA intelligence scores (feeds FINANCE)</h3>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           {Object.entries(intelligenceScores).map(([k, v]) => (
             <div key={k} className="rounded-xl bg-white p-3 text-sm">
@@ -232,7 +232,7 @@ export function FoundationClient({ foundation }: { foundation: VyronFinanceIntel
       <div className="rounded-[2rem] border-2 border-blue-200 bg-blue-50 p-8">
         <h2 className="text-2xl font-black text-blue-950">{foundation.productName} foundation</h2>
         <p className="mt-2 text-sm text-blue-900">
-          Shared entity architecture from VYRON COST — integration ready: {foundation.integrationReady ? "Yes" : "No"}
+          Shared entity architecture from VOLORA — integration ready: {foundation.integrationReady ? "Yes" : "No"}
         </p>
       </div>
       <div className="grid gap-4 md:grid-cols-2">

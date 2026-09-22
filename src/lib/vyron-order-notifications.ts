@@ -377,7 +377,7 @@ function buildOrderEmail(event: OrderNotificationEvent, ctx: OrderNotificationCo
   ];
 
   const textBody = [
-    `${heading.toUpperCase()} — VYRON ORDER`,
+    `${heading.toUpperCase()} — VOLORA Order`,
     ctx.tenantName || "",
     "",
     ...lines.map(([k, v]) => `${k}: ${v}`),
@@ -394,20 +394,20 @@ function buildOrderEmail(event: OrderNotificationEvent, ctx: OrderNotificationCo
   const htmlBody = `
 <div style="margin:0;padding:24px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
-    <div style="background:#0f172a;padding:20px 24px;">
+    <div style="background:#0b202b;padding:20px 24px;">
       <div style="font-size:18px;font-weight:800;letter-spacing:0.08em;color:#ffffff;">
-        VYRON<span style="color:#60a5fa;">ORDER</span>
+        VOLORA<span style="color:#5f8595;">ORDER</span>
       </div>
       ${ctx.tenantName ? `<div style="margin-top:4px;font-size:12px;font-weight:600;color:#94a3b8;">${ctx.tenantName}</div>` : ""}
     </div>
     <div style="padding:24px;">
-      <div style="font-size:20px;font-weight:800;color:#0f172a;">${heading}</div>
+      <div style="font-size:20px;font-weight:800;color:#0b202b;">${heading}</div>
       <div style="margin-top:4px;font-size:14px;font-weight:600;color:#64748b;">${ctx.customerName}</div>
       <table style="width:100%;margin-top:20px;border-collapse:collapse;">
         ${lines.map(([k, v]) => `
         <tr>
           <td style="padding:8px 0;font-size:13px;font-weight:600;color:#64748b;">${k}</td>
-          <td style="padding:8px 0;font-size:14px;font-weight:800;color:#0f172a;text-align:right;">${v}</td>
+          <td style="padding:8px 0;font-size:14px;font-weight:800;color:#0b202b;text-align:right;">${v}</td>
         </tr>`).join("")}
       </table>
       ${ctx.notes ? `
@@ -415,11 +415,11 @@ function buildOrderEmail(event: OrderNotificationEvent, ctx: OrderNotificationCo
         <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;color:#64748b;text-transform:uppercase;">Customer note</div>
         <div style="margin-top:6px;font-size:14px;font-weight:600;color:#334155;">${ctx.notes}</div>
       </div>` : ""}
-      <a href="${viewUrl}" style="display:block;margin-top:24px;padding:14px;background:#0f172a;color:#ffffff;text-align:center;text-decoration:none;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:0.08em;">
+      <a href="${viewUrl}" style="display:block;margin-top:24px;padding:14px;background:#0b202b;color:#ffffff;text-align:center;text-decoration:none;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:0.08em;">
         VIEW ORDER
       </a>
       <div style="margin-top:14px;font-size:12px;font-weight:500;color:#94a3b8;text-align:center;">
-        You will be asked to sign in to VYRON before the order opens.
+        You will be asked to sign in to VOLORA before the order opens.
       </div>
     </div>
   </div>
@@ -437,7 +437,7 @@ function buildOrderEmail(event: OrderNotificationEvent, ctx: OrderNotificationCo
  */
 function buildShortMessage(event: OrderNotificationEvent, ctx: OrderNotificationContext, viewUrl: string) {
   return [
-    `${EVENT_LABELS[event].toUpperCase()} — VYRON ORDER`,
+    `${EVENT_LABELS[event].toUpperCase()} — VOLORA Order`,
     ctx.tenantName || "",
     `Order: ${ctx.orderNumber}`,
     `Customer: ${ctx.customerName}`,
@@ -451,7 +451,7 @@ function buildShortMessage(event: OrderNotificationEvent, ctx: OrderNotification
 /** Ordered variables for an approved WhatsApp template, when one is configured. */
 function templateVariables(ctx: OrderNotificationContext, viewUrl: string): Record<string, string> {
   return {
-    "1": ctx.tenantName || "VYRON ORDER",
+    "1": ctx.tenantName || "VOLORA Order",
     "2": ctx.orderNumber,
     "3": ctx.customerName,
     "4": formatDate(ctx.requestedDeliveryDate),
@@ -613,17 +613,17 @@ export async function sendTestNotification(
   if (input.channel === "email") {
     result = await deliverEmail({
       to: target,
-      subject: "VYRON ORDER test notification",
+      subject: "VOLORA Order test notification",
       textBody:
-        "This is a VYRON ORDER test notification.\n\nNo order was created. If you received this, order notifications will reach you at this address.",
+        "This is a VOLORA Order test notification.\n\nNo order was created. If you received this, order notifications will reach you at this address.",
       htmlBody: `
 <div style="margin:0;padding:24px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;">
-    <div style="background:#0f172a;padding:20px 24px;font-size:18px;font-weight:800;letter-spacing:0.08em;color:#ffffff;">
-      VYRON<span style="color:#60a5fa;">ORDER</span>
+    <div style="background:#0b202b;padding:20px 24px;font-size:18px;font-weight:800;letter-spacing:0.08em;color:#ffffff;">
+      VOLORA<span style="color:#5f8595;">ORDER</span>
     </div>
     <div style="padding:24px;">
-      <div style="font-size:20px;font-weight:800;color:#0f172a;">This is a test notification</div>
+      <div style="font-size:20px;font-weight:800;color:#0b202b;">This is a test notification</div>
       <div style="margin-top:8px;font-size:14px;font-weight:600;color:#475569;">
         No order was created. If this reached you, order notifications will reach you at this address.
       </div>
@@ -636,13 +636,13 @@ export async function sendTestNotification(
   } else if (input.channel === "sms") {
     result = await deliverSms({
       to: target,
-      body: "VYRON ORDER: this is a test notification. No order was created.",
+      body: "VOLORA Order: this is a test notification. No order was created.",
     });
   } else if (input.channel === "whatsapp") {
     result = await deliverWhatsApp({
       to: target,
-      body: "VYRON ORDER: this is a test notification. No order was created.",
-      templateVariables: { "1": "VYRON ORDER", "2": "TEST", "3": "Test notification", "4": "-", "5": "0", "6": "-", "7": input.baseUrl || "" },
+      body: "VOLORA Order: this is a test notification. No order was created.",
+      templateVariables: { "1": "VOLORA Order", "2": "TEST", "3": "Test notification", "4": "-", "5": "0", "6": "-", "7": input.baseUrl || "" },
     });
   } else {
     result = { status: "Sent", provider: "in_app", reference: null, error: null };

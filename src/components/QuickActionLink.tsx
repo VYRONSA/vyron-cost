@@ -13,7 +13,7 @@ export default function QuickActionLink({
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-2 rounded-xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-semibold text-[#F8FAFC] shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:bg-[#23304f]"
+      className="inline-flex items-center gap-2 rounded-xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-semibold text-[#F8FAFC] shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:bg-[#163a48]"
     >
       <Icon size={16} />
       {label}

@@ -208,7 +208,7 @@ export default function SupplierInvoicesClient() {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => void load()}
-            className="inline-flex items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-4 py-2 text-xs font-black text-slate-700 transition hover:bg-white"
+            className="inline-flex items-center gap-2 rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 px-4 py-2 text-xs font-black text-slate-700 transition hover:bg-white"
           >
             <RefreshCw size={14} />
             Refresh
@@ -266,7 +266,7 @@ export default function SupplierInvoicesClient() {
         <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">
           <label className="lg:col-span-2 2xl:col-span-1">
             <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Search</span>
-            <span className="mt-1 flex items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2">
+            <span className="mt-1 flex items-center gap-2 rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3 py-2">
               <Search size={15} className="text-slate-400" />
               <input
                 value={search}
@@ -282,7 +282,7 @@ export default function SupplierInvoicesClient() {
             <select
               value={supplierFilter}
               onChange={(event) => setSupplierFilter(event.target.value)}
-              className="mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+              className="mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
             >
               <option value={ALL}>All suppliers</option>
               {suppliers.map((supplier) => (
@@ -298,7 +298,7 @@ export default function SupplierInvoicesClient() {
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
-              className="mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+              className="mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
             >
               <option value={ALL}>All statuses</option>
               {statuses.map((status) => (
@@ -315,7 +315,7 @@ export default function SupplierInvoicesClient() {
               type="date"
               value={dateFrom}
               onChange={(event) => setDateFrom(event.target.value)}
-              className="mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+              className="mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
             />
           </label>
           <label>
@@ -324,7 +324,7 @@ export default function SupplierInvoicesClient() {
               type="date"
               value={dateTo}
               onChange={(event) => setDateTo(event.target.value)}
-              className="mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+              className="mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
             />
           </label>
           <label>
@@ -335,7 +335,7 @@ export default function SupplierInvoicesClient() {
               value={amountMin}
               onChange={(event) => setAmountMin(event.target.value)}
               placeholder="0.00"
-              className="mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+              className="mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
             />
           </label>
           <label>
@@ -346,7 +346,7 @@ export default function SupplierInvoicesClient() {
               value={amountMax}
               onChange={(event) => setAmountMax(event.target.value)}
               placeholder="0.00"
-              className="mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+              className="mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.10)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
             />
           </label>
 

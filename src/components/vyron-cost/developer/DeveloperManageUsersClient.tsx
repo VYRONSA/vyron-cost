@@ -174,7 +174,7 @@ export default function DeveloperManageUsersClient({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <Link href="/developer/clients" className="inline-flex items-center gap-2 text-sm font-black text-blue-700">
           <ArrowLeft size={16} />
           Back to Client Directory
@@ -190,7 +190,7 @@ export default function DeveloperManageUsersClient({
         <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</div>
       ) : null}
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-black text-slate-900">Workspace users</h2>
           <button
@@ -303,7 +303,7 @@ export default function DeveloperManageUsersClient({
                       Reset
                     </button>
                     {member.status === "Disabled" ? (
-                      <button type="button" onClick={() => void enableUser(member.userId)} className="rounded-xl border border-[#3B82F6]/25 bg-[#3B82F6]/12 px-3 py-2 text-xs font-black text-[#4D7C0F]">
+                      <button type="button" onClick={() => void enableUser(member.userId)} className="rounded-xl border border-[#2C5A6B]/25 bg-[#2C5A6B]/12 px-3 py-2 text-xs font-black text-[#2F7C40]">
                         Enable
                       </button>
                     ) : member.role !== "OWNER" ? (
@@ -363,7 +363,7 @@ function Field({
     <VyronPremiumPageShell
       config={{
         title: "Developer Manage Users",
-        subtitle: "Premium VYRON COST workflow for developer manage users.",
+        subtitle: "Premium VOLORA workflow for developer manage users.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >

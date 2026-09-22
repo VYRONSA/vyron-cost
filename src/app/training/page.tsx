@@ -13,9 +13,9 @@ const sections = [
 
 export default function TrainingPage() {
   return (
-    <VyronCostAiShell hidePageHeader title="Training Centre" subtitle="Simple training guide for using VYRON COST from start to finish.">
+    <VyronCostAiShell hidePageHeader title="Training Centre" subtitle="Simple training guide for using VOLORA from start to finish.">
       <Link href="/vyron-academy" className={`mb-6 inline-flex ${VYRON_BTN.primary}`}>
-        Open VYRON COST Academy →
+        Open VOLORA Academy →
       </Link>
       <section className="grid gap-5">
         {sections.map(([title, text]) => (

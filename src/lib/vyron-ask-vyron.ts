@@ -265,7 +265,7 @@ export function classifyAskVyronQuestion(question: string): AskVyronCategory {
 
 function insufficientDataAnswer(category: AskVyronCategory): AskVyronAnswer {
   return {
-    answer: "VYRON needs more operational data to answer this properly.",
+    answer: "VOLORA needs more operational data to answer this properly.",
     summary:
       "Load products, BOMs, suppliers, inventory movements, customer invoices or connect Xero so intelligence engines can produce evidence-backed answers.",
     confidence: "Low",
@@ -306,7 +306,7 @@ function unknownAnswer(): AskVyronAnswer {
       { label: "Cost Intelligence", href: "/cost-intelligence" },
       { label: "Business Health", href: "/business-health" },
     ],
-    sourceModules: ["Ask VYRON guidance"],
+    sourceModules: ["Ask VOLORA guidance"],
     category: "unknown",
   };
 }
@@ -896,8 +896,8 @@ export function buildIntelligenceSourceStatuses(input: ActionsInput): Intelligen
 
 export function buildNoWorkspaceAnswer(): AskVyronAnswer {
   return {
-    answer: "Select an active workspace before asking VYRON business questions.",
-    summary: "Ask VYRON answers from the active company workspace only — no default tenant fallback.",
+    answer: "Select an active workspace before asking VOLORA business questions.",
+    summary: "Ask VOLORA answers from the active company workspace only — no default tenant fallback.",
     confidence: "High",
     evidence: [],
     relatedRisks: [],

@@ -476,7 +476,7 @@ function badgeClass(status: string) {
   if (status === "Low Stock") return "bg-rose-100 text-rose-800";
   if (status === "Overstocked") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   if (status === "Watch") return "bg-indigo-100 text-indigo-800";
-  return "bg-[#3B82F6]/12 text-[#4D7C0F]";
+  return "bg-[#2C5A6B]/12 text-[#2F7C40]";
 }
 function recommendation(status: string, product: string) {
   if (status === "Low Stock") return `${product} is below safe cover. Recommend manufacturing within 48 hours.`;

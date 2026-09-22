@@ -605,7 +605,7 @@ export default function ManufacturingIntelligenceClient() {
                 <div className="text-right font-bold">{formatNumber(batch.actualQty)}</div>
                 <div className="text-right font-bold">{formatCurrency(batch.expectedCost)}</div>
                 <div className="text-right font-black">{formatCurrency(batch.actualCost)}</div>
-                <div className={`text-right font-black ${variance > 0 ? "text-rose-700" : "text-[#1D4ED8]"}`}>{formatCurrency(variance)}</div>
+                <div className={`text-right font-black ${variance > 0 ? "text-rose-700" : "text-[#163A48]"}`}>{formatCurrency(variance)}</div>
                 <div>
                   <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${statusClass(batch.status)}`}>
                     {batch.status}
@@ -734,7 +734,7 @@ function ActionButton({
 }) {
   const tones = {
     indigo: "bg-indigo-100 text-indigo-800",
-    emerald: "bg-[#3B82F6]/12 text-[#4D7C0F]",
+    emerald: "bg-[#2C5A6B]/12 text-[#2F7C40]",
     purple: "bg-blue-100 text-blue-800",
     rose: "bg-rose-100 text-rose-800",
     slate: "bg-slate-100 text-slate-700",
@@ -748,7 +748,7 @@ function ActionButton({
 }
 
 function statusClass(status: BatchStatus) {
-  if (status === "Completed") return "bg-[#3B82F6]/12 text-[#4D7C0F]";
+  if (status === "Completed") return "bg-[#2C5A6B]/12 text-[#2F7C40]";
   if (status === "In Production") return "bg-indigo-100 text-indigo-800";
   if (status === "Reversed") return "bg-rose-100 text-rose-800";
   if (status === "Cancelled") return "bg-slate-200 text-slate-700";

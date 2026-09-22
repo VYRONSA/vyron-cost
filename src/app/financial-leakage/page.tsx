@@ -40,11 +40,11 @@ function recoveryRate(row: any) {
 
 function MiniSparkline({ tone = "violet" }: { tone?: "violet" | "blue" | "orange" | "pink" | "green" }) {
   const stroke =
-    tone === "blue" ? "#2563eb" :
-    tone === "orange" ? "#3b82f6" :
+    tone === "blue" ? "#1f4757" :
+    tone === "orange" ? "#2c5a6b" :
     tone === "pink" ? "#ec4899" :
-    tone === "green" ? "#3b82f6" :
-    "#60a5fa";
+    tone === "green" ? "#2c5a6b" :
+    "#5f8595";
 
   return (
     <svg viewBox="0 0 180 42" className="absolute bottom-3 right-4 h-10 w-36 opacity-55">
@@ -64,11 +64,11 @@ function FunConfetti() {
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       <span className="absolute left-10 top-9 text-2xl text-pink-500">✦</span>
       <span className="absolute left-28 top-4 text-xl text-blue-400">✧</span>
-      <span className="absolute left-60 top-16 text-lg text-[#3B82F6]">◆</span>
+      <span className="absolute left-60 top-16 text-lg text-[#2C5A6B]">◆</span>
       <span className="absolute right-28 top-8 text-2xl text-blue-500">✦</span>
       <span className="absolute right-52 top-20 text-xl text-blue-500">⌁</span>
       <span className="absolute bottom-8 left-32 text-lg text-[var(--vyron-warning-fg)]">✺</span>
-      <span className="absolute bottom-16 right-24 text-lg text-[#3B82F6]">✦</span>
+      <span className="absolute bottom-16 right-24 text-lg text-[#2C5A6B]">✦</span>
     </div>
   );
 }
@@ -130,8 +130,8 @@ export default async function FinancialLeakagePage() {
       title: "Price Optimisation",
       detail: "Increase prices on underperforming items",
       value: kpis.recoverableMonthly * 2.1,
-      tone: "text-[#84CC16]",
-      bg: "bg-[#3B82F6]/10",
+      tone: "text-[#55B968]",
+      bg: "bg-[#2C5A6B]/10",
     },
     {
       icon: Wallet,
@@ -162,11 +162,11 @@ export default async function FinancialLeakagePage() {
           </h2>
 
           <p className="mt-4 max-w-2xl text-sm font-semibold leading-7 text-slate-500">
-            VYRON COST turns supplier movement, low GP products, invoice issues and wastage into a colourful, easy-to-action recovery plan.
+            VOLORA turns supplier movement, low GP products, invoice issues and wastage into a colourful, easy-to-action recovery plan.
           </p>
 
           <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 to-indigo-950 p-6 text-white shadow-[0_18px_45px_rgba(29,107,255,0.28)]">
+            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 to-indigo-950 p-6 text-white shadow-[0_18px_45px_rgba(22,58,72,0.28)]">
               <MiniSparkline tone="violet" />
               <div className="flex items-start justify-between">
                 <div>
@@ -178,7 +178,7 @@ export default async function FinancialLeakagePage() {
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-500 to-blue-800 p-6 text-white shadow-[0_18px_45px_rgba(37,99,235,0.22)]">
+            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-500 to-blue-800 p-6 text-white shadow-[0_18px_45px_rgba(22,58,72,0.22)]">
               <MiniSparkline tone="pink" />
               <div className="flex items-start justify-between">
                 <div>
@@ -186,13 +186,13 @@ export default async function FinancialLeakagePage() {
                   <div className="mt-3 text-4xl font-black">{recoveryScore}<span className="text-xl">/100</span></div>
                   <div className="mt-2 text-sm font-bold text-blue-100">● Very Strong</div>
                 </div>
-                <div className="relative flex h-16 w-16 items-center justify-center rounded-full border-[8px] border-[#3B82F6]/30 bg-white/10 text-sm font-black">
+                <div className="relative flex h-16 w-16 items-center justify-center rounded-full border-[8px] border-[#2C5A6B]/30 bg-white/10 text-sm font-black">
                   {recoveryScore}%
                 </div>
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-600 to-blue-800 p-6 text-white shadow-[0_18px_45px_rgba(37,99,235,0.22)]">
+            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-600 to-blue-800 p-6 text-white shadow-[0_18px_45px_rgba(22,58,72,0.22)]">
               <MiniSparkline tone="blue" />
               <div className="flex items-start justify-between">
                 <div>
@@ -232,7 +232,7 @@ export default async function FinancialLeakagePage() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 2xl:grid-cols-4">
             {[
               [CircleDollarSign, "Detected", detected, "Total leakage identified", "bg-blue-100 text-blue-700"],
-              [ShieldAlert, "Recoverable", recoverable, "High confidence recovery", "bg-[#3B82F6]/12 text-[#1D4ED8]"],
+              [ShieldAlert, "Recoverable", recoverable, "High confidence recovery", "bg-[#2C5A6B]/12 text-[#163A48]"],
               [ClipboardCheck, "Approved", approved, "Approved recovery actions", "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
               [Banknote, "Recovered", recovered, "Value already recovered", "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
             ].map(([Icon, label, value, detail, tone]: any) => (
@@ -250,7 +250,7 @@ export default async function FinancialLeakagePage() {
           <div className="mt-8 flex items-center gap-4">
             <div className="h-4 flex-1 overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-[#3B82F6]"
+                className="h-full rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-[#2C5A6B]"
                 style={{ width: `${Math.max(12, recoveryProgress)}%` }}
               />
             </div>
@@ -306,7 +306,7 @@ export default async function FinancialLeakagePage() {
               ["bg-red-50 text-red-600", "HIGH IMPACT"],
               ["bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]", "HIGH IMPACT"],
               ["bg-blue-50 text-blue-600", "MEDIUM IMPACT"],
-              ["bg-[#3B82F6]/10 text-[#84CC16]", "MEDIUM IMPACT"],
+              ["bg-[#2C5A6B]/10 text-[#55B968]", "MEDIUM IMPACT"],
             ];
             const [tone, badge] = tones[index] || tones[0];
 
@@ -322,7 +322,7 @@ export default async function FinancialLeakagePage() {
                 <div className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-slate-500">{row.description}</div>
                 <div className="mt-4 text-2xl font-black text-red-600">{formatMoney(recovery)}</div>
                 <svg viewBox="0 0 160 30" className="mt-2 h-8 w-full">
-                  <path d="M2 24 C 25 18, 34 26, 51 14 S 76 5, 91 16 S 116 26, 136 11 S 149 4, 158 7" fill="none" stroke={index === 0 ? "#ef4444" : index === 1 ? "#60a5fa" : index === 2 ? "#1d4ed8" : "#6366f1"} strokeWidth="3" strokeLinecap="round" />
+                  <path d="M2 24 C 25 18, 34 26, 51 14 S 76 5, 91 16 S 116 26, 136 11 S 149 4, 158 7" fill="none" stroke={index === 0 ? "#ef4444" : index === 1 ? "#5f8595" : index === 2 ? "#163a48" : "#37606f"} strokeWidth="3" strokeLinecap="round" />
                 </svg>
               </Link>
             );

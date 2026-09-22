@@ -25,14 +25,14 @@ export default function GPRecoveryPlannerClient({ products }: { products: Produc
       config={{
         visualVariant: "recovery",
         title: "GPRecovery Planner",
-        subtitle: "Premium VYRON COST workflow for gprecovery planner.",
+        subtitle: "Premium VOLORA workflow for gprecovery planner.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] bg-[#3B82F6]/10 p-6">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#1D4ED8]">Monthly GP Recovery Plan</div>
-              <div className="mt-3 text-5xl font-black text-[#1D4ED8]">{money(total)}</div>
+            <div className="rounded-[2rem] bg-[#2C5A6B]/10 p-6">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#163A48]">Monthly GP Recovery Plan</div>
+              <div className="mt-3 text-5xl font-black text-[#163A48]">{money(total)}</div>
             </div>
             <div className="grid gap-4">
               {rows.map((row) => (
@@ -43,7 +43,7 @@ export default function GPRecoveryPlannerClient({ products }: { products: Produc
                       <p className="text-sm font-bold text-slate-500">GP gap {Number(row.product.gp_gap || 0).toFixed(1)}%</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-black text-[#1D4ED8]">{money(row.total)}</div>
+                      <div className="text-3xl font-black text-[#163A48]">{money(row.total)}</div>
                       <div className="text-xs font-bold text-slate-400">monthly recovery</div>
                     </div>
                   </div>

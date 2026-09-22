@@ -47,7 +47,7 @@ export const pieDemoCompany: VyronCompany = {
   currency_code: "ZAR",
   vat_percent: 15,
   logo_url: null,
-  primary_color: "#3b82f6",
+  primary_color: "#2c5a6b",
 };
 
 export const pieDemoBranches: VyronBranch[] = [

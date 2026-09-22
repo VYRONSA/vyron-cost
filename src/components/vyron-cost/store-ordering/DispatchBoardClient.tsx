@@ -107,7 +107,7 @@ export default function DispatchBoardClient() {
                 onClick={() => setTab(item.id)}
                 className={`rounded-full px-4 py-2 text-sm font-bold ${
                   tab === item.id
-                    ? "bg-[#0F172A] text-white"
+                    ? "bg-[#0B202B] text-white"
                     : "border border-[#E2E8F0] bg-white text-[#334155]"
                 }`}
               >

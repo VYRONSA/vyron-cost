@@ -457,7 +457,7 @@ export default function CustomerSalesOrdersClient({
         <KpiCard label="Procurement Required" value={String(kpis.procurementRequired)} />
       </section>
 
-      <section className="w-full max-w-full min-w-0 overflow-x-hidden rounded-3xl bg-white p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+      <section className="w-full max-w-full min-w-0 overflow-x-hidden rounded-3xl bg-white p-5 shadow-[0_18px_60px_rgba(11,32,43,0.08)]">
         <div className="flex flex-wrap items-center gap-3">
           <input
             value={search}
@@ -786,7 +786,7 @@ export default function CustomerSalesOrdersClient({
 
 function KpiCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="h-full w-full max-w-full min-w-0 rounded-2xl bg-white p-4 shadow-[0_12px_34px_rgba(15,23,42,0.08)]">
+    <div className="h-full w-full max-w-full min-w-0 rounded-2xl bg-white p-4 shadow-[0_12px_34px_rgba(11,32,43,0.08)]">
       <div className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">{label}</div>
       <div className="mt-2 break-words text-2xl font-black text-slate-900">{value}</div>
     </div>

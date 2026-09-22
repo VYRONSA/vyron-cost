@@ -83,7 +83,7 @@ export default function DemandForecastClient() {
             type="button"
             disabled={saving}
             onClick={() => void saveSnapshot()}
-            className="rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+            className="rounded-xl bg-[#1F4757] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save Snapshot"}
           </button>
@@ -102,7 +102,7 @@ export default function DemandForecastClient() {
 
         {warnings.length ? (
           <section className={VYRON_MASTER.moduleDataSection}>
-            <h2 className="mb-3 text-lg font-black text-[#0F172A]">Forecast Warnings</h2>
+            <h2 className="mb-3 text-lg font-black text-[#0B202B]">Forecast Warnings</h2>
             <div className="space-y-2">
               {warnings.slice(0, 8).map((warning) => (
                 <div
@@ -118,7 +118,7 @@ export default function DemandForecastClient() {
 
         <section className={VYRON_MASTER.moduleDataSection}>
           <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 className="text-lg font-black text-[#0F172A]">Product Forecasts</h2>
+            <h2 className="text-lg font-black text-[#0B202B]">Product Forecasts</h2>
           </div>
 
           {loading ? (
@@ -166,7 +166,7 @@ export default function DemandForecastClient() {
         {forecasts.length ? (
           <section className={`${VYRON_MASTER.moduleDataSection} text-sm text-[#64748B]`}>
             Forecast revenue next month (indicative):{" "}
-            <strong className="text-[#0F172A]">
+            <strong className="text-[#0B202B]">
               {formatMoney(forecasts.reduce((sum, row) => sum + row.forecast_next_month * row.unit_revenue, 0))}
             </strong>
           </section>

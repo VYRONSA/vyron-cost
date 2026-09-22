@@ -108,7 +108,7 @@ export default function StoreProductionRunsClient() {
                 ) : (
                   runs.map((run) => (
                     <tr key={run.id} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-                      <td className="px-4 py-3 font-bold text-[#0F172A]">{run.run_number}</td>
+                      <td className="px-4 py-3 font-bold text-[#0B202B]">{run.run_number}</td>
                       <td className="px-4 py-3 text-sm text-[#64748B]">{run.production_date}</td>
                       <td className="px-4 py-3">
                         <span

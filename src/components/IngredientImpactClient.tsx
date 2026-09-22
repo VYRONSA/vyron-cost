@@ -46,7 +46,7 @@ export default function IngredientImpactClient({ ingredientId }: { ingredientId:
       config={{
         visualVariant: "ingredients",
         title: "Ingredient Impact",
-        subtitle: "Premium VYRON COST workflow for ingredient impact.",
+        subtitle: "Premium VOLORA workflow for ingredient impact.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -62,7 +62,7 @@ export default function IngredientImpactClient({ ingredientId }: { ingredientId:
             </button>
 
             {message && (
-              <div className="mt-4 rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-4 text-sm font-bold text-[#1D4ED8]">
+              <div className="mt-4 rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-5 py-4 text-sm font-bold text-[#163A48]">
                 {message}
               </div>
             )}

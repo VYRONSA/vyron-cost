@@ -101,7 +101,7 @@ export default function ProductionRunNewClient() {
       }}
     >
       <section className="grid max-w-3xl gap-6">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <label className="text-xs font-black uppercase tracking-[0.12em] text-blue-600">Recipe / BOM *</label>
         <select
           value={bomId}

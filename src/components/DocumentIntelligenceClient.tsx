@@ -77,9 +77,9 @@ export default function DocumentIntelligenceClient() {
     >
       <section className="grid gap-6">
         <div className="rounded-[2rem] border border-blue-200 bg-blue-50 p-6">
-        <h2 className="text-xl font-black text-[#F8FAFC]">VYRON COST Document Intelligence</h2>
+        <h2 className="text-xl font-black text-[#F8FAFC]">VOLORA Document Intelligence</h2>
         <p className="mt-3 text-sm leading-7 text-blue-950">
-          Email invoices and purchase orders directly to VYRON COST and let AI extract, match and flag risks. Upload PDF or
+          Email invoices and purchase orders directly to VOLORA and let AI extract, match and flag risks. Upload PDF or
           image files now; email inbox intake is configured for production rollout.
         </p>
         <div className="mt-4 rounded-xl bg-white px-4 py-3 text-sm font-bold text-slate-700">
@@ -90,7 +90,7 @@ export default function DocumentIntelligenceClient() {
       <div className="grid gap-5 md:grid-cols-3">
         <label className="cursor-pointer rounded-[2rem] border border-white bg-white p-6 shadow-sm">
           <div className="flex items-center gap-3">
-            <FileUp className="text-[#1D4ED8]" />
+            <FileUp className="text-[#163A48]" />
             <div className="font-black text-[#F8FAFC]">Upload invoice PDF/image</div>
           </div>
           <input type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" onChange={(e) => handleUpload(e.target.files, "invoice")} />
@@ -98,7 +98,7 @@ export default function DocumentIntelligenceClient() {
         </label>
         <label className="cursor-pointer rounded-[2rem] border border-white bg-white p-6 shadow-sm">
           <div className="flex items-center gap-3">
-            <Upload className="text-[#1D4ED8]" />
+            <Upload className="text-[#163A48]" />
             <div className="font-black text-[#F8FAFC]">Upload purchase order PDF/image</div>
           </div>
           <input type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" onChange={(e) => handleUpload(e.target.files, "purchase-order")} />
@@ -116,7 +116,7 @@ export default function DocumentIntelligenceClient() {
         </div>
       </div>
 
-      {message ? <div className="rounded-xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3 text-sm font-black text-[#4D7C0F]">{message}</div> : null}
+      {message ? <div className="rounded-xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-4 py-3 text-sm font-black text-[#2F7C40]">{message}</div> : null}
 
         <div className="space-y-4">
         {docs.length === 0 ? (
@@ -176,13 +176,13 @@ export default function DocumentIntelligenceClient() {
                 ))}
               </div>
               <div className="mt-4 flex flex-wrap gap-3 text-xs font-black">
-                <Link href="/suppliers" className="text-[#1D4ED8]">
+                <Link href="/suppliers" className="text-[#163A48]">
                   Match supplier →
                 </Link>
-                <Link href="/ingredients" className="text-[#1D4ED8]">
+                <Link href="/ingredients" className="text-[#163A48]">
                   Match ingredient →
                 </Link>
-                <Link href="/products" className="text-[#1D4ED8]">
+                <Link href="/products" className="text-[#163A48]">
                   Match product →
                 </Link>
               </div>

@@ -158,9 +158,9 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
 
       {message ? <p className="rounded-xl bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</p> : null}
 
-      <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <div className="min-w-[1100px]">
-          <div className="grid grid-cols-9 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+          <div className="grid grid-cols-9 bg-[#061722] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
             <div>Batch #</div>
             <div>Date</div>
             <div className="col-span-2">Product</div>
@@ -208,7 +208,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
                         run.status === "Reversed"
                           ? "bg-red-100 text-red-800"
                           : run.status === "Completed"
-                            ? "bg-[#3B82F6]/12 text-[#4D7C0F]"
+                            ? "bg-[#2C5A6B]/12 text-[#2F7C40]"
                             : "bg-slate-100 text-slate-700"
                       }`}
                     >

@@ -74,25 +74,25 @@ export default async function CostAnalysisPage() {
   return (
     <VyronCostAiShell hidePageHeader title="Cost Analysis" subtitle="Food cost, packaging, labour, wastage and leakage breakdown.">
       <section className="grid gap-5 md:grid-cols-4">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Categories</div>
           <div className="mt-3 text-4xl font-black text-slate-900">{categories.length}</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Total Analysed</div>
           <div className="mt-3 text-4xl font-black text-blue-700">{formatMoney(total)}</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Largest Driver</div>
           <div className="mt-3 text-2xl font-black text-slate-900">{categories[0]?.name || "—"}</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Drilldown</div>
-          <div className="mt-3 text-4xl font-black text-[#84CC16]">Live</div>
+          <div className="mt-3 text-4xl font-black text-[#55B968]">Live</div>
         </div>
       </section>
 
-      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <h2 className="mb-5 text-xl font-black text-slate-900">Cost categories</h2>
         <div className="space-y-3">
           {categories.map((category) => {

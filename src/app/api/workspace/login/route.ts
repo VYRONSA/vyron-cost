@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const NO_WORKSPACE_MESSAGE =
-  "No workspace is linked to this login. Contact your VYRON administrator.";
+  "No workspace is linked to this login. Contact your VOLORA administrator.";
 
 async function parseLoginBody(request: NextRequest) {
   const contentType = request.headers.get("content-type") || "";

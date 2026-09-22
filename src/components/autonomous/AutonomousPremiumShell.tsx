@@ -11,7 +11,7 @@ const AUTONOMOUS_DEFAULTS: Partial<VyronPremiumPageConfig> = {
   intelligenceItems: [
     { label: "Explainable AI", detail: "Every signal shows formula, confidence and recommended action." },
     { label: "Cross-domain", detail: "Finance, inventory, procurement and production on one intelligence layer." },
-    { label: "Action-oriented", detail: "Signals link to the VYRON COST pages where work gets done." },
+    { label: "Action-oriented", detail: "Signals link to the VOLORA pages where work gets done." },
   ],
 };
 

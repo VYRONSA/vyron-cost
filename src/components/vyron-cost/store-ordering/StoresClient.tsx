@@ -155,7 +155,7 @@ export default function StoresClient() {
 
         {(canCreate || (canEdit && editingId)) && (
           <section className={`${VYRON_MASTER.moduleDataSection} space-y-4`}>
-            <h2 className="text-lg font-black text-[#0F172A]">
+            <h2 className="text-lg font-black text-[#0B202B]">
               {editingId ? "Edit Store" : "Add Store"}
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
@@ -234,7 +234,7 @@ export default function StoresClient() {
 
         <section className={VYRON_MASTER.moduleDataSection}>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-            <h2 className="text-lg font-black text-[#0F172A]">Stores</h2>
+            <h2 className="text-lg font-black text-[#0B202B]">Stores</h2>
             <div className="relative min-w-[240px]">
               <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
               <input
@@ -275,7 +275,7 @@ export default function StoresClient() {
                     <tr key={store.id} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
                       <td className="px-4 py-3 font-mono text-sm">{store.store_code}</td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2 font-bold text-[#0F172A]">
+                        <div className="flex items-center gap-2 font-bold text-[#0B202B]">
                           <Store size={16} className="text-[#64748B]" />
                           <Link href={`/stores/${store.id}`} className="hover:underline">{store.store_name}</Link>
                         </div>

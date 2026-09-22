@@ -11,7 +11,7 @@ export { PlatformNav };
 export function EnterpriseHubClient({ data }: { data: EnterprisePlatformPayload }) {
   return (
     <section className="grid gap-8">
-      <div className={`${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#101b35] via-[#1B2740] to-[#0e1733] p-8`}>
+      <div className={`${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#0b202b] via-[#0F2D39] to-[#0b202b] p-8`}>
         <div className="text-xs font-black uppercase tracking-widest text-blue-300">Enterprise Platform</div>
         <h2 className="mt-2 text-3xl font-black text-[#F8FAFC]">{data.multiCompany.groupName}</h2>
         <p className={`mt-2 ${EP_BODY}`}>
@@ -52,7 +52,7 @@ export function MultiCompanyClient({ data }: { data: EnterprisePlatformPayload["
               <div>
                 <span className={EP_LABEL}>{u.unitType}</span>
                 <div className="font-black text-[#F8FAFC]">{u.unitLabel}</div>
-                {u.isPrimary ? <span className="text-xs font-bold text-[#3B82F6]">Primary · live data</span> : null}
+                {u.isPrimary ? <span className="text-xs font-bold text-[#2C5A6B]">Primary · live data</span> : null}
               </div>
               <span className={`text-xs font-bold ${EP_MUTED}`}>{u.industry}</span>
             </div>
@@ -162,7 +162,7 @@ export function BenchmarkingClient({ engines }: { engines: EnterprisePlatformPay
                     key={r.unitKey}
                     className={
                       r.isBest
-                        ? "bg-[#3B82F6]/10"
+                        ? "bg-[#2C5A6B]/10"
                         : r.isWorst
                           ? "bg-red-500/10"
                           : EP_TABLE_ROW
@@ -170,7 +170,7 @@ export function BenchmarkingClient({ engines }: { engines: EnterprisePlatformPay
                   >
                     <td className="px-4 py-2 font-black text-[#F8FAFC]">{r.rank}</td>
                     <td className="px-4 py-2 font-bold text-[#CBD5E1]">{r.unitLabel}</td>
-                    <td className={`px-4 py-2 text-right font-black ${r.isBest ? "text-[#3B82F6]" : r.isWorst ? "text-red-300" : "text-[#F8FAFC]"}`}>
+                    <td className={`px-4 py-2 text-right font-black ${r.isBest ? "text-[#2C5A6B]" : r.isWorst ? "text-red-300" : "text-[#F8FAFC]"}`}>
                       {eng.dimension.includes("yield") || eng.dimension.includes("health") ? `${r.metricValue}` : money(r.metricValue)}
                     </td>
                   </tr>
@@ -336,7 +336,7 @@ export function EnterpriseSearchClient() {
 export function KnowledgeGraphClient({ graph }: { graph: EnterprisePlatformPayload["knowledgeGraph"] }) {
   return (
     <section className="grid gap-8 lg:grid-cols-[1fr_320px]">
-      <div className={`${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#101b35] via-[#1B2740] to-[#0e1733] p-8`}>
+      <div className={`${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#0b202b] via-[#0F2D39] to-[#0b202b] p-8`}>
         <h2 className="font-black text-[#F8FAFC]">Supply chain → financial impact</h2>
         <div className="mt-8 space-y-4">
           {graph.nodes.map((n, i) => (
@@ -401,12 +401,12 @@ export function EnterpriseAiClient({ presets }: { presets: EnterprisePlatformPay
           </button>
         ))}
       </div>
-      <div className={`${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#101b35] via-[#1B2740] to-[#0e1733] p-8`}>
-        <h2 className="text-xl font-black text-[#F8FAFC]">VYRON Enterprise AI</h2>
+      <div className={`${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#0b202b] via-[#0F2D39] to-[#0b202b] p-8`}>
+        <h2 className="text-xl font-black text-[#F8FAFC]">VOLORA Enterprise AI</h2>
         {answer ? (
           <>
             <p className={`mt-4 leading-8 ${EP_BODY}`}>{answer.answer}</p>
-            <div className="mt-6 rounded-xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150/80 p-4 text-xs text-[#94A3B8]">
+            <div className="mt-6 rounded-xl border border-[rgba(11,32,43,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150/80 p-4 text-xs text-[#94A3B8]">
               <div>Formula: {answer.formula}</div>
               <div className="mt-1">Confidence: {answer.confidence}%</div>
             </div>
@@ -433,12 +433,12 @@ export function PerformanceClient({ perf }: { perf: EnterprisePlatformPayload["p
         </div>
         <div className={`${EP_CARD_LG} border border-blue-400/30 bg-blue-500/15`}>
           <div className={`${EP_LABEL} text-blue-200`}>Readiness</div>
-          <div className="mt-2 text-3xl font-black text-[#3B82F6]">{perf.readinessPct}%</div>
+          <div className="mt-2 text-3xl font-black text-[#2C5A6B]">{perf.readinessPct}%</div>
         </div>
       </div>
       <ul className="space-y-2">
         {perf.strategies.map((s) => (
-          <li key={s} className={`rounded-xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 px-4 py-3 text-sm font-bold text-[#334155]`}>
+          <li key={s} className={`rounded-xl border border-[rgba(11,32,43,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 px-4 py-3 text-sm font-bold text-[#334155]`}>
             {s}
           </li>
         ))}

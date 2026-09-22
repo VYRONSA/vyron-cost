@@ -26,8 +26,8 @@ export default function ContractPriceReviewClient({ suppliers }: { suppliers: Su
       }}
     >
       <section className="grid gap-6">
-        <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase text-[#3B82F6]">
+        <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+        <div className="grid grid-cols-7 bg-[#061722] px-5 py-4 text-xs font-black uppercase text-[#2C5A6B]">
           <div className="col-span-2">Supplier</div>
           <div>Category</div>
           <div>Movement</div>
@@ -40,7 +40,7 @@ export default function ContractPriceReviewClient({ suppliers }: { suppliers: Su
             <div className="col-span-2 font-black text-[#F8FAFC]">{row.supplier_name}</div>
             <div>{row.category}</div>
             <div className="font-black text-red-700">{row.price_movement_percent.toFixed(1)}%</div>
-            <div className="font-black text-[#1D4ED8]">{formatSupplierSpend(row.contractVariance)}</div>
+            <div className="font-black text-[#163A48]">{formatSupplierSpend(row.contractVariance)}</div>
             <div>{row.renewalRisk}</div>
             <div className="text-xs font-bold text-slate-600">Review contract</div>
           </div>

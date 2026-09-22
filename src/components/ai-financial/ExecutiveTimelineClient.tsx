@@ -6,7 +6,7 @@ import type { ExecutiveTimelineEvent } from "@/lib/vyron-ai-financial-intelligen
 
 const CATEGORY_COLORS: Record<string, string> = {
   "Supplier Change": "bg-blue-100 text-blue-900",
-  Recovery: "bg-[#3B82F6]/12 text-[#4D7C0F]",
+  Recovery: "bg-[#2C5A6B]/12 text-[#2F7C40]",
   "Risk Alert": "bg-red-100 text-red-900",
   Approval: "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
 };

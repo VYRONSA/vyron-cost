@@ -61,7 +61,7 @@ function RegionOverlay({
   return (
     <div
       className={`pointer-events-none absolute rounded-sm border-2 transition-colors ${
-        active ? "border-indigo-500 bg-indigo-400/30 shadow-[0_0_0_2px_rgba(99,102,241,0.45)]" : "border-blue-400/50 bg-blue-400/10"
+        active ? "border-indigo-500 bg-indigo-400/30 shadow-[0_0_0_2px_rgba(55,96,111,0.45)]" : "border-blue-400/50 bg-blue-400/10"
       }`}
       style={{
         left: `${bbox.x * 100}%`,

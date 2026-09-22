@@ -13,7 +13,7 @@ type Props = {
 export default function ExecutiveSparkChart({
   data,
   height = 120,
-  colour = "#1d6bff",
+  colour = "#1f4757",
   formatValue = (n) => String(Math.round(n)),
   variant = "bar",
 }: Props) {

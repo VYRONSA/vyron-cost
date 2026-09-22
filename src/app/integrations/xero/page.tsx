@@ -18,7 +18,7 @@ export default async function Page() {
     <VyronCostAiShell
       hidePageHeader
       title="Xero Integration"
-      subtitle="Connect VYRON COST to Xero for accounting-ready customers, suppliers, invoices, purchase bills and sync audit visibility."
+      subtitle="Connect VOLORA to Xero for accounting-ready customers, suppliers, invoices, purchase bills and sync audit visibility."
     >
       <Suspense
         fallback={

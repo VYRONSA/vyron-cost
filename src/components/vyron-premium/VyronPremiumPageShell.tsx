@@ -87,7 +87,7 @@ export function VyronPremiumPageShell({
   dense?: boolean;
 }) {
   const {
-    badge = "Premium VYRON COST Workspace",
+    badge = "Premium VOLORA Workspace",
     title,
     subtitle,
     controlTitle,

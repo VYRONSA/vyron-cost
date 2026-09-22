@@ -19,11 +19,11 @@ export default function AiOperatorActionsClient() {
 
   return (
     <section className="grid gap-6">
-      <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-        <Bot size={34} className="text-[#3B82F6]" />
+      <div className="rounded-[2rem] bg-[#061722] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+        <Bot size={34} className="text-[#2C5A6B]" />
         <h2 className="mt-5 text-3xl font-black">AI Operator Actions</h2>
         <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
-          These are the action routes VYRON AI can guide or execute next. This turns the assistant from answer-only into operator-ready.
+          These are the action routes VOLORA AI can guide or execute next. This turns the assistant from answer-only into operator-ready.
         </p>
       </div>
 
@@ -34,21 +34,21 @@ export default function AiOperatorActionsClient() {
     <VyronPremiumPageShell
       config={{
         title: "Ai Operator Actions",
-        subtitle: "Premium VYRON COST workflow for ai operator actions.",
+        subtitle: "Premium VOLORA workflow for ai operator actions.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
-      <div key={title} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div key={title} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                     <button
                       type="button"
                       onClick={() => setExecuted((current) => ({ ...current, [title]: !done }))}
-                      className={`flex h-12 w-12 items-center justify-center rounded-2xl ${done ? "bg-[#3B82F6]/100 text-white" : "bg-slate-100 text-slate-400"}`}
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl ${done ? "bg-[#2C5A6B]/100 text-white" : "bg-slate-100 text-slate-400"}`}
                     >
                       <CheckCircle2 size={24} />
                     </button>
                     <h3 className="mt-5 text-xl font-black text-[#F8FAFC]">{title}</h3>
                     <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">{detail}</p>
-                    <Link href={href} className="mt-5 inline-flex rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
+                    <Link href={href} className="mt-5 inline-flex rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-5 py-3 text-sm font-black text-[#2F7C40]">
                       Open action
                     </Link>
                   </div>

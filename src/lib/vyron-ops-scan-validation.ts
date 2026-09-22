@@ -135,7 +135,7 @@ export async function validateOpsScan(
       barcode,
       workflow: input.workflow,
       actual: { label: barcode },
-      recommendation: "Barcode not recognised in VYRON COST inventory.",
+      recommendation: "Barcode not recognised in VOLORA inventory.",
       action: "Verify label or contact supervisor",
     };
   }

@@ -36,9 +36,9 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
       <section className="grid gap-6">
         <div className="grid gap-5 md:grid-cols-3">
         {snapshot.cards.map((card) => (
-          <div key={card.horizon} className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+          <div key={card.horizon} className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
             <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{card.label} forecast</div>
-            <div className="mt-3 text-4xl font-black text-[#1D4ED8]">{card.gpForecast}% GP</div>
+            <div className="mt-3 text-4xl font-black text-[#163A48]">{card.gpForecast}% GP</div>
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-xl bg-slate-50 p-3">
                 <div className="text-xs font-black uppercase text-slate-400">COGS</div>
@@ -55,13 +55,13 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
       </div>
 
       <div className="grid gap-5 xl:grid-cols-2">
-        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
           <h2 className="text-xl font-black text-[#F8FAFC]">GP Forecast Trend</h2>
-          <div className="mt-5 h-44 rounded-2xl bg-gradient-to-b from-[#3B82F6]/10 to-white p-4">
+          <div className="mt-5 h-44 rounded-2xl bg-gradient-to-b from-[#2C5A6B]/10 to-white p-4">
             <svg viewBox="0 0 360 150" className="h-full w-full">
               <polyline
                 fill="none"
-                stroke="#60A5FA"
+                stroke="#5F8595"
                 strokeWidth="4"
                 points={snapshot.gpTrend
                   .map((value, index) => `${index * 72},${150 - value * 1.8}`)
@@ -70,7 +70,7 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
             </svg>
           </div>
         </div>
-        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
           <h2 className="text-xl font-black text-[#F8FAFC]">Supplier Inflation Forecast</h2>
           <div className="mt-5 h-44 rounded-2xl bg-gradient-to-b from-red-50 to-white p-4">
             <svg viewBox="0 0 360 150" className="h-full w-full">
@@ -87,7 +87,7 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
         </div>
       </div>
 
-        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <h2 className="text-xl font-black text-[#F8FAFC]">Products likely to fall below target GP</h2>
@@ -104,7 +104,7 @@ export default function ForecastingClient({ snapshot }: { snapshot: ForecastSnap
             <div>Risk</div>
           </div>
           {filteredRisks.map((row) => (
-            <Link key={row.id} href={row.href} className="grid grid-cols-6 border-t border-slate-100 px-5 py-4 text-sm transition hover:bg-[#3B82F6]/10">
+            <Link key={row.id} href={row.href} className="grid grid-cols-6 border-t border-slate-100 px-5 py-4 text-sm transition hover:bg-[#2C5A6B]/10">
               <div className="col-span-2">
                 <div className="font-black text-slate-900">{row.name}</div>
                 <div className="text-xs text-slate-500">{row.category}</div>

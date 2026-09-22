@@ -172,14 +172,14 @@ export const DEMO_SCENARIOS: readonly DemoScenario[] = [
   {
     id: "unmatched-sku",
     title: "Unknown SKU",
-    story: "Bay Street Deli asks for a lamb pie VYRON does not make — nothing is guessed.",
+    story: "Bay Street Deli asks for a lamb pie VOLORA does not make — nothing is guessed.",
     input: manual({ customerName: "Bay Street Deli", customerPoNumber: "BSD-1002", lines: [{ sku: "HK-PIE-LAMB", description: "Lamb & Rosemary Pie", quantity: 12, unitPrice: 40 }] }),
     expect: { status: "EXCEPTION", codes: ["PRODUCT_UNMATCHED"] },
   },
   {
     id: "wrong-price",
     title: "Price differs from the price list",
-    story: "Bay Street Deli's order states R30 for beef pies; VYRON's price is R38.",
+    story: "Bay Street Deli's order states R30 for beef pies; VOLORA's price is R38.",
     input: manual({ customerName: "Bay Street Deli", customerPoNumber: "BSD-1003", lines: [{ sku: "HK-PIE-BEEF", quantity: 12, unitPrice: 30 }] }),
     expect: { status: "AWAITING_APPROVAL", codes: ["PRICE_MISMATCH"] },
   },
@@ -321,7 +321,7 @@ export const DEMO_SCENARIOS: readonly DemoScenario[] = [
   {
     id: "with-tax",
     title: "Order stating its tax",
-    story: "An order states its VAT; VYRON records it and the sales order applies the workspace VAT rate.",
+    story: "An order states its VAT; VOLORA records it and the sales order applies the workspace VAT rate.",
     input: manual({
       customerName: "Bay Street Deli",
       customerPoNumber: "BSD-1006",
@@ -332,7 +332,7 @@ export const DEMO_SCENARIOS: readonly DemoScenario[] = [
   },
   {
     id: "no-cost",
-    title: "Product with no cost in VYRON",
+    title: "Product with no cost in VOLORA",
     story: "BBQ sauce has no cost recorded, so margin is shown as Not Measured — never as zero.",
     input: manual({ customerName: "Bay Street Deli", customerPoNumber: "BSD-1007", lines: [{ sku: "HK-SAUCE-BBQ", quantity: 12, unitPrice: 24 }] }),
     expect: { status: "AWAITING_APPROVAL", codes: ["MARGIN_NOT_MEASURED"], absent: ["NEGATIVE_MARGIN"] },
@@ -354,7 +354,7 @@ export const DEMO_SCENARIOS: readonly DemoScenario[] = [
   {
     id: "ambiguous-product",
     title: "Two products share a SKU",
-    story: "Two tarts carry the same SKU in VYRON's master data — the engine lists both and asks.",
+    story: "Two tarts carry the same SKU in VOLORA's master data — the engine lists both and asks.",
     input: manual({ customerName: "Northside Grocers", customerPoNumber: "NG-7792", lines: [{ sku: "HK-TART", quantity: 6, unitPrice: 60 }] }),
     expect: { status: "EXCEPTION", codes: ["PRODUCT_AMBIGUOUS"] },
   },

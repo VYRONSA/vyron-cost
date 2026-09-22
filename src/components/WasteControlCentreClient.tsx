@@ -14,7 +14,7 @@ export default function WasteControlCentreClient({ branches }: { branches: Branc
     <VyronPremiumPageShell
       config={{
         title: "Waste Control Centre",
-        subtitle: "Premium VYRON COST workflow for waste control centre.",
+        subtitle: "Premium VOLORA workflow for waste control centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -24,19 +24,19 @@ export default function WasteControlCentreClient({ branches }: { branches: Branc
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Monthly Waste</div>
                 <div className="mt-3 text-4xl font-black text-red-700">{money(totalWaste)}</div>
               </div>
-              <div className="rounded-[2rem] bg-[#3B82F6]/10 p-6">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#1D4ED8]">Recoverable</div>
-                <div className="mt-3 text-4xl font-black text-[#1D4ED8]">{money(totalWaste * 0.65)}</div>
+              <div className="rounded-[2rem] bg-[#2C5A6B]/10 p-6">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#163A48]">Recoverable</div>
+                <div className="mt-3 text-4xl font-black text-[#163A48]">{money(totalWaste * 0.65)}</div>
               </div>
-              <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">Target</div>
+              <div className="rounded-[2rem] bg-[#061722] p-6 text-white">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">Target</div>
                 <div className="mt-3 text-3xl font-black">Reduce waste by 35%</div>
               </div>
             </section>
 
             <div className="grid gap-4">
               {branches.map((branch) => (
-                <div key={branch.id} className="rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+                <div key={branch.id} className="rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                   <div className="flex justify-between gap-4">
                     <div>
                       <div className="text-xl font-black text-[#F8FAFC]">{branch.branch_name}</div>

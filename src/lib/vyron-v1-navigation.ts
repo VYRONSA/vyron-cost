@@ -147,7 +147,7 @@ export const vyronV1NavSections: VyronV1NavSection[] = [
       { label: "Actions Centre", icon: CheckSquare, href: "/actions" },
       { label: "Execution Centre", icon: Play, href: "/execution-centre" },
       { label: "Autonomous Command Centre", icon: Brain, href: "/autonomous-command-centre" },
-      { label: "Ask VYRON", icon: MessageSquare, href: "/ask-vyron" },
+      { label: "Ask VOLORA", icon: MessageSquare, href: "/ask-vyron" },
     ],
   },
   {

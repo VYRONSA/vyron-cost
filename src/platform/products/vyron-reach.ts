@@ -2,7 +2,7 @@ import type { VyronProductDefinition } from "@/platform/types";
 
 export const VYRON_REACH_PRODUCT: VyronProductDefinition = {
   id: "vyron_reach",
-  name: "VYRON REACH",
+  name: "VOLORA Reach",
   shortName: "REACH",
   tagline: "Customer engagement, campaigns and multi-channel reach.",
   theme: {

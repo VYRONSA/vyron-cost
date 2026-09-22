@@ -14,7 +14,7 @@ export default function Page() {
         <VyronPremiumSectionHeading
           eyebrow="Quick navigation"
           title="Inventory Control Links"
-          subtitle="Open the operational stock pages without leaving the VYRON COST shell."
+          subtitle="Open the operational stock pages without leaving the VOLORA shell."
         />
         <div className="mt-6 grid gap-4 md:grid-cols-4">
           <Link href="/inventory" className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5 text-sm font-black text-blue-800 transition hover:border-blue-200 hover:shadow-md">

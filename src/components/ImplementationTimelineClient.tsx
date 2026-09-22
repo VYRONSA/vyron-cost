@@ -14,14 +14,14 @@ export default function ImplementationTimelineClient() {
     <VyronPremiumPageShell
       config={{
         title: "Implementation Timeline",
-        subtitle: "Premium VYRON COST workflow for implementation timeline.",
+        subtitle: "Premium VOLORA workflow for implementation timeline.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-5">
             {weeks.map(([week, detail], index) => (
-              <div key={week} className="grid gap-4 rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)] md:grid-cols-[90px_1fr]">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 text-2xl font-black text-[#1D4ED8]">{index + 1}</div>
+              <div key={week} className="grid gap-4 rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)] md:grid-cols-[90px_1fr]">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 text-2xl font-black text-[#163A48]">{index + 1}</div>
                 <div>
                   <h2 className="text-2xl font-black text-[#F8FAFC]">{week}</h2>
                   <p className="mt-2 text-sm font-semibold leading-7 text-slate-600">{detail}</p>

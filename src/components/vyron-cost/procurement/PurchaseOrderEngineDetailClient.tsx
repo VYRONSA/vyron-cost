@@ -118,7 +118,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
             <button
               type="button"
               onClick={() => void markSent()}
-              className="rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white"
+              className="rounded-xl bg-[#1F4757] px-4 py-2.5 text-sm font-bold text-white"
             >
               Mark Sent
             </button>
@@ -188,7 +188,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
 
             {supplierPerformance ? (
               <section className={VYRON_MASTER.moduleDataSection}>
-                <h2 className="mb-3 text-lg font-black text-[#0F172A]">Supplier Performance</h2>
+                <h2 className="mb-3 text-lg font-black text-[#0B202B]">Supplier Performance</h2>
                 <div className="grid gap-3 md:grid-cols-4 text-sm">
                   <div>Lead time: <strong>{supplierPerformance.lead_time_days} days</strong></div>
                   <div>On-time delivery: <strong>{supplierPerformance.on_time_delivery_pct}%</strong></div>
@@ -204,7 +204,7 @@ export default function PurchaseOrderEngineDetailClient({ poId }: { poId: string
             ) : null}
 
             <section className={VYRON_MASTER.moduleDataSection}>
-              <h2 className="mb-4 text-lg font-black text-[#0F172A]">Order Lines</h2>
+              <h2 className="mb-4 text-lg font-black text-[#0B202B]">Order Lines</h2>
               <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
                 <table className="min-w-full">
                   <thead className={VYRON_TABLE.head}>

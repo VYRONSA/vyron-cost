@@ -20,7 +20,7 @@ export default async function SupplierIntelligencePage() {
       <section className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {[
           ["Total Suppliers", centreStats.totalSuppliers, "bg-white"],
-          ["Active Suppliers", centreStats.activeSuppliers, "bg-[#3B82F6]/10"],
+          ["Active Suppliers", centreStats.activeSuppliers, "bg-[#2C5A6B]/10"],
           ["High Risk Suppliers", centreStats.highRiskSuppliers, "bg-red-50"],
           ["Inflation Alerts", centreStats.inflationAlerts, "bg-[var(--vyron-warning-bg)]"],
           ["Open Variances", centreStats.openVariances, "bg-[var(--vyron-warning-bg)]"],
@@ -48,7 +48,7 @@ export default async function SupplierIntelligencePage() {
           <div className="mt-2 text-2xl font-black">
             <span className="text-red-600">{widgets.increasesThisMonth}</span>
             <span className="text-slate-400"> / </span>
-            <span className="text-[#84CC16]">{widgets.decreasesThisMonth}</span>
+            <span className="text-[#55B968]">{widgets.decreasesThisMonth}</span>
           </div>
         </div>
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">

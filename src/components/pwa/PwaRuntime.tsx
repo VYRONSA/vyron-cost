@@ -168,7 +168,7 @@ export default function PwaRuntime() {
       if (typeof window !== "undefined") {
         window.localStorage.setItem(INSTALL_COMPLETE_KEY, "1");
       }
-      pushNotice({ id: `installed-${Date.now()}`, tone: "success", text: "VYRON COST installed successfully." });
+      pushNotice({ id: `installed-${Date.now()}`, tone: "success", text: "VOLORA installed successfully." });
     }
 
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
@@ -282,7 +282,7 @@ export default function PwaRuntime() {
         {notices.map((notice) => (
           <div
             key={notice.id}
-            className={`pointer-events-auto rounded-xl border px-3 py-2 text-xs font-semibold shadow-[0_10px_28px_rgba(15,23,42,0.12)] backdrop-blur ${toneClass(notice.tone)}`}
+            className={`pointer-events-auto rounded-xl border px-3 py-2 text-xs font-semibold shadow-[0_10px_28px_rgba(11,32,43,0.12)] backdrop-blur ${toneClass(notice.tone)}`}
           >
             {notice.text}
           </div>
@@ -300,14 +300,14 @@ export default function PwaRuntime() {
       <div
         className={`pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] z-[95] mx-auto flex w-full max-w-md justify-center px-4 sm:bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] ${showBottomBar ? "" : "hidden"}`}
       >
-        <div className="pointer-events-auto w-full overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.07)] bg-white/90 shadow-[0_8px_16px_rgba(15,23,42,0.05),0_24px_56px_rgba(15,23,42,0.12)] backdrop-blur-xl backdrop-saturate-150">
+        <div className="pointer-events-auto w-full overflow-hidden rounded-2xl border border-[rgba(11,32,43,0.07)] bg-white/90 shadow-[0_8px_16px_rgba(11,32,43,0.05),0_24px_56px_rgba(11,32,43,0.12)] backdrop-blur-xl backdrop-saturate-150">
           {showInstall ? (
             <div className="flex items-start gap-3.5 p-4">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1d6bff] via-[#4f46e5] to-[#1d4ed8] text-white shadow-[0_4px_12px_rgba(79,70,229,0.20)]">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1f4757] via-[#1f4757] to-[#163a48] text-white shadow-[0_4px_12px_rgba(22,58,72,0.20)]">
                 <Download size={18} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold tracking-[-0.01em] text-[#0F172A]">Install VYRON</p>
+                <p className="text-sm font-bold tracking-[-0.01em] text-[#0B202B]">Install VOLORA</p>
                 <p className="mt-0.5 text-xs font-medium leading-relaxed text-[#64748B]">
                   {installHint.startsWith("Install on iOS")
                     ? installHint.replace("Install on iOS: ", "On iPhone: tap ")
@@ -318,14 +318,14 @@ export default function PwaRuntime() {
                     type="button"
                     onClick={() => void handleInstall()}
                     disabled={installing}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#1d6bff] via-[#4f46e5] to-[#1d4ed8] px-4 text-xs font-bold text-white shadow-[0_4px_12px_rgba(79,70,229,0.18)] transition hover:brightness-[1.06] disabled:opacity-50"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#1f4757] via-[#1f4757] to-[#163a48] px-4 text-xs font-bold text-white shadow-[0_4px_12px_rgba(22,58,72,0.18)] transition hover:brightness-[1.06] disabled:opacity-50"
                   >
                     {installing ? "Installing…" : "Install"}
                   </button>
                   <button
                     type="button"
                     onClick={dismissInstallForThirtyDays}
-                    className="inline-flex h-10 items-center justify-center rounded-xl px-3 text-xs font-semibold text-[#64748B] transition hover:bg-[rgba(15,23,42,0.04)] hover:text-[#334155]"
+                    className="inline-flex h-10 items-center justify-center rounded-xl px-3 text-xs font-semibold text-[#64748B] transition hover:bg-[rgba(11,32,43,0.04)] hover:text-[#334155]"
                   >
                     Maybe later
                   </button>
@@ -338,9 +338,9 @@ export default function PwaRuntime() {
             <button
               type="button"
               onClick={applyUpdate}
-              className={`flex w-full items-center gap-2.5 px-4 py-3 text-left text-xs font-bold text-[#334155] transition hover:bg-[rgba(15,23,42,0.03)] ${showInstall ? "border-t border-[rgba(15,23,42,0.07)]" : ""}`}
+              className={`flex w-full items-center gap-2.5 px-4 py-3 text-left text-xs font-bold text-[#334155] transition hover:bg-[rgba(11,32,43,0.03)] ${showInstall ? "border-t border-[rgba(11,32,43,0.07)]" : ""}`}
             >
-              <RefreshCw size={15} className="text-[#4F46E5]" />
+              <RefreshCw size={15} className="text-[#1F4757]" />
               A new version is ready — tap to update
             </button>
           ) : null}

@@ -76,7 +76,7 @@ function MobileNavButton({
   const className = accent
     ? "-mt-8 flex h-16 w-16 items-center justify-center rounded-[1.8rem] border border-white/25 vyron-grad-surface text-white shadow-[var(--vyron-elev-brand)]"
     : `flex min-h-12 w-full flex-col items-center justify-center gap-1 rounded-2xl transition ${
-        active ? "text-[#4F46E5]" : "text-slate-400"
+        active ? "text-[#1F4757]" : "text-slate-400"
       }`;
 
   const content = (
@@ -102,16 +102,16 @@ function MobileNavButton({
 }
 
 function WorkspaceSwitcherButton({ client, onOpen }: { client: ActiveClient | null; onOpen: () => void }) {
-  const workspaceName = client?.tradingName || client?.companyName || "VYRON COST";
+  const workspaceName = client?.tradingName || client?.companyName || "VOLORA";
   const workspaceMeta = client?.packageName || "Workspace";
 
   return (
     <button
       type="button"
       onClick={onOpen}
-      className={`${MOBILE_TYPOGRAPHY.family} flex min-w-0 w-full items-center gap-3 rounded-[1.4rem] border border-white/70 bg-white/85 px-3 py-3 text-left shadow-[0_12px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl`}
+      className={`${MOBILE_TYPOGRAPHY.family} flex min-w-0 w-full items-center gap-3 rounded-[1.4rem] border border-white/70 bg-white/85 px-3 py-3 text-left shadow-[0_12px_32px_rgba(11,32,43,0.06)] backdrop-blur-xl`}
     >
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl vyron-grad-surface text-white shadow-[0_10px_24px_rgba(7,17,31,0.2)]">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl vyron-grad-surface text-white shadow-[0_10px_24px_rgba(6,23,34,0.2)]">
         <Building2 size={20} />
       </div>
       <div className="min-w-0 flex-1">
@@ -184,7 +184,7 @@ function CreateSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
             <Link
               key={action.href}
               href={action.href}
-              className="flex items-center gap-4 rounded-[1.4rem] border border-slate-100 bg-slate-50 px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
+              className="flex items-center gap-4 rounded-[1.4rem] border border-slate-100 bg-slate-50 px-4 py-4 shadow-[0_10px_24px_rgba(11,32,43,0.05)]"
             >
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl vyron-grad-surface text-white">
                 <Icon size={19} />
@@ -193,7 +193,7 @@ function CreateSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
                 <div className="text-sm font-black text-slate-950">{action.label}</div>
                 <div className="text-xs font-semibold text-slate-500">{action.detail}</div>
               </div>
-              <div className="rounded-full border border-[rgba(79,70,229,0.18)] bg-[rgba(79,70,229,0.06)] px-2.5 py-1 vyron-t-label text-[10px] text-[#4F46E5]">
+              <div className="rounded-full border border-[rgba(22,58,72,0.18)] bg-[rgba(22,58,72,0.06)] px-2.5 py-1 vyron-t-label text-[10px] text-[#1F4757]">
                 Run
               </div>
             </Link>
@@ -331,7 +331,7 @@ export default function VyronMobileShell({
     return Array.from(byHref.values());
   }, [activeClient?.packageName, workspaceSession]);
 
-  const workspaceName = activeClient?.tradingName || activeClient?.companyName || "VYRON COST";
+  const workspaceName = activeClient?.tradingName || activeClient?.companyName || "VOLORA";
   const workspaceSubtitle = activeClient?.packageName || "Touch-first workspace";
 
   const purchaseOrderDetailMatch = pathname.match(/^\/purchase-orders\/([^/]+)$/);
@@ -532,7 +532,7 @@ export default function VyronMobileShell({
 
         {effectiveStickyActions.length ? <PremiumMobileStickyActionBar actions={effectiveStickyActions} /> : null}
 
-        <nav className={`fixed inset-x-0 bottom-0 z-40 border-t border-white/80 bg-white/92 px-3 pb-[calc(env(safe-area-inset-bottom)+0.8rem)] pt-3 shadow-[0_-20px_55px_rgba(15,23,42,0.12)] backdrop-blur-xl ${mode === "tablet" ? "vyron-tablet-bottomnav" : ""}`}>
+        <nav className={`fixed inset-x-0 bottom-0 z-40 border-t border-white/80 bg-white/92 px-3 pb-[calc(env(safe-area-inset-bottom)+0.8rem)] pt-3 shadow-[0_-20px_55px_rgba(11,32,43,0.12)] backdrop-blur-xl ${mode === "tablet" ? "vyron-tablet-bottomnav" : ""}`}>
           <div className={`mx-auto grid grid-cols-5 items-end ${mode === "tablet" ? "max-w-4xl gap-3" : "max-w-3xl gap-1.5"}`}>
             {activeBottomNav.map((item) => {
               const Icon = item.icon;

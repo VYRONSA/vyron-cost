@@ -69,7 +69,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
       config={{
         visualVariant: "executive",
         title: "Executive Command Centre",
-        subtitle: "Premium VYRON COST workflow for executive command centre.",
+        subtitle: "Premium VOLORA workflow for executive command centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -86,7 +86,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 <Link
                   key={label}
                   href={href}
-                  className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] transition hover:border-blue-300"
+                  className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_10px_40px_rgba(11,32,43,0.06)] transition hover:border-blue-300"
                 >
                   <div className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600">{label}</div>
                   <div className="mt-2 text-3xl font-black text-slate-950">{value}</div>
@@ -98,7 +98,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
             <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-8 text-white shadow-[0_24px_80px_rgba(30,27,75,0.35)]">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VYRON COST</div>
+                  <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VOLORA</div>
                   <h2 className="mt-2 text-4xl font-black">Executive Command Centre</h2>
                   <p className="mt-2 max-w-2xl text-sm font-semibold text-slate-300">
                     CEO / CFO / Owner view — procurement, inventory, manufacturing, recovery and AI intelligence in one place.
@@ -142,11 +142,11 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 </div>
                 <div className="mt-4 rounded-2xl bg-white/10 p-4">
                   <div className="text-[10px] font-black uppercase opacity-75">Spend trend (14 days)</div>
-                  <ExecutiveSparkChart data={trends.spendTrend} colour="#93c5fd" formatValue={(n) => money(n)} />
+                  <ExecutiveSparkChart data={trends.spendTrend} colour="#93aeb9" formatValue={(n) => money(n)} />
                 </div>
               </CommandCentreCard>
 
-              <CommandCentreCard title="Inventory Command Centre" subtitle="Valuation · stock risk" href="/inventory-intelligence" accent="bg-gradient-to-br from-[#16233F] to-[#0e1733]">
+              <CommandCentreCard title="Inventory Command Centre" subtitle="Valuation · stock risk" href="/inventory-intelligence" accent="bg-gradient-to-br from-[#0F2D39] to-[#0b202b]">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                   <KpiTile label="Inventory value" value={money(inventory.inventoryValue)} />
                   <KpiTile label="Low stock" value={String(inventory.lowStock)} />
@@ -170,7 +170,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 </div>
                 <div className="mt-4 rounded-2xl bg-white/10 p-4">
                   <div className="text-[10px] font-black uppercase opacity-75">Production performance (avg yield % by week)</div>
-                  <ExecutiveSparkChart data={trends.productionPerformanceTrend} colour="#93c5fd" variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
+                  <ExecutiveSparkChart data={trends.productionPerformanceTrend} colour="#93aeb9" variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
                 </div>
               </CommandCentreCard>
 
@@ -188,7 +188,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
               </CommandCentreCard>
             </div>
 
-            <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+            <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <h3 className="text-xl font-black text-slate-950">Supplier inflation graph</h3>
@@ -199,12 +199,12 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 </Link>
               </div>
               <div className="mt-6 h-40">
-                <ExecutiveSparkChart data={trends.supplierInflationTrend} colour="#6366f1" height={140} formatValue={(n) => `${n.toFixed(1)}%`} />
+                <ExecutiveSparkChart data={trends.supplierInflationTrend} colour="#37606f" height={140} formatValue={(n) => `${n.toFixed(1)}%`} />
               </div>
             </section>
 
             <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+              <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                 <h3 className="text-xl font-black text-[#F8FAFC]">Executive risk heatmap</h3>
                 <p className="mt-1 text-sm font-semibold text-slate-500">Cross-functional exposure by area and metric</p>
                 <div className="mt-6">
@@ -269,7 +269,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
             </section>
 
             {supplierIntelligence ? (
-              <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+              <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Supplier Intelligence</div>
@@ -308,7 +308,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                     </ul>
                   </div>
                   <div>
-                    <div className="text-[10px] font-black uppercase text-[#84CC16]">Top savings</div>
+                    <div className="text-[10px] font-black uppercase text-[#55B968]">Top savings</div>
                     <ul className="mt-2 space-y-2 text-sm font-bold">
                       {supplierIntelligence.topSavingsOpportunities.map((s) => (
                         <li key={s.supplierId}>
@@ -323,7 +323,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 {supplierIntelligence.scoreTrend.length > 0 ? (
                   <div className="mt-6">
                     <div className="text-[10px] font-black uppercase text-slate-400">Supplier score trends</div>
-                    <ExecutiveSparkChart data={supplierIntelligence.scoreTrend} height={100} colour="#059669" />
+                    <ExecutiveSparkChart data={supplierIntelligence.scoreTrend} height={100} colour="#3E9B52" />
                   </div>
                 ) : null}
               </section>
@@ -385,7 +385,7 @@ export default function ExecutiveCommandCentreClient({ data }: { data: Executive
                 { label: "Finished goods", value: money(inventory.inventoryValue), Icon: Package, href: "/manufacturing/finished-goods" },
                 { label: "Recovery pipeline", value: String(recovery.openOpportunities), Icon: TrendingUp, href: "/recovery-pipeline" },
               ].map((card) => (
-                <Link key={card.label} href={card.href} className="rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] transition hover:shadow-md">
+                <Link key={card.label} href={card.href} className="rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(11,32,43,0.06)] transition hover:shadow-md">
                   <card.Icon className="text-blue-600" size={26} />
                   <div className="mt-3 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">{card.label}</div>
                   <div className="mt-1 text-2xl font-black text-slate-950">{card.value}</div>

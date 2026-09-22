@@ -172,7 +172,7 @@ export default function OrderNotificationSettingsClient() {
           const p = providers[key];
           const on = Boolean(p?.configured);
           return (
-            <div key={key} className={`${M.dashboardWidget} ${on ? "border-[#047857]/25" : "border-[#B45309]/25"}`}>
+            <div key={key} className={`${M.dashboardWidget} ${on ? "border-[#2F7C40]/25" : "border-[#B45309]/25"}`}>
               <p className={`${M.label} flex items-center gap-1.5`}>
                 {icon} {label}
               </p>
@@ -211,7 +211,7 @@ export default function OrderNotificationSettingsClient() {
       ) : null}
 
       <section className={M.modulePanel + " p-0"}>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(15,23,42,0.07)] px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(11,32,43,0.07)] px-5 py-4">
           <h2 className={`${M.label} text-[11px]`}>Recipients</h2>
           <button
             type="button"
@@ -227,18 +227,18 @@ export default function OrderNotificationSettingsClient() {
         ) : recipients.length === 0 && !draft ? (
           <div className="px-5 py-10 text-center">
             <Bell size={24} className="mx-auto text-[#CBD5E1]" />
-            <p className="mt-3 text-base font-black text-[#0F172A]">Nobody is being notified yet</p>
+            <p className="mt-3 text-base font-black text-[#0B202B]">Nobody is being notified yet</p>
             <p className="mt-1 text-sm font-semibold text-[#64748B]">
               Add the people who should hear when a customer places an order.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-[rgba(15,23,42,0.06)]">
+          <div className="divide-y divide-[rgba(11,32,43,0.06)]">
             {recipients.map((r) => (
               <div key={r.id} className="flex flex-wrap items-start justify-between gap-3 px-5 py-4">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-black text-[#0F172A]">{r.name}</p>
+                    <p className="text-sm font-black text-[#0B202B]">{r.name}</p>
                     <span className="vyron-status vyron-status-neutral">{r.role}</span>
                     {r.status === "Inactive" ? (
                       <span className="vyron-status vyron-status-error">Inactive</span>
@@ -248,9 +248,9 @@ export default function OrderNotificationSettingsClient() {
                     {[r.email, r.mobile].filter(Boolean).join(" · ") || "No contact details"}
                   </p>
                   <p className="mt-1 flex flex-wrap gap-1.5 text-[10px] font-black uppercase tracking-[0.08em]">
-                    {r.emailEnabled && r.email ? <span className="rounded bg-[rgba(15,23,42,0.05)] px-1.5 py-0.5 text-[#334155]">Email</span> : null}
-                    {r.smsEnabled && r.mobile ? <span className="rounded bg-[rgba(15,23,42,0.05)] px-1.5 py-0.5 text-[#334155]">SMS</span> : null}
-                    {r.whatsappEnabled && r.mobile ? <span className="rounded bg-[rgba(15,23,42,0.05)] px-1.5 py-0.5 text-[#334155]">WhatsApp</span> : null}
+                    {r.emailEnabled && r.email ? <span className="rounded bg-[rgba(11,32,43,0.05)] px-1.5 py-0.5 text-[#334155]">Email</span> : null}
+                    {r.smsEnabled && r.mobile ? <span className="rounded bg-[rgba(11,32,43,0.05)] px-1.5 py-0.5 text-[#334155]">SMS</span> : null}
+                    {r.whatsappEnabled && r.mobile ? <span className="rounded bg-[rgba(11,32,43,0.05)] px-1.5 py-0.5 text-[#334155]">WhatsApp</span> : null}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -284,7 +284,7 @@ export default function OrderNotificationSettingsClient() {
         )}
 
         {draft ? (
-          <div className="border-t border-[rgba(15,23,42,0.07)] bg-[rgba(15,23,42,0.03)] px-5 py-5">
+          <div className="border-t border-[rgba(11,32,43,0.07)] bg-[rgba(11,32,43,0.03)] px-5 py-5">
             <p className={M.label}>
               {draft.id ? "Edit recipient" : "New recipient"}
             </p>
@@ -325,7 +325,7 @@ export default function OrderNotificationSettingsClient() {
                 <label key={key} className="inline-flex items-center gap-2">
                   <input type="checkbox" checked={draft[key]} disabled={!available}
                     onChange={(e) => setDraft({ ...draft, [key]: e.target.checked })}
-                    className="h-5 w-5 rounded border-[rgba(15,23,42,0.20)] accent-[#2563EB]" />
+                    className="h-5 w-5 rounded border-[rgba(11,32,43,0.20)] accent-[#1F4757]" />
                   <span className={`text-sm font-bold ${available ? "text-[#334155]" : "text-[#94A3B8]"}`}>
                     {label}{available ? "" : " — no provider yet"}
                   </span>
@@ -334,7 +334,7 @@ export default function OrderNotificationSettingsClient() {
               <label className="inline-flex items-center gap-2">
                 <input type="checkbox" checked={draft.status === "Active"}
                   onChange={(e) => setDraft({ ...draft, status: e.target.checked ? "Active" : "Inactive" })}
-                  className="h-5 w-5 rounded border-[rgba(15,23,42,0.20)] accent-[#2563EB]" />
+                  className="h-5 w-5 rounded border-[rgba(11,32,43,0.20)] accent-[#1F4757]" />
                 <span className="text-sm font-bold text-[#334155]">Active</span>
               </label>
             </div>

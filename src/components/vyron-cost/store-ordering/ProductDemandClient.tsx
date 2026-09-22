@@ -66,7 +66,7 @@ export default function ProductDemandClient() {
             ) : (
               rows.map((row) => (
                 <tr key={row.product_id} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-                  <td className="px-4 py-3 font-semibold text-[#0F172A]">{row.product_name}</td>
+                  <td className="px-4 py-3 font-semibold text-[#0B202B]">{row.product_name}</td>
                   <td className="px-4 py-3 text-right text-sm">{row.quantity.toLocaleString("en-ZA")}</td>
                   <td className="px-4 py-3 text-right text-sm font-bold">{formatStoreOrderMoney(row.revenue)}</td>
                   <td className="px-4 py-3 text-right text-sm">{row.order_count}</td>
@@ -106,7 +106,7 @@ export default function ProductDemandClient() {
               type="button"
               onClick={() => setDays(period)}
               className={`rounded-full px-4 py-2 text-sm font-bold ${
-                days === period ? "bg-[#0F172A] text-white" : "border border-[#E2E8F0] bg-white text-[#334155]"
+                days === period ? "bg-[#0B202B] text-white" : "border border-[#E2E8F0] bg-white text-[#334155]"
               }`}
             >
               {period} days
@@ -115,12 +115,12 @@ export default function ProductDemandClient() {
         </div>
 
         <section className={VYRON_MASTER.moduleDataSection}>
-          <h2 className="mb-4 text-lg font-black text-[#0F172A]">Top Ordered Products</h2>
+          <h2 className="mb-4 text-lg font-black text-[#0B202B]">Top Ordered Products</h2>
           {renderTable(top, "No product demand in this period.")}
         </section>
 
         <section className={VYRON_MASTER.moduleDataSection}>
-          <h2 className="mb-4 text-lg font-black text-[#0F172A]">Bottom Ordered Products</h2>
+          <h2 className="mb-4 text-lg font-black text-[#0B202B]">Bottom Ordered Products</h2>
           {renderTable(bottom, "No slow movers in this period.")}
         </section>
       </div>

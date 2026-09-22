@@ -26,7 +26,7 @@ export default function PremiumMobileBottomSheet({
       tabIndex={-1}
     >
       <div
-        className="vyron-mobile-sheet-panel w-full rounded-t-[2rem] border-t border-white/70 bg-white p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-[0_-24px_60px_rgba(15,23,42,0.22)]"
+        className="vyron-mobile-sheet-panel w-full rounded-t-[2rem] border-t border-white/70 bg-white p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-[0_-24px_60px_rgba(11,32,43,0.22)]"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"

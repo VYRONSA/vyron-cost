@@ -46,15 +46,15 @@ const features = [
 
 export default function VyronLandingPage() {
   return (
-    <main className="min-h-screen bg-[#F7F8FA] text-[#0F172A]">
+    <main className="min-h-screen bg-[#F7F8FA] text-[#0B202B]">
       <header className="sticky top-0 z-20 border-b border-[#E2E8F0] bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-10">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl vyron-grad-deep text-xs font-black text-[#BFDBFE]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl vyron-grad-deep text-xs font-black text-[#BCCDD5]">
               VC
             </div>
             <div>
-              <div className="text-sm font-black">VYRON COST</div>
+              <div className="text-sm font-black">VOLORA</div>
               <div className="text-[9px] font-black uppercase tracking-[0.24em] text-[#64748B]">Profit Protection</div>
             </div>
           </Link>
@@ -73,7 +73,7 @@ export default function VyronLandingPage() {
             </Link>
             <Link
               href="/api/demo-access?redirect=/dashboard"
-              className="rounded-xl bg-[#60A5FA] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[#0F172A]"
+              className="rounded-xl bg-[#5F8595] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[#0B202B]"
             >
               View Demo
             </Link>
@@ -86,16 +86,16 @@ export default function VyronLandingPage() {
         <div className="relative mx-auto grid max-w-7xl gap-12 px-6 pb-12 pt-16 lg:grid-cols-2 lg:items-center lg:px-10 lg:pt-24">
           <div>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E2E8F0] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#64748B]">
-              <TrendingUp size={14} className="text-[#BFDBFE]" />
+              <TrendingUp size={14} className="text-[#BCCDD5]" />
               Enterprise Costing & Profit Protection
             </div>
             <h1 className="text-5xl font-black leading-[1.02] tracking-tight md:text-6xl lg:text-7xl">
-              VYRON COST
+              VOLORA
               <br />
-              <span className="text-[#0F172A]">PROTECTS MARGIN</span>
+              <span className="text-[#0B202B]">PROTECTS MARGIN</span>
             </h1>
             <p className="mt-8 max-w-xl text-lg leading-8 text-[#64748B]">
-              VYRON COST is built for food manufacturers, multi-site producers and finance teams who need live BOM
+              VOLORA is built for food manufacturers, multi-site producers and finance teams who need live BOM
               costing, supplier intelligence, invoice and PO control, and explainable profit recovery — not spreadsheets.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -108,13 +108,13 @@ export default function VyronLandingPage() {
               </Link>
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#0F172A]"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#0B202B]"
               >
                 Book Demo
               </Link>
               <Link
                 href="/api/demo-access?redirect=/dashboard"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#60A5FA] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#0F172A]"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#5F8595] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#0B202B]"
               >
                 View Demo
                 <LayoutDashboard size={18} />
@@ -123,7 +123,7 @@ export default function VyronLandingPage() {
           </div>
 
           <div className="vyron-surface-card-elevated overflow-hidden p-8">
-            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-[#64748B]">What VYRON COST does</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-[#64748B]">What VOLORA does</div>
             <div className="mt-6 space-y-4">
               {[
                 { emoji: "🔴", title: "Meat supplier inflation detected", sub: "+12.4% on protein lines" },
@@ -150,7 +150,7 @@ export default function VyronLandingPage() {
         <div className="mx-auto grid max-w-7xl gap-px md:grid-cols-4">
           {kpiStrip.map((item) => (
             <div key={item.label} className="px-6 py-8 text-center md:py-10">
-              <div className="text-3xl font-black text-[#0F172A] md:text-4xl">{item.value}</div>
+              <div className="text-3xl font-black text-[#0B202B] md:text-4xl">{item.value}</div>
               <div className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#64748B]">{item.label}</div>
             </div>
           ))}
@@ -166,7 +166,7 @@ export default function VyronLandingPage() {
         <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {features.map((feature) => (
             <div key={feature.title} className="vyron-surface-card-elevated p-6">
-              <h3 className="font-black text-[#0F172A]">{feature.title}</h3>
+              <h3 className="font-black text-[#0B202B]">{feature.title}</h3>
               <p className="mt-3 text-sm leading-7 text-[#64748B]">{feature.body}</p>
             </div>
           ))}
@@ -178,7 +178,7 @@ export default function VyronLandingPage() {
           <div>
             <div className="text-[10px] font-black uppercase tracking-[0.22em] text-[#64748B]">Demo client</div>
             <h2 className="mt-3 text-3xl font-black">Handcrafted Food Products</h2>
-            <p className="mt-2 text-[#64748B]">Live costing intelligence · powered by VYRON COST</p>
+            <p className="mt-2 text-[#64748B]">Live costing intelligence · powered by VOLORA</p>
           </div>
           <ClientBrandLockup variant="light" size="lg" />
         </div>
@@ -188,12 +188,12 @@ export default function VyronLandingPage() {
         <div className="rounded-[2rem] vyron-grad-deep p-12 text-center text-white">
           <h2 className="text-3xl font-black md:text-4xl">This software finds money — and shows the formula.</h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm text-white/70">
-            Email invoices and purchase orders directly to VYRON COST and let AI extract, match and flag risks.
+            Email invoices and purchase orders directly to VOLORA and let AI extract, match and flag risks.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#60A5FA] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#0F172A]"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#5F8595] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#0B202B]"
             >
               Login
             </Link>
@@ -215,7 +215,7 @@ export default function VyronLandingPage() {
       </section>
 
       <footer className="border-t border-[#E2E8F0] py-8 text-center text-[10px] font-black uppercase tracking-[0.2em] text-[#64748B]">
-        Handcrafted Food Products · powered by VYRON COST
+        Handcrafted Food Products · powered by VOLORA
       </footer>
     </main>
   );

@@ -234,7 +234,7 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
       >
       <section className={`grid min-w-0 max-w-full grid-cols-1 gap-5 ${canCreate || canEdit ? "xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)]" : ""}`}>
       {canCreate || canEdit ? (
-      <div className="min-w-0 rounded-[1.75rem] bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <div className="min-w-0 rounded-[1.75rem] bg-white p-5 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
             <Plus size={20} />
@@ -250,9 +250,9 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">True Unit Cost</div>
             <div className="mt-1 text-3xl font-black text-blue-300">{formatMoney(trueCost)}</div>
           </div>
-          <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/8 p-4">
+          <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/8 p-4">
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Movement</div>
-            <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#3B82F6]"}`}>{movement.toFixed(1)}%</div>
+            <div className={`mt-1 text-3xl font-black ${movement > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#2C5A6B]"}`}>{movement.toFixed(1)}%</div>
           </div>
         </div>
 
@@ -344,13 +344,13 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
             Save Ingredient
           </button>
 
-          {message && <div className="rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#3B82F6]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-4 py-3 text-sm font-bold text-[#2C5A6B]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div>}
         </div>
       </div>
       ) : null}
 
-      <div className="min-w-0 rounded-[1.75rem] bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <div className="min-w-0 rounded-[1.75rem] bg-white p-5 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-2xl font-black text-slate-950">Ingredients</h2>
@@ -373,7 +373,7 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
               </div>
             ) : filtered.length === 0 ? (
               <div className="border-t border-slate-100 px-5 py-10 text-center text-sm font-semibold text-slate-500">
-                No ingredients yet. Start by adding ingredients, linking suppliers, then build BOMs so VYRON can protect your product margins.
+                No ingredients yet. Start by adding ingredients, linking suppliers, then build BOMs so VOLORA can protect your product margins.
               </div>
             ) : null}
             {filtered.map((item) => {
@@ -384,7 +384,7 @@ export default function IngredientManagerClient({ initialIngredients, suppliers:
                   <div className="font-bold text-slate-500">{item.category}</div>
                   <div className="font-black text-slate-900">{formatMoney(item.purchase_cost)}</div>
                   <div className="font-black text-blue-700">{formatMoney(item.true_unit_cost)}</div>
-                  <div className={`font-black ${move > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#3B82F6]"}`}>{move.toFixed(1)}%</div>
+                  <div className={`font-black ${move > 5 ? "text-[var(--vyron-warning-fg)]" : "text-[#2C5A6B]"}`}>{move.toFixed(1)}%</div>
                   <div className="flex gap-2">
                     {canEdit ? (
                       <button onClick={() => edit(item)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Edit</button>

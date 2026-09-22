@@ -93,13 +93,13 @@ export default function InventoryDashboardClient() {
           type="button"
           onClick={() => void syncMasters()}
           disabled={syncing}
-          className="inline-flex items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155] disabled:opacity-60"
         >
           <RefreshCcw size={17} />
           {syncing ? "Syncing…" : "Sync from Ingredients & Products"}
         </button>
       ) : null}
-      <Link href="/inventory/ledger" className="inline-flex items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
+      <Link href="/inventory/ledger" className="inline-flex items-center gap-2 rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
         <Boxes size={17} />
         Stock Ledger
       </Link>
@@ -160,7 +160,7 @@ export default function InventoryDashboardClient() {
         ))}
       </div>
 
-      <p className="rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-4 text-sm font-medium leading-6 text-[#334155]">
+      <p className="rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 px-5 py-4 text-sm font-medium leading-6 text-[#334155]">
         Valuation: weighted average active. FIFO and standard cost settings remain available in stock item detail screens.
       </p>
     </VyronPremiumPageShell>

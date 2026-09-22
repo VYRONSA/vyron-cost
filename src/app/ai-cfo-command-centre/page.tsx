@@ -10,7 +10,7 @@ export default async function AiCfoCommandCentrePage() {
 
   return (
     <VyronCostShell hidePageHeader title="AI CFO Command Centre"
-      subtitle="VYRON INTELLIGENCE · FINANCIAL HEALTH · LEAKAGE · NARRATIVES · ALERTS"
+      subtitle="VOLORA Intelligence · FINANCIAL HEALTH · LEAKAGE · NARRATIVES · ALERTS"
     >
       <div className="mb-6 flex flex-wrap gap-2">
         <Link href="/ai-cfo-command-centre/leakage" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black">

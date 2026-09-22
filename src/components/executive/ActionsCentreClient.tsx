@@ -216,7 +216,7 @@ export default function ActionsCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#2C5A6B]/35 bg-[#2C5A6B]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Actions Centre
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Actions Centre</h1>
@@ -264,7 +264,7 @@ export default function ActionsCentreClient({
 
       {!snapshot.hasActionData && !loading ? (
         <section className={M.moduleDataSection}>
-          <h2 className="text-xl font-bold text-[#0F172A]">Action intelligence requires additional operational data.</h2>
+          <h2 className="text-xl font-bold text-[#0B202B]">Action intelligence requires additional operational data.</h2>
           <p className="mt-2 text-sm font-medium text-[#64748B]">
             Actions are derived from Decisions, Root Causes, Early Warnings and Predictive Risk signals. Load operational
             data to enable traceable execution plans.
@@ -290,8 +290,8 @@ export default function ActionsCentreClient({
       ) : (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <SummaryCard label="Critical Actions" value={String(snapshot.summary.criticalActions)} accent="#2563EB" />
-            <SummaryCard label="High Priority Actions" value={String(snapshot.summary.highPriorityActions)} accent="#3B82F6" />
+            <SummaryCard label="Critical Actions" value={String(snapshot.summary.criticalActions)} accent="#1F4757" />
+            <SummaryCard label="High Priority Actions" value={String(snapshot.summary.highPriorityActions)} accent="#2C5A6B" />
             <SummaryCard
               label="Estimated Opportunity"
               value={
@@ -299,7 +299,7 @@ export default function ActionsCentreClient({
                   ? snapshot.summary.opportunityLabel
                   : "Opportunity Not Yet Quantifiable"
               }
-              accent="#1D6BFF"
+              accent="#1F4757"
               small={snapshot.summary.estimatedOpportunity == null}
             />
             <SummaryCard
@@ -309,10 +309,10 @@ export default function ActionsCentreClient({
                   ? snapshot.summary.riskReductionLabel
                   : "Opportunity Not Yet Quantifiable"
               }
-              accent="#3B82F6"
+              accent="#2C5A6B"
               small={snapshot.summary.estimatedRiskReduction == null}
             />
-            <SummaryCard label="Execution Readiness" value={snapshot.summary.executionReadiness} accent="#0F172A" />
+            <SummaryCard label="Execution Readiness" value={snapshot.summary.executionReadiness} accent="#0B202B" />
           </section>
 
           {snapshot.pipeline.length === 0 ? (
@@ -330,7 +330,7 @@ export default function ActionsCentreClient({
           ) : (
             <>
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Action Pipeline</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Action Pipeline</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Execution actions traceable to decisions, root causes, warnings and predictive risks.
                 </p>
@@ -368,7 +368,7 @@ export default function ActionsCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Execution Playbooks</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Execution Playbooks</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Execution plans generated only when supported by current tenant data.
                 </p>
@@ -384,7 +384,7 @@ export default function ActionsCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Action Impact Matrix</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Action Impact Matrix</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Actions positioned by impact and effort from operational intelligence.
                 </p>
@@ -396,7 +396,7 @@ export default function ActionsCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Action Ownership Centre</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Action Ownership Centre</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Actions grouped by owner with critical count, impact and readiness.
                 </p>
@@ -413,7 +413,7 @@ export default function ActionsCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Blockers & Dependencies</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Blockers & Dependencies</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Data and integration gaps blocking execution readiness.
                 </p>
@@ -429,7 +429,7 @@ export default function ActionsCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Execution Queue</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Execution Queue</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Top 20 actions ranked Critical → High → Medium → Low.
                 </p>
@@ -458,7 +458,7 @@ export default function ActionsCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Expected Outcomes</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Expected Outcomes</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Summarised outcomes from margin, supplier, inventory, data quality and financial visibility actions.
                 </p>
@@ -472,7 +472,7 @@ export default function ActionsCentreClient({
           )}
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-lg font-bold text-[#0F172A]">Executive drilldowns</h2>
+            <h2 className="text-lg font-bold text-[#0B202B]">Executive drilldowns</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {[
                 { label: "Executive Boardroom", href: "/executive-boardroom", icon: Building2 },
@@ -494,7 +494,7 @@ export default function ActionsCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1F4757]/30 hover:text-[#1F4757]"
                 >
                   <link.icon size={16} />
                   {link.label}
@@ -523,8 +523,8 @@ function SummaryCard({
     <div className={`${M.moduleDataSection} p-5`}>
       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">{label}</div>
       <div
-        className={`mt-2 font-black text-[#0F172A] ${small ? "text-sm leading-6" : "text-2xl"}`}
-        style={{ color: small ? "#0F172A" : accent }}
+        className={`mt-2 font-black text-[#0B202B] ${small ? "text-sm leading-6" : "text-2xl"}`}
+        style={{ color: small ? "#0B202B" : accent }}
       >
         {value}
       </div>
@@ -535,8 +535,8 @@ function SummaryCard({
 function PipelineRow({ row }: { row: ExecutionAction }) {
   return (
     <tr className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{row.action}</td>
-      <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{row.category}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{row.action}</td>
+      <td className="px-4 py-3 font-semibold text-[#1F4757]">{row.category}</td>
       <td className="px-4 py-3">
         <PriorityBadge priority={row.priority} />
       </td>
@@ -549,7 +549,7 @@ function PipelineRow({ row }: { row: ExecutionAction }) {
       </td>
       <td className="px-4 py-3 text-sm font-medium text-[#64748B]">{row.dueHorizon}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -560,23 +560,23 @@ function PipelineRow({ row }: { row: ExecutionAction }) {
 function PlaybookCard({ playbook }: { playbook: ExecutionPlaybook }) {
   return (
     <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-5">
-      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1D6BFF]">{playbook.category}</div>
-      <h3 className="mt-1 font-bold text-[#0F172A]">{playbook.title}</h3>
+      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1F4757]">{playbook.category}</div>
+      <h3 className="mt-1 font-bold text-[#0B202B]">{playbook.title}</h3>
       <div className="mt-4 space-y-2 text-sm">
         <p>
-          <span className="font-bold text-[#0F172A]">Action: </span>
+          <span className="font-bold text-[#0B202B]">Action: </span>
           {playbook.action}
         </p>
         <p>
-          <span className="font-bold text-[#0F172A]">Owner: </span>
+          <span className="font-bold text-[#0B202B]">Owner: </span>
           {playbook.owner}
         </p>
         <p>
-          <span className="font-bold text-[#0F172A]">Outcome: </span>
+          <span className="font-bold text-[#0B202B]">Outcome: </span>
           {playbook.outcome}
         </p>
       </div>
-      <Link href={playbook.href} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+      <Link href={playbook.href} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
         Execute <ArrowRight size={14} />
       </Link>
     </div>
@@ -602,8 +602,8 @@ function ImpactMatrixQuadrant({
   return (
     <div className={`rounded-2xl border p-4 ${accent}`}>
       <div className="flex items-center gap-2">
-        <Scale size={16} className="text-[#1D6BFF]" />
-        <h3 className="font-bold text-[#0F172A]">{quadrant}</h3>
+        <Scale size={16} className="text-[#1F4757]" />
+        <h3 className="font-bold text-[#0B202B]">{quadrant}</h3>
       </div>
       {actions.length === 0 ? (
         <p className="mt-3 text-sm font-medium text-[#64748B]">No actions in this quadrant.</p>
@@ -611,7 +611,7 @@ function ImpactMatrixQuadrant({
         <ul className="mt-3 space-y-2">
           {actions.map((row) => (
             <li key={row.id}>
-              <Link href={row.href} className="text-sm font-semibold text-[#334155] hover:text-[#1D6BFF]">
+              <Link href={row.href} className="text-sm font-semibold text-[#334155] hover:text-[#1F4757]">
                 {row.action}
               </Link>
             </li>
@@ -626,13 +626,13 @@ function OwnerGroupCard({ group }: { group: OwnerGroup }) {
   return (
     <Link
       href={group.href}
-      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1D6BFF]/30 hover:shadow-md`}
+      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1F4757]/30 hover:shadow-md`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="font-bold text-[#0F172A]">{group.owner}</h3>
+          <h3 className="font-bold text-[#0B202B]">{group.owner}</h3>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-2xl font-black text-[#0F172A]">{group.totalActions}</span>
+            <span className="text-2xl font-black text-[#0B202B]">{group.totalActions}</span>
             <span className="text-sm font-medium text-[#64748B]">actions</span>
             {group.criticalActions > 0 ? (
               <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase text-rose-800">
@@ -654,7 +654,7 @@ function BlockerCard({ blocker }: { blocker: ActionBlocker }) {
     <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-4">
       <div className="flex flex-wrap items-center gap-2">
         <PriorityBadge priority={blocker.severity} />
-        <h3 className="font-bold text-[#0F172A]">{blocker.blocker}</h3>
+        <h3 className="font-bold text-[#0B202B]">{blocker.blocker}</h3>
       </div>
       <p className="mt-2 text-sm font-medium text-[#64748B]">
         <span className="font-bold text-[#334155]">Resolution: </span>
@@ -668,7 +668,7 @@ function BlockerCard({ blocker }: { blocker: ActionBlocker }) {
           </li>
         ))}
       </ul>
-      <Link href={blocker.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+      <Link href={blocker.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
         Resolve <ArrowRight size={14} />
       </Link>
     </div>
@@ -683,7 +683,7 @@ function QueueRow({ item }: { item: ExecutionQueueItem }) {
           {item.rank}
         </span>
       </td>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{item.action}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{item.action}</td>
       <td className="px-4 py-3">
         <PriorityBadge priority={item.priority} />
       </td>
@@ -693,7 +693,7 @@ function QueueRow({ item }: { item: ExecutionQueueItem }) {
         <ConfidenceBadge confidence={item.confidence} />
       </td>
       <td className="px-4 py-3 text-right">
-        <Link href={item.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={item.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -704,7 +704,7 @@ function QueueRow({ item }: { item: ExecutionQueueItem }) {
 function OutcomeCard({ outcome }: { outcome: ExpectedOutcomeSummary }) {
   return (
     <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-      <h3 className="font-bold text-[#0F172A]">{outcome.label}</h3>
+      <h3 className="font-bold text-[#0B202B]">{outcome.label}</h3>
       <p className="mt-2 text-sm font-medium text-[#334155]">{outcome.value}</p>
     </div>
   );
@@ -715,7 +715,7 @@ function PriorityBadge({ priority }: { priority: ExecutionAction["priority"] }) 
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
+    Low: "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]",
   };
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes[priority]}`}>
@@ -727,7 +727,7 @@ function PriorityBadge({ priority }: { priority: ExecutionAction["priority"] }) 
 function StatusBadge({ status }: { status: ExecutionAction["status"] }) {
   const classes: Record<ExecutionAction["status"], string> = {
     Ready: "border-blue-200 bg-blue-50 text-blue-800",
-    Recommended: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
+    Recommended: "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]",
     Waiting: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Blocked: "border-rose-200 bg-rose-50 text-rose-800",
   };

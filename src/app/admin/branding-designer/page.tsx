@@ -6,7 +6,7 @@ export default function BrandingDesignerPage() {
     <VyronCostAiShell
       hidePageHeader
       title="Branding Designer"
-      subtitle="Configure the branding every VYRON document and report inherits — logo, colours, and document text."
+      subtitle="Configure the branding every VOLORA document and report inherits — logo, colours, and document text."
     >
       <BrandingDesignerClient />
     </VyronCostAiShell>

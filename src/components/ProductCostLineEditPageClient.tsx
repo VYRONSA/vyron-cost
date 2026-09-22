@@ -144,12 +144,12 @@ export default function ProductCostLineEditPageClient({
       config={{
         visualVariant: "products",
         title: "Product Cost Line Edit Page",
-        subtitle: "Premium VYRON COST workflow for product cost line edit page.",
+        subtitle: "Premium VOLORA workflow for product cost line edit page.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.75fr]">
-            <div className="rounded-[2rem] border border-white bg-white p-7 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+            <div className="rounded-[2rem] border border-white bg-white p-7 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
               <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h2 className="text-3xl font-black text-[#F8FAFC]">Edit Product Cost Line</h2>
@@ -208,7 +208,7 @@ export default function ProductCostLineEditPageClient({
 
                 <div className="flex flex-wrap gap-3">
                   {canEditLine ? (
-                    <button type="button" onClick={saveLine} className="inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-6 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#23304f]">
+                    <button type="button" onClick={saveLine} className="inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-6 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#163a48]">
                       <Save size={18} />
                       Save Cost Line
                     </button>
@@ -222,12 +222,12 @@ export default function ProductCostLineEditPageClient({
                   ) : null}
                 </div>
 
-                {message && <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-4 text-sm font-black text-[#1D4ED8]">{message}</div>}
+                {message && <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-5 py-4 text-sm font-black text-[#163A48]">{message}</div>}
               </div>
             </div>
 
-            <aside className="rounded-[2rem] bg-[#07110d] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-              <div className="text-xs font-black uppercase tracking-[0.25em] text-[#3B82F6]">
+            <aside className="rounded-[2rem] bg-[#061722] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+              <div className="text-xs font-black uppercase tracking-[0.25em] text-[#2C5A6B]">
                 LINE COST PREVIEW
               </div>
 
@@ -237,8 +237,8 @@ export default function ProductCostLineEditPageClient({
                 Quantity × unit cost plus wastage allowance.
               </div>
 
-              <div className="mt-6 rounded-3xl border border-[#3B82F6]/20 bg-white/5 p-5">
-                <div className="text-sm font-black text-[#3B82F6]">Product</div>
+              <div className="mt-6 rounded-3xl border border-[#2C5A6B]/20 bg-white/5 p-5">
+                <div className="text-sm font-black text-[#2C5A6B]">Product</div>
                 <div className="mt-2 text-xl font-black">{product.product_name}</div>
               </div>
             </aside>

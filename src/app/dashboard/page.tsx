@@ -25,7 +25,7 @@ export default async function DashboardPage() {
   const compactDevice = /Android|iPhone|iPad|iPod|Mobi/i.test(userAgent);
   const activeClient = await getServerActiveWorkspace();
   const tradingName =
-    activeClient?.tradingName || activeClient?.companyName || "VYRON COST";
+    activeClient?.tradingName || activeClient?.companyName || "VOLORA";
   const title = `${tradingName} Command Centre`;
 
   if (compactDevice) {

@@ -355,7 +355,7 @@ export default function BomListClient({
       }}
       showControlPanel={false}
     >
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <VyronPremiumSectionHeading eyebrow="BOM library" title="Recipes & BOMs" subtitle="Search, filter and open costing structures." />
 
         <div className="mt-5 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
@@ -443,11 +443,11 @@ export default function BomListClient({
       </div>
 
       {loading ? (
-        <div className="rounded-[2rem] bg-white p-10 text-center text-sm font-bold text-slate-500 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-10 text-center text-sm font-bold text-slate-500 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           Loading recipes...
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-[2rem] bg-white p-10 text-center shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-10 text-center shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <h3 className="text-xl font-black text-slate-900">
             {activeFilters.length ? "No matching BOMs" : "No BOMs yet"}
           </h3>
@@ -473,7 +473,7 @@ export default function BomListClient({
           ) : null}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="min-w-[1040px]">
             <div className="grid grid-cols-[260px_170px_120px_130px_130px_100px_190px] bg-slate-50 px-5 py-4 text-xs font-black uppercase tracking-[0.14em] text-slate-500">
               <div>BOM</div><div>Purpose</div><div>Yield</div><div>Cost / Unit</div><div>Suggested</div><div>Status</div><div>Actions</div>
@@ -497,7 +497,7 @@ export default function BomListClient({
                 </div>
                 <div className="font-bold text-slate-500">{Number(bom.yield_qty || 0).toFixed(2)} {bom.yield_unit || ""}</div>
                 <div className="font-black text-slate-900">{formatMoney(bom.cost_per_unit)}</div>
-                <div className="font-black text-[#3B82F6]">{formatMoney(bom.suggested_selling_price)}</div>
+                <div className="font-black text-[#2C5A6B]">{formatMoney(bom.suggested_selling_price)}</div>
                 <div className="font-black text-blue-700">{bom.status || "Draft"}</div>
                 <div className="flex gap-2">
                   <Link href={`/recipes/${bom.id}`} className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-700">Open</Link>

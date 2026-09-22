@@ -12,7 +12,7 @@ const STATUS_STYLE: Record<AiAllowanceStatus, { color: string; label: string }> 
 
 const FEATURE_LABEL: Record<string, string> = {
   document_intelligence: "Document Intelligence",
-  ask_vyron: "Ask VYRON",
+  ask_vyron: "Ask VOLORA",
   cost_intelligence: "Cost Intelligence",
   supplier_intelligence: "Supplier Intelligence",
   manufacturing_intelligence: "Manufacturing Intelligence",

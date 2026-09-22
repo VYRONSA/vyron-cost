@@ -160,7 +160,7 @@ export default function CostIntelligenceCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#1D6BFF]/30 bg-[#1D6BFF]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#CBD5E1]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#1F4757]/30 bg-[#1F4757]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#CBD5E1]">
                 Cost Intelligence
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Cost Intelligence Centre</h1>
@@ -183,9 +183,9 @@ export default function CostIntelligenceCentreClient({
 
       {!hasData ? (
         <section className={M.moduleDataSection}>
-          <h2 className="text-xl font-bold text-[#0F172A]">Cost intelligence not available yet</h2>
+          <h2 className="text-xl font-bold text-[#0B202B]">Cost intelligence not available yet</h2>
           <p className="mt-2 text-sm font-medium text-[#64748B]">
-            Load products, BOM links, supplier costs and target GP so VYRON COST can analyse margin pressure.
+            Load products, BOM links, supplier costs and target GP so VOLORA can analyse margin pressure.
           </p>
           <ul className="mt-4 space-y-2 text-sm font-medium text-[#334155]">
             <li>· Add products with selling prices and target GP</li>
@@ -216,35 +216,35 @@ export default function CostIntelligenceCentreClient({
               value={String(summary?.erosionCount ?? 0)}
               href="/reports/product-margins"
               icon={TrendingDown}
-              accent="#2563EB"
+              accent="#1F4757"
             />
             <KpiCard
               label="Need repricing"
               value={String(summary?.repricingCount ?? 0)}
               href="/products"
               icon={AlertTriangle}
-              accent="#3B82F6"
+              accent="#2C5A6B"
             />
             <KpiCard
               label="Supplier inflation"
               value={String(summary?.inflationSuppliers ?? 0)}
               href="/document-intelligence/price-history/supplier"
               icon={Truck}
-              accent="#3B82F6"
+              accent="#2C5A6B"
             />
             <KpiCard
               label="BOM movement"
               value={String(bomMovementCount)}
               href="/recipes"
               icon={ChefHat}
-              accent="#1D6BFF"
+              accent="#1F4757"
             />
           </section>
 
           <section className={M.moduleDataSection}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-xl font-bold text-[#0F172A]">Product margin table</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Product margin table</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Current cost, selling price, GP variance and suggested repricing.
                 </p>
@@ -291,7 +291,7 @@ export default function CostIntelligenceCentreClient({
             <section className={M.moduleDataSection}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-bold text-[#0F172A]">Supplier inflation impact</h2>
+                  <h2 className="text-xl font-bold text-[#0B202B]">Supplier inflation impact</h2>
                   <p className="mt-1 text-sm font-medium text-[#64748B]">
                     Suppliers with recorded price movement from master data.
                   </p>
@@ -309,7 +309,7 @@ export default function CostIntelligenceCentreClient({
                   <p className="mt-2 text-xs font-medium text-[#94A3B8]">
                     Process purchase orders and GRNs, or update supplier master costs to build inflation signals.
                   </p>
-                  <Link href="/purchase-orders" className="mt-3 inline-flex text-sm font-bold text-[#1D6BFF]">
+                  <Link href="/purchase-orders" className="mt-3 inline-flex text-sm font-bold text-[#1F4757]">
                     Open purchase orders →
                   </Link>
                 </div>
@@ -327,9 +327,9 @@ export default function CostIntelligenceCentreClient({
                     <tbody>
                       {intelligence!.supplierInflation.map((row) => (
                         <tr key={row.supplierName} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-                          <td className="px-4 py-3 font-semibold text-[#0F172A]">{row.supplierName}</td>
+                          <td className="px-4 py-3 font-semibold text-[#0B202B]">{row.supplierName}</td>
                           <td className="px-4 py-3 text-[#64748B]">{row.category}</td>
-                          <td className="px-4 py-3 text-right font-bold text-[#2563EB]">{pct(row.movementPct)}</td>
+                          <td className="px-4 py-3 text-right font-bold text-[#1F4757]">{pct(row.movementPct)}</td>
                           <td className="px-4 py-3">
                             <RiskBadge level={row.riskLevel} />
                           </td>
@@ -344,7 +344,7 @@ export default function CostIntelligenceCentreClient({
             <section className={M.moduleDataSection}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-bold text-[#0F172A]">BOM movement analysis</h2>
+                  <h2 className="text-xl font-bold text-[#0B202B]">BOM movement analysis</h2>
                   <p className="mt-1 text-sm font-medium text-[#64748B]">
                     Ingredient cost movement affecting recipe and finished product cost.
                   </p>
@@ -362,7 +362,7 @@ export default function CostIntelligenceCentreClient({
                   <p className="mt-2 text-xs font-medium text-[#94A3B8]">
                     Add ingredients with current and previous purchase costs, or import procurement price history.
                   </p>
-                  <Link href="/ingredients" className="mt-3 inline-flex text-sm font-bold text-[#1D6BFF]">
+                  <Link href="/ingredients" className="mt-3 inline-flex text-sm font-bold text-[#1F4757]">
                     Open ingredients →
                   </Link>
                 </div>
@@ -381,10 +381,10 @@ export default function CostIntelligenceCentreClient({
                     <tbody>
                       {intelligence!.bomCostMovement.map((row) => (
                         <tr key={row.productName} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-                          <td className="px-4 py-3 font-semibold text-[#0F172A]">{row.productName}</td>
+                          <td className="px-4 py-3 font-semibold text-[#0B202B]">{row.productName}</td>
                           <td className="px-4 py-3 text-right text-[#64748B]">{money(row.previousCost)}</td>
                           <td className="px-4 py-3 text-right font-medium text-[#334155]">{money(row.currentCost)}</td>
-                          <td className="px-4 py-3 text-right font-bold text-[#1D6BFF]">{pct(row.movementPct)}</td>
+                          <td className="px-4 py-3 text-right font-bold text-[#1F4757]">{pct(row.movementPct)}</td>
                           <td className="px-4 py-3 text-[#64748B]">{row.impact}</td>
                         </tr>
                       ))}
@@ -396,7 +396,7 @@ export default function CostIntelligenceCentreClient({
           </div>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Suggested actions</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Suggested actions</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Prioritised cost and margin actions derived from current workspace data.
             </p>
@@ -405,14 +405,14 @@ export default function CostIntelligenceCentreClient({
                 <Link
                   key={action.id}
                   href={action.href}
-                  className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 transition hover:border-[#1D6BFF]/30"
+                  className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 transition hover:border-[#1F4757]/30"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <span className="font-bold text-[#0F172A]">{action.title}</span>
+                    <span className="font-bold text-[#0B202B]">{action.title}</span>
                     <ActionSeverityBadge severity={action.severity} />
                   </div>
                   <p className="mt-2 text-sm font-medium text-[#64748B]">{action.detail}</p>
-                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
                     Open <ArrowRight size={14} />
                   </span>
                 </Link>
@@ -421,7 +421,7 @@ export default function CostIntelligenceCentreClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-lg font-bold text-[#0F172A]">Module drilldowns</h2>
+            <h2 className="text-lg font-bold text-[#0B202B]">Module drilldowns</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {[
                 { label: "Product margins", href: "/reports/product-margins" },
@@ -434,7 +434,7 @@ export default function CostIntelligenceCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
+                  className="rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1F4757]/30 hover:text-[#1F4757]"
                 >
                   {link.label}
                 </Link>
@@ -463,7 +463,7 @@ function KpiCard({
   return (
     <Link
       href={href}
-      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1D6BFF]/30 hover:shadow-md`}
+      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1F4757]/30 hover:shadow-md`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -482,13 +482,13 @@ function KpiCard({
 
 function ProductMarginRow({ row }: { row: ProductIntelligenceRow }) {
   const variance = Number(row.gp_gap ?? 0);
-  const varianceClass = variance < 0 ? "text-[#2563EB]" : variance > 0 ? "text-blue-700" : "text-[#64748B]";
+  const varianceClass = variance < 0 ? "text-[#1F4757]" : variance > 0 ? "text-blue-700" : "text-[#64748B]";
   const productHref = row.product_id ? `/products/${row.product_id}` : "/products";
 
   return (
     <tr className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
       <td className="px-4 py-3">
-        <div className="font-semibold text-[#0F172A]">{row.product_name || "Unnamed product"}</div>
+        <div className="font-semibold text-[#0B202B]">{row.product_name || "Unnamed product"}</div>
         {row.category ? <div className="text-xs font-medium text-[#64748B]">{row.category}</div> : null}
       </td>
       <td className="px-4 py-3 text-right text-[#334155]">{money(Number(row.total_cost || 0))}</td>
@@ -498,11 +498,11 @@ function ProductMarginRow({ row }: { row: ProductIntelligenceRow }) {
       <td className="px-4 py-3 text-right font-semibold text-[#334155]">{pct(row.actual_gp)}</td>
       <td className="px-4 py-3 text-right text-[#64748B]">{pct(row.target_gp)}</td>
       <td className={`px-4 py-3 text-right font-bold ${varianceClass}`}>{pct(variance)}</td>
-      <td className="px-4 py-3 text-right font-semibold text-[#1D6BFF]">
+      <td className="px-4 py-3 text-right font-semibold text-[#1F4757]">
         {Number(row.suggested_price) ? money(Number(row.suggested_price)) : "—"}
       </td>
       <td className="px-4 py-3 text-right">
-        <Link href={productHref} className="text-xs font-bold text-[#1D6BFF]">
+        <Link href={productHref} className="text-xs font-bold text-[#1F4757]">
           {row.action_required || "Review"} →
         </Link>
       </td>
@@ -527,7 +527,7 @@ function ActionSeverityBadge({ severity }: { severity: SuggestedAction["severity
   const classes = {
     critical: "border-rose-200 bg-rose-50 text-rose-700",
     warning: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    info: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
+    info: "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]",
   };
   const labels = { critical: "Critical", warning: "Review", info: "Monitor" };
   return (

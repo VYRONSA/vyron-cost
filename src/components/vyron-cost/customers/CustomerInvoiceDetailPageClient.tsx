@@ -354,7 +354,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
 function StockStatusPill({ status }: { status: InvoiceStockPostingStatus }) {
   const classes: Record<InvoiceStockPostingStatus, string> = {
     "Not Posted": "bg-slate-100 text-slate-700",
-    Posted: "bg-[#3B82F6]/12 text-[#4D7C0F]",
+    Posted: "bg-[#2C5A6B]/12 text-[#2F7C40]",
     Reversed: "bg-rose-100 text-rose-700",
   };
   return <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${classes[status]}`}>{status}</span>;

@@ -45,7 +45,7 @@ const showIssues = (issues) => {
   for (const i of issues) line(`${tone[i.severity]}${i.severity.toUpperCase().padEnd(7)}\x1b[0m ${issueDefinition(i.code)?.title || i.code}${i.lineNo ? ` (line ${i.lineNo})` : ""}: ${i.message}`);
 };
 
-console.log(bold("\nVYRON COST — Order Engine demonstration"));
+console.log(bold("\nVOLORA — Order Engine demonstration"));
 console.log(dim("Fictional tenant: Harbour Kitchen Foods. In-memory; nothing is written anywhere real."));
 
 say("A customer sends an order");
@@ -57,7 +57,7 @@ const csv =
   "Northside Grocers,NG-8801,2026-10-02,NS-QUICHE-SP,Spinach quiche (our code),24,32.00\n" +
   "Northside Grocers,NG-8801,2026-10-02,HK-SOUP-TOM,Tomato Soup,24,26.00\n";
 
-say("VYRON receives it");
+say("VOLORA receives it");
 const email = await receiveInboundEmail(
   db,
   CO,
@@ -78,7 +78,7 @@ line(`Message stored once (message id is the idempotency key); order ${bold(emai
 const again = await receiveInboundEmail(db, CO, { messageId: "<ng-8801@northside-grocers.example>", provider: "demo", from: C.northside.email, to: [], receivedAt: "2026-09-29T07:42:05Z", attachments: [] }, CLERK);
 line(dim(`The mail server delivers it again: duplicate=${again.duplicate}; still ${db.tables.vyron_order_intakes.length} order.`));
 
-say("VYRON understands it — customer, products, prices, stock, production, margin");
+say("VOLORA understands it — customer, products, prices, stock, production, margin");
 let detail = await service.performIntakeAction(db, CO, intakeId, "validate", CLERK, { today: DEMO_TODAY });
 const snap = () => detail.intake.validation;
 line(`Customer: ${bold(snap().customer.name || "not identified")} (${snap().customer.matchRule || "—"})`);
@@ -89,19 +89,19 @@ for (const l of snap().lines) {
 }
 line(`Expected value ${money(snap().totals.expectedSubtotal)} · cost ${money(snap().totals.expectedCost)} · GP ${money(snap().totals.expectedGp)} (${snap().totals.expectedGpPct}%) — shown to approvers only`);
 
-say("VYRON identifies exceptions");
+say("VOLORA identifies exceptions");
 line(`Status: ${bold(detail.intake.status)}`);
 showIssues(snap().issues);
 
 say("A person resolves the exception — no guessing");
 const quicheLine = detail.lines.find((l) => l.raw_sku === "NS-QUICHE-SP");
-line(`"NS-QUICHE-SP" is Northside's own code. The order desk chooses Spinach Quiche and the manager asks VYRON to remember it for Northside.`);
+line(`"NS-QUICHE-SP" is Northside's own code. The order desk chooses Spinach Quiche and the manager asks VOLORA to remember it for Northside.`);
 await service.editIntake(db, CO, intakeId, { resolveLines: [{ lineId: quicheLine.id, productId: P.quiche.id, remember: true }] }, MANAGER, { canRemember: true });
 detail = await service.performIntakeAction(db, CO, intakeId, "validate", CLERK, { today: DEMO_TODAY });
 line(`Re-validated: ${bold(detail.intake.status)} — ${detail.intake.blocking_issue_count} blocking, ${detail.intake.warning_issue_count} warnings.`);
 showIssues(snap().issues.filter((i) => i.severity !== "info"));
 
-say("VYRON sends the order for approval; the manager reviews and approves");
+say("VOLORA sends the order for approval; the manager reviews and approves");
 line("The manager acknowledges the warnings (soup price below list; chicken pies short — production required).");
 detail = await service.performIntakeAction(db, CO, intakeId, "approve", MANAGER, {
   today: DEMO_TODAY,
@@ -111,7 +111,7 @@ detail = await service.performIntakeAction(db, CO, intakeId, "approve", MANAGER,
 });
 line(`Order ${bold(detail.intake.status)} · sales order ${bold(detail.salesOrder.order_number)} (${detail.salesOrder.status}).`);
 
-say("VYRON hands the order to the EXISTING Sales Order engine");
+say("VOLORA hands the order to the EXISTING Sales Order engine");
 const so = await salesOrders.getCustomerSalesOrder(db, CO, detail.intake.sales_order_id);
 for (const l of so.lines) line(`SO line: ${l.quantity} × ${l.description} @ ${money(l.selling_price)} · VAT ${l.tax_rate}% · cost ${money(l.cost_per_unit)}`);
 line(`Subtotal ${money(so.order.subtotal)} · VAT ${money(so.order.vat_amount)} · total ${money(so.order.total)}`);

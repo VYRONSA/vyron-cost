@@ -148,7 +148,7 @@ function money(value: number, currency = "ZAR") {
 }
 
 function displayCompanyName(branding: DocumentPdfBranding) {
-  return branding.tradingName || branding.companyName || "VYRON COST";
+  return branding.tradingName || branding.companyName || "VOLORA";
 }
 
 /** Truncates text with an ellipsis so it never overflows a fixed-width column (e.g. long UUID actor ids). */

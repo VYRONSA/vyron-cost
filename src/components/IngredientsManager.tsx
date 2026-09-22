@@ -138,9 +138,9 @@ export default function IngredientsManager({
 
   return (
     <section className="grid gap-6 xl:grid-cols-[0.8fr_1.5fr]">
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-3 text-[#84CC16]">
+          <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-3 text-[#55B968]">
             <Plus size={20} />
           </div>
           <div>
@@ -172,22 +172,22 @@ export default function IngredientsManager({
             </label>
           </div>
 
-          <div className="rounded-3xl bg-[#07110d] p-5 text-white">
-            <div className="text-xs font-black uppercase tracking-[0.25em] text-[#3B82F6]">Preview</div>
+          <div className="rounded-3xl bg-[#061722] p-5 text-white">
+            <div className="text-xs font-black uppercase tracking-[0.25em] text-[#2C5A6B]">Preview</div>
             <div className="mt-2 text-3xl font-black">{formatMoney(previewTrueCost)}</div>
             <div className="mt-1 text-sm text-slate-300">True usable unit cost</div>
           </div>
 
-          <button type="button" onClick={addIngredient} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#23304f]">
+          <button type="button" onClick={addIngredient} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#163a48]">
             <Plus size={18} />
             Add Ingredient
           </button>
 
-          {message && <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#1D4ED8]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-4 py-3 text-sm font-bold text-[#163A48]">{message}</div>}
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <div className="mb-5">
           <h2 className="text-2xl font-black text-[#F8FAFC]">Ingredient Master</h2>
           <p className="mt-2 text-sm text-slate-500">Search ingredients by name, category, unit, yield, price or notes.</p>
@@ -214,7 +214,7 @@ export default function IngredientsManager({
 
         <div className="overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[1120px]">
-            <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+            <div className="grid grid-cols-8 bg-[#061722] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
               <div>Ingredient</div><div>Category</div><div>Current</div><div>Yield</div><div>True Cost</div><div>Movement</div><div>Full Edit</div><div>Delete</div>
             </div>
 
@@ -225,7 +225,7 @@ export default function IngredientsManager({
               return (
                 <div key={item.id} className="grid grid-cols-8 items-center border-t border-slate-100 px-5 py-5 text-sm">
                   <div>
-                    <Link href={`/ingredients/${item.id}`} className="font-black text-[#F8FAFC] hover:text-[#1D4ED8]">
+                    <Link href={`/ingredients/${item.id}`} className="font-black text-[#F8FAFC] hover:text-[#163A48]">
                       {item.ingredient_name}
                     </Link>
                     <div className="mt-1 text-xs text-slate-500">{item.purchase_unit} → {item.recipe_unit}</div>
@@ -233,10 +233,10 @@ export default function IngredientsManager({
                   <div className="font-bold text-slate-600">{item.category}</div>
                   <div className="font-black">{formatMoney(Number(item.purchase_cost))}</div>
                   <div>{Number(item.yield_percent).toFixed(1)}%</div>
-                  <div className="font-black text-[#1D4ED8]">{formatMoney(Number(item.true_unit_cost))}</div>
+                  <div className="font-black text-[#163A48]">{formatMoney(Number(item.true_unit_cost))}</div>
                   <div><StatusPill tone={tone}>{movement >= 0 ? "+" : ""}{movement.toFixed(1)}%</StatusPill></div>
                   <div>
-                    <Link href={`/ingredients/${item.id}/edit`} className="inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-3 py-2 text-xs font-black text-[#1D4ED8]">
+                    <Link href={`/ingredients/${item.id}/edit`} className="inline-flex items-center gap-2 rounded-full border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-3 py-2 text-xs font-black text-[#163A48]">
                       <Edit3 size={14} />
                       Edit
                     </Link>

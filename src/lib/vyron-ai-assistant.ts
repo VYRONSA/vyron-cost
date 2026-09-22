@@ -293,7 +293,7 @@ export async function answerVyronQuestion(question: string): Promise<AiAnswer> {
   const fallbackProducts = products.slice(0, 5);
   return {
     question,
-    summary: "VYRON analysed your live costing data and surfaced the highest-impact actions.",
+    summary: "VOLORA analysed your live costing data and surfaced the highest-impact actions.",
     bullets: fallbackProducts.map(
       (p) => `${p.product_name} · ${p.category} · GP ${calculateGpPercent(Number(p.selling_price), Number(p.total_cost)).toFixed(1)}%`
     ),

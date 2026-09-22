@@ -225,7 +225,7 @@ export default function ExecutionCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#2C5A6B]/35 bg-[#2C5A6B]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Execution Centre
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Execution Centre</h1>
@@ -287,7 +287,7 @@ export default function ExecutionCentreClient({
 
       {!hasWorkspace ? (
         <section className={M.moduleDataSection}>
-          <h2 className="text-xl font-bold text-[#0F172A]">Select an active workspace</h2>
+          <h2 className="text-xl font-bold text-[#0B202B]">Select an active workspace</h2>
           <p className="mt-2 text-sm font-medium text-[#64748B]">
             Execution actions are scoped to the active company workspace.
           </p>
@@ -301,17 +301,17 @@ export default function ExecutionCentreClient({
           ) : null}
 
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <SummaryCard label="Recommended" value={String(summary.recommended)} accent="#1D6BFF" />
-            <SummaryCard label="Approved" value={String(summary.approved)} accent="#6366F1" />
-            <SummaryCard label="In Progress" value={String(summary.inProgress)} accent="#2563EB" />
-            <SummaryCard label="Completed" value={String(summary.completed)} accent="#3B82F6" />
-            <SummaryCard label="Overdue" value={String(summary.overdue)} accent="#2563EB" />
+            <SummaryCard label="Recommended" value={String(summary.recommended)} accent="#1F4757" />
+            <SummaryCard label="Approved" value={String(summary.approved)} accent="#37606F" />
+            <SummaryCard label="In Progress" value={String(summary.inProgress)} accent="#1F4757" />
+            <SummaryCard label="Completed" value={String(summary.completed)} accent="#2C5A6B" />
+            <SummaryCard label="Overdue" value={String(summary.overdue)} accent="#1F4757" />
           </section>
 
           <section className={M.moduleDataSection}>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h2 className="text-xl font-bold text-[#0F172A]">Execution Queue</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Execution Queue</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   {filteredActions.length} of {actions.length} action(s) shown
                 </p>
@@ -335,8 +335,8 @@ export default function ExecutionCentreClient({
                   onClick={() => selectTab(tab)}
                   className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
                     activeTab === tab
-                      ? "border-[#1D6BFF] bg-[#1D6BFF]/10 text-[#1D6BFF]"
-                      : "border-[#E2E8F0] bg-white text-[#64748B] hover:border-[#1D6BFF]/30"
+                      ? "border-[#1F4757] bg-[#1F4757]/10 text-[#1F4757]"
+                      : "border-[#E2E8F0] bg-white text-[#64748B] hover:border-[#1F4757]/30"
                   }`}
                 >
                   {tab}
@@ -393,7 +393,7 @@ export default function ExecutionCentreClient({
 
             {actions.length === 0 && !loading ? (
               <div className="mt-6 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-6">
-                <h3 className="font-bold text-[#0F172A]">No execution actions yet</h3>
+                <h3 className="font-bold text-[#0B202B]">No execution actions yet</h3>
                 <p className="mt-2 text-sm font-medium text-[#64748B]">
                   Sync from intelligence to import recommended actions from Actions Centre, Decisions Centre and Root
                   Cause Centre.
@@ -455,12 +455,12 @@ export default function ExecutionCentreClient({
 
           {selected ? (
             <section className={M.moduleDataSection}>
-              <h2 className="text-xl font-bold text-[#0F172A]">Action execution</h2>
+              <h2 className="text-xl font-bold text-[#0B202B]">Action execution</h2>
               <p className="mt-1 text-sm font-medium text-[#64748B]">{selected.title}</p>
 
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
                 <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-5">
-                  <h3 className="font-bold text-[#0F172A]">Expected outcome</h3>
+                  <h3 className="font-bold text-[#0B202B]">Expected outcome</h3>
                   <p className="mt-2 text-sm font-medium text-[#334155]">{selected.expected_outcome}</p>
                   <p className="mt-3 text-sm font-medium text-[#64748B]">
                     Expected benefit: {money(selected.expected_benefit)}
@@ -531,7 +531,7 @@ export default function ExecutionCentreClient({
                     ) : null}
                   </div>
 
-                  <label className="block text-sm font-bold text-[#0F172A]">
+                  <label className="block text-sm font-bold text-[#0B202B]">
                     Assign owner
                     <select
                       value={selected.owner}
@@ -547,7 +547,7 @@ export default function ExecutionCentreClient({
                     </select>
                   </label>
 
-                  <label className="block text-sm font-bold text-[#0F172A]">
+                  <label className="block text-sm font-bold text-[#0B202B]">
                     Due date
                     <input
                       type="date"
@@ -558,7 +558,7 @@ export default function ExecutionCentreClient({
                     />
                   </label>
 
-                  <label className="block text-sm font-bold text-[#0F172A]">
+                  <label className="block text-sm font-bold text-[#0B202B]">
                     Notes
                     <textarea
                       key={`${selected.id}-notes-${selected.updated_at}`}
@@ -578,13 +578,13 @@ export default function ExecutionCentreClient({
               </div>
 
               <div className="mt-6 rounded-2xl border border-[#E2E8F0] bg-white p-5">
-                <h3 className="font-bold text-[#0F172A]">Outcome tracking</h3>
+                <h3 className="font-bold text-[#0B202B]">Outcome tracking</h3>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <div>
                     <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">
                       Expected benefit
                     </div>
-                    <p className="mt-1 text-sm font-bold text-[#0F172A]">{money(selected.expected_benefit)}</p>
+                    <p className="mt-1 text-sm font-bold text-[#0B202B]">{money(selected.expected_benefit)}</p>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">
@@ -607,7 +607,7 @@ export default function ExecutionCentreClient({
                     </label>
                   </div>
                 </div>
-                <label className="mt-4 block text-sm font-bold text-[#0F172A]">
+                <label className="mt-4 block text-sm font-bold text-[#0B202B]">
                   Completion notes
                   <textarea
                     key={`${selected.id}-completion-${selected.updated_at}`}
@@ -626,7 +626,7 @@ export default function ExecutionCentreClient({
               </div>
 
               <div className="mt-6 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-5">
-                <h3 className="font-bold text-[#0F172A]">Action audit trail</h3>
+                <h3 className="font-bold text-[#0B202B]">Action audit trail</h3>
                 {selected.action_events.length === 0 ? (
                   <p className="mt-2 text-sm font-medium text-[#64748B]">No activity recorded yet.</p>
                 ) : (
@@ -641,19 +641,19 @@ export default function ExecutionCentreClient({
           ) : null}
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-lg font-bold text-[#0F172A]">Drilldowns</h2>
+            <h2 className="text-lg font-bold text-[#0B202B]">Drilldowns</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {[
                 { label: "Actions Centre", href: "/actions", icon: CheckSquare },
                 { label: "Decisions Centre", href: "/decisions", icon: Gavel },
                 { label: "Root Cause Centre", href: "/root-cause", icon: Search },
                 { label: "Autonomous Command", href: "/autonomous-command-centre", icon: Brain },
-                { label: "Ask VYRON", href: "/ask-vyron", icon: Brain },
+                { label: "Ask VOLORA", href: "/ask-vyron", icon: Brain },
               ].map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1F4757]/30 hover:text-[#1F4757]"
                 >
                   <link.icon size={16} />
                   {link.label}
@@ -724,14 +724,14 @@ function QueueRow({
   return (
     <tr
       className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover} cursor-pointer ${
-        selected ? "bg-[#1D6BFF]/5" : overdue ? "bg-rose-50/80" : ""
+        selected ? "bg-[#1F4757]/5" : overdue ? "bg-rose-50/80" : ""
       } ${overdue ? "border-l-4 border-l-rose-500" : ""}`}
       onClick={onSelect}
     >
       <td className="px-4 py-3">
         <PriorityBadge priority={row.priority} />
       </td>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{row.title}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{row.title}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.owner}</td>
       <td className="px-4 py-3">
         <StatusBadge status={row.status} overdue={overdue} />
@@ -739,9 +739,9 @@ function QueueRow({
       <td className={`px-4 py-3 text-sm font-medium ${overdue ? "font-bold text-rose-700" : "text-[#64748B]"}`}>
         {row.due_date || "—"}
       </td>
-      <td className="px-4 py-3 text-sm font-semibold text-[#1D6BFF]">{sourceModuleLabel(row.source_module)}</td>
+      <td className="px-4 py-3 text-sm font-semibold text-[#1F4757]">{sourceModuleLabel(row.source_module)}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.expected_outcome}</td>
-      <td className="px-4 py-3 text-right text-xs font-bold text-[#1D6BFF]">Manage</td>
+      <td className="px-4 py-3 text-right text-xs font-bold text-[#1F4757]">Manage</td>
     </tr>
   );
 }
@@ -750,7 +750,7 @@ function AuditEventItem({ event }: { event: ExecutionActionEvent }) {
   return (
     <li className="rounded-xl border border-[#E2E8F0] bg-white px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-sm font-bold text-[#0F172A]">{event.label}</span>
+        <span className="text-sm font-bold text-[#0B202B]">{event.label}</span>
         <span className="text-xs font-medium text-[#94A3B8]">{formatEventTime(event.at)}</span>
       </div>
       {event.detail ? <p className="mt-1 text-xs font-medium text-[#64748B]">{event.detail}</p> : null}
@@ -766,7 +766,7 @@ function PriorityBadge({ priority }: { priority: string }) {
         ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
         : priority === "Medium"
           ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
-          : "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]";
+          : "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]";
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes}`}>
       {priority}
@@ -776,7 +776,7 @@ function PriorityBadge({ priority }: { priority: string }) {
 
 function StatusBadge({ status, overdue }: { status: ExecutionActionRow["status"]; overdue: boolean }) {
   const classes: Record<ExecutionActionRow["status"], string> = {
-    Recommended: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
+    Recommended: "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]",
     Approved: "border-indigo-200 bg-indigo-50 text-indigo-800",
     "In Progress": "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Completed: "border-blue-200 bg-blue-50 text-blue-800",

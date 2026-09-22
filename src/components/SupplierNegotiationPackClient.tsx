@@ -28,12 +28,12 @@ export default function SupplierNegotiationPackClient({ suppliers }: { suppliers
       config={{
         visualVariant: "suppliers",
         title: "Supplier Negotiation Pack",
-        subtitle: "Premium VYRON COST workflow for supplier negotiation pack.",
+        subtitle: "Premium VOLORA workflow for supplier negotiation pack.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
+            <div className="rounded-[2rem] bg-[#061722] p-6 text-white">
               <h2 className="text-3xl font-black">Supplier Negotiation Pack</h2>
               <p className="mt-3 text-sm font-semibold text-slate-300">Use this with suppliers to negotiate price movement and recover margin.</p>
               <button onClick={downloadPack} className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-black text-[#F8FAFC]">
@@ -43,14 +43,14 @@ export default function SupplierNegotiationPackClient({ suppliers }: { suppliers
 
             <div className="grid gap-4">
               {priority.map((supplier) => (
-                <div key={supplier.id} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+                <div key={supplier.id} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                       <h3 className="text-2xl font-black text-[#F8FAFC]">{supplier.supplier_name}</h3>
                       <p className="mt-1 text-sm font-bold text-slate-500">{supplier.category} · movement {supplier.price_movement_percent.toFixed(1)}%</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-black text-[#1D4ED8]">{formatSupplierSpend(supplier.negotiation_opportunity)}</div>
+                      <div className="text-3xl font-black text-[#163A48]">{formatSupplierSpend(supplier.negotiation_opportunity)}</div>
                       <div className="text-xs font-bold text-slate-400">negotiation opportunity</div>
                     </div>
                   </div>

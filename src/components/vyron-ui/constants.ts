@@ -1,11 +1,11 @@
 /** Shared VYRON COST UI tokens — single source for page layout and colours. */
-export const VYRON_LIME = "#1D6BFF";
-export const VYRON_HEADING = "#0F172A";
+export const VYRON_LIME = "#1F4757";
+export const VYRON_HEADING = "#0B202B";
 export const VYRON_BODY = "#334155";
 export const VYRON_MUTED = "#64748B";
 export const VYRON_CARD = "#FFFFFF";
 export const VYRON_CARD_ELEVATED = "#FFFFFF";
-export const VYRON_CARD_SHELL = "#0B1220";
+export const VYRON_CARD_SHELL = "#081C27";
 export const VYRON_BORDER = "rgba(255,255,255,0.12)";
 
 export const VYRON_PAGE_GAP = "gap-5";

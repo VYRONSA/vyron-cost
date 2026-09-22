@@ -297,7 +297,7 @@ export default function CustomersClient() {
         visualVariant: "customers",
         badge: "Premium Sales Workspace",
         title: "Customer Control",
-        subtitle: "Customer master, invoice routing, payment terms, revenue history and GP movement — the commercial front door of VYRON COST.",
+        subtitle: "Customer master, invoice routing, payment terms, revenue history and GP movement — the commercial front door of VOLORA.",
         outcomes: [
           "Maintain customer master and invoice emails",
           "Track revenue and GP movement per customer",
@@ -466,7 +466,7 @@ export default function CustomersClient() {
               <div className="font-semibold text-slate-600">{customer.category}</div>
               <div className="truncate font-bold text-slate-700">{customer.invoiceEmail || "No invoice email"}</div>
               <div className="font-bold text-slate-700">{customer.terms}</div>
-              <div className={`font-bold ${customer.gpMovement < 38 ? "text-[var(--vyron-warning-fg)]" : "text-[#3B82F6]"}`}>{customer.gpMovement.toFixed(1)}%</div>
+              <div className={`font-bold ${customer.gpMovement < 38 ? "text-[var(--vyron-warning-fg)]" : "text-[#2C5A6B]"}`}>{customer.gpMovement.toFixed(1)}%</div>
               <div>
                 <select value={customer.status} onChange={(event) => updateCustomerStatus(customer.id, event.target.value)} disabled={!canEdit} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-black text-blue-700 outline-none disabled:opacity-60">
                   <option>Active</option>

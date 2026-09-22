@@ -54,7 +54,7 @@ export type ExportPayload = {
 export const EXPORT_CURRENCY_FMT = '"R" #,##0.00;[Red]-"R" #,##0.00';
 
 function displayCompanyName(branding: ExportBranding) {
-  return branding.tradingName || branding.companyName || "VYRON COST";
+  return branding.tradingName || branding.companyName || "VOLORA";
 }
 
 function valueToCsvCell(value: string | number | null, type: ExportColumnType) {

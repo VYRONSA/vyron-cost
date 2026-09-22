@@ -6,9 +6,9 @@ import { LeakageKpis } from "@/lib/vyron-financial-command-data";
 export default function DashboardStatusBar({ kpis }: { kpis: LeakageKpis }) {
   const items = [
     { label: "Money At Risk", value: formatExecutiveMoney(kpis.moneyAtRisk), tone: "text-[#EF4444]" },
-    { label: "Recoverable / Year", value: formatCompactAnnual(kpis.recoverableAnnual), tone: "text-[#2563EB]" },
-    { label: "Active Actions", value: String(kpis.pendingActions), tone: "text-[#1D6BFF]" },
-    { label: "Recovery Rate", value: `${kpis.recoveryRatePercent}%`, tone: "text-[#0F172A]" },
+    { label: "Recoverable / Year", value: formatCompactAnnual(kpis.recoverableAnnual), tone: "text-[#1F4757]" },
+    { label: "Active Actions", value: String(kpis.pendingActions), tone: "text-[#1F4757]" },
+    { label: "Recovery Rate", value: `${kpis.recoveryRatePercent}%`, tone: "text-[#0B202B]" },
     { label: "Threat Signals", value: "5", tone: "text-[#EF4444]" },
   ];
 
@@ -16,7 +16,7 @@ export default function DashboardStatusBar({ kpis }: { kpis: LeakageKpis }) {
     <footer className="sticky bottom-0 z-10 mt-3 border-t border-[#E2E8F0] bg-white/95 backdrop-blur-sm">
       <div className="flex flex-wrap items-center gap-4 px-1 py-3">
         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#64748B]">
-          <Activity size={14} className="text-[#2563EB]" />
+          <Activity size={14} className="text-[#1F4757]" />
           Live Status
         </div>
         {items.map((item) => (
@@ -26,7 +26,7 @@ export default function DashboardStatusBar({ kpis }: { kpis: LeakageKpis }) {
           </div>
         ))}
         <div className="ml-auto flex items-center gap-2">
-          <Link href="/alerts" className="inline-flex items-center gap-1 rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#64748B] hover:text-[#0F172A]">
+          <Link href="/alerts" className="inline-flex items-center gap-1 rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#64748B] hover:text-[#0B202B]">
             <Bell size={12} />
             Alerts
           </Link>

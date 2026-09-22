@@ -24,19 +24,19 @@ export default function MarginBridgeClient({ products }: { products: ProductInte
     <VyronPremiumPageShell
       config={{
         title: "Margin Bridge",
-        subtitle: "Premium VYRON COST workflow for margin bridge.",
+        subtitle: "Premium VOLORA workflow for margin bridge.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">Margin Bridge</div>
+            <div className="rounded-[2rem] bg-[#061722] p-6 text-white">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">Margin Bridge</div>
               <div className="mt-3 text-5xl font-black">{money(bridgeTotal)}</div>
               <p className="mt-3 text-sm font-semibold text-slate-300">Monthly margin required to move products from actual GP to target GP.</p>
             </div>
 
             <div className="overflow-hidden rounded-[2rem] bg-white">
-              <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase text-[#3B82F6]">
+              <div className="grid grid-cols-7 bg-[#061722] px-5 py-4 text-xs font-black uppercase text-[#2C5A6B]">
                 <div className="col-span-2">Product</div>
                 <div>Actual GP</div>
                 <div>Target GP</div>
@@ -50,7 +50,7 @@ export default function MarginBridgeClient({ products }: { products: ProductInte
                   <div>{row.currentGp.toFixed(1)}%</div>
                   <div>{row.targetGp.toFixed(1)}%</div>
                   <div className="font-black text-red-700">{row.gap.toFixed(1)}%</div>
-                  <div className="font-black text-[#1D4ED8]">{money(row.bridge)}</div>
+                  <div className="font-black text-[#163A48]">{money(row.bridge)}</div>
                   <div className="text-xs font-bold text-slate-600">Reprice / reduce cost</div>
                 </div>
               ))}

@@ -43,7 +43,7 @@ export default function InventoryLedgerPageClient() {
       }}
       actions={
         <div className="flex flex-wrap gap-2">
-          <Link href="/stock-movements" className="rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white">
+          <Link href="/stock-movements" className="rounded-xl bg-[#1F4757] px-4 py-2.5 text-sm font-bold text-white">
             Stock Movements
           </Link>
           <Link href="/inventory" className="rounded-xl border border-[#E2E8F0] px-4 py-2.5 text-sm font-bold text-[#334155]">

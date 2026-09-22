@@ -26,12 +26,12 @@ export default function ThreatCentrePanel({ kpis }: { kpis: LeakageKpis }) {
           <Link key={threat.id} href={threat.href}>
             <VyronSurfaceCard className="h-full p-3">
               <div className="flex items-start justify-between gap-1">
-                <div className="text-[11px] font-black leading-tight text-[#0F172A]">{threat.title}</div>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black ${threat.tone === "danger" ? "bg-[#FEE2E2] text-[#EF4444]" : "bg-[#FEF3C7] text-[#2563EB]"}`}>
+                <div className="text-[11px] font-black leading-tight text-[#0B202B]">{threat.title}</div>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black ${threat.tone === "danger" ? "bg-[#FEE2E2] text-[#EF4444]" : "bg-[#FEF3C7] text-[#1F4757]"}`}>
                   {threat.riskScore}
                 </span>
               </div>
-              <div className="mt-2 text-sm font-black text-[#0F172A]">{formatExecutiveMoney(threat.impact)}</div>
+              <div className="mt-2 text-sm font-black text-[#0B202B]">{formatExecutiveMoney(threat.impact)}</div>
               <div className="mt-1 text-[10px] font-bold text-[#64748B]">{threat.status}</div>
             </VyronSurfaceCard>
           </Link>

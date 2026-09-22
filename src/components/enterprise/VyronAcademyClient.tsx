@@ -27,8 +27,8 @@ export default function VyronAcademyClient({ guides }: { guides: AcademyGuide[] 
         return (
     <VyronPremiumPageShell
       config={{
-        title: "Vyron Academy",
-        subtitle: "Premium VYRON COST workflow for vyron academy.",
+        title: "VOLORA Academy",
+        subtitle: "Premium VOLORA workflow for vyron academy.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >

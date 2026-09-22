@@ -31,15 +31,15 @@ export default function DemoReadinessClient() {
     <VyronPremiumPageShell
       config={{
         title: "Demo Readiness",
-        subtitle: "Premium VYRON COST workflow for demo readiness.",
+        subtitle: "Premium VOLORA workflow for demo readiness.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
-      <div key={href} className="grid gap-4 rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)] md:grid-cols-[60px_1fr_180px] md:items-center">
+      <div key={href} className="grid gap-4 rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(11,32,43,0.06)] md:grid-cols-[60px_1fr_180px] md:items-center">
                   <button
                     type="button"
                     onClick={() => setDone((current) => ({ ...current, [href]: !checked }))}
-                    className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-[#3B82F6]/100 text-white" : "bg-slate-100 text-slate-400"}`}
+                    className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-[#2C5A6B]/100 text-white" : "bg-slate-100 text-slate-400"}`}
                   >
                     <CheckCircle2 size={24} />
                   </button>
@@ -48,7 +48,7 @@ export default function DemoReadinessClient() {
                     <div className="mt-1 text-lg font-black text-[#F8FAFC]">{label}</div>
                     <div className="mt-1 text-xs font-bold text-slate-500">{href}</div>
                   </div>
-                  <Link href={href} className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-3 text-center text-sm font-black text-[#4D7C0F]">
+                  <Link href={href} className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-5 py-3 text-center text-sm font-black text-[#2F7C40]">
                     Open
                   </Link>
                 </div>

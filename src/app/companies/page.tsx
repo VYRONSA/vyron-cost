@@ -20,7 +20,7 @@ export default async function CompaniesPage() {
 
       <section className="grid gap-5">
         {companies.map((company) => (
-          <div key={company.id} className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+          <div key={company.id} className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="flex flex-wrap gap-2">
@@ -28,7 +28,7 @@ export default async function CompaniesPage() {
                   <StatusPill tone="slate">{company.subscription_plan || "Professional"}</StatusPill>
                 </div>
 
-                <h2 className="mt-4 text-3xl font-black text-[#07110d]">{company.company_name}</h2>
+                <h2 className="mt-4 text-3xl font-black text-[#061722]">{company.company_name}</h2>
                 <p className="mt-2 text-sm text-slate-500">{company.trading_name || "No trading name captured"}</p>
               </div>
 
@@ -40,7 +40,7 @@ export default async function CompaniesPage() {
                   <b>VAT:</b> {Number(company.vat_percent || 15).toFixed(2)}%
                 </div>
                 <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                  <b>Accent:</b> {company.primary_color || "#3b82f6"}
+                  <b>Accent:</b> {company.primary_color || "#2c5a6b"}
                 </div>
               </div>
             </div>

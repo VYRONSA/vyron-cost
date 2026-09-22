@@ -10,7 +10,7 @@ export default function VyronPremiumCard({
   glow?: boolean;
 }) {
   return (
-    <div className={`vyron-surface-card-elevated ${glow ? "ring-1 ring-[#1D6BFF]/25" : ""} ${className}`}>
+    <div className={`vyron-surface-card-elevated ${glow ? "ring-1 ring-[#1F4757]/25" : ""} ${className}`}>
       {children}
     </div>
   );

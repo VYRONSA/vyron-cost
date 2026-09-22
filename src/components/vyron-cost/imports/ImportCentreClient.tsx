@@ -245,7 +245,7 @@ export default function ImportCentreClient() {
           ].map((card) => (
             <div key={card.label} className="rounded-2xl border border-[#E2E8F0] bg-white px-5 py-4">
               <div className="text-xs font-bold uppercase tracking-wide text-[#64748B]">{card.label}</div>
-              <div className="mt-2 text-3xl font-black text-[#0F172A]">
+              <div className="mt-2 text-3xl font-black text-[#0B202B]">
                 {loading ? "—" : card.value}
               </div>
             </div>
@@ -265,7 +265,7 @@ export default function ImportCentreClient() {
 
         <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
           <div className={`${M.moduleDataSection} space-y-3`}>
-            <h2 className="text-lg font-black text-[#0F172A]">Import Modules</h2>
+            <h2 className="text-lg font-black text-[#0B202B]">Import Modules</h2>
             {importCentreTemplates.map((item) => (
               <button
                 key={item.id}
@@ -276,11 +276,11 @@ export default function ImportCentreClient() {
                 }}
                 className={`w-full rounded-2xl border px-4 py-3 text-left ${
                   selected === item.id
-                    ? "border-[#0F172A] bg-[#F8FAFC]"
+                    ? "border-[#0B202B] bg-[#F8FAFC]"
                     : "border-[#E2E8F0] bg-white hover:bg-[#F8FAFC]"
                 }`}
               >
-                <div className="text-sm font-black text-[#0F172A]">{item.label}</div>
+                <div className="text-sm font-black text-[#0B202B]">{item.label}</div>
                 <div className="mt-1 text-xs font-semibold text-[#64748B]">{item.description}</div>
               </button>
             ))}
@@ -288,7 +288,7 @@ export default function ImportCentreClient() {
 
           <div className={`${M.moduleDataSection} space-y-5`}>
             <div>
-              <h2 className="text-lg font-black text-[#0F172A]">{template.label}</h2>
+              <h2 className="text-lg font-black text-[#0B202B]">{template.label}</h2>
               <p className="mt-1 text-sm font-medium text-[#64748B]">{template.description}</p>
             </div>
 

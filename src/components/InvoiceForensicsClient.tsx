@@ -48,12 +48,12 @@ export default function InvoiceForensicsClient({ rows }: { rows: InvoiceRiskFind
     <VyronPremiumPageShell
       config={{
         title: "Invoice Forensics",
-        subtitle: "Premium VYRON COST workflow for invoice forensics.",
+        subtitle: "Premium VOLORA workflow for invoice forensics.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+            <div className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
               <div className="flex items-center gap-3 rounded-[1.5rem] border border-blue-100 bg-blue-50/50 px-4 py-3">
                 <Search size={20} className="text-blue-700" />
                 <input
@@ -71,7 +71,7 @@ export default function InvoiceForensicsClient({ rows }: { rows: InvoiceRiskFind
               </div>
             </div>
 
-            <div className="overflow-x-auto rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+            <div className="overflow-x-auto rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
               <div className="min-w-[1180px]">
                 <div className="grid grid-cols-9 bg-blue-800 px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-blue-100">
                   <div>Invoice</div>
@@ -98,7 +98,7 @@ export default function InvoiceForensicsClient({ rows }: { rows: InvoiceRiskFind
                     <div>{row.duplicate_of || "—"}</div>
                     <div>{row.review_status}</div>
                     <div>
-                      <Link href="/invoice-centre" className="rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-3 py-2 text-xs font-black text-[#1D4ED8]">
+                      <Link href="/invoice-centre" className="rounded-full border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-3 py-2 text-xs font-black text-[#163A48]">
                         Open
                       </Link>
                     </div>

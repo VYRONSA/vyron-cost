@@ -7,7 +7,7 @@ import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPa
 export default function BoardPackCentreClient({ snapshot }: { snapshot: LaunchReadinessSnapshot }) {
   function downloadPack() {
     const text = [
-      "VYRON COST BOARD PACK",
+      "VOLORA BOARD PACK",
       "",
       `Readiness score: ${snapshot.readinessScore}%`,
       `Monthly recovery: ${formatLaunchMoney(snapshot.realisticMonthlyRecovery)}`,
@@ -29,7 +29,7 @@ export default function BoardPackCentreClient({ snapshot }: { snapshot: LaunchRe
     <VyronPremiumPageShell
       config={{
         title: "Board Pack Centre",
-        subtitle: "Premium VYRON COST workflow for board pack centre.",
+        subtitle: "Premium VOLORA workflow for board pack centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -52,7 +52,7 @@ export default function BoardPackCentreClient({ snapshot }: { snapshot: LaunchRe
                 ))}
               </div>
             </div>
-            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
+            <div className="rounded-[2rem] bg-[#061722] p-6 text-white">
               <h2 className="text-2xl font-black">Download Board Pack</h2>
               <p className="mt-3 text-sm font-semibold text-slate-300">Export a client-facing summary for owner / director review.</p>
               <button onClick={downloadPack} className="mt-6 inline-flex items-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-black text-[#F8FAFC]">

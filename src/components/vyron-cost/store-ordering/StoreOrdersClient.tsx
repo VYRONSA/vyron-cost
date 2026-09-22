@@ -146,7 +146,7 @@ export default function StoreOrdersClient() {
                   onClick={() => setStatusFilter(status)}
                   className={`rounded-full px-4 py-2 text-sm font-bold ${
                     statusFilter === status
-                      ? "bg-[#0F172A] text-white"
+                      ? "bg-[#0B202B] text-white"
                       : "border border-[#E2E8F0] bg-white text-[#334155]"
                   }`}
                 >
@@ -195,7 +195,7 @@ export default function StoreOrdersClient() {
                   filtered.map((order) => (
                     <tr key={order.id} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2 font-bold text-[#0F172A]">
+                        <div className="flex items-center gap-2 font-bold text-[#0B202B]">
                           <ShoppingCart size={16} className="text-[#64748B]" />
                           {order.order_number}
                         </div>
@@ -205,7 +205,7 @@ export default function StoreOrdersClient() {
                         <div className="text-xs text-[#64748B]">{order.store_code_snapshot || "—"}</div>
                       </td>
                       <td className="px-4 py-3 text-sm text-[#64748B]">{order.order_date}</td>
-                      <td className="px-4 py-3 text-right text-sm font-bold text-[#0F172A]">
+                      <td className="px-4 py-3 text-right text-sm font-bold text-[#0B202B]">
                         {formatStoreOrderMoney(order.order_value || order.subtotal)}
                       </td>
                       <td className="px-4 py-3 text-right text-sm text-[#334155]">

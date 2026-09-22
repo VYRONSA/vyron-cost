@@ -13,7 +13,7 @@ export default function ContractsClient({ contracts }: { contracts: ContractRow[
     <VyronPremiumPageShell
       config={{
         title: "Contracts",
-        subtitle: "Premium VYRON COST workflow for contracts.",
+        subtitle: "Premium VOLORA workflow for contracts.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -35,7 +35,7 @@ export default function ContractsClient({ contracts }: { contracts: ContractRow[
             <EnterpriseScrollContainer className="rounded-[2rem] bg-white shadow-sm">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-900 text-left text-[10px] font-black uppercase text-[#3B82F6]">
+                  <tr className="bg-slate-900 text-left text-[10px] font-black uppercase text-[#2C5A6B]">
                     <th className="p-4">Supplier</th>
                     <th className="p-4">Contract</th>
                     <th className="p-4">Type</th>

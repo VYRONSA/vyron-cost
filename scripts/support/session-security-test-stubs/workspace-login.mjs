@@ -30,9 +30,9 @@ function workspaceRecord(row) {
 function resolveFor(userId) {
   const { supabase } = state();
   const user = (state().users || []).find((u) => u.id === userId);
-  if (!user) throw new Error("No workspace is linked to this login. Contact your VYRON administrator.");
+  if (!user) throw new Error("No workspace is linked to this login. Contact your VOLORA administrator.");
   const membership = supabase.tables.vyron_workspace_memberships.find((m) => m.user_id === userId && m.status === "Active");
-  if (!membership) throw new Error("No workspace is linked to this login. Contact your VYRON administrator.");
+  if (!membership) throw new Error("No workspace is linked to this login. Contact your VOLORA administrator.");
   const ws = supabase.tables.vyron_workspaces.find((w) => w.id === membership.workspace_id);
   return {
     workspace: workspaceRecord(ws),

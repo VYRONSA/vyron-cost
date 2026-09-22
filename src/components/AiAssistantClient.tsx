@@ -37,13 +37,13 @@ export default function AiAssistantClient() {
       }}
     >
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl vyron-grad-deep text-[#BFDBFE]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl vyron-grad-deep text-[#BCCDD5]">
             <Sparkles size={22} />
           </div>
           <div>
-            <h2 className="vyron-t-title text-2xl text-[#0F172A]">VYRON AI Workspace</h2>
+            <h2 className="vyron-t-title text-2xl text-[#0B202B]">VOLORA AI Workspace</h2>
             <p className="text-sm text-slate-500">Ask profit, margin, supplier and recipe questions using live costing data.</p>
           </div>
         </div>
@@ -55,14 +55,14 @@ export default function AiAssistantClient() {
             onKeyDown={(event) => {
               if (event.key === "Enter") ask();
             }}
-            placeholder="Ask VYRON anything about margin, suppliers, recipes..."
-            className="flex-1 rounded-2xl border border-slate-200 px-4 py-4 text-sm font-bold outline-none focus:border-[#60A5FA]"
+            placeholder="Ask VOLORA anything about margin, suppliers, recipes..."
+            className="flex-1 rounded-2xl border border-slate-200 px-4 py-4 text-sm font-bold outline-none focus:border-[#5F8595]"
           />
           <button
             type="button"
             onClick={() => ask()}
             disabled={isPending}
-            className="inline-flex items-center gap-2 rounded-2xl vyron-grad-deep px-5 py-4 text-sm font-black text-[#BFDBFE] disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-2xl vyron-grad-deep px-5 py-4 text-sm font-black text-[#BCCDD5] disabled:opacity-60"
           >
             <WandSparkles size={18} />
             Ask
@@ -77,7 +77,7 @@ export default function AiAssistantClient() {
                 key={item}
                 type="button"
                 onClick={() => ask(item)}
-                className="rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-2 text-xs font-black text-[#1D4ED8] transition hover:bg-[#3B82F6]/15"
+                className="rounded-full border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-4 py-2 text-xs font-black text-[#163A48] transition hover:bg-[#2C5A6B]/15"
               >
                 {item}
               </button>
@@ -86,8 +86,8 @@ export default function AiAssistantClient() {
         </div>
       </div>
 
-        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <h3 className="vyron-t-title text-xl text-[#0F172A]">Answer Panel</h3>
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+        <h3 className="vyron-t-title text-xl text-[#0B202B]">Answer Panel</h3>
         {!answer ? (
           <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-8 text-sm font-bold text-slate-500">
             Select a suggested question or type your own to generate recommendations from live Supabase data.
@@ -95,7 +95,7 @@ export default function AiAssistantClient() {
         ) : (
           <div className="mt-4 space-y-4">
             <div className="rounded-2xl vyron-grad-deep p-5 text-white">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#BFDBFE]">Summary</div>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#BCCDD5]">Summary</div>
               <div className="mt-2 text-lg font-black">{answer.summary}</div>
             </div>
             <div>
@@ -113,8 +113,8 @@ export default function AiAssistantClient() {
       </div>
 
         {answer ? (
-        <div className="xl:col-span-2 rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-          <h3 className="vyron-t-title text-xl text-[#0F172A]">Recommendation Cards</h3>
+        <div className="xl:col-span-2 rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+          <h3 className="vyron-t-title text-xl text-[#0B202B]">Recommendation Cards</h3>
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {answer.recommendations.map((item) => (
               <Link
@@ -125,10 +125,10 @@ export default function AiAssistantClient() {
                     ? "border-red-200 bg-red-50"
                     : item.tone === "amber"
                       ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]"
-                      : "border-[#3B82F6]/25 bg-[#3B82F6]/10"
+                      : "border-[#2C5A6B]/25 bg-[#2C5A6B]/10"
                 }`}
               >
-                <div className="vyron-t-title text-[#0F172A]">{item.title}</div>
+                <div className="vyron-t-title text-[#0B202B]">{item.title}</div>
                 <div className="mt-2 text-sm text-slate-600">{item.detail}</div>
                 <div className="mt-3 text-lg font-black text-blue-700">{item.impact}</div>
               </Link>

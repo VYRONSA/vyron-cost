@@ -73,21 +73,21 @@ export default function ApprovalCentreClient({
     <VyronPremiumPageShell
       config={{
         title: "Approval Centre",
-        subtitle: "Premium VYRON COST workflow for approval centre.",
+        subtitle: "Premium VOLORA workflow for approval centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3">
-                <Search size={20} className="text-[#1D4ED8]" />
+            <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+              <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-4 py-3">
+                <Search size={20} className="text-[#163A48]" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search approvals..."
                   className="w-full bg-transparent text-sm font-black text-slate-700 outline-none placeholder:text-slate-400"
                 />
-                <div className="rounded-full bg-[#07110d] px-4 py-2 text-xs font-black text-[#3B82F6]">
+                <div className="rounded-full bg-[#061722] px-4 py-2 text-xs font-black text-[#2C5A6B]">
                   {filtered.length} items
                 </div>
               </div>
@@ -97,7 +97,7 @@ export default function ApprovalCentreClient({
               {filtered.map((approval) => (
                 <div
                   key={approval.id}
-                  className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_35px_rgba(15,23,42,0.06)]"
+                  className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_35px_rgba(11,32,43,0.06)]"
                 >
                   <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                     <div className="flex gap-4">
@@ -133,8 +133,8 @@ export default function ApprovalCentreClient({
                             <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Proposed</div>
                             <div className="mt-1 text-lg font-black">{Number(approval.proposed_value || 0).toFixed(2)}</div>
                           </div>
-                          <div className="rounded-2xl bg-[#07110d] px-4 py-3 text-white">
-                            <div className="text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">Impact</div>
+                          <div className="rounded-2xl bg-[#061722] px-4 py-3 text-white">
+                            <div className="text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">Impact</div>
                             <div className="mt-1 text-lg font-black">{formatMoney(Number(approval.financial_impact || 0))}</div>
                           </div>
                         </div>

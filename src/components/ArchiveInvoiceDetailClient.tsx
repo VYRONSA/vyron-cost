@@ -145,7 +145,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
         </button>
       </div>
 
-      {message ? <p className="rounded-xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
+      {message ? <p className="rounded-xl border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-4 py-2 text-sm font-semibold text-[#2F7C40]">{message}</p> : null}
       {error ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800">{error}</p> : null}
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -258,7 +258,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
     <VyronPremiumPageShell
       config={{
         title: "Archive Invoice Detail",
-        subtitle: "Premium VYRON COST workflow for archive invoice detail.",
+        subtitle: "Premium VOLORA workflow for archive invoice detail.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >

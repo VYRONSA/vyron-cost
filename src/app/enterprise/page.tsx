@@ -78,12 +78,12 @@ export default async function EnterprisePage() {
       </section>
 
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_20px_60px_rgba(6,20,14,0.28)]">
-          <div className="rounded-2xl bg-[#3B82F6]/12 p-3 text-[#3B82F6] w-fit">
+        <div className="rounded-[2rem] bg-[#061722] p-6 text-white shadow-[0_20px_60px_rgba(6,20,14,0.28)]">
+          <div className="rounded-2xl bg-[#2C5A6B]/12 p-3 text-[#2C5A6B] w-fit">
             <BrainCircuit size={24} />
           </div>
 
-          <div className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#3B82F6]">
+          <div className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#2C5A6B]">
             INVOICE AI
           </div>
 
@@ -97,16 +97,16 @@ export default async function EnterprisePage() {
           <EnterpriseDocumentMetrics />
         </div>
 
-        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-          <div className="rounded-2xl bg-[#3B82F6]/10 p-3 text-[#1D4ED8] w-fit">
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+          <div className="rounded-2xl bg-[#2C5A6B]/10 p-3 text-[#163A48] w-fit">
             <Gauge size={24} />
           </div>
 
-          <div className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#1D4ED8]">
+          <div className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#163A48]">
             YIELD ENGINE
           </div>
 
-          <div className="mt-2 text-3xl font-black text-[#07110d]">
+          <div className="mt-2 text-3xl font-black text-[#061722]">
             68 RULES
           </div>
 
@@ -115,7 +115,7 @@ export default async function EnterprisePage() {
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
           <div className="rounded-2xl bg-red-50 p-3 text-red-700 w-fit">
             <AlertTriangle size={24} />
           </div>
@@ -124,7 +124,7 @@ export default async function EnterprisePage() {
             GP ALERTS
           </div>
 
-          <div className="mt-2 text-3xl font-black text-[#07110d]">
+          <div className="mt-2 text-3xl font-black text-[#061722]">
             14 PRODUCTS
           </div>
 

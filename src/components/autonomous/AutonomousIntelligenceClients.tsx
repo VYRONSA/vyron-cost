@@ -13,7 +13,7 @@ import { VYRON_BTN, VYRON_STATUS, VYRON_SURFACE, VYRON_TABLE } from "@/component
 const BI_CARD = `${VYRON_SURFACE.dark} p-5 shadow-[0_2px_16px_rgba(0,0,0,0.14)]`;
 const BI_CARD_LG = `${VYRON_SURFACE.dark} p-6 shadow-[0_2px_16px_rgba(0,0,0,0.14)]`;
 const BI_NAV = `${VYRON_BTN.secondary} px-3 py-2 text-xs font-black`;
-const BI_HERO = `${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#101b35] via-[#1B2740] to-[#0e1733] p-8`;
+const BI_HERO = `${VYRON_SURFACE.darkShell} bg-gradient-to-br from-[#0b202b] via-[#0F2D39] to-[#0b202b] p-8`;
 const BI_SECTION = "text-xl font-black text-[#F8FAFC]";
 
 export function money(n: number) {
@@ -22,7 +22,7 @@ export function money(n: number) {
 
 export function ExplainBlock({ e }: { e: Explainable }) {
   return (
-    <div className="mt-3 rounded-xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 p-3 text-xs font-bold text-[#94A3B8]">
+    <div className="mt-3 rounded-xl border border-[rgba(11,32,43,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 p-3 text-xs font-bold text-[#94A3B8]">
       <div>Formula: {e.formula}</div>
       <div className="mt-1">Confidence: {e.confidence}%</div>
     </div>
@@ -40,7 +40,7 @@ export function AutonomousNav() {
     ["/vyron-command-centre/performance", "Org Performance"],
     ["/vyron-command-centre/knowledge", "Knowledge"],
     ["/vyron-command-centre/predictive-risk", "Predictive Risk"],
-    ["/vyron-command-centre/copilot", "Ask VYRON"],
+    ["/vyron-command-centre/copilot", "Ask VOLORA"],
     ["/vyron-command-centre/scorecards", "Scorecards"],
     ["/vyron-command-centre/strategic", "Strategic"],
   ] as const;
@@ -63,7 +63,7 @@ export function CommandCentreClient({ data }: { data: AutonomousBusinessIntellig
   };
   return (
     <AutonomousPremiumShell
-      title="VYRON Autonomous Command Centre"
+      title="VOLORA Autonomous Command Centre"
       subtitle="Autonomous decision-support across finance, inventory, procurement, production and recovery — all domains on one executive screen."
       outcomes={[
         "See overall business health score instantly",
@@ -73,9 +73,9 @@ export function CommandCentreClient({ data }: { data: AutonomousBusinessIntellig
       ]}
     >
       <div className={BI_HERO}>
-        <div className="text-xs font-black uppercase tracking-[0.18em] text-[#3B82F6]">Business Health</div>
+        <div className="text-xs font-black uppercase tracking-[0.18em] text-[#2C5A6B]">Business Health</div>
         <div className="mt-2 text-6xl font-black text-[#F8FAFC]">{data.businessHealth.overallScore}</div>
-        <p className="mt-2 text-sm font-semibold text-[#CBD5E1]">Live autonomous score across all VYRON COST domains</p>
+        <p className="mt-2 text-sm font-semibold text-[#CBD5E1]">Live autonomous score across all VOLORA domains</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {data.commandCentre.map((d) => (
@@ -86,7 +86,7 @@ export function CommandCentreClient({ data }: { data: AutonomousBusinessIntellig
           >
             <div className="flex justify-between">
               <h3 className="font-black text-[#F8FAFC]">{d.label}</h3>
-              <span className={`text-xs font-black uppercase ${d.status === "healthy" ? "text-[#3B82F6]" : d.status === "watch" ? "text-[var(--vyron-warning-fg)]" : "text-red-300"}`}>{d.status}</span>
+              <span className={`text-xs font-black uppercase ${d.status === "healthy" ? "text-[#2C5A6B]" : d.status === "watch" ? "text-[var(--vyron-warning-fg)]" : "text-red-300"}`}>{d.status}</span>
             </div>
             <dl className="mt-4 space-y-2 text-sm">
               {d.metrics.map((m) => (
@@ -133,7 +133,7 @@ export function BusinessHealthClient({ health }: { health: AutonomousBusinessInt
           <div key={String(l)} className={BI_CARD}>
             <div className="text-xs font-black uppercase tracking-[0.12em] text-blue-300">{l}</div>
             <div className="mt-2 text-3xl font-black text-[#F8FAFC]">{v}</div>
-            <div className="mt-2 h-2 rounded-full border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150">
+            <div className="mt-2 h-2 rounded-full border-[rgba(11,32,43,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150">
               <div className="h-full rounded-full bg-blue-500" style={{ width: `${v}%` }} />
             </div>
           </div>
@@ -236,7 +236,7 @@ export function DecisionsClient({ decisions }: { decisions: AutonomousBusinessIn
           <span className="text-xs font-black uppercase text-[#94A3B8]">{d.decisionType.replace(/_/g, " ")}</span>
           <h3 className="mt-1 font-black text-[#F8FAFC]">{d.title}</h3>
           <p className="mt-2 text-sm text-[#CBD5E1]">{d.rationale}</p>
-          <p className="mt-2 font-black text-[#3B82F6]">{money(d.expectedBenefitAnnual)}/yr</p>
+          <p className="mt-2 font-black text-[#2C5A6B]">{money(d.expectedBenefitAnnual)}/yr</p>
           <ExplainBlock e={d} />
           {d.href ? (
             <Link href={d.href} className="mt-2 inline-block text-xs font-black text-blue-300">
@@ -317,7 +317,7 @@ export function KnowledgeClient({ entries }: { entries: AutonomousBusinessIntell
   return (
     <AutonomousPremiumShell
       title="Knowledge Intelligence Graph"
-      subtitle="Domain summaries, live signals and explainable business knowledge across VYRON COST."
+      subtitle="Domain summaries, live signals and explainable business knowledge across VOLORA."
       outcomes={["Browse domain knowledge summaries", "Review live business signals", "Understand cross-domain links", "Use explainable confidence"]}
     >
     <div className="grid gap-4 md:grid-cols-2">
@@ -445,7 +445,7 @@ export function StrategicClient({ s }: { s: AutonomousBusinessIntelligencePayloa
               <li key={o.title} className={`rounded-xl p-4 ${VYRON_STATUS.lime}`}>
                 <span className="font-black">{i + 1}. {o.title}</span>
                 <p className="text-sm opacity-90">{o.detail}</p>
-                <p className="font-black text-[#3B82F6]">{money(o.value)}</p>
+                <p className="font-black text-[#2C5A6B]">{money(o.value)}</p>
               </li>
             ))}
           </ol>
@@ -477,7 +477,7 @@ export function CopilotClient({ presets }: { presets: CopilotAnswer[] }) {
 
   return (
     <AutonomousPremiumShell
-      title="Ask VYRON — Autonomous Copilot"
+      title="Ask VOLORA — Autonomous Copilot"
       subtitle="Natural-language business intelligence with explainable formulas and confidence scores."
       outcomes={[
         "Ask questions in plain language",
@@ -501,11 +501,11 @@ export function CopilotClient({ presets }: { presets: CopilotAnswer[] }) {
         ))}
       </div>
       <div className={BI_HERO}>
-        <h2 className="text-2xl font-black text-[#F8FAFC]">Ask VYRON</h2>
+        <h2 className="text-2xl font-black text-[#F8FAFC]">Ask VOLORA</h2>
         {answer ? (
           <>
             <p className="mt-4 text-sm leading-8 text-[#CBD5E1]">{answer.answer}</p>
-            <div className="mt-6 rounded-xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150/80 p-4 text-xs text-[#94A3B8]">
+            <div className="mt-6 rounded-xl border border-[rgba(11,32,43,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150/80 p-4 text-xs text-[#94A3B8]">
               <div>Formula: {answer.formula}</div>
               <div className="mt-1">Confidence: {answer.confidence}%</div>
             </div>

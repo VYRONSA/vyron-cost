@@ -185,12 +185,12 @@ export default function XeroSetupClient() {
         <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</div>
       ) : null}
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-black text-slate-950">Xero Connection</h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">
-              VYRON COST sends approved accounting-ready transactions to Xero. Xero remains the ledger.
+              VOLORA sends approved accounting-ready transactions to Xero. Xero remains the ledger.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -265,7 +265,7 @@ export default function XeroSetupClient() {
         ) : null}
 
         {oauthReady ? (
-          <p className="mt-4 text-xs font-semibold text-[#1D4ED8]">
+          <p className="mt-4 text-xs font-semibold text-[#163A48]">
             Xero OAuth is configured. Connect Xero redirects to login.xero.com for real authorisation.
           </p>
         ) : (
@@ -277,7 +277,7 @@ export default function XeroSetupClient() {
 
       <section
         ref={mappingRef}
-        className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]"
+        className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -341,13 +341,13 @@ function InfoTile({
     status === "Connecting"
       ? "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"
       : highlight
-        ? "border-[#3B82F6]/25 bg-[#3B82F6]/10 text-[#4D7C0F]"
+        ? "border-[#2C5A6B]/25 bg-[#2C5A6B]/10 text-[#2F7C40]"
         : "border-slate-100 bg-slate-50 text-slate-900";
 
   return (
     <div className={`rounded-2xl border p-4 ${statusClass}`}>
       <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">{label}</div>
-      <div className={`mt-2 text-sm font-black ${status === "Connecting" ? "text-[var(--vyron-warning-fg)]" : highlight ? "text-[#4D7C0F]" : "text-slate-900"}`}>
+      <div className={`mt-2 text-sm font-black ${status === "Connecting" ? "text-[var(--vyron-warning-fg)]" : highlight ? "text-[#2F7C40]" : "text-slate-900"}`}>
         {value}
       </div>
     </div>

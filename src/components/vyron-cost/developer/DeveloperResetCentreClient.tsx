@@ -359,7 +359,7 @@ export default function DeveloperResetCentreClient() {
       </div>
 
       {/* ------------------------------------------------ credentials */}
-      <div className="w-full rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <div className="w-full rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <h2 className="text-lg font-black text-slate-900">1 &nbsp;Target and authorisation</h2>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
@@ -424,7 +424,7 @@ export default function DeveloperResetCentreClient() {
       </div>
 
       {/* ------------------------------------------------ modules */}
-      <div className="w-full rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <div className="w-full rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <h2 className="text-lg font-black text-slate-900">2 &nbsp;Choose a module, then preview</h2>
         <p className="mt-1 text-sm font-semibold text-slate-500">
           Preview is read-only and always required before a reset is allowed.
@@ -465,7 +465,7 @@ export default function DeveloperResetCentreClient() {
       {/* ------------------------------------------------ preview */}
       {preview ? (
         <>
-          <div className="w-full rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <div className="w-full rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-black text-slate-900">3 &nbsp;This will be deleted</h2>
@@ -610,7 +610,7 @@ export default function DeveloperResetCentreClient() {
 
           {/* ------------------------------------------------ execute */}
           {preview.total > 0 ? (
-            <div className="w-full rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+            <div className="w-full rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
               <h2 className="text-lg font-black text-slate-900">5 &nbsp;Verify and execute</h2>
 
               {health ? (
@@ -798,7 +798,7 @@ export default function DeveloperResetCentreClient() {
 
       {/* ------------------------------------------------ audit */}
       {audit.length ? (
-        <div className="w-full rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="w-full rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <h2 className="text-lg font-black text-slate-900">Reset history</h2>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">

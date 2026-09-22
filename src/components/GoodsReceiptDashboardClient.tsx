@@ -65,7 +65,7 @@ export default function GoodsReceiptDashboardClient() {
   }, [receipts, search]);
 
   function emailSummary() {
-    const subject = encodeURIComponent("VYRON COST GRN summary");
+    const subject = encodeURIComponent("VOLORA GRN summary");
     const body = encodeURIComponent(
       filtered
         .map((row) => `${text(row.grn_number || row.id)} · ${text(row.supplier_name_snapshot)} · ${text(row.receipt_type)} · ${text(row.received_at).slice(0, 10)}`)
@@ -81,7 +81,7 @@ export default function GoodsReceiptDashboardClient() {
           New GRN
         </Link>
       ) : null}
-      <Link href="/goods-receipts/history" className="rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
+      <Link href="/goods-receipts/history" className="rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
         GRN History
       </Link>
       <Link href="/purchase-orders/back-orders" className="rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-5 py-3 text-sm font-semibold text-[var(--vyron-warning-fg)]">
@@ -90,14 +90,14 @@ export default function GoodsReceiptDashboardClient() {
       <button
         type="button"
         onClick={() => window.print()}
-        className="inline-flex items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]"
+        className="inline-flex items-center gap-2 rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]"
       >
         <Printer size={16} /> Print
       </button>
       <button
         type="button"
         onClick={emailSummary}
-        className="inline-flex items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]"
+        className="inline-flex items-center gap-2 rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]"
       >
         <Mail size={16} /> Email
       </button>
@@ -153,7 +153,7 @@ export default function GoodsReceiptDashboardClient() {
 
       <EnterpriseScrollContainer className="rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <table className="min-w-[980px] w-full text-left text-sm">
-          <thead className="bg-[#23304f] text-xs font-bold uppercase tracking-[0.12em] text-[#94A3B8]">
+          <thead className="bg-[#163a48] text-xs font-bold uppercase tracking-[0.12em] text-[#94A3B8]">
             <tr>
               <th className="px-4 py-3">GRN</th>
               <th className="px-4 py-3">Supplier</th>

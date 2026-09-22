@@ -21,13 +21,13 @@ export default function CommercialLaunchCentreClient({ snapshot }: { snapshot: L
     <VyronPremiumPageShell
       config={{
         title: "Commercial Launch Centre",
-        subtitle: "Premium VYRON COST workflow for commercial launch centre.",
+        subtitle: "Premium VOLORA workflow for commercial launch centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-              <Rocket size={34} className="text-[#3B82F6]" />
+            <div className="rounded-[2rem] bg-[#061722] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+              <Rocket size={34} className="text-[#2C5A6B]" />
               <h2 className="mt-5 text-3xl font-black">Commercial Launch Centre</h2>
               <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
                 Readiness score, launch blockers and client demo confidence for Handcrafted Foods.
@@ -35,7 +35,7 @@ export default function CommercialLaunchCentreClient({ snapshot }: { snapshot: L
               <div className="mt-6 grid gap-5 md:grid-cols-3">
                 <div className="rounded-3xl bg-white/10 p-5">
                   <div className="text-xs font-black uppercase text-slate-400">Readiness Score</div>
-                  <div className="mt-2 text-5xl font-black text-[#3B82F6]">{snapshot.readinessScore}%</div>
+                  <div className="mt-2 text-5xl font-black text-[#2C5A6B]">{snapshot.readinessScore}%</div>
                 </div>
                 <div className="rounded-3xl bg-white/10 p-5">
                   <div className="text-xs font-black uppercase text-slate-400">Monthly Recovery</div>
@@ -50,10 +50,10 @@ export default function CommercialLaunchCentreClient({ snapshot }: { snapshot: L
 
             <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               {checks.map(([label, value, href]) => (
-                <Link key={String(label)} href={String(href)} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)] transition hover:bg-[#3B82F6]/10">
+                <Link key={String(label)} href={String(href)} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)] transition hover:bg-[#2C5A6B]/10">
                   <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{label}</div>
                   <div className="mt-3 text-4xl font-black text-[#F8FAFC]">{String(value)}</div>
-                  <div className="mt-3 text-sm font-black text-[#1D4ED8]">Open →</div>
+                  <div className="mt-3 text-sm font-black text-[#163A48]">Open →</div>
                 </Link>
               ))}
             </section>

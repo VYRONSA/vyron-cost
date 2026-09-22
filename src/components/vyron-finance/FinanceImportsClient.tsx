@@ -45,7 +45,7 @@ export default function FinanceImportsClient() {
       config={{
         visualVariant: "finance",
         title: "Finance Imports",
-        subtitle: "Premium VYRON COST workflow for finance imports.",
+        subtitle: "Premium VOLORA workflow for finance imports.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -89,7 +89,7 @@ export default function FinanceImportsClient() {
                 />
               </label>
               {result ? (
-                <div className="mt-4 rounded-xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-4 text-sm font-bold text-[#4D7C0F]">
+                <div className="mt-4 rounded-xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-4 text-sm font-bold text-[#2F7C40]">
                   Valid rows: {result.valid} · Rejected: {result.rejected}
                 </div>
               ) : null}

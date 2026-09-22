@@ -74,7 +74,7 @@ export default function StoreProductionRunDetailClient({ runId }: { runId: strin
               type="button"
               disabled={completing}
               onClick={() => void completeRun()}
-              className="rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+              className="rounded-xl bg-[#1F4757] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
             >
               {completing ? "Completing…" : "Complete Run"}
             </button>
@@ -114,7 +114,7 @@ export default function StoreProductionRunDetailClient({ runId }: { runId: strin
             </section>
 
             <section className={VYRON_MASTER.moduleDataSection}>
-              <h2 className="mb-4 text-lg font-black text-[#0F172A]">Product Lines</h2>
+              <h2 className="mb-4 text-lg font-black text-[#0B202B]">Product Lines</h2>
               <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
                 <table className="min-w-full">
                   <thead className={VYRON_TABLE.head}>
@@ -146,7 +146,7 @@ export default function StoreProductionRunDetailClient({ runId }: { runId: strin
             </section>
 
             <section className={VYRON_MASTER.moduleDataSection}>
-              <h2 className="mb-4 text-lg font-black text-[#0F172A]">Required Ingredients</h2>
+              <h2 className="mb-4 text-lg font-black text-[#0B202B]">Required Ingredients</h2>
               <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
                 <table className="min-w-full">
                   <thead className={VYRON_TABLE.head}>

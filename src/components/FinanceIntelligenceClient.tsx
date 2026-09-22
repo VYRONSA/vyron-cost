@@ -12,7 +12,7 @@ function riskClass(level: string) {
   if (level === "Critical") return "bg-red-100 text-red-800 border-red-200";
   if (level === "High") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)] border-[var(--vyron-warning-border)]";
   if (level === "Medium") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)] border-[var(--vyron-warning-border)]";
-  return "bg-[#3B82F6]/12 text-[#4D7C0F] border-[#3B82F6]/25";
+  return "bg-[#2C5A6B]/12 text-[#2F7C40] border-[#2C5A6B]/25";
 }
 
 export default function FinanceIntelligenceClient({
@@ -39,7 +39,7 @@ export default function FinanceIntelligenceClient({
       config={{
         visualVariant: "finance",
         title: "Finance Intelligence",
-        subtitle: "Premium VYRON COST workflow for finance intelligence.",
+        subtitle: "Premium VOLORA workflow for finance intelligence.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -49,7 +49,7 @@ export default function FinanceIntelligenceClient({
                 <Link
                   key={label}
                   href={href}
-                  className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-lg"
+                  className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)] transition hover:-translate-y-0.5 hover:shadow-lg"
                 >
                   <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">{label}</div>
                   <div className="mt-2 text-3xl font-black text-slate-950">{value}</div>
@@ -77,7 +77,7 @@ export default function FinanceIntelligenceClient({
                   <div className="text-2xl font-black">{money(leakage.projectedAnnualImpact)}</div>
                 </div>
               </div>
-              <Link href="/financial-leakage" className="mt-6 inline-block text-sm font-black text-[#3B82F6] hover:underline">
+              <Link href="/financial-leakage" className="mt-6 inline-block text-sm font-black text-[#2C5A6B] hover:underline">
                 Open Financial Leakage Centre →
               </Link>
             </div>

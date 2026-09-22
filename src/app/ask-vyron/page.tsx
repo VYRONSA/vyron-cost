@@ -12,7 +12,7 @@ export default async function AskVyronPage() {
   return (
     <VyronCostAiShell
       hidePageHeader
-      title="Ask VYRON"
+      title="Ask VOLORA"
       subtitle="Ask your business what is happening, why it is happening, and what to do next."
     >
       <AskVyronClient intelligence={intelligence} companyName={companyName} hasWorkspace={hasWorkspace} />

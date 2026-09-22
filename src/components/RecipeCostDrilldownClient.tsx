@@ -24,13 +24,13 @@ export default function RecipeCostDrilldownClient({ products }: { products: Prod
       config={{
         visualVariant: "products",
         title: "Recipe Cost Drilldown",
-        subtitle: "Premium VYRON COST workflow for recipe cost drilldown.",
+        subtitle: "Premium VOLORA workflow for recipe cost drilldown.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-              <Boxes size={34} className="text-[#3B82F6]" />
+            <div className="rounded-[2rem] bg-[#061722] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+              <Boxes size={34} className="text-[#2C5A6B]" />
               <h2 className="mt-5 text-3xl font-black">Recipe Cost Drilldown</h2>
               <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
                 Breakdown every product cost into ingredient, packaging, labour and overhead exposure.
@@ -39,20 +39,20 @@ export default function RecipeCostDrilldownClient({ products }: { products: Prod
 
             <div className="grid gap-5">
               {rows.map(({ product, ingredient, packaging, labour, overhead, total }) => (
-                <div key={product.id} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+                <div key={product.id} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                       <h3 className="text-2xl font-black text-[#F8FAFC]">{product.product_name}</h3>
                       <p className="mt-1 text-sm font-bold text-slate-500">{product.category} · Total cost {money(total)}</p>
                     </div>
-                    <Link href={product.product_id ? `/products/${product.product_id}` : "/products"} className="inline-flex items-center gap-2 rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]">
+                    <Link href={product.product_id ? `/products/${product.product_id}` : "/products"} className="inline-flex items-center gap-2 rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-5 py-3 text-sm font-black text-[#2F7C40]">
                       Open product <ArrowRight size={16} />
                     </Link>
                   </div>
 
                   <div className="mt-5 grid gap-3 md:grid-cols-4">
                     {[
-                      ["Ingredients", ingredient, "bg-[#3B82F6]/10 text-[#4D7C0F]"],
+                      ["Ingredients", ingredient, "bg-[#2C5A6B]/10 text-[#2F7C40]"],
                       ["Packaging", packaging, "bg-blue-50 text-blue-800"],
                       ["Labour", labour, "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
                       ["Overheads", overhead, "bg-slate-50 text-slate-800"],

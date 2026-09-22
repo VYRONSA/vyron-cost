@@ -27,7 +27,7 @@ export default function RecoveryOpportunityDetailClient({
       config={{
         visualVariant: "recovery",
         title: "Recovery Opportunity Detail",
-        subtitle: "Premium VYRON COST workflow for recovery opportunity detail.",
+        subtitle: "Premium VOLORA workflow for recovery opportunity detail.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -39,21 +39,21 @@ export default function RecoveryOpportunityDetailClient({
                 <p className="mt-4 text-sm leading-7 text-slate-600">{detail.whyDetected}</p>
               </div>
 
-              <div className="rounded-[2rem] border border-[#3B82F6]/25 bg-[#3B82F6]/10 p-6">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#4D7C0F]">Formula used</div>
+              <div className="rounded-[2rem] border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 p-6">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#2F7C40]">Formula used</div>
                 <div className="mt-2 text-lg font-black text-[#F8FAFC]">{detail.formulaName}</div>
                 <div className="mt-4 rounded-xl bg-white p-4 font-mono text-sm font-bold text-slate-800">
                   {detail.formulaExpression}
                 </div>
-                <div className="mt-3 text-sm font-bold text-[#4D7C0F]">{detail.formulaWorkedExample}</div>
+                <div className="mt-3 text-sm font-bold text-[#2F7C40]">{detail.formulaWorkedExample}</div>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   <div className="rounded-xl bg-white p-4">
                     <div className="text-xs font-black uppercase text-slate-400">Monthly value</div>
-                    <div className="mt-1 text-2xl font-black text-[#1D4ED8]">{formatMoney(detail.monthly_saving)}</div>
+                    <div className="mt-1 text-2xl font-black text-[#163A48]">{formatMoney(detail.monthly_saving)}</div>
                   </div>
                   <div className="rounded-xl bg-white p-4">
                     <div className="text-xs font-black uppercase text-slate-400">Annual value</div>
-                    <div className="mt-1 text-2xl font-black text-[#1D4ED8]">{formatMoney(detail.annual_saving)}</div>
+                    <div className="mt-1 text-2xl font-black text-[#163A48]">{formatMoney(detail.annual_saving)}</div>
                     <div className="mt-1 text-xs text-slate-500">= monthly × 12</div>
                   </div>
                 </div>
@@ -71,7 +71,7 @@ export default function RecoveryOpportunityDetailClient({
                       <Link
                         key={product.id}
                         href={product.href}
-                        className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 transition hover:bg-[#3B82F6]/10"
+                        className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 transition hover:bg-[#2C5A6B]/10"
                       >
                         <span className="font-black text-[#F8FAFC]">{product.name}</span>
                         <span className="text-xs font-bold text-slate-500">{product.impact}</span>
@@ -93,7 +93,7 @@ export default function RecoveryOpportunityDetailClient({
                       <Link
                         key={supplier.id}
                         href={supplier.href}
-                        className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 transition hover:bg-[#3B82F6]/10"
+                        className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 transition hover:bg-[#2C5A6B]/10"
                       >
                         <span className="font-black text-[#F8FAFC]">{supplier.name}</span>
                         <span className="text-xs font-bold text-slate-500">{supplier.impact}</span>
@@ -106,15 +106,15 @@ export default function RecoveryOpportunityDetailClient({
 
             <aside className="space-y-5">
               <div className="rounded-[2rem] vyron-grad-deep p-6 text-white">
-                <div className="text-xs font-black uppercase tracking-[0.2em] text-[#BFDBFE]">Potential recovery</div>
-                <div className="mt-3 text-4xl font-black text-[#3B82F6]">{formatMoney(detail.annual_saving)}</div>
+                <div className="text-xs font-black uppercase tracking-[0.2em] text-[#BCCDD5]">Potential recovery</div>
+                <div className="mt-3 text-4xl font-black text-[#2C5A6B]">{formatMoney(detail.annual_saving)}</div>
                 <div className="mt-2 text-sm text-white/60">per year · {detail.confidencePercent}% confidence</div>
                 <div className="mt-4 rounded-xl bg-white/10 p-4 text-sm">
-                  <div className="font-black text-[#BFDBFE]">Data source</div>
+                  <div className="font-black text-[#BCCDD5]">Data source</div>
                   <div className="mt-2 text-white/80">{detail.dataSource}</div>
                 </div>
                 <div className="mt-4 rounded-xl bg-white/10 p-4 text-sm">
-                  <div className="font-black text-[#BFDBFE]">Recommended action</div>
+                  <div className="font-black text-[#BCCDD5]">Recommended action</div>
                   <div className="mt-2 text-white/80">{detail.recommendedAction}</div>
                 </div>
                 <div className="mt-4 text-sm font-bold">Status: {detail.status}</div>
@@ -156,7 +156,7 @@ export default function RecoveryOpportunityDetailClient({
                   </button>
                 </div>
                 {message ? (
-                  <div className="mt-4 rounded-xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3 text-sm font-black text-[#1D4ED8]">{message}</div>
+                  <div className="mt-4 rounded-xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-4 py-3 text-sm font-black text-[#163A48]">{message}</div>
                 ) : null}
               </div>
             </aside>

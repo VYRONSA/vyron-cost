@@ -80,7 +80,7 @@ export function VyronPremiumControlPanel({ title, actions, quotes, showTitle = t
             {showTitle && title ? (
               <>
                 <div className={M.eyebrow}>
-                  <Sparkles size={13} className="text-[#1D6BFF]" /> Workspace Control
+                  <Sparkles size={13} className="text-[#1F4757]" /> Workspace Control
                 </div>
                 <h3 className={`mt-3 break-words text-2xl tracking-tight text-balance md:text-3xl ${M.heading}`}>{title}</h3>
               </>
@@ -94,7 +94,7 @@ export function VyronPremiumControlPanel({ title, actions, quotes, showTitle = t
             {quotes.slice(0, 2).map((item) => (
               <div key={item.label} className={M.modulePanelNested}>
                 <div className={`flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] ${M.muted}`}>
-                  <ShieldCheck size={14} className="text-[#1D6BFF]" /> {item.label}
+                  <ShieldCheck size={14} className="text-[#1F4757]" /> {item.label}
                 </div>
                 <p className={`mt-2 text-sm font-medium leading-6 ${M.body}`}>&ldquo;{item.quote}&rdquo;</p>
               </div>
@@ -145,7 +145,7 @@ export function VyronPremiumFormulaCard({
           <div className={`mt-5 space-y-3 text-sm font-medium leading-7 ${M.bodyOnDark}`}>
             {formulas.map((line, index) => (
               <p key={`${line.label}-${index}`}>
-                <span className="font-bold text-[#3B82F6]">{line.label}</span> = {line.formula}
+                <span className="font-bold text-[#2C5A6B]">{line.label}</span> = {line.formula}
               </p>
             ))}
           </div>
@@ -183,7 +183,7 @@ export function VyronPremiumIntelligencePanel({
       <div className="mt-5 grid gap-3">
         {items.map((item) => (
           <div key={item.label} className={M.dashboardHeroRow}>
-            <div className="text-xs font-bold uppercase tracking-[0.1em] text-[#3B82F6]">{item.label}</div>
+            <div className="text-xs font-bold uppercase tracking-[0.1em] text-[#2C5A6B]">{item.label}</div>
             <p className={`mt-1 text-sm font-medium leading-6 ${M.bodyOnDark}`}>{item.detail}</p>
           </div>
         ))}
@@ -194,7 +194,7 @@ export function VyronPremiumIntelligencePanel({
 
 export function VyronPremiumInsightCard({ category, message, href }: { category: string; message: string; href?: string }) {
   const body = href ? (
-    <Link href={href} className="text-[#1D6BFF] hover:underline">
+    <Link href={href} className="text-[#1F4757] hover:underline">
       {message}
     </Link>
   ) : (
@@ -202,7 +202,7 @@ export function VyronPremiumInsightCard({ category, message, href }: { category:
   );
   return (
     <li className={`rounded-xl border border-[#E2E8F0] bg-white px-5 py-4 text-sm font-medium leading-6 ${M.body}`}>
-      <span className="mr-2 inline-block rounded-lg border border-[#3B82F6]/20 bg-[#3B82F6]/8 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#2563EB]">
+      <span className="mr-2 inline-block rounded-lg border border-[#2C5A6B]/20 bg-[#2C5A6B]/8 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#1F4757]">
         {category}
       </span>
       {body}
@@ -286,7 +286,7 @@ export function VyronPremiumEmptyState({ title = "Getting Started", steps }: { t
       <ol className={`mx-auto mt-6 max-w-lg space-y-3 text-left text-sm font-medium leading-6 ${M.body}`}>
         {steps.map((step, index) => (
           <li key={step} className={`flex gap-3 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2`}>
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#1D6BFF]/20 bg-[#F6F7FB] text-xs font-bold text-[#1D6BFF]">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#1F4757]/20 bg-[#F6F7FB] text-xs font-bold text-[#1F4757]">
               {index + 1}
             </span>
             <span className="pt-0.5">{step}</span>

@@ -22,7 +22,7 @@ export default function ApprovalMatrixClient({ data }: { data: ApprovalMatrixPay
     <VyronPremiumPageShell
       config={{
         title: "Approval Matrix",
-        subtitle: "Premium VYRON COST workflow for approval matrix.",
+        subtitle: "Premium VOLORA workflow for approval matrix.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >

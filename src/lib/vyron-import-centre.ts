@@ -56,12 +56,12 @@ export const importTemplates: ImportTemplate[] = [
   {
     id: "product-mappings",
     label: "Product Mapping",
-    description: "Map accounting item codes to existing VYRON products",
+    description: "Map accounting item codes to existing VOLORA products",
     columns: ["source_item_code", "source_description", "product_id", "product_name"],
     requiredColumns: ["source_item_code"],
     sampleRow: ["165", "N1 SAUSAGE ROLL", "", "Plain Steak Pie 160g"],
     instructions: [
-      "One row maps one accounting item code to one existing VYRON product.",
+      "One row maps one accounting item code to one existing VOLORA product.",
       "Supply product_id, or product_name for an exact company-scoped match.",
       "Products are never created by this import — map to a product that already exists.",
       "Re-importing the same item code updates the mapping instead of duplicating it.",
@@ -88,7 +88,7 @@ export const importTemplates: ImportTemplate[] = [
   {
     id: "customer-invoices",
     label: "Customer Invoices",
-    description: "VYRON standard customer invoice format — one row per invoice line",
+    description: "VOLORA standard customer invoice format — one row per invoice line",
     columns: [
       "invoice_number",
       "customer_name",
@@ -143,13 +143,13 @@ export const importTemplates: ImportTemplate[] = [
       "Dates use YYYY-MM-DD.",
       "Monetary fields are numeric — do not enter currency symbols.",
       "item_code is the source accounting-system item identifier.",
-      "VYRON resolves item_code to a product using the company-specific Product Mapping.",
+      "VOLORA resolves item_code to a product using the company-specific Product Mapping.",
     ],
   },
   {
     id: "supplier-invoices",
     label: "Supplier Invoices",
-    description: "VYRON standard supplier invoice format — one row per invoice line",
+    description: "VOLORA standard supplier invoice format — one row per invoice line",
     columns: [
       "invoice_number",
       "supplier_name",

@@ -206,7 +206,7 @@ export default function PredictiveRiskCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#2C5A6B]/35 bg-[#2C5A6B]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Predictive Risk Centre
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Predictive Risk Centre</h1>
@@ -255,7 +255,7 @@ export default function PredictiveRiskCentreClient({
 
       {!snapshot.hasForecastData && !loading ? (
         <section className={M.moduleDataSection}>
-          <h2 className="text-xl font-bold text-[#0F172A]">Predictive forecasting requires additional operational data.</h2>
+          <h2 className="text-xl font-bold text-[#0B202B]">Predictive forecasting requires additional operational data.</h2>
           <p className="mt-2 text-sm font-medium text-[#64748B]">
             Forecasts are derived from current warnings, health scores and operational signals. Load data to enable
             predictive risk modelling.
@@ -291,9 +291,9 @@ export default function PredictiveRiskCentreClient({
             <SummaryCard
               label="Critical Forecast Risks"
               value={String(snapshot.summary.criticalForecastRisks)}
-              accent="#2563EB"
+              accent="#1F4757"
             />
-            <SummaryCard label="High Forecast Risks" value={String(snapshot.summary.highForecastRisks)} accent="#3B82F6" />
+            <SummaryCard label="High Forecast Risks" value={String(snapshot.summary.highForecastRisks)} accent="#2C5A6B" />
             <SummaryCard
               label="Forecast Exposure"
               value={
@@ -301,11 +301,11 @@ export default function PredictiveRiskCentreClient({
                   ? snapshot.summary.forecastExposureLabel
                   : "Exposure Not Yet Measurable"
               }
-              accent="#0F172A"
+              accent="#0B202B"
               small={snapshot.summary.forecastExposure == null}
             />
-            <SummaryCard label="Confidence Level" value={snapshot.summary.confidenceLevel} accent="#1D6BFF" />
-            <SummaryCard label="Forecast Horizon" value={snapshot.summary.outlookLabel} accent="#3B82F6" small />
+            <SummaryCard label="Confidence Level" value={snapshot.summary.confidenceLevel} accent="#1F4757" />
+            <SummaryCard label="Forecast Horizon" value={snapshot.summary.outlookLabel} accent="#2C5A6B" small />
           </section>
 
           {snapshot.forecastedRisks.length === 0 ? (
@@ -324,7 +324,7 @@ export default function PredictiveRiskCentreClient({
           ) : (
             <>
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Forecasted Risks</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Forecasted Risks</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Forward-looking risks derived from current warnings, health scores and operational signals.
                 </p>
@@ -361,7 +361,7 @@ export default function PredictiveRiskCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Predictive Risk Models</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Predictive Risk Models</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Traceable forecast models generated only when supported by current tenant data.
                 </p>
@@ -379,7 +379,7 @@ export default function PredictiveRiskCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Top Future Risks</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Top Future Risks</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Top 10 future risks sorted Critical → High → Medium → Low.
                 </p>
@@ -408,7 +408,7 @@ export default function PredictiveRiskCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Scenario Centre</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Scenario Centre</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Descriptive scenarios based on current signals — no invented financial values.
                 </p>
@@ -420,7 +420,7 @@ export default function PredictiveRiskCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Risk Heatmap</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Risk Heatmap</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Likelihood vs impact positioning from current warning signals by category.
                 </p>
@@ -434,7 +434,7 @@ export default function PredictiveRiskCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Recommended Preventive Actions</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Recommended Preventive Actions</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Top 10 preventative actions to reduce forecast risk escalation.
                 </p>
@@ -448,7 +448,7 @@ export default function PredictiveRiskCentreClient({
           )}
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-lg font-bold text-[#0F172A]">Executive drilldowns</h2>
+            <h2 className="text-lg font-bold text-[#0B202B]">Executive drilldowns</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {[
                 { label: "Executive Boardroom", href: "/executive-boardroom", icon: Building2 },
@@ -470,7 +470,7 @@ export default function PredictiveRiskCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1F4757]/30 hover:text-[#1F4757]"
                 >
                   <link.icon size={16} />
                   {link.label}
@@ -499,8 +499,8 @@ function SummaryCard({
     <div className={`${M.moduleDataSection} p-5`}>
       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">{label}</div>
       <div
-        className={`mt-2 font-black text-[#0F172A] ${small ? "text-sm leading-6" : "text-2xl"}`}
-        style={{ color: small ? "#0F172A" : accent }}
+        className={`mt-2 font-black text-[#0B202B] ${small ? "text-sm leading-6" : "text-2xl"}`}
+        style={{ color: small ? "#0B202B" : accent }}
       >
         {value}
       </div>
@@ -511,8 +511,8 @@ function SummaryCard({
 function ForecastRow({ row }: { row: ForecastedRisk }) {
   return (
     <tr className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{row.risk}</td>
-      <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{row.category}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{row.risk}</td>
+      <td className="px-4 py-3 font-semibold text-[#1F4757]">{row.category}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#64748B]">{row.currentStatus}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.forecastedOutcome}</td>
       <td className="px-4 py-3">
@@ -524,7 +524,7 @@ function ForecastRow({ row }: { row: ForecastedRisk }) {
       <td className="px-4 py-3 text-sm font-medium text-[#64748B]">{row.forecastHorizon}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.recommendedAction}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -535,7 +535,7 @@ function ForecastRow({ row }: { row: ForecastedRisk }) {
 function FutureRiskRow({ row }: { row: FutureRiskItem }) {
   return (
     <tr className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{row.risk}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{row.risk}</td>
       <td className="px-4 py-3">
         <SeverityBadge severity={row.severity} />
       </td>
@@ -546,7 +546,7 @@ function FutureRiskRow({ row }: { row: FutureRiskItem }) {
       <td className="px-4 py-3 text-sm font-medium text-[#64748B]">{row.timeHorizon}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.recommendedResponse}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -559,8 +559,8 @@ function ModelCard({ model }: { model: PredictiveModel }) {
     <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1D6BFF]">{model.category}</div>
-          <h3 className="mt-1 font-bold text-[#0F172A]">{model.title}</h3>
+          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1F4757]">{model.category}</div>
+          <h3 className="mt-1 font-bold text-[#0B202B]">{model.title}</h3>
         </div>
         <ConfidenceBadge confidence={model.confidence} />
       </div>
@@ -575,7 +575,7 @@ function ModelCard({ model }: { model: PredictiveModel }) {
           ))}
         </ul>
       </div>
-      <Link href={model.href} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+      <Link href={model.href} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
         Open module <ArrowRight size={14} />
       </Link>
     </div>
@@ -592,7 +592,7 @@ function ScenarioCard({ scenario }: { scenario: ScenarioItem }) {
 
   return (
     <div className={`rounded-2xl border p-5 ${accent}`}>
-      <h3 className="font-bold text-[#0F172A]">{scenario.title}</h3>
+      <h3 className="font-bold text-[#0B202B]">{scenario.title}</h3>
       <p className="mt-2 text-sm font-medium leading-6 text-[#334155]">{scenario.summary}</p>
       <div className="mt-3">
         <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">Based on</div>
@@ -648,7 +648,7 @@ function HeatmapGrid({ risks }: { risks: HeatmapRisk[] }) {
                         <Link
                           key={row.id}
                           href={row.href}
-                          className="block rounded-lg bg-white/80 px-2 py-1 text-xs font-semibold text-[#334155] hover:text-[#1D6BFF]"
+                          className="block rounded-lg bg-white/80 px-2 py-1 text-xs font-semibold text-[#334155] hover:text-[#1F4757]"
                         >
                           {row.label}
                         </Link>
@@ -672,11 +672,11 @@ function PreventiveActionCard({ action }: { action: PreventiveAction }) {
         <span className="inline-flex h-6 w-6 items-center justify-center rounded-full vyron-grad-surface text-[10px] font-bold text-white">
           {action.priority}
         </span>
-        <div className="font-bold text-[#0F172A]">{action.title}</div>
+        <div className="font-bold text-[#0B202B]">{action.title}</div>
       </div>
       <p className="mt-2 text-sm font-medium text-[#64748B]">{action.whyItMatters}</p>
       <p className="mt-2 text-xs font-semibold text-[#334155]">Expected benefit: {action.expectedBenefit}</p>
-      <Link href={action.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+      <Link href={action.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
         Open module <ArrowRight size={14} />
       </Link>
     </div>
@@ -688,7 +688,7 @@ function SeverityBadge({ severity }: { severity: ForecastedRisk["severity"] }) {
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
+    Low: "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]",
   };
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes[severity]}`}>

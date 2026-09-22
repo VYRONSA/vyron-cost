@@ -29,6 +29,6 @@ export async function POST(request: Request) {
     const answer = answerAskVyronQuestion(question, context.input);
     return NextResponse.json({ ok: true, answer });
   } catch (error) {
-    return workspaceAccessErrorResponse(error, "Ask VYRON request failed.");
+    return workspaceAccessErrorResponse(error, "Ask VOLORA request failed.");
   }
 }

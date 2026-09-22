@@ -19,7 +19,7 @@ export default function EnterpriseForecastClient({ forecast }: { forecast: Enter
       config={{
         visualVariant: "finance",
         title: "Enterprise Forecast",
-        subtitle: "Premium VYRON COST workflow for enterprise forecast.",
+        subtitle: "Premium VOLORA workflow for enterprise forecast.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -41,9 +41,9 @@ export default function EnterpriseForecastClient({ forecast }: { forecast: Enter
                 <div className="text-xs font-black uppercase text-red-700">Supplier inflation trend</div>
                 <div className="mt-2 text-3xl font-black text-red-800">{forecast.supplierInflationPct}%</div>
               </div>
-              <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-5">
-                <div className="text-xs font-black uppercase text-[#1D4ED8]">Recovery opportunity (annual)</div>
-                <div className="mt-2 text-3xl font-black text-[#4D7C0F]">{money(forecast.recoveryOpportunityAnnual)}</div>
+              <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-5">
+                <div className="text-xs font-black uppercase text-[#163A48]">Recovery opportunity (annual)</div>
+                <div className="mt-2 text-3xl font-black text-[#2F7C40]">{money(forecast.recoveryOpportunityAnnual)}</div>
               </div>
             </div>
             <div className="rounded-[2rem] bg-white shadow-sm">

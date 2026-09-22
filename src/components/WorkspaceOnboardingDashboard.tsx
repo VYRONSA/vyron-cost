@@ -27,7 +27,7 @@ export default function WorkspaceOnboardingDashboard({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[2rem] bg-white p-8 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <section className="rounded-[2rem] bg-white p-8 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <div className="text-xs font-black uppercase tracking-[0.14em] text-blue-600">Workspace onboarding</div>
         <h2 className="mt-3 text-4xl font-black text-slate-950">{EMPTY_WORKSPACE_ONBOARDING.title}</h2>
         <p className="mt-4 max-w-2xl text-sm font-semibold leading-7 text-slate-500">

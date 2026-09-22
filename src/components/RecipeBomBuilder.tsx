@@ -231,7 +231,7 @@ export default function RecipeBomBuilder({
       <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-black uppercase tracking-[0.14em] text-slate-500">{title}</h3>
-          <button type="button" onClick={() => addLine(type)} className="rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-3 py-1.5 text-xs font-black text-[#1D4ED8]">
+          <button type="button" onClick={() => addLine(type)} className="rounded-full border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-3 py-1.5 text-xs font-black text-[#163A48]">
             + Add {title.toLowerCase()}
           </button>
         </div>
@@ -302,13 +302,13 @@ export default function RecipeBomBuilder({
   return (
     <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
       <div className="space-y-6">
-        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h2 className="text-3xl font-black text-[#F8FAFC]">BOM Builder</h2>
               <p className="mt-2 text-sm text-slate-500">Add ingredients, packaging, labour and wastage lines with live totals.</p>
             </div>
-            <Link href={`/recipes/${recipe.id}`} className="text-sm font-black text-[#1D4ED8]">
+            <Link href={`/recipes/${recipe.id}`} className="text-sm font-black text-[#163A48]">
               View recipe
             </Link>
           </div>
@@ -366,7 +366,7 @@ export default function RecipeBomBuilder({
           <button type="button" onClick={duplicateBom} className="inline-flex items-center gap-2 rounded-2xl bg-slate-100 px-6 py-4 text-sm font-black text-slate-800">
             Duplicate BOM
           </button>
-          <button type="button" onClick={approveBom} className="inline-flex items-center gap-2 rounded-2xl vyron-grad-deep px-6 py-4 text-sm font-black text-[#BFDBFE]">
+          <button type="button" onClick={approveBom} className="inline-flex items-center gap-2 rounded-2xl vyron-grad-deep px-6 py-4 text-sm font-black text-[#BCCDD5]">
             Approve BOM
           </button>
           <button type="button" onClick={deleteRecipe} className="inline-flex items-center gap-2 rounded-2xl bg-red-50 px-6 py-4 text-sm font-black text-red-700">
@@ -374,12 +374,12 @@ export default function RecipeBomBuilder({
             Delete recipe
           </button>
         </div>
-        {message ? <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-4 text-sm font-black text-[#1D4ED8]">{message}</div> : null}
+        {message ? <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-5 py-4 text-sm font-black text-[#163A48]">{message}</div> : null}
       </div>
 
       <aside className="space-y-5">
         <div className="rounded-[2rem] vyron-grad-deep p-6 text-white">
-          <div className="text-xs font-black uppercase tracking-[0.2em] text-[#BFDBFE]">Live totals</div>
+          <div className="text-xs font-black uppercase tracking-[0.2em] text-[#BCCDD5]">Live totals</div>
           <div className="mt-4 space-y-4">
             <div>
               <div className="text-xs text-white/50">Total cost</div>
@@ -391,16 +391,16 @@ export default function RecipeBomBuilder({
             </div>
             <div>
               <div className="text-xs text-white/50">GP preview</div>
-              <div className="text-3xl font-black text-[#BFDBFE]">{gpPreview.toFixed(1)}%</div>
+              <div className="text-3xl font-black text-[#BCCDD5]">{gpPreview.toFixed(1)}%</div>
             </div>
             <div className="rounded-2xl bg-white/5 p-4">
-              <div className="text-sm font-black text-[#BFDBFE]">Suggested selling price</div>
+              <div className="text-sm font-black text-[#BCCDD5]">Suggested selling price</div>
               <div className="mt-2 text-2xl font-black">{formatMoney(suggestedPrice)}</div>
             </div>
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
           <div className="grid gap-4">
             <label className="text-sm font-black text-slate-600">
               Selling price

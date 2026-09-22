@@ -18,10 +18,10 @@ export default async function UsersPage() {
         <MetricCard title="Invite Flow" value="Ready" note="Auth integration follows" icon={UserPlus} dark />
       </section>
 
-      <section className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <h2 className="text-2xl font-black text-[#07110d]">User Access Register</h2>
+      <section className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+        <h2 className="text-2xl font-black text-[#061722]">User Access Register</h2>
         <div className="mt-6 overflow-hidden rounded-3xl border border-slate-100">
-          <div className="grid grid-cols-4 bg-[#0b1210] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+          <div className="grid grid-cols-4 bg-[#081c27] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
             <div>Name</div>
             <div>Email</div>
             <div>Role</div>
@@ -29,7 +29,7 @@ export default async function UsersPage() {
           </div>
           {users.map((user) => (
             <div key={user.id} className="grid grid-cols-4 items-center border-t border-slate-100 px-5 py-5 text-sm">
-              <div className="font-black text-[#07110d]">{user.full_name}</div>
+              <div className="font-black text-[#061722]">{user.full_name}</div>
               <div className="font-bold text-slate-600">{user.email}</div>
               <div>{user.role}</div>
               <div><StatusPill tone={statusTone(user.status)}>{user.status}</StatusPill></div>

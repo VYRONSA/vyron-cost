@@ -30,11 +30,11 @@ export default function DeploymentReadinessAccessGuard({ children }: { children:
     return (
       <div className="flex min-h-[50vh] items-center justify-center p-8">
         <div className="max-w-md rounded-2xl border border-[#E2E8F0] bg-white p-8 text-center shadow-sm">
-          <h1 className="text-2xl font-bold text-[#0F172A]">Access denied</h1>
+          <h1 className="text-2xl font-bold text-[#0B202B]">Access denied</h1>
           <p className="mt-3 text-sm font-medium text-[#64748B]">
             Deployment readiness is available to platform developers and workspace administrators only.
           </p>
-          <Link href="/dashboard" className="mt-6 inline-block rounded-xl bg-[#1D6BFF] px-5 py-2.5 text-sm font-bold text-white">
+          <Link href="/dashboard" className="mt-6 inline-block rounded-xl bg-[#1F4757] px-5 py-2.5 text-sm font-bold text-white">
             Go to Dashboard
           </Link>
         </div>

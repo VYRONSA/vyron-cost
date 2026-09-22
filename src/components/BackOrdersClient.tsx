@@ -102,7 +102,7 @@ export default function BackOrdersClient() {
       config={{
         visualVariant: "procurement",
         title: "Back Orders",
-        subtitle: "Premium VYRON COST workflow for back orders.",
+        subtitle: "Premium VOLORA workflow for back orders.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >

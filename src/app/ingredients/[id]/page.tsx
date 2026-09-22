@@ -25,7 +25,7 @@ export default async function IngredientDetailPage({ params }: { params: Promise
         <div className="rounded-[2rem] bg-white p-6"><div className="text-xs font-black uppercase text-slate-400">Purchase Cost</div><div className="mt-3 text-3xl font-black">{formatMoney(ingredient.purchase_cost)}</div></div>
         <div className="rounded-[2rem] bg-white p-6"><div className="text-xs font-black uppercase text-slate-400">Previous Cost</div><div className="mt-3 text-3xl font-black">{formatMoney(ingredient.previous_cost)}</div></div>
         <div className="rounded-[2rem] bg-white p-6"><div className="text-xs font-black uppercase text-slate-400">True Unit Cost</div><div className="mt-3 text-3xl font-black text-blue-700">{formatMoney(ingredient.true_unit_cost)}</div></div>
-        <div className="rounded-[2rem] bg-white p-6"><div className="text-xs font-black uppercase text-slate-400">Movement</div><div className={`mt-3 text-3xl font-black ${movement > 5 ? "text-red-600" : "text-[#84CC16]"}`}>{movement.toFixed(1)}%</div></div>
+        <div className="rounded-[2rem] bg-white p-6"><div className="text-xs font-black uppercase text-slate-400">Movement</div><div className={`mt-3 text-3xl font-black ${movement > 5 ? "text-red-600" : "text-[#55B968]"}`}>{movement.toFixed(1)}%</div></div>
       </section>
       <IngredientEditPageClient ingredient={ingredient} />
     </VyronCostAiShell>

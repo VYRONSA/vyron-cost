@@ -168,7 +168,7 @@ export function matchQualityLabel(quality: MatchQuality) {
 }
 
 export function matchQualityClass(quality: MatchQuality) {
-  if (quality === "remembered") return "bg-[#3B82F6]/12 text-[#4D7C0F]";
+  if (quality === "remembered") return "bg-[#2C5A6B]/12 text-[#2F7C40]";
   if (quality === "exact") return "bg-sky-100 text-sky-800";
   if (quality === "similar") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   return "bg-slate-100 text-slate-700";

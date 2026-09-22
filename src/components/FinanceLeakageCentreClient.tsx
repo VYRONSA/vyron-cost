@@ -12,7 +12,7 @@ function riskClass(level: string) {
   if (level === "Critical") return "border-red-300 bg-red-50 text-red-800";
   if (level === "High") return "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   if (level === "Medium") return "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
-  return "border-[#3B82F6]/30 bg-[#3B82F6]/10 text-[#4D7C0F]";
+  return "border-[#2C5A6B]/30 bg-[#2C5A6B]/10 text-[#2F7C40]";
 }
 
 export default function FinanceLeakageCentreClient({ centre }: { centre: FinanceLeakageCentre }) {

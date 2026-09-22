@@ -356,7 +356,7 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
 
       <div className={`grid min-w-0 max-w-full grid-cols-1 gap-6 ${canCreate || canEdit ? "xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)]" : ""}`}>
       {canCreate || canEdit ? (
-      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <div className="mb-5 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700"><Plus size={22} /></div>
           <div>
@@ -406,18 +406,18 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
 
           <div className="grid gap-3 rounded-3xl bg-slate-50 p-5 md:grid-cols-3">
             <div><div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">BOM Cost</div><div className="mt-1 text-2xl font-black text-slate-900">{formatMoney(cost)}</div></div>
-            <div><div className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Actual GP</div><div className={`mt-1 text-2xl font-black ${gp < target ? "text-[var(--vyron-warning-fg)]" : "text-[#3B82F6]"}`}>{gp.toFixed(1)}%</div></div>
-            <div><div className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Suggested</div><div className="mt-1 text-2xl font-black text-[#3B82F6]">{formatMoney(suggested)}</div></div>
+            <div><div className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Actual GP</div><div className={`mt-1 text-2xl font-black ${gp < target ? "text-[var(--vyron-warning-fg)]" : "text-[#2C5A6B]"}`}>{gp.toFixed(1)}%</div></div>
+            <div><div className="text-xs font-bold uppercase tracking-[0.14em] text-[#94A3B8]">Suggested</div><div className="mt-1 text-2xl font-black text-[#2C5A6B]">{formatMoney(suggested)}</div></div>
           </div>
 
           <button onClick={save} className="rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[#F8FAFC]">Save Finished Product</button>
-          {message && <div className="rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#3B82F6]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-4 py-3 text-sm font-bold text-[#2C5A6B]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{errorMessage}</div>}
         </div>
       </div>
       ) : null}
 
-      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <div className="min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-2xl font-black text-slate-900">Finished Products</h2>
@@ -460,7 +460,7 @@ export default function ProductManagerClient({ initialProducts, boms }: { initia
                   <div className="truncate font-bold text-blue-700">{linked?.bom_name || "Not linked"}</div>
                   <div className="font-black text-slate-900">{formatMoney(product.total_cost)}</div>
                   <div className="font-black text-slate-900">{formatMoney(product.selling_price)}</div>
-                  <div className={`font-black ${productGp < Number(product.target_gp || 0) ? "text-[var(--vyron-warning-fg)]" : "text-[#3B82F6]"}`}>{productGp.toFixed(1)}%</div>
+                  <div className={`font-black ${productGp < Number(product.target_gp || 0) ? "text-[var(--vyron-warning-fg)]" : "text-[#2C5A6B]"}`}>{productGp.toFixed(1)}%</div>
                   <div className="flex gap-2">
                     {canEdit ? (
                       <button onClick={() => edit(product)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">Edit</button>

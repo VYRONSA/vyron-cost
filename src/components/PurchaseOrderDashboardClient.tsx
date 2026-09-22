@@ -47,13 +47,13 @@ export default function PurchaseOrderDashboardClient() {
       <Link href="/purchase-orders/new" className="rounded-xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
         + New Purchase Order
       </Link>
-      <Link href="/goods-receipts" className="rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#0F172A]">
+      <Link href="/goods-receipts" className="rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#0B202B]">
         GRN Dashboard
       </Link>
-      <Link href="/goods-receipts/new" className="rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
+      <Link href="/goods-receipts/new" className="rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
         New GRN
       </Link>
-      <Link href="/purchase-orders/settings" className="rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
+      <Link href="/purchase-orders/settings" className="rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
         PO Approval Settings
       </Link>
     </>

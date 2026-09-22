@@ -30,28 +30,28 @@ export default function IngredientPriceWatchClient({ products }: { products: Pro
       config={{
         visualVariant: "ingredients",
         title: "Ingredient Price Watch",
-        subtitle: "Premium VYRON COST workflow for ingredient price watch.",
+        subtitle: "Premium VOLORA workflow for ingredient price watch.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
             <section className="grid gap-5 md:grid-cols-3">
-              <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+              <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Monthly Price Exposure</div>
                 <div className="mt-3 text-4xl font-black text-red-700">{money(totalExposure)}</div>
               </div>
-              <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+              <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Items Watched</div>
                 <div className="mt-3 text-4xl font-black text-[#F8FAFC]">{rows.length}</div>
               </div>
-              <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">Alert Rule</div>
+              <div className="rounded-[2rem] bg-[#061722] p-6 text-white">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">Alert Rule</div>
                 <div className="mt-3 text-3xl font-black">Flag movement above 5%</div>
               </div>
             </section>
 
-            <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="grid grid-cols-6 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+            <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+              <div className="grid grid-cols-6 bg-[#061722] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
                 <div className="col-span-2">Item / Product</div>
                 <div>Category</div>
                 <div>Movement</div>
@@ -64,7 +64,7 @@ export default function IngredientPriceWatchClient({ products }: { products: Pro
                   <div>{row.category}</div>
                   <div className={row.movement > 8 ? "font-black text-red-700" : "font-black text-[var(--vyron-warning-fg)]"}>{row.movement.toFixed(1)}%</div>
                   <div className="font-black">{money(row.exposure)}</div>
-                  <Link href={row.href} className="font-black text-[#1D4ED8]">Open →</Link>
+                  <Link href={row.href} className="font-black text-[#163A48]">Open →</Link>
                 </div>
               ))}
             </div>

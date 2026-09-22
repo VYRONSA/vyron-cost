@@ -96,14 +96,14 @@ export default function BranchManagerClient({
     <VyronPremiumPageShell
       config={{
         title: "Branch Manager",
-        subtitle: "Premium VYRON COST workflow for branch manager.",
+        subtitle: "Premium VOLORA workflow for branch manager.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6 xl:grid-cols-[0.8fr_1.5fr]">
-            <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+            <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
               <div className="mb-5 flex items-center gap-3">
-                <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-3 text-[#1D4ED8]">
+                <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-3 text-[#163A48]">
                   <Building2 size={22} />
                 </div>
                 <div>
@@ -134,20 +134,20 @@ export default function BranchManagerClient({
                 <button
                   type="button"
                   onClick={addBranch}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#23304f]"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#163a48]"
                 >
                   <Plus size={18} />
                   Add Branch
                 </button>
 
-                {message && <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#1D4ED8]">{message}</div>}
+                {message && <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-4 py-3 text-sm font-bold text-[#163A48]">{message}</div>}
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+            <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
               <h2 className="text-2xl font-black text-[#F8FAFC]">Branch Network</h2>
 
-              <div className="mt-5 rounded-[1.5rem] border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3">
+              <div className="mt-5 rounded-[1.5rem] border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-4 py-3">
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}

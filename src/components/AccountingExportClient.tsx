@@ -23,7 +23,7 @@ const JOBS: ExportJob[] = [
   { id: "costs", title: "Cost Updates", description: "Ingredient and product cost changes.", endpoint: "/api/finance-exports/cost-updates" },
 ];
 
-const ERP_READY = ["Xero", "Sage", "QuickBooks", "VYRON FINANCE"];
+const ERP_READY = ["Xero", "Sage", "QuickBooks", "VOLORA Finance"];
 
 function downloadRows(filename: string, rows: Record<string, unknown>[]) {
   if (!rows.length) return;
@@ -71,7 +71,7 @@ export default function AccountingExportClient() {
       config={{
         visualVariant: "finance",
         title: "Accounting Export",
-        subtitle: "Premium VYRON COST workflow for accounting export.",
+        subtitle: "Premium VOLORA workflow for accounting export.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >

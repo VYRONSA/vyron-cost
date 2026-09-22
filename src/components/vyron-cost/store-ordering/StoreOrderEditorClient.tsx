@@ -288,25 +288,25 @@ export default function StoreOrderEditorClient({ orderId }: { orderId?: string }
           <section className={`${VYRON_MASTER.moduleDataSection} grid gap-4 md:grid-cols-4`}>
             <div>
               <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#64748B]">Order Value</div>
-              <div className="mt-1 text-xl font-black text-[#0F172A]">
+              <div className="mt-1 text-xl font-black text-[#0B202B]">
                 {formatStoreOrderMoney(order.order_value || order.subtotal)}
               </div>
             </div>
             <div>
               <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#64748B]">Estimated Cost</div>
-              <div className="mt-1 text-xl font-black text-[#0F172A]">
+              <div className="mt-1 text-xl font-black text-[#0B202B]">
                 {formatStoreOrderMoney(order.estimated_cost || 0)}
               </div>
             </div>
             <div>
               <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#64748B]">Gross Margin</div>
-              <div className="mt-1 text-xl font-black text-[#0F172A]">
+              <div className="mt-1 text-xl font-black text-[#0B202B]">
                 {formatStoreOrderMoney(order.gross_margin || 0)}
               </div>
             </div>
             <div>
               <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#64748B]">Margin %</div>
-              <div className="mt-1 text-xl font-black text-[#0F172A]">
+              <div className="mt-1 text-xl font-black text-[#0B202B]">
                 {Number(order.margin_pct || 0).toFixed(1)}%
               </div>
             </div>
@@ -379,7 +379,7 @@ export default function StoreOrderEditorClient({ orderId }: { orderId?: string }
 
             <section className={VYRON_MASTER.moduleDataSection}>
               <div className="mb-4 flex items-center justify-between gap-4">
-                <h2 className="text-lg font-black text-[#0F172A]">Order Lines</h2>
+                <h2 className="text-lg font-black text-[#0B202B]">Order Lines</h2>
                 {editable ? (
                   <button
                     type="button"
@@ -452,7 +452,7 @@ export default function StoreOrderEditorClient({ orderId }: { orderId?: string }
                             className="w-28 rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm"
                           />
                         </td>
-                        <td className="px-4 py-3 text-right text-sm font-bold text-[#0F172A]">
+                        <td className="px-4 py-3 text-right text-sm font-bold text-[#0B202B]">
                           {formatMoney(calcPreview(line))}
                         </td>
                         {editable ? (
@@ -472,7 +472,7 @@ export default function StoreOrderEditorClient({ orderId }: { orderId?: string }
                 </table>
               </EnterpriseScrollContainer>
 
-              <div className="mt-4 text-right text-lg font-black text-[#0F172A]">
+              <div className="mt-4 text-right text-lg font-black text-[#0B202B]">
                 Preview total: {formatMoney(previewTotal)}
               </div>
             </section>

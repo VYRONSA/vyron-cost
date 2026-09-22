@@ -194,7 +194,7 @@ export default function XeroFinancialDefaultsClient() {
     <section className={M.moduleDataSection}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-[#0F172A]">Company Financial Defaults</h2>
+          <h2 className="text-xl font-bold text-[#0B202B]">Company Financial Defaults</h2>
           <p className="mt-1 text-sm font-medium text-[#64748B]">
             Configure company-scoped defaults for financial posting. Product and category mappings can override these.
           </p>
@@ -227,7 +227,7 @@ export default function XeroFinancialDefaultsClient() {
       </div>
 
       <div className="mt-4 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm text-[#334155]">
-        <p className="font-bold text-[#0F172A]">Synced Chart of Accounts</p>
+        <p className="font-bold text-[#0B202B]">Synced Chart of Accounts</p>
         <p className="mt-1 text-xs font-medium text-[#64748B]">
           {accountCatalog.syncedAt
             ? `Synced ${new Date(accountCatalog.syncedAt).toLocaleString()} (${accountCount} accounts).`

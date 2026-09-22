@@ -65,7 +65,7 @@ export default function ReportTableShell({
         <SearchFilterBar value={search} onChange={onSearch} placeholder="Search this report..." resultCount={resultCount} />
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)]">
+      <div className="mt-4 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_4px_20px_rgba(11,32,43,0.04)]">
         {children}
       </div>
     </section>

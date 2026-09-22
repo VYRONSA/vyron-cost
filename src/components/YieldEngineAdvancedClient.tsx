@@ -34,14 +34,14 @@ export default function YieldEngineAdvancedClient({
     <VyronPremiumPageShell
       config={{
         title: "Yield Engine Advanced",
-        subtitle: "Premium VYRON COST workflow for yield engine advanced.",
+        subtitle: "Premium VOLORA workflow for yield engine advanced.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.2fr]">
-            <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+            <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
               <div className="mb-5 flex items-center gap-3">
-                <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-3 text-[#1D4ED8]">
+                <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-3 text-[#163A48]">
                   <Wheat size={22} />
                 </div>
                 <div>
@@ -99,16 +99,16 @@ export default function YieldEngineAdvancedClient({
                   <input type="number" value={rawCost} onChange={(event) => setRawCost(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-bold outline-none focus:border-blue-400" />
                 </label>
 
-                <button type="button" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#23304f]">
+                <button type="button" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#163a48]">
                   <Save size={18} />
                   Save Yield Rule Later
                 </button>
               </div>
             </div>
 
-            <div className="rounded-[2rem] bg-[#07110d] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+            <div className="rounded-[2rem] bg-[#061722] p-7 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
               <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-[#3B82F6]/12 p-3 text-[#3B82F6]">
+                <div className="rounded-2xl bg-[#2C5A6B]/12 p-3 text-[#2C5A6B]">
                   <Calculator size={22} />
                 </div>
                 <div>
@@ -118,28 +118,28 @@ export default function YieldEngineAdvancedClient({
               </div>
 
               <div className="mt-8 grid gap-4 md:grid-cols-2">
-                <div className="rounded-[1.5rem] border border-[#3B82F6]/20 bg-white/5 p-5">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#3B82F6]">Ingredient</div>
+                <div className="rounded-[1.5rem] border border-[#2C5A6B]/20 bg-white/5 p-5">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#2C5A6B]">Ingredient</div>
                   <div className="mt-2 text-2xl font-black">{selected?.ingredient_name || "None"}</div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-[#3B82F6]/20 bg-white/5 p-5">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#3B82F6]">Yield Mode</div>
+                <div className="rounded-[1.5rem] border border-[#2C5A6B]/20 bg-white/5 p-5">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#2C5A6B]">Yield Mode</div>
                   <div className="mt-2"><StatusPill tone="emerald">{mode.replaceAll("_", " ")}</StatusPill></div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-[#3B82F6]/20 bg-white/5 p-5">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#3B82F6]">Yield %</div>
+                <div className="rounded-[1.5rem] border border-[#2C5A6B]/20 bg-white/5 p-5">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#2C5A6B]">Yield %</div>
                   <div className="mt-2 text-4xl font-black">{yieldPercent.toFixed(1)}%</div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-[#3B82F6]/20 bg-white/5 p-5">
-                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#3B82F6]">True Usable Cost</div>
+                <div className="rounded-[1.5rem] border border-[#2C5A6B]/20 bg-white/5 p-5">
+                  <div className="text-xs font-black uppercase tracking-[0.18em] text-[#2C5A6B]">True Usable Cost</div>
                   <div className="mt-2 text-4xl font-black">{formatMoney(trueCost)}</div>
                 </div>
               </div>
 
-              <div className="mt-6 rounded-[1.5rem] border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-5 text-sm leading-7 text-slate-200">
+              <div className="mt-6 rounded-[1.5rem] border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-5 text-sm leading-7 text-slate-200">
                 Example: if rice increases from 10kg raw to 25kg cooked, yield is 250%. If avocado drops from 10kg whole to 6.5kg usable, yield is 65%. This is what protects the real product GP.
               </div>
             </div>

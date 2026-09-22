@@ -103,9 +103,9 @@ export default function SuppliersManager({
 
   return (
     <section className="grid gap-6 xl:grid-cols-[0.8fr_1.5fr]">
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-3 text-[#84CC16]"><Plus size={20} /></div>
+          <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-3 text-[#55B968]"><Plus size={20} /></div>
           <div>
             <h2 className="text-2xl font-black text-[#F8FAFC]">Add New Supplier</h2>
             <p className="text-sm text-slate-500">Create suppliers and assign categories.</p>
@@ -128,16 +128,16 @@ export default function SuppliersManager({
             <input className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 font-medium outline-none focus:border-blue-400" value={form.contact_email} onChange={(event) => updateForm("contact_email", event.target.value)} />
           </label>
 
-          <button type="button" onClick={addSupplier} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#23304f]">
+          <button type="button" onClick={addSupplier} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-transparent vyron-grad-surface px-5 py-4 text-sm font-black text-[#F8FAFC] transition hover:bg-[#163a48]">
             <Plus size={18} />
             Add Supplier
           </button>
 
-          {message && <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#1D4ED8]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-4 py-3 text-sm font-bold text-[#163A48]">{message}</div>}
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <div className="mb-5">
           <h2 className="text-2xl font-black text-[#F8FAFC]">Supplier Register</h2>
           <p className="mt-2 text-sm text-slate-500">Search suppliers by name, category, email, movement or risk.</p>
@@ -165,23 +165,23 @@ export default function SuppliersManager({
 
         <div className="overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[1080px]">
-            <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+            <div className="grid grid-cols-7 bg-[#061722] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
               <div>Supplier</div><div>Category</div><div>Contact</div><div>Movement</div><div>Risk</div><div>Full Edit</div><div>Delete</div>
             </div>
 
             {filteredSuppliers.map((supplier) => (
               <div key={supplier.id} className="grid grid-cols-7 items-center border-t border-slate-100 px-5 py-5 text-sm">
                 <div>
-                  <Link href={`/suppliers/${supplier.id}`} className="font-black text-[#F8FAFC] hover:text-[#1D4ED8]">
+                  <Link href={`/suppliers/${supplier.id}`} className="font-black text-[#F8FAFC] hover:text-[#163A48]">
                     {supplier.supplier_name}
                   </Link>
                 </div>
                 <div className="font-bold text-slate-600">{supplier.category}</div>
                 <div className="text-slate-500">{supplier.contact_email || "Not captured"}</div>
-                <div className="font-black text-[#1D4ED8]">{Number(supplier.last_price_movement).toFixed(1)}%</div>
+                <div className="font-black text-[#163A48]">{Number(supplier.last_price_movement).toFixed(1)}%</div>
                 <div><StatusPill tone={statusTone(supplier.risk_status)}>{supplier.risk_status}</StatusPill></div>
                 <div>
-                  <Link href={`/suppliers/${supplier.id}/edit`} className="inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-3 py-2 text-xs font-black text-[#1D4ED8]">
+                  <Link href={`/suppliers/${supplier.id}/edit`} className="inline-flex items-center gap-2 rounded-full border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-3 py-2 text-xs font-black text-[#163A48]">
                     <Edit3 size={14} />
                     Edit
                   </Link>

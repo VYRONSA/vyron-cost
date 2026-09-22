@@ -47,29 +47,29 @@ export default function ProductIntelligenceClient({
       config={{
         visualVariant: "products",
         title: "Product Intelligence",
-        subtitle: "Premium VYRON COST workflow for product intelligence.",
+        subtitle: "Premium VOLORA workflow for product intelligence.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3">
-                <Search size={20} className="text-[#1D4ED8]" />
+            <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+              <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-4 py-3">
+                <Search size={20} className="text-[#163A48]" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search product intelligence..."
                   className="w-full bg-transparent text-sm font-black text-slate-700 outline-none placeholder:text-slate-400"
                 />
-                <div className="rounded-full bg-[#07110d] px-4 py-2 text-xs font-black text-[#3B82F6]">
+                <div className="rounded-full bg-[#061722] px-4 py-2 text-xs font-black text-[#2C5A6B]">
                   {filtered.length} products
                 </div>
               </div>
             </div>
 
-            <div className="overflow-x-auto rounded-[2rem] border border-white bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+            <div className="overflow-x-auto rounded-[2rem] border border-white bg-white shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
               <div className="min-w-[1180px]">
-                <div className="grid grid-cols-10 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+                <div className="grid grid-cols-10 bg-[#061722] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
                   <div>Product</div>
                   <div>Category</div>
                   <div>Cost</div>
@@ -92,8 +92,8 @@ export default function ProductIntelligenceClient({
                     <div>{formatMoney(Number(row.total_cost || 0))}</div>
                     <div>{formatMoney(Number(row.selling_price || 0))}</div>
                     <div>{Number(row.target_gp || 0).toFixed(1)}%</div>
-                    <div className="font-black text-[#1D4ED8]">{Number(row.actual_gp || 0).toFixed(1)}%</div>
-                    <div className={Number(row.gp_gap || 0) > 0 ? "font-black text-red-700" : "font-black text-[#1D4ED8]"}>
+                    <div className="font-black text-[#163A48]">{Number(row.actual_gp || 0).toFixed(1)}%</div>
+                    <div className={Number(row.gp_gap || 0) > 0 ? "font-black text-red-700" : "font-black text-[#163A48]"}>
                       {Number(row.gp_gap || 0).toFixed(1)}%
                     </div>
                     <div className="font-black">{formatMoney(Number(row.suggested_price || 0))}</div>
@@ -101,7 +101,7 @@ export default function ProductIntelligenceClient({
                     <div>
                       <Link
                         href={row.product_id ? `/products/${row.product_id}/edit` : "/products"}
-                        className="inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-3 py-2 text-xs font-black text-[#1D4ED8]"
+                        className="inline-flex items-center gap-2 rounded-full border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-3 py-2 text-xs font-black text-[#163A48]"
                       >
                         <Zap size={14} />
                         {row.action_required || "Monitor"}
@@ -114,12 +114,12 @@ export default function ProductIntelligenceClient({
             </div>
 
             <section className="grid gap-5 md:grid-cols-2">
-              <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_20px_60px_rgba(6,20,14,0.28)]">
-                <div className="rounded-2xl bg-[#3B82F6]/12 p-3 text-[#3B82F6] w-fit">
+              <div className="rounded-[2rem] bg-[#061722] p-6 text-white shadow-[0_20px_60px_rgba(6,20,14,0.28)]">
+                <div className="rounded-2xl bg-[#2C5A6B]/12 p-3 text-[#2C5A6B] w-fit">
                   <ShieldAlert size={24} />
                 </div>
 
-                <div className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#3B82F6]">
+                <div className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[#2C5A6B]">
                   AI ACTION
                 </div>
 
@@ -132,8 +132,8 @@ export default function ProductIntelligenceClient({
                 </div>
               </div>
 
-              <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <div className="text-xs font-black uppercase tracking-[0.22em] text-[#1D4ED8]">
+              <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+                <div className="text-xs font-black uppercase tracking-[0.22em] text-[#163A48]">
                   NEXT ENGINE
                 </div>
 

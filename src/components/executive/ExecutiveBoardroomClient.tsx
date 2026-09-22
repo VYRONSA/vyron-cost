@@ -316,7 +316,7 @@ export default function ExecutiveBoardroomClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#1D6BFF]/30 bg-[#1D6BFF]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#CBD5E1]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#1F4757]/30 bg-[#1F4757]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#CBD5E1]">
                 Executive Boardroom
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>{companyName}</h1>
@@ -364,9 +364,9 @@ export default function ExecutiveBoardroomClient({
 
       {!hasData && !loading ? (
         <section className={M.moduleDataSection}>
-          <h2 className="text-xl font-bold text-[#0F172A]">Boardroom data not available yet</h2>
+          <h2 className="text-xl font-bold text-[#0B202B]">Boardroom data not available yet</h2>
           <p className="mt-2 text-sm font-medium text-[#64748B]">
-            Connect products, suppliers, procurement, inventory and invoices so VYRON COST can build executive signals.
+            Connect products, suppliers, procurement, inventory and invoices so VOLORA can build executive signals.
           </p>
           <ul className="mt-4 space-y-2 text-sm font-medium text-[#334155]">
             <li>· Create products, ingredients and suppliers</li>
@@ -395,12 +395,12 @@ export default function ExecutiveBoardroomClient({
               <Link
                 key={kpi.label}
                 href={kpi.href}
-                className={`${M.moduleDataSection} block p-5 transition hover:border-[#1D6BFF]/30 hover:shadow-md`}
+                className={`${M.moduleDataSection} block p-5 transition hover:border-[#1F4757]/30 hover:shadow-md`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">{kpi.label}</div>
-                    <div className="mt-2 text-2xl font-bold text-[#0F172A]">
+                    <div className="mt-2 text-2xl font-bold text-[#0B202B]">
                       {loading ? "…" : kpi.value}
                     </div>
                   </div>
@@ -413,7 +413,7 @@ export default function ExecutiveBoardroomClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Board signals</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Board signals</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Margin, supplier, stock, manufacturing, customer and accounting readiness alerts.
             </p>
@@ -422,10 +422,10 @@ export default function ExecutiveBoardroomClient({
                 <Link
                   key={signal.id}
                   href={signal.href}
-                  className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 transition hover:border-[#1D6BFF]/30"
+                  className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 transition hover:border-[#1F4757]/30"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-[#0F172A]">{signal.label}</span>
+                    <span className="font-bold text-[#0B202B]">{signal.label}</span>
                     <SeverityBadge severity={signal.severity} />
                   </div>
                   <p className="mt-2 text-sm font-medium text-[#64748B]">{signal.detail}</p>
@@ -437,7 +437,7 @@ export default function ExecutiveBoardroomClient({
           <section className={M.moduleDataSection}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-xl font-bold text-[#0F172A]">Recovery priorities</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Recovery priorities</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Ranked actions by estimated Rand impact and confidence.
                 </p>
@@ -475,15 +475,15 @@ export default function ExecutiveBoardroomClient({
                   ) : (
                     recoveryPriorities.map((row) => (
                       <tr key={row.id} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-                        <td className="px-4 py-3 font-semibold text-[#0F172A]">{row.issue}</td>
+                        <td className="px-4 py-3 font-semibold text-[#0B202B]">{row.issue}</td>
                         <td className="px-4 py-3 text-[#64748B]">{row.affected}</td>
-                        <td className="px-4 py-3 text-right font-bold text-[#2563EB]">
+                        <td className="px-4 py-3 text-right font-bold text-[#1F4757]">
                           {row.impact > 0 ? `${money(row.impact)}/mo` : "—"}
                         </td>
                         <td className="px-4 py-3 text-[#334155]">{row.confidence}</td>
                         <td className="px-4 py-3 text-[#334155]">{row.action}</td>
                         <td className="px-4 py-3 text-right">
-                          <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+                          <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
                             Open <ArrowRight size={14} />
                           </Link>
                         </td>
@@ -497,7 +497,7 @@ export default function ExecutiveBoardroomClient({
 
           {intelligence && intelligence.repricingSuggestions.length > 0 ? (
             <section className={M.moduleDataSection}>
-              <h2 className="text-xl font-bold text-[#0F172A]">Repricing opportunities</h2>
+              <h2 className="text-xl font-bold text-[#0B202B]">Repricing opportunities</h2>
               <p className="mt-1 text-sm font-medium text-[#64748B]">
                 Products below target GP with suggested selling prices.
               </p>
@@ -507,14 +507,14 @@ export default function ExecutiveBoardroomClient({
                     key={item.productName}
                     className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4"
                   >
-                    <div className="font-bold text-[#0F172A]">{item.productName}</div>
+                    <div className="font-bold text-[#0B202B]">{item.productName}</div>
                     <p className="mt-1 text-sm text-[#64748B]">
                       {money(item.currentPrice)} → {money(item.suggestedPrice)} · Target GP {pct(item.targetGp)}
                     </p>
-                    <p className="mt-2 text-sm font-bold text-[#1D6BFF]">
+                    <p className="mt-2 text-sm font-bold text-[#1F4757]">
                       Recovery potential {money(item.monthlyRecovery)}/month
                     </p>
-                    <Link href="/cost-intelligence" className="mt-2 inline-flex text-xs font-bold text-[#1D6BFF]">
+                    <Link href="/cost-intelligence" className="mt-2 inline-flex text-xs font-bold text-[#1F4757]">
                       Open Cost Intelligence →
                     </Link>
                   </div>
@@ -524,7 +524,7 @@ export default function ExecutiveBoardroomClient({
           ) : null}
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-lg font-bold text-[#0F172A]">Module drilldowns</h2>
+            <h2 className="text-lg font-bold text-[#0B202B]">Module drilldowns</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {[
                 { label: "Business Health", href: "/business-health" },
@@ -545,7 +545,7 @@ export default function ExecutiveBoardroomClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
+                  className="rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1F4757]/30 hover:text-[#1F4757]"
                 >
                   {link.label}
                 </Link>
@@ -562,7 +562,7 @@ function SeverityBadge({ severity }: { severity: "critical" | "warning" | "info"
   const classes = {
     critical: "border-rose-200 bg-rose-50 text-rose-700",
     warning: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    info: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
+    info: "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]",
     ok: "border-blue-200 bg-blue-50 text-blue-700",
   };
   const labels = {

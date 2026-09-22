@@ -61,7 +61,7 @@ export default function ActiveClientBanner() {
               className="inline-flex items-center gap-1 rounded-xl vyron-grad-surface px-4 py-2 text-xs font-semibold text-white"
             >
               <LogOut size={14} />
-              Return to VYRON DEV
+              Return to VOLORA DEV
             </button>
             <button
               type="button"

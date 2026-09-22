@@ -181,7 +181,7 @@ export default function AskVyronClient({
 
         setLastRefresh(new Date().toISOString());
       })
-      .catch(() => setLoadError("Could not load intelligence sources for Ask VYRON."))
+      .catch(() => setLoadError("Could not load intelligence sources for Ask VOLORA."))
       .finally(() => setLoading(false));
   }, [hasWorkspace]);
 
@@ -233,7 +233,7 @@ export default function AskVyronClient({
         });
         const data = await res.json();
         if (!res.ok || !data.ok) {
-          throw new Error(data.error || "Ask VYRON request failed.");
+          throw new Error(data.error || "Ask VOLORA request failed.");
         }
         const answer = data.answer as AskVyronAnswer;
         setCurrentAnswer(answer);
@@ -247,7 +247,7 @@ export default function AskVyronClient({
           ...prev,
         ].slice(0, 8));
       } catch (error) {
-        setAskError(error instanceof Error ? error.message : "Ask VYRON request failed.");
+        setAskError(error instanceof Error ? error.message : "Ask VOLORA request failed.");
       } finally {
         setAsking(false);
       }
@@ -273,10 +273,10 @@ export default function AskVyronClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
-                VYRON Intelligence Assistant
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#2C5A6B]/35 bg-[#2C5A6B]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+                VOLORA Intelligence Assistant
               </div>
-              <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Ask VYRON</h1>
+              <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Ask VOLORA</h1>
               <p className={`mt-2 max-w-3xl text-sm font-medium leading-6 ${M.bodyOnDark}`}>
                 Ask your business what is happening, why it is happening, and what to do next — for{" "}
                 <span className="font-bold text-white">{companyName}</span> · {currentPeriodLabel()}
@@ -324,9 +324,9 @@ export default function AskVyronClient({
 
       {!hasWorkspace ? (
         <section className={M.moduleDataSection}>
-          <h2 className="text-xl font-bold text-[#0F172A]">Select an active workspace</h2>
+          <h2 className="text-xl font-bold text-[#0B202B]">Select an active workspace</h2>
           <p className="mt-2 text-sm font-medium text-[#64748B]">
-            Ask VYRON answers from the active company workspace only. Log in to a company workspace or select a client
+            Ask VOLORA answers from the active company workspace only. Log in to a company workspace or select a client
             from Developer → Clients.
           </p>
           <div className="mt-5">
@@ -339,9 +339,9 @@ export default function AskVyronClient({
         <>
           <section className={M.moduleDataSection}>
             <div className="flex items-start gap-3">
-              <Sparkles size={20} className="mt-0.5 shrink-0 text-[#1D6BFF]" />
+              <Sparkles size={20} className="mt-0.5 shrink-0 text-[#1F4757]" />
               <div className="min-w-0 flex-1">
-                <h2 className="text-lg font-bold text-[#0F172A]">Ask a business question</h2>
+                <h2 className="text-lg font-bold text-[#0B202B]">Ask a business question</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Deterministic answers from workspace intelligence — not generative AI.
                 </p>
@@ -351,7 +351,7 @@ export default function AskVyronClient({
                     onChange={(event) => setQuestion(event.target.value)}
                     rows={3}
                     placeholder="Ask: What is hurting margin? · What should we fix first? · Which suppliers are risky? · What are my top actions?"
-                    className="w-full rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm font-medium text-[#0F172A] shadow-sm outline-none transition focus:border-[#1D6BFF]/40 focus:ring-2 focus:ring-[#1D6BFF]/15"
+                    className="w-full rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm font-medium text-[#0B202B] shadow-sm outline-none transition focus:border-[#1F4757]/40 focus:ring-2 focus:ring-[#1F4757]/15"
                   />
                   <div className="flex flex-wrap items-center gap-2">
                     <button
@@ -360,7 +360,7 @@ export default function AskVyronClient({
                       className={`${M.primaryBtn} px-5 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60`}
                     >
                       <Brain size={16} />
-                      {asking ? "Analysing…" : "Ask VYRON"}
+                      {asking ? "Analysing…" : "Ask VOLORA"}
                     </button>
                     {quickChips.map((chip) => (
                       <button
@@ -370,7 +370,7 @@ export default function AskVyronClient({
                           setQuestion(chip);
                           void submitQuestion(chip);
                         }}
-                        className="rounded-full border border-[#E2E8F0] bg-[#F6F7FB] px-3 py-1.5 text-xs font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
+                        className="rounded-full border border-[#E2E8F0] bg-[#F6F7FB] px-3 py-1.5 text-xs font-semibold text-[#334155] transition hover:border-[#1F4757]/30 hover:text-[#1F4757]"
                       >
                         {chip}
                       </button>
@@ -387,8 +387,8 @@ export default function AskVyronClient({
           {currentAnswer ? (
             <section className={M.moduleDataSection}>
               <div className="flex flex-wrap items-center gap-2">
-                <MessageSquare size={18} className="text-[#1D6BFF]" />
-                <h2 className="text-xl font-bold text-[#0F172A]">Answer</h2>
+                <MessageSquare size={18} className="text-[#1F4757]" />
+                <h2 className="text-xl font-bold text-[#0B202B]">Answer</h2>
                 <ConfidenceBadge confidence={currentAnswer.confidence} />
                 {currentAnswer.insufficientData ? (
                   <span className="rounded-full border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-2.5 py-0.5 text-[10px] font-bold uppercase text-[var(--vyron-warning-fg)]">
@@ -397,8 +397,8 @@ export default function AskVyronClient({
                 ) : null}
               </div>
 
-              <div className="mt-4 rounded-2xl border border-[#1D6BFF]/20 bg-[#1D6BFF]/5 p-5">
-                <p className="text-base font-bold leading-7 text-[#0F172A]">{currentAnswer.answer}</p>
+              <div className="mt-4 rounded-2xl border border-[#1F4757]/20 bg-[#1F4757]/5 p-5">
+                <p className="text-base font-bold leading-7 text-[#0B202B]">{currentAnswer.answer}</p>
                 <p className="mt-3 text-sm font-medium leading-6 text-[#475569]">{currentAnswer.summary}</p>
               </div>
 
@@ -408,8 +408,8 @@ export default function AskVyronClient({
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     {currentAnswer.evidence.map((item) => (
                       <div key={`${item.label}-${item.value}`} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1D6BFF]">{item.label}</div>
-                        <p className="mt-1 text-sm font-semibold text-[#0F172A]">{item.value}</p>
+                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1F4757]">{item.label}</div>
+                        <p className="mt-1 text-sm font-semibold text-[#0B202B]">{item.value}</p>
                       </div>
                     ))}
                   </div>
@@ -444,7 +444,7 @@ export default function AskVyronClient({
                     <Link
                       key={link.href}
                       href={link.href}
-                      className="inline-flex items-center gap-1 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
+                      className="inline-flex items-center gap-1 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1F4757]/30 hover:text-[#1F4757]"
                     >
                       {link.label}
                       <ArrowRight size={14} />
@@ -460,14 +460,14 @@ export default function AskVyronClient({
           ) : null}
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Suggested questions</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Suggested questions</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Common executive questions grouped by intelligence domain.
             </p>
             <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {SUGGESTED_QUESTION_GROUPS.map((group) => (
                 <div key={group.id} className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-5">
-                  <h3 className="font-bold text-[#0F172A]">{group.label}</h3>
+                  <h3 className="font-bold text-[#0B202B]">{group.label}</h3>
                   <div className="mt-3 space-y-2">
                     {group.questions.map((q) => (
                       <button
@@ -477,7 +477,7 @@ export default function AskVyronClient({
                           setQuestion(q);
                           void submitQuestion(q);
                         }}
-                        className="block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-left text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
+                        className="block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-left text-sm font-semibold text-[#334155] transition hover:border-[#1F4757]/30 hover:text-[#1F4757]"
                       >
                         {q}
                       </button>
@@ -489,9 +489,9 @@ export default function AskVyronClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Intelligence sources</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Intelligence sources</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
-              Modules Ask VYRON can currently read from this workspace.
+              Modules Ask VOLORA can currently read from this workspace.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {sourceStatuses.map((source) => (
@@ -502,7 +502,7 @@ export default function AskVyronClient({
 
           {sessionHistory.length > 0 ? (
             <section className={M.moduleDataSection}>
-              <h2 className="text-xl font-bold text-[#0F172A]">Recent intelligence answers</h2>
+              <h2 className="text-xl font-bold text-[#0B202B]">Recent intelligence answers</h2>
               <p className="mt-1 text-sm font-medium text-[#64748B]">Session history — current browser session only.</p>
               <div className="mt-4 space-y-3">
                 {sessionHistory.map((entry) => (
@@ -513,10 +513,10 @@ export default function AskVyronClient({
                       setQuestion(entry.question);
                       setCurrentAnswer(entry.answer);
                     }}
-                    className="block w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 text-left transition hover:border-[#1D6BFF]/30"
+                    className="block w-full rounded-2xl border border-[#E2E8F0] bg-white p-4 text-left transition hover:border-[#1F4757]/30"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="font-bold text-[#0F172A]">{entry.question}</p>
+                      <p className="font-bold text-[#0B202B]">{entry.question}</p>
                       <span className="text-xs font-medium text-[#94A3B8]">
                         {new Date(entry.askedAt).toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}
                       </span>
@@ -531,16 +531,16 @@ export default function AskVyronClient({
           <section className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-5">
             <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-[#64748B]">Limitations & safety</h2>
             <p className="mt-2 text-sm font-medium leading-6 text-[#475569]">
-              Ask VYRON currently answers from available workspace intelligence only. It does not invent values and does
-              not execute actions without approval. This is the VYRON Intelligence Assistant — deterministic analysis
+              Ask VOLORA currently answers from available workspace intelligence only. It does not invent values and does
+              not execute actions without approval. This is the VOLORA Intelligence Assistant — deterministic analysis
               from real operational engines, not generative AI.
             </p>
           </section>
 
           {!intelligenceReady && !loading ? (
             <section className={M.moduleDataSection}>
-              <h2 className="text-xl font-bold text-[#0F172A]">
-                VYRON needs more operational data to answer this properly.
+              <h2 className="text-xl font-bold text-[#0B202B]">
+                VOLORA needs more operational data to answer this properly.
               </h2>
               <p className="mt-2 text-sm font-medium text-[#64748B]">
                 Load operational records so intelligence engines can produce evidence-backed answers.
@@ -586,15 +586,15 @@ function SourceCard({ source }: { source: IntelligenceSourceStatus }) {
   return (
     <Link
       href={source.href}
-      className={`${M.moduleDataSection} block p-4 transition hover:border-[#1D6BFF]/30 hover:shadow-md`}
+      className={`${M.moduleDataSection} block p-4 transition hover:border-[#1F4757]/30 hover:shadow-md`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className="rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] p-2">
-            <Icon size={18} className="text-[#1D6BFF]" />
+            <Icon size={18} className="text-[#1F4757]" />
           </div>
           <div>
-            <h3 className="font-bold text-[#0F172A]">{source.label}</h3>
+            <h3 className="font-bold text-[#0B202B]">{source.label}</h3>
             <p className="mt-1 text-sm font-medium text-[#64748B]">{source.status}</p>
             <p className="mt-1 text-xs font-semibold text-[#94A3B8]">
               {source.available ? `${source.signalCount} signal(s)` : "Not available yet"}

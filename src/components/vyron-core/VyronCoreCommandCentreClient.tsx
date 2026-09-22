@@ -64,7 +64,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
   return (
     <VyronPremiumPageShell
       config={{
-        badge: "VYRON CORE",
+        badge: "VOLORA Core",
         title: "Workforce Command Centre",
         subtitle: "Unify workforce cost, productivity, risk, and digital twin intelligence for executive action.",
         outcomes: ["Track workforce health and leakage", "Expose cross-module operational risk", "Drive action from unified executive view"],
@@ -87,7 +87,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
         ].map(([label, value, note]) => (
           <div
             key={label}
-            className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]"
+            className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_10px_40px_rgba(11,32,43,0.06)]"
           >
             <div className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600">{label}</div>
             <div className="mt-2 text-3xl font-black text-slate-950">{value}</div>
@@ -99,7 +99,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
       <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-8 text-white shadow-[0_24px_80px_rgba(30,27,75,0.35)]">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VYRON CORE</div>
+            <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VOLORA Core</div>
             <h2 className="mt-2 text-4xl font-black">Executive Command Centre</h2>
             <p className="mt-2 max-w-2xl text-sm font-semibold text-slate-300">
               Workforce Digital Twin — clocking, field operations, travel, cost and risk intelligence unified for executive decisions.
@@ -141,7 +141,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
           </div>
         </CommandCentreCard>
 
-        <CommandCentreCard title="Field Operations" subtitle="Visits · jobs · coverage" href="/vyron-core/command-centre" accent="bg-gradient-to-br from-[#16233F] to-[#0e1733]">
+        <CommandCentreCard title="Field Operations" subtitle="Visits · jobs · coverage" href="/vyron-core/command-centre" accent="bg-gradient-to-br from-[#0F2D39] to-[#0b202b]">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <KpiTile label="Active staff" value={String(modules.fieldOperations.activeFieldStaff)} />
             <KpiTile label="Visits done" value={String(modules.fieldOperations.visitsCompleted)} />
@@ -180,22 +180,22 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
       </div>
 
       <section className="grid gap-6 xl:grid-cols-2">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
           <h3 className="text-xl font-black text-slate-950">Labour cost & productivity trends</h3>
           <p className="mt-1 text-sm font-semibold text-slate-500">6-month workforce cost and productivity index</p>
           <div className="mt-6 grid gap-6 sm:grid-cols-2">
             <div>
               <div className="text-[10px] font-black uppercase text-slate-400">Labour cost</div>
-              <ExecutiveSparkChart data={trends.labourCostTrend} colour="#6366f1" height={100} formatValue={(n) => money(n)} />
+              <ExecutiveSparkChart data={trends.labourCostTrend} colour="#37606f" height={100} formatValue={(n) => money(n)} />
             </div>
             <div>
               <div className="text-[10px] font-black uppercase text-slate-400">Productivity index</div>
-              <ExecutiveSparkChart data={trends.productivityTrend} colour="#3b82f6" height={100} variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
+              <ExecutiveSparkChart data={trends.productivityTrend} colour="#2c5a6b" height={100} variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
             </div>
           </div>
         </div>
 
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="text-xl font-black text-slate-950">Attrition forecasting</h3>
@@ -206,13 +206,13 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
             </Link>
           </div>
           <div className="mt-6 h-40">
-            <ExecutiveSparkChart data={attritionForecast} colour="#3b82f6" height={140} variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
+            <ExecutiveSparkChart data={attritionForecast} colour="#2c5a6b" height={140} variant="line" formatValue={(n) => `${n.toFixed(1)}%`} />
           </div>
         </div>
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
           <h3 className="text-xl font-black text-[#F8FAFC]">Workforce risk heatmap</h3>
           <p className="mt-1 text-sm font-semibold text-slate-500">Clocking · field ops · travel · cost · risk by area</p>
           <div className="mt-6">
@@ -256,7 +256,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
         </div>
       </section>
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h3 className="text-xl font-black text-slate-950">Workforce Digital Twin</h3>
@@ -288,7 +288,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
               </div>
               <div className="font-semibold text-slate-600">{t.department}</div>
               <div className="font-black text-blue-700">{t.clockInRate}%</div>
-              <div className="font-black text-[#1D4ED8]">{t.productivityIndex}%</div>
+              <div className="font-black text-[#163A48]">{t.productivityIndex}%</div>
               <div className="font-black">{t.healthScore}</div>
               <div className={`font-black ${t.riskScore >= 40 ? "text-red-600" : "text-slate-700"}`}>{t.riskScore}</div>
               <div className={`font-black ${t.attritionProbability >= 0.2 ? "text-[var(--vyron-warning-fg)]" : "text-slate-700"}`}>
@@ -300,7 +300,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
         </div>
       </section>
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <h3 className="text-xl font-black text-slate-950">Department health scores</h3>
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {healthScores.map((h) => (
@@ -319,7 +319,7 @@ export default function VyronCoreCommandCentreClient({ data }: { data: VyronCore
         </div>
       </section>
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <h3 className="text-xl font-black text-slate-950">Active forecasts</h3>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {forecasts.slice(0, 9).map((f) => (

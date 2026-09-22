@@ -8,8 +8,8 @@ export default function Page() {
     <VyronCostAiShell
       hidePageHeader
       wide
-      title="VYRON Order Centre"
-      subtitle="CUSTOMER ORDERS FROM VYRON ORDER, IN THE EXISTING SALES-ORDER ENGINE."
+      title="VOLORA Order Centre"
+      subtitle="CUSTOMER ORDERS FROM VOLORA Order, IN THE EXISTING SALES-ORDER ENGINE."
     >
       <OrderCentreClient />
     </VyronCostAiShell>

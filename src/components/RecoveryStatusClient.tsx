@@ -259,7 +259,7 @@ export default function RecoveryStatusClient({
       </div>
 
       {message && (
-        <div className="mt-4 rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/12 px-4 py-3 text-sm font-bold text-[#1D4ED8]">
+        <div className="mt-4 rounded-2xl border border-[#2C5A6B]/25 bg-[#2C5A6B]/12 px-4 py-3 text-sm font-bold text-[#163A48]">
           {message}
         </div>
       )}

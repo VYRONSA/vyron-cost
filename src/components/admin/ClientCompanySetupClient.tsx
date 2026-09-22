@@ -114,13 +114,13 @@ export default function ClientCompanySetupClient() {
     logoHeight: null,
     logoMaintainAspectRatio: true,
     palette: {
-      primaryColor: "#4338CA",
-      secondaryColor: "#0F172A",
-      accentColor: "#1D6BFF",
-      darkTextColor: "#0F172A",
+      primaryColor: "#163A48",
+      secondaryColor: "#0B202B",
+      accentColor: "#1F4757",
+      darkTextColor: "#0B202B",
       lightTextColor: "#FFFFFF",
-      headerBackground: "#0F172A",
-      footerBackground: "#0F172A",
+      headerBackground: "#0B202B",
+      footerBackground: "#0B202B",
     },
     physicalAddress: null,
     postalAddress: null,
@@ -643,7 +643,7 @@ export default function ClientCompanySetupClient() {
           <h2 className="text-lg font-black text-slate-950">Banking Details</h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">
             Printed on invoices so customers know where to pay. SARS does not require these on a tax invoice, and they
-            are shown nowhere else in VYRON COST.
+            are shown nowhere else in VOLORA.
           </p>
         </div>
         <Field label="Bank Name" value={profile.bankName} onChange={(v) => setProfile((p) => ({ ...p, bankName: v }))} />
@@ -662,7 +662,7 @@ export default function ClientCompanySetupClient() {
 
       <section className="rounded-[2rem] border border-blue-100 bg-white p-7 shadow-sm">
         <h2 className="text-lg font-black text-slate-950">Active Modules</h2>
-        <p className="mt-1 text-sm font-semibold text-slate-500">Modules included in your package. Contact VYRON to upgrade.</p>
+        <p className="mt-1 text-sm font-semibold text-slate-500">Modules included in your package. Contact VOLORA to upgrade.</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {profile.activeModules.map((module) => (
             <span key={module} className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-800">

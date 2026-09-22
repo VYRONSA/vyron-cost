@@ -207,7 +207,7 @@ export default function RootCauseCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#2C5A6B]/35 bg-[#2C5A6B]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Root Cause Centre
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Root Cause Centre</h1>
@@ -256,7 +256,7 @@ export default function RootCauseCentreClient({
 
       {!snapshot.hasAnalysisData && !loading ? (
         <section className={M.moduleDataSection}>
-          <h2 className="text-xl font-bold text-[#0F172A]">Root cause analysis requires additional operational data.</h2>
+          <h2 className="text-xl font-bold text-[#0B202B]">Root cause analysis requires additional operational data.</h2>
           <p className="mt-2 text-sm font-medium text-[#64748B]">
             Root causes are derived from Early Warning signals, Business Health scores and Predictive Risk forecasts.
             Load operational data to enable traceable investigations.
@@ -285,10 +285,10 @@ export default function RootCauseCentreClient({
             <SummaryCard
               label="Critical Root Causes"
               value={String(snapshot.summary.criticalRootCauses)}
-              accent="#2563EB"
+              accent="#1F4757"
             />
-            <SummaryCard label="High Impact Causes" value={String(snapshot.summary.highImpactCauses)} accent="#3B82F6" />
-            <SummaryCard label="Categories Affected" value={String(snapshot.summary.categoriesAffected)} accent="#1D6BFF" />
+            <SummaryCard label="High Impact Causes" value={String(snapshot.summary.highImpactCauses)} accent="#2C5A6B" />
+            <SummaryCard label="Categories Affected" value={String(snapshot.summary.categoriesAffected)} accent="#1F4757" />
             <SummaryCard
               label="Estimated Exposure"
               value={
@@ -296,10 +296,10 @@ export default function RootCauseCentreClient({
                   ? snapshot.summary.exposureLabel
                   : "Exposure Not Yet Measurable"
               }
-              accent="#0F172A"
+              accent="#0B202B"
               small={snapshot.summary.estimatedExposure == null}
             />
-            <SummaryCard label="Confidence Level" value={snapshot.summary.confidenceLevel} accent="#3B82F6" />
+            <SummaryCard label="Confidence Level" value={snapshot.summary.confidenceLevel} accent="#2C5A6B" />
           </section>
 
           {snapshot.investigations.length === 0 ? (
@@ -317,7 +317,7 @@ export default function RootCauseCentreClient({
           ) : (
             <>
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Root Cause Investigations</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Root Cause Investigations</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Problems traced to underlying causes with supporting evidence — no invented causes.
                 </p>
@@ -353,7 +353,7 @@ export default function RootCauseCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Cause Trees</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Cause Trees</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Visual investigation chains derived from actual tenant signals.
                 </p>
@@ -369,7 +369,7 @@ export default function RootCauseCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Root Cause Clusters</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Root Cause Clusters</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Grouped causes by pricing, supplier, inventory, manufacturing, customer, financial and data quality.
                 </p>
@@ -386,7 +386,7 @@ export default function RootCauseCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Evidence Centre</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Evidence Centre</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Supporting evidence for every root cause investigation.
                 </p>
@@ -398,7 +398,7 @@ export default function RootCauseCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Corrective Actions</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Corrective Actions</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Top 10 corrective actions ranked by severity and impact.
                 </p>
@@ -410,7 +410,7 @@ export default function RootCauseCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Recurring Causes</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Recurring Causes</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Causes appearing across Early Warning, Predictive Risk and Business Health signals.
                 </p>
@@ -443,7 +443,7 @@ export default function RootCauseCentreClient({
           )}
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-lg font-bold text-[#0F172A]">Executive drilldowns</h2>
+            <h2 className="text-lg font-bold text-[#0B202B]">Executive drilldowns</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {[
                 { label: "Executive Boardroom", href: "/executive-boardroom", icon: Building2 },
@@ -464,7 +464,7 @@ export default function RootCauseCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1F4757]/30 hover:text-[#1F4757]"
                 >
                   <link.icon size={16} />
                   {link.label}
@@ -493,8 +493,8 @@ function SummaryCard({
     <div className={`${M.moduleDataSection} p-5`}>
       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">{label}</div>
       <div
-        className={`mt-2 font-black text-[#0F172A] ${small ? "text-sm leading-6" : "text-2xl"}`}
-        style={{ color: small ? "#0F172A" : accent }}
+        className={`mt-2 font-black text-[#0B202B] ${small ? "text-sm leading-6" : "text-2xl"}`}
+        style={{ color: small ? "#0B202B" : accent }}
       >
         {value}
       </div>
@@ -505,9 +505,9 @@ function SummaryCard({
 function InvestigationRow({ row }: { row: RootCauseInvestigation }) {
   return (
     <tr className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{row.problem}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{row.problem}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.rootCause}</td>
-      <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{row.category}</td>
+      <td className="px-4 py-3 font-semibold text-[#1F4757]">{row.category}</td>
       <td className="px-4 py-3 text-xs font-medium text-[#64748B]">
         <ul className="space-y-1">
           {row.evidence.slice(0, 3).map((line) => (
@@ -521,7 +521,7 @@ function InvestigationRow({ row }: { row: RootCauseInvestigation }) {
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.estimatedImpact}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.recommendedResolution}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -535,11 +535,11 @@ function CauseTreeCard({ tree }: { tree: CauseTree }) {
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className={`flex h-9 w-9 shrink-0 items-center justify-center ${M.iconSubtle}`}>
-            <GitBranch size={18} className="text-[#1D6BFF]" />
+            <GitBranch size={18} className="text-[#1F4757]" />
           </div>
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1D6BFF]">{tree.category}</div>
-            <h3 className="font-bold text-[#0F172A]">{tree.title}</h3>
+            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1F4757]">{tree.category}</div>
+            <h3 className="font-bold text-[#0B202B]">{tree.title}</h3>
           </div>
         </div>
         <SeverityBadge severity={tree.severity} />
@@ -554,13 +554,13 @@ function CauseTreeCard({ tree }: { tree: CauseTree }) {
               {index < tree.nodes.length - 1 ? <div className="my-1 w-px flex-1 bg-[#CBD5E1]" /> : null}
             </div>
             <div className={`pb-4 ${index === tree.nodes.length - 1 ? "pb-0" : ""}`}>
-              <div className="font-bold text-[#0F172A]">{node.label}</div>
+              <div className="font-bold text-[#0B202B]">{node.label}</div>
               {node.detail ? <p className="mt-0.5 text-sm font-medium text-[#64748B]">{node.detail}</p> : null}
             </div>
           </div>
         ))}
       </div>
-      <Link href={tree.href} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+      <Link href={tree.href} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
         Investigate <ArrowRight size={14} />
       </Link>
     </div>
@@ -571,13 +571,13 @@ function ClusterCard({ cluster }: { cluster: RootCauseCluster }) {
   return (
     <Link
       href={cluster.href}
-      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1D6BFF]/30 hover:shadow-md`}
+      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1F4757]/30 hover:shadow-md`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="font-bold text-[#0F172A]">{cluster.label}</h3>
+          <h3 className="font-bold text-[#0B202B]">{cluster.label}</h3>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-2xl font-black text-[#0F172A]">{cluster.problemCount}</span>
+            <span className="text-2xl font-black text-[#0B202B]">{cluster.problemCount}</span>
             <span className="text-sm font-medium text-[#64748B]">linked problems</span>
             {cluster.severity !== "None" ? <SeverityBadge severity={cluster.severity} /> : null}
           </div>
@@ -594,14 +594,14 @@ function EvidenceRow({ item }: { item: EvidenceItem }) {
     <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-[#1D6BFF]/10 px-2 py-0.5 text-[10px] font-bold uppercase text-[#1D6BFF]">
+          <span className="rounded-full bg-[#1F4757]/10 px-2 py-0.5 text-[10px] font-bold uppercase text-[#1F4757]">
             {item.category}
           </span>
-          <span className="font-bold text-[#0F172A]">{item.label}</span>
+          <span className="font-bold text-[#0B202B]">{item.label}</span>
         </div>
         <p className="mt-1 text-sm font-medium text-[#334155]">{item.value}</p>
       </div>
-      <Link href={item.href} className="shrink-0 text-xs font-bold text-[#1D6BFF]">
+      <Link href={item.href} className="shrink-0 text-xs font-bold text-[#1F4757]">
         View →
       </Link>
     </div>
@@ -618,9 +618,9 @@ function CorrectiveActionCard({ action }: { action: CorrectiveAction }) {
         <div className="text-xs font-bold uppercase tracking-[0.08em] text-[#64748B]">Root cause</div>
       </div>
       <p className="mt-2 text-sm font-bold text-[#334155]">{action.rootCause}</p>
-      <p className="mt-2 font-bold text-[#0F172A]">{action.action}</p>
+      <p className="mt-2 font-bold text-[#0B202B]">{action.action}</p>
       <p className="mt-2 text-xs font-semibold text-[#64748B]">Expected improvement: {action.expectedImprovement}</p>
-      <Link href={action.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+      <Link href={action.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
         Open module <ArrowRight size={14} />
       </Link>
     </div>
@@ -630,14 +630,14 @@ function CorrectiveActionCard({ action }: { action: CorrectiveAction }) {
 function RecurringCauseRow({ cause }: { cause: RecurringCause }) {
   return (
     <tr className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{cause.cause}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{cause.cause}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{cause.frequency}</td>
       <td className="px-4 py-3">
         <SeverityBadge severity={cause.severity} />
       </td>
       <td className="px-4 py-3 text-sm font-medium text-[#64748B]">{cause.sources.join(" · ")}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={cause.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={cause.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -650,7 +650,7 @@ function SeverityBadge({ severity }: { severity: RootCauseInvestigation["severit
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
+    Low: "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]",
   };
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes[severity]}`}>

@@ -36,7 +36,7 @@ function TopBar() {
       <div className="flex flex-wrap items-center gap-4">
         <Link href="/ai-assistant" className="flex h-12 w-[430px] max-w-full items-center gap-3 rounded-2xl border border-blue-100 bg-white px-4 shadow-sm">
           <Search size={18} className="text-blue-500" />
-          <span className="text-sm font-semibold text-slate-400">Ask VYRON AI anything...</span>
+          <span className="text-sm font-semibold text-slate-400">Ask VOLORA AI anything...</span>
           <WandSparkles size={17} className="ml-auto text-blue-500" />
         </Link>
 
@@ -66,7 +66,7 @@ function HeroPanel() {
       <div className="relative z-10">
         <div className="mb-8 flex items-center gap-3">
           <span className="text-sm font-black uppercase tracking-[0.14em]">Today · Handcrafted Food Products</span>
-          <span className="rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/100 px-3 py-1 text-xs font-black">LIVE</span>
+          <span className="rounded-full border border-[#2C5A6B]/25 bg-[#2C5A6B]/100 px-3 py-1 text-xs font-black">LIVE</span>
         </div>
 
         <div className="grid gap-8 xl:grid-cols-[1fr_1fr_1fr_0.9fr] xl:items-center">
@@ -105,7 +105,7 @@ function HeroPanel() {
 
 function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
   return (
-    <section className="mb-5 rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+    <section className="mb-5 rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-black text-slate-900">HANDCRAFTED PROFIT MAP</h2>
@@ -124,7 +124,7 @@ function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
             href={`/products/${p.id}`}
             className={`relative block overflow-hidden rounded-3xl border p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl ${
               p.tone === "green"
-                ? "border-[#3B82F6]/25 bg-gradient-to-br from-white to-[#3B82F6]/10"
+                ? "border-[#2C5A6B]/25 bg-gradient-to-br from-white to-[#2C5A6B]/10"
                 : p.tone === "blue"
                   ? "border-blue-200 bg-gradient-to-br from-white to-blue-50"
                   : p.tone === "amber"
@@ -133,13 +133,13 @@ function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
             }`}
           >
             <div className="mb-4 flex items-center justify-between">
-              <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-4xl shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+              <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-4xl shadow-[0_12px_28px_rgba(11,32,43,0.08)]">
                 {p.emoji}
               </div>
               <div
                 className={`rounded-full px-3 py-1 text-xs font-black ${
                   p.tone === "green"
-                    ? "bg-[#3B82F6]/12 text-[#1D4ED8]"
+                    ? "bg-[#2C5A6B]/12 text-[#163A48]"
                     : p.tone === "blue"
                       ? "bg-blue-100 text-blue-700"
                       : p.tone === "amber"
@@ -157,7 +157,7 @@ function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
             <div
               className={`mt-5 text-5xl font-black tracking-tight ${
                 p.tone === "green"
-                  ? "text-[#1D4ED8]"
+                  ? "text-[#163A48]"
                   : p.tone === "blue"
                     ? "text-blue-700"
                     : p.tone === "amber"
@@ -177,9 +177,9 @@ function ProductProfitMap({ products }: { products: DashboardProductCard[] }) {
 
 function AiAssistant() {
   return (
-    <section className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+    <section className="rounded-[2rem] border border-blue-100 bg-white p-5 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
       <div className="mb-5 flex items-center justify-between">
-        <div className="text-xs font-black uppercase tracking-[0.15em] text-blue-700">VYRON AI Assistant</div>
+        <div className="text-xs font-black uppercase tracking-[0.15em] text-blue-700">VOLORA AI Assistant</div>
         <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-700">BETA</span>
       </div>
 
@@ -189,7 +189,7 @@ function AiAssistant() {
       <div className="mt-5 space-y-4">
         {recommendations.map((item) => {
           const Icon = item.icon;
-          const bg = item.color === "green" ? "bg-[#3B82F6]/100" : item.color === "orange" ? "bg-[var(--vyron-warning-solid)]" : "bg-blue-600";
+          const bg = item.color === "green" ? "bg-[#2C5A6B]/100" : item.color === "orange" ? "bg-[var(--vyron-warning-solid)]" : "bg-blue-600";
 
           return (
             <Link key={item.title} href={item.href} className="flex items-center gap-4 rounded-3xl bg-slate-50 p-4 transition hover:bg-blue-50">
@@ -199,7 +199,7 @@ function AiAssistant() {
               <div className="flex-1">
                 <div className="font-black text-slate-900">{item.title}</div>
                 <div className="mt-1 text-xs font-semibold text-slate-500">{item.sub}</div>
-                <div className={`mt-1 text-2xl font-black ${item.color === "green" ? "text-[#84CC16]" : item.color === "orange" ? "text-[var(--vyron-warning-fg)]" : "text-blue-600"}`}>
+                <div className={`mt-1 text-2xl font-black ${item.color === "green" ? "text-[#55B968]" : item.color === "orange" ? "text-[var(--vyron-warning-fg)]" : "text-blue-600"}`}>
                   {item.value}
                 </div>
               </div>
@@ -224,7 +224,7 @@ function BottomKpis() {
   return (
     <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
       {items.map(([title, value, sub, Icon, href]) => (
-        <Link key={title as string} href={href as string} className="rounded-[1.6rem] bg-white p-5 shadow-[0_14px_35px_rgba(29,78,216,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
+        <Link key={title as string} href={href as string} className="rounded-[1.6rem] bg-white p-5 shadow-[0_14px_35px_rgba(22,58,72,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-500 text-white">
             <Icon size={23} />
           </div>
@@ -241,7 +241,7 @@ export default async function VyronCostAiStyleDashboard() {
   const products = await getDashboardProducts(5);
 
   return (
-    <main className="min-h-screen bg-[#F7F8FA] text-[#0F172A]">
+    <main className="min-h-screen bg-[#F7F8FA] text-[#0B202B]">
       <div className="flex">
         <VyronCostSidebar />
 
@@ -256,31 +256,31 @@ export default async function VyronCostAiStyleDashboard() {
               <ProductProfitMap products={products} />
 
               <div className="grid gap-5 xl:grid-cols-3">
-                <Link href="/financial-intelligence" className="block rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
+                <Link href="/financial-intelligence" className="block rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(22,58,72,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
                   <h2 className="text-base font-black text-slate-900">PROFIT TREND</h2>
                   <p className="text-xs font-semibold text-slate-500">Gross Profit % over time</p>
                   <div className="mt-4 text-3xl font-black text-blue-700">73.8%</div>
                   <div className="mt-5 h-44 rounded-2xl bg-gradient-to-b from-blue-50 to-white p-4">
                     <svg viewBox="0 0 360 150" className="h-full w-full">
                       <polyline fill="none" stroke="#3556d5" strokeWidth="4" points="0,120 40,100 80,95 120,70 160,55 200,75 240,58 280,42 320,50 360,25" />
-                      <circle cx="360" cy="25" r="7" fill="#2563eb" />
+                      <circle cx="360" cy="25" r="7" fill="#1f4757" />
                     </svg>
                   </div>
                 </Link>
 
-                <Link href="/product-profitability" className="block rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
+                <Link href="/product-profitability" className="block rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(22,58,72,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
                   <h2 className="text-base font-black text-slate-900">TOP PROFIT DRIVERS</h2>
                   <div className="mt-5 space-y-3">
                     {products.slice(0, 5).map((product) => (
                       <div key={product.id} className="flex items-center justify-between">
                         <span className="font-black">{product.name}</span>
-                        <span className="font-black text-[#84CC16]">{product.gp}%</span>
+                        <span className="font-black text-[#55B968]">{product.gp}%</span>
                       </div>
                     ))}
                   </div>
                 </Link>
 
-                <Link href="/threat-centre" className="block rounded-[2rem] bg-red-50 p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
+                <Link href="/threat-centre" className="block rounded-[2rem] bg-red-50 p-5 shadow-[0_18px_50px_rgba(22,58,72,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
                   <h2 className="text-base font-black text-red-700">TOP PROFIT LEAKS</h2>
                   <div className="mt-5 space-y-3">
                     {products.slice().reverse().slice(0, 5).map((product) => (
@@ -296,14 +296,14 @@ export default async function VyronCostAiStyleDashboard() {
 
             <div className="space-y-5">
               <AiAssistant />
-              <Link href="/procurement-risk" className="block rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
+              <Link href="/procurement-risk" className="block rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(22,58,72,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
                 <h2 className="text-base font-black text-slate-900">COST RISK RADAR</h2>
                 <div className="mt-5 flex h-36 items-center justify-center rounded-3xl bg-blue-50">
                   <div className="h-28 w-28 rounded-full bg-gradient-to-br from-blue-600 via-blue-500 to-[var(--vyron-warning-bg)] opacity-85" />
                 </div>
                 <div className="mt-4 text-sm font-black text-blue-700">Open procurement risk →</div>
               </Link>
-              <Link href="/supplier-intelligence" className="block rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
+              <Link href="/supplier-intelligence" className="block rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(22,58,72,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
                 <h2 className="text-base font-black text-slate-900">SUPPLIER PERFORMANCE</h2>
                 <div className="mt-5 text-sm font-black text-blue-700">Open supplier intelligence →</div>
               </Link>

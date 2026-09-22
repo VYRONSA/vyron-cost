@@ -195,7 +195,7 @@ async function fetchWorkspaceClient(clientId: string): Promise<ClientWorkspace |
 }
 
 function clientLoginDisplayClass(status: ClientLoginDisplayStatus) {
-  if (status === "active_login") return "rounded-full bg-[#3B82F6]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]";
+  if (status === "active_login") return "rounded-full bg-[#2C5A6B]/12 px-3 py-1 text-xs font-black text-[#2F7C40]";
   if (status === "disabled_login") return "rounded-full bg-rose-100 px-3 py-1 text-xs font-black text-rose-800";
   return "rounded-full bg-[var(--vyron-warning-bg)] px-3 py-1 text-xs font-black text-[var(--vyron-warning-fg)]";
 }
@@ -282,7 +282,7 @@ function buildLocalClient(
 }
 
 function statusClass(status: ClientStatus) {
-  if (status === "Active") return "bg-[#3B82F6]/12 text-[#4D7C0F]";
+  if (status === "Active") return "bg-[#2C5A6B]/12 text-[#2F7C40]";
   if (status === "Demo") return "bg-blue-100 text-blue-800";
   if (status === "Suspended") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   if (status === "Archived") return "bg-slate-200 text-slate-700";
@@ -314,7 +314,7 @@ function validateAdminForm(admin: typeof emptyAdminForm, requirePassword = false
 }
 
 function xeroClass(status: XeroStatus) {
-  if (status === "Connected") return "rounded-full bg-[#3B82F6]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]";
+  if (status === "Connected") return "rounded-full bg-[#2C5A6B]/12 px-3 py-1 text-xs font-black text-[#2F7C40]";
   if (status === "Setup Required") return "rounded-full bg-[var(--vyron-warning-bg)] px-3 py-1 text-xs font-black text-[var(--vyron-warning-fg)]";
   return "rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700";
 }
@@ -334,7 +334,7 @@ function xeroClass(status: XeroStatus) {
  */
 function MultiStoreCommercialReference() {
   return (
-    <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+    <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-2xl font-black text-slate-900">Multi-Store Operations — commercial model</h2>
@@ -395,10 +395,10 @@ function MultiStoreCommercialReference() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-[#84CC16]/30 bg-[#84CC16]/5 p-4">
+        <div className="rounded-2xl border border-[#55B968]/30 bg-[#55B968]/5 p-4">
           <div className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="shrink-0 text-[#4D7C0F]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.12em] text-[#4D7C0F]">
+            <CheckCircle2 size={16} className="shrink-0 text-[#2F7C40]" />
+            <span className="text-[10px] font-black uppercase tracking-[0.12em] text-[#2F7C40]">
               Live — in production today
             </span>
           </div>
@@ -406,7 +406,7 @@ function MultiStoreCommercialReference() {
           <ul className="mt-3 space-y-1.5">
             {MULTI_STORE_COMMERCIALS.liveCapabilities.map((capability) => (
               <li key={capability} className="flex items-start gap-2 text-sm font-semibold text-slate-700">
-                <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-[#84CC16]" />
+                <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-[#55B968]" />
                 {capability}
               </li>
             ))}
@@ -1284,7 +1284,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
       <div className="w-full max-w-full min-w-0 space-y-6 overflow-x-hidden">
         <PageHeader
           title="Developer Centre"
-          subtitle="High-level overview of VYRON COST client workspaces and platform control."
+          subtitle="High-level overview of VOLORA client workspaces and platform control."
         />
 
         <ActionBar
@@ -1309,7 +1309,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
           {[
             ["Active Clients", statusCounts.total, "bg-blue-50 text-blue-800"],
-            ["Live", statusCounts.active, "bg-[#3B82F6]/10 text-[#4D7C0F]"],
+            ["Live", statusCounts.active, "bg-[#2C5A6B]/10 text-[#2F7C40]"],
             ["Demo", statusCounts.demo, "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
             ["In Setup", statusCounts.setup, "bg-slate-50 text-slate-800"],
             ["Suspended", statusCounts.suspended, "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]"],
@@ -1323,7 +1323,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
         </section>
 
         <section className="grid w-full max-w-full min-w-0 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-2xl font-black text-slate-900">Quick Actions</h2>
@@ -1335,7 +1335,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
                 [
                   { href: "/developer/clients", title: "Client Directory", note: "Search and manage existing workspaces", Icon: Users },
                   { href: "/developer/setup", title: "Client Setup", note: "Create a new client workspace", Icon: Plus },
-                  { href: "/dashboard", title: "Open App", note: "Return to the active VYRON COST tenant view", Icon: ExternalLink },
+                  { href: "/dashboard", title: "Open App", note: "Return to the active VOLORA tenant view", Icon: ExternalLink },
                   { href: "/integrations/xero", title: "Xero Setup", note: "Configure accounting integration per client", Icon: Building2 },
                 ] as const
               ).map(({ href, title, note, Icon }) => (
@@ -1352,7 +1352,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
             </div>
           </div>
 
-          <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <h2 className="text-2xl font-black text-slate-900">Setup Notes</h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">Recent platform activity and onboarding reminders.</p>
             <ul className="mt-5 space-y-3">
@@ -1365,7 +1365,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
           </div>
         </section>
 
-        <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-2xl font-black text-slate-900">Client Register Summary</h2>
@@ -1414,7 +1414,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
       <div className="w-full max-w-full min-w-0 space-y-6 overflow-x-hidden">
         <PageHeader
           title="Client Directory"
-          subtitle="Search and manage existing VYRON COST client workspaces."
+          subtitle="Search and manage existing VOLORA client workspaces."
         />
 
         {directoryError ? (
@@ -1427,7 +1427,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
           </div>
         ) : null}
 
-        <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-5 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-blue-100 bg-slate-50 px-4 py-3 sm:min-w-[240px]">
               <Search size={18} className="text-blue-700" />
@@ -1511,7 +1511,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
 
         <FlashMessage message={message} activeClient={activeClient} />
 
-        <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-xl font-black text-slate-900">
               {directoryView === "archived" ? "Archived Clients" : "Client Register"}
@@ -1791,13 +1791,13 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
     <div className="w-full max-w-full min-w-0 space-y-6 overflow-x-hidden">
       <PageHeader
         title="Client Setup"
-        subtitle={editingClientId ? "Update an existing client workspace." : "Create and onboard a new VYRON COST client workspace."}
+        subtitle={editingClientId ? "Update an existing client workspace." : "Create and onboard a new VOLORA client workspace."}
       />
 
       <FlashMessage message={message} activeClient={activeClient} />
 
       <div className="grid w-full max-w-full min-w-0 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-        <section ref={newClientRef} className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <section ref={newClientRef} className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
               <Plus size={22} />
@@ -1911,7 +1911,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
           </div>
         </section>
 
-        <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <section className="w-full max-w-full min-w-0 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <h2 className="text-2xl font-black text-slate-900">Setup Checklist</h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">Complete these items before marking the workspace Live.</p>
           <ul className="mt-5 space-y-3">
@@ -1921,7 +1921,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
                 className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700"
               >
                 {item.done ? (
-                  <CheckCircle2 size={18} className="shrink-0 text-[#84CC16]" />
+                  <CheckCircle2 size={18} className="shrink-0 text-[#55B968]" />
                 ) : (
                   <Circle size={18} className="shrink-0 text-slate-400" />
                 )}
@@ -1936,7 +1936,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
       </div>
 
       {recentSetupClients.length > 0 ? (
-        <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-black text-slate-900">Recently Created</h2>
@@ -1969,7 +1969,7 @@ export default function DeveloperClient({ mode = "centre" }: { mode?: DeveloperM
 
 function PageHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+    <section className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
       <h1 className="text-3xl font-black text-slate-950 md:text-4xl">{title}</h1>
       <p className="mt-2 text-sm font-semibold text-slate-600">{subtitle}</p>
     </section>
@@ -2462,7 +2462,7 @@ function ManageLoginModal({
             type="button"
             disabled={saving}
             onClick={onEnable}
-            className="rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-5 py-3 text-sm font-black text-[#4D7C0F] disabled:opacity-60"
+            className="rounded-2xl border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-5 py-3 text-sm font-black text-[#2F7C40] disabled:opacity-60"
           >
             Enable Login
           </button>

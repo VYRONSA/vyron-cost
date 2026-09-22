@@ -12,17 +12,17 @@ export default function VyronFinanceHubClient({ data }: { data: VyronFinanceInte
     <VyronPremiumPageShell
       config={{
         visualVariant: "finance",
-        title: "Vyron Finance Hub",
-        subtitle: "Premium VYRON COST workflow for vyron finance hub.",
+        title: "VOLORA Finance Hub",
+        subtitle: "Premium VOLORA workflow for vyron finance hub.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-8">
             <div className="rounded-[2rem] bg-gradient-to-br from-indigo-950 via-slate-950 to-blue-950 p-8 text-white">
-              <div className="text-xs font-black uppercase tracking-widest text-blue-300">VYRON FINANCE Intelligence Layer</div>
+              <div className="text-xs font-black uppercase tracking-widest text-blue-300">VOLORA Finance Intelligence Layer</div>
               <div className="mt-4 flex flex-wrap items-end gap-6">
                 <div className="text-6xl font-black">{healthScores.overall}</div>
-                <div className="text-sm text-slate-300">Overall financial health · feeds VYRON FINANCE</div>
+                <div className="text-sm text-slate-300">Overall financial health · feeds VOLORA Finance</div>
               </div>
               <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
                 {[

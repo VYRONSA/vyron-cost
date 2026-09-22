@@ -96,7 +96,7 @@ export default function ExceptionCentreClient() {
         <>
           <section className="grid gap-3 md:grid-cols-4">
             {byCode.slice(0, 8).map(([code, info]) => (
-              <div key={code} className="rounded-2xl bg-white p-4 shadow-[0_12px_34px_rgba(15,23,42,0.08)]">
+              <div key={code} className="rounded-2xl bg-white p-4 shadow-[0_12px_34px_rgba(11,32,43,0.08)]">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">{info.title}</span>
                   <SeverityPill severity={info.blocking ? "error" : "warning"} />

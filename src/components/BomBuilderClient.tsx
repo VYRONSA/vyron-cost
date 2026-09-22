@@ -666,9 +666,9 @@ export default function BomBuilderClient({
       ) : null}
 
       {/* Premium hero + quote strip */}
-      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 via-indigo-800 to-[#07110d] p-8 text-white shadow-[0_24px_60px_rgba(29,78,216,0.28)]">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#3B82F6]/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 left-1/3 h-48 w-48 rounded-full bg-[#3B82F6]/10 blur-3xl" />
+      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 via-indigo-800 to-[#061722] p-8 text-white shadow-[0_24px_60px_rgba(22,58,72,0.28)]">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#2C5A6B]/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 left-1/3 h-48 w-48 rounded-full bg-[#2C5A6B]/10 blur-3xl" />
         <div className="relative grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#CBD5E1]">
@@ -683,7 +683,7 @@ export default function BomBuilderClient({
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#3B82F6]">Costing principle</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#2C5A6B]">Costing principle</div>
               <p className="mt-2 text-sm font-semibold leading-6 text-slate-100">
                 &ldquo;Margin is not luck — it is engineered from yield, wastage and true unit cost.&rdquo;
               </p>
@@ -703,10 +703,10 @@ export default function BomBuilderClient({
         {[
           ["Total Batch Cost", formatMoney(totalCost), "text-slate-900", "bg-white"],
           ["Cost / Unit", formatMoney(costPerUnit), "text-blue-700", "bg-blue-50"],
-          ["Actual GP", `${actualGp.toFixed(1)}%`, actualGp < numericTargetGp ? "text-red-600" : "text-[#84CC16]", actualGp < numericTargetGp ? "bg-red-50" : "bg-[#3B82F6]/10"],
-          ["Suggested Batch Price", formatMoney(suggestedPrice), "text-[#1D4ED8]", "bg-[#3B82F6]/10"],
+          ["Actual GP", `${actualGp.toFixed(1)}%`, actualGp < numericTargetGp ? "text-red-600" : "text-[#55B968]", actualGp < numericTargetGp ? "bg-red-50" : "bg-[#2C5A6B]/10"],
+          ["Suggested Batch Price", formatMoney(suggestedPrice), "text-[#163A48]", "bg-[#2C5A6B]/10"],
         ].map(([label, value, cls, bg]) => (
-          <div key={label} className={`rounded-[2rem] p-5 shadow-[0_18px_50px_rgba(29,78,216,0.08)] ${bg}`}>
+          <div key={label} className={`rounded-[2rem] p-5 shadow-[0_18px_50px_rgba(22,58,72,0.08)] ${bg}`}>
             <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">{label}</div>
             <div className={`mt-2 text-3xl font-black ${cls}`}>{value}</div>
           </div>
@@ -722,7 +722,7 @@ export default function BomBuilderClient({
       <div className="grid gap-8 2xl:grid-cols-[1fr_380px]">
         <div className="grid gap-8">
           {/* Section 1 — Recipe setup */}
-          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)] md:p-8">
+          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)] md:p-8">
             <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
@@ -740,7 +740,7 @@ export default function BomBuilderClient({
                 <button
                   onClick={() => void saveBom()}
                   disabled={saving}
-                  className="inline-flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(29,107,255,0.35)] disabled:opacity-60"
+                  className="inline-flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-[0_12px_30px_rgba(22,58,72,0.35)] disabled:opacity-60"
                 >
                   <Save size={18} /> {saving ? "Saving..." : isCopy ? "Save as New BOM" : "Save BOM"}
                 </button>
@@ -821,16 +821,16 @@ export default function BomBuilderClient({
           </div>
 
           {/* Section 2 — Pricing */}
-          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)] md:p-8">
+          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)] md:p-8">
             <div className="mb-6 flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/12 text-[#1D4ED8]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#2C5A6B]/25 bg-[#2C5A6B]/12 text-[#163A48]">
                 <TrendingUp size={24} />
               </div>
               <div>
                 <div className={labelClass}>Section 2</div>
                 <h3 className="text-2xl font-black text-slate-900">Pricing &amp; GP Targets</h3>
                 <p className="mt-1 text-sm font-semibold text-slate-500">
-                  Set selling price and target GP — VYRON calculates actual GP and suggested price from your lines.
+                  Set selling price and target GP — VOLORA calculates actual GP and suggested price from your lines.
                 </p>
               </div>
             </div>
@@ -942,11 +942,11 @@ export default function BomBuilderClient({
               </p>
             </div>
           ) : null}
-          {message && <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-4 text-sm font-bold text-[#1D4ED8]">{message}</div>}
+          {message && <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-5 py-4 text-sm font-bold text-[#163A48]">{message}</div>}
           {errorMessage && <div className="rounded-2xl bg-red-50 px-5 py-4 text-sm font-bold text-red-700">{errorMessage}</div>}
 
           {/* Section 3 — Components */}
-          <div className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(29,78,216,0.08)] sm:p-6 md:p-8">
+          <div className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(22,58,72,0.08)] sm:p-6 md:p-8">
             <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]">
@@ -1299,11 +1299,11 @@ export default function BomBuilderClient({
 
         {/* Right sidebar — formula, how-it-works, field guide */}
         <div className="grid gap-6 self-start 2xl:sticky 2xl:top-6">
-          <aside className="relative overflow-hidden rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-[#3B82F6]/10" />
+          <aside className="relative overflow-hidden rounded-[2rem] bg-[#061722] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-[#2C5A6B]/10" />
             <div className="relative">
-              <Calculator size={28} className="text-[#3B82F6]" />
-              <div className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-[#3B82F6]">Formula Panel</div>
+              <Calculator size={28} className="text-[#2C5A6B]" />
+              <div className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-[#2C5A6B]">Formula Panel</div>
               <h2 className="mt-2 text-2xl font-black">How costs roll up</h2>
               <div className="mt-5 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm font-semibold leading-7 text-slate-200">
                 <p>
@@ -1322,7 +1322,7 @@ export default function BomBuilderClient({
                   <span className="font-black text-white">Suggested Price</span> = Cost / Unit ÷ (1 − Target GP%)
                 </p>
               </div>
-              <div className="mt-5 rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 p-4">
+              <div className="mt-5 rounded-2xl border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 p-4">
                 <div className="text-[10px] font-black uppercase tracking-[0.14em] text-[#CBD5E1]">Live preview</div>
                 <div className="mt-2 text-3xl font-black text-white">{actualGp.toFixed(1)}% GP</div>
                 <div className="mt-1 text-xs font-semibold text-[#CBD5E1]">Suggested: {formatMoney(suggestedPrice)}</div>
@@ -1330,7 +1330,7 @@ export default function BomBuilderClient({
             </div>
           </aside>
 
-          <aside className="rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <aside className="rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <div className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">How it works</div>
             <h2 className="mt-2 text-xl font-black text-slate-900">Guided BOM workflow</h2>
             <ol className="mt-5 space-y-4 text-sm font-semibold leading-6 text-slate-700">
@@ -1359,9 +1359,9 @@ export default function BomBuilderClient({
             </Link>
           </aside>
 
-          <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-800 via-indigo-900 to-slate-950 p-6 text-white shadow-[0_18px_55px_rgba(29,78,216,0.2)]">
+          <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-800 via-indigo-900 to-slate-950 p-6 text-white shadow-[0_18px_55px_rgba(22,58,72,0.2)]">
             <div className="pointer-events-none absolute -right-8 top-8 h-32 w-32 rounded-full border border-white/10" />
-            <div className="pointer-events-none absolute bottom-6 left-6 h-20 w-20 rounded-full border border-[#3B82F6]/25" />
+            <div className="pointer-events-none absolute bottom-6 left-6 h-20 w-20 rounded-full border border-[#2C5A6B]/25" />
             <div className="relative">
               <div className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-200">Wealth protection</div>
               <p className="mt-3 text-lg font-black leading-snug">

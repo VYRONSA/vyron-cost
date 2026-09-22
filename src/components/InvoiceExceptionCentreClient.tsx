@@ -14,7 +14,7 @@ export default function InvoiceExceptionCentreClient({ invoices }: { invoices: I
     <VyronPremiumPageShell
       config={{
         title: "Invoice Exception Centre",
-        subtitle: "Premium VYRON COST workflow for invoice exception centre.",
+        subtitle: "Premium VOLORA workflow for invoice exception centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -28,14 +28,14 @@ export default function InvoiceExceptionCentreClient({ invoices }: { invoices: I
                 <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Exceptions</div>
                 <div className="mt-3 text-4xl font-black">{invoices.length}</div>
               </div>
-              <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">Control</div>
+              <div className="rounded-[2rem] bg-[#061722] p-6 text-white">
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">Control</div>
                 <div className="mt-3 text-3xl font-black">Review before payment</div>
               </div>
             </section>
 
             <div className="overflow-hidden rounded-[2rem] bg-white">
-              <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase text-[#3B82F6]">
+              <div className="grid grid-cols-7 bg-[#061722] px-5 py-4 text-xs font-black uppercase text-[#2C5A6B]">
                 <div>Invoice</div>
                 <div>Supplier</div>
                 <div>Amount</div>

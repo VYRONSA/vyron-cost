@@ -32,13 +32,13 @@ export default function SavingsTrackerClient() {
     <VyronPremiumPageShell
       config={{
         title: "Savings Tracker",
-        subtitle: "Premium VYRON COST workflow for savings tracker.",
+        subtitle: "Premium VOLORA workflow for savings tracker.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">Savings Tracked</div>
+            <div className="rounded-[2rem] bg-[#061722] p-6 text-white">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">Savings Tracked</div>
               <div className="mt-3 text-5xl font-black">{money(total)}</div>
             </div>
             <div className="rounded-[2rem] bg-white p-6">
@@ -52,7 +52,7 @@ export default function SavingsTrackerClient() {
               {rows.map(([label, amount]) => (
                 <div key={String(label)} className="flex justify-between rounded-[2rem] bg-white p-5 font-black">
                   <span>{label}</span>
-                  <span className="text-[#1D4ED8]">{money(Number(amount))}</span>
+                  <span className="text-[#163A48]">{money(Number(amount))}</span>
                 </div>
               ))}
             </div>

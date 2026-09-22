@@ -140,9 +140,9 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
 
   return (
     <section className="grid gap-6 xl:grid-cols-[0.95fr_1.4fr]">
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-3 text-[#84CC16]">
+          <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-3 text-[#55B968]">
             {editingId ? <Edit3 size={20} /> : <Plus size={20} />}
           </div>
           <div>
@@ -252,7 +252,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <h2 className="text-2xl font-black text-[#F8FAFC]">Unit Register</h2>
         <p className="mt-2 text-sm text-slate-500">Search and maintain unit standards by tenant.</p>
 
@@ -265,7 +265,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
 
         <div className="mt-4 overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[900px]">
-            <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+            <div className="grid grid-cols-7 bg-[#061722] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
               <div>Code</div>
               <div>Name</div>
               <div>Symbol</div>
@@ -287,7 +287,7 @@ export default function UnitsOfMeasureManager({ initialUnits }: { initialUnits: 
                     type="button"
                     onClick={() => startEdit(row)}
                     disabled={busy}
-                    className="inline-flex items-center gap-1 rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-3 py-2 text-xs font-black text-[#1D4ED8] disabled:opacity-60"
+                    className="inline-flex items-center gap-1 rounded-full border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-3 py-2 text-xs font-black text-[#163A48] disabled:opacity-60"
                   >
                     <Edit3 size={14} />Edit
                   </button>

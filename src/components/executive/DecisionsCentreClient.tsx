@@ -214,7 +214,7 @@ export default function DecisionsCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#2C5A6B]/35 bg-[#2C5A6B]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Decisions Centre
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Decisions Centre</h1>
@@ -262,7 +262,7 @@ export default function DecisionsCentreClient({
 
       {!snapshot.hasDecisionData && !loading ? (
         <section className={M.moduleDataSection}>
-          <h2 className="text-xl font-bold text-[#0F172A]">Decision intelligence requires additional operational data.</h2>
+          <h2 className="text-xl font-bold text-[#0B202B]">Decision intelligence requires additional operational data.</h2>
           <p className="mt-2 text-sm font-medium text-[#64748B]">
             Decisions are derived from Early Warning, Predictive Risk, Root Cause and Business Health signals. Load
             operational data to enable traceable executive recommendations.
@@ -288,8 +288,8 @@ export default function DecisionsCentreClient({
       ) : (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <SummaryCard label="Critical Decisions" value={String(snapshot.summary.criticalDecisions)} accent="#2563EB" />
-            <SummaryCard label="High Impact Decisions" value={String(snapshot.summary.highImpactDecisions)} accent="#3B82F6" />
+            <SummaryCard label="Critical Decisions" value={String(snapshot.summary.criticalDecisions)} accent="#1F4757" />
+            <SummaryCard label="High Impact Decisions" value={String(snapshot.summary.highImpactDecisions)} accent="#2C5A6B" />
             <SummaryCard
               label="Estimated Opportunity"
               value={
@@ -297,7 +297,7 @@ export default function DecisionsCentreClient({
                   ? snapshot.summary.opportunityLabel
                   : "Opportunity Not Yet Quantifiable"
               }
-              accent="#1D6BFF"
+              accent="#1F4757"
               small={snapshot.summary.estimatedOpportunity == null}
             />
             <SummaryCard
@@ -307,10 +307,10 @@ export default function DecisionsCentreClient({
                   ? snapshot.summary.riskReductionLabel
                   : "Opportunity Not Yet Quantifiable"
               }
-              accent="#3B82F6"
+              accent="#2C5A6B"
               small={snapshot.summary.estimatedRiskReduction == null}
             />
-            <SummaryCard label="Confidence Level" value={snapshot.summary.confidenceLevel} accent="#0F172A" />
+            <SummaryCard label="Confidence Level" value={snapshot.summary.confidenceLevel} accent="#0B202B" />
           </section>
 
           {snapshot.recommendedDecisions.length === 0 ? (
@@ -328,7 +328,7 @@ export default function DecisionsCentreClient({
           ) : (
             <>
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Recommended Decisions</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Recommended Decisions</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Traceable decisions from current risks, root causes and opportunities — not generic advice.
                 </p>
@@ -365,7 +365,7 @@ export default function DecisionsCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Decision Playbooks</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Decision Playbooks</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Executive decision cards generated only when supported by current tenant data.
                 </p>
@@ -381,7 +381,7 @@ export default function DecisionsCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Decision Impact Matrix</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Decision Impact Matrix</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Decisions positioned by impact and effort from current signals.
                 </p>
@@ -397,7 +397,7 @@ export default function DecisionsCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Opportunity Centre</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Opportunity Centre</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Measurable opportunities from margin, supplier, inventory, manufacturing and integration signals.
                 </p>
@@ -413,7 +413,7 @@ export default function DecisionsCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Decision Conflicts</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Decision Conflicts</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Competing decisions identified only when supported by simultaneous signals.
                 </p>
@@ -429,7 +429,7 @@ export default function DecisionsCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Executive Decision Queue</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Executive Decision Queue</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Top 10 ranked decisions by urgency, impact and opportunity.
                 </p>
@@ -460,7 +460,7 @@ export default function DecisionsCentreClient({
           )}
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-lg font-bold text-[#0F172A]">Executive drilldowns</h2>
+            <h2 className="text-lg font-bold text-[#0B202B]">Executive drilldowns</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {[
                 { label: "Executive Boardroom", href: "/executive-boardroom", icon: Building2 },
@@ -481,7 +481,7 @@ export default function DecisionsCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1F4757]/30 hover:text-[#1F4757]"
                 >
                   <link.icon size={16} />
                   {link.label}
@@ -510,8 +510,8 @@ function SummaryCard({
     <div className={`${M.moduleDataSection} p-5`}>
       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">{label}</div>
       <div
-        className={`mt-2 font-black text-[#0F172A] ${small ? "text-sm leading-6" : "text-2xl"}`}
-        style={{ color: small ? "#0F172A" : accent }}
+        className={`mt-2 font-black text-[#0B202B] ${small ? "text-sm leading-6" : "text-2xl"}`}
+        style={{ color: small ? "#0B202B" : accent }}
       >
         {value}
       </div>
@@ -522,8 +522,8 @@ function SummaryCard({
 function DecisionRow({ row }: { row: ExecutiveDecision }) {
   return (
     <tr className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{row.decision}</td>
-      <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{row.category}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{row.decision}</td>
+      <td className="px-4 py-3 font-semibold text-[#1F4757]">{row.category}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#64748B]">{row.whyRecommended}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.expectedImpact}</td>
       <td className="px-4 py-3">
@@ -535,7 +535,7 @@ function DecisionRow({ row }: { row: ExecutiveDecision }) {
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.riskReduction}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.opportunity}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -548,26 +548,26 @@ function PlaybookCard({ playbook }: { playbook: DecisionPlaybook }) {
     <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1D6BFF]">{playbook.category}</div>
-          <h3 className="mt-1 font-bold text-[#0F172A]">{playbook.title}</h3>
+          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1F4757]">{playbook.category}</div>
+          <h3 className="mt-1 font-bold text-[#0B202B]">{playbook.title}</h3>
         </div>
         <ConfidenceBadge confidence={playbook.confidence} />
       </div>
       <div className="mt-4 space-y-2 text-sm">
         <p>
-          <span className="font-bold text-[#0F172A]">Decision: </span>
+          <span className="font-bold text-[#0B202B]">Decision: </span>
           <span className="font-medium text-[#334155]">{playbook.decision}</span>
         </p>
         <p>
-          <span className="font-bold text-[#0F172A]">Reason: </span>
+          <span className="font-bold text-[#0B202B]">Reason: </span>
           <span className="font-medium text-[#64748B]">{playbook.reason}</span>
         </p>
         <p>
-          <span className="font-bold text-[#0F172A]">Expected result: </span>
+          <span className="font-bold text-[#0B202B]">Expected result: </span>
           <span className="font-medium text-[#334155]">{playbook.expectedResult}</span>
         </p>
       </div>
-      <Link href={playbook.href} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+      <Link href={playbook.href} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
         Open module <ArrowRight size={14} />
       </Link>
     </div>
@@ -593,8 +593,8 @@ function ImpactMatrixQuadrant({
   return (
     <div className={`rounded-2xl border p-4 ${accent}`}>
       <div className="flex items-center gap-2">
-        <Scale size={16} className="text-[#1D6BFF]" />
-        <h3 className="font-bold text-[#0F172A]">{quadrant}</h3>
+        <Scale size={16} className="text-[#1F4757]" />
+        <h3 className="font-bold text-[#0B202B]">{quadrant}</h3>
       </div>
       {decisions.length === 0 ? (
         <p className="mt-3 text-sm font-medium text-[#64748B]">No decisions in this quadrant.</p>
@@ -602,7 +602,7 @@ function ImpactMatrixQuadrant({
         <ul className="mt-3 space-y-2">
           {decisions.map((row) => (
             <li key={row.id}>
-              <Link href={row.href} className="text-sm font-semibold text-[#334155] hover:text-[#1D6BFF]">
+              <Link href={row.href} className="text-sm font-semibold text-[#334155] hover:text-[#1F4757]">
                 {row.decision}
               </Link>
             </li>
@@ -617,12 +617,12 @@ function OpportunityCard({ item }: { item: OpportunityItem }) {
   return (
     <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="font-bold text-[#0F172A]">{item.opportunity}</h3>
+        <h3 className="font-bold text-[#0B202B]">{item.opportunity}</h3>
         <ConfidenceBadge confidence={item.confidence} />
       </div>
       <p className="mt-2 text-sm font-medium text-[#334155]">{item.estimatedImpact}</p>
       <p className="mt-2 text-xs font-semibold text-[#64748B]">{item.recommendedAction}</p>
-      <Link href={item.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+      <Link href={item.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
         Open <ArrowRight size={14} />
       </Link>
     </div>
@@ -632,7 +632,7 @@ function OpportunityCard({ item }: { item: OpportunityItem }) {
 function ConflictCard({ conflict }: { conflict: DecisionConflict }) {
   return (
     <div className="rounded-2xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] p-4">
-      <h3 className="font-bold text-[#0F172A]">{conflict.title}</h3>
+      <h3 className="font-bold text-[#0B202B]">{conflict.title}</h3>
       <div className="mt-3 grid gap-2 text-sm md:grid-cols-2">
         <p>
           <span className="font-bold text-[#334155]">A: </span>
@@ -663,15 +663,15 @@ function QueueRow({ item }: { item: DecisionQueueItem }) {
           {item.priority}
         </span>
       </td>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{item.decision}</td>
-      <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{item.category}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{item.decision}</td>
+      <td className="px-4 py-3 font-semibold text-[#1F4757]">{item.category}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{item.impact}</td>
       <td className="px-4 py-3">
         <ConfidenceBadge confidence={item.confidence} />
       </td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{item.suggestedOwner}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={item.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={item.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -684,7 +684,7 @@ function UrgencyBadge({ urgency }: { urgency: ExecutiveDecision["urgency"] }) {
     Immediate: "border-rose-200 bg-rose-50 text-rose-800",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
+    Low: "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]",
   };
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes[urgency]}`}>

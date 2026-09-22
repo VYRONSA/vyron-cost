@@ -252,7 +252,7 @@ export default function OrderIntakeDetailClient({ id, duplicate }: { id: string;
             </ol>
           </Card>
 
-          <details className="rounded-3xl bg-white p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+          <details className="rounded-3xl bg-white p-5 shadow-[0_18px_60px_rgba(11,32,43,0.08)]">
             <summary className="cursor-pointer text-xs font-black uppercase tracking-[0.13em] text-slate-500">Full audit trail ({events.length} events)</summary>
             <div className="mt-3 grid gap-2 text-xs font-semibold text-slate-600">
               {events.map((event) => (
@@ -343,7 +343,7 @@ export default function OrderIntakeDetailClient({ id, duplicate }: { id: string;
                 )}
               </dl>
               {permissions.canSeeCost && snapshot.totals.marginNotMeasuredLines > 0 ? (
-                <p className="mt-3 text-xs font-semibold text-slate-500">Margin not measured on {snapshot.totals.marginNotMeasuredLines} line(s): no product cost in VYRON.</p>
+                <p className="mt-3 text-xs font-semibold text-slate-500">Margin not measured on {snapshot.totals.marginNotMeasuredLines} line(s): no product cost in VOLORA.</p>
               ) : null}
               <p className="mt-3 text-xs font-semibold text-slate-400">Cost is the current product cost. Tax is added by Sales Orders at the workspace rate.</p>
             </Card>
@@ -449,7 +449,7 @@ export default function OrderIntakeDetailClient({ id, duplicate }: { id: string;
                   <Pill tone="blue">{salesOrder.status}</Pill>
                 </div>
                 <p className="text-xs text-slate-500">
-                  From here the existing VYRON workflow takes over: approval and stock reservation, picking, dispatch and invoicing in Sales Orders and the Order
+                  From here the existing VOLORA workflow takes over: approval and stock reservation, picking, dispatch and invoicing in Sales Orders and the Order
                   Centre. Invoicing and Xero posting remain separate, deliberate steps.
                 </p>
               </div>
@@ -467,7 +467,7 @@ export default function OrderIntakeDetailClient({ id, duplicate }: { id: string;
 
 function StatusTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-[0_12px_34px_rgba(15,23,42,0.08)]">
+    <div className="rounded-2xl bg-white p-4 shadow-[0_12px_34px_rgba(11,32,43,0.08)]">
       <div className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">{label}</div>
       <div className="mt-1 text-base font-black text-slate-900">{value}</div>
     </div>
@@ -509,7 +509,7 @@ function OrderSummary({ detail, busy, onResolveCustomer }: { detail: Detail; bus
       <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
         <Field label="Customer on the order" value={intake.customer_name || "Not stated"} />
         <Field
-          label="Customer in VYRON"
+          label="Customer in VOLORA"
           value={
             snapshot?.customer?.id ? (
               <span className="flex flex-wrap items-center gap-2">
@@ -610,7 +610,7 @@ function LinesTable({
                 <div className="truncate text-sm font-semibold text-slate-600">{line.raw_description || "—"}</div>
               </div>
               <div className="min-w-0">
-                <div className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-400">VYRON product</div>
+                <div className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-400">VOLORA product</div>
                 {evaluation?.productName ? (
                   <div className="truncate text-sm font-black text-slate-900">
                     {evaluation.productName}
@@ -688,7 +688,7 @@ function LinesTable({
                     </label>
                     <label className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">
                       Unit price (ex tax)
-                      <input value={draftPrice} onChange={(e) => setDraftPrice(e.target.value)} inputMode="decimal" placeholder="Blank = VYRON price" className="mt-1 block w-40 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold" />
+                      <input value={draftPrice} onChange={(e) => setDraftPrice(e.target.value)} inputMode="decimal" placeholder="Blank = VOLORA price" className="mt-1 block w-40 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold" />
                     </label>
                     <SecondaryButton
                       disabled={busy || !Number.isFinite(Number(draftQty))}

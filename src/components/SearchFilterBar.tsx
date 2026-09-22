@@ -40,7 +40,7 @@ export default function SearchFilterBar({
           className={
             isDark
               ? `w-full bg-transparent text-sm font-semibold text-[#F8FAFC] outline-none placeholder:text-[#94A3B8] ${M.inputPlaceholder}`
-              : `w-full bg-transparent text-sm font-semibold text-[#0F172A] outline-none ${M.inputPlaceholder}`
+              : `w-full bg-transparent text-sm font-semibold text-[#0B202B] outline-none ${M.inputPlaceholder}`
           }
         />
 
@@ -62,8 +62,8 @@ export default function SearchFilterBar({
           <div
             className={
               isDark
-                ? "hidden rounded-full border border-[#1D6BFF]/30 bg-[#1D6BFF]/15 px-4 py-2 text-xs font-bold text-[#CBD5E1] md:block"
-                : `hidden rounded-full border border-[#1D6BFF]/25 bg-[#1D6BFF]/8 px-4 py-2 text-xs font-bold text-[#1D6BFF] md:block`
+                ? "hidden rounded-full border border-[#1F4757]/30 bg-[#1F4757]/15 px-4 py-2 text-xs font-bold text-[#CBD5E1] md:block"
+                : `hidden rounded-full border border-[#1F4757]/25 bg-[#1F4757]/8 px-4 py-2 text-xs font-bold text-[#1F4757] md:block`
             }
           >
             {resultCount} results

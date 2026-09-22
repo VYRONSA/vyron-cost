@@ -72,13 +72,13 @@ export default function ManufacturingDashboardClient() {
       <Link href="/manufacturing/runs/new" className="rounded-xl border border-transparent vyron-grad-surface px-5 py-3 text-sm font-semibold text-[#F8FAFC]">
         New Production Run
       </Link>
-      <Link href="/manufacturing/history" className="rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
+      <Link href="/manufacturing/history" className="rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
         Manufacturing History
       </Link>
       <Link href="/manufacturing/finished-goods" className="rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-5 py-3 text-sm font-semibold text-[var(--vyron-warning-fg)]">
         Finished Goods
       </Link>
-      <Link href="/recipes" className="rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
+      <Link href="/recipes" className="rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 px-5 py-3 text-sm font-semibold text-[#334155]">
         Recipes & BOM
       </Link>
     </>
@@ -129,9 +129,9 @@ export default function ManufacturingDashboardClient() {
       />
 
       {stats ? (
-        <div className="relative overflow-hidden rounded-2xl border border-[rgba(15,23,42,0.09)] bg-white/80 p-6 text-[#0F172A] shadow-[0_4px_28px_rgba(0,0,0,0.2)]">
+        <div className="relative overflow-hidden rounded-2xl border border-[rgba(11,32,43,0.09)] bg-white/80 p-6 text-[#0B202B] shadow-[0_4px_28px_rgba(0,0,0,0.2)]">
           <div className="relative flex flex-wrap items-center gap-6">
-            <Package className="text-[#3B82F6]" size={32} />
+            <Package className="text-[#2C5A6B]" size={32} />
             <div className="flex-1">
               <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#94A3B8]">Finished Goods Inventory Value</div>
               <div className="mt-1 text-3xl font-black">{formatMoney(stats.finishedGoodsValue)}</div>
@@ -151,7 +151,7 @@ export default function ManufacturingDashboardClient() {
           ))}
         </VyronPremiumInsightsPanel>
       ) : (
-        <div className="rounded-2xl border border-[rgba(15,23,42,0.09)] bg-white/80 p-6 text-sm font-medium text-[#94A3B8]">
+        <div className="rounded-2xl border border-[rgba(11,32,43,0.09)] bg-white/80 p-6 text-sm font-medium text-[#94A3B8]">
           <TrendingDown className="mb-3 text-blue-300" size={28} />
           <VyronPremiumSectionHeading title="Insights will appear here" subtitle="Complete production runs to generate yield, wastage and cost insights." />
         </div>

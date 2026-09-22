@@ -29,13 +29,13 @@ export default function AiCfoCommandCentreClient({ data }: { data: AiFinancialIn
       config={{
         visualVariant: "finance",
         title: "Ai Cfo Command Centre",
-        subtitle: "Premium VYRON COST workflow for ai cfo command centre.",
+        subtitle: "Premium VOLORA workflow for ai cfo command centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-10">
             <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-950 p-8 text-white">
-              <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VYRON Intelligence Score</div>
+              <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VOLORA Intelligence Score</div>
               <div className="mt-3 flex flex-wrap items-end gap-6">
                 <div className="text-6xl font-black">{scores.overallScore}</div>
                 <div className="text-sm font-semibold text-slate-300">Enterprise financial decision readiness · 0–100</div>
@@ -52,7 +52,7 @@ export default function AiCfoCommandCentreClient({ data }: { data: AiFinancialIn
                   <div key={String(l)} className="rounded-xl bg-white/10 p-3">
                     <div className="text-[10px] font-black uppercase text-blue-200">{l}</div>
                     <div className="text-2xl font-black">{v}</div>
-                    <Link href={String(h)} className="text-[10px] font-bold text-[#3B82F6] hover:underline">
+                    <Link href={String(h)} className="text-[10px] font-bold text-[#2C5A6B] hover:underline">
                       Drill down →
                     </Link>
                   </div>

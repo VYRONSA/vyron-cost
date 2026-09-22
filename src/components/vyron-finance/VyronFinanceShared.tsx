@@ -73,7 +73,7 @@ export function FinanceNav() {
     ["/vyron-finance/executive", "Executive"],
     ["/vyron-finance/board-reporting", "Board Packs"],
     ["/vyron-finance/cfo-assistant", "CFO Assistant"],
-    ["/vyron-finance/foundation", "VYRON FINANCE"],
+    ["/vyron-finance/foundation", "VOLORA Finance"],
   ] as const;
   return (
     <nav className="mb-8 flex flex-wrap gap-2">

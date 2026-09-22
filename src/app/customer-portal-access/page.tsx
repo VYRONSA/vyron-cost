@@ -8,7 +8,7 @@ export default function Page() {
     <VyronCostAiShell
       hidePageHeader
       title="Customer Portal Access"
-      subtitle="WHO CAN ORDER THROUGH VYRON ORDER, AND WHAT THEY SIGN IN WITH."
+      subtitle="WHO CAN ORDER THROUGH VOLORA Order, AND WHAT THEY SIGN IN WITH."
     >
       <CustomerPortalAccessClient />
     </VyronCostAiShell>

@@ -160,7 +160,7 @@ export default function BusinessHealthCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#2C5A6B]/35 bg-[#2C5A6B]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Business Health Centre
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Business Health Centre</h1>
@@ -217,9 +217,9 @@ export default function BusinessHealthCentreClient({
 
       {!hasAnyData && !loading ? (
         <section className={M.moduleDataSection}>
-          <h2 className="text-xl font-bold text-[#0F172A]">Business health data not available yet</h2>
+          <h2 className="text-xl font-bold text-[#0B202B]">Business health data not available yet</h2>
           <p className="mt-2 text-sm font-medium text-[#64748B]">
-            Load operational data so VYRON COST can score financial, cost, inventory, procurement, production and
+            Load operational data so VOLORA can score financial, cost, inventory, procurement, production and
             customer health from real records.
           </p>
           <ul className="mt-4 space-y-2 text-sm font-medium text-[#334155]">
@@ -252,7 +252,7 @@ export default function BusinessHealthCentreClient({
           <section className={M.moduleDataSection}>
             <div className="flex flex-wrap items-start justify-between gap-6">
               <div>
-                <h2 className="text-xl font-bold text-[#0F172A]">Business health score</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Business health score</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Composite score from scored health categories — no fabricated numbers.
                 </p>
@@ -265,15 +265,15 @@ export default function BusinessHealthCentreClient({
                       snapshot.overallScore == null
                         ? "#CBD5E1"
                         : snapshot.overallScore >= 80
-                          ? "#1D4ED8"
+                          ? "#163A48"
                           : snapshot.overallScore >= 65
-                            ? "#3B82F6"
+                            ? "#2C5A6B"
                             : snapshot.overallScore >= 45
                               ? "#B45309"
                               : "#BE123C",
                   }}
                 >
-                  <div className="text-3xl font-black text-[#0F172A]">
+                  <div className="text-3xl font-black text-[#0B202B]">
                     {snapshot.overallScore != null ? snapshot.overallScore : "—"}
                   </div>
                   <div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
@@ -293,7 +293,7 @@ export default function BusinessHealthCentreClient({
           </section>
 
           <section>
-            <h2 className="mb-3 text-lg font-bold text-[#0F172A]">Health category cards</h2>
+            <h2 className="mb-3 text-lg font-bold text-[#0B202B]">Health category cards</h2>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {snapshot.categories.map((category) => (
                 <CategoryCard key={category.id} category={category} />
@@ -304,7 +304,7 @@ export default function BusinessHealthCentreClient({
           <section className={M.moduleDataSection}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-xl font-bold text-[#0F172A]">Trend direction</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Trend direction</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Derived from recovery and spend trend series when available.
                 </p>
@@ -319,7 +319,7 @@ export default function BusinessHealthCentreClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Business risk matrix</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Business risk matrix</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Risks grouped by severity from live product, inventory, supplier, manufacturing and Xero signals.
             </p>
@@ -331,7 +331,7 @@ export default function BusinessHealthCentreClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Top executive risks</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Top executive risks</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">Highest-priority risks ranked by severity.</p>
             <div className={`mt-4 ${M.tableSurface}`}>
               <table className="min-w-full text-sm">
@@ -353,13 +353,13 @@ export default function BusinessHealthCentreClient({
                   ) : (
                     snapshot.topRisks.map((risk) => (
                       <tr key={risk.id} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-                        <td className="px-4 py-3 font-semibold text-[#0F172A]">{risk.title}</td>
+                        <td className="px-4 py-3 font-semibold text-[#0B202B]">{risk.title}</td>
                         <td className="px-4 py-3">
                           <RiskLevelBadge level={risk.level} />
                         </td>
                         <td className="px-4 py-3 text-[#64748B]">{risk.detail}</td>
                         <td className="px-4 py-3 text-right">
-                          <Link href={risk.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+                          <Link href={risk.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
                             Open <ArrowRight size={14} />
                           </Link>
                         </td>
@@ -372,7 +372,7 @@ export default function BusinessHealthCentreClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Executive action centre</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Executive action centre</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Recommended leadership actions linked to the modules that resolve each issue.
             </p>
@@ -384,7 +384,7 @@ export default function BusinessHealthCentreClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-lg font-bold text-[#0F172A]">Executive drilldowns</h2>
+            <h2 className="text-lg font-bold text-[#0B202B]">Executive drilldowns</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {[
                 { label: "Executive Boardroom", href: "/executive-boardroom", icon: Building2 },
@@ -405,7 +405,7 @@ export default function BusinessHealthCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1F4757]/30 hover:text-[#1F4757]"
                 >
                   <link.icon size={16} />
                   {link.label}
@@ -433,19 +433,19 @@ function CategoryCard({ category }: { category: HealthCategoryCard }) {
   return (
     <Link
       href={category.href}
-      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1D6BFF]/30 hover:shadow-md`}
+      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1F4757]/30 hover:shadow-md`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <div className={`flex h-9 w-9 shrink-0 items-center justify-center ${M.iconSubtle}`}>
-              <Icon size={18} className="text-[#1D6BFF]" />
+              <Icon size={18} className="text-[#1F4757]" />
             </div>
-            <h3 className="font-bold text-[#0F172A]">{category.label}</h3>
+            <h3 className="font-bold text-[#0B202B]">{category.label}</h3>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <StatusBadge status={category.status} />
-            <span className="text-2xl font-black text-[#0F172A]">{scoreLabel(category.score)}</span>
+            <span className="text-2xl font-black text-[#0B202B]">{scoreLabel(category.score)}</span>
             {category.score != null ? (
               <span className="text-xs font-bold text-[#64748B]">/ 100</span>
             ) : null}
@@ -468,12 +468,12 @@ function ActionCard({ action }: { action: ExecutiveHealthAction }) {
     <div className={`rounded-2xl border p-4 ${severityClasses[action.severity]}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="font-bold text-[#0F172A]">{action.title}</div>
+          <div className="font-bold text-[#0B202B]">{action.title}</div>
           <p className="mt-1 text-sm font-medium text-[#64748B]">{action.explanation}</p>
         </div>
         <ActionSeverityBadge severity={action.severity} />
       </div>
-      <Link href={action.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+      <Link href={action.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
         Open module <ArrowRight size={14} />
       </Link>
     </div>
@@ -490,14 +490,14 @@ function RiskColumn({ level, items }: { level: RiskLevel; items: Array<{ id: str
   return (
     <div className={`rounded-2xl border p-4 ${colors[level]}`}>
       <div className="text-xs font-bold uppercase tracking-[0.12em] text-[#64748B]">{level}</div>
-      <div className="mt-1 text-2xl font-black text-[#0F172A]">{items.length}</div>
+      <div className="mt-1 text-2xl font-black text-[#0B202B]">{items.length}</div>
       <ul className="mt-3 space-y-2">
         {items.length === 0 ? (
           <li className="text-xs font-medium text-[#94A3B8]">No risks at this level.</li>
         ) : (
           items.map((item) => (
             <li key={item.id}>
-              <Link href={item.href} className="text-sm font-semibold text-[#334155] hover:text-[#1D6BFF]">
+              <Link href={item.href} className="text-sm font-semibold text-[#334155] hover:text-[#1F4757]">
                 {item.title}
               </Link>
               <p className="text-xs font-medium text-[#64748B]">{item.detail}</p>
@@ -555,7 +555,7 @@ function ActionSeverityBadge({ severity }: { severity: ExecutiveHealthAction["se
 function TrendBadge({ trend }: { trend: TrendDirection }) {
   const config: Record<TrendDirection, { className: string; icon: typeof TrendingUp }> = {
     Improving: { className: "border-blue-200 bg-blue-50 text-blue-800", icon: TrendingUp },
-    Stable: { className: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]", icon: Activity },
+    Stable: { className: "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]", icon: Activity },
     Declining: { className: "border-rose-200 bg-rose-50 text-rose-800", icon: TrendingDown },
     "Insufficient Data": { className: "border-slate-200 bg-slate-50 text-slate-700", icon: AlertTriangle },
   };

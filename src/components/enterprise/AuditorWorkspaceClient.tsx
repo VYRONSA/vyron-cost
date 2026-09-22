@@ -36,7 +36,7 @@ export default function AuditorWorkspaceClient() {
     <VyronPremiumPageShell
       config={{
         title: "Auditor Workspace",
-        subtitle: "Premium VYRON COST workflow for auditor workspace.",
+        subtitle: "Premium VOLORA workflow for auditor workspace.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >

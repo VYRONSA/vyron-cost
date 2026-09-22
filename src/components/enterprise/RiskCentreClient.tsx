@@ -8,7 +8,7 @@ function riskBg(level: string) {
   if (level === "Critical") return "border-red-300 bg-red-50";
   if (level === "High") return "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]";
   if (level === "Medium") return "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)]";
-  return "border-[#3B82F6]/30 bg-[#3B82F6]/10";
+  return "border-[#2C5A6B]/30 bg-[#2C5A6B]/10";
 }
 
 export default function RiskCentreClient({ risks }: { risks: RiskItem[] }) {
@@ -16,7 +16,7 @@ export default function RiskCentreClient({ risks }: { risks: RiskItem[] }) {
     <VyronPremiumPageShell
       config={{
         title: "Risk Centre",
-        subtitle: "Premium VYRON COST workflow for risk centre.",
+        subtitle: "Premium VOLORA workflow for risk centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >

@@ -30,13 +30,13 @@ export default function BulkImportCentreClient() {
     <VyronPremiumPageShell
       config={{
         title: "Bulk Import Centre",
-        subtitle: "Premium VYRON COST workflow for bulk import centre.",
+        subtitle: "Premium VOLORA workflow for bulk import centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-              <FileSpreadsheet size={32} className="text-[#3B82F6]" />
+            <div className="rounded-[2rem] bg-[#061722] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+              <FileSpreadsheet size={32} className="text-[#2C5A6B]" />
               <h2 className="mt-5 text-3xl font-black">Bulk Import Centre</h2>
               <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
                 Download templates, complete them in Excel, then upload. Files are staged for validation before importing into live costing data.
@@ -45,26 +45,26 @@ export default function BulkImportCentreClient() {
 
             <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {templates.map(([name, header]) => (
-                <div key={name} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+                <div key={name} className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <h3 className="text-xl font-black text-[#F8FAFC]">{name}</h3>
                       <p className="mt-2 text-xs font-bold leading-6 text-slate-500">{header}</p>
                     </div>
-                    <FileSpreadsheet className="text-[#1D4ED8]" size={28} />
+                    <FileSpreadsheet className="text-[#163A48]" size={28} />
                   </div>
 
                   <div className="mt-5 grid gap-3">
                     <button
                       type="button"
                       onClick={() => downloadTemplate(name, header)}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-3 text-sm font-black text-[#4D7C0F]"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-5 py-3 text-sm font-black text-[#2F7C40]"
                     >
                       <Download size={17} />
                       Download template
                     </button>
 
-                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#07110d] px-5 py-3 text-sm font-black text-[#3B82F6]">
+                    <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#061722] px-5 py-3 text-sm font-black text-[#2C5A6B]">
                       <UploadCloud size={17} />
                       Upload CSV
                       <input

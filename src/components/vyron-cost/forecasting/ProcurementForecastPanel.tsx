@@ -43,9 +43,9 @@ export default function ProcurementForecastPanel() {
   return (
     <section className={VYRON_MASTER.moduleDataSection}>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-black text-[#0F172A]">Procurement Forecast (BOM)</h2>
+        <h2 className="text-lg font-black text-[#0B202B]">Procurement Forecast (BOM)</h2>
         <div className="text-sm font-bold text-[#64748B]">
-          Total: <span className="text-[#0F172A]">{formatMoney(totalValue)}</span>
+          Total: <span className="text-[#0B202B]">{formatMoney(totalValue)}</span>
         </div>
       </div>
       {ingredients.length === 0 ? (

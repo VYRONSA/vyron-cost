@@ -20,7 +20,7 @@ export function PremiumMobileEmptyState({
     <PremiumMobileCard tone="default" className={`${MOBILE_TYPOGRAPHY.family} relative overflow-hidden p-6 text-center`}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(199,154,43,0.14),transparent_46%)]" />
 
-      <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] vyron-grad-surface text-white shadow-[0_16px_34px_rgba(7,17,31,0.18)]">
+      <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] vyron-grad-surface text-white shadow-[0_16px_34px_rgba(6,23,34,0.18)]">
         <Icon size={30} />
       </div>
 
@@ -54,7 +54,7 @@ export function PremiumMobileEmptyState({
 
 export function PremiumMobileCardSkeleton() {
   return (
-    <div className="relative overflow-hidden rounded-[1.5rem] border border-white/70 bg-white/80 p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
+    <div className="relative overflow-hidden rounded-[1.5rem] border border-white/70 bg-white/80 p-4 shadow-[0_14px_34px_rgba(11,32,43,0.06)]">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(100deg,transparent_20%,rgba(255,255,255,0.55)_45%,transparent_70%)]" />
       <div className="animate-pulse space-y-3">
         <div className="h-3 w-28 rounded-full bg-slate-200" />

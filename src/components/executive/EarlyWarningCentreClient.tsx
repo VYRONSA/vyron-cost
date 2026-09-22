@@ -207,7 +207,7 @@ export default function EarlyWarningCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#2C5A6B]/35 bg-[#2C5A6B]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Early Warning Centre
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Early Warning Centre</h1>
@@ -262,9 +262,9 @@ export default function EarlyWarningCentreClient({
 
       {!snapshot.hasMonitoringData && !loading ? (
         <section className={M.moduleDataSection}>
-          <h2 className="text-xl font-bold text-[#0F172A]">Early warning monitoring not available yet</h2>
+          <h2 className="text-xl font-bold text-[#0B202B]">Early warning monitoring not available yet</h2>
           <p className="mt-2 text-sm font-medium text-[#64748B]">
-            Load operational data so VYRON COST can detect margin, supplier, inventory, procurement, manufacturing,
+            Load operational data so VOLORA can detect margin, supplier, inventory, procurement, manufacturing,
             customer and Xero risks.
           </p>
           <ul className="mt-4 space-y-2 text-sm font-medium text-[#334155]">
@@ -295,10 +295,10 @@ export default function EarlyWarningCentreClient({
       ) : (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <SummaryCard label="Critical Warnings" value={String(snapshot.summary.critical)} accent="#2563EB" />
-            <SummaryCard label="High Warnings" value={String(snapshot.summary.high)} accent="#3B82F6" />
-            <SummaryCard label="Medium Warnings" value={String(snapshot.summary.medium)} accent="#2563EB" />
-            <SummaryCard label="Low Warnings" value={String(snapshot.summary.low)} accent="#1D6BFF" />
+            <SummaryCard label="Critical Warnings" value={String(snapshot.summary.critical)} accent="#1F4757" />
+            <SummaryCard label="High Warnings" value={String(snapshot.summary.high)} accent="#2C5A6B" />
+            <SummaryCard label="Medium Warnings" value={String(snapshot.summary.medium)} accent="#1F4757" />
+            <SummaryCard label="Low Warnings" value={String(snapshot.summary.low)} accent="#1F4757" />
             <SummaryCard
               label="Potential Exposure"
               value={
@@ -306,7 +306,7 @@ export default function EarlyWarningCentreClient({
                   ? snapshot.summary.exposureLabel
                   : "Exposure Not Yet Measurable"
               }
-              accent="#0F172A"
+              accent="#0B202B"
               small={snapshot.summary.potentialExposure == null}
             />
           </section>
@@ -321,7 +321,7 @@ export default function EarlyWarningCentreClient({
                     Current product, supplier, inventory, procurement, manufacturing, customer and Xero data show no
                     material early-warning signals.
                   </p>
-                  <p className="mt-3 text-sm font-medium text-blue-900">VYRON is monitoring:</p>
+                  <p className="mt-3 text-sm font-medium text-blue-900">VOLORA is monitoring:</p>
                   <ul className="mt-2 space-y-1 text-sm font-medium text-blue-900">
                     <li>· Margin erosion and missing price/cost data</li>
                     <li>· Supplier price movement and procurement variances</li>
@@ -342,7 +342,7 @@ export default function EarlyWarningCentreClient({
           ) : (
             <>
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Live Warning Feed</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Live Warning Feed</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Ranked warnings from live operational and integration data — no placeholders.
                 </p>
@@ -379,7 +379,7 @@ export default function EarlyWarningCentreClient({
               </section>
 
               <section>
-                <h2 className="mb-3 text-lg font-bold text-[#0F172A]">Warning Category Cards</h2>
+                <h2 className="mb-3 text-lg font-bold text-[#0B202B]">Warning Category Cards</h2>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   {snapshot.categoryCards.map((card) => (
                     <CategoryCard key={card.id} card={card} />
@@ -388,7 +388,7 @@ export default function EarlyWarningCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Priority Actions</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Priority Actions</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Top 10 recommended actions from the highest-severity warnings.
                 </p>
@@ -400,7 +400,7 @@ export default function EarlyWarningCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Data Quality Centre</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Data Quality Centre</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Gaps in products, BOMs, suppliers, customers, inventory and Xero that weaken early-warning detection.
                 </p>
@@ -416,7 +416,7 @@ export default function EarlyWarningCentreClient({
               </section>
 
               <section className={M.moduleDataSection}>
-                <h2 className="text-xl font-bold text-[#0F172A]">Top Risks</h2>
+                <h2 className="text-xl font-bold text-[#0B202B]">Top Risks</h2>
                 <p className="mt-1 text-sm font-medium text-[#64748B]">
                   Top 10 business risks sorted Critical → High → Medium → Low.
                 </p>
@@ -452,7 +452,7 @@ export default function EarlyWarningCentreClient({
           )}
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-lg font-bold text-[#0F172A]">Executive drilldowns</h2>
+            <h2 className="text-lg font-bold text-[#0B202B]">Executive drilldowns</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {[
                 { label: "Executive Boardroom", href: "/executive-boardroom", icon: Building2 },
@@ -474,7 +474,7 @@ export default function EarlyWarningCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1F4757]/30 hover:text-[#1F4757]"
                 >
                   <link.icon size={16} />
                   {link.label}
@@ -503,8 +503,8 @@ function SummaryCard({
     <div className={`${M.moduleDataSection} p-5`}>
       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">{label}</div>
       <div
-        className={`mt-2 font-black text-[#0F172A] ${small ? "text-sm leading-6" : "text-2xl"}`}
-        style={{ color: small ? "#0F172A" : accent }}
+        className={`mt-2 font-black text-[#0B202B] ${small ? "text-sm leading-6" : "text-2xl"}`}
+        style={{ color: small ? "#0B202B" : accent }}
       >
         {value}
       </div>
@@ -518,8 +518,8 @@ function WarningRow({ warning }: { warning: EarlyWarningItem }) {
       <td className="px-4 py-3">
         <SeverityBadge severity={warning.severity} />
       </td>
-      <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{warning.category}</td>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{warning.title}</td>
+      <td className="px-4 py-3 font-semibold text-[#1F4757]">{warning.category}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{warning.title}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#64748B]">{warning.description}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{warning.impact}</td>
       <td className="px-4 py-3">
@@ -528,7 +528,7 @@ function WarningRow({ warning }: { warning: EarlyWarningItem }) {
       <td className="px-4 py-3 text-xs font-medium text-[#64748B]">{warning.sourceData}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{warning.recommendedAction}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={warning.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={warning.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -539,7 +539,7 @@ function WarningRow({ warning }: { warning: EarlyWarningItem }) {
 function TopRiskRow({ risk }: { risk: TopRiskItem }) {
   return (
     <tr className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{risk.risk}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{risk.risk}</td>
       <td className="px-4 py-3">
         <SeverityBadge severity={risk.severity} />
       </td>
@@ -549,7 +549,7 @@ function TopRiskRow({ risk }: { risk: TopRiskItem }) {
       </td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{risk.recommendedResponse}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={risk.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={risk.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -573,18 +573,18 @@ function CategoryCard({ card }: { card: WarningCategoryCard }) {
   return (
     <Link
       href={card.href}
-      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1D6BFF]/30 hover:shadow-md`}
+      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1F4757]/30 hover:shadow-md`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <div className={`flex h-9 w-9 shrink-0 items-center justify-center ${M.iconSubtle}`}>
-              <Icon size={18} className="text-[#1D6BFF]" />
+              <Icon size={18} className="text-[#1F4757]" />
             </div>
-            <h3 className="font-bold text-[#0F172A]">{card.label}</h3>
+            <h3 className="font-bold text-[#0B202B]">{card.label}</h3>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-2xl font-black text-[#0F172A]">{card.count}</span>
+            <span className="text-2xl font-black text-[#0B202B]">{card.count}</span>
             {card.highestSeverity !== "None" ? <SeverityBadge severity={card.highestSeverity} /> : null}
           </div>
           <p className="mt-2 text-sm font-medium text-[#64748B]">{card.mainIssue}</p>
@@ -606,12 +606,12 @@ function PriorityActionCard({ action }: { action: PriorityAction }) {
             </span>
             <SeverityBadge severity={action.severity} />
           </div>
-          <div className="mt-2 font-bold text-[#0F172A]">{action.title}</div>
+          <div className="mt-2 font-bold text-[#0B202B]">{action.title}</div>
           <p className="mt-1 text-sm font-medium text-[#64748B]">{action.explanation}</p>
           <p className="mt-2 text-xs font-semibold text-[#334155]">Expected outcome: {action.outcome}</p>
         </div>
       </div>
-      <Link href={action.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+      <Link href={action.href} className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
         Open module <ArrowRight size={14} />
       </Link>
     </div>
@@ -624,12 +624,12 @@ function DataQualityRow({ warning }: { warning: EarlyWarningItem }) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <SeverityBadge severity={warning.severity} />
-          <span className="font-bold text-[#0F172A]">{warning.title}</span>
+          <span className="font-bold text-[#0B202B]">{warning.title}</span>
         </div>
         <p className="mt-1 text-sm font-medium text-[#64748B]">{warning.description}</p>
         <p className="mt-1 text-xs font-medium text-[#94A3B8]">{warning.sourceData}</p>
       </div>
-      <Link href={warning.href} className="shrink-0 text-xs font-bold text-[#1D6BFF]">
+      <Link href={warning.href} className="shrink-0 text-xs font-bold text-[#1F4757]">
         Fix →
       </Link>
     </div>
@@ -641,7 +641,7 @@ function SeverityBadge({ severity }: { severity: WarningSeverity }) {
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
+    Low: "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]",
   };
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes[severity]}`}>

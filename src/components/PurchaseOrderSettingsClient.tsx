@@ -85,7 +85,7 @@ export default function PurchaseOrderSettingsClient({
     <VyronPremiumPageShell
       config={{
         title: "Purchase Order Settings",
-        subtitle: "Premium VYRON COST workflow for purchase order settings.",
+        subtitle: "Premium VOLORA workflow for purchase order settings.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >

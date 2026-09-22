@@ -275,7 +275,7 @@ export default function VyronOrderPortalClient({
   if (booting) {
     return (
       <main className={`${M.page} flex min-h-dvh items-center justify-center px-6`}>
-        <p className="text-sm font-semibold text-[#64748B]">Loading VYRON ORDER…</p>
+        <p className="text-sm font-semibold text-[#64748B]">Loading VOLORA Order…</p>
       </main>
     );
   }
@@ -491,7 +491,7 @@ function SignIn({
       </form>
 
       {!loadingAccounts && customers.length === 0 ? (
-        <p className="mt-4 rounded-xl border border-[rgba(15,23,42,0.07)] bg-white/70 px-4 py-3 text-center text-xs font-medium text-[#64748B]">
+        <p className="mt-4 rounded-xl border border-[rgba(11,32,43,0.07)] bg-white/70 px-4 py-3 text-center text-xs font-medium text-[#64748B]">
           No accounts have been set up for {tenantName} yet. Please contact them to have your
           ordering access enabled.
         </p>
@@ -631,7 +631,7 @@ function Home({
   return (
     <div>
       <header className="max-w-2xl">
-        <p className="vyron-t-display text-[1.65rem] text-[#0F172A] md:text-[2rem]">{greetingText} 👋</p>
+        <p className="vyron-t-display text-[1.65rem] text-[#0B202B] md:text-[2rem]">{greetingText} 👋</p>
         <p className="mt-1.5 text-base font-semibold text-[#334155]">{customer.customerName}</p>
         {contextLine ? (
           <p className="mt-2 text-sm font-medium text-[#64748B]">{contextLine}</p>
@@ -694,7 +694,7 @@ function Home({
           */}
           {usuals.length === 0 && orders !== null ? (
             <section className={`${M.lightCard} p-5 md:p-6`}>
-              <h2 className="vyron-t-display text-base text-[#0F172A]">Your usual products</h2>
+              <h2 className="vyron-t-display text-base text-[#0B202B]">Your usual products</h2>
               <p className="mt-1.5 text-sm font-medium text-[#64748B]">
                 Once you have placed a few orders, the products you buy regularly will appear here so
                 you can add them in one tap.
@@ -709,7 +709,7 @@ function Home({
             <section className={`${M.lightCard} p-5 md:p-6`}>
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h2 className="vyron-t-display text-base text-[#0F172A]">Your usuals</h2>
+                  <h2 className="vyron-t-display text-base text-[#0B202B]">Your usuals</h2>
                   <p className="mt-1 text-xs font-medium text-[#64748B]">Based on your recent orders</p>
                 </div>
                 <button type="button" onClick={onNewOrder} className={`${M.ghostBtn} -mr-2 h-11 shrink-0 gap-1 px-2.5 text-xs`}>
@@ -724,15 +724,15 @@ function Home({
                   return (
                     <div
                       key={usual.productId}
-                      className="flex flex-col rounded-xl border border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)] p-4"
+                      className="flex flex-col rounded-xl border border-[rgba(11,32,43,0.06)] bg-[rgba(11,32,43,0.02)] p-4"
                     >
-                      <p className="text-sm font-bold leading-snug text-[#0F172A]">{usual.productName}</p>
+                      <p className="text-sm font-bold leading-snug text-[#0B202B]">{usual.productName}</p>
                       <p className="mt-1 text-xs font-medium text-[#64748B]">
                         Usually {usual.typicalUnits} units · ordered {usual.timesOrdered}×
                       </p>
                       {/* Price only where the catalogue gives one. Never estimated. */}
                       {product && !product.priceUnavailable ? (
-                        <p className="mt-2 text-sm font-black tabular-nums text-[#0F172A]">
+                        <p className="mt-2 text-sm font-black tabular-nums text-[#0B202B]">
                           {money(product.sellingPrice)}{" "}
                           <span className="text-xs font-semibold text-[#64748B]">each</span>
                           {product.unitsPerBox ? (
@@ -742,23 +742,23 @@ function Home({
                       ) : null}
 
                       <div className="mt-3 flex items-center gap-2">
-                        <div className="flex items-center rounded-xl border border-[rgba(15,23,42,0.10)] bg-white/85">
+                        <div className="flex items-center rounded-xl border border-[rgba(11,32,43,0.10)] bg-white/85">
                           <button
                             type="button"
                             aria-label={`Fewer ${usual.productName}`}
                             onClick={() => step(usual.productId, -1)}
-                            className="flex h-11 w-11 items-center justify-center rounded-l-xl text-[#64748B] transition hover:bg-[rgba(15,23,42,0.04)] hover:text-[#0F172A]"
+                            className="flex h-11 w-11 items-center justify-center rounded-l-xl text-[#64748B] transition hover:bg-[rgba(11,32,43,0.04)] hover:text-[#0B202B]"
                           >
                             <Minus size={15} />
                           </button>
-                          <span className="min-w-[2.75rem] text-center text-sm font-black tabular-nums text-[#0F172A]">
+                          <span className="min-w-[2.75rem] text-center text-sm font-black tabular-nums text-[#0B202B]">
                             {units}
                           </span>
                           <button
                             type="button"
                             aria-label={`More ${usual.productName}`}
                             onClick={() => step(usual.productId, 1)}
-                            className="flex h-11 w-11 items-center justify-center rounded-r-xl text-[#64748B] transition hover:bg-[rgba(15,23,42,0.04)] hover:text-[#0F172A]"
+                            className="flex h-11 w-11 items-center justify-center rounded-r-xl text-[#64748B] transition hover:bg-[rgba(11,32,43,0.04)] hover:text-[#0B202B]"
                           >
                             <Plus size={15} />
                           </button>
@@ -786,7 +786,7 @@ function Home({
           {favouriteProducts.length > 0 ? (
             <section className={`${M.lightCard} p-5 md:p-6`}>
               <div className="flex items-center justify-between gap-3">
-                <h2 className="vyron-t-display text-base text-[#0F172A]">Favourites</h2>
+                <h2 className="vyron-t-display text-base text-[#0B202B]">Favourites</h2>
                 <button type="button" onClick={onFavourites} className={`${M.ghostBtn} -mr-2 h-11 shrink-0 gap-1 px-2.5 text-xs`}>
                   See all <ChevronRight size={14} />
                 </button>
@@ -796,12 +796,12 @@ function Home({
                 {favouriteProducts.slice(0, 5).map((product) => (
                   <div
                     key={product.productId}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)] px-4 py-3"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(11,32,43,0.06)] bg-[rgba(11,32,43,0.02)] px-4 py-3"
                   >
                     <div className="flex min-w-0 items-center gap-2.5">
                       <Star size={15} className="shrink-0 fill-[#F59E0B] text-[#F59E0B]" />
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-[#0F172A]">{product.productName}</p>
+                        <p className="truncate text-sm font-bold text-[#0B202B]">{product.productName}</p>
                         <p className="mt-0.5 text-xs font-medium tabular-nums text-[#64748B]">
                           {money(product.sellingPrice)} each
                           {product.unitsPerBox ? ` · box of ${product.unitsPerBox}` : ""}
@@ -832,10 +832,10 @@ function Home({
               className={`${M.lightCard} ${M.lightCardHover} w-full border-[var(--vyron-brand-edge)] bg-[var(--vyron-brand-wash)] p-5 text-left`}
             >
               <span className="flex items-center justify-between gap-3">
-                <span className="vyron-t-label text-[10px] text-[#4F46E5]">Order in progress</span>
-                <ChevronRight size={17} className="shrink-0 text-[#4F46E5]" />
+                <span className="vyron-t-label text-[10px] text-[#1F4757]">Order in progress</span>
+                <ChevronRight size={17} className="shrink-0 text-[#1F4757]" />
               </span>
-              <span className="mt-2 block vyron-t-display text-[1.6rem] tabular-nums text-[#0F172A]">{money(cart.total)}</span>
+              <span className="mt-2 block vyron-t-display text-[1.6rem] tabular-nums text-[#0B202B]">{money(cart.total)}</span>
               <span className="mt-0.5 block text-sm font-medium text-[#64748B]">
                 {cart.itemCount} item{cart.itemCount === 1 ? "" : "s"} · not yet submitted
               </span>
@@ -853,7 +853,7 @@ function Home({
                 <span className="vyron-t-label text-[10px] text-[#64748B]">Order {active.orderNumber}</span>
                 <ChevronRight size={17} className="shrink-0 text-[#94A3B8]" />
               </span>
-              <span className="mt-2 block vyron-t-display text-[1.6rem] tabular-nums text-[#0F172A]">{money(active.total)}</span>
+              <span className="mt-2 block vyron-t-display text-[1.6rem] tabular-nums text-[#0B202B]">{money(active.total)}</span>
               <span className="mt-0.5 block text-sm font-medium text-[#64748B]">
                 {active.requestedDeliveryDate ? `For ${formatDate(active.requestedDeliveryDate)}` : "Delivery date to be confirmed"}
                 {active.lineCount ? ` · ${active.lineCount} product${active.lineCount === 1 ? "" : "s"}` : ""}
@@ -861,7 +861,7 @@ function Home({
               <span className="mt-4 block">
                 <OrderProgress status={active.customerStatus} showStages />
               </span>
-              <span className="mt-4 flex items-center justify-between gap-2 border-t border-[rgba(15,23,42,0.07)] pt-3 vyron-t-label text-[10px] text-[#4F46E5]">
+              <span className="mt-4 flex items-center justify-between gap-2 border-t border-[rgba(11,32,43,0.07)] pt-3 vyron-t-label text-[10px] text-[#1F4757]">
                 View order <ChevronRight size={14} />
               </span>
             </button>
@@ -869,7 +869,7 @@ function Home({
 
           <section className={`${M.lightCard} p-5`}>
             <div className="flex items-center justify-between gap-3">
-              <h2 className="vyron-t-display text-sm text-[#0F172A]">Recent orders</h2>
+              <h2 className="vyron-t-display text-sm text-[#0B202B]">Recent orders</h2>
               {recent.length > 0 ? (
                 <button type="button" onClick={onHistory} className={`${M.ghostBtn} -mr-2 h-11 px-2.5 text-xs`}>
                   See all
@@ -880,9 +880,9 @@ function Home({
             {orders === null ? (
               <p className="mt-3 text-sm font-medium text-[#94A3B8]">Loading your orders…</p>
             ) : recent.length === 0 ? (
-              <div className="mt-3 rounded-xl border border-dashed border-[rgba(15,23,42,0.10)] bg-[rgba(15,23,42,0.02)] p-6 text-center">
+              <div className="mt-3 rounded-xl border border-dashed border-[rgba(11,32,43,0.10)] bg-[rgba(11,32,43,0.02)] p-6 text-center">
                 <ShoppingBag size={22} className="mx-auto text-[#CBD5E1]" />
-                <p className="mt-2.5 text-sm font-bold text-[#0F172A]">No orders yet</p>
+                <p className="mt-2.5 text-sm font-bold text-[#0B202B]">No orders yet</p>
                 <p className="mt-1 text-xs font-medium text-[#64748B]">
                   Your orders will appear here once you place your first one.
                 </p>
@@ -917,11 +917,11 @@ function HomeTile({
       disabled={disabled}
       className={`${M.lightCard} ${disabled ? "opacity-55" : M.lightCardHover} flex min-h-[5.5rem] flex-col items-start gap-2 p-3.5 text-left disabled:cursor-not-allowed sm:flex-row sm:items-center sm:gap-3.5 sm:p-4`}
     >
-      <span className={`${disabled ? "bg-[rgba(15,23,42,0.05)] text-[#94A3B8]" : "vyron-grad-surface text-white shadow-[var(--vyron-elev-brand)]"} flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11`}>
+      <span className={`${disabled ? "bg-[rgba(11,32,43,0.05)] text-[#94A3B8]" : "vyron-grad-surface text-white shadow-[var(--vyron-elev-brand)]"} flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11`}>
         {icon}
       </span>
       <span className="min-w-0">
-        <span className="block text-[13px] font-bold leading-tight text-[#0F172A] sm:text-sm">{label}</span>
+        <span className="block text-[13px] font-bold leading-tight text-[#0B202B] sm:text-sm">{label}</span>
         {/* The qualifying line is real data, so it stays wherever it fits. */}
         <span className="mt-0.5 block truncate text-[11px] font-medium text-[#64748B] sm:text-xs">{note}</span>
       </span>
@@ -954,13 +954,13 @@ function OrderProgress({ status, showStages }: { status: string; showStages?: bo
           <span
             key={step}
             className={`h-1.5 flex-1 rounded-full transition ${
-              i <= reached ? (done ? "bg-[var(--vyron-success-solid)]" : "vyron-grad-surface") : "bg-[rgba(15,23,42,0.08)]"
+              i <= reached ? (done ? "bg-[var(--vyron-success-solid)]" : "vyron-grad-surface") : "bg-[rgba(11,32,43,0.08)]"
             }`}
           />
         ))}
       </span>
       <span className="mt-2.5 flex items-center justify-between gap-2">
-        <span className="vyron-t-label text-[10px] text-[#0F172A]">{status}</span>
+        <span className="vyron-t-label text-[10px] text-[#0B202B]">{status}</span>
         <span className="text-[10px] font-semibold text-[#94A3B8]">
           Step {reached + 1} of {PROGRESS_STEPS.length}
         </span>
@@ -1017,17 +1017,17 @@ function OrderTimeline({ status }: { status: string }) {
                     ? "border-transparent bg-[var(--vyron-success-solid)] text-white"
                     : isCurrent
                       ? "border-transparent vyron-grad-surface text-white shadow-[var(--vyron-elev-brand)]"
-                      : "border-[rgba(15,23,42,0.12)] bg-white"
+                      : "border-[rgba(11,32,43,0.12)] bg-white"
                 }`}
               >
                 {isDone ? <Check size={12} strokeWidth={3} /> : isCurrent ? <span className="h-2 w-2 rounded-full bg-white" /> : null}
               </span>
               {i < PROGRESS_STEPS.length - 1 ? (
-                <span className={`w-0.5 flex-1 ${i < reached ? "bg-[var(--vyron-success-solid)]" : "bg-[rgba(15,23,42,0.09)]"}`} />
+                <span className={`w-0.5 flex-1 ${i < reached ? "bg-[var(--vyron-success-solid)]" : "bg-[rgba(11,32,43,0.09)]"}`} />
               ) : null}
             </span>
             <span className={`pb-5 ${i === PROGRESS_STEPS.length - 1 ? "pb-0" : ""}`}>
-              <span className={`block text-sm ${isCurrent ? "font-bold text-[#0F172A]" : isDone ? "font-semibold text-[#334155]" : "font-medium text-[#94A3B8]"}`}>
+              <span className={`block text-sm ${isCurrent ? "font-bold text-[#0B202B]" : isDone ? "font-semibold text-[#334155]" : "font-medium text-[#94A3B8]"}`}>
                 {step}
               </span>
               {isCurrent ? (
@@ -1062,11 +1062,11 @@ function OrderRow({ order, onClick }: { order: CustomerOrderSummary; onClick: ()
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center justify-between gap-3 rounded-xl border border-[rgba(15,23,42,0.07)] bg-white/80 px-4 py-3.5 text-left transition hover:border-[rgba(15,23,42,0.12)] hover:bg-white hover:shadow-[var(--vyron-elev-2)]"
+      className="flex w-full items-center justify-between gap-3 rounded-xl border border-[rgba(11,32,43,0.07)] bg-white/80 px-4 py-3.5 text-left transition hover:border-[rgba(11,32,43,0.12)] hover:bg-white hover:shadow-[var(--vyron-elev-2)]"
     >
       <span className="min-w-0">
         <span className="flex flex-wrap items-center gap-2">
-          <span className="truncate text-sm font-bold text-[#0F172A]">{order.orderNumber}</span>
+          <span className="truncate text-sm font-bold text-[#0B202B]">{order.orderNumber}</span>
           <StatusPill status={order.customerStatus} />
         </span>
         <span className="mt-1 block text-xs font-medium text-[#64748B]">
@@ -1075,7 +1075,7 @@ function OrderRow({ order, onClick }: { order: CustomerOrderSummary; onClick: ()
         </span>
       </span>
       <span className="flex shrink-0 items-center gap-2.5">
-        <span className="text-sm font-black tabular-nums text-[#0F172A]">{money(order.total)}</span>
+        <span className="text-sm font-black tabular-nums text-[#0B202B]">{money(order.total)}</span>
         <ChevronRight size={16} className="text-[#94A3B8]" />
       </span>
     </button>
@@ -1198,7 +1198,7 @@ function Catalogue({
   if (loading) {
     return (
       <div className="space-y-3">
-        <div className="h-10 w-40 animate-pulse rounded-xl bg-[rgba(15,23,42,0.06)]" />
+        <div className="h-10 w-40 animate-pulse rounded-xl bg-[rgba(11,32,43,0.06)]" />
         {[0, 1, 2].map((i) => (
           <div key={i} className={`${M.lightCard} h-24 animate-pulse`} />
         ))}
@@ -1210,7 +1210,7 @@ function Catalogue({
     return (
       <div className={`${M.moduleEmptyState}`}>
         <AlertTriangle size={24} className="mx-auto text-[#B45309]" />
-        <p className="mt-3 vyron-t-display text-base text-[#0F172A]">We couldn&apos;t load your products</p>
+        <p className="mt-3 vyron-t-display text-base text-[#0B202B]">We couldn&apos;t load your products</p>
         <p className="mt-1 text-sm font-medium text-[#64748B]">{error}</p>
         <button type="button" onClick={() => void load()} className={`${M.primaryBtn} mt-5 h-11 px-6 text-sm`}>
           Try again
@@ -1231,7 +1231,7 @@ function Catalogue({
         }
       />
 
-      <h1 className="mt-4 vyron-t-display text-[1.5rem] text-[#0F172A]">Products</h1>
+      <h1 className="mt-4 vyron-t-display text-[1.5rem] text-[#0B202B]">Products</h1>
       <p className="mt-1 text-sm font-medium text-[#64748B]">
         Your prices, ready to order.
       </p>
@@ -1297,7 +1297,7 @@ function Catalogue({
          */
         <div className={`${M.moduleEmptyState} mt-6`}>
           {filter === "favourites" ? <Star size={24} className="mx-auto text-[#CBD5E1]" /> : <Search size={24} className="mx-auto text-[#CBD5E1]" />}
-          <p className="mt-3 vyron-t-display text-base text-[#0F172A]">
+          <p className="mt-3 vyron-t-display text-base text-[#0B202B]">
             {search.trim()
               ? "Nothing matches that search"
               : filter === "favourites"
@@ -1339,11 +1339,11 @@ function Catalogue({
                 type="button"
                 onClick={() => setOpen((prev) => ({ ...prev, [category.category]: !isOpen }))}
                 aria-expanded={isOpen}
-                className="flex min-h-[3.75rem] w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-[rgba(15,23,42,0.02)]"
+                className="flex min-h-[3.75rem] w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-[rgba(11,32,43,0.02)]"
               >
                 <span className="flex items-center gap-2.5">
-                  <span className="vyron-t-display text-base text-[#0F172A]">{category.category}</span>
-                  <span className="rounded-full bg-[rgba(15,23,42,0.05)] px-2 py-0.5 text-[11px] font-bold text-[#64748B]">
+                  <span className="vyron-t-display text-base text-[#0B202B]">{category.category}</span>
+                  <span className="rounded-full bg-[rgba(11,32,43,0.05)] px-2 py-0.5 text-[11px] font-bold text-[#64748B]">
                     {category.products.length}
                   </span>
                 </span>
@@ -1351,7 +1351,7 @@ function Catalogue({
               </button>
 
               {isOpen ? (
-                <div className="divide-y divide-[rgba(15,23,42,0.06)] border-t border-[rgba(15,23,42,0.06)]">
+                <div className="divide-y divide-[rgba(11,32,43,0.06)] border-t border-[rgba(11,32,43,0.06)]">
                   {category.products.map((product) => (
                     <ProductRow
                       key={product.productId}
@@ -1378,13 +1378,13 @@ function Catalogue({
       </div>
 
       {totals.lines > 0 ? (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[rgba(15,23,42,0.07)] bg-white/85 px-4 py-3 backdrop-blur-xl backdrop-saturate-150 md:px-8">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[rgba(11,32,43,0.07)] bg-white/85 px-4 py-3 backdrop-blur-xl backdrop-saturate-150 md:px-8">
           <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="vyron-t-label text-[10px] text-[#64748B]">
                 {totals.lines} product{totals.lines === 1 ? "" : "s"} · {totals.units} units
               </p>
-              <p className="mt-0.5 vyron-t-display text-[1.25rem] tabular-nums text-[#0F172A]">
+              <p className="mt-0.5 vyron-t-display text-[1.25rem] tabular-nums text-[#0B202B]">
                 {money(totals.value)}
                 <span className="ml-1.5 text-[11px] font-semibold text-[#94A3B8]">excl. VAT</span>
               </p>
@@ -1430,11 +1430,11 @@ function ProductRow({
     <div className={`px-5 py-4 transition ${inCart ? "bg-[var(--vyron-brand-wash)]" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[0.95rem] font-bold leading-snug text-[#0F172A]">{product.productName}</p>
+          <p className="text-[0.95rem] font-bold leading-snug text-[#0B202B]">{product.productName}</p>
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-[#64748B]">
             {product.sku ? <span>{product.sku}</span> : null}
             {perBox ? (
-              <span className="rounded-md bg-[rgba(15,23,42,0.05)] px-1.5 py-0.5 font-semibold">
+              <span className="rounded-md bg-[rgba(11,32,43,0.05)] px-1.5 py-0.5 font-semibold">
                 Box of {perBox}
               </span>
             ) : (
@@ -1449,7 +1449,7 @@ function ProductRow({
               <span className="vyron-status vyron-status-warning">Price unavailable</span>
             ) : (
               <>
-                <p className="vyron-t-display text-[1.05rem] tabular-nums text-[#0F172A]">
+                <p className="vyron-t-display text-[1.05rem] tabular-nums text-[#0B202B]">
                   {money(boxMode && product.pricePerBox !== null ? product.pricePerBox : product.sellingPrice)}
                 </p>
                 <p className="mt-0.5 text-[11px] font-semibold text-[#94A3B8]">
@@ -1468,7 +1468,7 @@ function ProductRow({
             onClick={onToggleFavourite}
             aria-pressed={favourite}
             aria-label={`${favourite ? "Remove" : "Save"} ${product.productName} ${favourite ? "from" : "to"} favourites`}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-[#94A3B8] transition hover:bg-[rgba(15,23,42,0.04)]"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-[#94A3B8] transition hover:bg-[rgba(11,32,43,0.04)]"
           >
             <Star size={17} className={favourite ? "fill-[#F59E0B] text-[#F59E0B]" : ""} />
           </button>
@@ -1486,7 +1486,7 @@ function ProductRow({
               <div
                 role="group"
                 aria-label={`${product.productName} ordering unit`}
-                className="inline-flex overflow-hidden rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 p-0.5"
+                className="inline-flex overflow-hidden rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 p-0.5"
               >
                 {(["boxes", "units"] as const).map((option) => (
                   <button
@@ -1504,13 +1504,13 @@ function ProductRow({
               </div>
             ) : null}
 
-            <div className="inline-flex items-center gap-1 rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 p-0.5">
+            <div className="inline-flex items-center gap-1 rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 p-0.5">
               <button
                 type="button"
                 aria-label={`Decrease ${product.productName}`}
                 onClick={() => onChange(units - step)}
                 disabled={units <= 0}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#334155] transition hover:bg-[rgba(15,23,42,0.05)] disabled:opacity-35"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#334155] transition hover:bg-[rgba(11,32,43,0.05)] disabled:opacity-35"
               >
                 <Minus size={17} />
               </button>
@@ -1522,13 +1522,13 @@ function ProductRow({
                 }}
                 inputMode="numeric"
                 aria-label={`${product.productName} quantity in ${boxMode ? "boxes" : "units"}`}
-                className="h-11 w-14 rounded-lg border-0 bg-transparent text-center text-base font-black tabular-nums text-[#0F172A] outline-none focus:bg-[rgba(79,70,229,0.06)]"
+                className="h-11 w-14 rounded-lg border-0 bg-transparent text-center text-base font-black tabular-nums text-[#0B202B] outline-none focus:bg-[rgba(22,58,72,0.06)]"
               />
               <button
                 type="button"
                 aria-label={`Increase ${product.productName}`}
                 onClick={() => onChange(units + step)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#334155] transition hover:bg-[rgba(15,23,42,0.05)]"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#334155] transition hover:bg-[rgba(11,32,43,0.05)]"
               >
                 <Plus size={17} />
               </button>
@@ -1540,7 +1540,7 @@ function ProductRow({
                   key={bump}
                   type="button"
                   onClick={() => onChange(units + bump * step)}
-                  className="h-11 min-w-[2.75rem] rounded-lg border border-[rgba(15,23,42,0.07)] bg-white/70 px-2 text-xs font-bold text-[#4F46E5] transition hover:border-[var(--vyron-brand-edge)] hover:bg-[var(--vyron-brand-wash)]"
+                  className="h-11 min-w-[2.75rem] rounded-lg border border-[rgba(11,32,43,0.07)] bg-white/70 px-2 text-xs font-bold text-[#1F4757] transition hover:border-[var(--vyron-brand-edge)] hover:bg-[var(--vyron-brand-wash)]"
                 >
                   +{bump}
                 </button>
@@ -1548,13 +1548,13 @@ function ProductRow({
             </div>
 
             {inCart ? (
-              <span className="ml-auto vyron-t-display text-[1.05rem] tabular-nums text-[#0F172A]">{money(lineTotal)}</span>
+              <span className="ml-auto vyron-t-display text-[1.05rem] tabular-nums text-[#0B202B]">{money(lineTotal)}</span>
             ) : null}
           </div>
 
           {inCart && boxMode && perBox ? (
             <p className="mt-2 text-xs font-medium text-[#64748B]">
-              {shown} box{shown === 1 ? "" : "es"} × {perBox} = <span className="font-bold text-[#0F172A]">{units} units</span>
+              {shown} box{shown === 1 ? "" : "es"} × {perBox} = <span className="font-bold text-[#0B202B]">{units} units</span>
             </p>
           ) : null}
         </>
@@ -1673,7 +1673,7 @@ function Review({
         <BackBar label="Back" onBack={onBack} />
         <div className={`${M.moduleEmptyState} mt-6`}>
           <ShoppingBag size={26} className="mx-auto text-[#CBD5E1]" />
-          <p className="mt-3 vyron-t-display text-base text-[#0F172A]">Your order is empty</p>
+          <p className="mt-3 vyron-t-display text-base text-[#0B202B]">Your order is empty</p>
           <p className="mt-1 text-sm font-medium text-[#64748B]">Add a few products and they will show up here.</p>
           <button type="button" onClick={onAddMore} className={`${M.primaryBtn} mt-5 h-11 px-6 text-sm`}>
             Browse products
@@ -1689,7 +1689,7 @@ function Review({
     <div className="pb-28">
       <BackBar label="Products" onBack={onBack} />
 
-      <h1 className="mt-4 vyron-t-display text-[1.5rem] text-[#0F172A]">Review your order</h1>
+      <h1 className="mt-4 vyron-t-display text-[1.5rem] text-[#0B202B]">Review your order</h1>
       <p className="mt-1 text-sm font-medium text-[#64748B]">
         Check the quantities and choose when you need it.
       </p>
@@ -1739,7 +1739,7 @@ function Review({
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
         <div className="min-w-0 space-y-4">
           <section className={`${M.lightCard} overflow-hidden p-0`}>
-            <div className="divide-y divide-[rgba(15,23,42,0.06)]">
+            <div className="divide-y divide-[rgba(11,32,43,0.06)]">
               {view.lines.map((line) => {
                 const boxMode = line.entryMode === "boxes" && Boolean(line.unitsPerBox);
                 const step = boxMode && line.unitsPerBox ? line.unitsPerBox : 1;
@@ -1749,7 +1749,7 @@ function Review({
                   <div key={line.productId} className="px-5 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-[0.95rem] font-bold text-[#0F172A]">{line.productName}</p>
+                        <p className="text-[0.95rem] font-bold text-[#0B202B]">{line.productName}</p>
                         <p className="mt-0.5 text-xs font-medium text-[#64748B]">
                           {money(line.sellingPrice)} / unit
                           {line.unitsPerBox ? ` · box of ${line.unitsPerBox}` : ""}
@@ -1758,22 +1758,22 @@ function Review({
                           <p className="mt-1 text-xs font-bold text-[#BE123C]">{line.unavailableReason || "Unavailable"}</p>
                         ) : null}
                       </div>
-                      <span className="shrink-0 vyron-t-display text-[1.05rem] tabular-nums text-[#0F172A]">{money(line.lineTotal)}</span>
+                      <span className="shrink-0 vyron-t-display text-[1.05rem] tabular-nums text-[#0B202B]">{money(line.lineTotal)}</span>
                     </div>
 
                     <div className="mt-3 flex items-center gap-2">
-                      <div className="inline-flex items-center gap-1 rounded-xl border border-[rgba(15,23,42,0.09)] bg-white/80 p-0.5">
+                      <div className="inline-flex items-center gap-1 rounded-xl border border-[rgba(11,32,43,0.09)] bg-white/80 p-0.5">
                         <button
                           type="button"
                           aria-label={`Decrease ${line.productName}`}
                           onClick={() => cart.setLine(line.productId, quantity - step, line.entryMode)}
-                          className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#334155] transition hover:bg-[rgba(15,23,42,0.05)]"
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#334155] transition hover:bg-[rgba(11,32,43,0.05)]"
                         >
                           <Minus size={17} />
                         </button>
                         <span
                           aria-label={`${line.productName} quantity`}
-                          className="inline-flex h-11 min-w-[3.25rem] items-center justify-center text-base font-black tabular-nums text-[#0F172A]"
+                          className="inline-flex h-11 min-w-[3.25rem] items-center justify-center text-base font-black tabular-nums text-[#0B202B]"
                         >
                           {shown}
                         </span>
@@ -1781,7 +1781,7 @@ function Review({
                           type="button"
                           aria-label={`Increase ${line.productName}`}
                           onClick={() => cart.setLine(line.productId, quantity + step, line.entryMode)}
-                          className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#334155] transition hover:bg-[rgba(15,23,42,0.05)]"
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#334155] transition hover:bg-[rgba(11,32,43,0.05)]"
                         >
                           <Plus size={17} />
                         </button>
@@ -1806,15 +1806,15 @@ function Review({
             <button
               type="button"
               onClick={onAddMore}
-              className="flex w-full items-center justify-center gap-2 border-t border-[rgba(15,23,42,0.06)] py-4 text-sm font-bold text-[#4F46E5] transition hover:bg-[var(--vyron-brand-wash)]"
+              className="flex w-full items-center justify-center gap-2 border-t border-[rgba(11,32,43,0.06)] py-4 text-sm font-bold text-[#1F4757] transition hover:bg-[var(--vyron-brand-wash)]"
             >
               <Plus size={16} /> Add more products
             </button>
           </section>
 
           <section className={`${M.lightCard} p-5`}>
-            <h2 className="flex items-center gap-2 vyron-t-display text-sm text-[#0F172A]">
-              <CalendarDays size={15} className="text-[#4F46E5]" /> When do you need it?
+            <h2 className="flex items-center gap-2 vyron-t-display text-sm text-[#0B202B]">
+              <CalendarDays size={15} className="text-[#1F4757]" /> When do you need it?
             </h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {options.map((option) => (
@@ -1857,7 +1857,7 @@ function Review({
         {/* Financial summary, in the platform's own hierarchy. */}
         <div className="min-w-0 lg:sticky lg:top-24">
           <section className={`${M.lightCard} p-5`}>
-            <h2 className="vyron-t-display text-sm text-[#0F172A]">Order summary</h2>
+            <h2 className="vyron-t-display text-sm text-[#0B202B]">Order summary</h2>
             <dl className="mt-4 space-y-2.5">
               <div className="flex items-center justify-between gap-3">
                 <dt className="text-sm font-medium text-[#64748B]">
@@ -1872,9 +1872,9 @@ function Review({
                 <dt className="text-sm font-medium text-[#64748B]">VAT</dt>
                 <dd className="text-sm font-bold tabular-nums text-[#334155]">{money(view.vatAmount)}</dd>
               </div>
-              <div className="flex items-center justify-between gap-3 border-t border-[rgba(15,23,42,0.08)] pt-3">
-                <dt className="vyron-t-label text-[11px] text-[#0F172A]">Total</dt>
-                <dd className="vyron-t-display text-[1.5rem] tabular-nums text-[#0F172A]">{money(view.total)}</dd>
+              <div className="flex items-center justify-between gap-3 border-t border-[rgba(11,32,43,0.08)] pt-3">
+                <dt className="vyron-t-label text-[11px] text-[#0B202B]">Total</dt>
+                <dd className="vyron-t-display text-[1.5rem] tabular-nums text-[#0B202B]">{money(view.total)}</dd>
               </div>
             </dl>
             <p className="mt-2 text-xs font-medium text-[#94A3B8]">
@@ -1898,11 +1898,11 @@ function Review({
       </div>
 
       {/* Phone and tablet keep the action within thumb reach. */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[rgba(15,23,42,0.07)] bg-white/85 px-4 py-3 backdrop-blur-xl backdrop-saturate-150 lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[rgba(11,32,43,0.07)] bg-white/85 px-4 py-3 backdrop-blur-xl backdrop-saturate-150 lg:hidden">
         <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="vyron-t-label text-[10px] text-[#64748B]">Total incl. VAT</p>
-            <p className="mt-0.5 vyron-t-display text-[1.25rem] tabular-nums text-[#0F172A]">{money(view.total)}</p>
+            <p className="mt-0.5 vyron-t-display text-[1.25rem] tabular-nums text-[#0B202B]">{money(view.total)}</p>
           </div>
           <button
             type="button"
@@ -1944,29 +1944,29 @@ function ConfirmationScreen({
           <dl className="space-y-3 text-left">
             <div className="flex items-center justify-between gap-3">
               <dt className="vyron-t-label text-[10px] text-[#64748B]">Order number</dt>
-              <dd className="text-sm font-black text-[#0F172A]">{confirmation.orderNumber}</dd>
+              <dd className="text-sm font-black text-[#0B202B]">{confirmation.orderNumber}</dd>
             </div>
             <div className="flex items-center justify-between gap-3">
               <dt className="vyron-t-label text-[10px] text-[#64748B]">Requested for</dt>
-              <dd className="text-sm font-bold text-[#0F172A]">{formatDate(confirmation.requestedDeliveryDate)}</dd>
+              <dd className="text-sm font-bold text-[#0B202B]">{formatDate(confirmation.requestedDeliveryDate)}</dd>
             </div>
-            <div className="flex items-center justify-between gap-3 border-t border-[rgba(15,23,42,0.08)] pt-3">
-              <dt className="vyron-t-label text-[11px] text-[#0F172A]">Total</dt>
-              <dd className="vyron-t-display text-[1.4rem] tabular-nums text-[#0F172A]">{money(confirmation.total)}</dd>
+            <div className="flex items-center justify-between gap-3 border-t border-[rgba(11,32,43,0.08)] pt-3">
+              <dt className="vyron-t-label text-[11px] text-[#0B202B]">Total</dt>
+              <dd className="vyron-t-display text-[1.4rem] tabular-nums text-[#0B202B]">{money(confirmation.total)}</dd>
             </div>
           </dl>
 
-          <div className="mt-6 rounded-xl border border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)] p-4 text-left">
+          <div className="mt-6 rounded-xl border border-[rgba(11,32,43,0.06)] bg-[rgba(11,32,43,0.02)] p-4 text-left">
             <p className="vyron-t-label text-[10px] text-[#64748B]">What happens next</p>
             <ol className="mt-2.5 space-y-1.5">
               {PROGRESS_STEPS.map((step, i) => (
                 <li key={step} className="flex items-center gap-2.5 text-sm">
                   <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${
-                    i === 0 ? "vyron-grad-surface text-white" : "bg-[rgba(15,23,42,0.06)] text-[#94A3B8]"
+                    i === 0 ? "vyron-grad-surface text-white" : "bg-[rgba(11,32,43,0.06)] text-[#94A3B8]"
                   }`}>
                     {i === 0 ? <Check size={11} strokeWidth={3} /> : i + 1}
                   </span>
-                  <span className={i === 0 ? "font-bold text-[#0F172A]" : "font-medium text-[#64748B]"}>{step}</span>
+                  <span className={i === 0 ? "font-bold text-[#0B202B]" : "font-medium text-[#64748B]"}>{step}</span>
                 </li>
               ))}
             </ol>
@@ -2024,7 +2024,7 @@ function OrderHistory({ onBack, onOpen }: { onBack: () => void; onOpen: (orderId
   return (
     <div>
       <BackBar label="Home" onBack={onBack} />
-      <h1 className="mt-4 vyron-t-display text-[1.5rem] text-[#0F172A]">My orders</h1>
+      <h1 className="mt-4 vyron-t-display text-[1.5rem] text-[#0B202B]">My orders</h1>
       <p className="mt-1 text-sm font-medium text-[#64748B]">Track and reorder anything you have placed.</p>
 
       {error ? (
@@ -2036,7 +2036,7 @@ function OrderHistory({ onBack, onOpen }: { onBack: () => void; onOpen: (orderId
       ) : orders.length === 0 ? (
         <div className={`${M.moduleEmptyState} mt-6`}>
           <History size={26} className="mx-auto text-[#CBD5E1]" />
-          <p className="mt-3 vyron-t-display text-base text-[#0F172A]">No orders yet</p>
+          <p className="mt-3 vyron-t-display text-base text-[#0B202B]">No orders yet</p>
           <p className="mt-1 text-sm font-medium text-[#64748B]">Your orders will appear here once you place one.</p>
         </div>
       ) : (
@@ -2050,7 +2050,7 @@ function OrderHistory({ onBack, onOpen }: { onBack: () => void; onOpen: (orderId
             >
               <span className="min-w-0">
                 <span className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-bold text-[#0F172A]">{order.orderNumber}</span>
+                  <span className="text-sm font-bold text-[#0B202B]">{order.orderNumber}</span>
                   <StatusPill status={order.customerStatus} />
                 </span>
                 <span className="mt-1 block text-xs font-medium text-[#64748B]">
@@ -2059,7 +2059,7 @@ function OrderHistory({ onBack, onOpen }: { onBack: () => void; onOpen: (orderId
                 </span>
               </span>
               <span className="flex shrink-0 items-center gap-2.5">
-                <span className="vyron-t-display text-[1.05rem] tabular-nums text-[#0F172A]">{money(order.total)}</span>
+                <span className="vyron-t-display text-[1.05rem] tabular-nums text-[#0B202B]">{money(order.total)}</span>
                 <ChevronRight size={16} className="text-[#94A3B8]" />
               </span>
             </button>
@@ -2149,43 +2149,43 @@ function OrderCentreDetail({
         <div className="min-w-0 space-y-4">
           <header className={`${M.lightCard} p-5 md:p-6`}>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="vyron-t-display text-[1.5rem] text-[#0F172A]">{order.orderNumber}</h1>
+              <h1 className="vyron-t-display text-[1.5rem] text-[#0B202B]">{order.orderNumber}</h1>
               <StatusPill status={order.customerStatus} />
             </div>
             <dl className="mt-4 grid gap-3 sm:grid-cols-3">
               <div>
                 <dt className="vyron-t-label text-[10px] text-[#64748B]">Placed</dt>
-                <dd className="mt-1 text-sm font-bold text-[#0F172A]">{formatDate(order.orderDate)}</dd>
+                <dd className="mt-1 text-sm font-bold text-[#0B202B]">{formatDate(order.orderDate)}</dd>
               </div>
               <div>
                 <dt className="vyron-t-label text-[10px] text-[#64748B]">Requested for</dt>
-                <dd className="mt-1 text-sm font-bold text-[#0F172A]">{formatDate(order.requestedDeliveryDate)}</dd>
+                <dd className="mt-1 text-sm font-bold text-[#0B202B]">{formatDate(order.requestedDeliveryDate)}</dd>
               </div>
               <div>
                 <dt className="vyron-t-label text-[10px] text-[#64748B]">Products</dt>
-                <dd className="mt-1 text-sm font-bold text-[#0F172A]">{order.lineCount}</dd>
+                <dd className="mt-1 text-sm font-bold text-[#0B202B]">{order.lineCount}</dd>
               </div>
             </dl>
           </header>
 
           <section className={`${M.lightCard} overflow-hidden p-0`}>
-            <h2 className="border-b border-[rgba(15,23,42,0.06)] px-5 py-4 vyron-t-display text-sm text-[#0F172A]">
+            <h2 className="border-b border-[rgba(11,32,43,0.06)] px-5 py-4 vyron-t-display text-sm text-[#0B202B]">
               Products
             </h2>
-            <div className="divide-y divide-[rgba(15,23,42,0.06)]">
+            <div className="divide-y divide-[rgba(11,32,43,0.06)]">
               {order.lines.map((line, index) => (
                 <div key={`${line.productId ?? "line"}-${index}`} className="flex items-start justify-between gap-3 px-5 py-3.5">
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-[#0F172A]">{line.description}</p>
+                    <p className="text-sm font-bold text-[#0B202B]">{line.description}</p>
                     <p className="mt-0.5 text-xs font-medium text-[#64748B]">
                       {line.quantity} {line.unit} × {money(line.sellingPrice)}
                     </p>
                   </div>
-                  <span className="shrink-0 text-sm font-black tabular-nums text-[#0F172A]">{money(line.lineTotal)}</span>
+                  <span className="shrink-0 text-sm font-black tabular-nums text-[#0B202B]">{money(line.lineTotal)}</span>
                 </div>
               ))}
             </div>
-            <dl className="space-y-2.5 border-t border-[rgba(15,23,42,0.08)] bg-[rgba(15,23,42,0.02)] px-5 py-4">
+            <dl className="space-y-2.5 border-t border-[rgba(11,32,43,0.08)] bg-[rgba(11,32,43,0.02)] px-5 py-4">
               <div className="flex items-center justify-between gap-3">
                 <dt className="text-sm font-medium text-[#64748B]">Subtotal</dt>
                 <dd className="text-sm font-bold tabular-nums text-[#334155]">{money(subtotal)}</dd>
@@ -2194,9 +2194,9 @@ function OrderCentreDetail({
                 <dt className="text-sm font-medium text-[#64748B]">VAT</dt>
                 <dd className="text-sm font-bold tabular-nums text-[#334155]">{money(vatAmount)}</dd>
               </div>
-              <div className="flex items-center justify-between gap-3 border-t border-[rgba(15,23,42,0.08)] pt-2.5">
-                <dt className="vyron-t-label text-[11px] text-[#0F172A]">Total</dt>
-                <dd className="vyron-t-display text-[1.4rem] tabular-nums text-[#0F172A]">{money(order.total)}</dd>
+              <div className="flex items-center justify-between gap-3 border-t border-[rgba(11,32,43,0.08)] pt-2.5">
+                <dt className="vyron-t-label text-[11px] text-[#0B202B]">Total</dt>
+                <dd className="vyron-t-display text-[1.4rem] tabular-nums text-[#0B202B]">{money(order.total)}</dd>
               </div>
             </dl>
           </section>
@@ -2211,7 +2211,7 @@ function OrderCentreDetail({
 
         <div className="min-w-0 space-y-4 lg:sticky lg:top-24">
           <section className={`${M.lightCard} p-5`}>
-            <h2 className="vyron-t-display text-sm text-[#0F172A]">Order progress</h2>
+            <h2 className="vyron-t-display text-sm text-[#0B202B]">Order progress</h2>
             <div className="mt-4">
               <OrderTimeline status={order.customerStatus} />
             </div>

@@ -21,7 +21,7 @@ const sections = [
 
 export async function GET() {
   const body = [
-    "VYRON COST — TRAINING MANUAL",
+    "VOLORA — TRAINING MANUAL",
     "Handcrafted Food Products Demo",
     "",
     ...sections,
@@ -37,7 +37,7 @@ export async function GET() {
   return new Response(body, {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": 'attachment; filename="VYRON-COST-Training-Manual.pdf"',
+      "Content-Disposition": 'attachment; filename="VOLORA-Training-Manual.pdf"',
     },
   });
 }

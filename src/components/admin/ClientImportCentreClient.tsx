@@ -111,7 +111,7 @@ export default function ClientImportCentreClient() {
 
   async function saveMapping() {
     if (!mapCode.trim() || !mapProductId) {
-      setMapMessage("Enter an accounting item code and choose a VYRON product.");
+      setMapMessage("Enter an accounting item code and choose a VOLORA product.");
       return;
     }
     const data = await fetch("/api/workspace/admin/product-mappings", {
@@ -298,7 +298,7 @@ export default function ClientImportCentreClient() {
     <VyronPremiumPageShell
       config={{
         title: "Client Import Centre",
-        subtitle: "Premium VYRON COST workflow for client import centre.",
+        subtitle: "Premium VOLORA workflow for client import centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -351,9 +351,9 @@ export default function ClientImportCentreClient() {
                   <button type="button" onClick={downloadTemplate} className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 px-4 py-3 text-sm font-black text-blue-800">
                     <Download size={16} />
                     {template.id === "customer-invoices"
-                      ? "Download Standard VYRON Customer Invoice Template"
+                      ? "Download Standard VOLORA Customer Invoice Template"
                       : template.id === "supplier-invoices"
-                        ? "Download Standard VYRON Supplier Invoice Template"
+                        ? "Download Standard VOLORA Supplier Invoice Template"
                         : "Download Template"}
                   </button>
                   {canImports ? (
@@ -449,7 +449,7 @@ export default function ClientImportCentreClient() {
                 <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-sm">
                   <h3 className="text-lg font-black text-slate-950">Product Mapping</h3>
                   <p className="mt-1 text-xs font-semibold text-slate-500">
-                    Accounting item code to VYRON product. Saved per company and reused by every future import.
+                    Accounting item code to VOLORA product. Saved per company and reused by every future import.
                   </p>
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     <input
@@ -463,7 +463,7 @@ export default function ClientImportCentreClient() {
                       onChange={(event) => setMapProductId(event.target.value)}
                       className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
                     >
-                      <option value="">Select VYRON product…</option>
+                      <option value="">Select VOLORA product…</option>
                       {products.map((product) => (
                         <option key={product.id} value={product.id}>{product.product_name}</option>
                       ))}

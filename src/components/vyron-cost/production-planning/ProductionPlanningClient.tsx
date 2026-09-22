@@ -120,7 +120,7 @@ export default function ProductionPlanningClient() {
         ) : null}
 
         <section className={VYRON_MASTER.moduleDataSection}>
-          <h2 className="mb-4 text-lg font-black text-[#0F172A]">Consolidated Product Demand</h2>
+          <h2 className="mb-4 text-lg font-black text-[#0B202B]">Consolidated Product Demand</h2>
           <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
             <table className="min-w-full">
               <thead className={VYRON_TABLE.head}>
@@ -148,7 +148,7 @@ export default function ProductionPlanningClient() {
                 ) : (
                   demand.map((row) => (
                     <tr key={row.product_id} className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-                      <td className="px-4 py-3 font-semibold text-[#0F172A]">{row.product_name}</td>
+                      <td className="px-4 py-3 font-semibold text-[#0B202B]">{row.product_name}</td>
                       <td className="px-4 py-3 text-right text-sm">{row.required_qty}</td>
                       <td className="px-4 py-3 text-right text-sm">{row.planned_qty}</td>
                       <td className="px-4 py-3 text-right text-sm font-bold">{formatStoreOrderMoney(row.total_cost)}</td>
@@ -166,7 +166,7 @@ export default function ProductionPlanningClient() {
         </section>
 
         <section className={VYRON_MASTER.moduleDataSection}>
-          <h2 className="mb-4 text-lg font-black text-[#0F172A]">Required Ingredients (BOM)</h2>
+          <h2 className="mb-4 text-lg font-black text-[#0B202B]">Required Ingredients (BOM)</h2>
           <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
             <table className="min-w-full">
               <thead className={VYRON_TABLE.head}>
@@ -194,7 +194,7 @@ export default function ProductionPlanningClient() {
                 ) : (
                   ingredients.map((row) => (
                     <tr key={`${row.ingredient_id || row.ingredient_name}`} className={VYRON_TABLE.row}>
-                      <td className="px-4 py-3 font-semibold text-[#0F172A]">{row.ingredient_name}</td>
+                      <td className="px-4 py-3 font-semibold text-[#0B202B]">{row.ingredient_name}</td>
                       <td className="px-4 py-3 text-right text-sm">
                         {row.required_qty} {row.unit}
                       </td>

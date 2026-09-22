@@ -11,14 +11,14 @@ export default function RolePermissionMatrixClient({ matrix }: { matrix: RolePer
     <VyronPremiumPageShell
       config={{
         title: "Role Permission Matrix",
-        subtitle: "Premium VYRON COST workflow for role permission matrix.",
+        subtitle: "Premium VOLORA workflow for role permission matrix.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="overflow-x-auto rounded-[2rem] bg-white shadow-sm">
             <table className="min-w-[1200px] w-full text-sm">
               <thead>
-                <tr className="bg-slate-900 text-left text-[10px] font-black uppercase tracking-wider text-[#3B82F6]">
+                <tr className="bg-slate-900 text-left text-[10px] font-black uppercase tracking-wider text-[#2C5A6B]">
                   <th className="p-4">Role / Module</th>
                   {ACTIONS.map((a) => (
                     <th key={a} className="p-4 text-center capitalize">
@@ -41,7 +41,7 @@ export default function RolePermissionMatrixClient({ matrix }: { matrix: RolePer
                         {ACTIONS.map((action) => (
                           <td key={action} className="p-3 text-center">
                             {mod[action] ? (
-                              <span className="inline-block h-3 w-3 rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/100" />
+                              <span className="inline-block h-3 w-3 rounded-full border border-[#2C5A6B]/25 bg-[#2C5A6B]/100" />
                             ) : (
                               <span className="inline-block h-3 w-3 rounded-full bg-slate-200" />
                             )}

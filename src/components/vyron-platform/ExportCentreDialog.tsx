@@ -121,7 +121,7 @@ export default function ExportCentreDialog(props: ExportCentreDialogProps) {
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-black text-slate-950">{title}</h2>
-            <p className="text-sm font-medium text-slate-600">VYRON COST standard reusable Export Centre.</p>
+            <p className="text-sm font-medium text-slate-600">VOLORA standard reusable Export Centre.</p>
           </div>
           <button
             type="button"

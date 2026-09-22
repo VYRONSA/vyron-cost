@@ -47,7 +47,7 @@ export default function ModulePageShell({
         outcomes: [
           "Review live operational data",
           "Export or print where available",
-          "Drill into linked VYRON COST modules",
+          "Drill into linked VOLORA modules",
           "Act on margin and recovery signals",
         ],
       }}

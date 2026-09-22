@@ -11,7 +11,7 @@ export default function ComplianceCentreClient({ metrics }: { metrics: Complianc
     <VyronPremiumPageShell
       config={{
         title: "Compliance Centre",
-        subtitle: "Premium VYRON COST workflow for compliance centre.",
+        subtitle: "Premium VOLORA workflow for compliance centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -32,7 +32,7 @@ export default function ComplianceCentreClient({ metrics }: { metrics: Complianc
                   <div className="mt-2 text-sm font-bold text-slate-600">{m.openIssues} open issue(s)</div>
                   <span
                     className={`mt-3 inline-block rounded-lg px-2 py-1 text-xs font-black ${
-                      m.status === "Compliant" ? "bg-[#3B82F6]/12 text-[#4D7C0F]" : m.status === "Watch" ? "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]" : "bg-red-100 text-red-800"
+                      m.status === "Compliant" ? "bg-[#2C5A6B]/12 text-[#2F7C40]" : m.status === "Watch" ? "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]" : "bg-red-100 text-red-800"
                     }`}
                   >
                     {m.status}

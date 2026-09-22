@@ -14,7 +14,7 @@ function riskColour(level: string) {
   if (level === "Critical") return "text-red-800 bg-red-50 border-red-200";
   if (level === "High") return "text-[var(--vyron-warning-fg)] bg-[var(--vyron-warning-bg)] border-[var(--vyron-warning-border)]";
   if (level === "Medium") return "text-[var(--vyron-warning-fg)] bg-[var(--vyron-warning-bg)] border-[var(--vyron-warning-border)]";
-  return "text-[#4D7C0F] bg-[#3B82F6]/10 border-[#3B82F6]/25";
+  return "text-[#2F7C40] bg-[#2C5A6B]/10 border-[#2C5A6B]/25";
 }
 
 type ChartPeriod = "monthly" | "quarterly" | "yearly";
@@ -34,7 +34,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
       config={{
         visualVariant: "suppliers",
         title: "Supplier Profile",
-        subtitle: "Premium VYRON COST workflow for supplier profile.",
+        subtitle: "Premium VOLORA workflow for supplier profile.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -124,7 +124,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                   </div>
                 </div>
                 <div className="mt-4">
-                  <ExecutiveSparkChart data={chartData.length ? chartData : [{ label: "—", value: 0 }]} height={140} colour="#1d6bff" />
+                  <ExecutiveSparkChart data={chartData.length ? chartData : [{ label: "—", value: 0 }]} height={140} colour="#1f4757" />
                 </div>
                 {profile.priceHistory.latest ? (
                   <div className="mt-4 grid gap-2 rounded-xl bg-slate-50 p-4 text-sm sm:grid-cols-4">
@@ -142,7 +142,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                     </div>
                     <div>
                       <span className="text-slate-400">Change</span>
-                      <div className={`font-black ${profile.priceHistory.latest.percentage >= 0 ? "text-red-600" : "text-[#84CC16]"}`}>
+                      <div className={`font-black ${profile.priceHistory.latest.percentage >= 0 ? "text-red-600" : "text-[#55B968]"}`}>
                         {money(profile.priceHistory.latest.difference)} ({profile.priceHistory.latest.percentage.toFixed(2)}%)
                       </div>
                     </div>
@@ -195,7 +195,7 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                       </div>
                       <div className="mt-2 flex flex-wrap gap-4 text-xs font-bold text-slate-600">
                         <span>Difference: {money(b.difference)}</span>
-                        <span className="text-[#1D4ED8]">Potential saving: {money(b.potentialSaving)}/mo est.</span>
+                        <span className="text-[#163A48]">Potential saving: {money(b.potentialSaving)}/mo est.</span>
                       </div>
                     </div>
                   ))
@@ -257,23 +257,23 @@ export default function SupplierProfileClient({ profile }: { profile: SupplierIn
                       </li>
                     ))
                   ) : (
-                    <li className="text-sm font-bold text-[#1D4ED8]">No elevated risk factors.</li>
+                    <li className="text-sm font-bold text-[#163A48]">No elevated risk factors.</li>
                   )}
                 </ul>
               </div>
             </section>
 
-            <section className="rounded-[2rem] bg-[#3B82F6]/10 p-6">
-              <h3 className="text-lg font-black text-[#4D7C0F]">Savings Opportunities</h3>
+            <section className="rounded-[2rem] bg-[#2C5A6B]/10 p-6">
+              <h3 className="text-lg font-black text-[#2F7C40]">Savings Opportunities</h3>
               <div className="mt-4 space-y-2">
                 {profile.savingsOpportunities.map((o) => (
                   <div key={o.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-4">
                     <div>
-                      <div className="text-xs font-black uppercase text-[#1D4ED8]">{o.type}</div>
+                      <div className="text-xs font-black uppercase text-[#163A48]">{o.type}</div>
                       <div className="font-black text-slate-900">{o.title}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-black text-[#1D4ED8]">{money(o.potentialAnnual)}/yr</div>
+                      <div className="font-black text-[#163A48]">{money(o.potentialAnnual)}/yr</div>
                       <div className="text-xs font-bold text-slate-500">{o.confidence}% confidence</div>
                       {o.href ? (
                         <Link href={o.href} className="text-xs font-black text-blue-700 hover:underline">

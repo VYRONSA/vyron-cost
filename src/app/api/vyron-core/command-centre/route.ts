@@ -14,7 +14,7 @@ export async function GET() {
     return NextResponse.json({ ok: true, data });
   } catch (error) {
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "VYRON CORE command centre load failed." },
+      { ok: false, error: error instanceof Error ? error.message : "VOLORA Core command centre load failed." },
       { status: 500 }
     );
   }

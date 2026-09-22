@@ -2,11 +2,11 @@ import type { VyronProductDefinition } from "@/platform/types";
 
 export const VYRON_PAY_PRODUCT: VyronProductDefinition = {
   id: "vyron_pay",
-  name: "VYRON PAY",
+  name: "VOLORA Pay",
   shortName: "PAY",
-  tagline: "Payments, collections and finance operations for VYRON tenants.",
+  tagline: "Payments, collections and finance operations for VOLORA tenants.",
   theme: {
-    primary: "#059669",
+    primary: "#3E9B52",
     accent: "#8B5CF6",
     label: "PAY",
   },

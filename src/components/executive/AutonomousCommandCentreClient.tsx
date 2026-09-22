@@ -211,7 +211,7 @@ export default function AutonomousCommandCentreClient({
         <div className={`relative p-1 md:p-2 ${M.dashboardHeroInner}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#2C5A6B]/35 bg-[#2C5A6B]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#FECDD3]">
                 Autonomous Command Centre
               </div>
               <h1 className={`text-3xl tracking-tight md:text-4xl ${M.headingOnDark}`}>Autonomous Command Centre</h1>
@@ -262,7 +262,7 @@ export default function AutonomousCommandCentreClient({
 
       {!snapshot.hasCommandData && !loading ? (
         <section className={M.moduleDataSection}>
-          <h2 className="text-xl font-bold text-[#0F172A]">
+          <h2 className="text-xl font-bold text-[#0B202B]">
             Autonomous intelligence requires additional operational data.
           </h2>
           <p className="mt-2 text-sm font-medium text-[#64748B]">
@@ -308,24 +308,24 @@ export default function AutonomousCommandCentreClient({
             <SummaryCard
               label="Health Score"
               value={snapshot.summary.healthScore != null ? `${snapshot.summary.healthScore}/100` : "—"}
-              accent="#3B82F6"
+              accent="#2C5A6B"
             />
             <SummaryCard label="Active Warnings" value={String(snapshot.summary.activeWarnings)} accent="#B45309" />
-            <SummaryCard label="Forecast Risks" value={String(snapshot.summary.forecastRisks)} accent="#2563EB" />
-            <SummaryCard label="Root Causes" value={String(snapshot.summary.rootCauses)} accent="#1D6BFF" />
-            <SummaryCard label="Decisions" value={String(snapshot.summary.decisions)} accent="#3B82F6" />
-            <SummaryCard label="Actions" value={String(snapshot.summary.actions)} accent="#6366F1" />
+            <SummaryCard label="Forecast Risks" value={String(snapshot.summary.forecastRisks)} accent="#1F4757" />
+            <SummaryCard label="Root Causes" value={String(snapshot.summary.rootCauses)} accent="#1F4757" />
+            <SummaryCard label="Decisions" value={String(snapshot.summary.decisions)} accent="#2C5A6B" />
+            <SummaryCard label="Actions" value={String(snapshot.summary.actions)} accent="#37606F" />
             <SummaryCard
               label="Estimated Exposure"
               value={snapshot.summary.estimatedExposure != null ? snapshot.summary.exposureLabel : "Exposure Not Yet Measurable"}
-              accent="#3B82F6"
+              accent="#2C5A6B"
               small={snapshot.summary.estimatedExposure == null}
             />
-            <SummaryCard label="Confidence" value={snapshot.summary.confidence} accent="#0F172A" />
+            <SummaryCard label="Confidence" value={snapshot.summary.confidence} accent="#0B202B" />
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Executive Intelligence Chain</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Executive Intelligence Chain</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Full intelligence pipeline from health monitoring through to execution.
             </p>
@@ -342,7 +342,7 @@ export default function AutonomousCommandCentreClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Intelligence Pipeline</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Intelligence Pipeline</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Stage counts, status and severity with drilldown to each intelligence centre.
             </p>
@@ -375,7 +375,7 @@ export default function AutonomousCommandCentreClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Top Executive Priorities</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Top Executive Priorities</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Critical and high-priority items from warnings, risks, root causes, decisions and actions.
             </p>
@@ -407,7 +407,7 @@ export default function AutonomousCommandCentreClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Executive Exposure Centre</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Executive Exposure Centre</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Measurable exposure breakdown across operational domains.
             </p>
@@ -419,7 +419,7 @@ export default function AutonomousCommandCentreClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Autonomous Recommendations</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Autonomous Recommendations</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Recommendations traceable to existing intelligence engines — no fabricated advice.
             </p>
@@ -435,25 +435,25 @@ export default function AutonomousCommandCentreClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Execution Readiness</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Execution Readiness</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Action execution status derived from the Actions engine and dependency blockers.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <ReadinessCard label="Ready" value={snapshot.executionReadiness.ready} accent="#3B82F6" />
-              <ReadinessCard label="Waiting" value={snapshot.executionReadiness.waiting} accent="#2563EB" />
-              <ReadinessCard label="Blocked" value={snapshot.executionReadiness.blocked} accent="#2563EB" />
+              <ReadinessCard label="Ready" value={snapshot.executionReadiness.ready} accent="#2C5A6B" />
+              <ReadinessCard label="Waiting" value={snapshot.executionReadiness.waiting} accent="#1F4757" />
+              <ReadinessCard label="Blocked" value={snapshot.executionReadiness.blocked} accent="#1F4757" />
               <ReadinessCard
                 label="Overall Readiness"
                 value={snapshot.executionReadiness.readiness}
-                accent="#1D6BFF"
+                accent="#1F4757"
                 text
               />
             </div>
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Blockers & Dependencies</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Blockers & Dependencies</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Aggregated blockers from Actions, Decisions, Root Causes and Xero intelligence.
             </p>
@@ -469,7 +469,7 @@ export default function AutonomousCommandCentreClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-xl font-bold text-[#0F172A]">Executive Command Queue</h2>
+            <h2 className="text-xl font-bold text-[#0B202B]">Executive Command Queue</h2>
             <p className="mt-1 text-sm font-medium text-[#64748B]">
               Top 20 ranked decisions and actions by priority and impact.
             </p>
@@ -503,7 +503,7 @@ export default function AutonomousCommandCentreClient({
           </section>
 
           <section className={M.moduleDataSection}>
-            <h2 className="text-lg font-bold text-[#0F172A]">Drilldown hub</h2>
+            <h2 className="text-lg font-bold text-[#0B202B]">Drilldown hub</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {[
                 { label: "Executive Boardroom", href: "/executive-boardroom", icon: Building2 },
@@ -514,7 +514,7 @@ export default function AutonomousCommandCentreClient({
                 { label: "Decisions", href: "/decisions", icon: Gavel },
                 { label: "Actions", href: "/actions", icon: CheckSquare },
                 { label: "Execution Centre", href: "/execution-centre", icon: Play },
-                { label: "Ask VYRON", href: "/ask-vyron", icon: Brain },
+                { label: "Ask VOLORA", href: "/ask-vyron", icon: Brain },
                 { label: "Cost Intelligence", href: "/cost-intelligence", icon: TrendingDown },
                 { label: "Products", href: "/products", icon: Package },
                 { label: "Suppliers", href: "/suppliers", icon: ShoppingCart },
@@ -525,7 +525,7 @@ export default function AutonomousCommandCentreClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1D6BFF]/30 hover:text-[#1D6BFF]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F6F7FB] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#1F4757]/30 hover:text-[#1F4757]"
                 >
                   <link.icon size={16} />
                   {link.label}
@@ -554,8 +554,8 @@ function SummaryCard({
     <div className={`${M.moduleDataSection} p-5`}>
       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">{label}</div>
       <div
-        className={`mt-2 font-black text-[#0F172A] ${small ? "text-sm leading-6" : "text-2xl"}`}
-        style={{ color: small ? "#0F172A" : accent }}
+        className={`mt-2 font-black text-[#0B202B] ${small ? "text-sm leading-6" : "text-2xl"}`}
+        style={{ color: small ? "#0B202B" : accent }}
       >
         {value}
       </div>
@@ -567,10 +567,10 @@ function PipelineStageCard({ stage }: { stage: IntelligencePipelineStage }) {
   return (
     <Link
       href={stage.href}
-      className="block min-w-[140px] rounded-2xl border border-[#E2E8F0] bg-white p-4 text-center shadow-sm transition hover:border-[#1D6BFF]/30 hover:shadow-md"
+      className="block min-w-[140px] rounded-2xl border border-[#E2E8F0] bg-white p-4 text-center shadow-sm transition hover:border-[#1F4757]/30 hover:shadow-md"
     >
-      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1D6BFF]">{stage.label}</div>
-      <div className="mt-2 text-2xl font-black text-[#0F172A]">{stage.count}</div>
+      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1F4757]">{stage.label}</div>
+      <div className="mt-2 text-2xl font-black text-[#0B202B]">{stage.count}</div>
       <div className="mt-1 text-xs font-semibold text-[#64748B]">{stage.status}</div>
       {stage.severity !== "None" ? (
         <div className="mt-2">
@@ -584,14 +584,14 @@ function PipelineStageCard({ stage }: { stage: IntelligencePipelineStage }) {
 function PipelineTableRow({ stage }: { stage: IntelligencePipelineStage }) {
   return (
     <tr className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{stage.label}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{stage.label}</td>
       <td className="px-4 py-3 font-semibold text-[#334155]">{stage.count}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#64748B]">{stage.status}</td>
       <td className="px-4 py-3">
         {stage.severity !== "None" ? <PriorityBadge priority={stage.severity} /> : <span className="text-[#94A3B8]">—</span>}
       </td>
       <td className="px-4 py-3 text-right">
-        <Link href={stage.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={stage.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -605,12 +605,12 @@ function PriorityRow({ row }: { row: ExecutivePriority }) {
       <td className="px-4 py-3">
         <PriorityBadge priority={row.priority} />
       </td>
-      <td className="px-4 py-3 font-semibold text-[#1D6BFF]">{row.category}</td>
+      <td className="px-4 py-3 font-semibold text-[#1F4757]">{row.category}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.reason}</td>
-      <td className="px-4 py-3 text-sm font-medium text-[#0F172A]">{row.recommendedResponse}</td>
+      <td className="px-4 py-3 text-sm font-medium text-[#0B202B]">{row.recommendedResponse}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.owner}</td>
       <td className="px-4 py-3 text-right">
-        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -622,11 +622,11 @@ function ExposureCard({ exposure }: { exposure: ExposureCategory }) {
   return (
     <Link
       href={exposure.href}
-      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1D6BFF]/30 hover:shadow-md`}
+      className={`${M.moduleDataSection} block p-5 transition hover:border-[#1F4757]/30 hover:shadow-md`}
     >
       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#64748B]">{exposure.label}</div>
-      <p className="mt-2 text-sm font-bold leading-6 text-[#0F172A]">{exposure.value}</p>
-      <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+      <p className="mt-2 text-sm font-bold leading-6 text-[#0B202B]">{exposure.value}</p>
+      <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
         View module <ArrowRight size={14} />
       </span>
     </Link>
@@ -638,13 +638,13 @@ function RecommendationCard({ recommendation }: { recommendation: AutonomousReco
     <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-5">
       <div className="flex flex-wrap items-center gap-2">
         <PriorityBadge priority={recommendation.priority} />
-        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1D6BFF]">{recommendation.source}</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1F4757]">{recommendation.source}</span>
       </div>
-      <h3 className="mt-2 font-bold text-[#0F172A]">{recommendation.title}</h3>
+      <h3 className="mt-2 font-bold text-[#0B202B]">{recommendation.title}</h3>
       <p className="mt-2 text-sm font-medium text-[#64748B]">{recommendation.impact}</p>
       <div className="mt-3 flex items-center justify-between gap-2">
         <ConfidenceBadge confidence={recommendation.confidence} />
-        <Link href={recommendation.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={recommendation.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </div>
@@ -699,7 +699,7 @@ function BlockerCard({ blocker }: { blocker: AggregatedBlocker }) {
 function QueueRow({ row }: { row: CommandQueueItem }) {
   return (
     <tr className={`${VYRON_TABLE.row} ${VYRON_TABLE.rowHover}`}>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{row.rank}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{row.rank}</td>
       <td className="px-4 py-3">
         <PriorityBadge priority={row.priority} />
       </td>
@@ -707,21 +707,21 @@ function QueueRow({ row }: { row: CommandQueueItem }) {
         <span
           className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${
             row.type === "Decision"
-              ? "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]"
+              ? "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]"
               : "border-indigo-200 bg-indigo-50 text-indigo-800"
           }`}
         >
           {row.type}
         </span>
       </td>
-      <td className="px-4 py-3 font-bold text-[#0F172A]">{row.title}</td>
+      <td className="px-4 py-3 font-bold text-[#0B202B]">{row.title}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.owner}</td>
       <td className="px-4 py-3 text-sm font-medium text-[#334155]">{row.impact}</td>
       <td className="px-4 py-3">
         <ConfidenceBadge confidence={row.confidence} />
       </td>
       <td className="px-4 py-3 text-right">
-        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1D6BFF]">
+        <Link href={row.href} className="inline-flex items-center gap-1 text-xs font-bold text-[#1F4757]">
           Open <ArrowRight size={14} />
         </Link>
       </td>
@@ -734,7 +734,7 @@ function PriorityBadge({ priority }: { priority: CommandPriority }) {
     Critical: "border-rose-200 bg-rose-50 text-rose-800",
     High: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
     Medium: "border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]",
-    Low: "border-[#1D6BFF]/25 bg-[#1D6BFF]/10 text-[#1D6BFF]",
+    Low: "border-[#1F4757]/25 bg-[#1F4757]/10 text-[#1F4757]",
   };
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${classes[priority]}`}>

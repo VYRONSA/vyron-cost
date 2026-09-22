@@ -62,7 +62,7 @@ export default function ClientWorkspaceTopBar() {
             className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-black text-blue-800"
           >
             <LogOut size={14} />
-            Return to VYRON DEV
+            Return to VOLORA DEV
           </button>
           <button
             type="button"

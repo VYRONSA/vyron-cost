@@ -126,7 +126,7 @@ export default function IngredientReportClient({
   );
 
   const controlClass =
-    "mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.12)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none";
+    "mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.12)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none";
 
   return (
     <ReportDocument

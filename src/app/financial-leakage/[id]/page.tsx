@@ -57,19 +57,19 @@ export default async function FinancialLeakageDetailPage({ params }: { params: P
 
       {detail.isDuplicate ? (
         <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Duplicate Exposure</div>
             <div className="mt-3 text-4xl font-black text-red-600">{formatMoney(detail.duplicateExposure || 0)}</div>
           </div>
-          <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Duplicate Amount</div>
             <div className="mt-3 text-4xl font-black text-slate-950">{formatMoney(detail.duplicateAmount || 0)}</div>
           </div>
-          <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Potential Recoverable</div>
             <div className="mt-3 text-4xl font-black text-blue-700">{formatMoney(detail.potentialRecovery)}</div>
           </div>
-          <div className="rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-700 to-indigo-700 p-6 text-white shadow-[0_18px_45px_rgba(29,107,255,0.28)]">
+          <div className="rounded-[2rem] border border-blue-100 bg-gradient-to-br from-blue-700 to-indigo-700 p-6 text-white shadow-[0_18px_45px_rgba(22,58,72,0.28)]">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-blue-100">Duplicate Count</div>
             <div className="mt-3 text-4xl font-black">{detail.duplicateCount || 1}</div>
             <div className="mt-2 flex items-center gap-2 text-sm font-bold text-blue-100">
@@ -80,26 +80,26 @@ export default async function FinancialLeakageDetailPage({ params }: { params: P
         </section>
       ) : (
         <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Monthly Leakage</div>
             <div className="mt-3 text-4xl font-black text-red-600">{formatMoney(detail.monthlyLoss)}</div>
           </div>
-          <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Potential Recovery</div>
             <div className="mt-3 text-4xl font-black text-blue-700">{formatMoney(detail.potentialRecovery)}</div>
           </div>
           {detail.annualRecovery != null ? (
-            <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+            <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
               <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Annual Recovery</div>
               <div className="mt-3 text-4xl font-black text-[var(--vyron-warning-fg)]">{formatMoney(detail.annualRecovery)}</div>
             </div>
           ) : (
-            <div className="rounded-[2rem] border border-blue-100 bg-slate-50 p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+            <div className="rounded-[2rem] border border-blue-100 bg-slate-50 p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
               <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Recovery Basis</div>
               <div className="mt-3 text-lg font-black text-slate-700">Current exposure (not annualised)</div>
             </div>
           )}
-          <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Severity</div>
             <div className="mt-4">
               <StatusPill tone={severityTone(detail.finding.severity)}>{detail.finding.severity || "Medium"}</StatusPill>

@@ -790,7 +790,7 @@ export async function getVyronFinanceIntelligence(
   ];
 
   const foundation: VyronFinanceFoundation = {
-    productName: "VYRON FINANCE",
+    productName: "VOLORA Finance",
     integrationReady: true,
     entities: [
       { key: "suppliers", label: "Suppliers", sourceTable: "vyron_cost_suppliers", syncNotes: "AP, contracts, inflation" },

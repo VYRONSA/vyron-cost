@@ -180,18 +180,18 @@ export default function CustomerPortalAccessClient() {
                 The mobile shell already names the page above this panel, so on
                 a phone the header keeps only what the shell does not say.
               */}
-              <div className="mb-2 hidden items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#BFDBFE] lg:inline-flex">
-                VYRON ORDER
+              <div className="mb-2 hidden items-center gap-2 rounded-full border border-[#2C5A6B]/35 bg-[#2C5A6B]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#BCCDD5] lg:inline-flex">
+                VOLORA Order
               </div>
               {/* Present on every screen so the page can be announced; hidden from sight on phones. */}
               <h1 className={`sr-only lg:not-sr-only lg:text-4xl lg:tracking-tight ${M.headingOnDark}`}>
                 Customer Portal Access
               </h1>
               <p className={`mt-2 hidden max-w-3xl text-sm font-medium leading-6 lg:block ${M.bodyOnDark}`}>
-                Manage which customers can access VYRON ORDER.
+                Manage which customers can access VOLORA Order.
               </p>
               <p className="flex items-start gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-semibold text-[#CBD5E1] lg:mt-4">
-                <KeyRound size={15} className="mt-0.5 shrink-0 text-[#BFDBFE]" />
+                <KeyRound size={15} className="mt-0.5 shrink-0 text-[#BCCDD5]" />
                 PINs are stored as a one-way hash. They cannot be displayed or recovered here — if a
                 customer forgets theirs, issue a new one.
               </p>
@@ -212,7 +212,7 @@ export default function CustomerPortalAccessClient() {
             <span className={`flex items-center gap-1.5 ${M.label}`}>
               <span className={`${M.iconSubtle} h-6 w-6`}>{tile.icon}</span> {tile.label}
             </span>
-            <span className={`mt-2 block text-2xl tabular-nums ${tile.tone || "font-black text-[#0F172A]"}`}>
+            <span className={`mt-2 block text-2xl tabular-nums ${tile.tone || "font-black text-[#0B202B]"}`}>
               {tile.value === null ? "—" : tile.value}
             </span>
           </div>
@@ -322,14 +322,14 @@ export default function CustomerPortalAccessClient() {
       ) : null}
 
       <div className={`${M.filterBar} mb-0 flex flex-wrap items-center gap-3`}>
-        <label className="flex h-12 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.10)] bg-white/85 px-3 transition focus-within:border-[#4F46E5] focus-within:ring-4 focus-within:ring-[#4F46E5]/12">
+        <label className="flex h-12 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-[rgba(11,32,43,0.10)] bg-white/85 px-3 transition focus-within:border-[#1F4757] focus-within:ring-4 focus-within:ring-[#1F4757]/12">
           <Search size={16} className="shrink-0 text-[#94A3B8]" />
           <span className="sr-only">Search customers</span>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search customers…"
-            className={`h-full w-full bg-transparent text-sm font-semibold text-[#0F172A] outline-none ${M.inputPlaceholder}`}
+            className={`h-full w-full bg-transparent text-sm font-semibold text-[#0B202B] outline-none ${M.inputPlaceholder}`}
           />
         </label>
         <div role="group" aria-label="Access filter" className="flex flex-wrap gap-2">
@@ -361,7 +361,7 @@ export default function CustomerPortalAccessClient() {
       ) : visible.length === 0 ? (
         <div className={M.moduleEmptyState}>
           <Users size={26} className="mx-auto text-[#CBD5E1]" />
-          <p className="mt-3 text-base font-black text-[#0F172A]">
+          <p className="mt-3 text-base font-black text-[#0B202B]">
             {rows.length === 0 ? "No customers yet" : "No customers match that filter"}
           </p>
           <p className="mt-1 text-sm font-semibold text-[#64748B]">
@@ -390,7 +390,7 @@ export default function CustomerPortalAccessClient() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-black text-[#0F172A]">{row.customerName}</p>
+                    <p className="text-sm font-black text-[#0B202B]">{row.customerName}</p>
                     {/* Access state, then lock state — both from the row, never inferred. */}
                     {row.hasAccess ? (
                       <span className={row.status === "Suspended" ? "vyron-status vyron-status-error" : "vyron-status vyron-status-success"}>
@@ -419,7 +419,7 @@ export default function CustomerPortalAccessClient() {
                         ) : null}
                       </>
                     ) : (
-                      <span>Cannot sign in to VYRON ORDER yet</span>
+                      <span>Cannot sign in to VOLORA Order yet</span>
                     )}
                   </p>
                 </div>
@@ -463,17 +463,17 @@ export default function CustomerPortalAccessClient() {
         validation, the same request, and the PIN still never comes back.
       */}
       {draft ? (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-[rgba(7,17,31,0.45)] p-0 backdrop-blur-sm sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-[rgba(6,23,34,0.45)] p-0 backdrop-blur-sm sm:items-center sm:p-4">
           <div
             role="dialog"
             aria-modal="true"
             aria-label={draftRow?.hasAccess ? "Reset PIN" : "Give portal access"}
-            className="w-full max-w-lg rounded-t-2xl border border-[rgba(15,23,42,0.07)] bg-white p-5 shadow-[var(--vyron-elev-4)] sm:rounded-2xl sm:p-6"
+            className="w-full max-w-lg rounded-t-2xl border border-[rgba(11,32,43,0.07)] bg-white p-5 shadow-[var(--vyron-elev-4)] sm:rounded-2xl sm:p-6"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className={M.label}>{draftRow?.hasAccess ? "Reset PIN" : "Give portal access"}</p>
-                <h2 className="mt-1 truncate vyron-t-display text-lg text-[#0F172A]">
+                <h2 className="mt-1 truncate vyron-t-display text-lg text-[#0B202B]">
                   {draftRow?.customerName || "Customer"}
                 </h2>
               </div>
@@ -481,7 +481,7 @@ export default function CustomerPortalAccessClient() {
                 type="button"
                 onClick={() => setDraft(null)}
                 aria-label="Close"
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#64748B] transition hover:bg-[rgba(15,23,42,0.05)] hover:text-[#0F172A]"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#64748B] transition hover:bg-[rgba(11,32,43,0.05)] hover:text-[#0B202B]"
               >
                 <X size={18} />
               </button>

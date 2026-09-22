@@ -66,7 +66,7 @@ export function VyronPremiumHeroBanner({
   return (
     <section className="grid gap-5">
       <div className="relative overflow-hidden rounded-[2.4rem] border border-white/70 bg-gradient-to-br to-[var(--vyron-warning-bg)] via-rose-50 to-blue-50 p-0 shadow-[0_28px_90px_rgba(30,58,138,0.13)]">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_87%_10%,rgba(251,146,60,0.38),transparent_30%),radial-gradient(circle_at_78%_75%,rgba(45,212,191,0.18),transparent_34%),radial-gradient(circle_at_28%_16%,rgba(29,107,255,0.12),transparent_34%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_87%_10%,rgba(251,146,60,0.38),transparent_30%),radial-gradient(circle_at_78%_75%,rgba(45,212,191,0.18),transparent_34%),radial-gradient(circle_at_28%_16%,rgba(22,58,72,0.12),transparent_34%)]" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-white/50 to-transparent" />
 
         <div className="relative grid min-h-[350px] gap-8 p-7 md:p-9 xl:grid-cols-[1fr_0.95fr] xl:items-center">
@@ -136,7 +136,7 @@ type VyronPremiumControlPanelProps = {
 
 export function VyronPremiumControlPanel({ title, actions, quotes }: VyronPremiumControlPanelProps) {
   return (
-    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#0b142e] via-[#0f224f] to-[#030815] p-6 text-white shadow-[0_24px_70px_rgba(30,58,138,0.22)] ring-1 ring-white/10">
+    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#081c27] via-[#0f224f] to-[#030815] p-6 text-white shadow-[0_24px_70px_rgba(30,58,138,0.22)] ring-1 ring-white/10">
       <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-[var(--vyron-warning-bg)] blur-3xl" />
       <div className="pointer-events-none absolute -bottom-16 left-1/2 h-56 w-56 rounded-full bg-indigo-400/12 blur-3xl" />
 
@@ -196,7 +196,7 @@ export function VyronPremiumFooterStrip() {
     { label: "Drive Performance", icon: BarChart3 },
   ];
   return (
-    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-slate-950 via-blue-950 to-slate-950 px-6 py-5 text-white shadow-[0_22px_60px_rgba(15,23,42,0.26)]">
+    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-slate-950 via-blue-950 to-slate-950 px-6 py-5 text-white shadow-[0_22px_60px_rgba(11,32,43,0.26)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_0%_100%,rgba(45,212,191,0.18),transparent_30%),radial-gradient(circle_at_100%_0%,rgba(251,146,60,0.22),transparent_30%)]" />
       <p className="relative text-center text-[10px] font-black uppercase tracking-[0.2em] text-blue-200 md:text-xs">
         Cost Intelligence · Operational Discipline · Profit Protection
@@ -231,7 +231,7 @@ export function VyronPremiumFormulaCard({
     <aside
       className={`relative overflow-hidden rounded-[2rem] p-6 ${
         isDark
-          ? "bg-gradient-to-br from-[#0b142e] via-[#08101f] to-[#07110d] text-white shadow-[0_18px_55px_rgba(29,78,216,0.22)] ring-1 ring-blue-500/20"
+          ? "bg-gradient-to-br from-[#081c27] via-[#08101f] to-[#061722] text-white shadow-[0_18px_55px_rgba(22,58,72,0.22)] ring-1 ring-blue-500/20"
           : "border border-[var(--vyron-warning-border)] bg-gradient-to-br to-[var(--vyron-warning-bg)] via-white to-blue-50/60 text-slate-900 shadow-[0_18px_50px_rgba(251,146,60,0.08)]"
       } ${className}`}
     >

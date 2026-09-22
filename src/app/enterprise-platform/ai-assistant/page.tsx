@@ -7,7 +7,7 @@ export default async function EnterpriseAiPage() {
   const { companyId } = await requireWorkspacePage("reports.view");
   const { enterpriseAi } = await getEnterprisePlatformPayload(companyId);
   return (
-    <VyronCostShell hidePageHeader title="VYRON Enterprise AI" subtitle="INFLATION · GP · RECOVERY · BRANCHES · EXPLAINABLE">
+    <VyronCostShell hidePageHeader title="VOLORA Enterprise AI" subtitle="INFLATION · GP · RECOVERY · BRANCHES · EXPLAINABLE">
       <PlatformNav />
       <EnterpriseAiClient presets={enterpriseAi} />
     </VyronCostShell>

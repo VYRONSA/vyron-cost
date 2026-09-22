@@ -8,15 +8,15 @@ export default function PlaceholderPage({
   return (
     <VyronCostShell
       title={title}
-      subtitle={`${title} module is currently under development inside the VYRON COST platform.`}
+      subtitle={`${title} module is currently under development inside the VOLORA platform.`}
     >
-      <div className="rounded-[2rem] border border-white bg-white p-10 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div className="rounded-[2rem] border border-white bg-white p-10 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <div className="text-3xl font-black text-[#F8FAFC]">
           {title}
         </div>
 
         <div className="mt-4 max-w-3xl text-base leading-8 text-slate-500">
-          This module will become part of the VYRON COST enterprise profit intelligence ecosystem.
+          This module will become part of the VOLORA enterprise profit intelligence ecosystem.
         </div>
       </div>
     </VyronCostShell>

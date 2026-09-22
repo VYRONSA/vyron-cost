@@ -190,7 +190,7 @@ const PACKAGE_DEFINITIONS: Record<PackageId, PackageDefinition> = {
   full: {
     id: "full",
     label: PACKAGE_LABELS.full,
-    description: "The complete VYRON platform: everything in Enterprise plus every Multi-Store Operations capability.",
+    description: "The complete VOLORA platform: everything in Enterprise plus every Multi-Store Operations capability.",
     // Full introduces no feature of its own. It is granted every tier and the
     // whole Multi-Store extension explicitly, by fullPackageFeatures().
     features: [],
@@ -253,14 +253,14 @@ export const INDUSTRY_EXTENSIONS: Record<IndustryExtensionId, IndustryExtensionD
   payroll_intelligence: {
     id: "payroll_intelligence",
     label: "Payroll Intelligence",
-    description: "Payroll cost intelligence for VYRON PAY tenants.",
+    description: "Payroll cost intelligence for VOLORA Pay tenants.",
     features: [],
     status: "planned",
   },
   farm_intelligence: {
     id: "farm_intelligence",
     label: "Farm Intelligence",
-    description: "Agricultural yield and supply intelligence for VYRON FARM.",
+    description: "Agricultural yield and supply intelligence for VOLORA Farm.",
     features: [],
     status: "planned",
   },
@@ -571,7 +571,7 @@ export function getModuleTooltip(moduleKey: PackageModuleKey): string {
 export function getUpgradeMessage(packageName: string, feature: FeatureKey): string {
   const current = isFullPackage(packageName) ? PACKAGE_LABELS.full : PACKAGE_LABELS[resolveBasePackageId(packageName)];
   const required = getUpgradePackageLabel(feature);
-  return `${required} package required — your workspace is on ${current}. Contact VYRON to upgrade.`;
+  return `${required} package required — your workspace is on ${current}. Contact VOLORA to upgrade.`;
 }
 
 export function getModulePrimaryFeature(moduleKey: PackageModuleKey): FeatureKey | null {
@@ -639,7 +639,7 @@ export const MULTI_STORE_COMMERCIALS = {
     "Cross-store comparisons",
     "Production planning from store demand",
     "AI demand and store forecasting",
-    "VYRON ORDER customer ordering",
+    "VOLORA Order customer ordering",
     "Advanced permissions",
     "Centralised management",
     "Priority support",

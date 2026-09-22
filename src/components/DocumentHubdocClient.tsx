@@ -125,11 +125,11 @@ type DemoDoc = {
 const starterDocs: DemoDoc[] = [];
 
 function statusClass(status: DocStatus) {
-  if (status === "Matched" || status === "Archived") return "bg-[#3B82F6]/10 text-[#1D4ED8]";
+  if (status === "Matched" || status === "Archived") return "bg-[#2C5A6B]/10 text-[#163A48]";
   if (status === "Error" || status === "Duplicate Risk") return "bg-red-50 text-red-700";
   if (status === "Needs Review") return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   if (status === "Extracting" || status === "Uploading") return "bg-blue-50 text-blue-700";
-  if (status === "Stored" || status === "Uploaded") return "bg-[#3B82F6]/10 text-[#1D4ED8]";
+  if (status === "Stored" || status === "Uploaded") return "bg-[#2C5A6B]/10 text-[#163A48]";
   return "bg-blue-50 text-blue-700";
 }
 
@@ -731,7 +731,7 @@ export default function DocumentHubdocClient({
             </div>
           </div>
 
-          <div className="rounded-[2.2rem] bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 p-6 text-white shadow-[0_18px_60px_rgba(59,130,246,0.28)]">
+          <div className="rounded-[2.2rem] bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 p-6 text-white shadow-[0_18px_60px_rgba(44,90,107,0.28)]">
             <div className="text-xs font-black uppercase tracking-[0.18em] text-blue-100">What changed</div>
             <h2 className="mt-2 text-2xl font-black">Shows the real extraction error.</h2>
 
@@ -816,14 +816,14 @@ export default function DocumentHubdocClient({
               Email Inbox
             </div>
             <div className="mt-3 text-sm font-semibold leading-6 text-slate-300">
-              Supplier invoices emailed to VYRON COST appear in the email intake queue for upload and extraction.
+              Supplier invoices emailed to VOLORA appear in the email intake queue for upload and extraction.
             </div>
             <div className="mt-4 rounded-2xl bg-white/10 px-4 py-3 text-sm font-black text-white">
               invoices@vyroncost.co.za
             </div>
             <a
               href="/email-invoice-inbox"
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#3B82F6]/100 px-4 py-2 text-xs font-black text-[#F8FAFC]"
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#2C5A6B]/100 px-4 py-2 text-xs font-black text-[#F8FAFC]"
             >
               Open email intake queue →
             </a>
@@ -1010,7 +1010,7 @@ export default function DocumentHubdocClient({
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-3 py-1 text-xs font-black ${statusClass(doc.status)}`}>{doc.status}</span>
                   </td>
-                  <td className={`px-4 py-3 font-black ${doc.risk === "High" ? "text-red-600" : doc.risk === "Medium" ? "text-[var(--vyron-warning-fg)]" : "text-[#84CC16]"}`}>
+                  <td className={`px-4 py-3 font-black ${doc.risk === "High" ? "text-red-600" : doc.risk === "Medium" ? "text-[var(--vyron-warning-fg)]" : "text-[#55B968]"}`}>
                     {doc.risk}
                   </td>
                   <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>

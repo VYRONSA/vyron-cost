@@ -373,7 +373,7 @@ export default function RecipeDetailClient({
       config={{
         visualVariant: "products",
         title: "Recipe Detail",
-        subtitle: "Premium VYRON COST workflow for recipe detail.",
+        subtitle: "Premium VOLORA workflow for recipe detail.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -390,9 +390,9 @@ export default function RecipeDetailClient({
             </div>
       
             {linkedProduct ? (
-              <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-4 text-sm font-bold text-[#4D7C0F]">
+              <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-5 py-4 text-sm font-bold text-[#2F7C40]">
                 Linked finished product:{" "}
-                <Link href={`/products/${linkedProduct.id}/edit`} className="font-black text-[#1D4ED8] underline">
+                <Link href={`/products/${linkedProduct.id}/edit`} className="font-black text-[#163A48] underline">
                   {linkedProduct.product_name}
                 </Link>
                 {" · "}Product cost syncs when this BOM is saved.
@@ -400,7 +400,7 @@ export default function RecipeDetailClient({
             ) : null}
       
             {imageUrl ? (
-              <div className="overflow-hidden rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(29,78,216,0.08)] sm:p-6">
+              <div className="overflow-hidden rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(22,58,72,0.08)] sm:p-6">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -461,9 +461,9 @@ export default function RecipeDetailClient({
                 ["Packaging Cost", formatMoney(packagingCost), "text-blue-700"],
                 ["Total Cost", formatMoney(totals.totalCost), "text-slate-900"],
                 ["Selling Price", formatMoney(totals.sellingPrice), "text-slate-900"],
-                ["GP", `${totals.actualGp.toFixed(2)}%`, totals.actualGp < totals.targetGp ? "text-red-600" : "text-[#84CC16]"],
+                ["GP", `${totals.actualGp.toFixed(2)}%`, totals.actualGp < totals.targetGp ? "text-red-600" : "text-[#55B968]"],
               ].map(([label, value, cls]) => (
-                <div key={label} className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(29,78,216,0.08)] md:p-6">
+                <div key={label} className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(22,58,72,0.08)] md:p-6">
                   <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">{label}</div>
                   <div className={`mt-2 text-2xl font-black md:mt-3 md:text-3xl ${cls}`}>{value}</div>
                 </div>
@@ -474,7 +474,7 @@ export default function RecipeDetailClient({
               Formula used: Actual GP = (Selling Price - Cost / Unit) / Selling Price. Suggested Price = Cost / Unit / (1 - Target GP%).
             </section>
       
-            <section className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(29,78,216,0.08)] sm:p-6">
+            <section className="rounded-[2rem] bg-white p-4 shadow-[0_18px_50px_rgba(22,58,72,0.08)] sm:p-6">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-black text-slate-900">Recipe Components</h2>
                 {canCreate ? (

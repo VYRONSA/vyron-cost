@@ -172,12 +172,12 @@ export default function IngredientRegisterClient({
       config={{
         visualVariant: "ingredients",
         title: "Ingredient Register",
-        subtitle: "Premium VYRON COST workflow for ingredient register.",
+        subtitle: "Premium VOLORA workflow for ingredient register.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6 xl:grid-cols-[0.75fr_1.35fr]">
-            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
               <div className="mb-5 flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
                   <Plus size={22} />
@@ -282,14 +282,14 @@ export default function IngredientRegisterClient({
                 )}
 
                 {message && (
-                  <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3 text-sm font-bold text-[#1D4ED8]">
+                  <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-4 py-3 text-sm font-bold text-[#163A48]">
                     {message}
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+            <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
               <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900">Ingredient Register</h2>

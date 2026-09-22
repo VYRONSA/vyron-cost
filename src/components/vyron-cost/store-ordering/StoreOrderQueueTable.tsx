@@ -75,7 +75,7 @@ export default function StoreOrderQueueTable({
                   if (column === "order") {
                     return (
                       <td key={column} className="px-4 py-3">
-                        <div className="flex items-center gap-2 font-bold text-[#0F172A]">
+                        <div className="flex items-center gap-2 font-bold text-[#0B202B]">
                           <ShoppingCart size={16} className="text-[#64748B]" />
                           {order.order_number}
                         </div>
@@ -110,7 +110,7 @@ export default function StoreOrderQueueTable({
                   }
                   if (column === "total") {
                     return (
-                      <td key={column} className="px-4 py-3 text-right text-sm font-bold text-[#0F172A]">
+                      <td key={column} className="px-4 py-3 text-right text-sm font-bold text-[#0B202B]">
                         {formatStoreOrderMoney(order.total)}
                       </td>
                     );

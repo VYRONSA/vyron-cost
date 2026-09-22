@@ -19,7 +19,7 @@ export default function ExportCentrePage() {
           <Link
             key={item.href}
             href={item.href}
-            className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)] transition hover:-translate-y-1 hover:shadow-xl"
+            className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)] transition hover:-translate-y-1 hover:shadow-xl"
           >
             <item.Icon className="text-blue-600" size={28} />
             <h2 className="mt-4 text-2xl font-black text-slate-950">{item.title}</h2>

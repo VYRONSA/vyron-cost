@@ -28,19 +28,19 @@ export default function FinalDemoChecklistClient() {
     <VyronPremiumPageShell
       config={{
         title: "Final Demo Checklist",
-        subtitle: "Premium VYRON COST workflow for final demo checklist.",
+        subtitle: "Premium VOLORA workflow for final demo checklist.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <div key={href} className="grid gap-4 rounded-[2rem] bg-white p-5 md:grid-cols-[60px_1fr_180px] md:items-center">
-                  <button onClick={() => setDone((current) => ({ ...current, [href]: !checked }))} className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-[#3B82F6]/100 text-white" : "bg-slate-100 text-slate-400"}`}>
+                  <button onClick={() => setDone((current) => ({ ...current, [href]: !checked }))} className={`flex h-12 w-12 items-center justify-center rounded-2xl ${checked ? "bg-[#2C5A6B]/100 text-white" : "bg-slate-100 text-slate-400"}`}>
                     <CheckCircle2 size={24} />
                   </button>
                   <div>
                     <div className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Final test {index + 1}</div>
                     <div className="font-black text-[#F8FAFC]">{label}</div>
                   </div>
-                  <Link href={href} className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-5 py-3 text-center text-sm font-black text-[#4D7C0F]">Open</Link>
+                  <Link href={href} className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-5 py-3 text-center text-sm font-black text-[#2F7C40]">Open</Link>
                 </div>
     </VyronPremiumPageShell>
   );

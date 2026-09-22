@@ -40,17 +40,17 @@ export default function InvoiceAiManager({
   return (
     <section className="grid gap-6">
       {message && (
-        <div className="rounded-3xl bg-[#3B82F6]/10 px-5 py-4 text-sm font-black text-[#1D4ED8]">
+        <div className="rounded-3xl bg-[#2C5A6B]/10 px-5 py-4 text-sm font-black text-[#163A48]">
           {message}
         </div>
       )}
 
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <h2 className="text-2xl font-black text-[#F8FAFC]">Invoice Queue</h2>
 
         <div className="mt-6 overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[1050px]">
-            <div className="grid grid-cols-7 bg-[#0b1210] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+            <div className="grid grid-cols-7 bg-[#081c27] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
               <div>Invoice</div>
               <div>Supplier</div>
               <div>Lines</div>
@@ -66,10 +66,10 @@ export default function InvoiceAiManager({
                 <div className="font-bold text-slate-600">{invoice.supplier_name_snapshot || "Supplier pending"}</div>
                 <div>{invoice.extracted_lines}</div>
                 <div className="font-black">{Number(invoice.confidence).toFixed(1)}%</div>
-                <div className="font-black text-[#1D4ED8]">{formatMoney(Number(invoice.estimated_impact))}</div>
+                <div className="font-black text-[#163A48]">{formatMoney(Number(invoice.estimated_impact))}</div>
                 <div><StatusPill tone={statusTone(invoice.status)}>{invoice.status}</StatusPill></div>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => updateInvoiceStatus(invoice.id, "Approved")} className="rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 p-2 text-[#1D4ED8]">
+                  <button type="button" onClick={() => updateInvoiceStatus(invoice.id, "Approved")} className="rounded-full border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 p-2 text-[#163A48]">
                     <CheckCircle2 size={16} />
                   </button>
                   <button type="button" onClick={() => updateInvoiceStatus(invoice.id, "Review")} className="rounded-full bg-[var(--vyron-warning-bg)] p-2 text-[var(--vyron-warning-fg)]">
@@ -85,12 +85,12 @@ export default function InvoiceAiManager({
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <h2 className="text-2xl font-black text-[#F8FAFC]">AI Extracted Lines</h2>
 
         <div className="mt-6 overflow-x-auto rounded-3xl border border-slate-100">
           <div className="min-w-[1180px]">
-            <div className="grid grid-cols-8 bg-[#0b1210] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+            <div className="grid grid-cols-8 bg-[#081c27] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
               <div>Raw Text</div>
               <div>Suggested Match</div>
               <div>Qty</div>
@@ -108,10 +108,10 @@ export default function InvoiceAiManager({
                 <div>{Number(line.quantity).toFixed(2)}</div>
                 <div>{line.unit}</div>
                 <div>{formatMoney(Number(line.line_total))}</div>
-                <div className="font-black text-[#1D4ED8]">{formatMoney(Number(line.extracted_unit_price))}</div>
+                <div className="font-black text-[#163A48]">{formatMoney(Number(line.extracted_unit_price))}</div>
                 <div><StatusPill tone={statusTone(line.status)}>{line.status}</StatusPill></div>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => updateLineStatus(line.id, "Approved")} className="rounded-full border border-[#3B82F6]/25 bg-[#3B82F6]/10 p-2 text-[#1D4ED8]">
+                  <button type="button" onClick={() => updateLineStatus(line.id, "Approved")} className="rounded-full border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 p-2 text-[#163A48]">
                     <CheckCircle2 size={16} />
                   </button>
                   <button type="button" onClick={() => updateLineStatus(line.id, "Review")} className="rounded-full bg-[var(--vyron-warning-bg)] p-2 text-[var(--vyron-warning-fg)]">

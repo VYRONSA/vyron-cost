@@ -86,9 +86,9 @@ export default function SupplierIntelligenceDashboardClient({ rows }: { rows: Su
         />
       ) : null}
 
-      <div className="overflow-x-auto rounded-2xl border border-[rgba(15,23,42,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 shadow-[0_2px_16px_rgba(0,0,0,0.14)]">
+      <div className="overflow-x-auto rounded-2xl border border-[rgba(11,32,43,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 shadow-[0_2px_16px_rgba(0,0,0,0.14)]">
         <div className="min-w-[1400px]">
-          <div className="grid grid-cols-12 bg-[#23304f] px-5 py-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">
+          <div className="grid grid-cols-12 bg-[#163a48] px-5 py-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#94A3B8]">
             <div className="col-span-2">Supplier</div>
             <div>Category</div>
             <div>Spend</div>
@@ -106,7 +106,7 @@ export default function SupplierIntelligenceDashboardClient({ rows }: { rows: Su
             <Link
               key={row.id}
               href={row.href}
-              className="grid grid-cols-12 items-center border-t border-white/10 px-5 py-4 text-sm text-[#CBD5E1] transition hover:bg-[#3B82F6]/5"
+              className="grid grid-cols-12 items-center border-t border-white/10 px-5 py-4 text-sm text-[#CBD5E1] transition hover:bg-[#2C5A6B]/5"
             >
               <div className="col-span-2 font-bold text-[#F8FAFC]">{row.supplier_name}</div>
               <div>{row.category}</div>
@@ -117,7 +117,7 @@ export default function SupplierIntelligenceDashboardClient({ rows }: { rows: Su
               <div>{row.duplicate_invoice_risk}</div>
               <div>{formatSupplierSpend(row.price_variance)}</div>
               <div>{row.reliability_score}</div>
-              <div className="font-bold text-[#3B82F6]">{formatSupplierSpend(row.negotiation_opportunity)}</div>
+              <div className="font-bold text-[#2C5A6B]">{formatSupplierSpend(row.negotiation_opportunity)}</div>
               <div className="font-bold text-[var(--vyron-warning-fg)]">{row.supplier_risk_score}</div>
               <div className="text-xs font-semibold text-[#94A3B8]">{row.recommended_action}</div>
             </Link>

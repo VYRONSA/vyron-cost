@@ -48,7 +48,7 @@ export function VyronMetricCard({
         >
           {label}
         </div>
-        {icon ? <div className="vyron-metric-icon shrink-0 text-[#1D6BFF] opacity-90">{icon}</div> : null}
+        {icon ? <div className="vyron-metric-icon shrink-0 text-[#1F4757] opacity-90">{icon}</div> : null}
       </div>
       <div
         className={`vyron-metric-value relative mt-auto min-w-0 break-words pt-3 text-base font-black leading-snug text-balance sm:text-lg xl:text-xl ${valueClass(tone, value)}`}
@@ -66,7 +66,7 @@ export function VyronMetricCard({
   );
 
   // `vyron-metric-card` is the hook the alternating blue band in globals.css paints.
-  const className = `vyron-metric-card group relative flex h-full min-h-[124px] min-w-0 flex-col overflow-hidden rounded-2xl border bg-white p-4 shadow-[0_4px_20px_rgba(15,23,42,0.05)] transition hover:border-[rgba(15,23,42,0.12)] hover:shadow-[0_8px_28px_rgba(15,23,42,0.08)] ${toneBorder[tone]}`;
+  const className = `vyron-metric-card group relative flex h-full min-h-[124px] min-w-0 flex-col overflow-hidden rounded-2xl border bg-white p-4 shadow-[0_4px_20px_rgba(11,32,43,0.05)] transition hover:border-[rgba(11,32,43,0.12)] hover:shadow-[0_8px_28px_rgba(11,32,43,0.08)] ${toneBorder[tone]}`;
 
   if (href) {
     return (

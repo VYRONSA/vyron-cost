@@ -77,7 +77,7 @@ export default async function SupplierRiskAlertPage({
 
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">
           <h2 className="text-xl font-black text-slate-900">Recommended Action</h2>
-          <div className="mt-3 rounded-2xl bg-[#3B82F6]/10 p-4 text-sm font-bold text-[#4D7C0F]">
+          <div className="mt-3 rounded-2xl bg-[#2C5A6B]/10 p-4 text-sm font-bold text-[#2F7C40]">
             Investigate supplier pricing, confirm PO compliance, and trigger negotiation if variance is outside threshold.
           </div>
           <div className="mt-4 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Affected Products</div>

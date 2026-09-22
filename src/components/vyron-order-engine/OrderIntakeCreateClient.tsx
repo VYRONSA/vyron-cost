@@ -107,7 +107,7 @@ export default function OrderIntakeCreateClient({ initialMode }: { initialMode: 
         </Link>
         <h1 className="mt-2 text-2xl font-black text-slate-900">New order</h1>
         <p className="mt-1 max-w-3xl text-sm font-semibold text-slate-500">
-          Record the order exactly as the customer sent it. VYRON then matches the customer and products by exact identifiers only — anything it
+          Record the order exactly as the customer sent it. VOLORA then matches the customer and products by exact identifiers only — anything it
           cannot match with certainty is raised for a person to resolve.
         </p>
       </div>

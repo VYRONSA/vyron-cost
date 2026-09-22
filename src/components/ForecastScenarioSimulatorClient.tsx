@@ -37,12 +37,12 @@ export default function ForecastScenarioSimulatorClient({ snapshot }: { snapshot
       config={{
         visualVariant: "finance",
         title: "Forecast Scenario Simulator",
-        subtitle: "Premium VYRON COST workflow for forecast scenario simulator.",
+        subtitle: "Premium VOLORA workflow for forecast scenario simulator.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
-            <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+            <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
               <h2 className="text-2xl font-black text-[#F8FAFC]">Scenario Controls</h2>
               <div className="mt-6 grid gap-5">
                 {controls.map(({ label, value, setter }) => (
@@ -59,12 +59,12 @@ export default function ForecastScenarioSimulatorClient({ snapshot }: { snapshot
               </div>
             </div>
 
-            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">Forecast Result</div>
+            <div className="rounded-[2rem] bg-[#061722] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">Forecast Result</div>
               <div className="mt-6 grid gap-5 md:grid-cols-2">
                 <div className="rounded-3xl bg-white/10 p-5">
                   <div className="text-xs font-black uppercase text-slate-400">Cost pressure</div>
-                  <div className="mt-2 text-4xl font-black text-[#3B82F6]">{scenario.costPressure.toFixed(1)}%</div>
+                  <div className="mt-2 text-4xl font-black text-[#2C5A6B]">{scenario.costPressure.toFixed(1)}%</div>
                 </div>
                 <div className="rounded-3xl bg-white/10 p-5">
                   <div className="text-xs font-black uppercase text-slate-400">Forecast GP</div>

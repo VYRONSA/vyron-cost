@@ -40,7 +40,7 @@ const sections = [
       { label: "Client Directory", href: "/developer/clients", icon: Users },
       { label: "Client Setup", href: "/developer/setup", icon: Settings },
       { label: "Deployment Readiness", href: "/deployment-readiness", icon: Shield },
-      { label: "Back to VYRON COST App", href: "/dashboard", icon: Home },
+      { label: "Back to VOLORA App", href: "/dashboard", icon: Home },
     ],
   },
 ];
@@ -75,8 +75,8 @@ export default function DeveloperShell({
       className={`min-h-screen ${M.page} xl:grid xl:grid-cols-[292px_minmax(0,1fr)]`}
       style={{ ["--vyron-sidebar-width" as string]: SIDEBAR_WIDTH }}
     >
-      <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-[292px] shrink-0 flex-col overflow-hidden border-r border-[#E2E8F0] bg-white px-4 py-5 shadow-[4px_0_24px_rgba(15,23,42,0.04)] xl:relative xl:z-30 xl:block">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(29,107,255,0.04),transparent_42%)]" />
+      <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-[292px] shrink-0 flex-col overflow-hidden border-r border-[#E2E8F0] bg-white px-4 py-5 shadow-[4px_0_24px_rgba(11,32,43,0.04)] xl:relative xl:z-30 xl:block">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(22,58,72,0.04),transparent_42%)]" />
         <div className="relative flex h-full min-h-0 flex-col">
           <div className="shrink-0 px-2 py-2">
             <Logo />
@@ -113,7 +113,7 @@ export default function DeveloperShell({
                             active ? M.navActiveDashboard : M.navInactive
                           )}
                         >
-                          <item.icon size={19} className={active ? "text-white" : "text-[#1D6BFF]"} />
+                          <item.icon size={19} className={active ? "text-white" : "text-[#1F4757]"} />
                           <span className="min-w-0 flex-1 truncate">{item.label}</span>
                         </Link>
                       );
@@ -145,7 +145,7 @@ export default function DeveloperShell({
             </button>
             <Link href="/dashboard" className={`${M.primaryBtn} h-10 px-5 text-sm`}>
               <Home size={17} />
-              <span className="hidden sm:inline">Back to VYRON COST App</span>
+              <span className="hidden sm:inline">Back to VOLORA App</span>
             </Link>
             <button
               type="button"

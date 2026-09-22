@@ -18,7 +18,7 @@ export default async function RecoveryOpportunityDetailPage({
   if (!opportunity) {
     return (
       <VyronCostAiShell hidePageHeader title="Recovery Opportunity Not Found" subtitle="This opportunity could not be loaded.">
-        <div className="rounded-[2rem] bg-white p-8 font-bold text-slate-600 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-8 font-bold text-slate-600 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           Recovery opportunity not found.
         </div>
       </VyronCostAiShell>
@@ -30,38 +30,38 @@ export default async function RecoveryOpportunityDetailPage({
       subtitle="Client-explainable recovery calculation, formula, source and recommended action."
     >
       <section className="grid gap-5 md:grid-cols-6">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Type</div>
           <div className="mt-3 text-2xl font-black text-slate-900">{opportunity.opportunity_type}</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Monthly</div>
           <div className="mt-3 text-4xl font-black text-blue-700">{money(opportunity.monthly_value)}</div>
         </div>
-        <div className="rounded-[2rem] bg-[#3B82F6]/10 p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
-          <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Annual</div>
-          <div className="mt-3 text-4xl font-black text-[#84CC16]">{money(opportunity.annual_value)}</div>
+        <div className="rounded-[2rem] bg-[#2C5A6B]/10 p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
+          <div className="text-xs font-black uppercase tracking-[0.14em] text-[#55B968]">Annual</div>
+          <div className="mt-3 text-4xl font-black text-[#55B968]">{money(opportunity.annual_value)}</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Recovery Confidence</div>
           <div className="mt-3 text-2xl font-black text-slate-900">{opportunity.confidence_level || "Medium Confidence"}</div>
           <div className="mt-1 text-sm font-bold text-slate-500">{Number(opportunity.confidence || 0).toFixed(0)}%</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Status</div>
           <div className="mt-3 text-2xl font-black text-blue-700">{opportunity.status || "Identified"}</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Owner</div>
           <div className="mt-3 text-2xl font-black text-slate-900">{opportunity.owner_name || "Unassigned"}</div>
         </div>
       </section>
 
       <section className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <h2 className="text-xl font-black text-slate-900">How This Is Calculated</h2>
           <p className="mt-4 text-sm font-semibold leading-7 text-slate-600">
-            {opportunity.description || "This opportunity was detected from current VYRON COST data."}
+            {opportunity.description || "This opportunity was detected from current VOLORA data."}
           </p>
 
           <div className="mt-5 rounded-3xl bg-slate-50 p-5">
@@ -103,9 +103,9 @@ export default async function RecoveryOpportunityDetailPage({
             </div>
           </div>
 
-          <div className="mt-5 rounded-3xl bg-[#3B82F6]/10 p-5">
-            <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Recommended Action</div>
-            <div className="mt-2 text-lg font-black text-[#4D7C0F]">
+          <div className="mt-5 rounded-3xl bg-[#2C5A6B]/10 p-5">
+            <div className="text-xs font-black uppercase tracking-[0.14em] text-[#55B968]">Recommended Action</div>
+            <div className="mt-2 text-lg font-black text-[#2F7C40]">
               {opportunity.recommended_action || "Review and investigate this opportunity."}
             </div>
           </div>
@@ -132,7 +132,7 @@ export default async function RecoveryOpportunityDetailPage({
         </div>
 
         <div className="space-y-5">
-          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <h2 className="text-xl font-black text-slate-900">Linked Records</h2>
             <div className="mt-5 space-y-3">
               {opportunity.product_name && (
@@ -192,7 +192,7 @@ export default async function RecoveryOpportunityDetailPage({
             </div>
           </div>
 
-          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+          <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
             <h2 className="text-xl font-black text-slate-900">Data Source</h2>
             <p className="mt-4 text-sm font-semibold leading-7 text-slate-600">
               {opportunity.data_source || "System calculation"}
@@ -202,11 +202,11 @@ export default async function RecoveryOpportunityDetailPage({
             </div>
 
             {drilldown?.affectedProducts?.length ? (
-              <div className="mt-5 rounded-3xl bg-[#3B82F6]/10 p-5">
-                <div className="text-xs font-black uppercase tracking-[0.14em] text-[#1D4ED8]">Affected Products</div>
+              <div className="mt-5 rounded-3xl bg-[#2C5A6B]/10 p-5">
+                <div className="text-xs font-black uppercase tracking-[0.14em] text-[#163A48]">Affected Products</div>
                 <div className="mt-3 space-y-2">
                   {drilldown.affectedProducts.slice(0, 6).map((product) => (
-                    <div key={product.productId} className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-[#4D7C0F]">
+                    <div key={product.productId} className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-[#2F7C40]">
                       {product.productName} · Cost diff {money(product.costDifference)} · GP impact {product.gpImpact.toFixed(2)}%
                     </div>
                   ))}

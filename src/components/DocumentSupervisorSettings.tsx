@@ -96,7 +96,7 @@ export default function DocumentSupervisorSettings() {
         </p>
       </div>
 
-      {message ? <p className="rounded-xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-2 text-sm font-semibold text-[#4D7C0F]">{message}</p> : null}
+      {message ? <p className="rounded-xl border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-4 py-2 text-sm font-semibold text-[#2F7C40]">{message}</p> : null}
       {error ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800">{error}</p> : null}
 
       <section className="rounded-[2rem] border border-blue-100 bg-white p-6 space-y-4">

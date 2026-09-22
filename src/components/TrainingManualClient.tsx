@@ -29,7 +29,7 @@ export default function TrainingManualClient() {
     <VyronPremiumPageShell
       config={{
         title: "Training Manual",
-        subtitle: "Premium VYRON COST workflow for training manual.",
+        subtitle: "Premium VOLORA workflow for training manual.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -37,12 +37,12 @@ export default function TrainingManualClient() {
             <div className="rounded-[2rem] border border-white bg-white p-6 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-black text-[#F8FAFC]">VYRON COST Training Manual</h2>
+                  <h2 className="text-2xl font-black text-[#F8FAFC]">VOLORA Training Manual</h2>
                   <p className="mt-2 text-sm text-slate-500">Step-by-step guide for client demo and month-end workflow.</p>
                 </div>
                 <a
                   href="/api/training-manual"
-                  className="rounded-xl vyron-grad-deep px-5 py-3 text-sm font-black text-[#BFDBFE]"
+                  className="rounded-xl vyron-grad-deep px-5 py-3 text-sm font-black text-[#BCCDD5]"
                 >
                   Download Full Training Manual PDF
                 </a>
@@ -52,7 +52,7 @@ export default function TrainingManualClient() {
             <div className="grid gap-4 md:grid-cols-2">
               {manualSections.map((section) => (
                 <div key={section.n} className="rounded-[2rem] border border-white bg-white p-5 shadow-sm">
-                  <div className="text-xs font-black uppercase tracking-[0.16em] text-[#1D4ED8]">Step {section.n}</div>
+                  <div className="text-xs font-black uppercase tracking-[0.16em] text-[#163A48]">Step {section.n}</div>
                   <h3 className="mt-2 text-lg font-black text-[#F8FAFC]">{section.title}</h3>
                   <p className="mt-2 text-sm leading-7 text-slate-600">{section.body}</p>
                 </div>
@@ -60,7 +60,7 @@ export default function TrainingManualClient() {
             </div>
 
             <div className="rounded-[2rem] vyron-grad-deep p-6 text-white">
-              <h3 className="text-lg font-black text-[#BFDBFE]">Quick links for training</h3>
+              <h3 className="text-lg font-black text-[#BCCDD5]">Quick links for training</h3>
               <div className="mt-4 flex flex-wrap gap-3 text-sm font-black">
                 <Link href="/products" className="rounded-full bg-white/10 px-4 py-2">Products</Link>
                 <Link href="/recipes" className="rounded-full bg-white/10 px-4 py-2">Recipes & BOM</Link>

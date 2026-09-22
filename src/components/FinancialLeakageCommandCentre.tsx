@@ -21,7 +21,7 @@ export default function FinancialLeakageCommandCentre({
     <div className="flex min-h-0 flex-col gap-3">
       <header className="shrink-0 flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="text-lg font-black uppercase tracking-[0.06em] text-[#0F172A] md:text-xl">
+          <h1 className="text-lg font-black uppercase tracking-[0.06em] text-[#0B202B] md:text-xl">
             Profit Protection Command Centre
           </h1>
           <p className="mt-1 text-xs leading-5 text-[#64748B] md:text-sm">

@@ -90,7 +90,7 @@ export default function StoreOrderDashboardClient() {
                 <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#64748B]">
                   {widget.label}
                 </div>
-                <div className="mt-2 text-3xl font-black text-[#0F172A]">
+                <div className="mt-2 text-3xl font-black text-[#0B202B]">
                   {loading ? "—" : display}
                 </div>
               </Link>

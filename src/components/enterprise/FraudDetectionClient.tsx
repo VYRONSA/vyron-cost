@@ -21,7 +21,7 @@ export default function FraudDetectionClient({ alerts }: { alerts: FraudAlert[] 
     <VyronPremiumPageShell
       config={{
         title: "Fraud Detection",
-        subtitle: "Premium VYRON COST workflow for fraud detection.",
+        subtitle: "Premium VOLORA workflow for fraud detection.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >

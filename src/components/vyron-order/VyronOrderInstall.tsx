@@ -116,12 +116,12 @@ export default function VyronOrderInstall({ open, onClose }: { open: boolean; on
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-end justify-center bg-[rgba(7,17,31,0.45)] backdrop-blur-sm sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-[120] flex items-end justify-center bg-[rgba(6,23,34,0.45)] backdrop-blur-sm sm:items-center sm:p-4">
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Install VYRON ORDER"
-        className="w-full max-w-md rounded-t-2xl border border-[rgba(15,23,42,0.07)] bg-white p-5 shadow-[var(--vyron-elev-4)] sm:rounded-2xl sm:p-6"
+        aria-label="Install VOLORA Order"
+        className="w-full max-w-md rounded-t-2xl border border-[rgba(11,32,43,0.07)] bg-white p-5 shadow-[var(--vyron-elev-4)] sm:rounded-2xl sm:p-6"
       >
         <div className="flex items-start justify-between gap-3">
           <span className="flex items-center gap-3">
@@ -131,7 +131,7 @@ export default function VyronOrderInstall({ open, onClose }: { open: boolean; on
             </span>
             <span className="min-w-0">
               <span className="block text-[1.05rem] font-black leading-none tracking-[0.14em]">
-                <span className="text-[#0F172A]">VYRON</span>
+                <span className="text-[#0B202B]">VOLORA</span>
                 <span className="vyron-grad-text">ORDER</span>
               </span>
               <span className="mt-1 block text-xs font-medium text-[#64748B]">Add it to your home screen</span>
@@ -141,7 +141,7 @@ export default function VyronOrderInstall({ open, onClose }: { open: boolean; on
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#64748B] transition hover:bg-[rgba(15,23,42,0.05)] hover:text-[#0F172A]"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#64748B] transition hover:bg-[rgba(11,32,43,0.05)] hover:text-[#0B202B]"
           >
             <X size={18} />
           </button>
@@ -149,7 +149,7 @@ export default function VyronOrderInstall({ open, onClose }: { open: boolean; on
 
         {installed ? (
           <p className={`${M.alertSuccess} mt-5 flex items-center gap-2 px-4 py-3 text-sm font-bold`}>
-            <Check size={16} /> VYRON ORDER is installed on this device.
+            <Check size={16} /> VOLORA Order is installed on this device.
           </p>
         ) : ios ? (
           <div className="mt-5">
@@ -158,20 +158,20 @@ export default function VyronOrderInstall({ open, onClose }: { open: boolean; on
             </p>
             <ol className="mt-4 space-y-3">
               <li className="flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(15,23,42,0.05)] text-xs font-black text-[#0F172A]">1</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(11,32,43,0.05)] text-xs font-black text-[#0B202B]">1</span>
                 <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-[#334155]">
-                  Tap <Share size={16} className="shrink-0 text-[#4F46E5]" /> Share at the bottom of Safari
+                  Tap <Share size={16} className="shrink-0 text-[#1F4757]" /> Share at the bottom of Safari
                 </span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(15,23,42,0.05)] text-xs font-black text-[#0F172A]">2</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(11,32,43,0.05)] text-xs font-black text-[#0B202B]">2</span>
                 <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-[#334155]">
-                  Choose <PlusSquare size={16} className="shrink-0 text-[#4F46E5]" /> Add to Home Screen
+                  Choose <PlusSquare size={16} className="shrink-0 text-[#1F4757]" /> Add to Home Screen
                 </span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(15,23,42,0.05)] text-xs font-black text-[#0F172A]">3</span>
-                <span className="min-w-0 text-sm font-medium text-[#334155]">Tap Add — it appears as VYRON ORDER</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(11,32,43,0.05)] text-xs font-black text-[#0B202B]">3</span>
+                <span className="min-w-0 text-sm font-medium text-[#334155]">Tap Add — it appears as VOLORA Order</span>
               </li>
             </ol>
             <p className="mt-4 text-xs font-medium text-[#94A3B8]">
@@ -190,7 +190,7 @@ export default function VyronOrderInstall({ open, onClose }: { open: boolean; on
               disabled={busy}
               className={`${M.primaryBtn} mt-5 h-12 w-full text-xs uppercase tracking-[0.1em] disabled:opacity-50`}
             >
-              <Download size={16} /> {busy ? "Installing…" : "Install VYRON ORDER"}
+              <Download size={16} /> {busy ? "Installing…" : "Install VOLORA Order"}
             </button>
           </div>
         ) : (

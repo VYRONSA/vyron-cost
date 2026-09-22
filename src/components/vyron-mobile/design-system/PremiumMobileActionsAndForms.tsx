@@ -62,7 +62,7 @@ export function PremiumMobileTextInput({
   return (
     <label className={`${MOBILE_TYPOGRAPHY.family} block`}>
       <div className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{label}</div>
-      <div className="flex min-h-14 items-center gap-2 rounded-[1.05rem] border border-slate-200 bg-white px-4 py-3 shadow-[0_8px_20px_rgba(15,23,42,0.05)]">
+      <div className="flex min-h-14 items-center gap-2 rounded-[1.05rem] border border-slate-200 bg-white px-4 py-3 shadow-[0_8px_20px_rgba(11,32,43,0.05)]">
         <input
           className="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-900 outline-none placeholder:text-slate-400"
           type={type}
@@ -90,7 +90,7 @@ export function PremiumMobileSelect({
     <button
       type="button"
       onClick={onClick}
-      className={`${MOBILE_TYPOGRAPHY.family} flex min-h-14 w-full items-center gap-2 rounded-[1.05rem] border border-slate-200 bg-white px-4 py-3 text-left shadow-[0_8px_20px_rgba(15,23,42,0.05)]`}
+      className={`${MOBILE_TYPOGRAPHY.family} flex min-h-14 w-full items-center gap-2 rounded-[1.05rem] border border-slate-200 bg-white px-4 py-3 text-left shadow-[0_8px_20px_rgba(11,32,43,0.05)]`}
     >
       <div className="min-w-0 flex-1">
         <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{label}</div>
@@ -103,7 +103,7 @@ export function PremiumMobileSelect({
 
 export function PremiumMobileDateField({ label, value }: { label: string; value: string }) {
   return (
-    <label className={`${MOBILE_TYPOGRAPHY.family} flex min-h-14 w-full items-center gap-3 rounded-[1.05rem] border border-slate-200 bg-white px-4 py-3 text-left shadow-[0_8px_20px_rgba(15,23,42,0.05)]`}>
+    <label className={`${MOBILE_TYPOGRAPHY.family} flex min-h-14 w-full items-center gap-3 rounded-[1.05rem] border border-slate-200 bg-white px-4 py-3 text-left shadow-[0_8px_20px_rgba(11,32,43,0.05)]`}>
       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
         <Calendar size={16} />
       </div>

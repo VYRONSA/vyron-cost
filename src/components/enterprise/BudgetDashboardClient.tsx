@@ -18,7 +18,7 @@ export default function BudgetDashboardClient({ dashboard }: { dashboard: Budget
     <VyronPremiumPageShell
       config={{
         title: "Budget Dashboard",
-        subtitle: "Premium VYRON COST workflow for budget dashboard.",
+        subtitle: "Premium VOLORA workflow for budget dashboard.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -46,7 +46,7 @@ export default function BudgetDashboardClient({ dashboard }: { dashboard: Budget
               </div>
               <div className="rounded-2xl bg-white p-5 shadow-sm">
                 <div className="text-xs font-black uppercase text-slate-400">Variance</div>
-                <div className={`mt-2 text-2xl font-black ${dashboard.byPeriod[period].actual > dashboard.byPeriod[period].budget ? "text-red-600" : "text-[#84CC16]"}`}>
+                <div className={`mt-2 text-2xl font-black ${dashboard.byPeriod[period].actual > dashboard.byPeriod[period].budget ? "text-red-600" : "text-[#55B968]"}`}>
                   {money(dashboard.byPeriod[period].actual - dashboard.byPeriod[period].budget)}
                 </div>
               </div>
@@ -54,7 +54,7 @@ export default function BudgetDashboardClient({ dashboard }: { dashboard: Budget
             <EnterpriseScrollContainer className="rounded-[2rem] bg-white shadow-sm">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-900 text-left text-[10px] font-black uppercase text-[#3B82F6]">
+                  <tr className="bg-slate-900 text-left text-[10px] font-black uppercase text-[#2C5A6B]">
                     <th className="p-4">Category</th>
                     <th className="p-4">Period</th>
                     <th className="p-4">Budget</th>
@@ -70,7 +70,7 @@ export default function BudgetDashboardClient({ dashboard }: { dashboard: Budget
                       <td className="p-4">{r.periodLabel}</td>
                       <td className="p-4">{money(r.budget)}</td>
                       <td className="p-4">{money(r.actual)}</td>
-                      <td className={`p-4 font-bold ${r.variance > 0 ? "text-red-600" : "text-[#84CC16]"}`}>{money(r.variance)}</td>
+                      <td className={`p-4 font-bold ${r.variance > 0 ? "text-red-600" : "text-[#55B968]"}`}>{money(r.variance)}</td>
                       <td className="p-4">{r.variancePct.toFixed(1)}%</td>
                     </tr>
                   ))}

@@ -141,19 +141,19 @@ export default function StockMovementsPageClient() {
             onClick={() => setMode(action)}
             className={`rounded-2xl border px-4 py-5 text-left transition ${
               mode === action
-                ? "border-[#1D6BFF] bg-[#EFF6FF] shadow-sm"
-                : "border-[#E2E8F0] bg-white hover:border-[#93C5FD]"
+                ? "border-[#1F4757] bg-[#EEF3F5] shadow-sm"
+                : "border-[#E2E8F0] bg-white hover:border-[#93AEB9]"
             }`}
           >
             <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#64748B]">Action</div>
-            <div className="mt-1 text-lg font-black text-[#0F172A]">{ACTION_LABELS[action]}</div>
+            <div className="mt-1 text-lg font-black text-[#0B202B]">{ACTION_LABELS[action]}</div>
           </button>
         ))}
       </div>
 
       {mode ? (
         <section className={`${VYRON_MASTER.moduleDataSection} mt-6 space-y-4`}>
-          <h2 className="text-lg font-black text-[#0F172A]">{ACTION_LABELS[mode]}</h2>
+          <h2 className="text-lg font-black text-[#0B202B]">{ACTION_LABELS[mode]}</h2>
 
           <label className="block">
             <span className="text-xs font-bold uppercase tracking-wide text-[#64748B]">Stock Item</span>
@@ -175,7 +175,7 @@ export default function StockMovementsPageClient() {
 
           {selectedItem ? (
             <div className="rounded-xl bg-[#F8FAFC] px-4 py-3 text-sm text-[#64748B]">
-              On hand: <strong className="text-[#0F172A]">{selectedItem.qty_on_hand}</strong> {selectedItem.unit}
+              On hand: <strong className="text-[#0B202B]">{selectedItem.qty_on_hand}</strong> {selectedItem.unit}
             </div>
           ) : null}
 
@@ -255,7 +255,7 @@ export default function StockMovementsPageClient() {
             type="button"
             disabled={submitting}
             onClick={() => void submit()}
-            className="rounded-xl bg-[#1D6BFF] px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
+            className="rounded-xl bg-[#1F4757] px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
           >
             {submitting ? "Posting…" : "Post Transaction"}
           </button>

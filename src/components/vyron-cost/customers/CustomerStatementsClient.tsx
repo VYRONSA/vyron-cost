@@ -100,11 +100,11 @@ export default function CustomerStatementsClient() {
         intelligenceItems: [
           { label: "Outstanding", detail: "Unpaid invoices are cash still owed — chase before terms slip." },
           { label: "Period view", detail: "Date-range filtering supports month-end debtor reconciliation." },
-          { label: "Email discipline", detail: "Statements from VYRON COST keep a consistent commercial record." },
+          { label: "Email discipline", detail: "Statements from VOLORA keep a consistent commercial record." },
         ],
       }}
     >
-      <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <VyronPremiumSectionHeading eyebrow="Filter" title="Statement parameters" subtitle="Select customer and date range." />
 
         <div className="mt-5 grid gap-4 md:grid-cols-3">
@@ -133,17 +133,17 @@ export default function CustomerStatementsClient() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-600">Outstanding Balance</p>
           <p className="mt-2 text-3xl font-black text-slate-950">{formatCurrency(outstanding)}</p>
         </div>
-        <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-600">Total Sales (Period)</p>
           <p className="mt-2 text-3xl font-black text-slate-950">{formatCurrency(totalSales)}</p>
         </div>
       </section>
 
-      <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <section className="rounded-[2rem] border border-blue-100 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <VyronPremiumSectionHeading eyebrow="History" title="Invoice history" />
         <EnterpriseScrollContainer className="mt-4 rounded-3xl border border-slate-100">
           <table className="min-w-[720px] w-full text-left text-sm">

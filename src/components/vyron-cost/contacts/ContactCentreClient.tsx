@@ -452,7 +452,7 @@ export default function ContactCentreClient() {
           ].map((card) => (
             <div key={card.label} className="rounded-2xl border border-[#E2E8F0] bg-white px-5 py-4">
               <div className="text-xs font-bold uppercase tracking-wide text-[#64748B]">{card.label}</div>
-              <div className="mt-2 text-3xl font-black text-[#0F172A]">{card.value}</div>
+              <div className="mt-2 text-3xl font-black text-[#0B202B]">{card.value}</div>
             </div>
           ))}
         </section>
@@ -467,7 +467,7 @@ export default function ContactCentreClient() {
                   onClick={() => setFilter(item.key)}
                   className={`rounded-full px-4 py-2 text-sm font-bold ${
                     filter === item.key
-                      ? "bg-[#0F172A] text-white"
+                      ? "bg-[#0B202B] text-white"
                       : "border border-[#E2E8F0] bg-white text-[#334155] hover:bg-[#F8FAFC]"
                   }`}
                 >
@@ -481,7 +481,7 @@ export default function ContactCentreClient() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search contacts"
-                className="w-full rounded-xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-3 text-sm font-medium text-[#0F172A]"
+                className="w-full rounded-xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-3 text-sm font-medium text-[#0B202B]"
               />
             </div>
           </div>
@@ -565,7 +565,7 @@ export default function ContactCentreClient() {
                         />
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2 font-bold text-[#0F172A]">
+                        <div className="flex items-center gap-2 font-bold text-[#0B202B]">
                           <BookUser size={16} className="text-[#64748B]" />
                           {contact.contact_name}
                         </div>
@@ -621,7 +621,7 @@ export default function ContactCentreClient() {
           />
           <div className="relative h-full w-full max-w-md overflow-y-auto bg-white shadow-2xl pointer-events-auto">
             <div className="sticky top-0 flex items-center justify-between border-b border-[#E2E8F0] bg-white px-6 py-4">
-              <h2 className="text-lg font-black text-[#0F172A]">Contact Detail</h2>
+              <h2 className="text-lg font-black text-[#0B202B]">Contact Detail</h2>
               <button
                 type="button"
                 onClick={() => setSelectedContact(null)}
@@ -638,7 +638,7 @@ export default function ContactCentreClient() {
                 <>
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wide text-[#64748B]">Contact Name</div>
-                    <div className="mt-1 text-xl font-black text-[#0F172A]">{selectedContact.contact_name}</div>
+                    <div className="mt-1 text-xl font-black text-[#0B202B]">{selectedContact.contact_name}</div>
                     <Link href={`/contacts/${selectedContact.id}`} className="mt-2 inline-block text-xs font-black text-blue-700 hover:underline">
                       Open Full Detail Page
                     </Link>

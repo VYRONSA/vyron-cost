@@ -233,7 +233,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-black uppercase text-[#4D7C0F]">Required Ingredients</h3>
+          <h3 className="text-sm font-black uppercase text-[#2F7C40]">Required Ingredients</h3>
           <ul className="mt-3 space-y-2 text-sm font-semibold">
             {ingredients.map((l) => (
               <li key={l.id} className="flex justify-between border-b border-slate-50 py-2">
@@ -244,7 +244,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
               </li>
             ))}
           </ul>
-          <h3 className="mt-6 text-sm font-black uppercase text-[#4D7C0F]">Required Packaging</h3>
+          <h3 className="mt-6 text-sm font-black uppercase text-[#2F7C40]">Required Packaging</h3>
           <ul className="mt-3 space-y-2 text-sm font-semibold">
             {packaging.map((l) => (
               <li key={l.id} className="flex justify-between border-b border-slate-50 py-2">
@@ -290,8 +290,8 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
       </div>
 
       {run.status === "Completed" ? (
-        <div className="rounded-[2rem] border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-6">
-          <h3 className="text-sm font-black uppercase text-[#4D7C0F]">Variance Analysis</h3>
+        <div className="rounded-[2rem] border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-6">
+          <h3 className="text-sm font-black uppercase text-[#2F7C40]">Variance Analysis</h3>
           <div className="mt-4 grid gap-3 sm:grid-cols-3 text-sm font-bold">
             <div>Cost variance: {run.cost_variance_pct}%</div>
             <div>Usage variance: {run.usage_variance_pct}%</div>

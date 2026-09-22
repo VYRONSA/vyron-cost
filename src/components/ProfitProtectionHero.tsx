@@ -6,7 +6,7 @@ export default function ProfitProtectionHero({ kpis }: { kpis: LeakageKpis }) {
   return (
     <VyronSurfaceCard elevated accent className="h-full p-4 md:p-5">
       <div className="vyron-section-label">Recoverable Annual Profit</div>
-      <div className="mt-1 text-[3.25rem] font-black leading-none tracking-tight text-[#0F172A] md:text-[4.5rem] lg:text-[5rem]">
+      <div className="mt-1 text-[3.25rem] font-black leading-none tracking-tight text-[#0B202B] md:text-[4.5rem] lg:text-[5rem]">
         {formatCompactAnnual(kpis.recoverableAnnual)}
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-[#E2E8F0] pt-3">
@@ -16,13 +16,13 @@ export default function ProfitProtectionHero({ kpis }: { kpis: LeakageKpis }) {
         </div>
         <div className="rounded-lg bg-[#F8FAFC] px-3 py-2">
           <div className="text-[9px] font-black uppercase tracking-[0.14em] text-[#64748B]">Monthly Leakage</div>
-          <div className="text-sm font-black text-[#0F172A]">{formatExecutiveMoney(kpis.estimatedMonthlyLeakage)}</div>
+          <div className="text-sm font-black text-[#0B202B]">{formatExecutiveMoney(kpis.estimatedMonthlyLeakage)}</div>
         </div>
         <div className="rounded-lg bg-[#F8FAFC] px-3 py-2">
           <div className="text-[9px] font-black uppercase tracking-[0.14em] text-[#64748B]">Recovery Rate</div>
-          <div className="text-sm font-black text-[#2563EB]">{kpis.recoveryRatePercent}%</div>
+          <div className="text-sm font-black text-[#1F4757]">{kpis.recoveryRatePercent}%</div>
         </div>
-        <Link href="/recovery-opportunities" className="ml-auto rounded-lg bg-[#60A5FA] px-3 py-2 text-[11px] font-black text-[#0F172A]">
+        <Link href="/recovery-opportunities" className="ml-auto rounded-lg bg-[#5F8595] px-3 py-2 text-[11px] font-black text-[#0B202B]">
           View Recovery
         </Link>
       </div>

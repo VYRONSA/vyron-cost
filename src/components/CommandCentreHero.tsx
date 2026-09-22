@@ -32,12 +32,12 @@ export default function CommandCentreHero({
     <section className="relative mb-8">
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <VyronPremiumCard className="overflow-hidden p-8 md:p-10 lg:p-12" glow>
-          <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#60A5FA]/10 blur-3xl" />
+          <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#5F8595]/10 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-16 left-1/3 h-48 w-48 rounded-full bg-[#1f4b38]/60 blur-3xl" />
 
           <div className="relative">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#60A5FA]/30 bg-[#60A5FA]/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-[#BFDBFE]">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-[#60A5FA] shadow-[0_0_12px_#60A5FA]" />
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#5F8595]/30 bg-[#5F8595]/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-[#BCCDD5]">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-[#5F8595] shadow-[0_0_12px_#5F8595]" />
               Live Intelligence
             </div>
 
@@ -63,14 +63,14 @@ export default function CommandCentreHero({
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
           <VyronPremiumCard className="p-6 vyron-glow-lime xl:col-span-1">
-            <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#BFDBFE]">Recoverable Profit</div>
-            <div className="mt-3 text-5xl font-black tracking-tight text-[#BFDBFE] md:text-6xl">
+            <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#BCCDD5]">Recoverable Profit</div>
+            <div className="mt-3 text-5xl font-black tracking-tight text-[#BCCDD5] md:text-6xl">
               {formatAnnualCompact(kpis.recoverableAnnual)}
             </div>
             <div className="mt-2 text-sm font-black uppercase tracking-[0.18em] text-white/45">per year</div>
             <Link
               href="/recovery-opportunities"
-              className="mt-6 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#BFDBFE] hover:text-white"
+              className="mt-6 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#BCCDD5] hover:text-white"
             >
               View recovery
               <ArrowUpRight size={14} />
@@ -80,7 +80,7 @@ export default function CommandCentreHero({
           <VyronPremiumCard className="p-6">
             <div className="text-[10px] font-black uppercase tracking-[0.28em] text-white/45">Active Risks</div>
             <div className="mt-3 text-5xl font-black text-white">{activeRisks}</div>
-            <div className="mt-2 text-xs font-bold text-[#2563eb]">Requires executive attention</div>
+            <div className="mt-2 text-xs font-bold text-[#1f4757]">Requires executive attention</div>
           </VyronPremiumCard>
 
           <VyronPremiumCard className="p-6 sm:col-span-2 xl:col-span-1">
@@ -88,7 +88,7 @@ export default function CommandCentreHero({
             <div className="mt-3 text-5xl font-black text-white">{productsUnderPressure}</div>
             <Link
               href="/product-profitability"
-              className="mt-4 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-white/50 hover:text-[#BFDBFE]"
+              className="mt-4 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-white/50 hover:text-[#BCCDD5]"
             >
               Margin intelligence
               <ArrowUpRight size={14} />

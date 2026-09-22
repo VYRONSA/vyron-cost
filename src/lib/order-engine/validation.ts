@@ -197,7 +197,7 @@ const priceValidator: OrderValidator = {
       const expected = expectedPrice && expectedPrice.sellingPrice > 0 ? expectedPrice.sellingPrice : null;
       const sourceLabel = expectedPrice ? expectedPrice.source.replace("_", " ") : "";
       if (supplied === null && expected === null) {
-        issues.push({ code: "PRICE_MISSING", severity: "error", category: "price", lineNo: line.line_no, message: "No price on the order and no customer or standard price in VYRON." });
+        issues.push({ code: "PRICE_MISSING", severity: "error", category: "price", lineNo: line.line_no, message: "No price on the order and no customer or standard price in VOLORA." });
       } else if (supplied !== null && supplied < 0) {
         issues.push({ code: "PRICE_NEGATIVE", severity: "error", category: "price", lineNo: line.line_no, message: `Unit price ${supplied} is negative.` });
       } else if (supplied === 0) {
@@ -288,7 +288,7 @@ const marginValidator: OrderValidator = {
       }
     }
     if (notMeasured > 0) {
-      issues.push({ code: "MARGIN_NOT_MEASURED", severity: "info", category: "margin", message: `Margin not measured for ${notMeasured} line(s): no product cost in VYRON.` });
+      issues.push({ code: "MARGIN_NOT_MEASURED", severity: "info", category: "margin", message: `Margin not measured for ${notMeasured} line(s): no product cost in VOLORA.` });
     }
     const minGp = ctx.policy?.policy.min_gp_pct;
     if (minGp !== null && minGp !== undefined) {

@@ -296,7 +296,7 @@ export default function CustomerProductGpReportClient({
   }, [columnsAndRows, view, activeView, companyName, generatedAt, period, activeFilters, totals]);
 
   const controlClass =
-    "mt-1 w-full rounded-xl border border-[rgba(15,23,42,0.12)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none";
+    "mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.12)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none";
   const num = "px-3 py-2 whitespace-nowrap text-right tabular-nums";
   const gpClass = (v: number) => `${num} font-black ${v < 0 ? "text-rose-700" : "text-emerald-700"}`;
 

@@ -41,7 +41,7 @@ export function VyronFieldGuide({
   footer?: ReactNode;
 }) {
   return (
-    <aside className="rounded-[2rem] border border-slate-200/80 bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+    <aside className="rounded-[2rem] border border-slate-200/80 bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
       <div className="flex items-start gap-3 border-b border-slate-100 pb-5">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
           <BookOpen size={22} />

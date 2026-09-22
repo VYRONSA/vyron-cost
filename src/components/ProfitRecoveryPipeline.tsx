@@ -11,13 +11,13 @@ function buildPipeline(kpis: LeakageKpis) {
   const revenue = recoverable + leakage + foodCost + packaging + labour + wastage;
 
   return [
-    { label: "Revenue", value: revenue, color: "#0F172A", bg: "#F1F5F9" },
+    { label: "Revenue", value: revenue, color: "#0B202B", bg: "#F1F5F9" },
     { label: "Food Cost", value: foodCost, color: "#64748B", bg: "#F8FAFC" },
     { label: "Packaging", value: packaging, color: "#475569", bg: "#F8FAFC" },
     { label: "Labour", value: labour, color: "#64748B", bg: "#F8FAFC" },
     { label: "Wastage", value: wastage, color: "#B45309", bg: "#FFFBEB" },
     { label: "Leakage", value: leakage, color: "#EF4444", bg: "#FEF2F2" },
-    { label: "Recoverable Profit", value: recoverable, color: "#047857", bg: "#F0FDF4" },
+    { label: "Recoverable Profit", value: recoverable, color: "#2F7C40", bg: "#EEF8F0" },
   ];
 }
 

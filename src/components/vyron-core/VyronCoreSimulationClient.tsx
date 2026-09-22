@@ -59,7 +59,7 @@ export default function VyronCoreSimulationClient({ initialSimulations }: { init
   return (
     <VyronPremiumPageShell
       config={{
-        badge: "VYRON CORE",
+        badge: "VOLORA Core",
         title: "Workforce Simulation Centre",
         subtitle: "Run what-if workforce scenarios to evaluate cost, attrition, and productivity outcomes.",
         outcomes: ["Test policy and staffing decisions safely", "Compare scenario outputs in one workspace", "Build data-backed workforce action plans"],
@@ -73,7 +73,7 @@ export default function VyronCoreSimulationClient({ initialSimulations }: { init
     >
       <section className="grid gap-8">
         <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-8 text-white">
-        <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VYRON CORE</div>
+        <div className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">VOLORA Core</div>
         <h2 className="mt-2 text-3xl font-black">Simulation Engine</h2>
         <p className="mt-2 max-w-2xl text-sm font-semibold text-slate-300">
           What-if workforce scenarios — overtime, headcount, attrition, field coverage and travel reduction.
@@ -84,7 +84,7 @@ export default function VyronCoreSimulationClient({ initialSimulations }: { init
         <div className="rounded-2xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</div>
       ) : null}
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <h3 className="text-xl font-black text-slate-950">Run new simulation</h3>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <label className="text-sm font-black text-slate-600">
@@ -134,7 +134,7 @@ export default function VyronCoreSimulationClient({ initialSimulations }: { init
         </button>
       </section>
 
-      <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <section className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <h3 className="text-xl font-black text-slate-950">Simulation history</h3>
         <div className="mt-5 space-y-4">
           {simulations.length === 0 ? (
@@ -149,7 +149,7 @@ export default function VyronCoreSimulationClient({ initialSimulations }: { init
                       {sim.scenarioType.replace(/_/g, " ")} · {new Date(sim.createdAt).toLocaleString("en-ZA")}
                     </div>
                   </div>
-                  <span className="rounded-full bg-[#3B82F6]/12 px-3 py-1 text-xs font-black text-[#4D7C0F]">{sim.status}</span>
+                  <span className="rounded-full bg-[#2C5A6B]/12 px-3 py-1 text-xs font-black text-[#2F7C40]">{sim.status}</span>
                 </div>
                 <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {Object.entries(sim.outputResults).map(([key, value]) => (

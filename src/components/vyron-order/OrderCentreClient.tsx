@@ -132,8 +132,8 @@ export default function OrderCentreClient() {
                 live figures. Repeating the title three times down the screen
                 was noise, not branding.
               */}
-              <div className="mb-2 hidden items-center gap-2 rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#BFDBFE] lg:inline-flex">
-                VYRON ORDER
+              <div className="mb-2 hidden items-center gap-2 rounded-full border border-[#2C5A6B]/35 bg-[#2C5A6B]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#BCCDD5] lg:inline-flex">
+                VOLORA Order
               </div>
               {/*
                 The heading stays in the document on every screen — a page
@@ -143,7 +143,7 @@ export default function OrderCentreClient() {
               */}
               <h1 className={`sr-only lg:not-sr-only lg:text-4xl lg:tracking-tight ${M.headingOnDark}`}>Order Centre</h1>
               <p className={`mt-2 hidden max-w-3xl text-sm font-medium leading-6 lg:block ${M.bodyOnDark}`}>
-                Customer orders, live from the VYRON COST sales-order engine.
+                Customer orders, live from the VOLORA sales-order engine.
               </p>
               <div className="flex flex-wrap gap-3 text-xs font-semibold lg:mt-4">
                 <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[#CBD5E1]">
@@ -190,19 +190,19 @@ export default function OrderCentreClient() {
               aria-pressed={selected}
               onClick={() => setStatus(tile.filter)}
               className={`${M.dashboardWidget} text-left ${
-                selected ? "border-[#1D6BFF]/40 ring-1 ring-[#2563EB]/25" : ""
+                selected ? "border-[#1F4757]/40 ring-1 ring-[#1F4757]/25" : ""
               }`}
             >
               <span className={`flex items-center gap-1.5 ${M.label}`}>
                 <span className={`${M.iconSubtle} h-6 w-6`}>{tile.icon}</span> {tile.label}
               </span>
-              <span className={`mt-2 block text-2xl tabular-nums ${selected ? M.accentKpiGradient : "font-black text-[#0F172A]"}`}>
+              <span className={`mt-2 block text-2xl tabular-nums ${selected ? M.accentKpiGradient : "font-black text-[#0B202B]"}`}>
                 {tile.value}
               </span>
             </button>
           );
         })}
-        <div className={`${M.dashboardWidget} border-[#1D6BFF]/25`}>
+        <div className={`${M.dashboardWidget} border-[#1F4757]/25`}>
           <span className={`flex items-center gap-1.5 ${M.label}`}>
             <span className={`${M.iconEmphasis} h-6 w-6`}><TrendingUp size={14} /></span> Today
           </span>
@@ -214,14 +214,14 @@ export default function OrderCentreClient() {
       </div>
 
       <div className={`${M.filterBar} mb-0 flex flex-wrap items-center gap-3`}>
-        <label className="flex h-12 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-[rgba(15,23,42,0.10)] bg-white/85 px-3 transition focus-within:border-[#4F46E5] focus-within:ring-4 focus-within:ring-[#4F46E5]/12">
+        <label className="flex h-12 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-[rgba(11,32,43,0.10)] bg-white/85 px-3 transition focus-within:border-[#1F4757] focus-within:ring-4 focus-within:ring-[#1F4757]/12">
           <Search size={16} className="shrink-0 text-[#94A3B8]" />
           <span className="sr-only">Search orders</span>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search order number or customer…"
-            className={`h-full w-full bg-transparent text-sm font-semibold text-[#0F172A] outline-none ${M.inputPlaceholder}`}
+            className={`h-full w-full bg-transparent text-sm font-semibold text-[#0B202B] outline-none ${M.inputPlaceholder}`}
           />
         </label>
         <div className="flex flex-wrap gap-2">
@@ -252,9 +252,9 @@ export default function OrderCentreClient() {
       ) : rows.length === 0 ? (
         <div className={M.moduleEmptyState}>
           <Inbox size={26} className="mx-auto text-[#CBD5E1]" />
-          <p className="mt-3 text-base font-black text-[#0F172A]">No orders here yet</p>
+          <p className="mt-3 text-base font-black text-[#0B202B]">No orders here yet</p>
           <p className="mt-1 text-sm font-semibold text-[#64748B]">
-            Customer orders placed through VYRON ORDER arrive here the moment they are submitted.
+            Customer orders placed through VOLORA Order arrive here the moment they are submitted.
           </p>
         </div>
       ) : (
@@ -267,7 +267,7 @@ export default function OrderCentreClient() {
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-black text-[#0F172A]">{row.orderNumber}</span>
+                  <span className="text-sm font-black text-[#0B202B]">{row.orderNumber}</span>
                   <span className={STAFF_STATUS_TONE[row.status] || "vyron-status vyron-status-neutral"}>
                     {row.status}
                   </span>
@@ -278,7 +278,7 @@ export default function OrderCentreClient() {
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-3">
-                <span className="text-base font-black tabular-nums text-[#0F172A]">{money(row.total)}</span>
+                <span className="text-base font-black tabular-nums text-[#0B202B]">{money(row.total)}</span>
                 <ChevronRight size={17} className="text-[#94A3B8]" />
               </div>
             </Link>

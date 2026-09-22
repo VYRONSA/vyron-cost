@@ -121,7 +121,7 @@ export default function ProcurementRequisitionDetailClient({ requisitionId }: { 
               type="button"
               disabled={generating || updating}
               onClick={() => void generatePurchaseOrders()}
-              className="rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+              className="rounded-xl bg-[#1F4757] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
             >
               {generating ? "Generating…" : "Generate Purchase Orders"}
             </button>
@@ -131,7 +131,7 @@ export default function ProcurementRequisitionDetailClient({ requisitionId }: { 
               type="button"
               disabled={updating}
               onClick={() => void advanceStatus(nextAction.status)}
-              className="rounded-xl bg-[#1D6BFF] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+              className="rounded-xl bg-[#1F4757] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
             >
               {updating ? "Updating…" : nextAction.label}
             </button>
@@ -198,7 +198,7 @@ export default function ProcurementRequisitionDetailClient({ requisitionId }: { 
             ) : null}
 
             <section className={VYRON_MASTER.moduleDataSection}>
-              <h2 className="mb-4 text-lg font-black text-[#0F172A]">Requisition Lines</h2>
+              <h2 className="mb-4 text-lg font-black text-[#0B202B]">Requisition Lines</h2>
               <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
                 <table className="min-w-full">
                   <thead className={VYRON_TABLE.head}>

@@ -10,7 +10,7 @@ export default function ManagementAccountsClient({ data }: { data: ManagementAcc
       config={{
         visualVariant: "finance",
         title: "Management Accounts",
-        subtitle: "Premium VYRON COST workflow for management accounts.",
+        subtitle: "Premium VOLORA workflow for management accounts.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -46,8 +46,8 @@ export default function ManagementAccountsClient({ data }: { data: ManagementAcc
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-              <div className="rounded-[2rem] bg-[#3B82F6]/10 p-6">
-                <h2 className="font-black text-[#4D7C0F]">Recovery analysis</h2>
+              <div className="rounded-[2rem] bg-[#2C5A6B]/10 p-6">
+                <h2 className="font-black text-[#2F7C40]">Recovery analysis</h2>
                 <dl className="mt-4 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <dt>Verified</dt>
@@ -79,7 +79,7 @@ export default function ManagementAccountsClient({ data }: { data: ManagementAcc
                     <div key={v.category} className="rounded-2xl bg-white p-4 shadow-sm">
                       <div className="flex justify-between font-black">
                         <span>{v.category}</span>
-                        <span className={v.variance > 0 ? "text-red-600" : "text-[#84CC16]"}>{v.variancePct.toFixed(1)}%</span>
+                        <span className={v.variance > 0 ? "text-red-600" : "text-[#55B968]"}>{v.variancePct.toFixed(1)}%</span>
                       </div>
                       <p className="mt-2 text-xs text-slate-600">{v.rootCause}</p>
                       <p className="mt-1 text-xs font-bold text-slate-500">

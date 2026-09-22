@@ -10,7 +10,7 @@ function drawHeader(doc: jsPDF, payload: TenantReportExportPayload) {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text("VYRON COST", 14, 14);
+  doc.text("VOLORA", 14, 14);
   doc.setFontSize(12);
   doc.text(payload.title, 14, 22);
 

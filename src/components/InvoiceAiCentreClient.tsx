@@ -46,14 +46,14 @@ export default function InvoiceAiCentreClient({
     <VyronPremiumPageShell
       config={{
         title: "Invoice Ai Centre",
-        subtitle: "Premium VYRON COST workflow for invoice ai centre.",
+        subtitle: "Premium VOLORA workflow for invoice ai centre.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
             <div className="grid gap-5 lg:grid-cols-3">
-              <div className="rounded-[2rem] bg-[#07110d] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
-                <div className="rounded-2xl bg-[#3B82F6]/12 p-3 text-[#3B82F6] w-fit">
+              <div className="rounded-[2rem] bg-[#061722] p-6 text-white shadow-[0_18px_55px_rgba(6,20,14,0.24)]">
+                <div className="rounded-2xl bg-[#2C5A6B]/12 p-3 text-[#2C5A6B] w-fit">
                   <BrainCircuit size={26} />
                 </div>
 
@@ -63,15 +63,15 @@ export default function InvoiceAiCentreClient({
                 </p>
               </div>
 
-              <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-3 text-[#1D4ED8] w-fit">
+              <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+                <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-3 text-[#163A48] w-fit">
                   <UploadCloud size={26} />
                 </div>
                 <h2 className="mt-5 text-2xl font-black text-[#F8FAFC]">Upload / Email Ready</h2>
                 <p className="mt-3 text-sm leading-7 text-slate-500">
                   Upload supplier PDFs into the review queue. Email inbox automation comes next.
                 </p>
-                <label className="mt-4 block cursor-pointer rounded-2xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 px-4 py-3 text-sm font-black text-[#4D7C0F]">
+                <label className="mt-4 block cursor-pointer rounded-2xl border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-4 py-3 text-sm font-black text-[#2F7C40]">
                   Upload invoice PDF
                   <input
                     type="file"
@@ -80,11 +80,11 @@ export default function InvoiceAiCentreClient({
                     onChange={(event) => setUploadedFileName(event.target.files?.[0]?.name || '')}
                   />
                 </label>
-                {uploadedFileName ? <div className="mt-3 rounded-xl bg-white px-3 py-2 text-xs font-black text-[#1D4ED8]">Staged: {uploadedFileName}</div> : null}
+                {uploadedFileName ? <div className="mt-3 rounded-xl bg-white px-3 py-2 text-xs font-black text-[#163A48]">Staged: {uploadedFileName}</div> : null}
               </div>
 
-              <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-                <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-3 text-[#1D4ED8] w-fit">
+              <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+                <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-3 text-[#163A48] w-fit">
                   <CheckCircle2 size={26} />
                 </div>
                 <h2 className="mt-5 text-2xl font-black text-[#F8FAFC]">Approval Ready</h2>
@@ -94,27 +94,27 @@ export default function InvoiceAiCentreClient({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3">
-                <Search size={20} className="text-[#1D4ED8]" />
+            <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+              <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-4 py-3">
+                <Search size={20} className="text-[#163A48]" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search invoices by supplier, number, status or amount..."
                   className="w-full bg-transparent text-sm font-black text-slate-700 outline-none placeholder:text-slate-400"
                 />
-                <div className="rounded-full bg-[#07110d] px-4 py-2 text-xs font-black text-[#3B82F6]">
+                <div className="rounded-full bg-[#061722] px-4 py-2 text-xs font-black text-[#2C5A6B]">
                   {filteredInvoices.length} invoices
                 </div>
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+            <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
               <h2 className="text-2xl font-black text-[#F8FAFC]">Invoice Queue</h2>
 
               <div className="mt-6 overflow-x-auto rounded-3xl border border-slate-100">
                 <div className="min-w-[980px]">
-                  <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+                  <div className="grid grid-cols-7 bg-[#061722] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
                     <div>Supplier</div>
                     <div>Invoice</div>
                     <div>Date</div>
@@ -147,9 +147,9 @@ export default function InvoiceAiCentreClient({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+            <div className="rounded-[2rem] border border-white bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
               <div className="flex items-center gap-3">
-                <div className="rounded-2xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-3 text-[#1D4ED8]">
+                <div className="rounded-2xl border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 p-3 text-[#163A48]">
                   <FileText size={22} />
                 </div>
                 <div>
@@ -160,7 +160,7 @@ export default function InvoiceAiCentreClient({
 
               <div className="mt-6 overflow-x-auto rounded-3xl border border-slate-100">
                 <div className="min-w-[980px]">
-                  <div className="grid grid-cols-7 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+                  <div className="grid grid-cols-7 bg-[#061722] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
                     <div>Supplier Item</div>
                     <div>Mapped Ingredient</div>
                     <div>Qty</div>

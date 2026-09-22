@@ -404,7 +404,7 @@ function buildAiExecutiveSummary(
     },
   ];
 
-  const summary = `VYRON CORE workforce twin shows ${headline.workforceHealth}/100 health with R${headline.predictedLeakage.toLocaleString("en-ZA")} predicted leakage. Clocking, field ops, travel and cost signals are integrated — ${insights.filter((i) => i.severity === "high").length} high-priority items need executive attention.`;
+  const summary = `VOLORA Core workforce twin shows ${headline.workforceHealth}/100 health with R${headline.predictedLeakage.toLocaleString("en-ZA")} predicted leakage. Clocking, field ops, travel and cost signals are integrated — ${insights.filter((i) => i.severity === "high").length} high-priority items need executive attention.`;
 
   return { summary, bullets, insights };
 }

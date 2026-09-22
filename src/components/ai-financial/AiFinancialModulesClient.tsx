@@ -63,7 +63,7 @@ export function AiBudgetActualClient({ rows }: { rows: AiFinancialIntelligencePa
               <td className="px-4 py-4 font-bold">{r.category}</td>
               <td className="px-4 py-4">{money(r.budget)}</td>
               <td className="px-4 py-4">{money(r.actual)}</td>
-              <td className={`px-4 py-4 font-black ${r.variance > 0 ? "text-red-600" : "text-[#84CC16]"}`}>
+              <td className={`px-4 py-4 font-black ${r.variance > 0 ? "text-red-600" : "text-[#55B968]"}`}>
                 {money(r.variance)}
               </td>
               <td className="px-4 py-4">{r.variancePct.toFixed(1)}%</td>
@@ -293,7 +293,7 @@ export function AiBenchmarksClient({
                     <span
                       className={
                         b.comparison === "better"
-                          ? "font-black text-[#84CC16]"
+                          ? "font-black text-[#55B968]"
                           : b.comparison === "worse"
                             ? "font-black text-red-600"
                             : "font-black text-[var(--vyron-warning-fg)]"

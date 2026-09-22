@@ -241,7 +241,7 @@ export async function resolveProductLicence(
 
   const { getProductDefinition } = await import("@/platform/products/registry");
   const product = getProductDefinition(productId as Parameters<typeof getProductDefinition>[0]);
-  if (!product) return deny("Unknown VYRON product.");
+  if (!product) return deny("Unknown VOLORA product.");
   if (product.status === "planned") return deny(`${product.name} is not yet activated for this workspace.`);
 
   if (resolution.workspaceStatus && VOIDING_WORKSPACE_STATUSES.includes(resolution.workspaceStatus)) {

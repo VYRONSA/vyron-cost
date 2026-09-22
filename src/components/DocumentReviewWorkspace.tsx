@@ -46,7 +46,7 @@ const InvoiceDocumentViewer = dynamic(() => import("@/components/InvoiceDocument
 
 function confidenceTone(score: number | null) {
   if (score === null) return "bg-slate-200 text-slate-600";
-  if (score >= 85) return "bg-[#3B82F6]/12 text-[#1D4ED8]";
+  if (score >= 85) return "bg-[#2C5A6B]/12 text-[#163A48]";
   if (score >= 70) return "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)]";
   return "bg-red-100 text-red-700";
 }
@@ -1491,7 +1491,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           </div>
         </div>
         {message || extractionInProgress ? (
-          <div className="mt-1 flex flex-wrap items-center gap-2 rounded bg-[#3B82F6]/10 px-2 py-1 text-[10px] font-bold text-[#4D7C0F]">
+          <div className="mt-1 flex flex-wrap items-center gap-2 rounded bg-[#2C5A6B]/10 px-2 py-1 text-[10px] font-bold text-[#2F7C40]">
             <span>{message || "Extraction in progress…"}</span>
             {extractionInProgress ? (
               <button

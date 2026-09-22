@@ -32,30 +32,30 @@ export default function InvoiceProcessingQueueClient({
 
   return (
     <section className="grid gap-6">
-      <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
-        <FileText size={32} className="text-[#3B82F6]" />
+      <div className="rounded-[2rem] bg-[#061722] p-6 text-white">
+        <FileText size={32} className="text-[#2C5A6B]" />
         <h2 className="mt-5 text-3xl font-black">Invoice Processing Queue</h2>
         <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
           Review extracted invoice data, confidence scores and supplier price movements before updating live ingredient costs.
         </p>
       </div>
 
-      <div className="rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-        <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-4 py-3">
-          <Search size={20} className="text-[#1D4ED8]" />
+      <div className="rounded-[2rem] bg-white p-5 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+        <div className="flex items-center gap-3 rounded-[1.5rem] border border-[#2C5A6B]/20 bg-[#2C5A6B]/10 px-4 py-3">
+          <Search size={20} className="text-[#163A48]" />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search invoice queue..."
             className="w-full bg-transparent text-sm font-black text-slate-700 outline-none placeholder:text-slate-400"
           />
-          <div className="rounded-full bg-[#07110d] px-4 py-2 text-xs font-black text-[#3B82F6]">{filtered.length} invoices</div>
+          <div className="rounded-full bg-[#061722] px-4 py-2 text-xs font-black text-[#2C5A6B]">{filtered.length} invoices</div>
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <div className="min-w-[1050px]">
-          <div className="grid grid-cols-8 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+          <div className="grid grid-cols-8 bg-[#061722] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
             <div>Supplier</div>
             <div>Invoice</div>
             <div>Date</div>
@@ -75,7 +75,7 @@ export default function InvoiceProcessingQueueClient({
     <VyronPremiumPageShell
       config={{
         title: "Invoice Processing Queue",
-        subtitle: "Premium VYRON COST workflow for invoice processing queue.",
+        subtitle: "Premium VOLORA workflow for invoice processing queue.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
@@ -95,12 +95,12 @@ export default function InvoiceProcessingQueueClient({
         </div>
       </div>
 
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
+      <div className="rounded-[2rem] bg-white p-6 shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
         <h2 className="text-2xl font-black text-[#F8FAFC]">Processing Rules</h2>
         <div className="mt-5 grid gap-3 md:grid-cols-3">
           {["Match supplier", "Match ingredient", "Detect price movement", "Flag duplicate", "Hold for approval", "Update live cost after approval"].map((item) => (
             <div key={item} className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-black text-slate-700">
-              <CheckCircle2 className="text-[#1D4ED8]" size={18} />
+              <CheckCircle2 className="text-[#163A48]" size={18} />
               {item}
             </div>
           ))}

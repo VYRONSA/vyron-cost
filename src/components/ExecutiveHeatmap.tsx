@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { HeatmapCell } from "@/lib/vyron-executive-command-centre";
 
 const levelStyles: Record<HeatmapCell["level"], string> = {
-  low: "bg-[#3B82F6]/12 text-[#4D7C0F] border-[#3B82F6]/25",
+  low: "bg-[#2C5A6B]/12 text-[#2F7C40] border-[#2C5A6B]/25",
   medium: "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)] border-[var(--vyron-warning-border)]",
   high: "bg-[var(--vyron-warning-bg)] text-[var(--vyron-warning-fg)] border-[var(--vyron-warning-border)]",
   critical: "bg-red-100 text-red-950 border-red-300",

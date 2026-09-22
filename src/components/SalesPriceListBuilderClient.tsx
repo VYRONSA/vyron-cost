@@ -50,12 +50,12 @@ export default function SalesPriceListBuilderClient({ products }: { products: Pr
     <VyronPremiumPageShell
       config={{
         title: "Sales Price List Builder",
-        subtitle: "Premium VYRON COST workflow for sales price list builder.",
+        subtitle: "Premium VOLORA workflow for sales price list builder.",
         formulas: ["GP % = (Price - Cost) / Price"],
       }}
     >
       <section className="grid gap-6">
-            <div className="rounded-[2rem] bg-[#07110d] p-6 text-white">
+            <div className="rounded-[2rem] bg-[#061722] p-6 text-white">
               <h2 className="text-3xl font-black">Sales Price List Builder</h2>
               <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
                 Generate customer-facing price lists from suggested prices and GP protection rules.
@@ -69,8 +69,8 @@ export default function SalesPriceListBuilderClient({ products }: { products: Pr
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
-              <div className="grid grid-cols-6 bg-[#07110d] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#3B82F6]">
+            <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_10px_40px_rgba(11,32,43,0.06)]">
+              <div className="grid grid-cols-6 bg-[#061722] px-5 py-4 text-xs font-black uppercase tracking-[0.16em] text-[#2C5A6B]">
                 <div className="col-span-2">Product</div>
                 <div>Category</div>
                 <div>Current</div>
@@ -82,7 +82,7 @@ export default function SalesPriceListBuilderClient({ products }: { products: Pr
                   <div className="col-span-2 font-black text-[#F8FAFC]">{row.product.product_name}</div>
                   <div>{row.product.category}</div>
                   <div>{money(row.currentPrice)}</div>
-                  <div className="font-black text-[#1D4ED8]">{money(row.suggestedPrice)}</div>
+                  <div className="font-black text-[#163A48]">{money(row.suggestedPrice)}</div>
                   <div className="font-black text-blue-700">{row.increasePercent.toFixed(1)}%</div>
                 </div>
               ))}

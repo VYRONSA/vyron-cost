@@ -12,25 +12,25 @@ export default async function ExecutiveBriefingPage() {
       subtitle="Boardroom-ready summary of margin leakage, supplier risk and recovery opportunities."
     >
       <section className="grid gap-5 md:grid-cols-4">
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Annual Recovery</div>
-          <div className="mt-3 text-4xl font-black text-[#84CC16]">{money(annual)}</div>
+          <div className="mt-3 text-4xl font-black text-[#55B968]">{money(annual)}</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Monthly Recovery</div>
           <div className="mt-3 text-4xl font-black text-blue-700">{money(monthly)}</div>
         </div>
-        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+        <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
           <div className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Open Actions</div>
           <div className="mt-3 text-4xl font-black text-slate-900">{opportunities.length}</div>
         </div>
-        <div className="rounded-[2rem] bg-[#3B82F6]/10 p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
-          <div className="text-xs font-black uppercase tracking-[0.14em] text-[#84CC16]">Priority</div>
-          <div className="mt-3 text-3xl font-black text-[#84CC16]">Recover</div>
+        <div className="rounded-[2rem] bg-[#2C5A6B]/10 p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
+          <div className="text-xs font-black uppercase tracking-[0.14em] text-[#55B968]">Priority</div>
+          <div className="mt-3 text-3xl font-black text-[#55B968]">Recover</div>
         </div>
       </section>
 
-      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(29,78,216,0.08)]">
+      <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-[0_18px_50px_rgba(22,58,72,0.08)]">
         <h2 className="text-xl font-black text-slate-900">Top Executive Actions</h2>
         <div className="mt-5 grid gap-4">
           {opportunities.slice(0, 5).map((item) => (
@@ -44,7 +44,7 @@ export default async function ExecutiveBriefingPage() {
                   <div className="font-black text-slate-900">{item.title}</div>
                   <div className="mt-1 text-sm font-semibold text-slate-500">{item.recommended_action}</div>
                 </div>
-                <div className="text-2xl font-black text-[#84CC16]">{money(item.annual_value)}</div>
+                <div className="text-2xl font-black text-[#55B968]">{money(item.annual_value)}</div>
               </div>
             </Link>
           ))}
