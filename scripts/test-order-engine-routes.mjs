@@ -115,7 +115,7 @@ db.from = (table) => {
 };
 
 globalThis.__VYRON_SESSION_TEST__ = { supabase: db, browserSupabase: db, users: USERS, cookies: new Map(), headers: {} };
-const useJar = (jar) => {
+const setCookieJar = (jar) => {
   globalThis.__VYRON_SESSION_TEST__.cookies = new Map(Object.entries(jar || {}));
 };
 
@@ -125,13 +125,13 @@ const itemRoute = await importFromRoot("src/app/api/order-intake/[id]/route.ts")
 const lookupRoute = await importFromRoot("src/app/api/order-intake/lookup/route.ts");
 
 async function login(email, password) {
-  useJar({});
+  setCookieJar({});
   const res = await loginRoute.POST(new NextRequest(new URL("/api/workspace/login", "http://qa.local"), { method: "POST", body: JSON.stringify({ email, password }), headers: { "content-type": "application/json" } }));
   return Object.fromEntries(res.cookies.getAll().filter((c) => c.value).map((c) => [c.name, c.value]));
 }
 
 async function call(jar, handler, { method = "GET", url = "/api/order-intake", body, id, raw } = {}) {
-  useJar(jar);
+  setCookieJar(jar);
   const init = { method, headers: { "content-type": "application/json" } };
   if (raw !== undefined) init.body = raw;
   else if (body !== undefined) init.body = JSON.stringify(body);
