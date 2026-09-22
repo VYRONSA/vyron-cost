@@ -48,6 +48,14 @@ export type SalesOrderInput = {
   lines: SalesOrderLineInput[];
   /** Trusted server callers only: keep an explicitly supplied line cost. Never set from a browser request. */
   trustSuppliedCost?: boolean;
+  /**
+   * Trusted server callers only: the id to give a NEW order (ignored when `id`
+   * is set). The Order Engine claims this id before writing, so a retried
+   * handoff finds the same order instead of creating a second one.
+   */
+  newOrderId?: string;
+  /** Trusted server callers only: the verified actor for the creation audit event. Defaults to "user". */
+  auditActor?: string;
 };
 
 export type SalesOrderRow = {
@@ -985,7 +993,7 @@ export async function saveCustomerSalesOrder(
   const now = new Date().toISOString();
 
   if (!input.id) {
-    const orderId = randomUUID();
+    const orderId = input.newOrderId || randomUUID();
     const { data: order, error: createError } = await supabase
       .from("vyron_customer_sales_orders")
       .insert({
@@ -1026,7 +1034,7 @@ export async function saveCustomerSalesOrder(
       companyId,
       salesOrderId: orderId,
       eventType: "SALES_ORDER_CREATED",
-      actor: "user",
+      actor: input.auditActor || "user",
       toStatus: "Draft",
       detail: `Sales order ${String(order.order_number || "") || orderId} created.`,
       metadata: { approvalRules },
