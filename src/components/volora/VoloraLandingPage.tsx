@@ -34,7 +34,8 @@ import { VoloraWordmark } from "@/components/vyron-ui/VyronLogo";
  *
  * Photography is extracted from the reference itself
  * (scripts/extract-volora-landing-assets.mjs). The laptop and phone show real
- * VOLORA screens captured from the demo workspace. The four hero KPI figures are
+ * VOLORA screens captured from the demo workspace (dashboard; mobile Manufacturing —
+ * the app has no separate "Live Production" screen). The four hero KPI figures are
  * illustrative marketing figures and are labelled as such.
  */
 
@@ -363,7 +364,7 @@ export default function VoloraLandingPage() {
           <figure className="relative z-20 mx-auto mt-8 w-[46%] max-w-[15rem] lg:absolute lg:left-[calc(var(--u)*84.6)] lg:top-[calc(var(--u)*9.9)] lg:mt-0 lg:w-[calc(var(--u)*13.6)] lg:max-w-none">
             <div className="rounded-[2.2rem] bg-[#0E1114] p-[5%] shadow-[0_24px_50px_rgba(6,23,34,0.35)] ring-1 ring-[#3a4148] lg:rounded-[calc(var(--u)*2.3)]">
               <div className="relative aspect-[390/844] overflow-hidden rounded-[1.7rem] bg-white lg:rounded-[calc(var(--u)*1.8)]">
-                <Image src={`${A}/app-mobile.webp`} alt="The VOLORA mobile workspace (demo workspace)." fill sizes="(min-width: 1024px) 14vw, 45vw" className="object-cover object-top" />
+                <Image src={`${A}/app-mobile.webp`} alt="The VOLORA mobile Manufacturing screen (demo workspace)." fill sizes="(min-width: 1024px) 14vw, 45vw" className="object-cover object-top" />
                 <span className="absolute left-1/2 top-[1.2%] h-[3.2%] w-[34%] -translate-x-1/2 rounded-full bg-[#0E1114]" />
               </div>
             </div>
@@ -374,7 +375,7 @@ export default function VoloraLandingPage() {
         </section>
 
         {/* ════════════════════ REAL SOLUTIONS. REAL RESULTS. ════════════════════ */}
-        <section id="industries" aria-labelledby="industries-title" className="bg-[#F6F8F7] px-5 pb-12 lg:px-[calc(var(--u)*3.3)] lg:pb-[calc(var(--u)*2.6)] lg:pt-[calc(var(--u)*1.2)]">
+        <section id="industries" aria-labelledby="industries-title" className="bg-[#F6F8F7] px-5 pb-12 lg:px-[calc(var(--u)*3.3)] lg:pb-[calc(var(--u)*3.55)] lg:pt-[calc(var(--u)*1.2)]">
           <div className="flex flex-wrap items-end justify-between gap-3 lg:pl-[calc(var(--u)*2.8)] lg:pr-[calc(var(--u)*0.5)]">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#163A48] lg:text-[calc(var(--u)*0.82)]">Built for your industry</p>
@@ -386,7 +387,7 @@ export default function VoloraLandingPage() {
               View All Industries <ArrowRight className="h-[1.1em] w-[1.1em]" aria-hidden />
             </Link>
           </div>
-          <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:mt-[calc(var(--u)*1.1)] lg:grid-cols-7 lg:gap-[calc(var(--u)*1.1)]">
+          <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:mt-[calc(var(--u)*0.15)] lg:grid-cols-7 lg:gap-[calc(var(--u)*1.1)]">
             {INDUSTRIES.map(({ slug, label, icon: Icon }) => (
               <li key={slug} className="relative aspect-[123/152] overflow-hidden rounded-xl shadow-[0_10px_24px_rgba(6,23,34,0.18)] lg:rounded-[calc(var(--u)*0.8)]">
                 <Image src={`${A}/industry-${slug}.webp`} alt="" fill sizes="(min-width: 1024px) 13vw, 45vw" className="object-cover" />
