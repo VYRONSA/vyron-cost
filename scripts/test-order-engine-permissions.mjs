@@ -113,7 +113,7 @@ const ENDPOINTS = [
   { name: "list policies", permission: "sales_orders.view", run: (jar) => call(jar, R.policies.GET) },
   { name: "save policy", permission: "sales_orders.approve", run: (jar) => call(jar, R.policies.PUT, { method: "PUT", body: { customerId: null, requirePo: false } }) },
   { name: "sources", permission: "sales_orders.view", run: (jar) => call(jar, R.sources.GET) },
-  { name: "lookup", permission: "sales_orders.edit", run: (jar) => call(jar, R.lookup.GET, { url: "/api/order-intake/lookup?type=product&q=pie" }) },
+  { name: "lookup", permission: "sales_orders.view", run: (jar) => call(jar, R.lookup.GET, { url: "/api/order-intake/lookup?type=product&q=pie" }) },
 ];
 
 const effective = (role) => perms.resolveEffectivePermissions(role, {});

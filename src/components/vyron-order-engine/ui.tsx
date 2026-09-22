@@ -129,3 +129,38 @@ export function NotEnabledNotice() {
     </Notice>
   );
 }
+
+/** The Order Inbox's own sections — one sidebar entry, three screens. */
+export function OrderEngineTabs({ active }: { active: "inbox" | "exceptions" | "rules" }) {
+  const tabs = [
+    { key: "inbox", label: "Orders", href: "/order-inbox" },
+    { key: "exceptions", label: "Exception Centre", href: "/order-inbox/exceptions" },
+    { key: "rules", label: "Order rules & mappings", href: "/order-inbox/rules" },
+  ] as const;
+  return (
+    <nav className="flex flex-wrap gap-1 self-start rounded-2xl bg-slate-100 p-1" aria-label="Order Inbox sections">
+      {tabs.map((tab) => (
+        <a
+          key={tab.key}
+          href={tab.href}
+          aria-current={active === tab.key ? "page" : undefined}
+          className={`rounded-xl px-4 py-2 text-sm font-black ${active === tab.key ? "bg-white text-slate-900 shadow" : "text-slate-500 hover:text-slate-800"}`}
+        >
+          {tab.label}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
+export const SOURCE_LABEL: Record<string, string> = {
+  manual: "Manual",
+  csv: "CSV",
+  xlsx: "Excel",
+  email: "E-mail",
+  pdf: "PDF",
+  woocommerce: "WooCommerce",
+  shopify: "Shopify",
+  api: "API",
+  edi: "EDI",
+};

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { WorkspaceAccessError } from "@/lib/vyron-workspace-access";
 import { OrderEngineError } from "@/lib/order-engine/errors";
 import { orderErrorResponse, orderRouteContext, readJsonBody } from "@/lib/order-engine/http";
+import { namesFor } from "@/lib/order-engine/names";
 import { listStandingMappings, revokeStandingMapping } from "@/lib/order-engine/service";
 
 export const runtime = "nodejs";
@@ -11,7 +12,15 @@ export async function GET(request: NextRequest) {
   try {
     const { supabase, companyId } = await orderRouteContext("sales_orders.view");
     const mappings = await listStandingMappings(supabase, companyId, { includeRevoked: request.nextUrl.searchParams.get("includeRevoked") === "1" });
-    return NextResponse.json({ ok: true, mappings });
+    const names = await namesFor(supabase, companyId, { customers: mappings.map((m) => m.customerId), products: mappings.map((m) => m.productId) });
+    return NextResponse.json({
+      ok: true,
+      mappings: mappings.map((m) => ({
+        ...m,
+        customerName: m.customerId ? names.customers.get(m.customerId) ?? null : null,
+        productName: m.productId ? names.products.get(m.productId) ?? null : null,
+      })),
+    });
   } catch (error) {
     return orderErrorResponse(error, "Load mappings failed.");
   }

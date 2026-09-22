@@ -3,7 +3,7 @@ import OrderInboxClient from "@/components/vyron-order-engine/OrderInboxClient";
 import { requireWorkspacePage } from "@/lib/vyron-workspace-page";
 import { sessionHasPermission } from "@/lib/vyron-workspace-permissions";
 
-const VIEWS = ["inbox", "approvals", "exceptions", "done", "all"] as const;
+const VIEWS = ["inbox", "approvals", "exceptions", "approved", "confirmed", "closed", "all"] as const;
 
 export default async function OrderInboxPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const { session } = await requireWorkspacePage("sales_orders.view");

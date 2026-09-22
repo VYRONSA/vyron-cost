@@ -14,7 +14,8 @@ export const runtime = "nodejs";
  */
 export async function GET(request: NextRequest) {
   try {
-    const { supabase, companyId } = await orderRouteContext("sales_orders.edit");
+    // Names and SKUs only — view-level information. Applying a choice still needs edit.
+    const { supabase, companyId } = await orderRouteContext("sales_orders.view");
     const type = request.nextUrl.searchParams.get("type");
     const q = String(request.nextUrl.searchParams.get("q") || "").trim().slice(0, 100);
     if (q.length < 2) return NextResponse.json({ ok: true, results: [] });
@@ -22,8 +23,8 @@ export async function GET(request: NextRequest) {
 
     if (type === "product") {
       const [byName, bySku] = await Promise.all([
-        supabase.from("vyron_cost_products").select("id, product_name, sku, selling_price").eq("company_id", companyId).ilike("product_name", pattern).limit(20),
-        supabase.from("vyron_cost_products").select("id, product_name, sku, selling_price").eq("company_id", companyId).ilike("sku", pattern).limit(20),
+        supabase.from("vyron_cost_products").select("id, product_name, sku").eq("company_id", companyId).ilike("product_name", pattern).limit(20),
+        supabase.from("vyron_cost_products").select("id, product_name, sku").eq("company_id", companyId).ilike("sku", pattern).limit(20),
       ]);
       if (byName.error) throw byName.error;
       if (bySku.error) throw bySku.error;
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     if (type === "customer") {
       const { data, error } = await supabase
         .from("vyron_customers")
-        .select("id, customer_name, email, status")
+        .select("id, customer_name, status")
         .eq("company_id", companyId)
         .ilike("customer_name", pattern)
         .limit(20);

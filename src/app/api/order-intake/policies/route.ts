@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { WorkspaceAccessError } from "@/lib/vyron-workspace-access";
 import { orderErrorResponse, orderRouteContext, readJsonBody } from "@/lib/order-engine/http";
+import { namesFor } from "@/lib/order-engine/names";
 import { listOrderPolicies, saveOrderPolicy } from "@/lib/order-engine/policies";
 
 export const runtime = "nodejs";
@@ -9,7 +10,9 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     const { supabase, companyId } = await orderRouteContext("sales_orders.view");
-    return NextResponse.json({ ok: true, policies: await listOrderPolicies(supabase, companyId) });
+    const policies = await listOrderPolicies(supabase, companyId);
+    const names = await namesFor(supabase, companyId, { customers: policies.map((p) => p.customer_id) });
+    return NextResponse.json({ ok: true, policies: policies.map((p) => ({ ...p, customer_name: p.customer_id ? names.customers.get(p.customer_id) ?? null : null })) });
   } catch (error) {
     return orderErrorResponse(error, "Load order policies failed.");
   }
