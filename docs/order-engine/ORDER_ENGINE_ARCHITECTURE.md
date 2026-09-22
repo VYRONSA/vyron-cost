@@ -1,6 +1,7 @@
 # VYRON COST — Order Engine Architecture
 
-Status: **foundation implemented on branch `feat/order-engine-foundation`; database migration NOT applied to any live database.**
+Status: **implemented and tested on branch `feat/order-engine-foundation`; neither migration is applied to any live database; not merged, not deployed.**
+Revision 2 (2026-09-22): mappings, customer policies, Exception Centre, source facts, concurrency proof, existing-engine fixes — see §15–§19 and the companion documents.
 Date: 2026-09-22
 
 This document is the design record for the Order Engine. Every section says
@@ -120,7 +121,12 @@ not model it — DESIGNED FOR LATER (see §15).
 
 ---
 
-## 3. Data model — IMPLEMENTED NOW (migration written, not applied)
+## 3. Data model — IMPLEMENTED NOW (migrations written, not applied)
+
+> Revision 2: `20260922130000_vyron_order_intake_hardening.sql` adds composite
+> tenant keys, `vyron_order_product_aliases`, `vyron_order_customer_identities`
+> (revoke-only), `vyron_customer_order_policies`, and shipping / tax-inclusive /
+> extraction columns. Proven by `test:order-engine-migration-pg`.
 
 Migration: `supabase/migrations/20260922120000_vyron_order_intake.sql`.
 Additive only — four new tables; **no existing table is altered**.
@@ -247,6 +253,10 @@ resolves a customer.
 
 ## 6. Product / SKU matching — IMPLEMENTED NOW
 
+> Revision 2: the ladders now include this customer's approved aliases (rung 1)
+> and remembered customer references; the current ladders are in
+> `VALIDATION_RULES.md` §3.
+
 Deterministic ladder per line. Result is exactly one of `MATCHED`, `UNMATCHED`,
 `AMBIGUOUS`:
 
@@ -329,7 +339,11 @@ schema-validated OpenAI Responses pattern in
 bucket's MIME allow-list extended for xlsx/csv, and a customer-order extraction
 schema. The existing supplier-invoice prompt/schema is not suitable.
 
-## 10. AI — DESIGNED FOR LATER
+## 10. AI — DESIGNED FOR LATER (extraction contract IMPLEMENTED)
+
+> Revision 2: the extraction contract (per-field value, confidence, source
+> location, method) and its validator are implemented and tested; no provider is
+> called. See `ORDER_SOURCE_ADAPTERS.md` §6.
 
 An `OrderExtractionProvider` produces an `OrderCandidate` exactly like an
 adapter. Rules fixed now:
@@ -415,83 +429,96 @@ Service functions throw a typed `OrderEngineError { code, status }`
 mapping; a missing table (migration not applied) returns `503` with a clear
 message instead of a crash.
 
-## 15. Known limitations and findings recorded, not changed
+## 15. Known limitations and findings
 
-Found during the audit; **deliberately not changed** because they are existing
-accounting/commercial behaviour and changing them needs evidence and sign-off:
+Found while tracing the existing engine. Items 1–3 and 6–7 were **fixed on
+2026-09-22** with regression tests (`test:sales-order-safety`); details and the
+remaining open items are in `SALES_ORDER_INTEGRATION.md` §4 and
+`SECURITY_REVIEW.md` §3.
 
-1. `saveCustomerSalesOrder` fills the product-master selling price before the
-   customer price list is consulted, so price lists apply only when the master
-   price is 0. The Order Engine avoids this by passing the resolved price
-   explicitly. The standalone Sales Orders screen is unchanged.
-2. `checkAndReserveStock` compares against gross on-hand and ignores other
-   orders' reservations. The Order Engine's stock validator nets them; the
-   sales-order engine is unchanged.
-3. Existing sales-order routes take the audit actor from the request body.
-4. `sales_orders.approve` has no separation of duties.
-5. `buildIngredientShortageLines` does not scale by BOM yield or wastage.
-6. `/order-centre` has no `NAV_PATH_PERMISSIONS` entry.
+1. ~~Price lists applied only when the master price was 0~~ — fixed: the master
+   price is the last fallback; contract beats default deterministically.
+2. ~~Reservation ignored other orders' reservations~~ — fixed: live
+   reservations are netted (shared rule with the Order Engine).
+3. ~~Sales-order and invoice routes took the audit actor from the request~~ —
+   fixed on the order and invoice path; 26 other routes recorded as open (O1).
+4. `sales_orders.approve` has no separation of duties — open (O4).
+5. `buildIngredientShortageLines` does not scale by BOM yield or wastage — open.
+6. ~~Staff order entry priced lines at cost~~ — fixed.
+7. ~~Any member could set a customer's portal PIN~~ — fixed.
+8. `/order-centre` has no `NAV_PATH_PERMISSIONS` entry — open (display only;
+   its APIs are server-gated).
 
 ## 16. Food Sock
 
-Only confirmed facts are used: two stores (WooCommerce, Shopify) via Metorik;
-a PostgreSQL master database. Nothing Food Sock-specific is in the engine. B2B
-order formats, retailer ordering cadence, approval rules, price rules, delivery
-rules, VAT basis, refund allocation and COGS semantics are **unknown** and are
-not encoded. Food Sock historical sales remain in the separate external-sales
-design and never become intakes or invoices.
+Only confirmed facts are used; nothing Food Sock-specific is in the engine.
+See `FOOD_SOCK_READINESS.md` for what is known, what VYRON can already
+support, and the questions that must be answered first. Food Sock historical
+sales remain in the separate external-sales design and never become intakes or
+invoices.
 
 ## 17. What is required before production
 
-1. Review and apply `20260922120000_vyron_order_intake.sql` to the production
-   database — **a human-approved production DDL change**.
-2. Merge the branch to `main` (which auto-deploys). Until the migration is
-   applied the Order Inbox answers "not yet enabled" rather than failing.
-3. Decide whether intake confirmation should trigger the existing staff
-   notifications (`notifyOrderEvent`) — deliberately off today.
+1. Review and apply **both** migrations —
+   `20260922120000_vyron_order_intake.sql` then
+   `20260922130000_vyron_order_intake_hardening.sql` — to the production
+   database: **a human-approved production DDL change**, through the safety
+   programme.
+2. Merge the branch to `main` (which auto-deploys). The branch also contains
+   the existing-engine fixes (§15), which take effect on deploy whether or not
+   the migrations are applied. Until the migrations are applied the Order Inbox
+   answers "not yet enabled" rather than failing.
+3. Decide whether Order Engine events should reach the existing staff
+   notifications — deliberately off.
+4. For a live-screen demo: an approved non-production environment
+   (`DEMO_SCRIPT.md` §5).
 
 ## 18. Implementation map (handover)
 
 | Concern | File |
 |---|---|
 | Types | `src/lib/order-engine/types.ts` |
-| State machine, permissions per action, derived statuses | `src/lib/order-engine/lifecycle.ts` |
-| Deterministic matching (customer, product) | `src/lib/order-engine/matching.ts` |
-| Validators and the context loader | `src/lib/order-engine/validation.ts` |
-| Receive, edit, actions, handoff, audit, CAS | `src/lib/order-engine/service.ts` |
-| E-mail boundary (not connected) | `src/lib/order-engine/email-intake.ts`, `adapters/email.ts` |
-| Adapters | `src/lib/order-engine/adapters/{manual,csv,platforms,types}.ts` |
-| Route plumbing (auth → permission → company, actor) | `src/lib/order-engine/http.ts` |
-| API | `src/app/api/order-intake/{route.ts,[id]/route.ts,lookup/route.ts}` |
-| UI | `src/app/order-inbox/{page.tsx,new/page.tsx,[id]/page.tsx}`, `src/components/vyron-order-engine/*` |
-| Navigation | `src/lib/vyron-navigation.ts` (Customers → Order Inbox), `NAV_PATH_PERMISSIONS["/order-inbox"]` |
-| Change to existing engine | `saveCustomerSalesOrder` accepts optional trusted-server `newOrderId` and `auditActor`; every existing caller is unchanged |
-| Migration | `supabase/migrations/20260922120000_vyron_order_intake.sql` |
+| State machine, permissions per action, derived statuses | `lifecycle.ts` |
+| Deterministic matching (customer, product, aliases, identities) | `matching.ts` |
+| Validators, context loader | `validation.ts` |
+| Issue catalogue (meaning, level, action) | `issue-catalog.ts` |
+| Receive, edit, actions, handoff, mappings, Exception Centre, audit, CAS | `service.ts` |
+| Customer order policies | `policies.ts` |
+| Order sources and states | `sources.ts`, `adapters/{manual,csv,email,platforms,types}.ts`, `email-intake.ts` |
+| Cost redaction | `redaction.ts` |
+| Notifications (off by default), telemetry | `notifications.ts`, `telemetry.ts` |
+| Route plumbing (auth → permission → company, actor, JSON / size) | `http.ts` |
+| Demo fixtures (fictional) | `demo/fixtures.ts` |
+| API | `src/app/api/order-intake/` — list/receive, `[id]`, `lookup`, `exceptions`, `mappings`, `policies`, `sources` |
+| UI | `src/app/order-inbox/` (inbox, new, `[id]`, exceptions, rules), `src/components/vyron-order-engine/*` |
+| Shared with the sales-order engine | `src/lib/vyron-sales-order-reservations.ts`, `src/lib/vyron-audit-actor.ts` |
+| Migrations | `supabase/migrations/20260922120000_vyron_order_intake.sql`, `20260922130000_vyron_order_intake_hardening.sql` |
+| Scripted demo | `scripts/order-engine-demo.mjs` |
+
+Companion documents: `SALES_ORDER_INTEGRATION.md`, `APPROVAL_MODEL.md`,
+`VALIDATION_RULES.md`, `ORDER_SOURCE_ADAPTERS.md`, `SECURITY_REVIEW.md`,
+`DEMO_SCRIPT.md`, `FOOD_SOCK_READINESS.md`.
 
 ## 19. Verification
 
-| Suite | Kind | Result (2026-09-22) |
+| Suite | Kind | Checks |
 |---|---|---|
-| `npm run test:order-engine` | Family A — domain + real sales-order handoff, in-memory DB, two synthetic tenants | 171/171 |
-| `npm run test:order-engine-routes` | Family A — route handlers with the real session, membership and company resolution | 42/42 |
-| `npm run test:order-engine-migration-pg` | Family B — the migration on a throwaway local Postgres (created and dropped) | 33/33 |
-| Existing offline suites (19, incl. sales-order cost capture, session and tenant security) | regression | all pass |
-| `npm run typecheck` (web + mobile), `npm run build` | build | pass |
-| `npx eslint .` | lint | no new findings; the pre-existing repository baseline (285 errors / 6 407 warnings on `main`) is unchanged |
+| `test:order-engine` | domain + real sales-order handoff | 171 |
+| `test:order-engine-routes` | API security & workflow, real session code | 42 |
+| `test:order-engine-permissions` | 10 roles × 19 endpoints + anonymous, 415/413, tenant isolation | 226 |
+| `test:order-engine-fixtures` | 20 fictional scenarios through their real adapters, approved into Draft sales orders | 214 |
+| `test:order-engine-concurrency` | 16 race / retry / duplicate scenarios | 45 |
+| `test:order-engine-controls` | mappings, identities, policies, notifications, telemetry, redaction, Exception Centre, filters, CSV hardening, WooCommerce / Shopify review, AI contract | 126 |
+| `test:sales-order-safety` | existing-engine fixes through real routes | 32 |
+| `test:order-engine-migration-pg` | both migrations on a disposable local Postgres, two-connection races, EXPLAIN on 50 000 rows | 64 |
+| Existing offline suites | regression | all pass (see the final report) |
+| Browser harness | the real screen components, bundled, fed responses from the real routes on the fictional tenant, production CSS, Chromium | 12 screens, 0 errors; screenshots in `screenshots/` |
 
-Not verified: the screens have not been exercised in a browser. Running the app
-locally connects to the production database, which this work must not touch;
-the screens are covered by type-checking, the build, and the API tests they call.
+The browser harness is a one-off verification kept outside the repository (it
+needs a bundler the repository does not ship); the full app was not run against
+a database, because the only configured database is production.
 
 ## 20. The demo workflow
 
-Against a database with the migration applied and a workspace that has
-customers and products with SKUs:
-
-1. Customers → **Order Inbox** → **New order** (or **Import CSV**; the page offers a template).
-2. Enter customer, PO, delivery date and lines with SKU, quantity and price → **Receive order**.
-3. **Validate order** → the order moves to *Awaiting approval* or *Exception*; every line shows the product it matched and by which rule, stock available net of reservations, the expected price, and (for approvers) expected margin.
-4. For an exception, choose the customer or product (ambiguous candidates are offered; otherwise search) → validate again.
-5. An approver acknowledges any warnings and **Approve and create sales order** — or holds, requests changes, or rejects with a reason.
-6. The order is *Confirmed*; the Downstream card links the Draft sales order. Picking, dispatch and invoicing continue in Sales Orders / Order Centre. Nothing was reserved, invoiced, e-mailed or posted to Xero.
-7. The audit trail lists every step with the member who took it.
+See `DEMO_SCRIPT.md` — scripted end-to-end demo (`npm run demo:order-engine`)
+and the screen walkthrough.
