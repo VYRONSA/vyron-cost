@@ -14,38 +14,38 @@ import type { ShopifyOrder, WooOrder } from "@/lib/order-engine/adapters/platfor
  * with a real tenant's generated ids.
  */
 
-export const DEMO_COMPANY_ID = "d3m00000-0000-4000-8000-00000000c0de";
-export const DEMO_WORKSPACE_ID = "d3m00000-0000-4000-8000-00000000a0a0";
+export const DEMO_COMPANY_ID = "de300000-0000-4000-8000-00000000c0de";
+export const DEMO_WORKSPACE_ID = "de300000-0000-4000-8000-00000000a0a0";
 /** The date the scenarios treat as "today" — fixed so every run is identical. */
 export const DEMO_TODAY = "2026-09-29";
 
 const CO = DEMO_COMPANY_ID;
 
 export const DEMO_CUSTOMERS = {
-  northside: { id: "d3m0c000-0000-4000-8000-000000000001", company_id: CO, customer_name: "Northside Grocers", email: "orders@northside-grocers.example", status: "Active", active: true },
-  bayStreet: { id: "d3m0c000-0000-4000-8000-000000000002", company_id: CO, customer_name: "Bay Street Deli", email: "buying@baystreetdeli.example", status: "Active", active: true },
-  cove: { id: "d3m0c000-0000-4000-8000-000000000003", company_id: CO, customer_name: "Cove Café", status: "Active", active: true, on_hold: true },
-  lighthouse: { id: "d3m0c000-0000-4000-8000-000000000004", company_id: CO, customer_name: "Lighthouse Hotel", email: "stores@lighthousehotel.example", status: "Active", active: true },
-  oldMill: { id: "d3m0c000-0000-4000-8000-000000000005", company_id: CO, customer_name: "Old Mill Bistro", status: "Inactive", active: false },
+  northside: { id: "de3c0000-0000-4000-8000-000000000001", company_id: CO, customer_name: "Northside Grocers", email: "orders@northside-grocers.example", status: "Active", active: true },
+  bayStreet: { id: "de3c0000-0000-4000-8000-000000000002", company_id: CO, customer_name: "Bay Street Deli", email: "buying@baystreetdeli.example", status: "Active", active: true },
+  cove: { id: "de3c0000-0000-4000-8000-000000000003", company_id: CO, customer_name: "Cove Café", status: "Active", active: true, on_hold: true },
+  lighthouse: { id: "de3c0000-0000-4000-8000-000000000004", company_id: CO, customer_name: "Lighthouse Hotel", email: "stores@lighthousehotel.example", status: "Active", active: true },
+  oldMill: { id: "de3c0000-0000-4000-8000-000000000005", company_id: CO, customer_name: "Old Mill Bistro", status: "Inactive", active: false },
 } as const;
 
 export const DEMO_PRODUCTS = {
-  beefPie: { id: "d3m0p000-0000-4000-8000-000000000001", company_id: CO, product_name: "Beef & Ale Pie 200g", sku: "HK-PIE-BEEF", selling_price: 38, total_cost: 17.5 },
-  chickenPie: { id: "d3m0p000-0000-4000-8000-000000000002", company_id: CO, product_name: "Chicken & Leek Pie 200g", sku: "HK-PIE-CHK", selling_price: 36, total_cost: 16.2 },
-  quiche: { id: "d3m0p000-0000-4000-8000-000000000003", company_id: CO, product_name: "Spinach Quiche 180g", sku: "HK-QUICHE", selling_price: 32, total_cost: 14 },
-  soup: { id: "d3m0p000-0000-4000-8000-000000000004", company_id: CO, product_name: "Tomato Soup 500ml", sku: "HK-SOUP-TOM", selling_price: 28, total_cost: 9.8 },
-  sauce: { id: "d3m0p000-0000-4000-8000-000000000005", company_id: CO, product_name: "Smoky BBQ Sauce 250ml", sku: "HK-SAUCE-BBQ", selling_price: 24, total_cost: null },
-  hamper: { id: "d3m0p000-0000-4000-8000-000000000006", company_id: CO, product_name: "Harbour Gift Hamper", sku: "HK-GIFT", selling_price: 450, total_cost: 390 },
+  beefPie: { id: "de3f0000-0000-4000-8000-000000000001", company_id: CO, product_name: "Beef & Ale Pie 200g", sku: "HK-PIE-BEEF", selling_price: 38, total_cost: 17.5 },
+  chickenPie: { id: "de3f0000-0000-4000-8000-000000000002", company_id: CO, product_name: "Chicken & Leek Pie 200g", sku: "HK-PIE-CHK", selling_price: 36, total_cost: 16.2 },
+  quiche: { id: "de3f0000-0000-4000-8000-000000000003", company_id: CO, product_name: "Spinach Quiche 180g", sku: "HK-QUICHE", selling_price: 32, total_cost: 14 },
+  soup: { id: "de3f0000-0000-4000-8000-000000000004", company_id: CO, product_name: "Tomato Soup 500ml", sku: "HK-SOUP-TOM", selling_price: 28, total_cost: 9.8 },
+  sauce: { id: "de3f0000-0000-4000-8000-000000000005", company_id: CO, product_name: "Smoky BBQ Sauce 250ml", sku: "HK-SAUCE-BBQ", selling_price: 24, total_cost: null },
+  hamper: { id: "de3f0000-0000-4000-8000-000000000006", company_id: CO, product_name: "Harbour Gift Hamper", sku: "HK-GIFT", selling_price: 450, total_cost: 390 },
   // Two products carry the same SKU — a real-world data problem the engine must not guess through.
-  tartSmall: { id: "d3m0p000-0000-4000-8000-000000000007", company_id: CO, product_name: "Lemon Tart 6in", sku: "HK-TART", selling_price: 60, total_cost: 24 },
-  tartLarge: { id: "d3m0p000-0000-4000-8000-000000000008", company_id: CO, product_name: "Lemon Tart 9in", sku: "HK-TART", selling_price: 95, total_cost: 38 },
+  tartSmall: { id: "de3f0000-0000-4000-8000-000000000007", company_id: CO, product_name: "Lemon Tart 6in", sku: "HK-TART", selling_price: 60, total_cost: 24 },
+  tartLarge: { id: "de3f0000-0000-4000-8000-000000000008", company_id: CO, product_name: "Lemon Tart 9in", sku: "HK-TART", selling_price: 95, total_cost: 38 },
 } as const;
 
 const P = DEMO_PRODUCTS;
 const C = DEMO_CUSTOMERS;
 
 /** An existing, live sales order holding 40 chicken pies — so only 20 of 60 are free. */
-export const DEMO_EXISTING_ORDER_ID = "d3m0s000-0000-4000-8000-000000000001";
+export const DEMO_EXISTING_ORDER_ID = "de350000-0000-4000-8000-000000000001";
 
 /** The whole fictional tenant as table rows (for the in-memory database or a staging seed). */
 export function demoSeed(): Record<string, Array<Record<string, unknown>>> {
@@ -54,33 +54,33 @@ export function demoSeed(): Record<string, Array<Record<string, unknown>>> {
     vyron_customers: Object.values(C).map((c) => ({ ...c })),
     vyron_cost_products: Object.values(P).map((p) => ({ ...p })),
     vyron_cost_stock_items: [
-      { id: "d3m0s100-0000-4000-8000-000000000001", company_id: CO, entity_type: "finished_goods", entity_id: P.beefPie.id, qty_on_hand: 240 },
-      { id: "d3m0s100-0000-4000-8000-000000000002", company_id: CO, entity_type: "finished_goods", entity_id: P.chickenPie.id, qty_on_hand: 60 },
-      { id: "d3m0s100-0000-4000-8000-000000000003", company_id: CO, entity_type: "finished_goods", entity_id: P.quiche.id, qty_on_hand: 0 },
-      { id: "d3m0s100-0000-4000-8000-000000000004", company_id: CO, entity_type: "finished_goods", entity_id: P.soup.id, qty_on_hand: 120 },
-      { id: "d3m0s100-0000-4000-8000-000000000005", company_id: CO, entity_type: "finished_goods", entity_id: P.sauce.id, qty_on_hand: 80 },
-      { id: "d3m0s100-0000-4000-8000-000000000006", company_id: CO, entity_type: "finished_goods", entity_id: P.hamper.id, qty_on_hand: 3 },
+      { id: "de351000-0000-4000-8000-000000000001", company_id: CO, entity_type: "finished_goods", entity_id: P.beefPie.id, qty_on_hand: 240 },
+      { id: "de351000-0000-4000-8000-000000000002", company_id: CO, entity_type: "finished_goods", entity_id: P.chickenPie.id, qty_on_hand: 60 },
+      { id: "de351000-0000-4000-8000-000000000003", company_id: CO, entity_type: "finished_goods", entity_id: P.quiche.id, qty_on_hand: 0 },
+      { id: "de351000-0000-4000-8000-000000000004", company_id: CO, entity_type: "finished_goods", entity_id: P.soup.id, qty_on_hand: 120 },
+      { id: "de351000-0000-4000-8000-000000000005", company_id: CO, entity_type: "finished_goods", entity_id: P.sauce.id, qty_on_hand: 80 },
+      { id: "de351000-0000-4000-8000-000000000006", company_id: CO, entity_type: "finished_goods", entity_id: P.hamper.id, qty_on_hand: 3 },
     ],
     vyron_cost_boms: [
-      { id: "d3m0b000-0000-4000-8000-000000000001", company_id: CO, product_id: P.beefPie.id },
-      { id: "d3m0b000-0000-4000-8000-000000000002", company_id: CO, product_id: P.chickenPie.id },
-      { id: "d3m0b000-0000-4000-8000-000000000003", company_id: CO, product_id: P.quiche.id },
+      { id: "de3b0000-0000-4000-8000-000000000001", company_id: CO, product_id: P.beefPie.id },
+      { id: "de3b0000-0000-4000-8000-000000000002", company_id: CO, product_id: P.chickenPie.id },
+      { id: "de3b0000-0000-4000-8000-000000000003", company_id: CO, product_id: P.quiche.id },
     ],
     vyron_customer_price_list_assignments: [
-      { id: "d3m0a000-0000-4000-8000-000000000001", company_id: CO, customer_id: C.northside.id, default_price_list_id: null, contract_price_list_id: "d3m0l000-0000-4000-8000-000000000001", status: "Active" },
+      { id: "de3a0000-0000-4000-8000-000000000001", company_id: CO, customer_id: C.northside.id, default_price_list_id: null, contract_price_list_id: "de310000-0000-4000-8000-000000000001", status: "Active" },
     ],
     vyron_customer_price_list_items: [
-      { id: "d3m0i000-0000-4000-8000-000000000001", company_id: CO, price_list_id: "d3m0l000-0000-4000-8000-000000000001", product_id: P.beefPie.id, final_price: 35, status: "Active", effective_from: "2026-01-01" },
+      { id: "de3e0000-0000-4000-8000-000000000001", company_id: CO, price_list_id: "de310000-0000-4000-8000-000000000001", product_id: P.beefPie.id, final_price: 35, status: "Active", effective_from: "2026-01-01" },
     ],
     vyron_customer_price_lists: [],
     vyron_customer_price_list_versions: [],
     vyron_customer_branches: [],
     vyron_cost_product_pack_sizes: [
-      { id: "d3m0k000-0000-4000-8000-000000000001", company_id: CO, product_id: P.soup.id, units_per_box: 12, confidence: "Confirmed", evidence_source: "demo" },
+      { id: "de3d0000-0000-4000-8000-000000000001", company_id: CO, product_id: P.soup.id, units_per_box: 12, confidence: "Confirmed", evidence_source: "demo" },
     ],
     vyron_customer_order_policies: [
       {
-        id: "d3m0y000-0000-4000-8000-000000000001",
+        id: "de370000-0000-4000-8000-000000000001",
         company_id: CO,
         customer_id: C.lighthouse.id,
         require_po: true,
@@ -99,7 +99,7 @@ export function demoSeed(): Record<string, Array<Record<string, unknown>>> {
     vyron_customer_sales_orders: [{ id: DEMO_EXISTING_ORDER_ID, company_id: CO, order_number: "SO-DEMO-0001", customer_id: C.bayStreet.id, customer_name: C.bayStreet.customer_name, status: "Picking" }],
     vyron_customer_sales_order_lines: [],
     vyron_customer_sales_order_allocations: [
-      { id: "d3m0r000-0000-4000-8000-000000000001", company_id: CO, sales_order_id: DEMO_EXISTING_ORDER_ID, product_id: P.chickenPie.id, reserved_qty: 40, status: "Reserved" },
+      { id: "de360000-0000-4000-8000-000000000001", company_id: CO, sales_order_id: DEMO_EXISTING_ORDER_ID, product_id: P.chickenPie.id, reserved_qty: 40, status: "Reserved" },
     ],
     vyron_customer_sales_order_audit: [],
     vyron_customer_sales_order_invoice_links: [],

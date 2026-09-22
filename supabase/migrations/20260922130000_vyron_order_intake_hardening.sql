@@ -71,12 +71,15 @@ begin
       foreign key (intake_id, company_id) references public.vyron_order_intakes (id, company_id) on delete cascade;
   end if;
   -- Messages are never deleted by the application; a message may not be
-  -- removed while an order still points at it.
+  -- removed while an order still points at it. The first migration's plain
+  -- key (ON DELETE SET NULL) would quietly unlink the order instead, and it
+  -- does not check the company, so it is replaced by the composite key.
   if not exists (select 1 from pg_constraint where conname = 'vyron_order_intakes_message_same_company') then
     alter table public.vyron_order_intakes
       add constraint vyron_order_intakes_message_same_company
       foreign key (source_message_id, company_id) references public.vyron_order_source_messages (id, company_id);
   end if;
+  alter table public.vyron_order_intakes drop constraint if exists vyron_order_intakes_source_message_id_fkey;
 end $$;
 
 -- The "All orders" view pages by date without a status filter.

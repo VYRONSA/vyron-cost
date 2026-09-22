@@ -21,6 +21,7 @@ import pg from "pg";
 
 const ROOT = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const MIGRATION = readFileSync(path.join(ROOT, "supabase/migrations/20260922120000_vyron_order_intake.sql"), "utf8");
+const HARDENING = readFileSync(path.join(ROOT, "supabase/migrations/20260922130000_vyron_order_intake_hardening.sql"), "utf8");
 
 const PGURL = process.env.PGURL || "";
 if (!PGURL) {
@@ -69,10 +70,22 @@ try {
   check("migration applies", true);
   await db.query(MIGRATION);
   check("migration re-applies cleanly (idempotent)", true);
+  await db.query(HARDENING);
+  check("hardening migration applies", true);
+  await db.query(HARDENING);
+  check("hardening migration re-applies cleanly (idempotent)", true);
 
-  const tables = ["vyron_order_source_messages", "vyron_order_intakes", "vyron_order_intake_lines", "vyron_order_intake_events"];
+  const tables = [
+    "vyron_order_source_messages",
+    "vyron_order_intakes",
+    "vyron_order_intake_lines",
+    "vyron_order_intake_events",
+    "vyron_order_product_aliases",
+    "vyron_order_customer_identities",
+    "vyron_customer_order_policies",
+  ];
   const rls = await db.query(`select relname, relrowsecurity from pg_class where relname = any($1)`, [tables]);
-  check("all four tables exist", rls.rows.length === 4);
+  check("all seven tables exist", rls.rows.length === 7);
   check("RLS enabled on every table", rls.rows.every((r) => r.relrowsecurity === true));
   const policies = await db.query(`select count(*)::int as n from pg_policies where tablename = any($1)`, [tables]);
   check("no policies (service role only)", policies.rows[0].n === 0);
@@ -132,6 +145,116 @@ try {
   check("message stored", (await sqlState(...msg("<m1>"))) === null);
   check("same message id rejected", (await sqlState(...msg("<m1>"))) === "23505");
   check("unknown channel rejected", (await sqlState(`insert into vyron_order_source_messages (company_id, channel, provider, message_id, received_at) values ($1, 'fax', 't', 'x', now())`, [CO])) === "23514");
+  // ---- hardening: tenant consistency ------------------------------------------------
+  const owner = await insertIntake({ source_key: "tenant-check" });
+  check(
+    "a line cannot belong to another company than its order",
+    (await sqlState(`insert into vyron_order_intake_lines (company_id, intake_id, line_no, quantity) values ($1, $2, 1, 1)`, [CO_B, owner])) === "23503"
+  );
+  check(
+    "an event cannot belong to another company than its order",
+    (await sqlState(`insert into vyron_order_intake_events (company_id, intake_id, event_type, actor) values ($1, $2, 'X', 'u')`, [CO_B, owner])) === "23503"
+  );
+  const msgA = (await db.query(`insert into vyron_order_source_messages (company_id, channel, provider, message_id, received_at) values ($1, 'email', 't', '<tenant-a>', now()) returning id`, [CO])).rows[0].id;
+  check("an order cannot point at another company's message", (await sqlState(...intake({ company_id: CO_B, source_message_id: msgA }))) === "23503");
+  check("an order may point at its own company's message", (await sqlState(...intake({ source_message_id: msgA }))) === null);
+  check("a referenced message cannot be deleted", (await sqlState(`delete from vyron_order_source_messages where id = $1`, [msgA])) === "23503");
+  check(
+    "the match rule customer_alias is allowed",
+    (await sqlState(`insert into vyron_order_intake_lines (company_id, intake_id, line_no, quantity, match_rule) values ($1, $2, 9, 1, 'customer_alias')`, [CO, owner])) === null
+  );
+
+  // ---- hardening: mappings are revoke-only ------------------------------------------
+  const cust = "44444444-4444-4444-8444-444444444444";
+  const prod = "55555555-5555-4555-8555-555555555555";
+  const prod2 = "66666666-6666-4666-8666-666666666666";
+  const otherCust = "77777777-7777-4777-8777-777777777777";
+  const alias = (customer, key, product = prod) => [
+    `insert into vyron_order_product_aliases (company_id, customer_id, source_code, source_code_normalized, product_id, created_by) values ($1, $2, $3, $3, $4, 'u') returning id`,
+    [CO, customer, key, product],
+  ];
+  const aliasId = (await db.query(...alias(cust, "sku:A1"))).rows[0].id;
+  check("one live alias per customer and code", (await sqlState(...alias(cust, "sku:A1", prod2))) === "23505");
+  check("the same code for another customer is allowed", (await sqlState(...alias(otherCust, "sku:A1"))) === null);
+  check("one live company-wide alias per code", (await sqlState(...alias(null, "sku:B1"))) === null && (await sqlState(...alias(null, "sku:B1"))) === "23505");
+  check("an alias cannot be re-pointed", (await sqlState(`update vyron_order_product_aliases set product_id = $2 where id = $1`, [aliasId, prod2])) === "P0001");
+  check("an alias cannot be deleted", (await sqlState(`delete from vyron_order_product_aliases where id = $1`, [aliasId])) === "P0001");
+  check("revoked_at and revoked_by go together", (await sqlState(`update vyron_order_product_aliases set revoked_at = now() where id = $1`, [aliasId])) === "23514");
+  check("an alias can be revoked", (await sqlState(`update vyron_order_product_aliases set revoked_at = now(), revoked_by = 'u' where id = $1`, [aliasId])) === null);
+  check("a revoked alias cannot be revoked again", (await sqlState(`update vyron_order_product_aliases set revoked_at = now(), revoked_by = 'v' where id = $1`, [aliasId])) === "P0001");
+  check("after revocation the code can be mapped afresh", (await sqlState(...alias(cust, "sku:A1", prod2))) === null);
+  const identity = (ref, customer) => [
+    `insert into vyron_order_customer_identities (company_id, source, external_reference, external_reference_normalized, customer_id, created_by) values ($1, 'woocommerce', $2, $2, $3, 'u') returning id`,
+    [CO, ref, customer],
+  ];
+  const identityId = (await db.query(...identity("woo:store:customer:1", cust))).rows[0].id;
+  check("one live customer per source reference", (await sqlState(...identity("woo:store:customer:1", otherCust))) === "23505");
+  check("a customer identity cannot be re-pointed", (await sqlState(`update vyron_order_customer_identities set customer_id = $2 where id = $1`, [identityId, otherCust])) === "P0001");
+
+  // ---- hardening: policies -----------------------------------------------------------
+  const policyInsert = (customer, column, value) =>
+    column
+      ? [`insert into vyron_customer_order_policies (company_id, customer_id, updated_by, ${column}) values ($1, $2, 'u', $3)`, [CO, customer, value]]
+      : [`insert into vyron_customer_order_policies (company_id, customer_id, updated_by) values ($1, $2, 'u')`, [CO, customer]];
+  check("one company default policy", (await sqlState(...policyInsert(null))) === null && (await sqlState(...policyInsert(null))) === "23505");
+  check("one policy per customer", (await sqlState(...policyInsert(cust))) === null && (await sqlState(...policyInsert(cust))) === "23505");
+  const defaults = (await db.query(`select require_po, require_delivery_date, enforce_case_quantity, min_order_value, min_gp_pct from vyron_customer_order_policies where customer_id = $1`, [cust])).rows[0];
+  check("every rule is off by default", defaults.require_po === false && defaults.require_delivery_date === false && defaults.enforce_case_quantity === false && defaults.min_order_value === null && defaults.min_gp_pct === null);
+  check("delivery weekdays must be 1-7", (await sqlState(...policyInsert("88888888-8888-4888-8888-888888888888", "delivery_weekdays", [0, 8]))) === "23514");
+  check("minimum margin within +/-100%", (await sqlState(...policyInsert("99999999-9999-4999-8999-999999999999", "min_gp_pct", 150))) === "23514");
+
+  // ---- real concurrency on the compare-and-set and the source identity --------------
+  const c1 = new pg.Client({ connectionString: url.toString() });
+  const c2 = new pg.Client({ connectionString: url.toString() });
+  await c1.connect();
+  await c2.connect();
+  try {
+    const target = await insertIntake({ source_key: "cas-race", status: "AWAITING_APPROVAL" });
+    const cas = (client, who) =>
+      client.query(
+        `update vyron_order_intakes set status = 'APPROVED', decision_by = $2, version = version + 1 where id = $1 and company_id = $3 and status = 'AWAITING_APPROVAL' and version = 1 returning id`,
+        [target, who, CO]
+      );
+    await c1.query("begin");
+    await c2.query("begin");
+    const first = await cas(c1, "ann");
+    const secondPromise = cas(c2, "ben"); // waits on the row lock
+    await new Promise((r) => setTimeout(r, 150));
+    await c1.query("commit");
+    const second = await secondPromise;
+    await c2.query("commit");
+    check("two simultaneous compare-and-set approvals: exactly one row updated", first.rowCount + second.rowCount === 1, `${first.rowCount}+${second.rowCount}`);
+    const decided = (await db.query(`select decision_by, version from vyron_order_intakes where id = $1`, [target])).rows[0];
+    check("the winner's decision stands; version advanced once", decided.decision_by === "ann" && decided.version === 2);
+
+    const [a, b] = await Promise.allSettled([c1.query(...intake({ source_key: "same-web-order" })), c2.query(...intake({ source_key: "same-web-order" }))]);
+    check(
+      "two simultaneous inserts of the same source order: one succeeds, one gets 23505",
+      [a, b].filter((r) => r.status === "fulfilled").length === 1 && [a, b].some((r) => r.status === "rejected" && r.reason.code === "23505")
+    );
+  } finally {
+    await c1.end().catch(() => undefined);
+    await c2.end().catch(() => undefined);
+  }
+
+  // ---- performance: the inbox and lookups use their indexes (50,000 synthetic rows) -
+  await db.query(
+    `insert into vyron_order_intakes (company_id, intake_number, source, source_key, content_hash, created_by, status, customer_id, customer_po_number)
+     select case when g % 10 = 0 then $1::uuid else gen_random_uuid() end, 'ORD-P-' || g, 'csv', 'perf-' || g, 'h', 'u',
+       (array['RECEIVED','EXCEPTION','AWAITING_APPROVAL','REJECTED'])[1 + g % 4], gen_random_uuid(), 'PO-' || g
+     from generate_series(1, 50000) g`,
+    [CO]
+  );
+  await db.query("analyze vyron_order_intakes");
+  const plan = async (sql, params) => (await db.query(`explain ${sql}`, params)).rows.map((r) => r["QUERY PLAN"]).join(" | ");
+  const inbox = await plan(`select id from vyron_order_intakes where company_id = $1 and status = any($2) order by created_at desc limit 51`, [CO, ["RECEIVED", "EXCEPTION"]]);
+  check("inbox query uses an index, no sequential scan", /Index/.test(inbox) && !/Seq Scan/.test(inbox), inbox);
+  const all = await plan(`select id from vyron_order_intakes where company_id = $1 order by created_at desc limit 51`, [CO]);
+  check("'All orders' query uses the company/date index", /idx_vyron_order_intakes_company_created/.test(all), all);
+  const po = await plan(`select id from vyron_order_intakes where company_id = $1 and customer_id = $2 and customer_po_number = $3`, [CO, cust, "PO-10"]);
+  check("duplicate-PO lookup uses its index", /idx_vyron_order_intakes_company_po/.test(po), po);
+  const src = await plan(`select id from vyron_order_intakes where company_id = $1 and source = 'csv' and source_key = 'perf-10'`, [CO]);
+  check("source-identity lookup uses the unique index", /vyron_order_intakes_source_identity/.test(src), src);
 } finally {
   await db.end().catch(() => undefined);
   await admin.query(`drop database if exists ${dbName}`).catch(() => undefined);
