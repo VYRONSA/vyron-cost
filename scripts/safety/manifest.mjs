@@ -443,6 +443,71 @@ const REGISTER = [
       "Drives the real /api/order-intake handlers with the real session, membership and company-resolution code via scripts/support/session-security-test-hook.mjs; only cookies, the database and password checks are stand-ins. Synthetic tenants and members only; no network.",
   },
   {
+    id: "test-order-engine-fixtures",
+    file: "scripts/test-order-engine-fixtures.mjs",
+    family: A,
+    purpose:
+      "Order Engine fixture scenarios: 20 fictional orders through their real adapters (manual, CSV, WooCommerce, Shopify), validated against expected rule codes and approved into Draft sales orders with product, quantity, price, discount, tax, PO and customer checked.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit",
+    evidence:
+      "Runs src/lib/order-engine and the real sales-order engine on the fictional Harbour Kitchen Foods tenant (src/lib/order-engine/demo/fixtures.ts) in scripts/support/document-email-test-stubs/fake-supabase.mjs. No client data, no real database, no network.",
+  },
+  {
+    id: "test-order-engine-concurrency",
+    file: "scripts/test-order-engine-concurrency.mjs",
+    family: A,
+    purpose:
+      "Order Engine races and retries: simultaneous approvals, stale approvals, stock / price / reservation changes after validation, simultaneous duplicate deliveries (web order, CSV, e-mail), retried approvals and handoffs, concurrent alias recording — one order and one sales order every time, no double reservation, no path around approval.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit",
+    evidence:
+      "In-memory database with the migration's unique constraints enforced (fake-supabase options.unique); requests interleave through Promise.all. Fictional tenant; no network.",
+  },
+  {
+    id: "test-order-engine-controls",
+    file: "scripts/test-order-engine-controls.mjs",
+    family: A,
+    purpose:
+      "Order Engine controls: approved aliases and customer identities (exact, per customer, revocable, never merged), customer order policies, notifications (off by default), telemetry without personal data, cost redaction, Exception Centre, inbox filters, CSV hardening, WooCommerce and Shopify mapping review, AI extraction contract.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit",
+    evidence:
+      "Runs src/lib/order-engine on the fictional tenant in fake-supabase. No client data, no real database, no network.",
+  },
+  {
+    id: "test-order-engine-permissions",
+    file: "scripts/test-order-engine-permissions.mjs",
+    family: A,
+    purpose:
+      "Order Engine permission matrix: 10 workspace roles x 19 endpoints and actions plus anonymous callers, JSON-only and size-limited mutations, tenant isolation of exceptions, mappings and policies.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit",
+    evidence:
+      "Drives the real /api/order-intake handlers with the real login, session, membership and company resolution via scripts/support/session-security-test-hook.mjs; synthetic members and the fictional tenant only.",
+  },
+  {
+    id: "test-sales-order-safety",
+    file: "scripts/test-sales-order-safety.mjs",
+    family: A,
+    purpose:
+      "Existing sales-order engine safety: audit actor from the session (sales-order, invoice and Order Centre routes), portal-access permissions, price-list precedence, contract-over-default pricing, no double stock reservation, and a static guard against client-supplied actors.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit",
+    evidence:
+      "Drives the real sales-order, Order Centre and portal-access route handlers with the real session code via scripts/support/session-security-test-hook.mjs; synthetic tenant and members; no network.",
+  },
+  {
     id: "test-order-engine-migration-pg",
     file: "scripts/test-order-engine-migration-pg.mjs",
     family: B,
@@ -918,6 +983,17 @@ const REGISTER = [
   },
 
   // ─── Non-validation tooling ──────────────────────────────────────────────
+  {
+    id: "order-engine-demo",
+    file: "scripts/order-engine-demo.mjs",
+    family: "tooling",
+    purpose: "Scripted Order Engine demonstration (docs/order-engine/DEMO_SCRIPT.md): the Tuesday story end to end on the fictional tenant.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — in-memory, discarded on exit",
+    evidence: "Runs the real Order Engine and sales-order engine against fake-supabase with the fictional Harbour Kitchen Foods fixtures. No database, no network, no client data.",
+  },
   {
     id: "generate-pwa-icons",
     file: "scripts/generate-pwa-icons.mjs",
