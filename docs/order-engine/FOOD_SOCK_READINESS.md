@@ -32,6 +32,16 @@ or test the Order Engine. Status labels as in `VALIDATION_RULES.md`.
 | B2B orders by e-mail (e.g. retailer POs as CSV) | e-mail boundary; CSV attachments become orders | NOT CONNECTED (built, tested) |
 | Approval before a sales order exists | full approval workflow into the existing Sales Orders | IMPLEMENTED, TESTED |
 | Customer ordering rules | optional per-customer policies | IMPLEMENTED; values REQUIRE CLIENT INFORMATION |
+| B2B and B2C in one pipeline | order context (B2B / B2C) and channel on every order; unknown web customers booked only to a chosen B2C account | IMPLEMENTED, TESTED; account REQUIRES A DECISION (D2) |
+| Excel and PDF orders by e-mail | XLSX attachments read like CSV; PDFs held as "document not read yet" | NOT CONNECTED (built, tested) |
+| Document / AI extraction | canonical extraction contract with per-field confidence and as-written values | IMPLEMENTED, TESTED; no extractor connected |
+| What the customer actually sent | frozen source snapshot per order and line; any later change raised to the approver | IMPLEMENTED, TESTED |
+| Store product / customer ids | matched through `vyron_import_source_links` when a link exists; never guessed | IMPLEMENTED, TESTED; links REQUIRE MAPPING (D9) |
+| Production visibility | production required per product with BOM components, component stock and shortfall (estimate) | IMPLEMENTED, TESTED |
+| Tenant decisions | ordering settings: B2C account, name matching, repeated-PO action, lead time | IMPLEMENTED, TESTED |
+| UAT | fictional Food Sock-shaped catalogue and 13 scenarios (`npm run uat:food-sock`, `npm run test:order-engine-food-sock`); can run on a catalogue snapshot file | IMPLEMENTED |
+
+Open business decisions: `FOOD_SOCK_OPEN_DECISIONS.md`.
 
 ## 3. What must be confirmed by Food Sock
 

@@ -71,6 +71,7 @@ const R = {
   mappings: await importFromRoot("src/app/api/order-intake/mappings/route.ts"),
   policies: await importFromRoot("src/app/api/order-intake/policies/route.ts"),
   sources: await importFromRoot("src/app/api/order-intake/sources/route.ts"),
+  settings: await importFromRoot("src/app/api/order-intake/settings/route.ts"),
 };
 
 async function login(email, password) {
@@ -112,6 +113,8 @@ const ENDPOINTS = [
   { name: "revoke mapping", permission: "sales_orders.approve", run: (jar) => call(jar, R.mappings.POST, { method: "POST", body: { action: "revoke", kind: "product_alias", id: "nope" } }) },
   { name: "list policies", permission: "sales_orders.view", run: (jar) => call(jar, R.policies.GET) },
   { name: "save policy", permission: "sales_orders.approve", run: (jar) => call(jar, R.policies.PUT, { method: "PUT", body: { customerId: null, requirePo: false } }) },
+  { name: "read ordering settings", permission: "sales_orders.view", run: (jar) => call(jar, R.settings.GET) },
+  { name: "save ordering settings", permission: "sales_orders.approve", run: (jar) => call(jar, R.settings.PUT, { method: "PUT", body: { duplicatePoAction: "warn" } }) },
   { name: "sources", permission: "sales_orders.view", run: (jar) => call(jar, R.sources.GET) },
   { name: "lookup", permission: "sales_orders.view", run: (jar) => call(jar, R.lookup.GET, { url: "/api/order-intake/lookup?type=product&q=pie" }) },
 ];
@@ -167,6 +170,11 @@ console.log("\nTenant isolation of the new endpoints");
   check("…and cannot revoke one (404)", revokeB.status === 404 && !db.tables.vyron_order_product_aliases[0].revoked_at);
   const policyB = await call(jars.OTHER_OWNER, R.policies.PUT, { method: "PUT", body: { customerId: fixtures.DEMO_CUSTOMERS.bayStreet.id, requirePo: true } });
   check("…cannot set a policy for tenant A's customer (400)", policyB.status === 400);
+  const settingsB = await call(jars.OTHER_OWNER, R.settings.PUT, { method: "PUT", body: { b2cCustomerId: fixtures.DEMO_CUSTOMERS.bayStreet.id } });
+  check("…cannot choose tenant A's customer as its B2C account (400)", settingsB.status === 400);
+  const ownB = await call(jars.OTHER_OWNER, R.settings.PUT, { method: "PUT", body: { duplicatePoAction: "block" } });
+  const readA = await call(jars.OWNER, R.settings.GET);
+  check("…and its own settings never apply to tenant A", ownB.status === 200 && readA.status === 200 && readA.json.settings.duplicatePoAction !== "block");
   const excB = await call(jars.OTHER_OWNER, R.exceptions.GET);
   check("…and sees none of tenant A's exceptions", excB.status === 200 && excB.json.open.length === 0);
   const readB = await call(jars.OTHER_OWNER, R.item.GET, { id: ORDER });

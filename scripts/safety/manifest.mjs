@@ -508,6 +508,19 @@ const REGISTER = [
       "Drives the real sales-order, Order Centre and portal-access route handlers with the real session code via scripts/support/session-security-test-hook.mjs; synthetic tenant and members; no network.",
   },
   {
+    id: "test-order-engine-food-sock",
+    file: "scripts/test-order-engine-food-sock.mjs",
+    family: A,
+    purpose:
+      "Food Sock ordering foundation (UAT): every Food Sock UAT scenario through the real Order Engine and sales-order engine — manual, web-store, e-mail CSV / XLSX / PDF and document-extraction intake, the canonical extraction contract, frozen source snapshots, external-id / SKU / name matching, duplicates, price, stock, production with BOM components, margin, customer rules, tenant ordering settings, the Exception Centre, approval, concurrent approval, the idempotent Sales Order handoff, B2B / B2C, historical-order refusal and tenant isolation.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit",
+    evidence:
+      "Runs src/lib/order-engine on the fictional Food Sock UAT tenant (src/lib/order-engine/uat/food-sock-uat.ts — fictional catalogue, customers and rules, not Food Sock data) in scripts/support/document-email-test-stubs/fake-supabase.mjs. No client data, no real database, no network, no mailbox.",
+  },
+  {
     id: "test-order-engine-migration-pg",
     file: "scripts/test-order-engine-migration-pg.mjs",
     family: B,
@@ -983,6 +996,17 @@ const REGISTER = [
   },
 
   // ─── Non-validation tooling ──────────────────────────────────────────────
+  {
+    id: "food-sock-uat",
+    file: "scripts/food-sock-uat.mjs",
+    family: "tooling",
+    purpose: "Food Sock UAT runner: the UAT scenarios end to end in memory, on the fictional catalogue or a supplied catalogue snapshot file, with approval and the Draft sales-order handoff shown.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — in-memory, discarded on exit",
+    evidence: "Runs the real Order Engine and sales-order engine against fake-supabase. Orders and customers are fictional; a catalogue snapshot is read from a local file and re-homed onto the in-memory UAT tenant. No database, no network.",
+  },
   {
     id: "order-engine-demo",
     file: "scripts/order-engine-demo.mjs",

@@ -609,7 +609,7 @@ section("E-mail boundary (not connected)");
   const noAttachment = await receiveInboundEmail(db, CO, { ...message, messageId: "<m2>", attachments: [] }, CLERK);
   check("no attachment → NO_ORDER_FOUND, nothing guessed", noAttachment.status === "NO_ORDER_FOUND" && db.tables.vyron_order_intakes.length === 1);
   const pdfOnly = await receiveInboundEmail(db, CO, { ...message, messageId: "<m3>", attachments: [{ fileName: "po.pdf", contentType: "application/pdf", sizeBytes: 900 }] }, CLERK);
-  check("PDF-only → NO_ORDER_FOUND (PDF not read automatically yet)", pdfOnly.status === "NO_ORDER_FOUND");
+  check("PDF-only → NEEDS_EXTRACTION (held for an extractor; nothing guessed, no order)", pdfOnly.status === "NEEDS_EXTRACTION" && db.tables.vyron_order_intakes.length === 1);
   const broken = await receiveInboundEmail(db, CO, { ...message, messageId: "<m4>", attachments: [{ fileName: "x.csv", contentType: "text/csv", sizeBytes: 5, text: "sku\nX\n" }] }, CLERK);
   check("unreadable CSV → FAILED with reason", broken.status === "FAILED" && /quantity/.test(broken.reason));
   const invalid = await rejects(receiveInboundEmail(db, CO, { ...message, messageId: "" }, CLERK));

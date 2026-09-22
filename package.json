@@ -60,6 +60,8 @@
     "test:order-engine-concurrency": "node scripts/test-order-engine-concurrency.mjs",
     "test:order-engine-controls": "node scripts/test-order-engine-controls.mjs",
     "test:order-engine-permissions": "node scripts/test-order-engine-permissions.mjs",
+    "test:order-engine-food-sock": "node scripts/test-order-engine-food-sock.mjs",
+    "uat:food-sock": "node scripts/food-sock-uat.mjs",
     "test:sales-order-safety": "node scripts/test-sales-order-safety.mjs",
     "demo:order-engine": "node scripts/order-engine-demo.mjs"
   },

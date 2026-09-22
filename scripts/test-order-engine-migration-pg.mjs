@@ -22,6 +22,7 @@ import pg from "pg";
 const ROOT = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const MIGRATION = readFileSync(path.join(ROOT, "supabase/migrations/20260922120000_vyron_order_intake.sql"), "utf8");
 const HARDENING = readFileSync(path.join(ROOT, "supabase/migrations/20260922130000_vyron_order_intake_hardening.sql"), "utf8");
+const FOOD_SOCK = readFileSync(path.join(ROOT, "supabase/migrations/20260923120000_vyron_order_engine_food_sock.sql"), "utf8");
 
 const PGURL = process.env.PGURL || "";
 if (!PGURL) {
@@ -74,6 +75,10 @@ try {
   check("hardening migration applies", true);
   await db.query(HARDENING);
   check("hardening migration re-applies cleanly (idempotent)", true);
+  await db.query(FOOD_SOCK);
+  check("ordering-foundation migration applies", true);
+  await db.query(FOOD_SOCK);
+  check("ordering-foundation migration re-applies cleanly (idempotent)", true);
 
   const tables = [
     "vyron_order_source_messages",
@@ -83,9 +88,10 @@ try {
     "vyron_order_product_aliases",
     "vyron_order_customer_identities",
     "vyron_customer_order_policies",
+    "vyron_order_engine_settings",
   ];
   const rls = await db.query(`select relname, relrowsecurity from pg_class where relname = any($1)`, [tables]);
-  check("all seven tables exist", rls.rows.length === 7);
+  check("all eight tables exist", rls.rows.length === 8);
   check("RLS enabled on every table", rls.rows.every((r) => r.relrowsecurity === true));
   const policies = await db.query(`select count(*)::int as n from pg_policies where tablename = any($1)`, [tables]);
   check("no policies (service role only)", policies.rows[0].n === 0);
@@ -202,6 +208,33 @@ try {
   check("every rule is off by default", defaults.require_po === false && defaults.require_delivery_date === false && defaults.enforce_case_quantity === false && defaults.min_order_value === null && defaults.min_gp_pct === null);
   check("delivery weekdays must be 1-7", (await sqlState(...policyInsert("88888888-8888-4888-8888-888888888888", "delivery_weekdays", [0, 8]))) === "23514");
   check("minimum margin within +/-100%", (await sqlState(...policyInsert("99999999-9999-4999-8999-999999999999", "min_gp_pct", 150))) === "23514");
+
+  // ---- ordering foundation: context, snapshots, match rules, settings ---------------
+  check("order context defaults to UNSPECIFIED", (await db.query(`select order_context from vyron_order_intakes where id = $1`, [await insertIntake({})])).rows[0].order_context === "UNSPECIFIED");
+  check("unknown order context rejected", (await sqlState(...intake({ order_context: "B2X" }))) === "23514");
+  check("B2B and B2C accepted", (await sqlState(...intake({ order_context: "B2B" }))) === null && (await sqlState(...intake({ order_context: "B2C" }))) === null);
+  check("unknown extraction confidence rejected", (await sqlState(...intake({ extraction_confidence: "SURE" }))) === "23514");
+  check("customer matched by a fuzzy rule cannot be stored", (await sqlState(...intake({ customer_match_rule: "fuzzy" }))) === "23514");
+  check("external_id and b2c_account customer rules accepted", (await sqlState(...intake({ customer_match_rule: "external_id" }))) === null && (await sqlState(...intake({ customer_match_rule: "b2c_account" }))) === null);
+  const snapIntake = await insertIntake({ source_snapshot: JSON.stringify({ po_number: "PO-1" }) });
+  check("working PO may change", (await sqlState(`update vyron_order_intakes set customer_po_number = 'PO-2' where id = $1`, [snapIntake])) === null);
+  check("the order's source snapshot cannot be changed", (await sqlState(`update vyron_order_intakes set source_snapshot = '{"po_number":"PO-2"}' where id = $1`, [snapIntake])) === "P0001");
+  const snapLine = (await db.query(`insert into vyron_order_intake_lines (company_id, intake_id, line_no, quantity, source_snapshot) values ($1, $2, 1, 5, '{"source_quantity":5}') returning id`, [CO, snapIntake])).rows[0].id;
+  check("working quantity may change", (await sqlState(`update vyron_order_intake_lines set quantity = 7 where id = $1`, [snapLine])) === null);
+  check("the line's source snapshot cannot be changed", (await sqlState(`update vyron_order_intake_lines set source_snapshot = '{"source_quantity":7}' where id = $1`, [snapLine])) === "P0001");
+  check("external_id product match rule accepted", (await sqlState(`insert into vyron_order_intake_lines (company_id, intake_id, line_no, quantity, match_rule) values ($1, $2, 2, 1, 'external_id')`, [CO, snapIntake])) === null);
+  check("message may be held as NEEDS_EXTRACTION", (await sqlState(`insert into vyron_order_source_messages (company_id, channel, provider, message_id, received_at, processing_status) values ($1, 'email', 't', '<pdf-1>', now(), 'NEEDS_EXTRACTION')`, [CO])) === null);
+  check("unknown message status still rejected", (await sqlState(`insert into vyron_order_source_messages (company_id, channel, provider, message_id, received_at, processing_status) values ($1, 'email', 't', '<pdf-2>', now(), 'GUESSED')`, [CO])) === "23514");
+  const setting = (company, column, value) =>
+    column
+      ? [`insert into vyron_order_engine_settings (company_id, updated_by, ${column}) values ($1, 'u', $2)`, [company, value]]
+      : [`insert into vyron_order_engine_settings (company_id, updated_by) values ($1, 'u')`, [company]];
+  check("one settings row per company", (await sqlState(...setting(CO))) === null && (await sqlState(...setting(CO))) === "23505");
+  const sdef = (await db.query(`select b2c_customer_id, product_name_matching, duplicate_po_action, min_lead_time_days from vyron_order_engine_settings where company_id = $1`, [CO])).rows[0];
+  check("settings default conservative (no B2C account, review, warn, no lead time)", sdef.b2c_customer_id === null && sdef.product_name_matching === "review" && sdef.duplicate_po_action === "warn" && sdef.min_lead_time_days === null);
+  check("unknown name-matching mode rejected", (await sqlState(...setting("44444444-4444-4444-8444-444444444441", "product_name_matching", "fuzzy"))) === "23514");
+  check("unknown repeated-PO action rejected", (await sqlState(...setting("44444444-4444-4444-8444-444444444442", "duplicate_po_action", "merge"))) === "23514");
+  check("lead time above 90 days rejected", (await sqlState(...setting("44444444-4444-4444-8444-444444444443", "min_lead_time_days", 120))) === "23514");
 
   // ---- real concurrency on the compare-and-set and the source identity --------------
   const c1 = new pg.Client({ connectionString: url.toString() });
