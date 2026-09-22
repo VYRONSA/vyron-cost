@@ -42,10 +42,15 @@ export const ORDER_SOURCE_REGISTRY: readonly OrderSourceInfo[] = [
   {
     source: "xlsx",
     label: "Excel file",
-    state: "COMING_SOON",
-    detail: "Save the sheet as CSV for now. Reading .xlsx on the server waits for a parser without the known issues of the bundled one.",
+    state: "NOT_CONNECTED",
+    detail: "Excel (.xlsx) order attachments on inbound e-mail are read with the same column mapping as CSV (exceljs, 5 MB, first sheet). No mailbox is connected; direct upload uses CSV.",
   },
-  { source: "pdf", label: "PDF order", state: "COMING_SOON", detail: "Designed: document extraction as a reviewed candidate, never an approval." },
+  {
+    source: "pdf",
+    label: "PDF order",
+    state: "NOT_CONNECTED",
+    detail: "PDF orders are held as documents needing extraction; any extractor hands back the canonical extraction contract as a reviewed candidate. No extractor is connected.",
+  },
   { source: "api", label: "API", state: "COMING_SOON", detail: "Designed: a tenant API key with an idempotency key per order." },
   { source: "edi", label: "EDI", state: "COMING_SOON", detail: "Designed: mapped onto the same order candidate." },
 ];

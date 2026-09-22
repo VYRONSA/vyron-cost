@@ -1,6 +1,7 @@
 import { cleanText, normalizeEmail } from "@/lib/order-engine/normalize";
 import type { OrderCandidate } from "@/lib/order-engine/types";
 import { parseCsvOrder } from "@/lib/order-engine/adapters/csv";
+import { isXlsxAttachment } from "@/lib/order-engine/adapters/xlsx";
 import { OrderSourceParseError } from "@/lib/order-engine/adapters/types";
 
 /**
@@ -11,10 +12,12 @@ import { OrderSourceParseError } from "@/lib/order-engine/adapters/types";
  * deterministic rule for turning a message into order candidates. Today it is
  * driven only by tests and by trusted server code.
  *
- * Rule: every CSV attachment becomes one candidate (source "email", key
- * "<message id>#<file name>"). A message with no CSV attachment yields no
- * candidate — the body is kept for a person; it is never guessed at. PDF/XLSX
- * and AI extraction of bodies are designed for later (architecture §9–10).
+ * Rule: every CSV attachment — and every Excel (.xlsx) attachment, read into
+ * the same CSV text first (adapters/xlsx.ts) — becomes one candidate (source
+ * "email", key "<message id>#<file name>"). A message whose only order
+ * documents are PDFs is held as NEEDS_EXTRACTION: the document waits for an
+ * extractor (extraction.ts) or a person; nothing is guessed. A message with no
+ * attachment yields no candidate — the body is kept for a person.
  */
 
 export type InboundEmailAttachment = {
@@ -22,8 +25,10 @@ export type InboundEmailAttachment = {
   contentType: string;
   sizeBytes: number;
   sha256?: string | null;
-  /** Text content, for text attachments the adapter can read (CSV). */
+  /** Text content, for text attachments the adapter can read (CSV; Excel after conversion). */
   text?: string | null;
+  /** Raw bytes (base64) for binary attachments the boundary converts itself (Excel). */
+  contentBase64?: string | null;
   /** Where the bytes are stored, once a provider stores them (vyron-documents bucket). */
   storagePath?: string | null;
 };
@@ -43,7 +48,14 @@ export type InboundEmailMessage = {
 
 export type EmailParseResult =
   | { kind: "orders"; candidates: OrderCandidate[] }
+  | { kind: "needs_extraction"; documents: Array<{ fileName: string; contentType: string }>; reason: string }
   | { kind: "no_order"; reason: string };
+
+export function isPdfAttachment(attachment: { fileName?: string | null; contentType?: string | null }): boolean {
+  const type = String(attachment.contentType || "").toLowerCase();
+  const name = String(attachment.fileName || "").toLowerCase();
+  return type === "application/pdf" || name.endsWith(".pdf");
+}
 
 function isCsv(attachment: InboundEmailAttachment): boolean {
   const type = String(attachment.contentType || "").toLowerCase();
@@ -62,8 +74,16 @@ export function assertInboundEmail(message: InboundEmailMessage): void {
 
 export function parseInboundEmail(message: InboundEmailMessage): EmailParseResult {
   assertInboundEmail(message);
-  const csvs = message.attachments.filter(isCsv);
+  const csvs = message.attachments.filter((a) => isCsv(a) || isXlsxAttachment(a));
   if (!csvs.length) {
+    const pdfs = message.attachments.filter(isPdfAttachment);
+    if (pdfs.length) {
+      return {
+        kind: "needs_extraction",
+        documents: pdfs.map((a) => ({ fileName: a.fileName, contentType: a.contentType })),
+        reason: `${pdfs.length} PDF order document(s) held for extraction — no extractor is connected; enter the order manually or process the document.`,
+      };
+    }
     return {
       kind: "no_order",
       reason: message.attachments.length

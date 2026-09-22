@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { OrderEngineError, isUniqueViolation, raiseDbError } from "@/lib/order-engine/errors";
 import { cleanText, normalizeEmail } from "@/lib/order-engine/normalize";
 import { assertInboundEmail, parseInboundEmail, type InboundEmailMessage } from "@/lib/order-engine/adapters/email";
+import { isXlsxAttachment, xlsxToCsvText } from "@/lib/order-engine/adapters/xlsx";
 import { receiveOrderCandidate, type ReceiveResult } from "@/lib/order-engine/service";
 import type { OrderEngineActor } from "@/lib/order-engine/types";
 
@@ -19,7 +20,7 @@ import type { OrderEngineActor } from "@/lib/order-engine/types";
 export type InboundEmailResult = {
   messageRowId: string;
   duplicate: boolean;
-  status: "PARSED" | "NO_ORDER_FOUND" | "FAILED";
+  status: "PARSED" | "NO_ORDER_FOUND" | "NEEDS_EXTRACTION" | "FAILED";
   orders: ReceiveResult[];
   reason: string | null;
 };
@@ -107,11 +108,23 @@ export async function receiveInboundEmail(
 
   let parsed: ReturnType<typeof parseInboundEmail>;
   try {
-    parsed = parseInboundEmail(message);
+    // Excel attachments are read into CSV text first, then follow the CSV rule.
+    const attachments = await Promise.all(
+      message.attachments.map(async (a) => {
+        if (!isXlsxAttachment(a) || typeof a.text === "string") return a;
+        if (!a.contentBase64) throw new Error(`Attachment ${a.fileName} has no readable content.`);
+        return { ...a, text: await xlsxToCsvText(Buffer.from(a.contentBase64, "base64")) };
+      })
+    );
+    parsed = parseInboundEmail({ ...message, attachments });
   } catch (error) {
     const reason = error instanceof Error ? error.message : "The message could not be read.";
     await finish("FAILED", reason, null);
     return { messageRowId: rowId, duplicate: false, status: "FAILED", orders: [], reason };
+  }
+  if (parsed.kind === "needs_extraction") {
+    await finish("NEEDS_EXTRACTION", parsed.reason, null);
+    return { messageRowId: rowId, duplicate: false, status: "NEEDS_EXTRACTION", orders: [], reason: parsed.reason };
   }
   if (parsed.kind === "no_order") {
     await finish("NO_ORDER_FOUND", parsed.reason, null);
