@@ -4,6 +4,7 @@ import { OrderEngineError, isUniqueViolation, raiseDbError } from "@/lib/order-e
 import { cleanText, normalizeEmail } from "@/lib/order-engine/normalize";
 import { assertInboundEmail, parseInboundEmail, type InboundEmailMessage } from "@/lib/order-engine/adapters/email";
 import { isXlsxAttachment, xlsxToCsvText } from "@/lib/order-engine/adapters/xlsx";
+import { attachmentHash } from "@/lib/order-engine/email-security";
 import { receiveOrderCandidate, type ReceiveResult } from "@/lib/order-engine/service";
 import type { OrderEngineActor } from "@/lib/order-engine/types";
 
@@ -31,7 +32,8 @@ export async function receiveInboundEmail(
   supabase: SupabaseClient,
   companyId: string,
   message: InboundEmailMessage,
-  actor: OrderEngineActor
+  actor: OrderEngineActor,
+  options: { mailboxId?: string | null; verification?: Record<string, unknown> | null } = {}
 ): Promise<InboundEmailResult> {
   try {
     assertInboundEmail(message);
@@ -65,14 +67,18 @@ export async function receiveInboundEmail(
     to_addresses: (message.to || []).map(normalizeEmail),
     cc_addresses: (message.cc || []).map(normalizeEmail),
     subject: cleanText(message.subject, 500),
+    mailbox_id: options.mailboxId ?? null,
+    sender_verification: options.verification ?? {},
     received_at: new Date(message.receivedAt).toISOString(),
     body_text: cleanText(message.bodyText, 100_000),
     // Metadata only: attachment bytes live in storage, never in this row.
+    // Attachment provenance stays with its message: name, type, size, hash and
+    // where the bytes are stored. Bytes are never copied into this row.
     attachments: message.attachments.map((a) => ({
       fileName: a.fileName,
       contentType: a.contentType,
       sizeBytes: a.sizeBytes,
-      sha256: a.sha256 ?? null,
+      sha256: a.sha256 ?? attachmentHash(a),
       storagePath: a.storagePath ?? null,
     })),
     processing_status: "RECEIVED",
