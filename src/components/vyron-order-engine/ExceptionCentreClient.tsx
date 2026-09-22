@@ -19,6 +19,23 @@ type OpenRow = {
   title: string;
   message: string;
   action: string;
+  originalValue?: string | null;
+  expectedValue?: string | null;
+  raisedAt?: string | null;
+  raisedBy?: string | null;
+};
+
+type DocumentRow = {
+  messageId: string;
+  channel: string;
+  receivedAt: string;
+  from: string | null;
+  subject: string | null;
+  code: string;
+  severity: "error" | "warning";
+  documents: string[];
+  reason: string | null;
+  action: string;
 };
 
 type ResolvedRow = {
@@ -32,7 +49,7 @@ type ResolvedRow = {
   remembered: boolean;
 };
 
-type Loaded = { kind: "ok"; open: OpenRow[]; resolved: ResolvedRow[] } | { kind: "not_enabled" } | { kind: "error"; error: string };
+type Loaded = { kind: "ok"; open: OpenRow[]; resolved: ResolvedRow[]; documents: DocumentRow[] } | { kind: "not_enabled" } | { kind: "error"; error: string };
 
 async function fetchCentre(): Promise<Loaded> {
   try {
@@ -40,7 +57,7 @@ async function fetchCentre(): Promise<Loaded> {
     const data = await res.json().catch(() => ({}));
     if (res.status === 503 && data.code === "NOT_ENABLED") return { kind: "not_enabled" };
     if (!res.ok || !data.ok) return { kind: "error", error: data.error || "Could not load exceptions." };
-    return { kind: "ok", open: data.open || [], resolved: data.resolved || [] };
+    return { kind: "ok", open: data.open || [], resolved: data.resolved || [], documents: data.documents || [] };
   } catch (e) {
     return { kind: "error", error: e instanceof Error ? e.message : "Could not load exceptions." };
   }
@@ -125,20 +142,22 @@ export default function ExceptionCentreClient() {
             }
           >
             <div className="overflow-x-auto">
-              <div className="min-w-[960px]">
-                <div className="grid grid-cols-[0.8fr_1fr_1.2fr_0.4fr_1.4fr_2fr] gap-3 border-b border-slate-100 pb-2 text-[10px] font-black uppercase tracking-[0.13em] text-slate-400">
+              <div className="min-w-[1180px]">
+                <div className="grid grid-cols-[0.8fr_1fr_1.1fr_0.4fr_1.4fr_1.1fr_1.6fr_0.9fr] gap-3 border-b border-slate-100 pb-2 text-[10px] font-black uppercase tracking-[0.13em] text-slate-400">
                   <div>Severity</div>
                   <div>Order</div>
                   <div>Customer</div>
                   <div>Line</div>
                   <div>What went wrong</div>
+                  <div>Values</div>
                   <div>What to do</div>
+                  <div>Raised</div>
                 </div>
                 {rows.map((row, index) => (
                   <Link
                     key={`${row.intakeId}-${row.code}-${row.lineNo}-${index}`}
                     href={`/order-inbox/${row.intakeId}`}
-                    className="grid grid-cols-[0.8fr_1fr_1.2fr_0.4fr_1.4fr_2fr] items-start gap-3 border-b border-slate-50 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className="grid grid-cols-[0.8fr_1fr_1.1fr_0.4fr_1.4fr_1.1fr_1.6fr_0.9fr] items-start gap-3 border-b border-slate-50 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                   >
                     <div>
                       <SeverityPill severity={row.severity} />
@@ -155,12 +174,56 @@ export default function ExceptionCentreClient() {
                       <div className="font-black text-slate-900">{row.title}</div>
                       <div className="text-xs text-slate-500">{row.message}</div>
                     </div>
+                    <div className="text-xs text-slate-600">
+                      {row.originalValue ? (
+                        <div>
+                          <span className="text-slate-400">Order: </span>
+                          {row.originalValue}
+                        </div>
+                      ) : null}
+                      {row.expectedValue ? (
+                        <div>
+                          <span className="text-slate-400">Expected: </span>
+                          {row.expectedValue}
+                        </div>
+                      ) : null}
+                      {!row.originalValue && !row.expectedValue ? <span className="text-slate-400">—</span> : null}
+                    </div>
                     <div className="text-xs text-slate-600">{row.action}</div>
+                    <div className="text-xs text-slate-500">
+                      <div>{row.raisedBy || "—"}</div>
+                      <div>{row.raisedAt ? when(row.raisedAt) : ""}</div>
+                    </div>
                   </Link>
                 ))}
                 {rows.length === 0 ? <div className="py-8 text-center text-sm font-semibold text-slate-400">Nothing here.</div> : null}
               </div>
             </div>
+          </Card>
+
+          <Card title={`Documents not turned into orders (${loaded.documents.length})`}>
+            {loaded.documents.length === 0 ? (
+              <p className="text-sm font-semibold text-slate-500">Every received document became an order.</p>
+            ) : (
+              <div className="grid gap-2">
+                {loaded.documents.map((d) => (
+                  <div key={d.messageId} className="grid grid-cols-[0.7fr_1.4fr_1.6fr_1.8fr] items-start gap-3 rounded-xl border border-slate-50 p-2 text-sm font-semibold text-slate-700">
+                    <SeverityPill severity={d.severity} />
+                    <div>
+                      <div className="font-black text-slate-900">{d.subject || "(no subject)"}</div>
+                      <div className="text-xs text-slate-400">
+                        {d.from || "unknown sender"} · {when(d.receivedAt)}
+                      </div>
+                    </div>
+                    <div className="text-xs">
+                      <div className="text-slate-900">{d.documents.join(", ") || "No attachment"}</div>
+                      <div className="text-slate-500">{d.reason}</div>
+                    </div>
+                    <div className="text-xs text-slate-600">{d.action}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
 
           <Card title="Recently resolved">

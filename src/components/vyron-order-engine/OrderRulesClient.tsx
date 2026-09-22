@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import OrderSettingsCard from "@/components/vyron-order-engine/OrderSettingsCard";
 import type { CustomerOrderPolicy } from "@/lib/order-engine/types";
 import { Card, Notice, NotEnabledNotice, OrderEngineTabs, Pill, PrimaryButton, SecondaryButton, when } from "@/components/vyron-order-engine/ui";
 
@@ -166,6 +167,8 @@ export default function OrderRulesClient({ canManage }: { canManage: boolean }) 
       </div>
       <OrderEngineTabs active="rules" />
       {message ? <Notice tone={message.tone}>{message.text}</Notice> : null}
+
+      <OrderSettingsCard canManage={canManage} />
 
       <Card title="Ordering rules">
         <div className="grid gap-2">

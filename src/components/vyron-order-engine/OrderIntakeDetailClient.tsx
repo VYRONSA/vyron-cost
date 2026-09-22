@@ -4,7 +4,16 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowRight, Check, CircleSlash, PauseCircle, RefreshCw, RotateCcw, ShieldCheck, XCircle } from "lucide-react";
 import { STATUS_LABEL, type IntakeAction } from "@/lib/order-engine/lifecycle";
-import type { IntakeEventRow, IntakeLineRow, IntakeRow, LineEvaluation, ValidationIssue, ValidationSnapshot } from "@/lib/order-engine/types";
+import type {
+  IntakeEventRow,
+  IntakeLineRow,
+  IntakeRow,
+  IntakeSourceSnapshot,
+  LineEvaluation,
+  LineSourceSnapshot,
+  ValidationIssue,
+  ValidationSnapshot,
+} from "@/lib/order-engine/types";
 import {
   Card,
   IntakeStatusPill,
@@ -38,6 +47,7 @@ type LoadResult = { kind: "ok"; detail: Detail } | { kind: "not_enabled" } | { k
 /** How a PRODUCT line was matched. */
 const RULE_LABEL: Record<string, string> = {
   manual: "Chosen by a person",
+  external_id: "Source product id (linked)",
   sku_exact: "Exact SKU",
   sku_normalized: "SKU (case / spaces)",
   customer_alias: "This customer's approved code",
@@ -48,6 +58,8 @@ const RULE_LABEL: Record<string, string> = {
 /** How the CUSTOMER was identified. An exact customer name is a normal match; only e-mail needs review. */
 const CUSTOMER_RULE_LABEL: Record<string, string> = {
   customer_id: "Chosen by a person",
+  external_id: "Source customer id (linked)",
+  b2c_account: "Company B2C account",
   identity_map: "Remembered customer reference",
   name_exact: "Exact name",
   sender_email: "Sender e-mail — review",
@@ -231,6 +243,8 @@ export default function OrderIntakeDetailClient({ id, duplicate }: { id: string;
             />
           </Card>
 
+          <AsReceived intake={intake} lines={lines} />
+
           <Card title="Timeline">
             <ol className="grid gap-3">
               {events.map((event) => {
@@ -314,7 +328,50 @@ export default function OrderIntakeDetailClient({ id, duplicate }: { id: string;
                   ))}
                 </ul>
               )}
-              <p className="mt-3 text-xs font-semibold text-slate-400">Available = on hand minus stock reserved by other live sales orders. Nothing is reserved until the sales order is approved.</p>
+              {(snapshot.production || []).map((req) => (
+                <div key={req.productId} className="mt-4 rounded-2xl border border-slate-100 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-sm font-black text-slate-900">Production required — {req.productName || "product"}</div>
+                    {req.componentsAvailable === true ? <Pill tone="green">Components in stock</Pill> : req.componentsAvailable === false ? <Pill tone="amber">Components short</Pill> : <Pill tone="slate">Components not measured</Pill>}
+                  </div>
+                  <div className="mt-1 text-xs font-semibold text-slate-500">
+                    Ordered {qty(req.quantityRequired)} · finished stock available {qty(req.availableFinished)} · shortfall {qty(req.shortfall)}
+                    {req.bomName ? ` · BOM ${req.bomName}` : ""}
+                    {req.bomYield ? ` (yield ${qty(req.bomYield)})` : ""}
+                  </div>
+                  {req.components.length ? (
+                    <table className="mt-2 w-full text-xs">
+                      <thead>
+                        <tr className="text-left text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">
+                          <th className="py-1">Component</th>
+                          <th className="py-1 text-right">Required</th>
+                          <th className="py-1 text-right">In stock</th>
+                          <th className="py-1 text-right">Short</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {req.components.map((c, i) => (
+                          <tr key={`${c.ingredientId}-${i}`} className="border-t border-slate-50 font-semibold text-slate-700">
+                            <td className="py-1">
+                              {c.name}
+                              {c.note ? <div className="text-[11px] text-slate-400">{c.note}</div> : null}
+                            </td>
+                            <td className="py-1 text-right">
+                              {qty(c.required)} {c.unit || ""}
+                            </td>
+                            <td className="py-1 text-right">{c.available === null ? "—" : qty(c.available)}</td>
+                            <td className={`py-1 text-right ${c.shortfall && c.shortfall > 0 ? "text-amber-700" : ""}`}>{c.shortfall === null ? "—" : qty(c.shortfall)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : null}
+                </div>
+              ))}
+              <p className="mt-3 text-xs font-semibold text-slate-400">
+                Available = on hand minus stock reserved by other live sales orders. Production figures are estimates from the BOM; approving an order does not
+                produce, reserve or purchase anything.
+              </p>
             </Card>
           ) : null}
 
@@ -768,5 +825,68 @@ function Lookup({ type, disabled, onPick }: { type: "product" | "customer"; disa
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** What the source said, frozen at receipt, beside the current working values. */
+function AsReceived({ intake, lines }: { intake: IntakeRow; lines: IntakeLineRow[] }) {
+  const head = (intake.source_snapshot && "po_number" in intake.source_snapshot ? intake.source_snapshot : null) as IntakeSourceSnapshot | null;
+  const anyLine = lines.some((l) => l.source_snapshot && "source_quantity" in l.source_snapshot);
+  if (!head && !anyLine) return null;
+  const changed = (a: unknown, b: unknown) => String(a ?? "") !== String(b ?? "");
+  const cell = (original: unknown, current: unknown) => (
+    <span className={changed(original, current) ? "rounded bg-amber-50 px-1 text-amber-800" : ""}>{original === null || original === undefined || original === "" ? "—" : String(original)}</span>
+  );
+  return (
+    <Card title="As received">
+      <p className="mb-3 text-xs font-semibold text-slate-500">
+        Exactly what the {SOURCE_LABEL[intake.source] || intake.source} source said, kept unchanged. Highlighted values have since been changed on the order.
+        {intake.order_context ? ` Context: ${intake.order_context === "UNSPECIFIED" ? "not stated" : intake.order_context}.` : ""}
+        {intake.source_channel ? ` Channel: ${intake.source_channel}.` : ""}
+        {intake.extraction_confidence ? ` Extraction confidence: ${intake.extraction_confidence}.` : ""}
+      </p>
+      {head ? (
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm md:grid-cols-4">
+          <dt className="font-semibold text-slate-500">Customer</dt>
+          <dd className="font-black text-slate-900">{head.customer_name || head.customer_reference || "—"}</dd>
+          <dt className="font-semibold text-slate-500">PO</dt>
+          <dd className="font-black text-slate-900">{cell(head.po_number, intake.customer_po_number)}</dd>
+          <dt className="font-semibold text-slate-500">Order reference</dt>
+          <dd className="font-black text-slate-900">{head.external_order_number || head.source_order_reference || "—"}</dd>
+          <dt className="font-semibold text-slate-500">Delivery date</dt>
+          <dd className="font-black text-slate-900">{cell(head.requested_delivery_date ? String(head.requested_delivery_date).slice(0, 10) : null, intake.requested_delivery_date)}</dd>
+        </dl>
+      ) : null}
+      {anyLine ? (
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[520px] text-xs">
+            <thead>
+              <tr className="text-left text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">
+                <th className="py-1">Line</th>
+                <th className="py-1">SKU as sent</th>
+                <th className="py-1">Description as sent</th>
+                <th className="py-1 text-right">Qty as sent</th>
+                <th className="py-1 text-right">Price as sent</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map((line) => {
+                const snap = (line.source_snapshot && "source_quantity" in line.source_snapshot ? line.source_snapshot : null) as LineSourceSnapshot | null;
+                if (!snap) return null;
+                return (
+                  <tr key={line.id} className="border-t border-slate-50 font-semibold text-slate-700">
+                    <td className="py-1">{line.line_no}</td>
+                    <td className="py-1">{snap.source_sku || "—"}</td>
+                    <td className="py-1">{snap.source_product_name || "—"}</td>
+                    <td className="py-1 text-right">{cell(snap.as_written?.quantity ?? snap.source_quantity, snap.as_written?.quantity ?? line.quantity)}</td>
+                    <td className="py-1 text-right">{cell(snap.as_written?.price ?? snap.source_price, snap.as_written?.price ?? line.unit_price)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+    </Card>
   );
 }
