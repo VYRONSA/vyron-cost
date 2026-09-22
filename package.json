@@ -52,7 +52,10 @@
     "test:kf-gp-correction": "node scripts/test-kf-gp-correction.mjs",
     "test:sales-order-cost-capture": "node scripts/test-sales-order-cost-capture.mjs",
     "test:manufacture-reversal-pg": "node scripts/test-manufacture-reversal-pg.mjs",
-    "test:manufacture-reversal-e2e": "node scripts/test-manufacture-reversal-e2e.mjs"
+    "test:manufacture-reversal-e2e": "node scripts/test-manufacture-reversal-e2e.mjs",
+    "test:order-engine": "node scripts/test-order-engine.mjs",
+    "test:order-engine-routes": "node scripts/test-order-engine-routes.mjs",
+    "test:order-engine-migration-pg": "node scripts/test-order-engine-migration-pg.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3",

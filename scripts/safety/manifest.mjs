@@ -417,6 +417,45 @@ const REGISTER = [
       "Family P, not C: it writes one named production tenant's data by design and runs only in VERIFIED production. Default mode is a read-only dry run. --execute refuses unless --company is the Food Sock tenant, --expect-database is the verified production ref matching .env.local, an approved plan hash is pinned in src/lib/data-migration/food-sock-cost-correction.ts and equals both --approve-plan-hash and the plan rebuilt from current state, --approver and --reason are given, --acknowledge names that plan and tenant, and VYRON_ACKNOWLEDGE_PRODUCTION_WRITE=1. The database function apply_food_sock_cost_precision_correction() (migration 20260917100000) re-verifies every row and value under row locks, changes exactly three rows or nothing, and is idempotent. Proven by scripts/test-food-sock-cost-correction-pg.mjs.",
   },
   {
+    id: "test-order-engine",
+    file: "scripts/test-order-engine.mjs",
+    family: A,
+    purpose:
+      "Order Engine domain regression: intake lifecycle, deterministic customer and product matching (never fuzzy), validation, idempotent receive, approval re-validation and compare-and-set, idempotent handoff to a Draft sales order with nothing posted, audit actors, tenant isolation, and the CSV, e-mail, WooCommerce and Shopify adapters.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit",
+    evidence:
+      "Runs src/lib/order-engine and the real sales-order engine against scripts/support/document-email-test-stubs/fake-supabase.mjs holding two synthetic tenants. No client data, no real database, no network.",
+  },
+  {
+    id: "test-order-engine-routes",
+    file: "scripts/test-order-engine-routes.mjs",
+    family: A,
+    purpose:
+      "Order Engine API regression: authentication, per-action permissions, company from the verified session only, cross-tenant 404, server-set audit actor, cost hidden from non-approvers, and the create → validate → approve workflow through the HTTP handlers.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit",
+    evidence:
+      "Drives the real /api/order-intake handlers with the real session, membership and company-resolution code via scripts/support/session-security-test-hook.mjs; only cookies, the database and password checks are stand-ins. Synthetic tenants and members only; no network.",
+  },
+  {
+    id: "test-order-engine-migration-pg",
+    file: "scripts/test-order-engine-migration-pg.mjs",
+    family: B,
+    purpose:
+      "PostgreSQL test of the Order Engine migration 20260922120000: re-runnable, RLS on and no anon/authenticated privileges, source-identity and line-identity uniqueness, status/source/match checks, CONFIRMED requires a sales order, one intake per sales order, append-only audit trail.",
+    authentication: ["none"],
+    mutation: "ephemeral",
+    external: [],
+    cleanup: "complete — creates a uniquely named throwaway database on the local server and drops it in a finally block",
+    evidence:
+      "Applies the repository migration to a disposable local PostgreSQL named by PGURL and refuses any non-localhost PGURL. Never reads .env.local, never reaches Supabase. Synthetic rows only.",
+  },
+  {
     id: "test-food-sock-cost-correction-pg",
     file: "scripts/test-food-sock-cost-correction-pg.mjs",
     family: B,
