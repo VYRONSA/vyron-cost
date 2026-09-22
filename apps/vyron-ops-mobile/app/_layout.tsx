@@ -23,7 +23,7 @@ export default function RootLayout() {
   return (
     <AppProviders>
       <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#070D18" } }}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#061722" } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="receiving" />
         <Stack.Screen name="production" />

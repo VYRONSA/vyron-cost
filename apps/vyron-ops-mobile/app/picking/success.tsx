@@ -12,7 +12,7 @@ export default function PickingSuccessScreen() {
         title="Picking completed"
         description={
           orderNumber
-            ? `Store order ${orderNumber} is ready for dispatch. Inventory and workflow updates are managed by VYRON COST.`
+            ? `Store order ${orderNumber} is ready for dispatch. Inventory and workflow updates are managed by VOLORA.`
             : "Picking was completed successfully."
         }
         actionLabel="Return to home"

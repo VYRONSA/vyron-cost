@@ -136,7 +136,7 @@ export function OperatorHomeDashboard() {
     <ScrollView className="flex-1 bg-vyron-bg">
       <View className="gap-6 p-5 pb-10">
         <View className="gap-2">
-          <Text className="text-xs font-bold uppercase tracking-[0.2em] text-vyron-emerald">VYRON OPS</Text>
+          <Text className="text-xs font-bold uppercase tracking-[0.2em] text-vyron-gold">VOLORA OPS</Text>
           <Text className="text-3xl font-bold text-vyron-text">Operations Home</Text>
           <Text className="text-base font-medium text-vyron-muted">
             {tenant.tradingName} · Daily warehouse and factory tasks

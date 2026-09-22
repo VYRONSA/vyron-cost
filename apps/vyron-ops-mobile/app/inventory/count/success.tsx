@@ -12,7 +12,7 @@ export default function CountSuccessScreen() {
         title="Stock count saved"
         description={
           item
-            ? `${item} count posted to VYRON COST. Running balance and valuation updated on the server.`
+            ? `${item} count posted to VOLORA. Running balance and valuation updated on the server.`
             : "Stock count saved successfully."
         }
         actionLabel="Return to inventory"

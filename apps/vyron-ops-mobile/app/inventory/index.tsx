@@ -31,7 +31,7 @@ export default function InventoryHomeScreen() {
     <ScrollView className="flex-1 bg-vyron-bg">
       <View className="gap-5 p-5 pb-12">
         <Text className="text-base font-medium text-vyron-muted">
-          Primary inventory workspace for warehouse tablets. All balances and costing remain in VYRON COST.
+          Primary inventory workspace for warehouse tablets. All balances and costing remain in VOLORA.
         </Text>
         <View className="flex-row flex-wrap gap-4">
           {tiles.map((tile) => (

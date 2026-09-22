@@ -12,7 +12,7 @@ export default function ReceiptSuccessScreen() {
         title="Receipt confirmed"
         description={
           poNumber
-            ? `Purchase Order ${poNumber} has been received. Inventory and audit records were updated by VYRON COST.`
+            ? `Purchase Order ${poNumber} has been received. Inventory and audit records were updated by VOLORA.`
             : "The purchase order was received successfully."
         }
         actionLabel="Return to home"

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "VYRON OPS",
+    "name": "VOLORA Ops",
     "slug": "vyronsoft",
     "version": "1.0.0",
     "orientation": "default",
@@ -19,7 +19,7 @@
         "VIBRATE"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#070D18",
+        "backgroundColor": "#0B202B",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -39,14 +39,14 @@
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#070D18"
+          "backgroundColor": "#0B202B"
         }
       ],
       [
         "expo-notifications",
         {
           "icon": "./assets/images/icon.png",
-          "color": "#10B981"
+          "color": "#3E9B52"
         }
       ]
     ],

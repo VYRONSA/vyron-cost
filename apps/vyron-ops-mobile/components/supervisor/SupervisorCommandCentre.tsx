@@ -27,7 +27,7 @@ export function SupervisorCommandCentre() {
     <ScrollView className="flex-1 bg-vyron-bg">
       <View className="gap-6 p-5 pb-12">
         <View className="gap-3">
-          <Text className="text-xs font-bold uppercase tracking-[0.2em] text-vyron-emerald">VYRON OPS</Text>
+          <Text className="text-xs font-bold uppercase tracking-[0.2em] text-vyron-gold">VOLORA OPS</Text>
           <Text className="text-3xl font-bold text-vyron-text">Supervisor Command Centre</Text>
           <View className="flex-row flex-wrap items-center justify-between gap-3">
             <View className="gap-1">

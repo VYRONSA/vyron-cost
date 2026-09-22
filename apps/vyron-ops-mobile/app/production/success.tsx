@@ -12,7 +12,7 @@ export default function ProductionSuccessScreen() {
         title="Production run completed"
         description={
           runNumber
-            ? `Production Run ${runNumber} has been completed. Inventory, costing and audit records were updated by VYRON COST.`
+            ? `Production Run ${runNumber} has been completed. Inventory, costing and audit records were updated by VOLORA.`
             : "The production run was completed successfully."
         }
         actionLabel="Return to home"

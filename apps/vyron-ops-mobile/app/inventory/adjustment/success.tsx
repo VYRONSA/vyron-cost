@@ -12,7 +12,7 @@ export default function AdjustmentSuccessScreen() {
         title="Adjustment posted"
         description={
           item
-            ? `${item} adjustment recorded by VYRON COST. Inventory value and audit updated on the server.`
+            ? `${item} adjustment recorded by VOLORA. Inventory value and audit updated on the server.`
             : "Adjustment posted successfully."
         }
         actionLabel="Return to inventory"

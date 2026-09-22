@@ -5,10 +5,10 @@ export default function SalesLayout() {
     <Stack
       screenOptions={{
         headerShown: true,
-        headerStyle: { backgroundColor: "#0F1729" },
+        headerStyle: { backgroundColor: "#0B202B" },
         headerTintColor: "#F8FAFC",
         headerTitleStyle: { fontWeight: "700" },
-        contentStyle: { backgroundColor: "#070D18" },
+        contentStyle: { backgroundColor: "#061722" },
       }}
     >
       <Stack.Screen name="index" options={{ title: "Sales & Invoices" }} />

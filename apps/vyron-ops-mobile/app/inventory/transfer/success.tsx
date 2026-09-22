@@ -12,7 +12,7 @@ export default function TransferSuccessScreen() {
         title="Transfer completed"
         description={
           item
-            ? `${item} transfer posted by VYRON COST. Balances updated on the server.`
+            ? `${item} transfer posted by VOLORA. Balances updated on the server.`
             : "Transfer completed successfully."
         }
         actionLabel="Return to inventory"

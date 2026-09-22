@@ -12,7 +12,7 @@ export default function DispatchSuccessScreen() {
         title="Delivery confirmed"
         description={
           orderNumber
-            ? `Store order ${orderNumber} delivery has been recorded by VYRON COST.`
+            ? `Store order ${orderNumber} delivery has been recorded by VOLORA.`
             : "Delivery was confirmed successfully."
         }
         actionLabel="Return to home"
