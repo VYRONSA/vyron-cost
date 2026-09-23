@@ -6,9 +6,13 @@
  * authentication: service-role (read)
  * external: none
  *
- * KINGDOM FOODS — customer ordering reconciliation. READ ONLY.
+ * VOLORA — production integrity diagnostic for Customer Ordering. READ ONLY.
  *
- * Four diagnostics agreed beforehand:
+ * Generic: it takes a company id and reports on that company. It knows nothing
+ * about any particular client, and there is no client name or identifier
+ * anywhere in this file.
+ *
+ * Four diagnostics:
  *   A  reservations held by orders that should no longer hold stock
  *   B  the Stock Master balance against the last ledger balance per item
  *   C  customers whose assigned price list does not cover what they can see
@@ -27,8 +31,8 @@
  * would produce a report about the wrong data), and unless the operator names
  * the company explicitly.
  *
- *   node scripts/kingdom-foods-ordering-diagnostics.mjs --list-companies
- *   node scripts/kingdom-foods-ordering-diagnostics.mjs --company <company_id> [--report <file.md>]
+ *   node scripts/customer-ordering-integrity-diagnostic.mjs --list-companies
+ *   node scripts/customer-ordering-integrity-diagnostic.mjs --company <company_id> [--report <file.json>]
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -72,7 +76,7 @@ const allowlist = JSON.parse(readFileSync(path.join(ROOT, "scripts/safety/allowl
 const entry = projectRef ? allowlist.supabaseProjects?.[projectRef] : null;
 
 console.log("\n" + "=".repeat(78));
-console.log("  KINGDOM FOODS — CUSTOMER ORDERING RECONCILIATION (READ ONLY)");
+console.log("  VOLORA — CUSTOMER ORDERING INTEGRITY DIAGNOSTIC (READ ONLY)");
 console.log("=".repeat(78));
 console.log(`  database        : ${projectRef || "(unparsed)"}`);
 console.log(`  allowlisted as  : ${entry ? entry.environment : "NOT LISTED"}${entry?.unresolved ? " (UNRESOLVED)" : ""}`);
@@ -490,15 +494,24 @@ if (legacyEmpty) {
 // ---------------------------------------------------------------------------
 // The Kingdom Foods customer records themselves
 // ---------------------------------------------------------------------------
-section("E. The Kingdom Foods customer records");
-const kingdom = customers.filter((c) => /kingdom/i.test(String(c.customer_name || "")));
-console.log(`  customer records matching "Kingdom" : ${kingdom.length}`);
+section("E. Customers whose name appears more than once");
+// Near-duplicate customer records matter here because a price list, an
+// ordering login and an order history all attach to ONE customer record.
+const byName = new Map();
+for (const customer of customers) {
+  const key = String(customer.customer_name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!key) continue;
+  byName.set(key, [...(byName.get(key) || []), customer]);
+}
+const duplicated = [...byName.values()].filter((group) => group.length > 1);
+const kingdom = duplicated.flat();
+console.log(`  names carried by more than one customer record : ${duplicated.length} (${kingdom.length} records)`);
 for (const customer of kingdom) {
   const row = coverage.find((c) => c.customerId === String(customer.id));
   const assignment = row?.assigned ? `price list ${row.priceList} — ${row.uncovered.length} of ${sellable.length} products uncovered` : "NO price list assigned — every product priced from the product master";
   console.log(`    ${String(customer.customer_name).slice(0, 44).padEnd(46)} ${String(customer.status || "")} ${assignment}`);
 }
-report.kingdomCustomers = kingdom.map((customer) => {
+report.duplicateCustomers = kingdom.map((customer) => {
   const row = coverage.find((c) => c.customerId === String(customer.id));
   return {
     customerId: String(customer.id),

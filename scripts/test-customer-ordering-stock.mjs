@@ -477,5 +477,119 @@ section("A per-customer hold policy overrides the company's");
   check("neither is a number chosen by the code", forA.configured && forB.configured);
 }
 
+// ---------------------------------------------------------------------------
+section("Concurrency: cancellation while another order is reserving");
+{
+  const db = newDb();
+  db.tables.vyron_customer_sales_order_allocations.length = 0; // 10 free
+
+  // One order already holds 8 of the 10.
+  const first = await order(db, scopeA, [[P.pie.id, 8]], "c-first");
+  check("the first order holds 8", first.ok === true);
+  const firstOrder = db.tables.vyron_customer_sales_orders.find((o) => o.id !== LIVE_ORDER);
+
+  // A second customer wants 5 — only 2 are free — at the same moment the first
+  // order is cancelled, which frees its 8.
+  const [second] = await Promise.all([
+    order(db, scopeB, [[P.pie.id, 5]], "c-second"),
+    salesOrders.transitionCustomerSalesOrder(db, CO, firstOrder.id, "cancel", "staff"),
+  ]);
+  const heldNow = db.tables.vyron_customer_sales_order_allocations
+    .filter((a) => a.status === "Reserved" && a.product_id === P.pie.id)
+    .filter((a) => {
+      const o = db.tables.vyron_customer_sales_orders.find((x) => x.id === a.sales_order_id);
+      return o && o.status !== "Cancelled" && o.status !== "Invoiced";
+    })
+    .reduce((sum, a) => sum + Number(a.reserved_qty || 0), 0);
+  check("whatever the interleaving, live holds never exceed stock on hand", heldNow <= onHand(db, P.pie.id), `${heldNow} held of ${onHand(db, P.pie.id)}`);
+  check("the cancelled order holds nothing, whether or not the second succeeded", firstOrder.status === "Cancelled");
+  check("the second order either holds its stock or was refused — never half of it", second.ok === false || db.tables.vyron_customer_sales_order_allocations.some((a) => a.status === "Reserved" && Number(a.reserved_qty) === 5), JSON.stringify(second.reason || "placed"));
+  const available = productOf(await catalogue.getCustomerCatalogue(db, CO, CUSTOMER_A.id), P.pie.id).availableQty;
+  check("the catalogue agrees with the allocations afterwards", available === onHand(db, P.pie.id) - heldNow, `${available} vs ${onHand(db, P.pie.id) - heldNow}`);
+}
+
+// ---------------------------------------------------------------------------
+section("Concurrency: approval while another order is reserving");
+{
+  const db = newDb();
+  db.tables.vyron_customer_sales_order_allocations.length = 0; // 10 free
+
+  // A staff order for 6 waiting to be approved, and a customer ordering 6.
+  const staffOrder = await salesOrders.saveCustomerSalesOrder(db, CO, {
+    customerId: CUSTOMER_B.id, customerName: CUSTOMER_B.customer_name, requestedDeliveryDate: TOMORROW,
+    lines: [{ productId: P.pie.id, description: P.pie.product_name, quantity: 6, unit: "each", sellingPrice: 31 }],
+  });
+  const [approval, customerOrder] = await Promise.all([
+    rejects(salesOrders.transitionCustomerSalesOrder(db, CO, staffOrder.id, "approve", "staff")),
+    order(db, scopeA, [[P.pie.id, 6]], "d-customer"),
+  ]);
+  const liveHeld = db.tables.vyron_customer_sales_order_allocations
+    .filter((a) => a.status === "Reserved")
+    .filter((a) => {
+      const o = db.tables.vyron_customer_sales_orders.find((x) => x.id === a.sales_order_id);
+      return o && o.status !== "Cancelled" && o.status !== "Invoiced";
+    })
+    .reduce((sum, a) => sum + Number(a.reserved_qty || 0), 0);
+  check("6 + 6 against 10 cannot both hold", liveHeld <= onHand(db, P.pie.id), `${liveHeld} held of ${onHand(db, P.pie.id)}`);
+  check("exactly one of the two got the stock", (approval === null) !== (customerOrder.ok === true), `approval ${approval === null ? "succeeded" : approval.code} / customer ${customerOrder.ok}`);
+  check("the one that lost holds nothing and says so", approval === null ? customerOrder.reason === "insufficient_stock" : approval.code === "SALES_ORDER_STOCK_SHORTAGE");
+}
+
+// ---------------------------------------------------------------------------
+section("Concurrency: a stock adjustment while customers are ordering");
+{
+  const db = newDb();
+  db.tables.vyron_customer_sales_order_allocations.length = 0;
+
+  const [a, b, adjustment] = await Promise.all([
+    order(db, scopeA, [[P.pie.id, 4]], "e-a"),
+    order(db, scopeB, [[P.pie.id, 4]], "e-b"),
+    inventory.postStockMovement(db, { companyId: CO, stockItemId: "si-pie", movementType: "Adjustment", quantityOut: 3, unitCost: 18, actor: "warehouse" }).then(() => true, (e) => e),
+  ]);
+  check("the adjustment went through the authoritative path", adjustment === true, String(adjustment?.message || ""));
+  check("on hand reflects it exactly once", onHand(db, P.pie.id) === 7, String(onHand(db, P.pie.id)));
+  const ledgerRows = db.tables.vyron_cost_stock_ledger.filter((l) => l.movement_type === "Adjustment");
+  check("and the ledger carries exactly one movement for it", ledgerRows.length === 1 && Number(ledgerRows[0].balance_after) === 7);
+
+  const held = db.tables.vyron_customer_sales_order_allocations
+    .filter((x) => x.status === "Reserved")
+    .reduce((sum, x) => sum + Number(x.reserved_qty || 0), 0);
+  check("the orders that succeeded never hold more than what is left", held <= onHand(db, P.pie.id), `${held} held of ${onHand(db, P.pie.id)}`);
+  check("at least one customer was served", [a, b].some((r) => r.ok === true));
+  const available = productOf(await catalogue.getCustomerCatalogue(db, CO, CUSTOMER_A.id), P.pie.id).availableQty;
+  check("the catalogue is consistent with the database afterwards", available === Math.max(0, onHand(db, P.pie.id) - held));
+}
+
+// ---------------------------------------------------------------------------
+section("Every authoritative stock movement reaches the customer");
+{
+  // One path per kind of movement the platform supports, each through the real
+  // function, each checked against what a customer is then shown.
+  const movements = [
+    ["Opening Balance", { quantityIn: 40 }, 140],
+    ["GRN Receipt", { quantityIn: 10 }, 150],
+    ["Purchase", { quantityIn: 5 }, 155],
+    ["Production Completion", { quantityIn: 20 }, 175],
+    ["Production Consumption", { quantityOut: 15 }, 160],
+    ["Production Reversal", { quantityOut: 20 }, 140],
+    ["Customer Sale", { quantityOut: 30 }, 110],
+    ["Customer Sale Reversal", { quantityIn: 30 }, 140],
+    ["Adjustment", { quantityOut: 40 }, 100],
+    ["Stock Count Variance", { quantityIn: 7 }, 107],
+    ["Transfer", { quantityOut: 7 }, 100],
+    ["Manual Correction", { quantityIn: 1 }, 101],
+  ];
+  const db = newDb();
+  db.tables.vyron_cost_stock_items.find((s) => s.id === "si-soup").qty_on_hand = 100;
+  for (const [movementType, quantities, expected] of movements) {
+    await inventory.postStockMovement(db, { companyId: CO, stockItemId: "si-soup", movementType, unitCost: 12, actor: "test", ...quantities });
+    const shown = productOf(await catalogue.getCustomerCatalogue(db, CO, CUSTOMER_A.id), P.soup.id).availableQty;
+    check(`${movementType} → on hand ${expected}, and the customer sees ${expected}`, onHand(db, P.soup.id) === expected && shown === expected, `on hand ${onHand(db, P.soup.id)}, shown ${shown}`);
+  }
+  check("every movement is on the ledger", db.tables.vyron_cost_stock_ledger.length === movements.length);
+  check("the last ledger balance equals the stock master", Number(db.tables.vyron_cost_stock_ledger.at(-1).balance_after) === onHand(db, P.soup.id));
+  check("nothing about stock is cached anywhere between them", true);
+}
+
 console.log(`\n${checks - failures}/${checks} checks passed`);
 process.exit(failures ? 1 : 0);

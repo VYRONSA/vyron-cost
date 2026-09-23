@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
 
 export type StockEntityType = "ingredient" | "packaging" | "finished_goods";
 export type StockStatus = "In Stock" | "Low Stock" | "Out Of Stock" | "Overstock" | "Slow Moving";
@@ -104,7 +103,14 @@ export async function writeInventoryAudit(
   });
 }
 
-export async function getInventorySettings(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {
+/**
+ * Per-company inventory thresholds.
+ *
+ * `companyId` is required. It used to default to one named tenant, which meant
+ * a caller that forgot it silently read another company's settings — the sort
+ * of thing that is invisible until it is wrong for somebody.
+ */
+export async function getInventorySettings(supabase: SupabaseClient, companyId: string) {
   const { data } = await supabase.from("vyron_inventory_settings").select("*").eq("company_id", companyId).maybeSingle();
   return {
     minorVariancePct: Number(data?.minor_variance_pct ?? 2),
@@ -438,7 +444,7 @@ export async function refreshLowStockAlert(supabase: SupabaseClient, companyId: 
   }
 }
 
-export async function syncStockItemsFromMasters(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {
+export async function syncStockItemsFromMasters(supabase: SupabaseClient, companyId: string) {
   const [{ data: ingredients }, { data: products }] = await Promise.all([
     supabase.from("vyron_cost_ingredients").select("id, ingredient_name, category, purchase_unit, purchase_cost, supplier_id").eq("company_id", companyId),
     supabase.from("vyron_cost_products").select("id, product_name, category, total_cost").eq("company_id", companyId),
@@ -1082,7 +1088,7 @@ export async function listVyronFinishedGoods(supabase: SupabaseClient, companyId
   return rows;
 }
 
-export async function getVyronFinishedGoodsInventoryValue(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {
+export async function getVyronFinishedGoodsInventoryValue(supabase: SupabaseClient, companyId: string) {
   const rows = await listVyronFinishedGoods(supabase, companyId);
   return round2(rows.reduce((sum, row) => sum + finishedGoodStockValue(row), 0));
 }
@@ -1107,7 +1113,7 @@ export async function listVyronStockMovements(supabase: SupabaseClient, companyI
   return rows.filter((row) => row.company_id === companyId);
 }
 
-export async function getInventoryDashboardStats(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {
+export async function getInventoryDashboardStats(supabase: SupabaseClient, companyId: string) {
   const { data: items } = await supabase.from("vyron_cost_stock_items").select("*").eq("company_id", companyId);
   const rows = (items || []) as StockItemRow[];
 
@@ -1166,7 +1172,7 @@ export async function getInventoryDashboardStats(supabase: SupabaseClient, compa
 
 export async function listStockItems(
   supabase: SupabaseClient,
-  companyId = VYRON_DEFAULT_TENANT_ID,
+  companyId: string,
   filters?: { entityType?: string; status?: string; search?: string }
 ) {
   let query = supabase.from("vyron_cost_stock_items").select("*").eq("company_id", companyId).order("description");
@@ -1516,7 +1522,7 @@ export async function getOverstockItems(supabase: SupabaseClient, companyId: str
   });
 }
 
-export async function getInventoryExecutiveStats(supabase: SupabaseClient, companyId = VYRON_DEFAULT_TENANT_ID) {
+export async function getInventoryExecutiveStats(supabase: SupabaseClient, companyId: string) {
   const dash = await getInventoryDashboardStats(supabase, companyId);
   return {
     inventoryValue: dash.totalInventoryValue,

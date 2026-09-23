@@ -521,17 +521,30 @@ const REGISTER = [
       "Runs src/lib/order-engine on the fictional Food Sock UAT tenant (src/lib/order-engine/uat/food-sock-uat.ts — fictional catalogue, customers and rules, not Food Sock data) in scripts/support/document-email-test-stubs/fake-supabase.mjs. No client data, no real database, no network, no mailbox.",
   },
   {
-    id: "kingdom-foods-ordering-diagnostics",
-    file: "scripts/kingdom-foods-ordering-diagnostics.mjs",
+    id: "customer-ordering-integrity-diagnostic",
+    file: "scripts/customer-ordering-integrity-diagnostic.mjs",
     family: A,
     purpose:
-      "Read-only production reconciliation of one tenant's customer ordering: reservations held by orders that should no longer hold stock, the Stock Master against the last ledger balance per item, customer price-list coverage against what each customer can see, the legacy finished-goods bucket against the Stock Master, the Kingdom Foods customer records, and whether the ordering application is in use.",
+      "Read-only production integrity diagnostic for VOLORA Customer Ordering, for any company: reservations held by orders that should no longer hold stock, the Stock Master against the last ledger balance per item, customer price-list coverage against what each customer can see, the legacy finished-goods bucket against the Stock Master, customer records whose name is duplicated, and whether the ordering application is in use. It names no client and hardcodes no company.",
     authentication: ["service-role"],
     mutation: "none",
     external: [],
     cleanup: "n/a — reads only",
     evidence:
       "Uses no database client. It issues HTTP GET requests to PostgREST and nothing else: global fetch is wrapped so any other method throws before leaving the process, so a write is not merely forbidden but unreachable. It refuses to run unless the database is allowlisted as production and the operator names the company explicitly; the company is never inferred from a name.",
+  },
+  {
+    id: "test-customer-ordering-multi-tenant",
+    file: "scripts/test-customer-ordering-multi-tenant.mjs",
+    family: A,
+    purpose:
+      "Customer Ordering across companies: three fictional companies configured differently (master-price fallback with no hold expiry; assigned-list-only with expiry; a default rather than contract price list) proving that catalogue stock, prices, reservations, orders and hold policies are each scoped to their own company and that no company's activity changes another's; that a newly provisioned company is correct with no configuration rows added for it; that nothing outside the inventory layer changes a stock quantity and nothing outside the sales-order engine writes a reservation; and that the ordering layer contains no identifier or name of any real tenant.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit",
+    evidence:
+      "Runs the real customer-ordering, sales-order, price-list, hold-policy and inventory code on three fictional companies in scripts/support/document-email-test-stubs/fake-supabase.mjs, plus a static scan of src/ for stock and reservation writers. No client data, no real database, no network.",
   },
   {
     id: "test-customer-ordering-stock",

@@ -65,6 +65,7 @@
     "uat:food-sock": "node scripts/food-sock-uat.mjs",
     "test:sales-order-safety": "node scripts/test-sales-order-safety.mjs",
     "test:customer-ordering-stock": "node scripts/test-customer-ordering-stock.mjs",
+    "test:customer-ordering-multi-tenant": "node scripts/test-customer-ordering-multi-tenant.mjs",
     "demo:order-engine": "node scripts/order-engine-demo.mjs"
   },
   "dependencies": {
