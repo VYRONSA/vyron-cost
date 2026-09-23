@@ -131,16 +131,16 @@ export default function DashboardExecutiveClient({ overview }: { overview: Dashb
   return (
     <div className="grid w-full max-w-full min-w-0 gap-5">
       {/* ---------------------------------------------------------------- hero */}
-      <section className="relative overflow-hidden rounded-2xl">
+      <section className="relative overflow-hidden rounded-2xl bg-[#0A1C17]">
         <Image
-          src="/volora/dashboard/hero-food.webp"
+          src="/volora/dashboard/hero-production.webp"
           alt=""
-          width={1464}
-          height={630}
+          width={1430}
+          height={578}
           priority
-          className="absolute inset-0 h-full w-full object-cover object-right"
+          className="absolute inset-y-0 right-0 h-full w-full object-cover object-right md:w-[62%]"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,23,34,0.96)_0%,rgba(6,23,34,0.90)_34%,rgba(6,23,34,0.55)_58%,rgba(6,23,34,0.12)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,28,23,1)_0%,rgba(10,28,23,1)_39%,rgba(10,28,23,0.55)_50%,rgba(10,28,23,0.15)_60%,rgba(10,28,23,0)_68%)] max-md:bg-[linear-gradient(90deg,rgba(10,28,23,0.95)_0%,rgba(10,28,23,0.78)_60%,rgba(10,28,23,0.35)_100%)]" />
         <div className="relative px-8 py-9 md:px-10 md:py-11">
           <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#F4C44E]">Welcome to VOLORA</p>
           <h1 className="mt-4 max-w-xl text-[2.35rem] font-black leading-[1.08] tracking-[-0.025em] text-white md:text-[2.75rem]">
