@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createCustomerInvoice, type CustomerInvoiceRow } from "@/lib/vyron-customer-invoices";
-import { loadReservedQuantities } from "@/lib/vyron-sales-order-reservations";
+import { ACTIVE_RESERVATION_STATUSES, loadReservedQuantities } from "@/lib/vyron-sales-order-reservations";
 import { resolveCustomerProductPrice } from "@/lib/vyron-customer-price-lists";
 import { createProductionRun } from "@/lib/vyron-manufacturing";
 import {
@@ -884,6 +884,17 @@ async function applyCustomerPriceList(
         customerId,
         productId: line.productId,
       });
+      /*
+       * This customer may only be priced by their own list, and it does not
+       * cover this product. Refuse the line rather than quietly selling at the
+       * master price: someone must add it to their list, or price the line
+       * deliberately.
+       */
+      if (price.source === "unavailable" && !(Number(line.sellingPrice) > 0)) {
+        throw new Error(
+          `${price.productName || "This product"} is not on this customer's price list, and they are priced from their own list only. Add it to their price list, or enter a price on the line.`
+        );
+      }
       return {
         ...line,
         description: line.description || price.productName,
@@ -1176,6 +1187,127 @@ async function checkAndReserveStock(
 
   const { error: allocError } = await supabase.from("vyron_customer_sales_order_allocations").insert(allocations);
   if (allocError) throw new Error(allocError.message);
+
+  /*
+   * Reading availability and then writing the reservation is two steps, and
+   * two approvals running at the same moment both passed the check before
+   * either wrote — so 10 units could be reserved twice. Re-read the whole
+   * position now that this order's rows are in, and settle it the same way a
+   * queue does: earliest reservation first, until the stock runs out.
+   *
+   * Both racing writers see the same rows and reach the same answer, so
+   * exactly one of them keeps the stock; the loser withdraws its own rows and
+   * is told it is short. Nothing else is touched.
+   */
+  const overCommitted = await withdrawIfOverCommitted(supabase, companyId, order.id, allocations);
+  if (overCommitted.length) {
+    const err = new Error("INSUFFICIENT_STOCK_FOR_APPROVAL") as Error & { code?: string; shortages?: SalesOrderStockShortage[] };
+    err.code = "SALES_ORDER_STOCK_SHORTAGE";
+    err.shortages = overCommitted;
+    throw err;
+  }
+}
+
+/**
+ * Settle a contested product deterministically: order every live reservation by
+ * when it was made, hand out stock until it is gone, and withdraw this order's
+ * rows if they fall beyond the line.
+ *
+ * Returns the shortages that made this order withdraw — empty when it kept its
+ * stock.
+ */
+async function withdrawIfOverCommitted(
+  supabase: SupabaseClient,
+  companyId: string,
+  salesOrderId: string,
+  written: Array<{ product_id: string | null; reserved_qty: number }>
+): Promise<SalesOrderStockShortage[]> {
+  const productIds = [...new Set(written.map((a) => String(a.product_id || "")).filter(Boolean))];
+  if (!productIds.length) return [];
+
+  const [{ data: stockRows }, { data: allocationRows }] = await Promise.all([
+    supabase
+      .from("vyron_cost_stock_items")
+      .select("entity_id, qty_on_hand")
+      .eq("company_id", companyId)
+      .eq("entity_type", "finished_goods")
+      .in("entity_id", productIds),
+    supabase
+      .from("vyron_customer_sales_order_allocations")
+      .select("id, sales_order_id, product_id, reserved_qty, status, created_at")
+      .eq("company_id", companyId)
+      .eq("status", "Reserved")
+      .in("product_id", productIds),
+  ]);
+
+  const onHand = new Map<string, number>();
+  for (const row of (stockRows || []) as Array<{ entity_id: string; qty_on_hand: number | null }>) {
+    onHand.set(String(row.entity_id), round4((onHand.get(String(row.entity_id)) || 0) + Number(row.qty_on_hand || 0)));
+  }
+
+  const rows = (allocationRows || []) as Array<{ id: string; sales_order_id: string; product_id: string; reserved_qty: number | null; created_at: string | null }>;
+  const orderIds = [...new Set(rows.map((r) => String(r.sales_order_id)))];
+  const { data: orders } = orderIds.length
+    ? await supabase.from("vyron_customer_sales_orders").select("id, status").eq("company_id", companyId).in("id", orderIds)
+    : { data: [] };
+  const live = new Set(
+    ((orders || []) as Array<{ id: string; status: string }>)
+      .filter((o) => (ACTIVE_RESERVATION_STATUSES as readonly string[]).includes(o.status))
+      .map((o) => String(o.id))
+  );
+
+  const shortages: SalesOrderStockShortage[] = [];
+  for (const productId of productIds) {
+    const contenders = rows
+      .filter((r) => String(r.product_id) === productId && live.has(String(r.sales_order_id)))
+      // Earliest first; the row id breaks a tie so both writers agree.
+      .sort((a, b) => String(a.created_at || "").localeCompare(String(b.created_at || "")) || String(a.id).localeCompare(String(b.id)));
+
+    let remaining = onHand.get(productId) ?? 0;
+    for (const row of contenders) {
+      const wanted = Number(row.reserved_qty || 0);
+      if (wanted <= remaining) {
+        remaining = round4(remaining - wanted);
+        continue;
+      }
+      // This row cannot be honoured. Only withdraw our own.
+      if (String(row.sales_order_id) !== salesOrderId) continue;
+      shortages.push({
+        product_id: productId,
+        product_name: "",
+        linked_bom_id: null,
+        required_qty: wanted,
+        available_qty: Math.max(0, remaining),
+        shortfall_qty: round4(wanted - Math.max(0, remaining)),
+        unit: "each",
+      });
+    }
+  }
+
+  if (shortages.length) {
+    await supabase
+      .from("vyron_customer_sales_order_allocations")
+      .delete()
+      .eq("company_id", companyId)
+      .eq("sales_order_id", salesOrderId)
+      .eq("status", "Reserved");
+  }
+  return shortages;
+}
+
+/**
+ * Hold the stock an order commits, through the same check and the same
+ * allocation rows the staff approval uses.
+ *
+ * The customer ordering application calls this the moment an order is placed:
+ * an order that does not hold what it asked for makes the availability shown
+ * to the next customer a guess. Throws the usual SALES_ORDER_STOCK_SHORTAGE
+ * when the stock is no longer there.
+ */
+export async function reserveStockForSalesOrder(supabase: SupabaseClient, companyId: string, salesOrderId: string): Promise<void> {
+  const loaded = await getCustomerSalesOrder(supabase, companyId, salesOrderId);
+  if (!loaded) throw new Error("Sales order not found.");
+  await checkAndReserveStock(supabase, companyId, loaded.order, loaded.lines);
 }
 
 export async function transitionCustomerSalesOrder(

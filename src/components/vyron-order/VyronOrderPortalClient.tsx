@@ -8,7 +8,7 @@ import {
 import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
 import VyronOrderShell, { VyronOrderAuthShell } from "@/components/vyron-order/VyronOrderShell";
 import type { CustomerCatalogue, CatalogueProduct } from "@/lib/vyron-order-catalogue";
-import type { CartView, PriceChange } from "@/lib/vyron-order-cart";
+import type { CartView, PriceChange, StockShortfall as Shortfall } from "@/lib/vyron-order-cart";
 import type { CustomerOrderSummary, CustomerOrderDetail, UsualProduct } from "@/lib/vyron-order-history";
 
 /**
@@ -1418,10 +1418,19 @@ function ProductRow({
   onChange: (nextUnits: number) => void;
   onToggleFavourite: () => void;
 }) {
-  const unavailable = product.priceUnavailable;
+  // "unavailable" covers both a missing price and nothing left to supply.
+  const unavailable = product.unavailable ?? product.priceUnavailable;
   const perBox = product.unitsPerBox;
   const boxMode = mode === "boxes" && Boolean(perBox);
   const step = boxMode && perBox ? perBox : 1;
+  const availableQty = product.availableQty;
+  /*
+   * Never walk the customer into a refusal: the stepper stops at what can
+   * actually be supplied. The server checks it again on submission — this is
+   * courtesy, not the control.
+   */
+  const maxUnits = availableQty === null || availableQty === undefined ? null : availableQty;
+  const capped = (next: number) => (maxUnits === null ? next : Math.min(next, maxUnits));
   const shown = boxMode && perBox ? Math.round(units / perBox) : units;
   const lineTotal = units * product.sellingPrice;
   const inCart = units > 0;
@@ -1440,12 +1449,17 @@ function ProductRow({
             ) : (
               <span>Sold per unit</span>
             )}
+            {product.availability === "limited" && availableQty !== null && availableQty !== undefined ? (
+              <span className="font-semibold text-[#B45309]">Only {availableQty} left</span>
+            ) : null}
           </p>
         </div>
 
         <div className="flex shrink-0 items-start gap-2">
           <div className="text-right">
-            {unavailable ? (
+            {product.availability === "out_of_stock" ? (
+              <span className="vyron-status vyron-status-warning">Out of stock</span>
+            ) : unavailable ? (
               <span className="vyron-status vyron-status-warning">Price unavailable</span>
             ) : (
               <>
@@ -1518,7 +1532,7 @@ function ProductRow({
                 value={shown}
                 onChange={(e) => {
                   const entered = Number(e.target.value.replace(/\D/g, "")) || 0;
-                  onChange(boxMode && perBox ? entered * perBox : entered);
+                  onChange(capped(boxMode && perBox ? entered * perBox : entered));
                 }}
                 inputMode="numeric"
                 aria-label={`${product.productName} quantity in ${boxMode ? "boxes" : "units"}`}
@@ -1527,7 +1541,7 @@ function ProductRow({
               <button
                 type="button"
                 aria-label={`Increase ${product.productName}`}
-                onClick={() => onChange(units + step)}
+                onClick={() => onChange(capped(units + step))}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#334155] transition hover:bg-[rgba(11,32,43,0.05)]"
               >
                 <Plus size={17} />
@@ -1539,7 +1553,7 @@ function ProductRow({
                 <button
                   key={bump}
                   type="button"
-                  onClick={() => onChange(units + bump * step)}
+                  onClick={() => onChange(capped(units + bump * step))}
                   className="h-11 min-w-[2.75rem] rounded-lg border border-[rgba(11,32,43,0.07)] bg-white/70 px-2 text-xs font-bold text-[#1F4757] transition hover:border-[var(--vyron-brand-edge)] hover:bg-[var(--vyron-brand-wash)]"
                 >
                   +{bump}
@@ -1595,6 +1609,7 @@ function Review({
   const [dateError, setDateError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [priceChanges, setPriceChanges] = useState<PriceChange[]>([]);
+  const [shortfalls, setShortfalls] = useState<Shortfall[]>([]);
   const [busy, setBusy] = useState(false);
   const options = useMemo(() => deliveryOptions(), []);
 
@@ -1623,6 +1638,7 @@ function Review({
     setBusy(true);
     setSubmitError(null);
     setPriceChanges([]);
+    setShortfalls([]);
     try {
       const res = await fetch("/api/vyron-order/orders", {
         method: "POST",
@@ -1642,6 +1658,13 @@ function Review({
         // on a slow connection the gap was long enough to read.
         await cart.refresh();
         setPriceChanges((body.priceChanges || []) as PriceChange[]);
+        return;
+      }
+      if (res.status === 409 && body?.reason === "insufficient_stock") {
+        // Same courtesy for stock: refresh the quantities first, then say what
+        // can actually be supplied.
+        await cart.refresh();
+        setShortfalls((body.shortfalls || []) as Shortfall[]);
         return;
       }
       if (!res.ok || !body?.ok) {
@@ -1710,6 +1733,25 @@ function Review({
           <button type="button" onClick={onDismissNotice} className="mt-2 text-xs font-bold underline">
             Got it
           </button>
+        </div>
+      ) : null}
+
+      {shortfalls.length > 0 ? (
+        <div role="alert" className="vyron-alert vyron-alert-warning mt-5">
+          <p className="flex items-center gap-2 text-sm font-bold">
+            <AlertTriangle size={15} /> Not enough available
+          </p>
+          <p className="mt-1 text-sm font-medium">Your order was not placed. We can supply:</p>
+          <ul className="mt-2 space-y-1 text-sm font-bold">
+            {shortfalls.map((s) => (
+              <li key={s.productId}>
+                {s.productName}: {s.available} of the {s.requested} you asked for
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-sm font-medium">
+            The quantities below have been brought up to date. Adjust them and tap Place order to continue.
+          </p>
         </div>
       ) : null}
 

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCustomerCatalogue, type CatalogueProduct } from "@/lib/vyron-order-catalogue";
-import { saveCustomerSalesOrder, calculateSalesOrderTotals } from "@/lib/vyron-customer-sales-orders";
+import { saveCustomerSalesOrder, calculateSalesOrderTotals, reserveStockForSalesOrder, transitionCustomerSalesOrder } from "@/lib/vyron-customer-sales-orders";
 import { notifyOrderEvent } from "@/lib/vyron-order-notifications";
 
 /**
@@ -33,9 +33,13 @@ export type CartLine = {
   sellingPrice: number;
   pricePerBox: number | null;
   lineTotal: number;
-  /** Set when the product has gone inactive or lost its price since it was added. */
+  /** Set when the product has gone inactive, lost its price, or cannot be supplied. */
   unavailable: boolean;
   unavailableReason: string | null;
+  /** How many may be ordered right now. Null when the product has no stock record. */
+  availableQty: number | null;
+  /** True when the quantity in the cart is more than is available. */
+  exceedsAvailable: boolean;
 };
 
 export type CartView = {
@@ -48,13 +52,24 @@ export type CartView = {
   requestedDeliveryDate: string | null;
   notes: string | null;
   hasUnavailable: boolean;
+  /** Lines asking for more than the business can supply. */
+  shortfalls: StockShortfall[];
 };
 
 export type PriceChange = { productId: string; productName: string; was: number; now: number };
+/** A line the business cannot supply in full, with what it can supply. */
+export type StockShortfall = { productId: string; productName: string; requested: number; available: number };
 
 export type SubmitOutcome =
   | { ok: true; orderId: string; orderNumber: string; total: number; requestedDeliveryDate: string | null; duplicate: boolean }
-  | { ok: false; reason: "empty" | "unavailable" | "price_changed" | "invalid_date" | "failed"; message: string; priceChanges?: PriceChange[]; unavailable?: string[] };
+  | {
+      ok: false;
+      reason: "empty" | "unavailable" | "price_changed" | "invalid_date" | "insufficient_stock" | "failed";
+      message: string;
+      priceChanges?: PriceChange[];
+      unavailable?: string[];
+      shortfalls?: StockShortfall[];
+    };
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -123,9 +138,19 @@ export async function getCart(supabase: SupabaseClient, scope: CartScope): Promi
         lineTotal: 0,
         unavailable: true,
         unavailableReason: "This product is no longer available.",
+        availableQty: null,
+        exceedsAvailable: false,
       };
     }
-    const unavailable = product.priceUnavailable;
+    /*
+     * Availability comes from the catalogue, which takes it from the one
+     * calculation the staff approval also enforces. A line asking for more
+     * than is available is marked here and refused at submission — the browser
+     * is never trusted to have shown the right number.
+     */
+    const availableQty = product.availableQty;
+    const exceedsAvailable = availableQty !== null && quantityUnits > availableQty;
+    const unavailable = product.unavailable || exceedsAvailable;
     return {
       productId,
       productName: product.productName,
@@ -137,7 +162,15 @@ export async function getCart(supabase: SupabaseClient, scope: CartScope): Promi
       pricePerBox: product.pricePerBox,
       lineTotal: round2(quantityUnits * product.sellingPrice),
       unavailable,
-      unavailableReason: unavailable ? "Pricing is currently unavailable for this product." : null,
+      unavailableReason: product.priceUnavailable
+        ? "Pricing is currently unavailable for this product."
+        : product.availability === "out_of_stock"
+          ? "This product is out of stock."
+          : exceedsAvailable
+            ? `Only ${availableQty} available.`
+            : null,
+      availableQty,
+      exceedsAvailable,
     };
   });
 
@@ -168,6 +201,9 @@ export async function getCart(supabase: SupabaseClient, scope: CartScope): Promi
     requestedDeliveryDate: cart?.requested_delivery_date ? String(cart.requested_delivery_date) : null,
     notes: cart?.notes ? String(cart.notes) : null,
     hasUnavailable: lines.some((l) => l.unavailable),
+    shortfalls: lines
+      .filter((l) => l.exceedsAvailable)
+      .map((l) => ({ productId: l.productId, productName: l.productName, requested: l.quantityUnits, available: l.availableQty ?? 0 })),
   };
 }
 
@@ -324,6 +360,18 @@ export async function submitCart(
   if (!cart.lines.length) {
     return { ok: false, reason: "empty", message: "Your order is empty." };
   }
+  /*
+   * What the business can actually supply, checked here and not in the browser.
+   * A quantity that was available when the customer added it may not be now.
+   */
+  if (cart.shortfalls.length) {
+    return {
+      ok: false,
+      reason: "insufficient_stock",
+      message: "We cannot supply everything in your order. Please check the quantities.",
+      shortfalls: cart.shortfalls,
+    };
+  }
   if (cart.hasUnavailable) {
     return {
       ok: false,
@@ -391,6 +439,29 @@ export async function submitCart(
   }
 
   try {
+    /*
+     * The claim is made, but stock may have moved between reading the cart and
+     * getting here. Read availability once more, immediately before the write,
+     * and give the claim back if the business can no longer supply the order.
+     */
+    const finalCheck = await getCart(supabase, scope);
+    if (finalCheck.shortfalls.length || finalCheck.hasUnavailable) {
+      await releaseClaim(supabase, scope, key);
+      return finalCheck.shortfalls.length
+        ? {
+            ok: false,
+            reason: "insufficient_stock",
+            message: "We cannot supply everything in your order. Please check the quantities.",
+            shortfalls: finalCheck.shortfalls,
+          }
+        : {
+            ok: false,
+            reason: "unavailable",
+            message: "Some products are no longer available. Please remove them and try again.",
+            unavailable: finalCheck.lines.filter((l) => l.unavailable).map((l) => l.productName),
+          };
+    }
+
     // The existing engine owns numbering, price-list application, cost and GP.
     const order = await saveCustomerSalesOrder(supabase, scope.companyId, {
       customerId: scope.customerId,
@@ -405,6 +476,34 @@ export async function submitCart(
         sellingPrice: line.sellingPrice,
       })),
     });
+
+    /*
+     * Hold the stock this order commits, through the sales-order engine's own
+     * reservation. Two customers racing for the last units both reach here;
+     * the reservation layer settles it, and the one that loses has its order
+     * cancelled and is told what is left rather than being promised stock the
+     * business does not have.
+     */
+    try {
+      await reserveStockForSalesOrder(supabase, scope.companyId, String(order.id));
+    } catch (error) {
+      const shortages = (error as { code?: string; shortages?: Array<{ product_id: string; required_qty: number; available_qty: number }> })?.shortages;
+      if ((error as { code?: string })?.code !== "SALES_ORDER_STOCK_SHORTAGE") throw error;
+      await transitionCustomerSalesOrder(supabase, scope.companyId, String(order.id), "cancel", "vyron-order (stock no longer available)");
+      await releaseClaim(supabase, scope, key);
+      const byProduct = new Map(cart.lines.map((l) => [l.productId, l.productName]));
+      return {
+        ok: false,
+        reason: "insufficient_stock",
+        message: "We cannot supply everything in your order. Please check the quantities.",
+        shortfalls: (shortages || []).map((s) => ({
+          productId: String(s.product_id),
+          productName: byProduct.get(String(s.product_id)) || "",
+          requested: Number(s.required_qty || 0),
+          available: Number(s.available_qty || 0),
+        })),
+      };
+    }
 
     await supabase
       .from("vyron_customer_order_submissions")
@@ -447,13 +546,18 @@ export async function submitCart(
     };
   } catch {
     // Release the claim so the customer can genuinely retry.
-    await supabase
-      .from("vyron_customer_order_submissions")
-      .delete()
-      .eq("company_id", scope.companyId)
-      .eq("customer_id", scope.customerId)
-      .eq("idempotency_key", key)
-      .is("sales_order_id", null);
+    await releaseClaim(supabase, scope, key);
     return { ok: false, reason: "failed", message: "Your order was not submitted. No order was created." };
   }
+}
+
+/** Give back an unused idempotency claim so a retry is a genuine retry. */
+async function releaseClaim(supabase: SupabaseClient, scope: CartScope, key: string) {
+  await supabase
+    .from("vyron_customer_order_submissions")
+    .delete()
+    .eq("company_id", scope.companyId)
+    .eq("customer_id", scope.customerId)
+    .eq("idempotency_key", key)
+    .is("sales_order_id", null);
 }

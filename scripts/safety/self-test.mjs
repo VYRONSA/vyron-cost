@@ -195,8 +195,8 @@ check("verified production still prohibits Family C and permits Family A", evalu
 // ── 5. Register integrity ──────────────────────────────────────────────────
 const counts = familyCounts();
 const all = listAssets();
-check("register holds 83 assets", all.length === 83, String(all.length));
-check("74 validation assets", counts.A + counts.B + counts.C + counts.D === 74, String(counts.A + counts.B + counts.C + counts.D));
+check("register holds 84 assets", all.length === 84, String(all.length));
+check("75 validation assets", counts.A + counts.B + counts.C + counts.D === 75, String(counts.A + counts.B + counts.C + counts.D));
 check("3 controlled production data operations (Family P)", counts.P === 3, String(counts.P));
 check("6 non-validation tooling assets", counts.tooling === 6, String(counts.tooling));
 check("every asset has a purpose", all.every((a) => a.purpose && a.purpose.length > 10));

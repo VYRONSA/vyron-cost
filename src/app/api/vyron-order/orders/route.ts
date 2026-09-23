@@ -44,9 +44,19 @@ export async function POST(request: NextRequest) {
   });
 
   if (!outcome.ok) {
-    const status = outcome.reason === "price_changed" ? 409 : outcome.reason === "failed" ? 500 : 400;
+    // A price change and a stock shortfall are both conflicts with what the
+    // customer was shown, so both come back as 409 with the current figures.
+    const status =
+      outcome.reason === "price_changed" || outcome.reason === "insufficient_stock" ? 409 : outcome.reason === "failed" ? 500 : 400;
     return NextResponse.json(
-      { ok: false, reason: outcome.reason, error: outcome.message, priceChanges: outcome.priceChanges, unavailable: outcome.unavailable },
+      {
+        ok: false,
+        reason: outcome.reason,
+        error: outcome.message,
+        priceChanges: outcome.priceChanges,
+        unavailable: outcome.unavailable,
+        shortfalls: outcome.shortfalls,
+      },
       { status }
     );
   }

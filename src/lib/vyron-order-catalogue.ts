@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { loadAvailableQuantities } from "@/lib/vyron-sales-order-reservations";
+import { assignedListOnly } from "@/lib/vyron-customer-price-lists";
 
 /**
  * VYRON ORDER — the customer-facing catalogue.
@@ -25,7 +27,8 @@ export type CatalogueProduct = {
   sku: string | null;
   /** The customer's own price, VAT exclusive. Safe to expose — they order on it. */
   sellingPrice: number;
-  priceSource: "contract" | "default" | "product_master";
+  /** "unavailable": this customer's price list does not cover the product. */
+  priceSource: "contract" | "default" | "product_master" | "unavailable";
   /** True when no price could be established; such products cannot be ordered. */
   priceUnavailable: boolean;
   /**
@@ -38,6 +41,19 @@ export type CatalogueProduct = {
   unitsPerBox: number | null;
   /** Price for one box. Null whenever unitsPerBox is null. */
   pricePerBox: number | null;
+  /**
+   * How many the customer may order right now: stock on hand less what other
+   * live sales orders already hold, from the one availability calculation
+   * (loadAvailableQuantities). Null means the product has no stock record, so
+   * availability is not measured and is not guessed either.
+   *
+   * On hand is NOT sent to a customer: how much is in the building is the
+   * business's information. What they may order is theirs.
+   */
+  availableQty: number | null;
+  availability: "available" | "limited" | "out_of_stock" | "not_measured";
+  /** True when nothing can be ordered: no price, or none available. */
+  unavailable: boolean;
 };
 
 export type CatalogueCategory = {
@@ -55,6 +71,10 @@ export type CustomerCatalogue = {
   unpricedCount: number;
   /** Products with no verified pack size — ordered in units. */
   withoutPackSize: number;
+  /** Products that cannot be ordered right now because none is available. */
+  outOfStockCount: number;
+  /** Products with no stock record: availability is unknown, not zero. */
+  notMeasuredCount: number;
 };
 
 type ProductRow = {
@@ -74,6 +94,9 @@ type PriceItemRow = {
   effective_from: string | null;
   effective_to: string | null;
 };
+
+/** Below this many boxes (or units where there is no box) the customer is warned. */
+const LIMITED_BOXES = 2;
 
 const num = (v: unknown) => {
   const x = Number(v ?? 0);
@@ -132,14 +155,19 @@ export async function getCustomerCatalogue(
   if (productError) throw new Error(productError.message);
   const products = ((productRows || []) as ProductRow[]).filter(isActive);
 
+  // The whole row, so a database without price_source_rule still answers.
   const { data: assignment, error: assignmentError } = await supabase
     .from("vyron_customer_price_list_assignments")
-    .select("default_price_list_id, contract_price_list_id")
+    .select("*")
     .eq("company_id", companyId)
     .eq("customer_id", customerId)
     .eq("status", "Active")
     .maybeSingle();
   if (assignmentError) throw new Error(assignmentError.message);
+  // When this customer may only be priced by their own list, a product the
+  // list does not cover is shown as unavailable rather than at a price nobody
+  // agreed with them.
+  const listOnly = assignedListOnly(assignment);
 
   const contractId = assignment?.contract_price_list_id ? String(assignment.contract_price_list_id) : null;
   const defaultId = assignment?.default_price_list_id ? String(assignment.default_price_list_id) : null;
@@ -173,12 +201,35 @@ export async function getCustomerCatalogue(
     if (contract) return { price: num(contract.final_price), source: "contract" };
     const fallback = defaultId ? effective.find((r) => String(r.price_list_id) === defaultId) : undefined;
     if (fallback) return { price: num(fallback.final_price), source: "default" };
+    if (listOnly) return { price: 0, source: "unavailable" };
     return { price: num(product.selling_price), source: "product_master" };
   }
+
+  /*
+   * What may still be sold, from the one availability calculation the staff
+   * sales-order approval also enforces. Nothing about stock is worked out
+   * here: a second rule would be a second answer, and the customer would be
+   * told one thing while approval did another.
+   */
+  const availability = await loadAvailableQuantities(
+    supabase,
+    companyId,
+    products.map((p) => String(p.id))
+  );
 
   const rows: CatalogueProduct[] = products.map((product) => {
     const { price, source } = resolvePrice(product);
     const unitsPerBox = unitsPerBoxByProduct.get(String(product.id)) ?? null;
+    const stock = availability.get(String(product.id));
+    const availableQty = stock?.measured ? stock.available : null;
+    const priceUnavailable = price <= 0;
+    const state: CatalogueProduct["availability"] = !stock?.measured
+      ? "not_measured"
+      : stock.available <= 0
+        ? "out_of_stock"
+        : stock.available <= (unitsPerBox || 1) * LIMITED_BOXES
+          ? "limited"
+          : "available";
     return {
       productId: String(product.id),
       productName: String(product.product_name || "—"),
@@ -186,10 +237,13 @@ export async function getCustomerCatalogue(
       sku: product.sku ? String(product.sku) : null,
       sellingPrice: price,
       priceSource: source,
-      priceUnavailable: price <= 0,
+      priceUnavailable,
       unitsPerBox,
       // The box price is derived from the unit price so the two can never drift.
       pricePerBox: unitsPerBox && price > 0 ? Math.round(price * unitsPerBox * 100) / 100 : null,
+      availableQty,
+      availability: state,
+      unavailable: priceUnavailable || state === "out_of_stock",
     };
   });
 
@@ -215,5 +269,7 @@ export async function getCustomerCatalogue(
     productCount: rows.length,
     unpricedCount: rows.filter((r) => r.priceUnavailable).length,
     withoutPackSize: rows.filter((r) => r.unitsPerBox === null).length,
+    outOfStockCount: rows.filter((r) => r.availability === "out_of_stock").length,
+    notMeasuredCount: rows.filter((r) => r.availability === "not_measured").length,
   };
 }

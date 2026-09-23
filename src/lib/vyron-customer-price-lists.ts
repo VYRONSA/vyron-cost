@@ -28,8 +28,26 @@ export type CustomerPriceListItemRow = {
   effective_to: string | null;
 };
 
+/**
+ * How a customer may be priced when their own list does not cover a product.
+ * Stored per customer on the price-list assignment, and defaulting to the
+ * historical behaviour so no existing customer's pricing changes.
+ */
+export const PRICE_SOURCE_RULES = ["fallback_to_master", "assigned_list_only"] as const;
+export type PriceSourceRule = (typeof PRICE_SOURCE_RULES)[number];
+
+/** True when this customer may only be priced by their assigned list. */
+export function assignedListOnly(assignment: { price_source_rule?: string | null; contract_price_list_id?: string | null; default_price_list_id?: string | null } | null | undefined): boolean {
+  if (!assignment) return false;
+  if (String(assignment.price_source_rule || "fallback_to_master") !== "assigned_list_only") return false;
+  // A rule with no list behind it would price nothing at all; that is a
+  // configuration mistake, not an instruction to sell nothing.
+  return Boolean(assignment.contract_price_list_id || assignment.default_price_list_id);
+}
+
 export type ResolvedCustomerPrice = {
-  source: "contract" | "default" | "product_master";
+  /** "unavailable": the customer's own list does not cover this product and may not be departed from. */
+  source: "contract" | "default" | "product_master" | "unavailable";
   priceListId: string | null;
   sellingPrice: number;
   costPerUnit: number;
@@ -328,13 +346,16 @@ export async function resolveCustomerProductPrice(
     | {
         default_price_list_id: string | null;
         contract_price_list_id: string | null;
+        price_source_rule?: string | null;
       }
     | null = null;
 
   if (params.customerId) {
+    // The whole row, so a database that does not yet carry price_source_rule
+    // still answers rather than erroring on an unknown column.
     const { data: row, error: assignmentError } = await supabase
       .from("vyron_customer_price_list_assignments")
-      .select("default_price_list_id, contract_price_list_id")
+      .select("*")
       .eq("company_id", companyId)
       .eq("customer_id", params.customerId)
       .eq("status", "Active")
@@ -388,6 +409,24 @@ export async function resolveCustomerProductPrice(
         productName: String(product.product_name || ""),
       };
     }
+  }
+
+  /*
+   * The customer has a price list, it does not cover this product, and this
+   * customer is configured to be priced by their list alone. Quoting the
+   * master price here would put a price in front of them that nobody agreed,
+   * so nothing is quoted: the product is unavailable to them until someone
+   * adds it to their list.
+   */
+  if (assignedListOnly(assignment)) {
+    return {
+      source: "unavailable",
+      priceListId: null,
+      sellingPrice: 0,
+      costPerUnit: Number(product.total_cost || 0),
+      productId: String(product.id),
+      productName: String(product.product_name || ""),
+    };
   }
 
   return {

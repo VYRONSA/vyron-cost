@@ -259,6 +259,53 @@ export async function postStockMovement(
     allowNegative?: boolean;
   }
 ) {
+  /*
+   * Reading the balance, working out the new one here, and writing it back is
+   * three steps. Two movements running at the same moment both read the same
+   * balance and the second overwrote the first, so a movement was lost while
+   * its ledger row was still written. Every write below is therefore
+   * conditional on the balance not having moved since it was read
+   * (compare-and-set); if it has, the whole calculation is redone against the
+   * new balance. A few attempts is enough for real contention, and giving up
+   * loudly is far better than losing stock quietly.
+   */
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await attemptStockMovement(supabase, params);
+    } catch (error) {
+      if (!(error instanceof StockBalanceMovedError)) throw error;
+      if (attempt >= 5) throw new Error("Stock is being changed by something else right now. Please try again.");
+    }
+  }
+}
+
+/** Raised when another movement changed the balance while this one was working it out. */
+class StockBalanceMovedError extends Error {
+  constructor() {
+    super("The stock balance changed while this movement was being posted.");
+    this.name = "StockBalanceMovedError";
+  }
+}
+
+async function attemptStockMovement(
+  supabase: SupabaseClient,
+  params: {
+    companyId: string;
+    stockItemId: string;
+    movementType: LedgerMovementType;
+    quantityIn?: number;
+    quantityOut?: number;
+    unitCost: number;
+    referenceType?: string;
+    referenceId?: string;
+    referenceLabel?: string;
+    actor?: string;
+    metadata?: Record<string, unknown>;
+    updateAverageOnReceipt?: boolean;
+    movementDate?: string;
+    allowNegative?: boolean;
+  }
+) {
   const { data: item, error: loadErr } = await supabase
     .from("vyron_cost_stock_items")
     .select("*")
@@ -297,6 +344,40 @@ export async function postStockMovement(
   const value = round2(newQty * newAvg);
   const movementValue = round2(qtyIn * unitCost - qtyOut * unitCost);
 
+  /*
+   * The balance moves first, and only if it is still what was read. The ledger
+   * row is written after, so a lost race writes nothing at all rather than a
+   * ledger row with no matching balance change.
+   */
+  const settings = await getInventorySettings(supabase, params.companyId);
+  const status = computeStockStatus(
+    {
+      qty_on_hand: newQty,
+      reorder_level: item.reorder_level,
+      min_level: item.min_level,
+      max_level: item.max_level,
+      last_movement_at: new Date().toISOString(),
+    },
+    settings.slowMovingDays30
+  );
+
+  const { data: updatedRows, error: updErr } = await supabase
+    .from("vyron_cost_stock_items")
+    .update({
+      qty_on_hand: newQty,
+      average_cost: newAvg,
+      current_cost: newCurrent,
+      inventory_value: value,
+      stock_status: status,
+      last_movement_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", params.stockItemId)
+    .eq("qty_on_hand", item.qty_on_hand)
+    .select("id");
+  if (updErr) throw new Error(updErr.message);
+  if (!updatedRows || updatedRows.length === 0) throw new StockBalanceMovedError();
+
   const { error: ledgerErr } = await supabase.from("vyron_cost_stock_ledger").insert({
     company_id: params.companyId,
     stock_item_id: params.stockItemId,
@@ -314,32 +395,6 @@ export async function postStockMovement(
     metadata: params.metadata || {},
   });
   if (ledgerErr) throw new Error(ledgerErr.message);
-
-  const settings = await getInventorySettings(supabase, params.companyId);
-  const status = computeStockStatus(
-    {
-      qty_on_hand: newQty,
-      reorder_level: item.reorder_level,
-      min_level: item.min_level,
-      max_level: item.max_level,
-      last_movement_at: new Date().toISOString(),
-    },
-    settings.slowMovingDays30
-  );
-
-  const { error: updErr } = await supabase
-    .from("vyron_cost_stock_items")
-    .update({
-      qty_on_hand: newQty,
-      average_cost: newAvg,
-      current_cost: newCurrent,
-      inventory_value: value,
-      stock_status: status,
-      last_movement_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", params.stockItemId);
-  if (updErr) throw new Error(updErr.message);
 
   await refreshLowStockAlert(supabase, params.companyId, params.stockItemId);
 

@@ -521,6 +521,19 @@ const REGISTER = [
       "Runs src/lib/order-engine on the fictional Food Sock UAT tenant (src/lib/order-engine/uat/food-sock-uat.ts — fictional catalogue, customers and rules, not Food Sock data) in scripts/support/document-email-test-stubs/fake-supabase.mjs. No client data, no real database, no network, no mailbox.",
   },
   {
+    id: "test-customer-ordering-stock",
+    file: "scripts/test-customer-ordering-stock.mjs",
+    family: A,
+    purpose:
+      "Customer Ordering against stock and price lists: that what a customer is shown to be available is the same figure staff approval enforces (on hand less what live orders hold), that a customer cannot order more than that and cannot order what is out of stock, that a placed order holds its stock immediately, that a stock adjustment reaches the customer with nothing to synchronise, that two customers and two staff approvals racing for the last units cannot over-commit them, that two simultaneous stock movements cannot lose one another, that a customer priced from their own list only is never quoted the master price, that the agreed price is snapshotted onto the order, and that no customer or tenant can see another's price, stock or products.",
+    authentication: ["none"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — the database is an in-memory stand-in discarded on exit",
+    evidence:
+      "Runs the real customer-ordering, sales-order, price-list and inventory code (src/lib/vyron-order-*.ts, vyron-customer-sales-orders.ts, vyron-customer-price-lists.ts, vyron-inventory.ts) on a fictional tenant in scripts/support/document-email-test-stubs/fake-supabase.mjs. No Kingdom Foods data, no real database, no network.",
+  },
+  {
     id: "test-order-engine-activation",
     file: "scripts/test-order-engine-activation.mjs",
     family: A,
