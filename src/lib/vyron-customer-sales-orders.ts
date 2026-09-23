@@ -1315,7 +1315,14 @@ export async function transitionCustomerSalesOrder(
   companyId: string,
   id: string,
   action: "submit" | "approve" | "start_picking" | "pack" | "dispatch" | "cancel",
-  actor?: string
+  actor?: string,
+  /**
+   * `neverAutoApprove` submits an order into Awaiting Approval even when no
+   * approval rule matches. An order a CUSTOMER placed is always somebody's
+   * decision: approving it because no rule happened to fire would be the
+   * business agreeing to supply without anyone having looked.
+   */
+  options: { neverAutoApprove?: boolean } = {}
 ): Promise<SalesOrderRow> {
   const loaded = await getCustomerSalesOrder(supabase, companyId, id);
   if (!loaded) throw new Error("Sales order not found.");
@@ -1348,14 +1355,14 @@ export async function transitionCustomerSalesOrder(
     const totals = calculateSalesOrderTotals(inputForRules.lines);
     const rules = await evaluateApprovalRules(supabase, companyId, inputForRules, inputForRules.lines, totals);
 
-    if (rules.length === 0) {
+    if (rules.length === 0 && !options.neverAutoApprove) {
       toStatus = "Approved";
       await checkAndReserveStock(supabase, companyId, loaded.order, loaded.lines);
     }
 
     const { error: rulePatchError } = await supabase
       .from("vyron_customer_sales_orders")
-      .update({ requires_approval: rules.length > 0, approval_flags: rules, updated_at: new Date().toISOString() })
+      .update({ requires_approval: rules.length > 0 || options.neverAutoApprove === true, approval_flags: rules, updated_at: new Date().toISOString() })
       .eq("company_id", companyId)
       .eq("id", id);
     if (rulePatchError) throw new Error(rulePatchError.message);

@@ -47,6 +47,7 @@ const salesOrders = await importFromRoot("src/lib/vyron-customer-sales-orders.ts
 const reservations = await importFromRoot("src/lib/vyron-sales-order-reservations.ts");
 const inventory = await importFromRoot("src/lib/vyron-inventory.ts");
 const priceLists = await importFromRoot("src/lib/vyron-customer-price-lists.ts");
+const holds = await importFromRoot("src/lib/vyron-order-holds.ts");
 
 // ---------------------------------------------------------------------------
 // A fictional tenant, shaped like the real problem: a manufacturer with retail
@@ -132,7 +133,11 @@ function seed() {
     vyron_customer_order_carts: [],
     vyron_customer_order_cart_lines: [],
     vyron_customer_order_submissions: [],
-    vyron_customer_portal_identities: [],
+    vyron_customer_portal_tenants: [{ company_id: CO, slug: "fictional-foods", display_name: "Fictional Foods", status: "Active", pending_hold_minutes: null }],
+    vyron_customer_portal_identities: [
+      { id: "pi-a", company_id: CO, customer_id: CUSTOMER_A.id, status: "Active", pending_hold_minutes: null },
+      { id: "pi-b", company_id: CO, customer_id: CUSTOMER_B.id, status: "Active", pending_hold_minutes: null },
+    ],
     vyron_customer_portal_sessions: [],
     vyron_order_notification_deliveries: [],
     vyron_order_notification_settings: [],
@@ -393,6 +398,84 @@ section("Tenant and customer isolation");
   check("no customer is shown what another customer has reserved", !held);
 }
 
+// ---------------------------------------------------------------------------
+section("An unapproved order does not hold stock for ever");
+{
+  const db = newDb();
+  db.tables.vyron_customer_sales_order_allocations.length = 0; // 10 pies free
+
+  const policyBefore = await holds.loadHoldPolicy(db, CO, CUSTOMER_A.id);
+  check("the hold policy starts NOT CONFIGURED — no number is assumed", policyBefore.configured === false && policyBefore.minutes === null && policyBefore.source === "not_configured");
+
+  const placed = await order(db, scopeA, [[P.pie.id, 10]], "hold-1");
+  check("a placed order holds the stock", placed.ok === true && productOf(await catalogue.getCustomerCatalogue(db, CO, CUSTOMER_A.id), P.pie.id).availableQty === 0);
+  const theOrder = db.tables.vyron_customer_sales_orders.find((o) => o.id !== LIVE_ORDER);
+  check("…and waits for a person: it is never approved automatically", theOrder.status === "Awaiting Approval" && theOrder.requires_approval === true, theOrder.status);
+
+  // Age the order by a day. With no policy, it still holds.
+  theOrder.created_at = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const untouched = await holds.expireStaleCustomerHolds(db, CO);
+  check("with no policy configured, nothing expires — the behaviour is unchanged", untouched.expired.length === 0 && theOrder.status === "Awaiting Approval");
+  check("…and the stock is still held", productOf(await catalogue.getCustomerCatalogue(db, CO, CUSTOMER_A.id), P.pie.id).availableQty === 0);
+
+  // The business decides: two hours.
+  db.tables.vyron_customer_portal_tenants[0].pending_hold_minutes = 120;
+  const policy = await holds.loadHoldPolicy(db, CO, CUSTOMER_A.id);
+  check("once set, the policy reads as configured, from the company", policy.configured === true && policy.minutes === 120 && policy.source === "company");
+
+  const released = await holds.expireStaleCustomerHolds(db, CO);
+  check("the day-old order expires", released.expired.length === 1 && released.expired[0].releasedUnits === 10, JSON.stringify(released.expired));
+  check("…is cancelled through the ordinary order lifecycle", theOrder.status === "Cancelled");
+  check("…with the cancellation on the audit trail", db.tables.vyron_customer_sales_order_audit.some((a) => a.sales_order_id === theOrder.id));
+  check("the stock is available again immediately", productOf(await catalogue.getCustomerCatalogue(db, CO, CUSTOMER_A.id), P.pie.id).availableQty === 10);
+  const reorder = await order(db, scopeB, [[P.pie.id, 10]], "hold-2");
+  check("…and another customer can order it", reorder.ok === true, JSON.stringify(reorder));
+}
+
+// ---------------------------------------------------------------------------
+section("A decided order keeps its stock");
+{
+  const db = newDb();
+  db.tables.vyron_customer_sales_order_allocations.length = 0;
+  db.tables.vyron_customer_portal_tenants[0].pending_hold_minutes = 120;
+
+  const placed = await order(db, scopeA, [[P.pie.id, 6]], "keep-1");
+  check("the order is placed and holds its stock", placed.ok === true);
+  const theOrder = db.tables.vyron_customer_sales_orders.find((o) => o.id !== LIVE_ORDER);
+  await salesOrders.transitionCustomerSalesOrder(db, CO, theOrder.id, "approve", "staff");
+  check("a person approves it", db.tables.vyron_customer_sales_orders.find((o) => o.id === theOrder.id).status === "Approved");
+
+  db.tables.vyron_customer_sales_orders.find((o) => o.id === theOrder.id).created_at = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
+  const swept = await holds.expireStaleCustomerHolds(db, CO);
+  check("an approved order is never expired, however old", swept.expired.length === 0 && db.tables.vyron_customer_sales_orders.find((o) => o.id === theOrder.id).status === "Approved");
+  check("…and it keeps holding its stock", productOf(await catalogue.getCustomerCatalogue(db, CO, CUSTOMER_A.id), P.pie.id).availableQty === 4);
+}
+
+// ---------------------------------------------------------------------------
+section("A cancelled order releases its stock");
+{
+  const db = newDb();
+  db.tables.vyron_customer_sales_order_allocations.length = 0;
+  const placed = await order(db, scopeA, [[P.pie.id, 10]], "cancel-1");
+  check("the order holds everything", placed.ok === true && productOf(await catalogue.getCustomerCatalogue(db, CO, CUSTOMER_A.id), P.pie.id).availableQty === 0);
+  const theOrder = db.tables.vyron_customer_sales_orders.find((o) => o.id !== LIVE_ORDER);
+  await salesOrders.transitionCustomerSalesOrder(db, CO, theOrder.id, "cancel", "staff");
+  check("cancelling releases it at once", productOf(await catalogue.getCustomerCatalogue(db, CO, CUSTOMER_A.id), P.pie.id).availableQty === 10);
+  check("…even though the allocation rows are still there (the engine never deleted them)", db.tables.vyron_customer_sales_order_allocations.some((a) => a.sales_order_id === theOrder.id && a.status === "Reserved"));
+}
+
+// ---------------------------------------------------------------------------
+section("A per-customer hold policy overrides the company's");
+{
+  const db = newDb();
+  db.tables.vyron_customer_portal_tenants[0].pending_hold_minutes = 120;
+  db.tables.vyron_customer_portal_identities.find((i) => i.customer_id === CUSTOMER_B.id).pending_hold_minutes = 30;
+  const forA = await holds.loadHoldPolicy(db, CO, CUSTOMER_A.id);
+  const forB = await holds.loadHoldPolicy(db, CO, CUSTOMER_B.id);
+  check("the company policy applies to a customer with no override", forA.minutes === 120 && forA.source === "company");
+  check("a customer with their own terms keeps them", forB.minutes === 30 && forB.source === "customer");
+  check("neither is a number chosen by the code", forA.configured && forB.configured);
+}
+
 console.log(`\n${checks - failures}/${checks} checks passed`);
-if (failures) console.log(`${failures} FAILED`);
 process.exit(failures ? 1 : 0);

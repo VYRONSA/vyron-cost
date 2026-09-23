@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { loadAvailableQuantities } from "@/lib/vyron-sales-order-reservations";
 import { assignedListOnly } from "@/lib/vyron-customer-price-lists";
+import { expireStaleCustomerHolds } from "@/lib/vyron-order-holds";
 
 /**
  * VYRON ORDER — the customer-facing catalogue.
@@ -204,6 +205,13 @@ export async function getCustomerCatalogue(
     if (listOnly) return { price: 0, source: "unavailable" };
     return { price: num(product.selling_price), source: "product_master" };
   }
+
+  /*
+   * Orders nobody decided on in time give their stock back before availability
+   * is worked out, so what the customer sees already reflects the release.
+   * Does nothing until a company has set a hold policy.
+   */
+  await expireStaleCustomerHolds(supabase, companyId);
 
   /*
    * What may still be sold, from the one availability calculation the staff

@@ -505,6 +505,18 @@ export async function submitCart(
       };
     }
 
+    /*
+     * The order now awaits a decision. It is never approved automatically:
+     * a customer placing an order is a request to supply, and somebody at the
+     * business answers it. The stock stays held while they do.
+     */
+    try {
+      await transitionCustomerSalesOrder(supabase, scope.companyId, String(order.id), "submit", "vyron-order (placed by customer)", { neverAutoApprove: true });
+    } catch {
+      // The order and its hold both stand; only the status move failed, and
+      // staff will see it in the Order Centre either way.
+    }
+
     await supabase
       .from("vyron_customer_order_submissions")
       .update({ sales_order_id: order.id, order_number: order.order_number })

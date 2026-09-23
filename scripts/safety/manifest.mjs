@@ -521,6 +521,19 @@ const REGISTER = [
       "Runs src/lib/order-engine on the fictional Food Sock UAT tenant (src/lib/order-engine/uat/food-sock-uat.ts — fictional catalogue, customers and rules, not Food Sock data) in scripts/support/document-email-test-stubs/fake-supabase.mjs. No client data, no real database, no network, no mailbox.",
   },
   {
+    id: "kingdom-foods-ordering-diagnostics",
+    file: "scripts/kingdom-foods-ordering-diagnostics.mjs",
+    family: A,
+    purpose:
+      "Read-only production reconciliation of one tenant's customer ordering: reservations held by orders that should no longer hold stock, the Stock Master against the last ledger balance per item, customer price-list coverage against what each customer can see, the legacy finished-goods bucket against the Stock Master, the Kingdom Foods customer records, and whether the ordering application is in use.",
+    authentication: ["service-role"],
+    mutation: "none",
+    external: [],
+    cleanup: "n/a — reads only",
+    evidence:
+      "Uses no database client. It issues HTTP GET requests to PostgREST and nothing else: global fetch is wrapped so any other method throws before leaving the process, so a write is not merely forbidden but unreachable. It refuses to run unless the database is allowlisted as production and the operator names the company explicitly; the company is never inferred from a name.",
+  },
+  {
     id: "test-customer-ordering-stock",
     file: "scripts/test-customer-ordering-stock.mjs",
     family: A,
