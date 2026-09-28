@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getCustomerCatalogue, type CatalogueProduct } from "@/lib/vyron-order-catalogue";
+import { getCustomerCatalogue, loadCustomerPermittedPrices, type CatalogueProduct } from "@/lib/vyron-order-catalogue";
 import { setCartLine, getCart, type CartScope, type CartView } from "@/lib/vyron-order-cart";
 
 /**
@@ -228,7 +228,9 @@ export async function listFavourites(supabase: SupabaseClient, scope: CartScope)
     .eq("company_id", scope.companyId)
     .eq("customer_id", scope.customerId);
   if (error) throw new Error(error.message);
-  return (data || []).map((r) => String(r.product_id));
+  // A favourite from before a product left the customer's price list is not shown.
+  const permitted = await loadCustomerPermittedPrices(supabase, scope.companyId, scope.customerId);
+  return (data || []).map((r) => String(r.product_id)).filter((id) => permitted.has(id));
 }
 
 /** Toggling validates the product against the customer's own catalogue first. */
@@ -307,9 +309,12 @@ export async function getUsualProducts(
     entry.quantities.push(Number(line.quantity || 0));
   }
 
+  // Past orders do not make a product orderable: only what the price list permits today.
+  const permitted = await loadCustomerPermittedPrices(supabase, scope.companyId, scope.customerId);
   const usuals: UsualProduct[] = [];
   for (const [productId, entry] of byProduct) {
     if (entry.orders.size < 2) continue;
+    if (!permitted.has(productId)) continue;
     const sorted = [...entry.quantities].sort((a, b) => a - b);
     const median = sorted[Math.floor(sorted.length / 2)] || 0;
     usuals.push({

@@ -75,7 +75,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const { data: existing, error: existingError } = await supabase
     .from("vyron_documents")
-    .select("id, tenant_id, supplier_name, supplier_vat_number, customer_name, customer_vat_number, invoice_number, invoice_date, purchase_order_number, account_number, customer_reference, sales_representative, subtotal, vat, total, currency, deleted_at")
+    .select("id, tenant_id, status, supplier_name, supplier_vat_number, customer_name, customer_vat_number, invoice_number, invoice_date, purchase_order_number, account_number, customer_reference, sales_representative, subtotal, vat, total, currency, deleted_at")
     .eq("id", documentId)
     .maybeSingle();
   if (existingError) return NextResponse.json({ ok: false, error: existingError.message }, { status: 500 });
@@ -83,6 +83,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const denied = verifyDocumentTenantAccess(existing, tenantId);
   if (denied) return denied;
   if (existing.deleted_at) return NextResponse.json({ ok: false, error: "Document was deleted." }, { status: 404 });
+  /*
+   * Saving corrections sets the status to "reviewed". On an approved invoice
+   * that silently un-approved it: it went back into the review queue, and the
+   * next approval attempt re-raised the policy findings a supervisor had
+   * already overridden. An approved invoice is changed by rollback, not here.
+   */
+  if (String(existing.status || "").toLowerCase() === "archived") {
+    return NextResponse.json(
+      { ok: false, alreadyApproved: true, error: "This invoice is already approved and cannot be edited." },
+      { status: 409 }
+    );
+  }
 
   await supabase
     .from("vyron_documents")

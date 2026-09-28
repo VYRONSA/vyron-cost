@@ -179,7 +179,9 @@ check(
 );
 check(
   "approve route blocks when validation blocks",
-  /if \(validation\.blocked\)[\s\S]{0,800}status:\s*400/.test(approveSource),
+  // The only permitted exception is a verified supervisor override (see test-supervisor-override.mjs).
+  /if \(validation\.blocked(?: && !overridingPolicy)?\)[\s\S]{0,800}status:\s*400/.test(approveSource) &&
+    /const overridingPolicy = validation\.blocked && hasSupervisorOverride;/.test(approveSource),
   "no 400 response found for a blocked validation"
 );
 

@@ -188,11 +188,13 @@ section("What the Customer Ordering Application shows");
   check("…which is the same figure staff approval enforces", pie.availableQty === onHand(db, P.pie.id) - 4);
   check("how much is in the building is NOT sent to the customer", !Object.keys(pie).some((f) => /on_?hand|stockQty|inventory/i.test(f)), Object.keys(pie).join(","));
   check("what another customer holds is not sent either", !JSON.stringify(pie).includes("reserved"));
-  const tart = productOf(view, P.tart.id);
+  // The tart is on customer B's list only, so it is looked at through B.
+  const viewB = await catalogue.getCustomerCatalogue(db, CO, CUSTOMER_B.id);
+  const tart = productOf(viewB, P.tart.id);
   check("a product with nothing available says so and cannot be ordered", tart.availability === "out_of_stock" && tart.unavailable === true);
   const soup = productOf(view, P.soup.id);
   check("a well-stocked product is simply available", soup.availability === "available" && soup.availableQty === 100);
-  check("the catalogue counts what cannot be supplied", view.outOfStockCount === 1 && view.notMeasuredCount === 0);
+  check("the catalogue counts what cannot be supplied", viewB.outOfStockCount === 1 && view.outOfStockCount === 0 && view.notMeasuredCount === 0);
 
   // A product with no stock record at all: unknown is not zero.
   db.tables.vyron_cost_stock_items = db.tables.vyron_cost_stock_items.filter((r) => r.entity_id !== P.soup.id);
@@ -253,23 +255,20 @@ section("Price list: what each customer sees");
   check("customer B sees theirs", productOf(b, P.pie.id).sellingPrice === 31 && productOf(b, P.pie.id).priceSource === "contract");
   check("neither customer is ever shown the other's price", productOf(a, P.pie.id).sellingPrice !== productOf(b, P.pie.id).sellingPrice);
 
-  // The product that is NOT on customer A's list.
-  const tartForA = productOf(a, P.tart.id);
-  check(
-    "by default, a product missing from the customer's list still takes the master price",
-    tartForA.priceSource === "product_master" && tartForA.sellingPrice === P.tart.selling_price,
-    `${tartForA.priceSource} @ ${tartForA.sellingPrice}`
-  );
+  // The product that is NOT on customer A's list. Since 2026-09-28 the customer
+  // app shows a customer their price list and nothing else, whatever the
+  // price_source_rule (which now governs staff sales orders only).
+  check("a product missing from the customer's list is not in their catalogue at all", productOf(a, P.tart.id) === undefined);
+  const offListOrder = await order(db, scopeA, [[P.tart.id, 1]], "key-off-list").catch((e) => ({ ok: false, refusedAt: "cart", error: e.message }));
+  check("…and cannot be ordered", offListOrder.ok === false, JSON.stringify(offListOrder));
 
   // The same tenant, with customer A configured to be priced by their own list only.
   const listOnly = newDb();
   listOnly.tables.vyron_customer_price_list_assignments.find((r) => r.id === "pla-a").price_source_rule = "assigned_list_only";
   const strict = await catalogue.getCustomerCatalogue(listOnly, CO, CUSTOMER_A.id);
-  const strictTart = productOf(strict, P.tart.id);
-  check("configured to their list only, the uncovered product carries no price at all", strictTart.priceSource === "unavailable" && strictTart.sellingPrice === 0);
-  check("…it is shown as unavailable rather than at someone else's price", strictTart.priceUnavailable === true && strictTart.unavailable === true);
+  check("configured to their list only, the uncovered product is equally absent", productOf(strict, P.tart.id) === undefined);
   check("…the products their list does cover are unaffected", productOf(strict, P.pie.id).sellingPrice === 36 && productOf(strict, P.soup.id).sellingPrice === 25);
-  const blocked = await order(listOnly, scopeA, [[P.tart.id, 1]], "key-strict");
+  const blocked = await order(listOnly, scopeA, [[P.tart.id, 1]], "key-strict").catch((e) => ({ ok: false, refusedAt: "cart", error: e.message }));
   check("…and it cannot be ordered", blocked.ok === false, JSON.stringify(blocked));
 
   const strictStaff = await priceLists.resolveCustomerProductPrice(listOnly, CO, { customerId: CUSTOMER_A.id, productId: P.tart.id });
@@ -289,7 +288,7 @@ section("Price list: what each customer sees");
 
   // The staff sales-order engine, for the same customer and product.
   const staffPrice = await priceLists.resolveCustomerProductPrice(db, CO, { customerId: CUSTOMER_A.id, productId: P.tart.id });
-  check("the staff Sales Order flow resolves the same way", staffPrice.source === "product_master" && staffPrice.sellingPrice === P.tart.selling_price);
+  check("the staff Sales Order flow is unchanged: by default it still falls back to the master price", staffPrice.source === "product_master" && staffPrice.sellingPrice === P.tart.selling_price);
   const staffPricePie = await priceLists.resolveCustomerProductPrice(db, CO, { customerId: CUSTOMER_A.id, productId: P.pie.id });
   check("…and agrees with the customer app where a contract price exists", staffPricePie.sellingPrice === productOf(a, P.pie.id).sellingPrice);
 }

@@ -89,9 +89,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
     extractionQuality: await loadExtractionQuality(supabase, documentId),
     lines: lines || [],
     rules: { ...rules, blockUnmappedLines: rules.requireMatchedLineItems },
+    // Mirrors the approve route: a clerk's "approve anyway" flags do not lift
+    // policy blockers, so the pre-check opens the supervisor dialog up front.
     options: {
-      forceApproval: Boolean(body?.force),
-      forceTotalsMismatch: Boolean(body?.forceTotalsMismatch),
+      forceApproval: false,
+      forceTotalsMismatch: false,
       hasSupervisorOverride: Boolean(body?.hasSupervisorOverride),
     },
   });

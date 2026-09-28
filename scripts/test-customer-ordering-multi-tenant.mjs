@@ -170,19 +170,19 @@ section("Each company is configured differently, and each gets its own answer");
     check(`${key}: the product on their list is at their own price`, priced.sellingPrice === t.listPrice, `${priced.sellingPrice}`);
     check(`${key}: availability is their own stock`, priced.availableQty === t.product.onHand, `${priced.availableQty}`);
   }
-  const aUncovered = productOf(await shown(db, "A"), TENANTS.A.uncovered.id);
-  check("A falls back to the product master, as configured", aUncovered.priceSource === "product_master" && aUncovered.sellingPrice === TENANTS.A.uncovered.master);
-  check("…and A's customer can order it", aUncovered.unavailable === false);
-
-  const bUncovered = productOf(await shown(db, "B"), TENANTS.B.uncovered.id);
-  check("B is priced from its assigned list only, as configured", bUncovered.priceSource === "unavailable" && bUncovered.sellingPrice === 0);
-  check("…so the product off its list cannot be ordered, even though there is stock", bUncovered.unavailable === true && onHand(db, TENANTS.B.uncovered.id) === 50);
-  const refused = await order(db, "B", TENANTS.B.uncovered.id, 1, "b-uncovered");
-  check("…and the order is refused", refused.ok === false, JSON.stringify(refused));
+  // Since 2026-09-28 the customer app shows a customer their price list and
+  // nothing else, whichever price_source_rule the company set (that rule now
+  // governs staff sales orders only).
+  for (const key of ["A", "B", "C"]) {
+    const t = TENANTS[key];
+    check(`${key} (${t.rule}): the product off its list is not in the catalogue, in stock or not`, productOf(await shown(db, key), t.uncovered.id) === undefined);
+    const refused = await rejects(order(db, key, t.uncovered.id, 1, `${key}-uncovered`));
+    check(`${key}: …and cannot be put in the cart`, Boolean(refused) && /not available/i.test(String(refused.message)));
+  }
+  check("B's off-list product really is in stock", onHand(db, TENANTS.B.uncovered.id) === 50);
 
   const cPriced = productOf(await shown(db, "C"), TENANTS.C.product.id);
   check("C is priced from a DEFAULT list rather than a contract list", cPriced.priceSource === "default" && cPriced.sellingPrice === TENANTS.C.listPrice);
-  check("C's out-of-stock product says so", productOf(await shown(db, "C"), TENANTS.C.uncovered.id).availability === "out_of_stock");
 }
 
 // ---------------------------------------------------------------------------
@@ -264,20 +264,28 @@ section("A brand-new company works with nothing configured for it");
   db.tables.vyron_cost_products.push({ id: NEW_PRODUCT, company_id: NEW_CO, product_name: "Delta Pie", sku: "D-PIE", selling_price: 45, total_cost: 20, category: "All", status: "Active" });
   db.tables.vyron_cost_stock_items.push({ id: "si-D-PIE", company_id: NEW_CO, entity_type: "finished_goods", entity_id: NEW_PRODUCT, item_code: "D-PIE", qty_on_hand: 12, average_cost: 20, current_cost: 20, unit: "each" });
 
+  const scope = { companyId: NEW_CO, customerId: NEW_CUSTOMER, customerName: "New Customer" };
+  const bare = await catalogue.getCustomerCatalogue(db, NEW_CO, NEW_CUSTOMER);
+  check("the catalogue answers with no configuration rows at all", Array.isArray(bare.categories));
+  check("…but a customer with no price list is offered nothing, stock or not", bare.productCount === 0 && !productOf(bare, NEW_PRODUCT));
+  check("…and cannot order the stock item", Boolean(await rejects(cart.setCartLine(db, scope, { productId: NEW_PRODUCT, quantityUnits: 1 }))));
+
+  // The one thing the business must set up: the customer's price list.
+  db.tables.vyron_customer_price_lists.push({ id: "dl-list", company_id: NEW_CO, name: "Delta list", status: "Active" });
+  db.tables.vyron_customer_price_list_assignments.push({ id: "dl-pla", company_id: NEW_CO, customer_id: NEW_CUSTOMER, contract_price_list_id: "dl-list", default_price_list_id: null, status: "Active" });
+  db.tables.vyron_customer_price_list_items.push({ id: "dl-pli", company_id: NEW_CO, price_list_id: "dl-list", product_id: NEW_PRODUCT, final_price: 45, status: "Active", effective_from: "2026-01-01" });
   const view = await catalogue.getCustomerCatalogue(db, NEW_CO, NEW_CUSTOMER);
   const product = productOf(view, NEW_PRODUCT);
-  check("the catalogue works with no configuration rows at all", Boolean(product));
-  check("pricing falls back to the product master — backward compatible", product.priceSource === "product_master" && product.sellingPrice === 45);
+  check("with a price list, the product appears at the list price", Boolean(product) && product.priceSource === "contract" && product.sellingPrice === 45);
   check("availability is correct from the stock record alone", product.availableQty === 12 && product.availability === "available");
 
-  const scope = { companyId: NEW_CO, customerId: NEW_CUSTOMER, customerName: "New Customer" };
   await cart.setCartLine(db, scope, { productId: NEW_PRODUCT, quantityUnits: 12 });
   await cart.setCartDelivery(db, scope, { requestedDeliveryDate: TOMORROW });
   const view2 = await cart.getCart(db, scope);
   const placed = await cart.submitCart(db, scope, { idempotencyKey: "new-1", acknowledgedPrices: view2.lines.map((l) => ({ productId: l.productId, sellingPrice: l.sellingPrice })) });
   check("a customer can order, and the stock is held", placed.ok === true && db.tables.vyron_customer_sales_order_allocations.some((a) => a.company_id === NEW_CO));
   const over = await cart.setCartLine(db, scope, { productId: NEW_PRODUCT, quantityUnits: 1 }).then(() => cart.getCart(db, scope));
-  check("…and over-ordering is refused without any configuration", over.shortfalls.length === 1 && over.shortfalls[0].available === 0);
+  check("…and over-ordering is refused without any further configuration", over.shortfalls.length === 1 && over.shortfalls[0].available === 0);
 
   const policy = await holds.loadHoldPolicy(db, NEW_CO, NEW_CUSTOMER);
   check("hold expiry is off until somebody configures it", policy.configured === false && policy.minutes === null);

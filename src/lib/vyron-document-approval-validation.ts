@@ -266,18 +266,24 @@ export async function recordApprovalOverride(
     overrideReason: string;
     rulesBypassed: string[];
     violations: ApprovalViolation[];
+    metadata?: Record<string, unknown>;
   }
-) {
-  const { error } = await supabase.from("vyron_document_approval_override_audit").insert({
-    tenant_id: params.tenantId,
-    document_id: params.documentId,
-    overridden_by: params.overriddenBy,
-    override_reason: params.overrideReason,
-    rules_bypassed: params.rulesBypassed,
-    violations_snapshot: params.violations,
-    metadata: { source: "invoice_approval" },
-  });
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("vyron_document_approval_override_audit")
+    .insert({
+      tenant_id: params.tenantId,
+      document_id: params.documentId,
+      overridden_by: params.overriddenBy,
+      override_reason: params.overrideReason,
+      rules_bypassed: params.rulesBypassed,
+      violations_snapshot: params.violations,
+      metadata: { ...params.metadata, source: "invoice_approval" },
+    })
+    .select("id")
+    .single();
   if (error) throw new Error(error.message);
+  return (data?.id as string | undefined) ?? null;
 }
 
 export async function recordPoLinkOverride(
@@ -287,6 +293,7 @@ export async function recordPoLinkOverride(
     documentId: string;
     overriddenBy: string;
     overrideReason: string;
+    metadata?: Record<string, unknown>;
   }
 ) {
   const { error } = await supabase.from("vyron_document_po_link_override_audit").insert({
@@ -294,7 +301,7 @@ export async function recordPoLinkOverride(
     document_id: params.documentId,
     overridden_by: params.overriddenBy,
     override_reason: params.overrideReason,
-    metadata: { source: "invoice_approval_po_requirement" },
+    metadata: { ...params.metadata, source: "invoice_approval_po_requirement" },
   });
   if (error) throw new Error(error.message);
 }

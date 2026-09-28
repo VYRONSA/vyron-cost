@@ -133,6 +133,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
     violations: ApprovalViolation[];
     pin: string;
     reason: string;
+    error?: string;
     draftToSave: ReviewDraft | null;
     approveOpts: { force: boolean; forceTotalsMismatch: boolean; reconciliationNote?: string };
   } | null>(null);
@@ -548,7 +549,19 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           violations?: ApprovalViolation[];
           totalsMismatch?: boolean;
           lowConfidenceFields?: string[];
+          supervisorOverrideRejected?: boolean;
+          alreadyApproved?: boolean;
         };
+        // A refused override is not a fresh block: keep the dialog, the findings
+        // and the reason, and say why. Only the PIN is cleared.
+        if (approvalError.supervisorOverrideRejected) {
+          setOverrideModal((current) =>
+            current ? { ...current, pin: "", error: approvalError.message } : current
+          );
+          return;
+        }
+        // Never silently retry an approval that carries a supervisor override.
+        if (approvalError.alreadyApproved || supervisorOverride) throw error;
         if (approvalError.policyBlocked && approvalError.violations?.length) {
           setOverrideModal({
             open: true,
@@ -600,7 +613,10 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
       setOverrideModal(null);
       router.push("/document-intelligence");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Approval failed.");
+      const message = error instanceof Error ? error.message : "Approval failed.";
+      setErrorMessage(message);
+      // The page-level message sits behind the dialog; show it where the supervisor is looking.
+      setOverrideModal((current) => (current ? { ...current, error: message } : current));
     } finally {
       setApproving(false);
     }
@@ -647,9 +663,10 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
   async function submitSupervisorOverride() {
     if (!overrideModal?.draftToSave) return;
     if (!overrideModal.pin.trim() || !overrideModal.reason.trim()) {
-      setErrorMessage("Supervisor PIN and override reason are required.");
+      setOverrideModal({ ...overrideModal, error: "Supervisor PIN and override reason are required." });
       return;
     }
+    setOverrideModal({ ...overrideModal, error: undefined });
     await completeApproval(overrideModal.draftToSave, overrideModal.approveOpts, {
       pin: overrideModal.pin.trim(),
       reason: overrideModal.reason.trim(),
@@ -1673,6 +1690,11 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
                 onChange={(e) => setOverrideModal({ ...overrideModal, reason: e.target.value })}
               />
             </label>
+            {overrideModal.error ? (
+              <p role="alert" className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs font-bold text-rose-800">
+                {overrideModal.error}
+              </p>
+            ) : null}
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"

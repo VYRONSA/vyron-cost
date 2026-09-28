@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { loadAvailableQuantities } from "@/lib/vyron-sales-order-reservations";
-import { assignedListOnly } from "@/lib/vyron-customer-price-lists";
 import { expireStaleCustomerHolds } from "@/lib/vyron-order-holds";
 
 /**
@@ -11,14 +10,19 @@ import { expireStaleCustomerHolds } from "@/lib/vyron-order-holds";
  * from the row type, so a leak has to be a deliberate change to this file
  * rather than an accidental spread of a wider object.
  *
- * Pricing follows exactly the rules in resolveCustomerProductPrice()
- * (vyron-customer-price-lists.ts): the customer's contract price list wins,
- * then their default price list, then the product master, and a price-list item
- * only counts if it is Active and effective on the date being priced. That
- * function resolves one product at a time; a catalogue needs every product at
- * once, so the same rules are applied here over three batched reads instead of
- * three reads per product. `assertCatalogueMatchesResolver` in the Stage 1
- * security tests proves the two agree product by product.
+ * WHAT A CUSTOMER MAY SEE AND ORDER IS THEIR PRICE LIST, NOTHING ELSE.
+ * A product is in a customer's catalogue only when an Active, currently
+ * effective item for it sits on the Active contract or default price list of
+ * the customer's Active assignment (loadCustomerPermittedPrices). A product in
+ * stock, or in the product master, is not thereby orderable by every customer.
+ * Until 2026-09-28 the catalogue listed every active product in the tenant and
+ * priced the ones off the customer's list from the product master, so any
+ * customer could see and order any stock item.
+ *
+ * Among permitted products the price follows resolveCustomerProductPrice()
+ * (vyron-customer-price-lists.ts): contract beats default, and within a list
+ * the most recently effective item wins. The customer app never falls back to
+ * the product master; that fallback remains a staff sales-order setting.
  */
 
 export type CatalogueProduct = {
@@ -28,8 +32,8 @@ export type CatalogueProduct = {
   sku: string | null;
   /** The customer's own price, VAT exclusive. Safe to expose — they order on it. */
   sellingPrice: number;
-  /** "unavailable": this customer's price list does not cover the product. */
-  priceSource: "contract" | "default" | "product_master" | "unavailable";
+  /** Which of the customer's lists priced it. Off-list products are never in the catalogue. */
+  priceSource: "contract" | "default";
   /** True when no price could be established; such products cannot be ordered. */
   priceUnavailable: boolean;
   /**
@@ -83,7 +87,6 @@ type ProductRow = {
   product_name: string;
   category: string | null;
   sku: string | null;
-  selling_price: number | null;
   status: string | null;
   product_status: string | null;
 };
@@ -95,6 +98,97 @@ type PriceItemRow = {
   effective_from: string | null;
   effective_to: string | null;
 };
+
+export type PermittedProductPrice = {
+  productId: string;
+  priceListId: string;
+  source: "contract" | "default";
+  price: number;
+};
+
+const inWindow = (from: unknown, to: unknown, asOfDate: string) =>
+  (from ? String(from) <= asOfDate : true) && (to ? String(to) >= asOfDate : true);
+
+/**
+ * The products this customer may order, and the price each is sold at.
+ *
+ * Everything is derived from the company and customer of the authenticated
+ * session. A product is permitted only through:
+ *   the customer's Active price-list assignment
+ *   -> its contract or default price list, which must itself be Active and in date
+ *   -> an Active item for the product on that list, effective on `asOfDate`.
+ * No assignment, no list, no item: no product. Nothing falls back to the
+ * product master here.
+ *
+ * Used by the catalogue (what is shown) and again, independently, by order
+ * submission immediately before the order is written.
+ */
+export async function loadCustomerPermittedPrices(
+  supabase: SupabaseClient,
+  companyId: string,
+  customerId: string,
+  asOfDate: string = new Date().toISOString().slice(0, 10)
+): Promise<Map<string, PermittedProductPrice>> {
+  const permitted = new Map<string, PermittedProductPrice>();
+
+  const { data: assignment, error: assignmentError } = await supabase
+    .from("vyron_customer_price_list_assignments")
+    .select("contract_price_list_id, default_price_list_id")
+    .eq("company_id", companyId)
+    .eq("customer_id", customerId)
+    .eq("status", "Active")
+    .maybeSingle();
+  if (assignmentError) throw new Error(assignmentError.message);
+  const contractId = assignment?.contract_price_list_id ? String(assignment.contract_price_list_id) : null;
+  const defaultId = assignment?.default_price_list_id ? String(assignment.default_price_list_id) : null;
+  const assignedIds = [contractId, defaultId].filter(Boolean) as string[];
+  if (!assignedIds.length) return permitted;
+
+  // The lists themselves must be live. A list that is switched off or has
+  // ended grants nothing, whatever items remain on it.
+  const { data: lists, error: listError } = await supabase
+    .from("vyron_customer_price_lists")
+    .select("id, status, effective_from, effective_to")
+    .eq("company_id", companyId)
+    .in("id", assignedIds);
+  if (listError) throw new Error(listError.message);
+  const liveIds = new Set(
+    (lists || [])
+      .filter((l) => String(l.status || "").toLowerCase() === "active" && inWindow(l.effective_from, l.effective_to, asOfDate))
+      .map((l) => String(l.id))
+  );
+  const candidateIds = assignedIds.filter((id) => liveIds.has(id));
+  if (!candidateIds.length) return permitted;
+
+  const { data: items, error: itemError } = await supabase
+    .from("vyron_customer_price_list_items")
+    .select("price_list_id, product_id, final_price, effective_from, effective_to")
+    .eq("company_id", companyId)
+    .eq("status", "Active")
+    .in("price_list_id", candidateIds);
+  if (itemError) throw new Error(itemError.message);
+
+  // Same selection as resolveCustomerProductPrice: contract first, then the
+  // most recently effective item.
+  const effective = ((items || []) as PriceItemRow[])
+    .filter((row) => row.product_id && inWindow(row.effective_from, row.effective_to, asOfDate))
+    .sort((a, b) => {
+      const contractRank = Number(b.price_list_id === contractId) - Number(a.price_list_id === contractId);
+      if (contractRank !== 0) return contractRank;
+      return String(b.effective_from || "").localeCompare(String(a.effective_from || ""));
+    });
+  for (const row of effective) {
+    const productId = String(row.product_id);
+    if (permitted.has(productId)) continue;
+    permitted.set(productId, {
+      productId,
+      priceListId: String(row.price_list_id),
+      source: String(row.price_list_id) === contractId ? "contract" : "default",
+      price: num(row.final_price),
+    });
+  }
+  return permitted;
+}
 
 /** Below this many boxes (or units where there is no box) the customer is warned. */
 const LIMITED_BOXES = 2;
@@ -148,62 +242,19 @@ export async function getCustomerCatalogue(
     if (Number.isFinite(units) && units > 0) unitsPerBoxByProduct.set(String(row.product_id), units);
   }
 
-  const { data: productRows, error: productError } = await supabase
-    .from("vyron_cost_products")
-    .select("id, product_name, category, sku, selling_price, status, product_status")
-    .eq("company_id", companyId)
-    .order("product_name");
-  if (productError) throw new Error(productError.message);
-  const products = ((productRows || []) as ProductRow[]).filter(isActive);
-
-  // The whole row, so a database without price_source_rule still answers.
-  const { data: assignment, error: assignmentError } = await supabase
-    .from("vyron_customer_price_list_assignments")
-    .select("*")
-    .eq("company_id", companyId)
-    .eq("customer_id", customerId)
-    .eq("status", "Active")
-    .maybeSingle();
-  if (assignmentError) throw new Error(assignmentError.message);
-  // When this customer may only be priced by their own list, a product the
-  // list does not cover is shown as unavailable rather than at a price nobody
-  // agreed with them.
-  const listOnly = assignedListOnly(assignment);
-
-  const contractId = assignment?.contract_price_list_id ? String(assignment.contract_price_list_id) : null;
-  const defaultId = assignment?.default_price_list_id ? String(assignment.default_price_list_id) : null;
-  const candidateIds = [contractId, defaultId].filter(Boolean) as string[];
-
-  const itemsByProduct = new Map<string, PriceItemRow[]>();
-  if (candidateIds.length) {
-    const { data: items, error: itemError } = await supabase
-      .from("vyron_customer_price_list_items")
-      .select("price_list_id, product_id, final_price, effective_from, effective_to")
+  // Only the products this customer's price list permits. Nothing else in the
+  // tenant, however much of it is in stock, is read, shown or priced.
+  const permitted = await loadCustomerPermittedPrices(supabase, companyId, customerId, asOfDate);
+  let products: ProductRow[] = [];
+  if (permitted.size) {
+    const { data: productRows, error: productError } = await supabase
+      .from("vyron_cost_products")
+      .select("id, product_name, category, sku, status, product_status")
       .eq("company_id", companyId)
-      .eq("status", "Active")
-      .in("price_list_id", candidateIds);
-    if (itemError) throw new Error(itemError.message);
-    for (const item of (items || []) as PriceItemRow[]) {
-      const key = String(item.product_id);
-      if (!itemsByProduct.has(key)) itemsByProduct.set(key, []);
-      itemsByProduct.get(key)!.push(item);
-    }
-  }
-
-  /** Same selection rule as resolveCustomerProductPrice, contract first. */
-  function resolvePrice(product: ProductRow): { price: number; source: CatalogueProduct["priceSource"] } {
-    const items = itemsByProduct.get(String(product.id)) || [];
-    const effective = items.filter((row) => {
-      const startsOk = row.effective_from ? String(row.effective_from) <= asOfDate : true;
-      const endsOk = row.effective_to ? String(row.effective_to) >= asOfDate : true;
-      return startsOk && endsOk;
-    });
-    const contract = contractId ? effective.find((r) => String(r.price_list_id) === contractId) : undefined;
-    if (contract) return { price: num(contract.final_price), source: "contract" };
-    const fallback = defaultId ? effective.find((r) => String(r.price_list_id) === defaultId) : undefined;
-    if (fallback) return { price: num(fallback.final_price), source: "default" };
-    if (listOnly) return { price: 0, source: "unavailable" };
-    return { price: num(product.selling_price), source: "product_master" };
+      .in("id", [...permitted.keys()])
+      .order("product_name");
+    if (productError) throw new Error(productError.message);
+    products = ((productRows || []) as ProductRow[]).filter((p) => isActive(p) && permitted.has(String(p.id)));
   }
 
   /*
@@ -226,7 +277,7 @@ export async function getCustomerCatalogue(
   );
 
   const rows: CatalogueProduct[] = products.map((product) => {
-    const { price, source } = resolvePrice(product);
+    const { price, source } = permitted.get(String(product.id))!;
     const unitsPerBox = unitsPerBoxByProduct.get(String(product.id)) ?? null;
     const stock = availability.get(String(product.id));
     const availableQty = stock?.measured ? stock.available : null;

@@ -11,6 +11,7 @@ import { updateStockCostsFromApprovedInvoice } from "@/lib/vyron-inventory";
 import { getPoApprovalRules, writeProcurementAudit } from "@/lib/vyron-procurement";
 import { computeThreeWayMatch, upsertThreeWayMatch } from "@/lib/vyron-three-way-match";
 import { isSupervisorAuthorized } from "@/lib/vyron-document-approval-audit";
+import { getServerWorkspaceSession } from "@/lib/vyron-workspace-admin-server";
 import { insertDocumentCostAudit } from "@/lib/vyron-document-cost-audit";
 import { roundMoney } from "@/lib/vyron-invoice-line-math";
 import { reconcileInvoiceTotals } from "@/lib/vyron-invoice-reconciliation";
@@ -88,6 +89,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     | undefined;
   const overridePin = String(supervisorOverride?.pin || "");
   const overrideReason = String(supervisorOverride?.reason || "").trim();
+  const overrideRequested = Boolean(supervisorOverride && (overridePin || overrideReason));
   const hasSupervisorOverride = Boolean(overridePin && overrideReason && isSupervisorAuthorized(overridePin));
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
@@ -104,13 +106,51 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const { data: document, error: docError } = await supabase
     .from("vyron_documents")
-    .select("id, tenant_id, supplier_name, supplier_vat_number, currency, status, field_confidence, invoice_number, invoice_date, purchase_order_number, purchase_order_id, subtotal, vat, total")
+    .select("id, tenant_id, supplier_name, supplier_vat_number, currency, status, field_confidence, invoice_number, invoice_date, purchase_order_number, purchase_order_id, subtotal, vat, total, approved_at, approved_by")
     .eq("id", documentId)
     .maybeSingle();
   if (docError) return NextResponse.json({ ok: false, error: docError.message }, { status: 500 });
   if (!document) return NextResponse.json({ ok: false, error: "Document not found." }, { status: 404 });
   const denied = verifyDocumentTenantAccess(document, tenantId);
   if (denied) return denied;
+
+  /*
+   * An approved invoice stays approved. Re-running approval on it would
+   * re-evaluate the original policy findings and present them as a fresh
+   * block — so an invoice a supervisor already overrode looked as if the
+   * override never happened — and, if pushed through, would apply its costs a
+   * second time.
+   */
+  if (String(document.status || "").toLowerCase() === "archived") {
+    return NextResponse.json(
+      {
+        ok: false,
+        alreadyApproved: true,
+        error: `This invoice is already approved${document.approved_at ? ` (${String(document.approved_at).slice(0, 16).replace("T", " ")})` : ""}. It cannot be approved again.`,
+      },
+      { status: 409 }
+    );
+  }
+
+  /*
+   * A supervisor override that is not accepted is refused as such. It used to
+   * fall through as "no override", so the response was identical to the
+   * original policy block and the dialog reopened blank: the supervisor could
+   * not tell a rejected PIN from an override the system ignored.
+   */
+  if (overrideRequested && !overrideReason) {
+    return NextResponse.json(
+      { ok: false, supervisorOverrideRejected: true, error: "An override reason is required. The invoice was not approved." },
+      { status: 400 }
+    );
+  }
+  if (overrideRequested && !hasSupervisorOverride) {
+    traceEvent("APPROVAL OVERRIDE REJECTED", documentId, { reason: "supervisor PIN not accepted" });
+    return NextResponse.json(
+      { ok: false, supervisorOverrideRejected: true, error: "Supervisor PIN not accepted. The invoice was not approved." },
+      { status: 403 }
+    );
+  }
 
   const rules = await getDocumentApprovalRules(supabase, tenantId);
   const poRules = await getPoApprovalRules(supabase, tenantId);
@@ -123,23 +163,34 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const policyRules = { ...rules, blockUnmappedLines: rules.requireMatchedLineItems };
   traceStart("APPROVAL VALIDATION", documentId);
+  /*
+   * Policy is evaluated WITHOUT supervisor authority, always. This is the
+   * verdict a normal approval gets, and it is the exact set of findings a
+   * supervisor is authorising an exception to. Evaluating it with the override
+   * switched on made the validator drop the very rules being overridden, so the
+   * override audit recorded only some of the blockers the supervisor saw.
+   */
   const validation = validateDocumentApproval({
     document,
     extractionQuality: await loadExtractionQuality(supabase, documentId),
     lines: lines || [],
     rules: policyRules,
-    options: {
-      forceApproval: forceApproval || hasSupervisorOverride,
-      forceTotalsMismatch: forceTotalsMismatch || hasSupervisorOverride,
-      hasSupervisorOverride,
-    },
+    /*
+     * The clerk's "approve anyway" flags (force, forceTotalsMismatch) are NOT
+     * policy authority. They used to be passed here, where `force` switched
+     * off every error-level blocker and `forceTotalsMismatch` the totals and
+     * variance rules, so a clerk confirming "N lines not matched — approve
+     * anyway?" approved an invoice the policy said needs a supervisor. They are
+     * still recorded on the approval audit as what the clerk asked for.
+     */
+    options: { forceApproval: false, forceTotalsMismatch: false, hasSupervisorOverride: false },
   });
 
   traceComplete("APPROVAL VALIDATION", documentId, { blocked: validation.blocked, violations: validation.violations.length, qualityRules: validation.violations.filter((v) => v.rule.startsWith("extraction_")).length, businessRules: validation.violations.filter((v) => !v.rule.startsWith("extraction_")).length });
   const poLinkViolation = validatePoLinkRequired(
     document.purchase_order_id as string | null,
     poRules.requirePoBeforeInvoiceApproval,
-    hasSupervisorOverride
+    false
   );
   if (poLinkViolation) {
     validation.violations.push(poLinkViolation);
@@ -148,7 +199,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
     validation.requiresSupervisorOverride = true;
   }
 
-  if (validation.blocked) {
+  // A valid supervisor override authorises the exception; it does not erase the findings.
+  const overridingPolicy = validation.blocked && hasSupervisorOverride;
+
+  if (validation.blocked && !overridingPolicy) {
     traceEvent("APPROVAL BLOCKED", documentId, { rules: validation.violations.map((v) => v.rule).join("|") });
     return NextResponse.json(
       {
@@ -163,22 +217,63 @@ export async function POST(request: NextRequest, context: RouteContext) {
     );
   }
 
-  if (hasSupervisorOverride) {
-    await recordApprovalOverride(supabase, {
-      tenantId: document.tenant_id as string,
-      documentId,
-      overriddenBy: String(supervisorOverride?.overriddenBy || approvedBy),
-      overrideReason,
-      rulesBypassed: validation.violations.map((v) => v.rule),
-      violations: validation.violations,
-    });
-    if (poLinkViolation) {
-      await recordPoLinkOverride(supabase, {
+  /*
+   * The override is recorded BEFORE anything is approved or costed, and a
+   * failure to record it stops the approval: an exception to company policy
+   * that leaves no evidence is not an authorised exception.
+   *
+   * Identity comes from the verified workspace session. The name the browser
+   * sends ("supervisor") is kept only as the label the operator declared.
+   */
+  let supervisorOverrideRecord: {
+    overrideAuditId: string | null;
+    overriddenBy: string;
+    overrideReason: string;
+    rulesOverridden: string[];
+  } | null = null;
+  if (overridingPolicy) {
+    const session = await getServerWorkspaceSession().catch(() => null);
+    const declaredBy = String(supervisorOverride?.overriddenBy || "").trim() || null;
+    const overriddenBy = session?.email || session?.userId || declaredBy || approvedBy;
+    const rulesOverridden = validation.violations.filter((v) => v.severity === "error").map((v) => v.rule);
+    const overrideMetadata = {
+      sessionUserId: session?.userId ?? null,
+      sessionWorkspaceId: session?.workspaceId ?? null,
+      declaredBy,
+      approvedBy,
+      resultingStatus: "archived",
+      approvedAt,
+    };
+    try {
+      const overrideAuditId = await recordApprovalOverride(supabase, {
         tenantId: document.tenant_id as string,
         documentId,
-        overriddenBy: String(supervisorOverride?.overriddenBy || approvedBy),
+        overriddenBy,
         overrideReason,
+        rulesBypassed: rulesOverridden,
+        violations: validation.violations,
+        metadata: overrideMetadata,
       });
+      if (poLinkViolation) {
+        await recordPoLinkOverride(supabase, {
+          tenantId: document.tenant_id as string,
+          documentId,
+          overriddenBy,
+          overrideReason,
+          metadata: overrideMetadata,
+        });
+      }
+      supervisorOverrideRecord = { overrideAuditId, overriddenBy, overrideReason, rulesOverridden };
+      traceEvent("APPROVAL OVERRIDE RECORDED", documentId, { rules: rulesOverridden.join("|") });
+    } catch (overrideAuditError) {
+      console.error("[approve] supervisor override could not be recorded", overrideAuditError);
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "The supervisor override could not be recorded, so the invoice was not approved. Try again.",
+        },
+        { status: 500 }
+      );
     }
   }
 
@@ -554,6 +649,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
     : hasRoundingDifference
       ? `Approved with rounding difference (within R${rules.majorMismatchThreshold.toFixed(2)}). ${reconciliationNote || ""}`.trim()
       : "Approved and cost updates applied.";
+  const approvalNotesWithOverride = supervisorOverrideRecord
+    ? `${approvalNotes} Supervisor override by ${supervisorOverrideRecord.overriddenBy} of ${supervisorOverrideRecord.rulesOverridden.join(", ")}: ${supervisorOverrideRecord.overrideReason}`
+    : approvalNotes;
 
   try {
     await insertDocumentApprovalAudit(supabase, {
@@ -561,7 +659,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       documentId,
       approvedBy,
       approvedAt,
-      approvalNotes,
+      approvalNotes: approvalNotesWithOverride,
       reconciliationNote,
       previousStatus: String(document.status || "reviewed"),
       newStatus: "archived",
@@ -587,7 +685,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
       })),
       costUpdatesCount: updatesApplied.length,
       priceHistoryCount: historyRows.length,
-      metadata: { totalsMismatch, forceApproval, forceTotalsMismatch },
+      metadata: {
+        totalsMismatch,
+        forceApproval,
+        forceTotalsMismatch,
+        // The approval record carries the policy findings it was granted over.
+        policyFindings: validation.violations,
+        supervisorOverride: supervisorOverrideRecord,
+      },
     });
   } catch (auditError) {
     console.warn("[approve] approval audit insert failed", auditError);
@@ -602,7 +707,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       archived_at: approvedAt,
       processed_at: approvedAt,
       reconciliation_note: hasMajorMismatch || hasRoundingDifference ? reconciliationNote : null,
-      processing_notes: approvalNotes,
+      processing_notes: approvalNotesWithOverride,
     })
     .eq("id", documentId);
 

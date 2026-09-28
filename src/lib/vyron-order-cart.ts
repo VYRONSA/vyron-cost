@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getCustomerCatalogue, type CatalogueProduct } from "@/lib/vyron-order-catalogue";
+import { getCustomerCatalogue, loadCustomerPermittedPrices, type CatalogueProduct } from "@/lib/vyron-order-catalogue";
 import { saveCustomerSalesOrder, calculateSalesOrderTotals, reserveStockForSalesOrder, transitionCustomerSalesOrder } from "@/lib/vyron-customer-sales-orders";
 import { notifyOrderEvent } from "@/lib/vyron-order-notifications";
 
@@ -462,6 +462,29 @@ export async function submitCart(
           };
     }
 
+    /*
+     * The price-list gate, checked independently of the cart and immediately
+     * before the write. Every line must be a product the authenticated
+     * customer's own price list permits today, at exactly that list's price.
+     * The cart already only holds catalogue products; this does not rely on
+     * that. A cart row inserted by any other route, or a list changed since
+     * the cart was read, stops here.
+     */
+    const permitted = await loadCustomerPermittedPrices(supabase, scope.companyId, scope.customerId);
+    const offList = cart.lines.filter((line) => {
+      const allowed = permitted.get(line.productId);
+      return !allowed || !(allowed.price > 0) || Math.round(allowed.price * 100) !== Math.round(line.sellingPrice * 100);
+    });
+    if (offList.length) {
+      await releaseClaim(supabase, scope, key);
+      return {
+        ok: false,
+        reason: "unavailable",
+        message: "Some products are no longer available. Please remove them and try again.",
+        unavailable: offList.map((l) => l.productName),
+      };
+    }
+
     // The existing engine owns numbering, price-list application, cost and GP.
     const order = await saveCustomerSalesOrder(supabase, scope.companyId, {
       customerId: scope.customerId,
@@ -473,7 +496,8 @@ export async function submitCart(
         description: line.productName,
         quantity: line.quantityUnits,
         unit: "each",
-        sellingPrice: line.sellingPrice,
+        // The price-list price, never a figure that came from the browser.
+        sellingPrice: permitted.get(line.productId)!.price,
       })),
     });
 

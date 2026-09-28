@@ -30,6 +30,7 @@
     "measure:workspace-density": "node scripts/measure-review-workspace-density.mjs",
     "certify:workflow": "node scripts/certify-production-workflow.mjs",
     "test:approval-safety": "node scripts/test-approval-safety.mjs",
+    "test:supervisor-override": "node scripts/test-supervisor-override.mjs",
     "test:crop-fidelity": "node scripts/test-crop-fidelity.mjs",
     "test:document-email": "node scripts/test-document-email.mjs",
     "test:data-migration": "node scripts/test-data-migration.mjs",
@@ -66,6 +67,7 @@
     "test:sales-order-safety": "node scripts/test-sales-order-safety.mjs",
     "test:customer-ordering-stock": "node scripts/test-customer-ordering-stock.mjs",
     "test:customer-ordering-multi-tenant": "node scripts/test-customer-ordering-multi-tenant.mjs",
+    "test:customer-price-list-security": "node scripts/test-customer-price-list-security.mjs",
     "demo:order-engine": "node scripts/order-engine-demo.mjs"
   },
   "dependencies": {

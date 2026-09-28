@@ -407,6 +407,8 @@ export async function approveAndUpdateCosts(
       policyBlocked?: boolean;
       violations?: ApprovalViolation[];
       requiresSupervisorOverride?: boolean;
+      supervisorOverrideRejected?: boolean;
+      alreadyApproved?: boolean;
     };
     err.lowConfidenceFields = data.lowConfidenceFields;
     err.minRequiredConfidence = data.minRequiredConfidence;
@@ -414,6 +416,8 @@ export async function approveAndUpdateCosts(
     err.policyBlocked = data.policyBlocked;
     err.violations = data.violations;
     err.requiresSupervisorOverride = data.requiresSupervisorOverride;
+    err.supervisorOverrideRejected = data.supervisorOverrideRejected;
+    err.alreadyApproved = data.alreadyApproved;
     throw err;
   }
   return data;
