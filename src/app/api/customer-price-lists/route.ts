@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
+import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
 import {
+  PriceListError,
   assignCustomerPriceLists,
   createCustomerPriceList,
   listCustomerPriceListAssignments,
@@ -14,6 +15,19 @@ function bad(message: string, status = 400) {
   return NextResponse.json({ ok: false, error: message }, { status });
 }
 
+function errorResponse(error: unknown, fallback: string) {
+  if (error instanceof PriceListError) return bad(error.message, error.status);
+  return workspaceAccessErrorResponse(error, fallback);
+}
+
+/*
+ * The company is the one the signed-in member's workspace owns
+ * (requireApiCompanyId), which fails closed (403) when none can be authorised,
+ * like the other write routes. Every list, customer and product id in a request
+ * body is then re-checked against that company in vyron-customer-price-lists.ts;
+ * upsert_items and assign previously accepted another company's ids.
+ */
+
 export async function GET() {
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
@@ -23,8 +37,7 @@ export async function GET() {
 
   try {
     await requireWorkspacePermission("sales_orders.view");
-    const companyId = await resolveApiCompanyId();
-    if (!companyId) return NextResponse.json({ ok: true, lists: [], assignments: [] });
+    const companyId = await requireApiCompanyId();
 
     const [lists, assignments] = await Promise.all([
       listCustomerPriceLists(supabase, companyId),
@@ -33,7 +46,7 @@ export async function GET() {
 
     return NextResponse.json({ ok: true, lists, assignments });
   } catch (error) {
-    return workspaceAccessErrorResponse(error, "Unable to load customer price lists.");
+    return errorResponse(error, "Unable to load customer price lists.");
   }
 }
 
@@ -45,13 +58,13 @@ export async function POST(request: NextRequest) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
 
   try {
-    await requireWorkspacePermission("sales_orders.edit");
-    const companyId = await resolveApiCompanyId();
-    if (!companyId) return bad("No active workspace company.");
+    const session = await requireWorkspacePermission("sales_orders.edit");
+    const companyId = await requireApiCompanyId();
 
     const body = await request.json();
     const mode = String(body?.mode || "create_list");
-    const actor = "user";
+    // Who did it comes from the verified session, not the request.
+    const actor = String(session.userId || "").trim() || "user";
 
     if (mode === "create_list") {
       const listName = String(body?.listName || "").trim();
@@ -97,6 +110,6 @@ export async function POST(request: NextRequest) {
 
     return bad("Unsupported mode.");
   } catch (error) {
-    return workspaceAccessErrorResponse(error, "Unable to save customer price list.");
+    return errorResponse(error, "Unable to save customer price list.");
   }
 }

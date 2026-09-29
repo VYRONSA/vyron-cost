@@ -72,6 +72,48 @@ export type PriceImportRow = {
   status?: "Active" | "Inactive";
 };
 
+/** A refusal with the HTTP status the route should answer with. */
+export class PriceListError extends Error {
+  status: number;
+  constructor(message: string, status = 400) {
+    super(message);
+    this.name = "PriceListError";
+    this.status = status;
+  }
+}
+
+/*
+ * The shape Postgres's uuid type accepts. An id that is not this shape can never
+ * name a row, so it is answered "not found" before any query — sending it to the
+ * database made Postgres reject the cast and the route answer 500. Shape only
+ * (no version/variant bits), so no genuine row is ever refused.
+ */
+const UUID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUuidShape(value: unknown): value is string {
+  return typeof value === "string" && UUID_SHAPE.test(value.trim());
+}
+
+/**
+ * The price list, if and only if it belongs to this company.
+ *
+ * A list id from another tenant resolves exactly like one that does not exist,
+ * so the answer never confirms that another company's list is there.
+ */
+export async function requireCompanyPriceList(supabase: SupabaseClient, companyId: string, priceListId: string) {
+  const id = String(priceListId || "").trim();
+  if (!isUuidShape(id)) throw new PriceListError("Price list not found.", 404);
+  const { data, error } = await supabase
+    .from("vyron_customer_price_lists")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new PriceListError("Price list not found.", 404);
+  return data as CustomerPriceListRow;
+}
+
 function round4(n: number) {
   return Math.round(n * 10000) / 10000;
 }
@@ -213,7 +255,11 @@ export async function upsertCustomerPriceListItems(
 ) {
   if (!params.items.length) return { upserted: 0 };
 
+  // The list id arrives from the browser: it must be one of this company's lists.
+  await requireCompanyPriceList(supabase, companyId, params.priceListId);
+
   const productIds = params.items.map((item) => item.productId);
+  if (!productIds.every(isUuidShape)) throw new PriceListError("Product not found.", 404);
   const { data: products, error: productError } = await supabase
     .from("vyron_cost_products")
     .select("id, total_cost, selling_price")
@@ -289,6 +335,20 @@ export async function assignCustomerPriceLists(
     actor?: string;
   }
 ) {
+  // Every identifier here arrives from the browser: each must belong to this company.
+  if (!isUuidShape(params.customerId)) throw new PriceListError("Customer not found.", 404);
+  const { data: customer, error: customerError } = await supabase
+    .from("vyron_customers")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("id", params.customerId)
+    .maybeSingle();
+  if (customerError) throw new Error(customerError.message);
+  if (!customer) throw new PriceListError("Customer not found.", 404);
+  for (const listId of [params.defaultPriceListId, params.contractPriceListId]) {
+    if (listId) await requireCompanyPriceList(supabase, companyId, listId);
+  }
+
   const { data, error } = await supabase
     .from("vyron_customer_price_list_assignments")
     .upsert(
@@ -827,4 +887,326 @@ export async function importCustomerPriceListRows(
     rejected: rejectedRows,
     errors,
   };
+}
+
+/* ------------------------------------------------------------------------ */
+/* Price list editor                                                         */
+/*                                                                           */
+/* Every function takes companyId from the verified session and re-checks    */
+/* each identifier the browser supplied against it: the list, the item and   */
+/* the product must all belong to this company, and the item to this list.   */
+/* Nothing is hard-deleted — a product leaves a list by becoming Inactive,    */
+/* which the customer catalogue already honours — and every change is        */
+/* written to vyron_customer_price_list_audit_log with before and after.      */
+/* ------------------------------------------------------------------------ */
+
+/** The largest price numeric(14,4) can hold, with headroom. */
+const MAX_LIST_PRICE = 999_999_999;
+
+/** A list price a person typed: a finite number above zero. */
+export function parseListPrice(value: unknown): number {
+  const text = typeof value === "string" ? value.trim().replace(",", ".") : value;
+  const price = typeof text === "number" ? text : typeof text === "string" && text !== "" ? Number(text) : NaN;
+  if (!Number.isFinite(price)) throw new PriceListError("Enter a valid price.");
+  if (price <= 0) throw new PriceListError("The price must be more than zero.");
+  if (price > MAX_LIST_PRICE) throw new PriceListError("That price is too large.");
+  return round4(price);
+}
+
+function productIsActive(row: { status?: string | null; product_status?: string | null }) {
+  const blocked = ["inactive", "archived", "discontinued", "disabled"];
+  return !blocked.includes(String(row.status || "").toLowerCase()) && !blocked.includes(String(row.product_status || "").toLowerCase());
+}
+
+export type PriceListDetailItem = {
+  id: string;
+  productId: string;
+  productName: string;
+  sku: string | null;
+  finalPrice: number;
+  status: "Active" | "Inactive";
+  effectiveFrom: string | null;
+  effectiveTo: string | null;
+  updatedAt: string | null;
+};
+
+export type PriceListDetail = {
+  list: CustomerPriceListRow;
+  items: PriceListDetailItem[];
+  assignedCustomers: Array<{ customerId: string; customerName: string; role: "Default" | "Contract"; status: string }>;
+  history: Array<{ at: string; event: string; actor: string | null; detail: string | null }>;
+};
+
+async function requireListItem(supabase: SupabaseClient, companyId: string, priceListId: string, itemId: string) {
+  const id = String(itemId || "").trim();
+  if (!isUuidShape(id)) throw new PriceListError("Price list item not found.", 404);
+  const { data, error } = await supabase
+    .from("vyron_customer_price_list_items")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("price_list_id", priceListId)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new PriceListError("Price list item not found.", 404);
+  return data as CustomerPriceListItemRow;
+}
+
+async function productNameFor(supabase: SupabaseClient, companyId: string, productId: string) {
+  const { data } = await supabase
+    .from("vyron_cost_products")
+    .select("product_name")
+    .eq("company_id", companyId)
+    .eq("id", productId)
+    .maybeSingle();
+  return String(data?.product_name || productId);
+}
+
+/** One price list with its products, the customers on it, and its recent history. */
+export async function getCustomerPriceListDetail(
+  supabase: SupabaseClient,
+  companyId: string,
+  priceListId: string
+): Promise<PriceListDetail> {
+  const list = await requireCompanyPriceList(supabase, companyId, priceListId);
+
+  const { data: itemRows, error: itemError } = await supabase
+    .from("vyron_customer_price_list_items")
+    .select("id, product_id, final_price, status, effective_from, effective_to, updated_at")
+    .eq("company_id", companyId)
+    .eq("price_list_id", list.id);
+  if (itemError) throw new Error(itemError.message);
+
+  const productIds = [...new Set((itemRows || []).map((row) => String(row.product_id)))];
+  const productById = new Map<string, { product_name: string | null; sku: string | null }>();
+  if (productIds.length) {
+    const { data: products, error: productError } = await supabase
+      .from("vyron_cost_products")
+      .select("id, product_name, sku")
+      .eq("company_id", companyId)
+      .in("id", productIds);
+    if (productError) throw new Error(productError.message);
+    for (const p of products || []) productById.set(String(p.id), { product_name: p.product_name, sku: p.sku ?? null });
+  }
+
+  const items: PriceListDetailItem[] = (itemRows || [])
+    .map((row) => {
+      const product = productById.get(String(row.product_id));
+      return {
+        id: String(row.id),
+        productId: String(row.product_id),
+        productName: String(product?.product_name || "Unknown product"),
+        sku: product?.sku ? String(product.sku) : null,
+        finalPrice: Number(row.final_price || 0),
+        status: (row.status === "Inactive" ? "Inactive" : "Active") as "Active" | "Inactive",
+        effectiveFrom: row.effective_from ? String(row.effective_from) : null,
+        effectiveTo: row.effective_to ? String(row.effective_to) : null,
+        updatedAt: row.updated_at ? String(row.updated_at) : null,
+      };
+    })
+    .sort((a, b) => (a.status === b.status ? a.productName.localeCompare(b.productName) : a.status === "Active" ? -1 : 1));
+
+  const { data: assignmentRows, error: assignmentError } = await supabase
+    .from("vyron_customer_price_list_assignments")
+    .select("customer_id, default_price_list_id, contract_price_list_id, status")
+    .eq("company_id", companyId);
+  if (assignmentError) throw new Error(assignmentError.message);
+  const onThisList = (assignmentRows || []).filter(
+    (a) => String(a.default_price_list_id || "") === list.id || String(a.contract_price_list_id || "") === list.id
+  );
+  const customerNames = new Map<string, string>();
+  if (onThisList.length) {
+    const { data: customers, error: customerError } = await supabase
+      .from("vyron_customers")
+      .select("id, customer_name")
+      .eq("company_id", companyId)
+      .in("id", onThisList.map((a) => String(a.customer_id)));
+    if (customerError) throw new Error(customerError.message);
+    for (const c of customers || []) customerNames.set(String(c.id), String(c.customer_name || "Customer"));
+  }
+  const assignedCustomers = onThisList
+    .filter((a) => customerNames.has(String(a.customer_id)))
+    .map((a) => ({
+      customerId: String(a.customer_id),
+      customerName: customerNames.get(String(a.customer_id))!,
+      role: (String(a.contract_price_list_id || "") === list.id ? "Contract" : "Default") as "Default" | "Contract",
+      status: String(a.status || "Active"),
+    }))
+    .sort((a, b) => a.customerName.localeCompare(b.customerName));
+
+  // History is informative; a failure to read it never blocks the editor.
+  const { data: auditRows } = await supabase
+    .from("vyron_customer_price_list_audit_log")
+    .select("created_at, event_type, actor, detail")
+    .eq("company_id", companyId)
+    .eq("price_list_id", list.id)
+    .order("created_at", { ascending: false })
+    .limit(15);
+  const history = (auditRows || []).map((row) => ({
+    at: String(row.created_at || ""),
+    event: String(row.event_type || ""),
+    actor: row.actor ? String(row.actor) : null,
+    detail: row.detail ? String(row.detail) : null,
+  }));
+
+  return { list, items, assignedCustomers, history };
+}
+
+/**
+ * Put a product on a list at a price.
+ *
+ * One row per product per list (the table's unique key). An Active row for the
+ * product is a duplicate and is refused; an Inactive one is brought back at the
+ * new price rather than duplicated, and the audit log says so.
+ */
+export async function addCustomerPriceListItem(
+  supabase: SupabaseClient,
+  companyId: string,
+  params: { priceListId: string; productId: string; price: unknown; actor: string }
+) {
+  const list = await requireCompanyPriceList(supabase, companyId, params.priceListId);
+  const price = parseListPrice(params.price);
+
+  const productId = String(params.productId || "").trim();
+  if (!productId) throw new PriceListError("Choose a product.");
+  if (!isUuidShape(productId)) throw new PriceListError("Product not found.", 404);
+  const { data: product, error: productError } = await supabase
+    .from("vyron_cost_products")
+    .select("id, product_name, status, product_status")
+    .eq("company_id", companyId)
+    .eq("id", productId)
+    .maybeSingle();
+  if (productError) throw new Error(productError.message);
+  // Another company's product resolves exactly like a missing one.
+  if (!product) throw new PriceListError("Product not found.", 404);
+  if (!productIsActive(product)) throw new PriceListError("That product is inactive and cannot be priced.");
+
+  const { data: existing, error: existingError } = await supabase
+    .from("vyron_customer_price_list_items")
+    .select("*")
+    .eq("company_id", companyId)
+    .eq("price_list_id", list.id)
+    .eq("product_id", productId)
+    .maybeSingle();
+  if (existingError) throw new Error(existingError.message);
+  if (existing && existing.status === "Active") {
+    throw new PriceListError(`${product.product_name} is already on this price list. Edit its price instead.`, 409);
+  }
+
+  const now = new Date().toISOString();
+  let itemId: string;
+  if (existing) {
+    const { error } = await supabase
+      .from("vyron_customer_price_list_items")
+      .update({ status: "Active", override_price: price, final_price: price, effective_to: null, updated_at: now })
+      .eq("company_id", companyId)
+      .eq("id", existing.id);
+    if (error) throw new Error(error.message);
+    itemId = String(existing.id);
+  } else {
+    const { data, error } = await supabase
+      .from("vyron_customer_price_list_items")
+      .insert({
+        company_id: companyId,
+        price_list_id: list.id,
+        product_id: productId,
+        base_price: price,
+        override_price: price,
+        final_price: price,
+        status: "Active",
+        updated_at: now,
+      })
+      .select("id")
+      .single();
+    if (error) {
+      // The unique key caught a concurrent add of the same product.
+      if (String(error.code) === "23505") throw new PriceListError(`${product.product_name} is already on this price list.`, 409);
+      throw new Error(error.message);
+    }
+    itemId = String(data.id);
+  }
+
+  await writeCustomerPriceListAudit(supabase, {
+    companyId,
+    eventType: existing ? "Price List Item Reactivated" : "Price List Item Added",
+    actor: params.actor,
+    detail: `${existing ? "Reactivated" : "Added"} ${product.product_name} at ${price}`,
+    priceListId: list.id,
+    priceListItemId: itemId,
+    metadata: { productId, newPrice: price, previousPrice: existing ? Number(existing.final_price) : null, previousStatus: existing?.status ?? null },
+  });
+  return { itemId, reactivated: Boolean(existing) };
+}
+
+/** Change the price of a product already on the list. */
+export async function updateCustomerPriceListItemPrice(
+  supabase: SupabaseClient,
+  companyId: string,
+  params: { priceListId: string; itemId: string; price: unknown; actor: string }
+) {
+  const list = await requireCompanyPriceList(supabase, companyId, params.priceListId);
+  const item = await requireListItem(supabase, companyId, list.id, params.itemId);
+  const price = parseListPrice(params.price);
+  const previous = Number(item.final_price || 0);
+
+  const { error } = await supabase
+    .from("vyron_customer_price_list_items")
+    .update({ override_price: price, final_price: price, updated_at: new Date().toISOString() })
+    .eq("company_id", companyId)
+    .eq("price_list_id", list.id)
+    .eq("id", item.id);
+  if (error) throw new Error(error.message);
+
+  const name = await productNameFor(supabase, companyId, String(item.product_id));
+  await writeCustomerPriceListAudit(supabase, {
+    companyId,
+    eventType: "Price List Item Price Changed",
+    actor: params.actor,
+    detail: `${name}: ${previous} → ${price}`,
+    priceListId: list.id,
+    priceListItemId: item.id,
+    metadata: { productId: item.product_id, previousPrice: previous, newPrice: price },
+  });
+  return { itemId: item.id, previousPrice: previous, price };
+}
+
+/**
+ * Take a product off the list (Inactive) or put it back (Active).
+ *
+ * The row and its price are kept: the customer catalogue only offers Active
+ * items, so Inactive removes it from every customer on this list at once.
+ */
+export async function setCustomerPriceListItemStatus(
+  supabase: SupabaseClient,
+  companyId: string,
+  params: { priceListId: string; itemId: string; status: unknown; actor: string }
+) {
+  const status = params.status === "Active" ? "Active" : params.status === "Inactive" ? "Inactive" : null;
+  if (!status) throw new PriceListError("Status must be Active or Inactive.");
+  const list = await requireCompanyPriceList(supabase, companyId, params.priceListId);
+  const item = await requireListItem(supabase, companyId, list.id, params.itemId);
+  if (item.status === status) return { itemId: item.id, status, changed: false };
+  if (status === "Active" && !(Number(item.final_price) > 0)) {
+    throw new PriceListError("Set a price above zero before reactivating this product.");
+  }
+
+  const { error } = await supabase
+    .from("vyron_customer_price_list_items")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("company_id", companyId)
+    .eq("price_list_id", list.id)
+    .eq("id", item.id);
+  if (error) throw new Error(error.message);
+
+  const name = await productNameFor(supabase, companyId, String(item.product_id));
+  await writeCustomerPriceListAudit(supabase, {
+    companyId,
+    eventType: status === "Inactive" ? "Price List Item Deactivated" : "Price List Item Reactivated",
+    actor: params.actor,
+    detail: `${status === "Inactive" ? "Removed" : "Restored"} ${name}`,
+    priceListId: list.id,
+    priceListItemId: item.id,
+    metadata: { productId: item.product_id, previousStatus: item.status, newStatus: status, price: Number(item.final_price) },
+  });
+  return { itemId: item.id, status, changed: true };
 }

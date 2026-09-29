@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
+import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
 import { importCustomerPriceListRows, type PriceImportRow } from "@/lib/vyron-customer-price-lists";
 import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
@@ -17,7 +17,8 @@ export async function POST(request: NextRequest) {
 
   try {
     await requireWorkspacePermission("admin.imports");
-    const companyId = await resolveApiCompanyId();
+    // The company the signed-in member's workspace owns; refuses (403) when none can be authorised.
+    const companyId = await requireApiCompanyId();
     if (!companyId) return bad("No active workspace company.");
 
     const body = await request.json();

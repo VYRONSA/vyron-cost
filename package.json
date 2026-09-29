@@ -68,6 +68,9 @@
     "test:customer-ordering-stock": "node scripts/test-customer-ordering-stock.mjs",
     "test:customer-ordering-multi-tenant": "node scripts/test-customer-ordering-multi-tenant.mjs",
     "test:customer-price-list-security": "node scripts/test-customer-price-list-security.mjs",
+    "test:customer-price-list-editor": "node scripts/test-customer-price-list-editor.mjs",
+    "test:customer-sales-reports": "node scripts/test-customer-sales-reports.mjs",
+    "test:workspace-permission-map": "node scripts/test-workspace-permission-map.mjs",
     "demo:order-engine": "node scripts/order-engine-demo.mjs"
   },
   "dependencies": {

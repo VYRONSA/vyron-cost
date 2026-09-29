@@ -23,6 +23,8 @@ const reportCards = [
   { href: "/reports/gp?view=product", title: "Product GP Report", description: "Gross profit by product sold: quantity, average price, average cost and margin.", icon: Percent, badge: "Sales GP" },
   { href: "/reports/gp?view=invoice", title: "Invoice GP Report", description: "Gross profit per customer invoice across the selected period.", icon: FileSpreadsheet, badge: "Sales GP" },
   { href: "/reports/gp?view=month", title: "Monthly GP Report", description: "Revenue, cost of sales and GP by month for trend and period comparison.", icon: LineChart, badge: "Sales GP" },
+  { href: "/reports/sales-by-customer-item", title: "Sales by Customer / Item / Date", description: "Recorded sales by customer, item and date at the price on each invoice or order line.", icon: BarChart3, badge: "Sales" },
+  { href: "/reports/customer-price-list", title: "Customer Price List Report", description: "The price each customer is entitled to for each product, from their assigned price lists.", icon: FileSpreadsheet, badge: "Pricing" },
   { href: "/reports/product-margins", title: "Product GP (Price Review)", description: "Product cost vs selling price, target GP and price-review status.", icon: Percent, badge: "Costing" },
   { href: "/reports/product-costings", title: "Recipe Cost Report", description: "Full product costing breakdowns and BOM-linked cost lines.", icon: FileSpreadsheet, badge: "Costing" },
   { href: "/reports/bom-completeness", title: "Finished Goods — BOM Completeness", description: "Finished goods whose BOM is missing, empty, incomplete or cannot produce a cost, prioritised by sales exposure.", icon: ClipboardList, badge: "Costing" },

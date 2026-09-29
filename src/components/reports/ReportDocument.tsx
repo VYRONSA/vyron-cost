@@ -192,16 +192,17 @@ export default function ReportDocument({
             {subtitle ? <p className="mt-1 max-w-3xl text-sm font-semibold text-slate-500">{subtitle}</p> : null}
           </div>
 
-          <dl className="min-w-[240px] shrink-0 space-y-1 text-right text-sm">
+          {/* On phones the period and stamp take the full width and wrap; from sm up, unchanged. */}
+          <dl className="w-full min-w-0 space-y-1 text-left text-sm sm:w-auto sm:min-w-[240px] sm:shrink-0 sm:text-right">
             {periodText ? (
               <div>
                 <dt className="sr-only">Period</dt>
-                <dd className="font-black text-slate-900">{periodText}</dd>
+                <dd className="break-words font-black text-slate-900">{periodText}</dd>
               </div>
             ) : null}
             <div>
               <dt className="sr-only">Generated</dt>
-              <dd className="font-semibold text-slate-600">Generated: {formatStamp(generatedAt)}</dd>
+              <dd className="break-words font-semibold text-slate-600">Generated: {formatStamp(generatedAt)}</dd>
             </div>
           </dl>
         </div>

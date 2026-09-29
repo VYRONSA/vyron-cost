@@ -28,6 +28,8 @@ function likeToRegex(pattern, flags) {
   return new RegExp(`^${source}$`, flags);
 }
 
+const UUID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function createFakeSupabase(seed = {}, options = {}) {
   const tables = structuredClone(seed);
   const calls = {};
@@ -60,12 +62,23 @@ export function createFakeSupabase(seed = {}, options = {}) {
       this.max = null;
     }
     select() { return this; }
+    /*
+     * Opt-in (options.strictUuid): behave like Postgres, where filtering a uuid
+     * column (id, *_id) by a value that is not a uuid is a cast error (22P02),
+     * not an empty result. Lets a test prove malformed ids never reach a query.
+     */
+    uuidCastError(column, values) {
+      if (!options.strictUuid || !(column === "id" || column.endsWith("_id"))) return;
+      const bad = values.find((v) => v !== null && v !== undefined && !UUID_SHAPE.test(String(v)));
+      if (bad !== undefined && !this.castError) this.castError = { code: "22P02", message: `invalid input syntax for type uuid: "${bad}"` };
+    }
     eq(column, value) {
+      this.uuidCastError(column, [value]);
       this.filters.push((row) => row[column] !== null && row[column] !== undefined && row[column] === value);
       return this;
     }
     neq(column, value) { this.filters.push((row) => row[column] !== value); return this; }
-    in(column, values) { this.filters.push((row) => values.includes(row[column])); return this; }
+    in(column, values) { this.uuidCastError(column, values); this.filters.push((row) => values.includes(row[column])); return this; }
     is(column, value) { this.filters.push((row) => (row[column] ?? null) === value); return this; }
     /** SQL LIKE: % is any run of characters, _ is one character; case-sensitive. */
     like(column, pattern) {
@@ -134,6 +147,7 @@ export function createFakeSupabase(seed = {}, options = {}) {
     then(resolve, reject) { return this.run().then(resolve, reject); }
 
     async run() {
+      if (this.castError) return { data: null, error: this.castError };
       const rows = (tables[this.table] ||= []);
       if (this.op === "upsert") {
         const written = [];

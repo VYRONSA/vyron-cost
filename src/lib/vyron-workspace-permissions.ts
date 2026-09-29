@@ -416,18 +416,28 @@ export function resolvePermissionKey(permission: string): string {
   return PERMISSION_ALIASES[permission] || permission;
 }
 
+/**
+ * The saved permission entries, canonicalised: legacy names mapped to current
+ * keys, unknown keys dropped, values made boolean.
+ *
+ * Only the keys that were actually saved are returned. A key that is absent is
+ * NOT a denial: resolveEffectivePermissions() lays these over the role's
+ * defaults, so an absent key keeps the role's value and an explicit false still
+ * denies. This used to start from every key set to false, so a partial saved map
+ * such as { "reports.export": false } also switched off every view and edit
+ * permission the role grants.
+ */
 export function normalizePermissionMap(
   input?: Record<string, boolean> | null
 ): Record<string, boolean> {
-  const normalized = Object.fromEntries(
-    ALL_PERMISSION_KEYS.map((key) => [key, false])
-  ) as Record<string, boolean>;
+  const known = new Set<string>(ALL_PERMISSION_KEYS);
+  const normalized: Record<string, boolean> = {};
 
   if (!input) return normalized;
 
   for (const [rawKey, value] of Object.entries(input)) {
     const key = resolvePermissionKey(rawKey);
-    if (key in normalized) normalized[key] = Boolean(value);
+    if (known.has(key)) normalized[key] = Boolean(value);
   }
 
   return normalized;
