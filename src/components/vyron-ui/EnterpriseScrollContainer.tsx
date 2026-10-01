@@ -26,7 +26,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
  *
  * `auto`   Measured. For grids in normal content-flow pages, where the page
  *          scrolls and the amount of chrome above the grid is not knowable at
- *          author time.
+ *          author time. See "SCREEN FALLBACK" below for grids that start low.
  *
  * `page`   Unconstrained vertically: the grid renders at its natural height and
  *          the SHELL scrolls, so there is no second vertical scrollbar to get
@@ -63,6 +63,21 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
  * bare filter bar to a 420px KPI hero. An offset safe for the tallest page
  * wastes roughly a fifth of the viewport on the shortest one.
  *
+ * SCREEN FALLBACK
+ * ---------------
+ * "Space left below the grid's top" only works for a grid that starts high.
+ * One that starts below a KPI hero, a queue panel and a filter row — the
+ * Document Intelligence archive sits ~700px down — has little or no space
+ * left, so it collapsed to the 220px floor: three rows in a box, below the
+ * fold, for good. When the space left is under half a screen, a desktop grid
+ * is instead sized to one screen. The user scrolls the page to it once and it
+ * then fills the viewport, header pinned and horizontal scrollbar in view.
+ *
+ * Not applied below 1024px, where the mobile shell takes over — a phone gets
+ * no viewport-height box it did not already have — nor to `constrained`
+ * grids: editors and import previews whose Save/Post/Import bar sits below
+ * the grid and must stay close to it.
+ *
  * RUNTIME COST
  * ------------
  * ONE ResizeObserver and ONE resize listener exist per document, not per grid,
@@ -72,6 +87,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
  */
 
 export const ENTERPRISE_GRID_CLASS = "vyron-enterprise-grid";
+
+/** The width at which the desktop shell replaces the mobile shell. */
+const DESKTOP_QUERY = "(min-width: 1024px)";
 
 type Subscriber = () => void;
 
@@ -85,6 +103,12 @@ type Subscriber = () => void;
 const subscribers = new Set<Subscriber>();
 let observer: ResizeObserver | null = null;
 let frame = 0;
+/*
+ * In the desktop shell the body is a fixed 100vh frame, so content that loads
+ * above a grid never resizes it. The scroller's own children do resize, so
+ * they are observed too — once each, however many grids share the scroller.
+ */
+let observedScrollerChildren = new WeakSet<Element>();
 
 function flush() {
   frame = 0;
@@ -96,7 +120,7 @@ function schedule() {
   frame = requestAnimationFrame(flush);
 }
 
-function subscribe(run: Subscriber): () => void {
+function subscribe(run: Subscriber, scroller: HTMLElement | null): () => void {
   subscribers.add(run);
 
   if (!observer && typeof window !== "undefined") {
@@ -105,11 +129,20 @@ function subscribe(run: Subscriber): () => void {
     window.addEventListener("resize", schedule);
   }
 
+  if (observer && scroller) {
+    for (const child of Array.from(scroller.children)) {
+      if (observedScrollerChildren.has(child)) continue;
+      observedScrollerChildren.add(child);
+      observer.observe(child);
+    }
+  }
+
   return () => {
     subscribers.delete(run);
     if (subscribers.size === 0 && observer) {
       observer.disconnect();
       observer = null;
+      observedScrollerChildren = new WeakSet<Element>();
       window.removeEventListener("resize", schedule);
       if (frame) cancelAnimationFrame(frame);
       frame = 0;
@@ -125,6 +158,12 @@ type Props = {
   gutter?: number;
   /** Floor so the grid never collapses on short viewports, in px. */
   minHeight?: number;
+  /**
+   * `auto` only. Keep the grid to the space left below it and never apply the
+   * one-screen fallback — for editors and import previews whose action bar
+   * sits below the grid.
+   */
+  constrained?: boolean;
   /** Extra classes for borders, radius, background — presentation only. */
   className?: string;
 };
@@ -142,6 +181,7 @@ export default function EnterpriseScrollContainer({
   mode = "auto",
   gutter = 24,
   minHeight = 220,
+  constrained = false,
   className = "",
 }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -159,11 +199,15 @@ export default function EnterpriseScrollContainer({
     // of scroll position. Using viewport-relative top would shrink the grid as
     // the user scrolls.
     const offsetWithinScroller = elRect.top - scrollerRect.top + scroller.scrollTop;
-    const available = scroller.clientHeight - offsetWithinScroller - gutter;
-    const next = Math.max(minHeight, Math.round(available));
+    const viewport = scroller.clientHeight;
+    const remaining = viewport - offsetWithinScroller - gutter;
+    const screen = viewport - 2 * gutter;
+    const desktop = window.matchMedia(DESKTOP_QUERY).matches;
+    const height = !constrained && desktop && remaining < screen / 2 ? screen : remaining;
+    const next = Math.max(minHeight, Math.round(height));
 
     setMaxHeight((current) => (current === next ? current : next));
-  }, [gutter, minHeight]);
+  }, [constrained, gutter, minHeight]);
 
   useLayoutEffect(() => {
     if (mode !== "auto") return;
@@ -172,7 +216,8 @@ export default function EnterpriseScrollContainer({
 
   useEffect(() => {
     if (mode !== "auto") return;
-    return subscribe(measure);
+    const el = ref.current;
+    return subscribe(measure, el ? findScroller(el) : null);
   }, [measure, mode]);
 
   if (mode === "page") {

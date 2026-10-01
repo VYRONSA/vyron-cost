@@ -213,15 +213,28 @@ The `:not([class*="bg-"])` guard gives a background only to heads that lack one 
 a sticky head with no background lets rows bleed through, but overriding an
 existing background would change the design.
 
-### Two modes — prefer `fill`
+### Three modes — prefer `fill`
 
 | Mode | Cost | Use |
 |---|---|---|
 | **`fill`** | **Pure CSS. Zero runtime.** | The page is already a full-height flex column. The layout algorithm computes remaining space; nothing is measured. |
 | `auto` *(default)* | One shared observer per document | Normal content-flow pages, where the chrome above the grid is not knowable at author time. |
+| `page` | None | Registers where seeing many rows beats a pinned header: natural height, the shell is the only vertical scroller. |
 
 **Use `fill` wherever the page can be a full-height workspace.** Reach for `auto`
 only when converting the page would change it from scrolling to non-scrolling.
+
+### `auto` sizing
+
+On desktop (≥1024px) an `auto` grid gets the space left below its top edge —
+unless that is under half a screen, in which case it gets one screen
+(viewport − 2 × gutter). A grid below a KPI hero and filter rows therefore
+fills the viewport once scrolled to, instead of collapsing to the 220px floor.
+Below 1024px (mobile shell) the fallback does not apply.
+
+Pass **`constrained`** to keep the space-left sizing without the fallback. Use
+it for editors and import previews whose Save / Post / Import bar sits below
+the grid, so the bar stays close to the rows it acts on.
 
 ### Why `auto` is not pure CSS
 

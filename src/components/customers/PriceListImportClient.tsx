@@ -221,7 +221,7 @@ export default function PriceListImportClient() {
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <h3 className="text-sm font-bold text-slate-900">Preview</h3>
         <div className="mt-2 text-xs text-slate-600">Rows loaded: {rows.length} · Invalid: {invalid.length}</div>
-        <EnterpriseScrollContainer className="mt-3">
+        <EnterpriseScrollContainer constrained className="mt-3">
           <table className="min-w-full text-xs">
             <thead className="bg-slate-50 text-left uppercase text-slate-500">
               <tr>

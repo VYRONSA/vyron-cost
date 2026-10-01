@@ -351,7 +351,7 @@ export default function GoodsReceiptFormClient({ initialPoId }: { initialPoId?: 
         ))}
       </div>
 
-      <EnterpriseScrollContainer className="rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
+      <EnterpriseScrollContainer constrained className="rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <table className="min-w-[940px] w-full text-left text-sm">
           <thead className="bg-blue-800 text-xs font-black uppercase tracking-[0.14em] text-blue-100">
             <tr>

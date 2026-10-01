@@ -392,7 +392,7 @@ export default function StoreOrderEditorClient({ orderId }: { orderId?: string }
                 ) : null}
               </div>
 
-              <EnterpriseScrollContainer className="rounded-2xl border border-[#E2E8F0]">
+              <EnterpriseScrollContainer constrained className="rounded-2xl border border-[#E2E8F0]">
                 <table className="min-w-full">
                   <thead className={VYRON_TABLE.head}>
                     <tr>

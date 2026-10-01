@@ -211,7 +211,7 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
         </div>
       </div>
 
-        <EnterpriseScrollContainer className="rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
+        <EnterpriseScrollContainer constrained className="rounded-[2rem] border border-blue-100 bg-white shadow-[0_18px_60px_rgba(30,58,138,0.08)]">
         <table className="min-w-[980px] w-full text-left text-sm">
           <thead className="bg-blue-800 text-xs font-black uppercase tracking-[0.14em] text-blue-100">
             <tr><th className="px-4 py-3">Item</th><th className="px-4 py-3">System</th><th className="px-4 py-3">Counted</th><th className="px-4 py-3">Variance</th><th className="px-4 py-3">%</th><th className="px-4 py-3">Value</th><th className="px-4 py-3">Class</th><th className="px-4 py-3">Unit</th></tr>
