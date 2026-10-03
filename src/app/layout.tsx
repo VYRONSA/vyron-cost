@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Montserrat } from "next/font/google";
 import "./globals.css";
 import PwaRuntime from "@/components/pwa/PwaRuntime";
+import { VOLORA_DESCRIPTION, VOLORA_SITE_URL, VOLORA_TITLE, VYRONSOFT } from "@/lib/volora-site";
 
 // VOLORA type system: Montserrat for display (headings, KPI figures), Inter for
 // everything else. Self-hosted by next/font — no browser request to Google.
@@ -17,28 +18,27 @@ const voloraDisplay = Montserrat({
   variable: "--font-volora-display",
 });
 
-const DESCRIPTION = "Profitability Intelligence for manufacturing and food manufacturing businesses.";
-
 export const metadata: Metadata = {
+  metadataBase: new URL(VOLORA_SITE_URL),
   title: {
-    default: "VOLORA — Profitability Intelligence",
+    default: VOLORA_TITLE,
     template: "%s · VOLORA",
   },
-  description: DESCRIPTION,
+  description: VOLORA_DESCRIPTION,
   applicationName: "VOLORA",
-  creator: "Vyronsoft (Pty) Ltd",
-  publisher: "Vyronsoft (Pty) Ltd",
+  creator: VYRONSOFT.name,
+  publisher: VYRONSOFT.name,
   openGraph: {
     type: "website",
     siteName: "VOLORA",
-    title: "VOLORA — Profitability Intelligence",
-    description: DESCRIPTION,
-    images: [{ url: "/og-volora.png", width: 1200, height: 630, alt: "VOLORA — Profitability Intelligence" }],
+    title: VOLORA_TITLE,
+    description: VOLORA_DESCRIPTION,
+    images: [{ url: "/og-volora.png", width: 1200, height: 630, alt: "VOLORA — Turn every cost into a more profitable tomorrow." }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "VOLORA — Profitability Intelligence",
-    description: DESCRIPTION,
+    title: VOLORA_TITLE,
+    description: VOLORA_DESCRIPTION,
     images: ["/og-volora.png"],
   },
   manifest: "/manifest.json",

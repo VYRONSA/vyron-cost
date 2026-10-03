@@ -23,6 +23,7 @@ import {
   Warehouse,
 } from "lucide-react";
 import { VoloraWordmark } from "@/components/vyron-ui/VyronLogo";
+import { VOLORA_SITE_URL, VYRONSOFT, VYRONSOFT_ECOSYSTEM } from "@/lib/volora-site";
 
 /**
  * VOLORA public landing page.
@@ -212,7 +213,7 @@ export default function VoloraLandingPage() {
                   <VoloraWordmark height={34} variant="onDark" className="h-full w-auto" />
                 </span>
                 <span className="mt-1 text-[8px] font-semibold uppercase tracking-[0.34em] text-[#DDE7EB] lg:mt-[calc(var(--u)*0.55)] lg:text-[calc(var(--u)*0.74)]">
-                  Profitability Intelligence
+                  Cost Intelligence
                 </span>
               </Link>
 
@@ -235,7 +236,7 @@ export default function VoloraLandingPage() {
                   <GoldButton href="/login" className="h-9 px-4 text-xs lg:h-[calc(var(--u)*3.05)] lg:px-[calc(var(--u)*2)] lg:text-[calc(var(--u)*1.08)]">
                     Request a Demo <ArrowRight className="h-[1.1em] w-[1.1em]" aria-hidden />
                   </GoldButton>
-                  <span className="mt-1 hidden text-[calc(var(--u)*0.76)] font-medium text-white/80 lg:block">A product of Vyronsoft (Pty) Ltd.</span>
+                  <span className="mt-1 hidden text-[calc(var(--u)*0.76)] font-medium text-white/80 lg:block">A product of VYRONSOFT (Pty) Ltd.</span>
                 </div>
               </div>
             </div>
@@ -453,10 +454,64 @@ export default function VoloraLandingPage() {
               </ul>
             </div>
             <p className="relative z-10 px-5 pb-6 text-xs text-white/85 lg:absolute lg:bottom-[12.5%] lg:right-[3.7%] lg:p-0 lg:text-[calc(var(--u)*0.82)]">
-              A product of Vyronsoft (Pty) Ltd.
+              A product of VYRONSOFT (Pty) Ltd.
             </p>
           </div>
         </section>
+
+        {/* ═══════════════════════════════ FOOTER ═══════════════════════════════ */}
+        {/* Plain anchors throughout: the ecosystem links are cross-site and must be crawlable without JavaScript. */}
+        <footer className="border-t border-white/10 bg-[#071A22] px-5 py-10 text-white lg:px-[calc(var(--u)*5.45)] lg:py-[calc(var(--u)*3.4)]">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <a href={VYRONSOFT.url} className="volora-display text-lg font-semibold tracking-[0.04em] text-white transition hover:text-[#F4C44E]">
+                {VYRONSOFT.name}
+              </a>
+              <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-[#F4C44E]">{VYRONSOFT.statement}</p>
+            </div>
+            <nav aria-label="Footer">
+              <ul className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-white/80">
+                {NAV.map((n) => (
+                  <li key={n.label}>
+                    <Link href={n.href} className="transition hover:text-[#F4C44E]">
+                      {n.label}
+                    </Link>
+                  </li>
+                ))}
+                <li>
+                  <Link href="/login" className="transition hover:text-[#F4C44E]">
+                    Sign In
+                  </Link>
+                </li>
+              </ul>
+            </nav>
+          </div>
+
+          <nav aria-labelledby="ecosystem-title" className="mt-10 border-t border-white/10 pt-8">
+            <h2 id="ecosystem-title" className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/60">
+              VYRONSOFT SOFTWARE ECOSYSTEM
+            </h2>
+            <ul className="mt-5 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+              {VYRONSOFT_ECOSYSTEM.map((product) => {
+                const current = product.url === `${VOLORA_SITE_URL}/`;
+                return (
+                  <li key={product.url}>
+                    <a
+                      href={product.url}
+                      aria-current={current ? "page" : undefined}
+                      className={`flex h-full flex-col rounded-xl border px-4 py-3 transition ${current ? "border-[#F4C44E]/60 bg-white/[0.04]" : "border-white/10 hover:border-[#F4C44E]/50"}`}
+                    >
+                      <span className={`volora-display text-[15px] font-semibold tracking-[0.06em] ${current ? "text-[#F4C44E]" : "text-white"}`}>{product.name}</span>{" "}
+                      <span className="mt-1 text-xs leading-snug text-white/65">{product.descriptor}</span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          <p className="mt-10 border-t border-white/10 pt-6 text-xs text-white/55">© {VYRONSOFT.name}</p>
+        </footer>
       </div>
     </main>
   );
