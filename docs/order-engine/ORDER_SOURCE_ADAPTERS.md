@@ -131,6 +131,8 @@ Tested: `test:order-engine-controls` (extraction contract).
 
 ## 8. Shopify mapping — IMPLEMENTED (NOT CONNECTED), TESTED
 
+> Completed Shopify and WooCommerce **sales** (paid orders the store fulfils) are recorded by the Online Store Sales Sync, straight into customer invoices: `docs/integrations/ONLINE_STORE_SALES_SYNC.md`. A store must use one path only: activating the sales sync is refused while this web-store channel is ACTIVE for the same store (the reverse is not yet guarded in Order rules).
+
 | Shopify | VYRON | Note |
 |---|---|---|
 | store + `id` | `source_key` | |

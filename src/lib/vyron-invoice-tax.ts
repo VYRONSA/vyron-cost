@@ -139,9 +139,16 @@ function resolveRate(treatment: TaxTreatment, rate: unknown): Decimal {
   return resolved;
 }
 
+/**
+ * `allowCreditLines` admits a negative quantity: a line of a credit note. It
+ * is opt-in so the ordinary invoice paths keep refusing negative lines exactly
+ * as before. A credit line carries no discount — the credited amount is
+ * already net — and rounds symmetrically, so a credit of a whole invoice
+ * mirrors its VAT to the cent.
+ */
 export function calculateInvoiceTaxLine(
   line: InvoiceTaxLineInput,
-  options: { pricesIncludeTax?: boolean } = {}
+  options: { pricesIncludeTax?: boolean; allowCreditLines?: boolean } = {}
 ): InvoiceTaxLineResult {
   const treatment = line.taxTreatment;
   const quantity = toDecimal(line.quantity, QUANTITY_SCALE);
@@ -159,7 +166,11 @@ export function calculateInvoiceTaxLine(
     ? money(explicitDiscount)
     : money(divPow10(mul(gross, discountPercent), 2));
 
-  if (gt(discountAmount, gross)) {
+  if (options.allowCreditLines && compare(gross, ZERO) < 0) {
+    if (!isZeroish(discountAmount)) {
+      throw new Error("A credit line cannot carry a discount; state the net credited price.");
+    }
+  } else if (gt(discountAmount, gross)) {
     throw new Error("A line discount cannot exceed the line value.");
   }
 
@@ -210,7 +221,7 @@ export type InvoiceTaxTotals = {
 
 export function calculateInvoiceTax(
   lines: InvoiceTaxLineInput[],
-  options: { pricesIncludeTax?: boolean } = {}
+  options: { pricesIncludeTax?: boolean; allowCreditLines?: boolean } = {}
 ): InvoiceTaxTotals {
   const results = lines.map((line) => calculateInvoiceTaxLine(line, options));
   const subtotalExclTax = sum(results.map((r) => r.taxableAmount));

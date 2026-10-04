@@ -78,6 +78,11 @@ export type CustomerInvoiceRow = {
   prices_include_tax: boolean;
   tax_snapshot: InvoiceTaxSnapshot | null;
   tax_snapshot_at: string | null;
+  /** Where the sale came from when not entered in VOLORA (e.g. SHOPIFY). Absent before the column exists. */
+  source_channel?: string | null;
+  source_reference?: string | null;
+  /** Set on a credit note: the invoice it credits. */
+  credited_invoice_id?: string | null;
 };
 
 export type { InvoiceStockPostingStatus } from "@/lib/vyron-invoice-stock-status";
@@ -186,7 +191,13 @@ async function enrichInvoiceLinesFromProductMaster(
    * cost snapshot) sets trustSuppliedCost to keep its explicit cost. Equality
    * of cost and price is never used as a heuristic here.
    */
-  trustSuppliedCost = false
+  trustSuppliedCost = false,
+  /*
+   * A trusted server workflow recording a sale that already happened elsewhere
+   * (a Shopify order) keeps its price and cost exactly as supplied — including
+   * a zero price for a free item, which must not be re-priced from a list.
+   */
+  useSuppliedLineValues = false
 ): Promise<CustomerInvoiceLineInput[]> {
   const productIds = lines.map((line) => line.productId).filter(Boolean) as string[];
   if (!productIds.length) return lines;
@@ -206,6 +217,14 @@ async function enrichInvoiceLinesFromProductMaster(
       const product = byId.get(line.productId);
       // A line naming a product this company does not own is refused — never written cross-tenant.
       if (!product) throw new Error("Product not found for the active company.");
+      if (useSuppliedLineValues) {
+        return {
+          ...line,
+          productName: line.productName || String(product.product_name || ""),
+          sellingPrice: Number(line.sellingPrice || 0),
+          costPerUnit: Number(line.costPerUnit || 0),
+        };
+      }
       const customerPrice = await resolveCustomerProductPrice(supabase, companyId, {
         customerId,
         productId: line.productId,
@@ -273,6 +292,12 @@ export async function createCustomerInvoice(
     lines: CustomerInvoiceLineInput[];
     /** Trusted server callers only: keep an explicitly supplied line cost. Never set from a browser request. */
     trustSuppliedCost?: boolean;
+    /** Trusted server callers only: keep supplied price and cost exactly, zero included. Never set from a browser request. */
+    useSuppliedLineValues?: boolean;
+    /** Provenance for a sale entered outside VOLORA. Written only when given (the columns are additive). */
+    source?: { channel: string; reference: string } | null;
+    /** Makes this a credit note of that invoice (same company): negative-quantity lines are accepted. */
+    creditedInvoiceId?: string | null;
   }
 ) {
   let customerName = params.customerName.trim();
@@ -300,7 +325,8 @@ export async function createCustomerInvoice(
     companyId,
     params.customerId,
     params.lines,
-    params.trustSuppliedCost === true
+    params.trustSuppliedCost === true,
+    params.useSuppliedLineValues === true
   );
 
   for (const line of enrichedLines) {
@@ -319,7 +345,20 @@ export async function createCustomerInvoice(
 
   const defaultRate = await resolveDefaultVatRate(supabase, companyId);
   const engineLines = toTaxEngineLines(enrichedLines, defaultRate);
-  const tax = calculateInvoiceTax(engineLines, { pricesIncludeTax: Boolean(params.pricesIncludeTax) });
+  if (params.creditedInvoiceId) {
+    const { data: credited, error: creditedError } = await supabase
+      .from("vyron_customer_invoices")
+      .select("id")
+      .eq("id", params.creditedInvoiceId)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    if (creditedError) throw new Error(creditedError.message);
+    if (!credited) throw new Error("The invoice being credited does not exist in the active company.");
+  }
+  const tax = calculateInvoiceTax(engineLines, {
+    pricesIncludeTax: Boolean(params.pricesIncludeTax),
+    allowCreditLines: Boolean(params.creditedInvoiceId),
+  });
   const totals = {
     ...taxTotalsToColumns(tax),
     ...computeCostTotals(enrichedLines, toNumber(tax.subtotalExclTax, 2)),
@@ -343,6 +382,8 @@ export async function createCustomerInvoice(
       notes: params.notes || null,
       prices_include_tax: Boolean(params.pricesIncludeTax),
       ...totals,
+      ...(params.source ? { source_channel: params.source.channel, source_reference: params.source.reference } : {}),
+      ...(params.creditedInvoiceId ? { credited_invoice_id: params.creditedInvoiceId } : {}),
     })
     .select("*")
     .single();
@@ -359,7 +400,11 @@ export async function createCustomerInvoice(
     ...taxLineToColumns(tax.lines[index]),
   }));
   const { error: linesError } = await supabase.from("vyron_customer_invoice_lines").insert(lineRows);
-  if (linesError) throw new Error(linesError.message);
+  if (linesError) {
+    // An automated caller retries; a header without its lines must not be left behind.
+    if (params.source) await supabase.from("vyron_customer_invoices").delete().eq("id", invoice.id).eq("company_id", companyId);
+    throw new Error(linesError.message);
+  }
 
   return invoice as CustomerInvoiceRow;
 }
@@ -581,7 +626,10 @@ async function buildInvoiceTaxSnapshot(
     discountPercent: 0,
     discountAmount: line.discount_amount ?? 0,
   }));
-  const totals = calculateInvoiceTax(engineLines, { pricesIncludeTax: Boolean(invoice.prices_include_tax) });
+  const totals = calculateInvoiceTax(engineLines, {
+    pricesIncludeTax: Boolean(invoice.prices_include_tax),
+    allowCreditLines: Boolean(invoice.credited_invoice_id),
+  });
   const documentClass = classifyInvoiceDocument(totals.totalInclTax, totals.lines);
 
   const errors = validateInvoiceForIssue({

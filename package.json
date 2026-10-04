@@ -71,6 +71,8 @@
     "test:customer-price-list-editor": "node scripts/test-customer-price-list-editor.mjs",
     "test:customer-sales-reports": "node scripts/test-customer-sales-reports.mjs",
     "test:workspace-permission-map": "node scripts/test-workspace-permission-map.mjs",
+    "test:store-sales-shopify": "node scripts/test-store-sales-shopify.mjs",
+    "test:store-sales-woocommerce": "node scripts/test-store-sales-woocommerce.mjs",
     "demo:order-engine": "node scripts/order-engine-demo.mjs"
   },
   "dependencies": {

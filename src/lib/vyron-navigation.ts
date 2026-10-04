@@ -144,6 +144,7 @@ export const vyronNavSections: VyronNavSection[] = [
       { label: "Order Inbox", icon: ClipboardCheck, href: "/order-inbox" },
       { label: "Sales Orders", icon: ShoppingCart, href: "/customer-sales-orders" },
       { label: "Customer Invoices", icon: ReceiptText, href: "/customer-invoices" },
+      { label: "Online Store Sales", icon: ShoppingCart, href: "/integrations/online-stores" },
       { label: "Customer Price Lists", icon: FileText, href: "/customer-price-lists" },
       { label: "Customer GP Reporting", icon: BarChart3, href: "/customer-gp-reporting" },
       { label: "Portal Access", icon: KeyRound, href: "/customer-portal-access" },

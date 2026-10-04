@@ -560,6 +560,7 @@ export const NAV_PATH_PERMISSIONS: Record<string, string> = {
   "/customer-gp-reporting": "reports.view",
 
   "/integrations/xero": "xero.view",
+  "/integrations/online-stores": "invoices.view",
 
   "/reports": "reports.view",
 
