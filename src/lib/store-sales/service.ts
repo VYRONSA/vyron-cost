@@ -1194,7 +1194,7 @@ export async function getSyncOverview(supabase: SupabaseClient, companyId: strin
   let query = supabase
     .from(T_ORDERS)
     .select(
-      "id, company_id, connection_id, channel, external_order_id, order_number, order_created_at, financial_status, cancelled_at, currency, total_price, customer_display, status, issues, issue_codes, customer_id, invoice_id, invoice_number, stock_moved, attempts, next_attempt_at, last_error, last_event_at, imported_at, created_at, updated_at"
+      "id, company_id, connection_id, channel, external_order_id, order_number, order_created_at, financial_status, cancelled_at, currency, total_price, customer_display, status, issues, issue_codes, customer_id, invoice_id, invoice_number, attempts, next_attempt_at, last_error, last_event_at, imported_at, created_at, updated_at"
     )
     .eq("company_id", companyId)
     .eq("connection_id", connection.id);
