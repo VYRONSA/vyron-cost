@@ -48,11 +48,20 @@ type Run = {
 };
 
 type Shortage = { ingredient: string; required: number; available: number; shortfall: number; unit: string };
+type MinimumWarning = { stockItemId: string; itemCode: string | null; description: string | null; currentQty: number; expectedQty: number; minimumQty: number; shortfall: number; status: string; blocksProduction: boolean };
+
+/** "Continue anyway?" for an action that will take stock below a configured minimum. */
+function confirmMinimums(warnings: MinimumWarning[], verb: string) {
+  if (!warnings.length) return true;
+  const list = warnings.map((w) => `• ${w.description || w.itemCode}: ${w.currentQty} → ${w.expectedQty} (minimum ${w.minimumQty})`).join("\n");
+  return window.confirm(`STOCK MINIMUM WARNING\n\nThis production will take ${warnings.length} item(s) to or below their minimum level:\n${list}\n\n${verb} anyway?`);
+}
 
 export default function ProductionRunDetailClient({ runId }: { runId: string }) {
   const { canCreate, canStart, canComplete } = useManufacturingPermissions();
   const [run, setRun] = useState<Run | null>(null);
   const [shortages, setShortages] = useState<Shortage[]>([]);
+  const [minimumWarnings, setMinimumWarnings] = useState<MinimumWarning[]>([]);
   const [actualQty, setActualQty] = useState("");
   const [overrideReason, setOverrideReason] = useState("");
   const [wasteLine, setWasteLine] = useState("");
@@ -80,7 +89,10 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
     fetch(`/api/production/runs/${runId}/validate-stock${query}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
-        if (d.ok) setShortages(d.shortages || []);
+        if (d.ok) {
+          setShortages(d.shortages || []);
+          setMinimumWarnings(d.minimumWarnings || []);
+        }
       });
   }, [runId]);
 
@@ -109,6 +121,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
   }
 
   async function complete(withOverride = false) {
+    if (!confirmMinimums(minimumWarnings, "Complete")) return;
     if (!canComplete) {
       setMessage("You do not have permission to complete production runs.");
       return;
@@ -224,6 +237,37 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
                   <td className="font-black text-red-700">
                     {s.shortfall} {s.unit}
                   </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+
+      {minimumWarnings.length > 0 && run.status !== "Completed" ? (
+        <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6">
+          <h3 className="text-sm font-black uppercase text-amber-800">⚠️ Stock Minimum Warning</h3>
+          <p className="mt-1 text-sm font-semibold text-amber-900">This production will reduce {minimumWarnings.length} item(s) to or below the minimum level your company set.</p>
+          <table className="mt-4 w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs font-black uppercase text-amber-700">
+                <th className="py-2">Item</th>
+                <th>Current</th>
+                <th>Expected</th>
+                <th>Minimum</th>
+                <th>Shortfall</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {minimumWarnings.map((w) => (
+                <tr key={w.stockItemId} className="border-t border-amber-100 font-semibold">
+                  <td className="py-2">{w.description || w.itemCode}</td>
+                  <td>{w.currentQty}</td>
+                  <td>{w.expectedQty}</td>
+                  <td>{w.minimumQty}</td>
+                  <td className="font-black text-amber-800">{w.shortfall}</td>
+                  <td className="font-black">{w.blocksProduction ? "Blocks production" : w.status.replace(/_/g, " ")}</td>
                 </tr>
               ))}
             </tbody>
@@ -364,7 +408,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
           </button>
         ) : null}
         {run.status === "Approved" && canStart ? (
-          <button type="button" disabled={loading} onClick={() => void action(`/api/production/runs/${runId}/start`)} className="rounded-2xl bg-[var(--vyron-warning-solid)] px-5 py-3 text-sm font-black text-white">
+          <button type="button" disabled={loading} onClick={() => { if (confirmMinimums(minimumWarnings, "Start")) void action(`/api/production/runs/${runId}/start`); }} className="rounded-2xl bg-[var(--vyron-warning-solid)] px-5 py-3 text-sm font-black text-white">
             Start production
           </button>
         ) : null}

@@ -46,8 +46,12 @@ export function assignedListOnly(assignment: { price_source_rule?: string | null
 }
 
 export type ResolvedCustomerPrice = {
-  /** "unavailable": the customer's own list does not cover this product and may not be departed from. */
-  source: "contract" | "default" | "product_master" | "unavailable";
+  /**
+   * contract / default: the customer's assigned lists. company_default: the company's default price
+   * list (customer has no list). product_master: legacy fallback, only while the company has not
+   * configured a default list. unavailable: no applicable list prices this product — no price is quoted.
+   */
+  source: "contract" | "default" | "company_default" | "product_master" | "unavailable";
   priceListId: string | null;
   sellingPrice: number;
   costPerUnit: number;
@@ -382,6 +386,63 @@ export async function assignCustomerPriceLists(
   return data;
 }
 
+/**
+ * The company's default price list, if one is configured. Null when none is — or when the database
+ * does not yet carry the is_company_default column (the legacy product-master fallback then stays).
+ */
+export async function loadCompanyDefaultPriceList(supabase: SupabaseClient, companyId: string): Promise<{ id: string; list_name: string } | null> {
+  const { data, error } = await supabase.from("vyron_customer_price_lists").select("id, list_name").eq("company_id", companyId).eq("is_company_default", true).maybeSingle();
+  if (error) {
+    if (/is_company_default|column .* does not exist|42703/i.test(error.message)) return null;
+    throw new Error(error.message);
+  }
+  return data ? { id: String(data.id), list_name: String(data.list_name || "") } : null;
+}
+
+/**
+ * Make one list the company default (customers without a price list are priced from it), or clear
+ * it. One default per company. Audited. Once a company has a default list, a product priced by no
+ * applicable list is "no price available" — the product-master fallback stops.
+ */
+export async function setCompanyDefaultPriceList(supabase: SupabaseClient, companyId: string, priceListId: string, makeDefault: boolean, actor: string) {
+  const list = await requireCompanyPriceList(supabase, companyId, priceListId);
+  if (makeDefault && String((list as { status?: string }).status || "Active") !== "Active") throw new PriceListError("Only an Active price list can be the company default.");
+  const previous = await loadCompanyDefaultPriceList(supabase, companyId);
+  if (makeDefault) {
+    if (previous && previous.id !== priceListId) {
+      const { error } = await supabase.from("vyron_customer_price_lists").update({ is_company_default: false, updated_at: new Date().toISOString() }).eq("id", previous.id).eq("company_id", companyId);
+      if (error) throw new Error(error.message);
+    }
+    const { error } = await supabase.from("vyron_customer_price_lists").update({ is_company_default: true, updated_at: new Date().toISOString() }).eq("id", priceListId).eq("company_id", companyId);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase.from("vyron_customer_price_lists").update({ is_company_default: false, updated_at: new Date().toISOString() }).eq("id", priceListId).eq("company_id", companyId);
+    if (error) throw new Error(error.message);
+  }
+  await writeCustomerPriceListAudit(supabase, {
+    companyId,
+    eventType: makeDefault ? "Company Default Set" : "Company Default Cleared",
+    actor,
+    priceListId,
+    detail: makeDefault
+      ? `${(list as { list_name?: string }).list_name || "Price list"} is now the company default price list${previous && previous.id !== priceListId ? ` (was ${previous.list_name})` : ""}.`
+      : `${(list as { list_name?: string }).list_name || "Price list"} is no longer the company default price list.`,
+    metadata: { previousDefaultId: previous?.id ?? null },
+  });
+  return { companyDefaultId: makeDefault ? priceListId : null };
+}
+
+/** Of these list ids, those whose header is Active and in date on `date` (company-scoped). */
+async function activePriceListIds(supabase: SupabaseClient, companyId: string, ids: string[], date: string): Promise<string[]> {
+  if (!ids.length) return [];
+  const { data, error } = await supabase.from("vyron_customer_price_lists").select("id, status, effective_from, effective_to").eq("company_id", companyId).in("id", ids);
+  if (error) throw new Error(error.message);
+  return (data || [])
+    .filter((list) => String(list.status || "Active") === "Active")
+    .filter((list) => (list.effective_from ? String(list.effective_from) <= date : true) && (list.effective_to ? String(list.effective_to) >= date : true))
+    .map((list) => String(list.id));
+}
+
 export async function resolveCustomerProductPrice(
   supabase: SupabaseClient,
   companyId: string,
@@ -424,19 +485,24 @@ export async function resolveCustomerProductPrice(
     assignment = row || null;
   }
 
-  const candidatePriceListIds = [
-    assignment?.contract_price_list_id || null,
-    assignment?.default_price_list_id || null,
-  ].filter(Boolean) as string[];
+  /*
+   * Hierarchy (2026-10-06): the customer's assigned list(s) → the company default price list (only
+   * when the customer has NO assigned list) → no price. A customer with an explicit list is never
+   * priced from the company default. A list counts only while its header is Active and in date.
+   */
+  const companyDefault = await loadCompanyDefaultPriceList(supabase, companyId);
+  const customerListIds = [assignment?.contract_price_list_id || null, assignment?.default_price_list_id || null].filter(Boolean) as string[];
+  const candidatePriceListIds = customerListIds.length ? customerListIds : companyDefault ? [companyDefault.id] : [];
+  const usableListIds = await activePriceListIds(supabase, companyId, candidatePriceListIds, date);
 
-  if (candidatePriceListIds.length) {
+  if (usableListIds.length) {
     const { data: items, error: itemError } = await supabase
       .from("vyron_customer_price_list_items")
       .select("price_list_id, final_price, effective_from, effective_to")
       .eq("company_id", companyId)
       .eq("product_id", params.productId)
       .eq("status", "Active")
-      .in("price_list_id", candidatePriceListIds);
+      .in("price_list_id", usableListIds);
     if (itemError) throw new Error(itemError.message);
 
     /*
@@ -459,7 +525,8 @@ export async function resolveCustomerProductPrice(
       })[0];
 
     if (valid) {
-      const source = valid.price_list_id === assignment?.contract_price_list_id ? "contract" : "default";
+      const source: ResolvedCustomerPrice["source"] =
+        valid.price_list_id === assignment?.contract_price_list_id ? "contract" : customerListIds.length ? "default" : "company_default";
       return {
         source,
         priceListId: String(valid.price_list_id),
@@ -478,7 +545,7 @@ export async function resolveCustomerProductPrice(
    * so nothing is quoted: the product is unavailable to them until someone
    * adds it to their list.
    */
-  if (assignedListOnly(assignment)) {
+  if (assignedListOnly(assignment) || companyDefault) {
     return {
       source: "unavailable",
       priceListId: null,

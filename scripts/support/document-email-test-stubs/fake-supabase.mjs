@@ -132,7 +132,11 @@ export function createFakeSupabase(seed = {}, options = {}) {
       this.filters.push((row) => terms.some((matches) => matches(row)));
       return this;
     }
-    order() { return this; }
+    /** Ordering is a no-op unless options.honourOrder (then like Postgres: nulls last ascending, first descending). */
+    order(column, opts = {}) {
+      if (options.honourOrder) (this.orders ||= []).push({ column, ascending: opts.ascending !== false });
+      return this;
+    }
     limit(count) { this.max = count; return this; }
     /** PostgREST range: rows from..to inclusive (applied after the filters). */
     range(from, to) { this.skip = from; this.max = to - from + 1; return this; }
@@ -194,6 +198,19 @@ export function createFakeSupabase(seed = {}, options = {}) {
           if (violates(this.table, { ...row, ...this.payload }, row)) return duplicateKey(this.table);
         }
         for (const row of matched) Object.assign(row, this.payload);
+      }
+      if (this.orders?.length) {
+        matched = [...matched].sort((a, b) => {
+          for (const { column, ascending } of this.orders) {
+            const x = a[column] ?? null;
+            const y = b[column] ?? null;
+            if (x === y) continue;
+            if (x === null) return ascending ? 1 : -1;
+            if (y === null) return ascending ? -1 : 1;
+            return (x < y ? -1 : 1) * (ascending ? 1 : -1);
+          }
+          return 0;
+        });
       }
       if (this.skip) matched = matched.slice(this.skip);
       if (this.max !== null) matched = matched.slice(0, this.max);

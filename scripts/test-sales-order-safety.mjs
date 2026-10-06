@@ -83,7 +83,11 @@ const seed = () => ({
     { id: "i2", company_id: CO, price_list_id: "pl-contract", product_id: "p1", final_price: 16.5, status: "Active", effective_from: "2026-01-01" },
     { id: "i3", company_id: CO, price_list_id: "pl-default", product_id: "p2", final_price: 27, status: "Active", effective_from: "2026-01-01" },
   ],
-  vyron_customer_price_lists: [],
+  // Every price-list item belongs to a list header (a foreign key in the database); pricing now also checks the header is Active and in date.
+  vyron_customer_price_lists: [
+    { id: "pl-default", company_id: CO, list_name: "Standard", list_type: "Standard", status: "Active", effective_from: "2026-01-01", effective_to: null, version: 1 },
+    { id: "pl-contract", company_id: CO, list_name: "Contract", list_type: "Contract", status: "Active", effective_from: "2026-01-01", effective_to: null, version: 1 },
+  ],
   vyron_customer_price_list_versions: [],
   vyron_customer_branches: [],
   vyron_customer_invoices: [],

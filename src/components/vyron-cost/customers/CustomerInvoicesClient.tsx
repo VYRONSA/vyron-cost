@@ -32,6 +32,16 @@ type InvoiceLine = {
   unitCost: number;
   vatRate: number;
   taxTreatment: TaxTreatment;
+  /** Where the pre-filled price came from (the server re-applies the price list on save). */
+  priceSource?: string;
+};
+
+const PRICE_SOURCE_LABEL: Record<string, string> = {
+  contract: "Customer contract price list",
+  default: "Customer price list",
+  company_default: "Company default price list",
+  product_master: "Product master price (no default price list configured)",
+  unavailable: "⚠️ No selling price available — add this product to the price list",
 };
 
 /**
@@ -696,13 +706,37 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
   }
 
   function selectItemLookupResult(lineId: string, item: ItemLookupResult) {
+    const productId = item.entityId || item.stockItemId;
+    // The selling price comes from the customer's price list, never from the item's cost.
     updateLine(lineId, {
-      productId: item.entityId || item.stockItemId,
+      productId,
       description: item.productName,
-      unitPrice: item.currentCost,
+      unitPrice: 0,
       unitCost: item.currentCost,
       vatRate: item.vatRate ?? DEFAULT_VAT_RATE,
+      priceSource: undefined,
     });
+    void resolveLinePrice(lineId, productId);
+  }
+
+  /** The customer's price for a product on the invoice date (POST /api/customer-price-lists/resolve). */
+  async function resolveLinePrice(lineId: string, productId: string | null | undefined) {
+    if (!productId) return;
+    try {
+      const res = await fetch("/api/customer-price-lists/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, customerId: customerId || null, asOfDate: invoiceDate || undefined }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok || !data.resolved) return;
+      const source = String(data.resolved.source || "");
+      setLines((current) =>
+        current.map((line) => (line.id === lineId ? { ...line, unitPrice: Number(data.resolved.sellingPrice || 0), priceSource: source } : line))
+      );
+    } catch {
+      // Left as typed: the server applies the price list when the invoice is saved.
+    }
   }
 
   function updateLine(id: string, patch: Partial<InvoiceLine>) {
@@ -1435,7 +1469,12 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                       </div>
 
                       <NumberInput label="Qty" value={line.qty} onChange={(value) => updateLine(line.id, { qty: value })} />
-                      <NumberInput label="Unit Price Excl" value={line.unitPrice} onChange={(value) => updateLine(line.id, { unitPrice: value })} />
+                      <div className="grid gap-1">
+                        <NumberInput label="Unit Price Excl" value={line.unitPrice} onChange={(value) => updateLine(line.id, { unitPrice: value })} />
+                        {line.priceSource ? (
+                          <span className={`text-[11px] font-bold ${line.priceSource === "unavailable" ? "text-rose-700" : "text-slate-500"}`}>Price source: {PRICE_SOURCE_LABEL[line.priceSource] || line.priceSource}</span>
+                        ) : null}
+                      </div>
                       <NumberInput label="Unit Cost" value={line.unitCost} onChange={(value) => updateLine(line.id, { unitCost: value })} />
 
                       <label className="block">

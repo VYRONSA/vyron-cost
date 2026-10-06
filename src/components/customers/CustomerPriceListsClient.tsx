@@ -13,6 +13,8 @@ type PriceList = {
   version: number;
   effective_from?: string | null;
   effective_to?: string | null;
+  /** Customers without a price list are priced from the company default list. */
+  is_company_default?: boolean | null;
 };
 
 type Product = { id: string; product_name: string; sku?: string | null };
@@ -113,6 +115,28 @@ export default function CustomerPriceListsClient() {
       setDetailError(e instanceof Error ? e.message : "Could not open the price list.");
     } finally {
       if (request === detailRequest.current) setDetailLoading(false);
+    }
+  }
+
+  /** Make this list the company default price list, or clear it (PATCH { companyDefault }). */
+  async function toggleCompanyDefault(listId: string, makeDefault: boolean) {
+    setBusy(true);
+    setMessage("");
+    try {
+      const res = await fetch(`/api/customer-price-lists/${listId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyDefault: makeDefault }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) throw new Error(data?.error || "Could not change the company default.");
+      setMessage(makeDefault ? "This is now the company default price list." : "Company default cleared.");
+      await loadData();
+      await loadDetail(listId);
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Could not change the company default.");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -375,7 +399,10 @@ export default function CustomerPriceListsClient() {
                   <div className="font-semibold text-slate-900">{list.list_name}</div>
                   <span className="text-xs font-semibold text-slate-500">{selectedListId === list.id ? "Open" : "View / edit →"}</span>
                 </div>
-                <div className="text-xs text-slate-500">{list.list_type} · {list.status} · v{list.version}</div>
+                <div className="text-xs text-slate-500">
+                  {list.list_type} · {list.status} · v{list.version}
+                  {list.is_company_default ? <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 font-bold text-emerald-800">Company default</span> : null}
+                </div>
               </button>
             ))}
           </div>
@@ -417,6 +444,15 @@ export default function CustomerPriceListsClient() {
                       : " · No end date"}
                   </div>
                 </div>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void toggleCompanyDefault(detail.list.id, !detail.list.is_company_default)}
+                  title="Customers without a price list are invoiced from the company default list. Once one is set, a product on no applicable list has no price until it is added."
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
+                >
+                  {detail.list.is_company_default ? "Company default ✓ — clear" : "Make company default"}
+                </button>
                 <div className="text-right text-xs text-slate-500">
                   <div><span className="font-semibold text-slate-900">{activeItems.length}</span> active product{activeItems.length === 1 ? "" : "s"}</div>
                   {inactiveItems.length ? <div>{inactiveItems.length} removed</div> : null}

@@ -50,7 +50,21 @@ export type CustomerInvoiceLineInput = {
   taxRate?: number | null;
   discountPercent?: number | null;
   discountAmount?: number | null;
+  /** Where the selling price came from (set by the server, never trusted from a browser). */
+  priceSource?: string | null;
+  priceListId?: string | null;
 };
+
+/** No selling price can be determined for a line: the invoice is refused until pricing is resolved. */
+export class PriceUnavailableError extends Error {
+  productIds: string[];
+  constructor(products: Array<{ id: string; name: string }>) {
+    super(
+      `No selling price available for ${products.map((p) => p.name).join(", ")}: the customer's price list (or, for a customer without a list, the company default price list) does not price ${products.length === 1 ? "this product" : "these products"}. Add ${products.length === 1 ? "it" : "them"} to the price list before invoicing.`
+    );
+    this.productIds = products.map((p) => p.id);
+  }
+}
 
 export type CustomerInvoiceRow = {
   branch_id?: string | null;
@@ -197,7 +211,9 @@ async function enrichInvoiceLinesFromProductMaster(
    * (a Shopify order) keeps its price and cost exactly as supplied — including
    * a zero price for a free item, which must not be re-priced from a list.
    */
-  useSuppliedLineValues = false
+  useSuppliedLineValues = false,
+  /** Prices in force on the invoice date (defaults to today). */
+  asOfDate?: string | null
 ): Promise<CustomerInvoiceLineInput[]> {
   const productIds = lines.map((line) => line.productId).filter(Boolean) as string[];
   if (!productIds.length) return lines;
@@ -210,6 +226,7 @@ async function enrichInvoiceLinesFromProductMaster(
   if (error) throw new Error(error.message);
 
   const byId = new Map((products || []).map((product) => [String(product.id), product]));
+  const unpriced: Array<{ id: string; name: string }> = [];
 
   const resolved = await Promise.all(
     lines.map(async (line) => {
@@ -223,17 +240,31 @@ async function enrichInvoiceLinesFromProductMaster(
           productName: line.productName || String(product.product_name || ""),
           sellingPrice: Number(line.sellingPrice || 0),
           costPerUnit: Number(line.costPerUnit || 0),
+          priceSource: "external",
+          priceListId: null,
         };
       }
       const customerPrice = await resolveCustomerProductPrice(supabase, companyId, {
         customerId,
         productId: line.productId,
+        asOfDate: asOfDate || undefined,
       });
+      /*
+       * Price-list enforcement (2026-10-06). A product priced by the customer's list — or, for a
+       * customer without a list, the company default list — is invoiced at that price, whatever
+       * was typed. "unavailable" refuses the invoice: no arbitrary price is used. Only while a
+       * company has configured no default price list does the legacy rule stay (a typed price,
+       * else the product master price), and the line says so.
+       */
+      const fromList = customerPrice.source === "contract" || customerPrice.source === "default" || customerPrice.source === "company_default";
+      if (customerPrice.source === "unavailable") unpriced.push({ id: line.productId, name: line.productName || customerPrice.productName || String(product.product_name || "") });
+      const typed = Number(line.sellingPrice) > 0;
       return {
         ...line,
         productName: line.productName || customerPrice.productName || String(product.product_name || ""),
-        sellingPrice:
-          Number(line.sellingPrice) > 0 ? Number(line.sellingPrice) : Number(customerPrice.sellingPrice || 0),
+        sellingPrice: fromList ? Number(customerPrice.sellingPrice || 0) : typed ? Number(line.sellingPrice) : Number(customerPrice.sellingPrice || 0),
+        priceSource: fromList ? customerPrice.source : customerPrice.source === "unavailable" ? "unavailable" : typed ? "manual" : "product_master",
+        priceListId: fromList ? customerPrice.priceListId : null,
         costPerUnit:
           trustSuppliedCost && Number(line.costPerUnit) > 0
             ? Number(line.costPerUnit)
@@ -241,6 +272,7 @@ async function enrichInvoiceLinesFromProductMaster(
       };
     })
   );
+  if (unpriced.length) throw new PriceUnavailableError(unpriced);
 
   return resolved;
 }
@@ -326,7 +358,8 @@ export async function createCustomerInvoice(
     params.customerId,
     params.lines,
     params.trustSuppliedCost === true,
-    params.useSuppliedLineValues === true
+    params.useSuppliedLineValues === true,
+    params.invoiceDate || null
   );
 
   for (const line of enrichedLines) {
@@ -397,6 +430,8 @@ export async function createCustomerInvoice(
     selling_price: line.sellingPrice,
     cost_per_unit: line.costPerUnit || 0,
     discount_percent: Number(line.discountPercent || 0),
+    price_source: line.priceSource || null,
+    price_list_id: line.priceListId || null,
     ...taxLineToColumns(tax.lines[index]),
   }));
   const { error: linesError } = await supabase.from("vyron_customer_invoice_lines").insert(lineRows);
@@ -487,7 +522,15 @@ export async function updateCustomerInvoice(
     params.branchId !== undefined ? params.branchId : loaded.invoice.branch_id
   );
 
-  const enrichedLines = await enrichInvoiceLinesFromProductMaster(supabase, companyId, customerId, params.lines, params.trustSuppliedCost === true);
+  const enrichedLines = await enrichInvoiceLinesFromProductMaster(
+    supabase,
+    companyId,
+    customerId,
+    params.lines,
+    params.trustSuppliedCost === true,
+    false,
+    params.invoiceDate || loaded.invoice.invoice_date || null
+  );
 
   for (const line of enrichedLines) {
     if (!line.productId) continue;
@@ -546,6 +589,8 @@ export async function updateCustomerInvoice(
     selling_price: line.sellingPrice,
     cost_per_unit: line.costPerUnit || 0,
     discount_percent: Number(line.discountPercent || 0),
+    price_source: line.priceSource || null,
+    price_list_id: line.priceListId || null,
     ...taxLineToColumns(tax.lines[index]),
   }));
   if (lineRows.length) {

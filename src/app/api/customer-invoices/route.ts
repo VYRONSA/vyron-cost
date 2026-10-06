@@ -1,6 +1,6 @@
 import { BranchNotSelectableError } from "@/lib/vyron-customer-branches";
 import { NextRequest, NextResponse } from "next/server";
-import { createCustomerInvoice, listCustomerInvoices } from "@/lib/vyron-customer-invoices";
+import { PriceUnavailableError, createCustomerInvoice, listCustomerInvoices } from "@/lib/vyron-customer-invoices";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
 import {
@@ -53,6 +53,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof BranchNotSelectableError) {
       return NextResponse.json({ ok: false, error: error.message }, { status: 409 });
+    }
+    if (error instanceof PriceUnavailableError) {
+      return NextResponse.json({ ok: false, code: "NO_PRICE", error: error.message, productIds: error.productIds }, { status: 400 });
     }
     return workspaceAccessErrorResponse(error, "Create failed.");
   }

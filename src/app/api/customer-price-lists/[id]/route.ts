@@ -7,6 +7,7 @@ import {
   getCustomerPriceListDetail,
   setCustomerPriceListItemStatus,
   updateCustomerPriceListItemPrice,
+  setCompanyDefaultPriceList,
 } from "@/lib/vyron-customer-price-lists";
 import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
@@ -88,6 +89,11 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     const { id } = await params;
     const body = await readBody(request);
     const itemId = String(body.itemId || "");
+    // { companyDefault: true | false } — make this list the company default price list, or clear it.
+    if (body.companyDefault !== undefined) {
+      const result = await setCompanyDefaultPriceList(supabase, companyId, id, body.companyDefault === true, actor);
+      return NextResponse.json({ ok: true, ...result });
+    }
     if (body.price !== undefined && body.status !== undefined) {
       throw new PriceListError("Change the price or the status, not both at once.");
     }

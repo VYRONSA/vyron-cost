@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkProductionMinimums } from "@/lib/vyron-production-minimums";
 import { validateProductionStock } from "@/lib/vyron-manufacturing";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import {
@@ -27,7 +28,12 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     if (!stockOk && shortages.length === 0) {
       return NextResponse.json({ ok: false, error: "Not found." }, { status: 404 });
     }
-    return NextResponse.json({ ok: true, stockOk, shortages }, { headers: { "Cache-Control": "no-store" } });
+    // Expected stock after this run against the company's minimum levels (warnings; "blocking" only where configured).
+    const minimums = await checkProductionMinimums(supabase, companyId, id);
+    return NextResponse.json(
+      { ok: true, stockOk, shortages, minimumWarnings: minimums.warnings, minimumBlocking: minimums.blocking, untrackedLines: minimums.untrackedLines },
+      { headers: { "Cache-Control": "no-store" } }
+    );
   } catch (error) {
     return workspaceAccessErrorResponse(error, "Validation failed.");
   }

@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, ArrowUpRight, Box, Calculator, ChevronRight, ClipboardList, Coins, FileText, Package, TrendingUp, UserPlus } from "lucide-react";
 import type { DashboardActivity, DashboardKpi, DashboardOverview } from "@/lib/vyron-dashboard-overview";
+import type { AttentionCentre } from "@/lib/vyron-attention-centre";
+import DashboardAttentionPanel from "@/components/dashboard/DashboardAttentionPanel";
 
 /**
  * The VOLORA executive dashboard.
@@ -125,7 +127,7 @@ function GpTrend({ points }: { points: DashboardOverview["gpTrend"] }) {
   );
 }
 
-export default function DashboardExecutiveClient({ overview }: { overview: DashboardOverview }) {
+export default function DashboardExecutiveClient({ overview, attention = null }: { overview: DashboardOverview; attention?: AttentionCentre | null }) {
   const { totalCostValue, averageGpPct, activeProducts, ordersThisMonth, gpTrend, gpTrendChangePct, activity } = overview;
 
   return (
@@ -187,6 +189,9 @@ export default function DashboardExecutiveClient({ overview }: { overview: Dashb
           </Link>
         ))}
       </section>
+
+      {/* ------------------------------------- attention required + last production */}
+      <DashboardAttentionPanel attention={attention} />
 
       {/* ------------------------------------- key performance + profit trend */}
       <section className="grid gap-5 xl:grid-cols-[1.02fr_1fr]">

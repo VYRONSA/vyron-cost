@@ -22,7 +22,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   const { id } = await context.params;
   const body = await request.json().catch(() => ({}));
   try {
-    await requireWorkspacePermission("manufacturing.runs.complete");
+    const session = await requireWorkspacePermission("manufacturing.runs.complete");
     const companyId = await requireManufacturingCompanyId(supabase, manufacturingCompanyContextFromRequest(request, body));
     const run = await completeProductionRun(supabase, companyId, id, {
       actual_qty: Number(body.actual_qty || 0),
@@ -30,7 +30,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       wastage: body.wastage,
       stock_override: Boolean(body.stock_override),
       stock_override_reason: body.stock_override_reason,
-      completed_by: body.completed_by || "user",
+      // Who completed the run is the verified member, never a name the browser sends.
+      completed_by: [session.firstName, session.surname].filter(Boolean).join(" ").trim() || session.email || session.userId,
     });
     return NextResponse.json({ ok: true, run });
   } catch (error) {

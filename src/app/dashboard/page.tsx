@@ -3,6 +3,7 @@ import DashboardExecutiveClient from "@/components/DashboardExecutiveClient";
 import VyronMobileHomeLauncher from "@/components/vyron-mobile/VyronMobileHomeLauncher";
 import { getServerActiveWorkspace, getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
 import { getDashboardOverview, EMPTY_OVERVIEW } from "@/lib/vyron-dashboard-overview";
+import { getAttentionCentre, type AttentionCentre } from "@/lib/vyron-attention-centre";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { headers } from "next/headers";
 
@@ -29,6 +30,8 @@ export default async function DashboardPage() {
    * true.
    */
   let overview = EMPTY_OVERVIEW;
+  // Attention Required: absent (not zero) if it cannot be read, so it never claims "all clear" falsely.
+  let attention: AttentionCentre | null = null;
   const companyId = await getWorkspaceCompanyId();
   if (companyId && isSupabaseServiceRoleConfigured()) {
     const supabase = getSupabaseAdmin();
@@ -38,12 +41,17 @@ export default async function DashboardPage() {
       } catch {
         overview = EMPTY_OVERVIEW;
       }
+      try {
+        attention = await getAttentionCentre(supabase, companyId);
+      } catch {
+        attention = null;
+      }
     }
   }
 
   return (
     <VyronCostAiShell hidePageHeader title={title} subtitle="Real-time cost, margin and operational intelligence.">
-      <DashboardExecutiveClient overview={overview} />
+      <DashboardExecutiveClient overview={overview} attention={attention} />
     </VyronCostAiShell>
   );
 }

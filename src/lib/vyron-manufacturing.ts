@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { checkProductionMinimums, describeMinimumBlock } from "@/lib/vyron-production-minimums";
 import { calcLineCost, type BomHeader, type BomLine } from "@/lib/vyron-cost-bom-data";
 import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
 import {
@@ -781,6 +782,11 @@ export async function transitionProductionRun(
     if (!stockCheck.ok) {
       throw new Error(`Stock shortage: ${stockCheck.shortages.length} line(s) below required quantity. Approve with awareness or add stock before starting.`);
     }
+    // Company-configured hard minimums: only items the company marked "block production".
+    const minimums = await checkProductionMinimums(supabase, run.company_id, runId);
+    if (minimums.blocking.length) {
+      throw new Error(`Minimum stock: ${describeMinimumBlock(minimums.blocking)}. These items are set to block production.`);
+    }
   }
 
   const startFromPlannedFields =
@@ -866,6 +872,12 @@ export async function completeProductionRun(
     const err = new Error("STOCK_SHORTAGE");
     (err as Error & { shortages: StockShortage[] }).shortages = stockCheck.shortages;
     throw err;
+  }
+  // Company-configured hard minimums block completion too, unless the run carries the existing
+  // recorded stock override (who and why are written with the run).
+  const minimumCheck = await checkProductionMinimums(supabase, run.company_id, runId);
+  if (minimumCheck.blocking.length && !input.stock_override) {
+    throw new Error(`Minimum stock: ${describeMinimumBlock(minimumCheck.blocking)}. These items are set to block production; complete with a stock override to proceed.`);
   }
 
   const actualQty = roundQty(input.actual_qty);

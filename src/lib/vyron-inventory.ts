@@ -118,6 +118,9 @@ export async function getInventorySettings(supabase: SupabaseClient, companyId: 
     slowMovingDays30: Number(data?.slow_moving_days_30 ?? 30),
     slowMovingDays60: Number(data?.slow_moving_days_60 ?? 60),
     slowMovingDays90: Number(data?.slow_moving_days_90 ?? 90),
+    /** Expected hours between production runs; null = not configured (no "no production" warning). */
+    expectedProductionIntervalHours:
+      data?.expected_production_interval_hours === null || data?.expected_production_interval_hours === undefined ? null : Number(data.expected_production_interval_hours),
   };
 }
 
