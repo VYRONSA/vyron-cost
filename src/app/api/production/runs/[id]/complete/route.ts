@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { completeProductionRun } from "@/lib/vyron-manufacturing";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import {
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       stock_override: Boolean(body.stock_override),
       stock_override_reason: body.stock_override_reason,
       // Who completed the run is the verified member, never a name the browser sends.
-      completed_by: [session.firstName, session.surname].filter(Boolean).join(" ").trim() || session.email || session.userId,
+      completed_by: await memberDisplayName(supabase, session),
     });
     return NextResponse.json({ ok: true, run });
   } catch (error) {

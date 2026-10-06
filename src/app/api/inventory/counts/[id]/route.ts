@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import {
   approveStockCount,
   getStockCountForCompany,
@@ -85,47 +86,47 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ ok: true });
     }
     if (body.action === "approve") {
-      await requireWorkspacePermission("inventory.counts.approve");
-      await approveStockCount(supabase, companyId, id, String(body.approvedBy || "supervisor"), {
+      const session = await requireWorkspacePermission("inventory.counts.approve");
+      await approveStockCount(supabase, companyId, id, await memberDisplayName(supabase, session), {
         overrideNote: body.overrideNote ? String(body.overrideNote) : undefined,
       });
       return NextResponse.json({ ok: true });
     }
     if (body.action === "pause") {
-      await requireWorkspacePermission("inventory.counts.create");
-      await pauseStockCount(supabase, companyId, id, String(body.actor || "operator"));
+      const session = await requireWorkspacePermission("inventory.counts.create");
+      await pauseStockCount(supabase, companyId, id, await memberDisplayName(supabase, session));
       return NextResponse.json({ ok: true });
     }
     if (body.action === "resume") {
-      await requireWorkspacePermission("inventory.counts.create");
-      await resumeStockCount(supabase, companyId, id, String(body.actor || "operator"));
+      const session = await requireWorkspacePermission("inventory.counts.create");
+      await resumeStockCount(supabase, companyId, id, await memberDisplayName(supabase, session));
       return NextResponse.json({ ok: true });
     }
     if (body.action === "reject") {
-      await requireWorkspacePermission("inventory.counts.approve");
+      const session = await requireWorkspacePermission("inventory.counts.approve");
       await rejectStockCount(
         supabase,
         companyId,
         id,
-        String(body.actor || body.approvedBy || "supervisor"),
+        await memberDisplayName(supabase, session),
         body.reason ? String(body.reason) : undefined
       );
       return NextResponse.json({ ok: true });
     }
     if (body.action === "request_recount") {
-      await requireWorkspacePermission("inventory.counts.approve");
+      const session = await requireWorkspacePermission("inventory.counts.approve");
       await requestStockCountRecount(
         supabase,
         companyId,
         id,
-        String(body.actor || body.approvedBy || "supervisor"),
+        await memberDisplayName(supabase, session),
         body.reason ? String(body.reason) : undefined
       );
       return NextResponse.json({ ok: true });
     }
     if (body.action === "post") {
-      await requireWorkspacePermission("inventory.adjustments.post");
-      await postStockCount(supabase, companyId, id, String(body.actor || "supervisor"));
+      const session = await requireWorkspacePermission("inventory.adjustments.post");
+      await postStockCount(supabase, companyId, id, await memberDisplayName(supabase, session));
       return NextResponse.json({ ok: true });
     }
     return NextResponse.json({ ok: false, error: "Unknown action." }, { status: 400 });

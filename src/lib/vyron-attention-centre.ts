@@ -90,7 +90,8 @@ export async function getProductionActivity(supabase: SupabaseClient, companyId:
     last,
     unitsToday: Math.round(todays.reduce((t, r) => t + Number(r.actual_qty || 0), 0) * 1e4) / 1e4,
     runsToday: todays.length,
-    hoursSinceLast: last ? Math.round(((now.getTime() - Date.parse(last.completedAt)) / 3600000) * 10) / 10 : null,
+    // Exact (not rounded): the overdue check compares it with the configured interval.
+    hoursSinceLast: last ? (now.getTime() - Date.parse(last.completedAt)) / 3600000 : null,
     expectedIntervalHours: settings.expectedProductionIntervalHours,
     byLocation: null,
   };
@@ -186,7 +187,7 @@ export async function getAttentionCentre(supabase: SupabaseClient, companyId: st
       add({ key: "production.none", area: "PRODUCTION", severity: "warning", count: 1, label: "No production has been processed yet", href: "/manufacturing/runs" });
     } else if ((production.hoursSinceLast ?? 0) > interval) {
       const hours = production.hoursSinceLast ?? 0;
-      const ago = hours >= 48 ? `${Math.floor(hours / 24)} days ago` : `${Math.round(hours)} hours ago`;
+      const ago = hours >= 48 ? `${Math.floor(hours / 24)} days ago` : hours >= 1 ? `${Math.floor(hours)} hour${Math.floor(hours) === 1 ? "" : "s"} ago` : (() => { const m = Math.max(1, Math.floor(hours * 60)); return `${m} minute${m === 1 ? "" : "s"} ago`; })();
       add({ key: "production.overdue", area: "PRODUCTION", severity: hours > interval * 2 ? "critical" : "warning", count: 1, label: `Last production processed ${ago}`, href: "/manufacturing/runs" });
     }
   }

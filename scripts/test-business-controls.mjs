@@ -53,6 +53,7 @@ const stockTake = await importFromRoot("src/lib/vyron-stock-take-import.ts");
 const { approveStockCount, postStockCount } = await importFromRoot("src/lib/vyron-inventory.ts");
 const prices = await importFromRoot("src/lib/vyron-customer-price-lists.ts");
 const { createCustomerInvoice, PriceUnavailableError } = await importFromRoot("src/lib/vyron-customer-invoices.ts");
+const { memberDisplayName } = await importFromRoot("src/lib/vyron-audit-actor.ts");
 
 const CO = "aaaaaaaa-0000-4000-8000-000000000001";
 const CO_B = "bbbbbbbb-0000-4000-8000-000000000001";
@@ -264,6 +265,24 @@ section("4 & 5. Attention Required and last production");
   const late = await getAttentionCentre(db, CO, new Date("2026-10-09T12:32:00Z"));
   const overdue = late.items.find((i) => i.key === "production.overdue");
   check("with a 24 h interval configured: 'Last production processed 3 days ago' (critical, > 2 × interval)", overdue?.label === "Last production processed 3 days ago" && overdue?.severity === "critical", JSON.stringify(overdue));
+  // Browser-QA defect (2026-10-06): hours were rounded to 0.1 before the comparison, so 1 h 01 min
+  // against a 1 h interval read as "1.0 > 1" and no warning showed. The comparison now uses exact hours.
+  const settingsA = () => db.tables.vyron_inventory_settings.find((r) => r.company_id === CO);
+  settingsA().expected_production_interval_hours = 1;
+  const justOver = await getAttentionCentre(db, CO, new Date("2026-10-06T13:33:00Z"));
+  check("1 h interval, last run 1 h 01 min ago → overdue (no rounding)", justOver.items.find((i) => i.key === "production.overdue")?.label === "Last production processed 1 hour ago", JSON.stringify(justOver.items.find((i) => i.key === "production.overdue")));
+  settingsA().expected_production_interval_hours = 0.5;
+  const minutes = await getAttentionCentre(db, CO, new Date("2026-10-06T13:17:00Z"));
+  check("30 min interval, 45 min since the last run → '45 minutes ago'", minutes.items.find((i) => i.key === "production.overdue")?.label === "Last production processed 45 minutes ago", JSON.stringify(minutes.items.find((i) => i.key === "production.overdue")));
+  settingsA().expected_production_interval_hours = 0.01;
+  const oneMinute = await getAttentionCentre(db, CO, new Date("2026-10-06T12:33:30Z"));
+  check("one minute over → '1 minute ago' (singular)", oneMinute.items.find((i) => i.key === "production.overdue")?.label === "Last production processed 1 minute ago", JSON.stringify(oneMinute.items.find((i) => i.key === "production.overdue")));
+  const label = async (iso) => (await getAttentionCentre(db, CO, new Date(iso))).items.find((i) => i.key === "production.overdue")?.label;
+  check("two minutes over → '2 minutes ago'", (await label("2026-10-06T12:34:30Z")) === "Last production processed 2 minutes ago");
+  settingsA().expected_production_interval_hours = 1;
+  check("five hours → '5 hours ago' (plural)", (await label("2026-10-06T17:40:00Z")) === "Last production processed 5 hours ago");
+  check("two and a half days → '2 days ago'", (await label("2026-10-09T00:40:00Z")) === "Last production processed 2 days ago");
+  settingsA().expected_production_interval_hours = 24;
   const onTime = await getAttentionCentre(db, CO, new Date("2026-10-06T20:00:00Z"));
   check("within the interval → no production warning", !onTime.items.some((i) => i.key === "production.overdue"));
   const b = await getAttentionCentre(db, CO_B, now);
@@ -360,6 +379,20 @@ section("7. Customer price-list enforcement");
     const value = Math.round((r.lines || []).reduce((t, l) => t + Number(l.lineValue || 0), 0) * 100) / 100;
     return value === 524.8; // 10 × 42.50 + 2 × 49.90
   })());
+}
+
+// ---------------------------------------------------------------------------
+section("Who did it: the verified member's name (browser-QA defect 2026-10-06)");
+{
+  // The signed server session carries no name ("Workspace User"); records people read take the
+  // member's profile name, looked up by the session user id.
+  db.tables.vyron_user_profiles = [
+    { id: ACTOR, first_name: "Alice", surname: "QA-Admin", email: "alice@example.test" },
+    { id: "u-email-only", first_name: null, surname: null, email: "only@example.test" },
+  ];
+  check("profile name", (await memberDisplayName(db, { userId: ACTOR })) === "Alice QA-Admin");
+  check("e-mail when the profile has no name", (await memberDisplayName(db, { userId: "u-email-only" })) === "only@example.test");
+  check("user id when there is no profile — never a name from the request", (await memberDisplayName(db, { userId: "u-unknown" })) === "u-unknown");
 }
 
 console.log(`\n${checks - failures}/${checks} checks passed${failures ? ` — ${failures} FAILED` : ""}`);

@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { WorkspaceSession } from "@/lib/vyron-workspace-session";
 
 /**
@@ -14,4 +15,23 @@ import type { WorkspaceSession } from "@/lib/vyron-workspace-session";
  */
 export function sessionAuditActor(session: Pick<WorkspaceSession, "userId">): string {
   return String(session.userId || "").trim() || "unknown-member";
+}
+
+/**
+ * The verified member's name, for records people read ("Processed by", "Approved by"): first name
+ * and surname from their profile, else their e-mail, else their user id. Looked up from the
+ * session's user id — the signed server session carries no name — and never taken from a request.
+ */
+export async function memberDisplayName(
+  supabase: SupabaseClient,
+  session: Pick<WorkspaceSession, "userId">
+): Promise<string> {
+  const userId = sessionAuditActor(session);
+  try {
+    const { data } = await supabase.from("vyron_user_profiles").select("first_name, surname, email").eq("id", userId).maybeSingle();
+    const name = [data?.first_name, data?.surname].map((part) => String(part ?? "").trim()).filter(Boolean).join(" ");
+    return name || String(data?.email ?? "").trim() || userId;
+  } catch {
+    return userId;
+  }
 }
