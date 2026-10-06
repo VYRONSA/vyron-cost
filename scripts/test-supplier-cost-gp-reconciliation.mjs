@@ -94,6 +94,8 @@ function supplierInvoice(id, tenant, invoiceNumber, invoiceDate, lines) {
 const DOC_SEP = uuid("d", 1); // 15 September: the shapes that broke production, plus one sound line
 const DOC_SEP30 = uuid("d", 2); // 30 September: boundary, a sound price move
 const DOC_B = uuid("d", 3); // tenant B, pointing at tenant A's ingredient id
+const DOC_PENDING = uuid("d", 4); // tenant A, still under review
+const DOC_DELETED = uuid("d", 5); // tenant A, deleted
 
 const SEPTEMBER = supplierInvoice(DOC_SEP, CO_A, "SUP-0915", "2026-09-15", [
   { description: "Cake Flour", quantity: 10, unit: "kg", unit_price: 14, matched_entity_type: "ingredient", matched_entity_id: "ing-flour", matched_entity_name: "Cake Flour" },
@@ -119,7 +121,29 @@ function seed() {
       { id: "m1", workspace_id: WS_A, user_id: U_A, role: "OWNER", status: "Active", permissions: {} },
       { id: "m2", workspace_id: WS_B, user_id: U_B, role: "OWNER", status: "Active", permissions: {} },
     ],
-    vyron_documents: [SEPTEMBER.document, SEPTEMBER_30.document, FOREIGN.document],
+    vyron_documents: [
+      SEPTEMBER.document,
+      SEPTEMBER_30.document,
+      FOREIGN.document,
+      // Not processed: still under review, and deleted. Neither belongs in the register.
+      { ...SEPTEMBER.document, id: DOC_PENDING, invoice_number: "SUP-PENDING", status: "reviewed" },
+      { ...SEPTEMBER.document, id: DOC_DELETED, invoice_number: "SUP-DELETED", status: "deleted", deleted_at: "2026-09-20T10:00:00Z" },
+    ],
+    vyron_cost_suppliers: [
+      { id: "sup-a", company_id: CO_A, supplier_name: "QA Wholesale" },
+      { id: "sup-b", company_id: CO_B, supplier_name: "QA B Supplier" },
+    ],
+    // Invoices loaded through the import route (the register's own table).
+    vyron_cost_supplier_invoices: [
+      { id: "si-0812", company_id: CO_A, supplier_id: "sup-a", supplier_name: "QA Wholesale", invoice_number: "SUP-0812", invoice_date: "2026-08-12", status: "Approved", source_type: "import", subtotal: 100, vat: 15, total: 115, created_at: "2026-08-20T00:00:00Z" },
+      // The same supplier invoice also approved in Invoice Intelligence (DOC_SEP30): a cross-source duplicate.
+      { id: "si-0930", company_id: CO_A, supplier_id: "sup-a", supplier_name: "QA Wholesale", invoice_number: "SUP-0930", invoice_date: "2026-09-30", status: "Approved", source_type: "import", subtotal: 475, vat: 71.25, total: 546.25, created_at: "2026-10-01T00:00:00Z" },
+    ],
+    vyron_cost_supplier_invoice_lines: [
+      { id: "sil-1", invoice_id: "si-0812", item_name: "Cake Flour", quantity: 5, unit: "kg", unit_cost: 13, line_excl: 65 },
+      { id: "sil-2", invoice_id: "si-0812", item_name: "Butter", quantity: 0.4, unit: "kg", unit_cost: 87.5, line_excl: 35 },
+      { id: "sil-3", invoice_id: "si-0930", item_name: "Butter", quantity: 5, unit: "kg", unit_cost: 95, line_excl: 475 },
+    ],
     vyron_document_line_items: [...SEPTEMBER.lines, ...SEPTEMBER_30.lines, ...FOREIGN.lines],
     vyron_document_extraction_logs: [SEPTEMBER.extraction, SEPTEMBER_30.extraction, FOREIGN.extraction],
     vyron_po_approval_rules: [
@@ -180,6 +204,7 @@ const { createCustomerInvoice } = await importFromRoot("src/lib/vyron-customer-i
 const { getCustomerGpReport } = await importFromRoot("src/lib/vyron-customer-gp-reporting.ts");
 const { getSalesByCustomerItemReport } = await importFromRoot("src/lib/vyron-customer-sales-reports.ts");
 const guard = await importFromRoot("src/lib/vyron-supplier-cost-guard.ts");
+const { listSupplierInvoiceRegister } = await importFromRoot("src/lib/vyron-supplier-invoices.ts");
 
 async function quietly(fn) {
   const saved = { log: console.log, info: console.info, warn: console.warn, error: console.error };
@@ -266,6 +291,33 @@ check("synthetic owners sign in through the real login route", Boolean(jarA.vyro
   check("tenant B's approval cannot touch tenant A's ingredient (company-scoped lookup)", foreign.status === 200 && Number(ingredient("ing-flour").purchase_cost) === 14 && !t("vyron_document_cost_audit").some((a) => a.document_id === DOC_B));
   const crossTenant = await approve(jarB, DOC_SEP30);
   check("tenant B cannot approve tenant A's invoice (refused, not processed)", crossTenant.status === 403 || crossTenant.status === 404, String(crossTenant.status));
+}
+
+// ---------------------------------------------------------------------------
+section("Supplier Invoice Register: every processed supplier invoice, however it was captured");
+{
+  // Production (Kingdom Foods, 2026-10-06): the register read only imported invoices, so 22 September
+  // invoices approved in Invoice Intelligence were missing and September showed one invoice.
+  const { invoices, lineCounts } = await listSupplierInvoiceRegister(db, CO_A);
+  const byNumber = (n) => invoices.filter((r) => r.invoice_number === n);
+  const sep = byNumber("SUP-0915")[0];
+  const sep30 = byNumber("SUP-0930").find((r) => r.origin === "document");
+  check("both September invoices approved in Invoice Intelligence are in the register", Boolean(sep) && Boolean(sep30), JSON.stringify(invoices.map((r) => [r.invoice_number, r.origin])));
+  check("imported invoices are still there", byNumber("SUP-0812").length === 1 && byNumber("SUP-0812")[0].origin === "register");
+  check("an approved document opens the approved document, read-only", sep?.origin === "document" && sep?.href === `/document-intelligence/archive/${DOC_SEP}` && sep?.status === "Approved" && sep?.source_type === "Invoice Intelligence");
+  check("an imported invoice still opens the register's own page", byNumber("SUP-0812")[0]?.href === "/supplier-invoices/si-0812");
+  check("document totals and dates are the approved document's", sep?.total === SEPTEMBER.document.total && sep?.subtotal === SEPTEMBER.document.subtotal && sep?.vat === SEPTEMBER.document.vat && sep?.invoice_date === "2026-09-15");
+  check("line counts: approved document lines and imported lines", lineCounts[DOC_SEP] === 5 && lineCounts[DOC_SEP30] === 1 && lineCounts["si-0812"] === 2, JSON.stringify(lineCounts));
+  check("documents still under review, or deleted, are not processed invoices", !byNumber("SUP-PENDING").length && !byNumber("SUP-DELETED").length);
+  check("another tenant's approved invoice never appears", !invoices.some((r) => r.id === DOC_B || r.invoice_number === "SUP-B-1"));
+  const dup = byNumber("SUP-0930");
+  check("the same supplier invoice imported AND approved is shown twice and flagged, not hidden", dup.length === 2 && dup.every((r) => r.duplicate_risk === true));
+  check("a single invoice is not flagged", sep?.duplicate_risk === false && byNumber("SUP-0812")[0].duplicate_risk === false);
+  const september = invoices.filter((r) => String(r.invoice_date).startsWith("2026-09"));
+  check("September lists every processed invoice: 2 approved documents + 1 imported", september.length === 3, JSON.stringify(september.map((r) => r.invoice_number)));
+  check("newest invoice date first", invoices.every((r, i) => i === 0 || String(invoices[i - 1].invoice_date || "") >= String(r.invoice_date || "")));
+  const b = await listSupplierInvoiceRegister(db, CO_B);
+  check("tenant B's register lists only its own approved invoice", b.invoices.length === 1 && b.invoices[0].id === DOC_B);
 }
 
 // ---------------------------------------------------------------------------

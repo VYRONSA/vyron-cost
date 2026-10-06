@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { readAllIn, readAllPages } from "@/lib/vyron-supabase-paging";
 
 /**
  * Supplier invoice management — server side, company scoped.
@@ -97,6 +98,96 @@ export async function listSupplierInvoices(supabase: SupabaseClient, companyId: 
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data || []) as SupplierInvoiceRow[];
+}
+
+/** A row of the supplier invoice register: an imported/captured invoice, or one approved in Supplier Invoice Intelligence. */
+export type SupplierInvoiceRegisterRow = SupplierInvoiceRow & {
+  origin: "register" | "document";
+  /** Where the row opens. */
+  href: string;
+};
+
+/** Supplier + invoice number; null when there is no number to compare (a blank number is not evidence of a duplicate). */
+const invoiceKey = (row: { supplier_name: string | null; invoice_number: string | null }) => {
+  const number = String(row.invoice_number || "").trim().toLowerCase();
+  if (!number || number === "—") return null;
+  return `${String(row.supplier_name || "").trim().toLowerCase()}|${number}`;
+};
+
+/**
+ * Every processed supplier invoice for the register, whichever way it was captured.
+ *
+ * An invoice approved in Supplier Invoice Intelligence is stored as an approved
+ * document (vyron_documents), never in vyron_cost_supplier_invoices — so the
+ * register used to show only imported invoices, and from the day a company
+ * switched to Invoice Intelligence its new invoices disappeared from it. Those
+ * documents are listed here read-only (they open the approved document; they
+ * are changed or voided only through the document workflow). The same supplier
+ * and invoice number appearing more than once is flagged, not hidden.
+ */
+export async function listSupplierInvoiceRegister(
+  supabase: SupabaseClient,
+  companyId: string
+): Promise<{ invoices: SupplierInvoiceRegisterRow[]; lineCounts: Record<string, number> }> {
+  const imported = await listSupplierInvoices(supabase, companyId);
+  const importedCounts = await supplierInvoiceLineCounts(supabase, imported.map((row) => row.id));
+
+  const documents = await readAllPages<Record<string, unknown>>((from, to) =>
+    supabase
+      .from("vyron_documents")
+      .select("id, supplier_name, invoice_number, invoice_date, subtotal, vat, total, approved_at, created_at, updated_at, purchase_order_id")
+      .eq("tenant_id", companyId)
+      .eq("status", "archived")
+      .not("approved_at", "is", null)
+      .order("id", { ascending: true })
+      .range(from, to)
+  );
+  const documentIds = documents.map((doc) => String(doc.id));
+  const documentLines = await readAllIn<{ document_id: string; ignored: boolean | null }>(documentIds, (chunk, from, to) =>
+    supabase.from("vyron_document_line_items").select("document_id, ignored").in("document_id", chunk).order("id", { ascending: true }).range(from, to)
+  );
+  const documentCounts: Record<string, number> = {};
+  for (const line of documentLines) {
+    if (line.ignored) continue;
+    documentCounts[line.document_id] = (documentCounts[line.document_id] || 0) + 1;
+  }
+
+  const rows: SupplierInvoiceRegisterRow[] = [
+    ...imported.map((row) => ({ ...row, duplicate_risk: Boolean(row.duplicate_risk), origin: "register" as const, href: `/supplier-invoices/${row.id}` })),
+    ...documents.map((doc) => ({
+      id: String(doc.id),
+      invoice_number: String(doc.invoice_number || "—"),
+      supplier_id: null,
+      supplier_name: (doc.supplier_name as string | null) ?? null,
+      invoice_date: (doc.invoice_date as string | null) ?? null,
+      status: "Approved",
+      source_type: "Invoice Intelligence",
+      file_name: null,
+      duplicate_risk: false,
+      matched_po_id: (doc.purchase_order_id as string | null) ?? null,
+      subtotal: doc.subtotal === null || doc.subtotal === undefined ? null : Number(doc.subtotal),
+      vat: doc.vat === null || doc.vat === undefined ? null : Number(doc.vat),
+      total: doc.total === null || doc.total === undefined ? null : Number(doc.total),
+      notes: null,
+      created_at: String(doc.approved_at || doc.created_at),
+      updated_at: (doc.updated_at as string | null) ?? null,
+      origin: "document" as const,
+      href: `/document-intelligence/archive/${doc.id}`,
+    })),
+  ];
+
+  const seen = new Map<string, number>();
+  for (const row of rows) {
+    const key = invoiceKey(row);
+    if (key) seen.set(key, (seen.get(key) || 0) + 1);
+  }
+  for (const row of rows) {
+    const key = invoiceKey(row);
+    if (key && (seen.get(key) || 0) > 1) row.duplicate_risk = true;
+  }
+
+  rows.sort((a, b) => String(b.invoice_date || "").localeCompare(String(a.invoice_date || "")) || String(b.created_at).localeCompare(String(a.created_at)));
+  return { invoices: rows, lineCounts: { ...importedCounts, ...documentCounts } };
 }
 
 /** Line counts for the list view, in one query rather than N. */

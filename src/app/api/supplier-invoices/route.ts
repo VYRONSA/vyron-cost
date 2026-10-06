@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getSupplierInvoiceEditOptions,
-  listSupplierInvoices,
-  supplierInvoiceLineCounts,
+  listSupplierInvoiceRegister,
 } from "@/lib/vyron-supplier-invoices";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
@@ -29,9 +28,9 @@ export async function GET() {
         { headers: { "Cache-Control": "no-store" } }
       );
     }
-    const invoices = await listSupplierInvoices(supabase, companyId);
-    const [lineCounts, options] = await Promise.all([
-      supplierInvoiceLineCounts(supabase, invoices.map((invoice) => invoice.id)),
+    // Imported invoices and invoices approved in Supplier Invoice Intelligence, together.
+    const [{ invoices, lineCounts }, options] = await Promise.all([
+      listSupplierInvoiceRegister(supabase, companyId),
       getSupplierInvoiceEditOptions(supabase, companyId),
     ]);
     return NextResponse.json(

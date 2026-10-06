@@ -21,6 +21,9 @@ type SupplierInvoice = {
   subtotal: number | null;
   vat: number | null;
   total: number | null;
+  /** "document": approved in Supplier Invoice Intelligence — opens the document, changed only through its workflow. */
+  origin?: "register" | "document";
+  href?: string;
 };
 
 type SupplierOption = { id: string; supplier_name: string };
@@ -393,7 +396,7 @@ export default function SupplierInvoicesClient() {
                 <tr key={invoice.id} className="border-t border-indigo-50 transition hover:bg-indigo-50/40">
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     <Link
-                      href={`/supplier-invoices/${invoice.id}`}
+                      href={invoice.href || `/supplier-invoices/${invoice.id}`}
                       className="font-black text-indigo-700 underline-offset-2 hover:underline"
                     >
                       {invoice.invoice_number}
@@ -423,12 +426,12 @@ export default function SupplierInvoicesClient() {
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     <div className="flex flex-nowrap items-center gap-1.5">
                       <Link
-                        href={`/supplier-invoices/${invoice.id}`}
+                        href={invoice.href || `/supplier-invoices/${invoice.id}`}
                         className="rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-black text-indigo-800 transition hover:bg-indigo-100"
                       >
                         Open
                       </Link>
-                      {canDelete ? (
+                      {canDelete && invoice.origin !== "document" ? (
                         <button
                           onClick={() => void removeInvoice(invoice)}
                           disabled={busyId === invoice.id}
