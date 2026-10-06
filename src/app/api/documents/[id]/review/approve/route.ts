@@ -13,6 +13,7 @@ import { computeThreeWayMatch, upsertThreeWayMatch } from "@/lib/vyron-three-way
 import { isSupervisorAuthorized } from "@/lib/vyron-document-approval-audit";
 import { getServerWorkspaceSession } from "@/lib/vyron-workspace-admin-server";
 import { insertDocumentCostAudit } from "@/lib/vyron-document-cost-audit";
+import { decideSupplierCostUpdate } from "@/lib/vyron-supplier-cost-guard";
 import { roundMoney } from "@/lib/vyron-invoice-line-math";
 import { reconcileInvoiceTotals } from "@/lib/vyron-invoice-reconciliation";
 import { recomputeRecoveryIntelligenceV2 } from "@/lib/vyron-recovery-intelligence-v2";
@@ -396,14 +397,37 @@ export async function POST(request: NextRequest, context: RouteContext) {
     });
   }
 
+  // Cost updates a person must make: the supplier's price could not be proven to be per the item's costing unit.
+  const costUpdatesHeld: Array<{ lineItemId: string; entityType: string; entityId: string; entityName: string; previousCost: number; invoicePrice: number; invoiceUnit: string | null; code: string; reason: string }> = [];
+  const heldAlerts: Array<Record<string, unknown>> = [];
+  const appliedLineIds = new Set<string>();
+  const holdCostUpdate = (line: any, entity: { id: string; name: string }, previousCost: number, invoicePrice: number, decision: { code: string; reason: string }) => {
+    costUpdatesHeld.push({ lineItemId: line.id, entityType: line.matched_entity_type, entityId: entity.id, entityName: entity.name, previousCost, invoicePrice, invoiceUnit: line.unit ?? null, code: decision.code, reason: decision.reason });
+    heldAlerts.push({
+      tenant_id: document.tenant_id,
+      supplier_id: supplier?.id || null,
+      supplier_name: document.supplier_name,
+      document_id: documentId,
+      line_item_id: line.id,
+      risk_type: "cost_update_held",
+      severity: "medium",
+      title: "Cost update held",
+      description: `${entity.name}: ${decision.reason}`,
+      previous_price: previousCost,
+      new_price: invoicePrice,
+      metadata: { entityType: line.matched_entity_type, entityId: entity.id, code: decision.code, invoiceUnit: line.unit ?? null },
+    });
+  };
+
   for (const line of targetLines as any[]) {
     const newPrice = Number(line.unit_price || 0);
 
     if (line.matched_entity_type === "ingredient" || line.matched_entity_type === "packaging") {
       const { data: ingredient } = await supabase
         .from("vyron_cost_ingredients")
-        .select("id, ingredient_name, purchase_cost")
+        .select("id, ingredient_name, purchase_cost, purchase_unit")
         .eq("id", line.matched_entity_id)
+        .eq("company_id", document.tenant_id)
         .maybeSingle();
       if (!ingredient) continue;
       const prev = Number(ingredient.purchase_cost || 0);
@@ -441,6 +465,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
           movementType: moveType,
         })
       );
+
+      const decision = decideSupplierCostUpdate({ entityType: line.matched_entity_type, invoiceUnit: line.unit, masterUnit: ingredient.purchase_unit, previousCost: prev, newCost: newPrice });
+      if (!decision.apply) {
+        holdCostUpdate(line, { id: ingredient.id, name: ingredient.ingredient_name }, prev, newPrice, decision);
+        continue;
+      }
+      appliedLineIds.add(line.id);
 
       await supabase
         .from("vyron_cost_ingredients")
@@ -504,6 +535,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         .from("vyron_cost_products")
         .select("id, product_name, total_cost")
         .eq("id", line.matched_entity_id)
+        .eq("company_id", document.tenant_id)
         .maybeSingle();
       if (!product) continue;
       const prev = Number(product.total_cost || 0);
@@ -541,6 +573,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
           movementType: moveType,
         })
       );
+
+      const decision = decideSupplierCostUpdate({ entityType: "product", invoiceUnit: line.unit, masterUnit: null, previousCost: prev, newCost: newPrice });
+      if (!decision.apply) {
+        holdCostUpdate(line, { id: product.id, name: product.product_name }, prev, newPrice, decision);
+        continue;
+      }
+      appliedLineIds.add(line.id);
 
       await supabase
         .from("vyron_cost_products")
@@ -616,6 +655,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
       metadata: { triggeredRiskCount: riskAlerts.length },
     });
   }
+
+  // Held updates are reported separately; they are not supplier risk signals.
+  riskAlerts.push(...heldAlerts);
 
   if (historyRows.length) {
     await insertPriceHistoryRows(supabase, historyRows);
@@ -716,7 +758,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
       companyId: document.tenant_id as string,
       documentId,
       invoiceNumber: document.invoice_number as string | null,
-      lines: (lines || []) as Array<{
+      // Only lines whose cost was applied: a held price is not a stock cost either.
+      lines: (lines || []).filter((line: any) => appliedLineIds.has(line.id)) as Array<{
         matched_entity_type?: string | null;
         matched_entity_id?: string | null;
         description?: string | null;
@@ -803,7 +846,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
     recoveryRecomputed,
     recoveryRecomputeWarning,
     updatesApplied,
-    message: recoveryRecomputed
+    heldCount: costUpdatesHeld.length,
+    costUpdatesHeld,
+    message: costUpdatesHeld.length
+      ? `Approved. ${updatesApplied.length} cost(s) updated; ${costUpdatesHeld.length} held for review (unit or price could not be verified).`
+      : recoveryRecomputed
       ? "Approved. Costs, price history, and recovery intelligence updated."
       : "Approved. Costs and price history updated.",
   });

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { readAllIn, readAllPages } from "@/lib/vyron-supabase-paging";
 import { loadCustomerPermittedPrices } from "@/lib/vyron-order-catalogue";
 import { PriceListError, isUuidShape } from "@/lib/vyron-customer-price-lists";
 
@@ -36,29 +37,14 @@ const num = (v: unknown) => {
 const text = (v: unknown) => String(v ?? "").trim();
 const today = () => new Date().toISOString().slice(0, 10);
 
-/** PostgREST caps a response (1000 rows by default); read every page. */
-async function readAll<T>(build: (from: number, to: number) => PromiseLike<{ data: unknown; error: { message: string } | null }>): Promise<T[]> {
-  const rows: T[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const { data, error } = await build(from, from + PAGE - 1);
-    if (error) throw new Error(error.message);
-    const page = (data || []) as T[];
-    rows.push(...page);
-    if (page.length < PAGE) break;
-  }
-  return rows;
-}
+type PageResult = PromiseLike<{ data: unknown; error: { message: string } | null }>;
 
-/** `.in()` with thousands of ids overflows a URL; read in chunks. */
-async function readIn<T>(ids: string[], build: (chunk: string[]) => PromiseLike<{ data: unknown; error: { message: string } | null }>): Promise<T[]> {
-  const rows: T[] = [];
-  for (let i = 0; i < ids.length; i += IN_CHUNK) {
-    const { data, error } = await build(ids.slice(i, i + IN_CHUNK));
-    if (error) throw new Error(error.message);
-    rows.push(...((data || []) as T[]));
-  }
-  return rows;
-}
+/** PostgREST caps a response (1000 rows by default); read every page. */
+const readAll = <T>(build: (from: number, to: number) => PageResult): Promise<T[]> => readAllPages<T>(build);
+
+/** `.in()` with thousands of ids overflows a URL: read in chunks, and every page of each chunk. */
+const readIn = <T>(ids: string[], build: (chunk: string[]) => { range(from: number, to: number): PageResult }): Promise<T[]> =>
+  readAllIn<T>(ids, (chunk, from, to) => build(chunk).range(from, to), IN_CHUNK, PAGE);
 
 function readDate(value: unknown, label: string): string | null {
   const v = text(value);

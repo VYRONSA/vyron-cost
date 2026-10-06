@@ -50,6 +50,7 @@
     "test:kingdom-foods-emergency-security": "node scripts/test-kingdom-foods-emergency-security.mjs",
     "test:invoice-cost-capture": "node scripts/test-invoice-cost-capture.mjs",
     "test:customer-gp-report": "node scripts/test-customer-gp-report-margin.mjs",
+    "test:supplier-cost-gp": "node scripts/test-supplier-cost-gp-reconciliation.mjs",
     "test:kf-gp-correction": "node scripts/test-kf-gp-correction.mjs",
     "test:sales-order-cost-capture": "node scripts/test-sales-order-cost-capture.mjs",
     "test:manufacture-reversal-pg": "node scripts/test-manufacture-reversal-pg.mjs",

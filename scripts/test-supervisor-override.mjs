@@ -108,8 +108,8 @@ function seed({ requirePoLinked = false, extraction = FAILED_EXTRACTION, lines, 
       },
     ],
     vyron_document_line_items: lines || [
-      { id: "l1", document_id: DOC, description: "Beef mince 5kg", quantity: 4, unit_price: 150, vat: 90, line_total: 690, ignored: false, matched_entity_type: "ingredient", matched_entity_id: "ing-1", matched_entity_name: "Beef mince" },
-      { id: "l2", document_id: DOC, description: "Chicken fillet 2kg", quantity: 2, unit_price: 200, vat: 60, line_total: 460, ignored: false, matched_entity_type: "ingredient", matched_entity_id: "ing-2", matched_entity_name: "Chicken fillet" },
+      { id: "l1", document_id: DOC, description: "Beef mince 5kg", quantity: 4, unit: "kg", unit_price: 150, vat: 90, line_total: 690, ignored: false, matched_entity_type: "ingredient", matched_entity_id: "ing-1", matched_entity_name: "Beef mince" },
+      { id: "l2", document_id: DOC, description: "Chicken fillet 2kg", quantity: 2, unit: "kg", unit_price: 200, vat: 60, line_total: 460, ignored: false, matched_entity_type: "ingredient", matched_entity_id: "ing-2", matched_entity_name: "Chicken fillet" },
     ],
     vyron_document_extraction_logs: [
       { id: "x1", document_id: DOC, stage: "extraction", status: "success", created_at: "2026-09-20T08:00:00Z", metadata: { extractionQuality: extraction } },
@@ -118,8 +118,8 @@ function seed({ requirePoLinked = false, extraction = FAILED_EXTRACTION, lines, 
     vyron_po_approval_rules: [{ id: "po-r", company_id: CO_A, require_po_before_invoice_approval: requirePoLinked }],
     vyron_document_approval_rules: approvalRules ? [{ id: "ar", tenant_id: CO_A, ...approvalRules }] : [],
     vyron_cost_ingredients: [
-      { id: "ing-1", company_id: CO_A, ingredient_name: "Beef mince", purchase_cost: 140 },
-      { id: "ing-2", company_id: CO_A, ingredient_name: "Chicken fillet", purchase_cost: 190 },
+      { id: "ing-1", company_id: CO_A, ingredient_name: "Beef mince", purchase_unit: "kg", purchase_cost: 140 },
+      { id: "ing-2", company_id: CO_A, ingredient_name: "Chicken fillet", purchase_unit: "kg", purchase_cost: 190 },
     ],
     vyron_document_approval_override_audit: [],
     vyron_document_po_link_override_audit: [],
@@ -317,13 +317,13 @@ for (const [label, requirePoLinked, expectedRules] of [
 
 const SOUND_EXTRACTION = { classification: "Verified", quality: 100, completenessStatus: "Complete", reconciliationStatus: "Reconciled", columnMappingFailed: false };
 const UNMAPPED_LINES = [
-  { id: "l1", document_id: DOC, description: "Beef mince 5kg", quantity: 4, unit_price: 150, vat: 90, line_total: 690, ignored: false, matched_entity_type: null, matched_entity_id: null },
-  { id: "l2", document_id: DOC, description: "Chicken fillet 2kg", quantity: 2, unit_price: 200, vat: 60, line_total: 460, ignored: false, matched_entity_type: "ingredient", matched_entity_id: "ing-2", matched_entity_name: "Chicken fillet" },
+  { id: "l1", document_id: DOC, description: "Beef mince 5kg", quantity: 4, unit: "kg", unit_price: 150, vat: 90, line_total: 690, ignored: false, matched_entity_type: null, matched_entity_id: null },
+  { id: "l2", document_id: DOC, description: "Chicken fillet 2kg", quantity: 2, unit: "kg", unit_price: 200, vat: 60, line_total: 460, ignored: false, matched_entity_type: "ingredient", matched_entity_id: "ing-2", matched_entity_name: "Chicken fillet" },
 ];
 /** Lines that fall R115 short of the invoice header: a major totals mismatch. */
 const SHORT_LINES = [
-  { id: "l1", document_id: DOC, description: "Beef mince 5kg", quantity: 4, unit_price: 125, vat: 75, line_total: 575, ignored: false, matched_entity_type: "ingredient", matched_entity_id: "ing-1", matched_entity_name: "Beef mince" },
-  { id: "l2", document_id: DOC, description: "Chicken fillet 2kg", quantity: 2, unit_price: 200, vat: 60, line_total: 460, ignored: false, matched_entity_type: "ingredient", matched_entity_id: "ing-2", matched_entity_name: "Chicken fillet" },
+  { id: "l1", document_id: DOC, description: "Beef mince 5kg", quantity: 4, unit: "kg", unit_price: 125, vat: 75, line_total: 575, ignored: false, matched_entity_type: "ingredient", matched_entity_id: "ing-1", matched_entity_name: "Beef mince" },
+  { id: "l2", document_id: DOC, description: "Chicken fillet 2kg", quantity: 2, unit: "kg", unit_price: 200, vat: 60, line_total: 460, ignored: false, matched_entity_type: "ingredient", matched_entity_id: "ing-2", matched_entity_name: "Chicken fillet" },
 ];
 /** Exactly what the review screen sends after "N line(s) are not matched. Approve anyway?" and a totals reason. */
 const CLERK_APPROVE_ANYWAY = { force: true, forceTotalsMismatch: true, reconciliationNote: "Supplier short-shipped; will credit" };

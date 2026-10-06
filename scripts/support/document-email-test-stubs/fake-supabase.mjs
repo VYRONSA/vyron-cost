@@ -197,6 +197,9 @@ export function createFakeSupabase(seed = {}, options = {}) {
       }
       if (this.skip) matched = matched.slice(this.skip);
       if (this.max !== null) matched = matched.slice(0, this.max);
+      // Opt-in (options.maxRows: n, or { table: n }): PostgREST's response cap — a select returns at most n rows, silently.
+      const cap = typeof options.maxRows === "number" ? options.maxRows : options.maxRows?.[this.table];
+      if (cap && this.op === "select") matched = matched.slice(0, cap);
       if (this.mode === "maybe") {
         if (matched.length > 1) return { data: null, error: { message: "multiple rows returned" } };
         return { data: matched[0] ? structuredClone(matched[0]) : null, error: null };

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { readAllIn, readAllPages } from "@/lib/vyron-supabase-paging";
 
 type CustomerInvoiceRow = {
   id: string;
@@ -237,20 +238,19 @@ export async function getCustomerGpReport(
     search: normalizeFilterValue(filters.search),
   };
 
-  let invoiceQuery = supabase
-    .from("vyron_customer_invoices")
-    .select("id, company_id, customer_id, customer_name, invoice_number, invoice_date, status, stock_posted, sales_value, cost_value, gross_profit")
-    .eq("company_id", companyId)
-    .order("invoice_date", { ascending: false });
+  // Every page: a response is capped (1000 rows by default) and a capped read under-counts silently.
+  const invoiceRows = await readAllPages<CustomerInvoiceRow>((from, to) => {
+    let invoiceQuery = supabase
+      .from("vyron_customer_invoices")
+      .select("id, company_id, customer_id, customer_name, invoice_number, invoice_date, status, stock_posted, sales_value, cost_value, gross_profit")
+      .eq("company_id", companyId);
+    if (normalizedFilters.from) invoiceQuery = invoiceQuery.gte("invoice_date", normalizedFilters.from);
+    if (normalizedFilters.to) invoiceQuery = invoiceQuery.lte("invoice_date", normalizedFilters.to);
+    if (normalizedFilters.customerId) invoiceQuery = invoiceQuery.eq("customer_id", normalizedFilters.customerId);
+    return invoiceQuery.order("invoice_date", { ascending: false }).order("id", { ascending: true }).range(from, to);
+  });
 
-  if (normalizedFilters.from) invoiceQuery = invoiceQuery.gte("invoice_date", normalizedFilters.from);
-  if (normalizedFilters.to) invoiceQuery = invoiceQuery.lte("invoice_date", normalizedFilters.to);
-  if (normalizedFilters.customerId) invoiceQuery = invoiceQuery.eq("customer_id", normalizedFilters.customerId);
-
-  const { data: invoiceRows, error: invoiceError } = await invoiceQuery;
-  if (invoiceError) throw new Error(invoiceError.message);
-
-  const postedInvoices = ((invoiceRows || []) as CustomerInvoiceRow[]).filter(
+  const postedInvoices = invoiceRows.filter(
     (row) => Boolean(row.stock_posted) || ["Posted", "Sent", "Paid"].includes(String(row.status || ""))
   );
 
@@ -287,40 +287,40 @@ export async function getCustomerGpReport(
     };
   }
 
-  const [linesRes, customersRes, productsRes, linksRes, assignmentsRes] = await Promise.all([
-    supabase
-      .from("vyron_customer_invoice_lines")
-      .select("invoice_id, product_id, product_name, quantity, selling_price, cost_per_unit")
-      .in("invoice_id", invoiceIds),
-    supabase
-      .from("vyron_customers")
-      .select("id, customer_name, category")
-      .eq("company_id", companyId),
-    supabase
-      .from("vyron_cost_products")
-      .select("id, product_name, category")
-      .eq("company_id", companyId),
-    supabase
-      .from("vyron_customer_sales_order_invoice_links")
-      .select("invoice_id, sales_order_id")
-      .eq("company_id", companyId)
-      .in("invoice_id", invoiceIds),
+  const [lines, customers, products, links, assignmentsRes] = await Promise.all([
+    // Invoice lines carry no company_id: reached only through this company's invoices, every page of every chunk.
+    readAllIn<InvoiceLineRow>(invoiceIds, (chunk, from, to) =>
+      supabase
+        .from("vyron_customer_invoice_lines")
+        .select("id, invoice_id, product_id, product_name, quantity, selling_price, cost_per_unit")
+        .in("invoice_id", chunk)
+        .order("id", { ascending: true })
+        .range(from, to)
+    ),
+    readAllPages<CustomerRow>((from, to) =>
+      supabase.from("vyron_customers").select("id, customer_name, category").eq("company_id", companyId).order("id", { ascending: true }).range(from, to)
+    ),
+    readAllPages<ProductRow>((from, to) =>
+      supabase.from("vyron_cost_products").select("id, product_name, category").eq("company_id", companyId).order("id", { ascending: true }).range(from, to)
+    ),
+    readAllIn<InvoiceOrderLink>(invoiceIds, (chunk, from, to) =>
+      supabase
+        .from("vyron_customer_sales_order_invoice_links")
+        .select("invoice_id, sales_order_id")
+        .eq("company_id", companyId)
+        .in("invoice_id", chunk)
+        .order("invoice_id", { ascending: true })
+        .order("sales_order_id", { ascending: true })
+        .range(from, to)
+    ),
     supabase
       .from("vyron_customer_price_list_assignments")
       .select("customer_id, default_price_list_id, contract_price_list_id")
       .eq("company_id", companyId),
   ]);
 
-  if (linesRes.error) throw new Error(linesRes.error.message);
-  if (customersRes.error) throw new Error(customersRes.error.message);
-  if (productsRes.error) throw new Error(productsRes.error.message);
-  if (linksRes.error) throw new Error(linksRes.error.message);
   if (assignmentsRes.error) throw new Error(assignmentsRes.error.message);
 
-  const lines = (linesRes.data || []) as InvoiceLineRow[];
-  const customers = (customersRes.data || []) as CustomerRow[];
-  const products = (productsRes.data || []) as ProductRow[];
-  const links = (linksRes.data || []) as InvoiceOrderLink[];
 
   const customerById = new Map(customers.map((row) => [String(row.id), row]));
   const productById = new Map(products.map((row) => [String(row.id), row]));
