@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { stockTakeEffectiveAt } from "@/lib/vyron-stock-take-rules";
 
 export type StockEntityType = "ingredient" | "packaging" | "finished_goods";
 export type StockStatus = "In Stock" | "Low Stock" | "Out Of Stock" | "Overstock" | "Slow Moving";
@@ -1439,6 +1440,11 @@ export async function postStockCount(
   if (String(header.status || "") !== "Approved") {
     throw new Error("Stock count must be approved before posting.");
   }
+  // An uploaded stock take posts on its Stock Take Date (the day the physical count was performed),
+  // never on the upload or posting day.
+  const stockTakeDate = String(header.count_type || "") === "upload" && header.count_date ? String(header.count_date).slice(0, 10) : null;
+  const movementDate = options?.movementDate ?? (stockTakeDate ? stockTakeEffectiveAt(stockTakeDate) : undefined);
+  const movementMetadata = stockTakeDate ? { stockTakeDate } : undefined;
 
   const { data: lines } = await supabase
     .from("vyron_cost_stock_count_lines")
@@ -1460,7 +1466,8 @@ export async function postStockCount(
         referenceId: countId,
         referenceLabel: header.count_number as string,
         actor,
-        movementDate: options?.movementDate,
+        movementDate,
+        metadata: movementMetadata,
       });
     } else {
       await postStockMovement(supabase, {
@@ -1473,14 +1480,16 @@ export async function postStockCount(
         referenceId: countId,
         referenceLabel: header.count_number as string,
         actor,
-        movementDate: options?.movementDate,
+        movementDate,
+        metadata: movementMetadata,
       });
     }
   }
 
+  const postedAt = new Date().toISOString();
   await supabase
     .from("vyron_cost_stock_counts")
-    .update({ status: "Posted", posted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .update({ status: "Posted", posted_at: postedAt, updated_at: postedAt })
     .eq("id", countId)
     .eq("company_id", companyId);
 
@@ -1488,9 +1497,10 @@ export async function postStockCount(
     companyId: header.company_id as string,
     eventType: "Stock Count Posted",
     actor,
-    detail: `Posted count ${header.count_number}`,
+    detail: stockTakeDate ? `Posted count ${header.count_number} with stock take date ${stockTakeDate}` : `Posted count ${header.count_number}`,
     referenceType: "stock_count",
     referenceId: countId,
+    metadata: stockTakeDate ? { stockTakeDate, effectiveMovementDate: movementDate, uploadedAt: header.created_at ?? null, submittedAt: header.submitted_at ?? null, postedAt } : undefined,
   });
 }
 
