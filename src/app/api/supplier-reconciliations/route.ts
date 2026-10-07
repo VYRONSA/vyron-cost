@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
-import { sessionAuditActor } from "@/lib/vyron-audit-actor";
+import { memberDisplayName, sessionAuditActor } from "@/lib/vyron-audit-actor";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
-import { ReconciliationError, listSupplierReconciliations, runSupplierReconciliation } from "@/lib/vyron-supplier-reconciliation";
+import {
+  ReconciliationError,
+  listSupplierReconciliations,
+  loadStatementContext,
+  runApprovedStatementReconciliation,
+  runSupplierReconciliation,
+} from "@/lib/vyron-supplier-reconciliation";
+import { StatementPdfError, extractSupplierStatementPdf, isPdfUpload } from "@/lib/vyron-supplier-statement-pdf";
 import { UploadTableError, readUploadedTable } from "@/lib/vyron-upload-table";
 import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
@@ -24,7 +31,13 @@ export async function GET() {
   }
 }
 
-/** POST multipart { file (CSV/XLSX), supplierName? } — reconcile a supplier statement / invoice list. Posts nothing to the books. */
+/**
+ * POST multipart — reconcile a supplier statement / invoice list. Posts nothing to the books.
+ *   CSV / XLSX { file, supplierName? } — reconciled directly (unchanged).
+ *   PDF { file, action: "extract" } — read the statement and return it for review. Writes nothing.
+ *   PDF { file, action: "approve", digest, supplierName, approved: "true" } — reconcile the reviewed
+ *       statement; the PDF must give exactly the extraction that was reviewed.
+ */
 export async function POST(request: Request) {
   if (!isSupabaseServiceRoleConfigured()) return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
   const supabase = getSupabaseAdmin();
@@ -35,12 +48,37 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const file = form.get("file");
     if (!(file instanceof File)) return NextResponse.json({ ok: false, error: "Choose a supplier statement or invoice list to upload." }, { status: 400 });
+    if (isPdfUpload(file)) {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const context = await loadStatementContext(supabase, companyId);
+      const action = String(form.get("action") || "extract");
+      if (action === "extract") {
+        const extraction = await extractSupplierStatementPdf(bytes, { ownCompanyNames: context.ownCompanyNames });
+        return NextResponse.json({ ok: true, mode: "review", fileName: file.name, extraction, knownSuppliers: context.supplierNames }, { headers: { "Cache-Control": "no-store" } });
+      }
+      if (action !== "approve") return NextResponse.json({ ok: false, error: "Unknown action." }, { status: 400 });
+      if (String(form.get("approved") || "") !== "true") return NextResponse.json({ ok: false, error: "Review and approve the extracted statement first." }, { status: 400 });
+      const result = await runApprovedStatementReconciliation(
+        supabase,
+        companyId,
+        {
+          bytes,
+          fileName: file.name,
+          approvedDigest: String(form.get("digest") || ""),
+          supplierName: String(form.get("supplierName") || ""),
+          ownCompanyNames: context.ownCompanyNames,
+          approvedBy: await memberDisplayName(supabase, session),
+        },
+        sessionAuditActor(session)
+      );
+      return NextResponse.json({ ok: true, ...result });
+    }
     const table = await readUploadedTable(new Uint8Array(await file.arrayBuffer()), file.name, file.type);
     const supplierName = String(form.get("supplierName") || "").trim() || null;
     const result = await runSupplierReconciliation(supabase, companyId, { table, sha256: table.sha256, fileName: file.name, supplierName }, sessionAuditActor(session));
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
-    if (error instanceof UploadTableError || error instanceof ReconciliationError) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    if (error instanceof UploadTableError || error instanceof ReconciliationError || error instanceof StatementPdfError) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
     return workspaceAccessErrorResponse(error, "Reconciliation failed.");
   }
 }

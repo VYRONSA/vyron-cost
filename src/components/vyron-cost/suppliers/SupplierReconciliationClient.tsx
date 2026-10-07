@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Card, KpiCard, Notice, Pill, money } from "@/components/vyron-order-engine/ui";
 import FileDropZone from "@/components/vyron-ui/FileDropZone";
+import SupplierStatementReview, { type StatementExtraction } from "@/components/vyron-cost/suppliers/SupplierStatementReview";
 
 type Status = "MATCHED" | "MISSING_IN_VOLORA" | "TOTAL_DIFFERENCE" | "VAT_DIFFERENCE" | "DUPLICATE" | "CREDIT_NOTE" | "NOT_ON_SUPPLIER_DOCUMENT";
 type Line = {
@@ -71,6 +72,8 @@ export default function SupplierReconciliationClient() {
   const [current, setCurrent] = useState<{ id: string; fileName: string; summary: Summary; lines: Line[] } | null>(null);
   const [filter, setFilter] = useState<Status | "EXCEPTIONS" | "ALL">("EXCEPTIONS");
   const [history, setHistory] = useState<Run[]>([]);
+  const [review, setReview] = useState<{ file: File; extraction: StatementExtraction; knownSuppliers: string[] } | null>(null);
+  const isPdf = (file: File) => file.type === "application/pdf" || /\.pdf$/i.test(file.name);
 
   const loadHistory = useCallback(async () => {
     const res = await fetch("/api/supplier-reconciliations", { cache: "no-store" });
@@ -84,7 +87,20 @@ export default function SupplierReconciliationClient() {
   const upload = async (file: File) => {
     setBusy(true);
     setError(null);
+    setReview(null);
     try {
+      if (isPdf(file)) {
+        // A PDF statement is read and shown for review first; nothing runs until it is approved.
+        const form = new FormData();
+        form.append("file", file);
+        form.append("action", "extract");
+        const res = await fetch("/api/supplier-reconciliations", { method: "POST", body: form });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "The statement could not be read.");
+        setCurrent(null);
+        setReview({ file, extraction: data.extraction, knownSuppliers: data.knownSuppliers || [] });
+        return;
+      }
       const form = new FormData();
       form.append("file", file);
       if (supplierName.trim()) form.append("supplierName", supplierName.trim());
@@ -92,6 +108,31 @@ export default function SupplierReconciliationClient() {
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "Reconciliation failed.");
       setCurrent({ id: data.reconciliation.id, fileName: file.name, summary: { ...data.summary, skippedRows: data.skipped }, lines: data.lines.map(toLine) });
+      setFilter("EXCEPTIONS");
+      await loadHistory();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Reconciliation failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const approve = async (supplier: string) => {
+    if (!review) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("file", review.file);
+      form.append("action", "approve");
+      form.append("approved", "true");
+      form.append("digest", review.extraction.digest);
+      form.append("supplierName", supplier);
+      const res = await fetch("/api/supplier-reconciliations", { method: "POST", body: form });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Reconciliation failed.");
+      setCurrent({ id: data.reconciliation.id, fileName: review.file.name, summary: { ...data.summary, skippedRows: data.skipped }, lines: data.lines.map(toLine) });
+      setReview(null);
       setFilter("EXCEPTIONS");
       await loadHistory();
     } catch (e) {
@@ -115,7 +156,7 @@ export default function SupplierReconciliationClient() {
       <div>
         <h1 className="text-2xl font-black text-slate-900">Supplier Invoice Reconciliation</h1>
         <p className="mt-1 max-w-3xl text-sm font-semibold text-slate-500">
-          Upload a supplier statement or invoice list. VOLORA matches each line by supplier and invoice number against the supplier invoices it holds and shows every exception. Nothing is
+          Upload a supplier statement (PDF) or invoice list (CSV / Excel). A PDF statement is read and shown for your review first. VOLORA matches each line by supplier and invoice number against the supplier invoices it holds and shows every exception. Nothing is
           posted to your books.
         </p>
       </div>
@@ -123,12 +164,30 @@ export default function SupplierReconciliationClient() {
       <Card title="Upload">
         <div className="grid gap-3">
           <label className="grid max-w-md gap-1 text-xs font-black uppercase text-slate-500">
-            Supplier (only needed when the file has no supplier column)
+            Supplier (CSV / Excel without a supplier column; for a PDF the supplier is confirmed on review)
             <input className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold normal-case" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} placeholder="e.g. N1 Restaurant Suppliers (Pty) Ltd" />
           </label>
-          <FileDropZone disabled={busy} label={busy ? "Reconciling…" : "Drag & drop a supplier statement or invoice list (CSV / Excel)"} onFile={(f) => void upload(f)} />
+          <FileDropZone
+            accept=".pdf,.csv,.xlsx"
+            disabled={busy}
+            label={busy ? "Reading…" : "Drag & drop a supplier statement (PDF) or invoice list (CSV / Excel)"}
+            hint="or click to choose a file (max 5 MB). Scanned PDFs cannot be read."
+            onFile={(f) => void upload(f)}
+          />
         </div>
       </Card>
+
+      {review ? (
+        <SupplierStatementReview
+          key={review.extraction.digest}
+          fileName={review.file.name}
+          extraction={review.extraction}
+          knownSuppliers={review.knownSuppliers}
+          busy={busy}
+          onApprove={(supplier) => void approve(supplier)}
+          onCancel={() => setReview(null)}
+        />
+      ) : null}
 
       {current && s ? (
         <>

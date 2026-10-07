@@ -53,6 +53,7 @@
     "test:supplier-cost-gp": "node scripts/test-supplier-cost-gp-reconciliation.mjs",
     "test:business-controls": "node scripts/test-business-controls.mjs",
     "test:stock-take-upload": "node scripts/test-stock-take-upload.mjs",
+    "test:supplier-statement-pdf": "node scripts/test-supplier-statement-pdf.mjs",
     "test:kf-gp-correction": "node scripts/test-kf-gp-correction.mjs",
     "test:sales-order-cost-capture": "node scripts/test-sales-order-cost-capture.mjs",
     "test:manufacture-reversal-pg": "node scripts/test-manufacture-reversal-pg.mjs",

@@ -3,6 +3,7 @@ import { normalisedNameKey } from "@/lib/vyron-supplier-resolution";
 import { listSupplierInvoiceRegister, type SupplierInvoiceRegisterRow } from "@/lib/vyron-supplier-invoices";
 import { parseAmount, parseDateCell, pickColumn } from "@/lib/vyron-upload-table";
 import type { CsvTable } from "@/lib/data-migration/csv";
+import { extractSupplierStatementPdf, type StatementExtraction } from "@/lib/vyron-supplier-statement-pdf";
 
 /**
  * VOLORA — supplier invoice reconciliation.
@@ -252,6 +253,102 @@ export async function runSupplierReconciliation(
 ) {
   const { lines: statement, skipped } = readStatementLines(input.table, input.supplierName);
   if (!statement.length) throw new ReconciliationError("No invoice lines could be read from the file.");
+  return recordReconciliation(supabase, companyId, { statement, skipped, sha256: input.sha256, fileName: input.fileName }, actor);
+}
+
+/**
+ * The approved lines of an extracted PDF statement → statement lines. Only invoices and credit notes
+ * read without an error are reconciled; payments / journals are read but not matched to invoices,
+ * and excluded lines are reported as skipped with their reason.
+ */
+export function statementLinesFromExtraction(extraction: StatementExtraction, supplierName: string): { lines: StatementLine[]; skipped: Array<{ row: number; reason: string }> } {
+  const lines: StatementLine[] = [];
+  const skipped: Array<{ row: number; reason: string }> = [];
+  for (const t of extraction.transactions) {
+    if (t.status === "EXCLUDED") {
+      skipped.push({ row: t.index, reason: `Page ${t.page}: ${t.flags.filter((f) => f.severity === "error").map((f) => f.message).join(" ")}` });
+      continue;
+    }
+    if (t.status !== "RECONCILE") continue;
+    const isCredit = t.type === "CREDIT_NOTE";
+    const amount = r2((t.debit ?? 0) - (t.credit ?? 0));
+    lines.push({
+      row: t.index,
+      supplierName,
+      invoiceNumber: t.reference!,
+      documentType: isCredit ? "CREDIT_NOTE" : "INVOICE",
+      invoiceDate: t.date,
+      dueDate: t.dueDate,
+      total: isCredit ? -Math.abs(amount) : amount,
+      vat: null,
+      amountPaid: null,
+    });
+  }
+  return { lines, skipped };
+}
+
+/**
+ * Reconcile a PDF statement the user reviewed and approved. The PDF is read again and must give
+ * exactly the extraction that was reviewed (same digest); otherwise nothing runs. Writes only the
+ * reconciliation record, as a CSV / Excel reconciliation does.
+ */
+export async function runApprovedStatementReconciliation(
+  supabase: SupabaseClient,
+  companyId: string,
+  input: { bytes: Uint8Array; fileName: string; approvedDigest: string; supplierName: string; ownCompanyNames: string[]; approvedBy: string },
+  actor: string
+) {
+  const supplierName = String(input.supplierName || "").trim();
+  if (!supplierName) throw new ReconciliationError("Choose the supplier this statement is from before approving it.");
+  const extraction = await extractSupplierStatementPdf(input.bytes, { ownCompanyNames: input.ownCompanyNames });
+  if (!input.approvedDigest || extraction.digest !== input.approvedDigest)
+    throw new ReconciliationError("The statement is not the one that was reviewed. Upload it again and review the extracted lines before approving.");
+  const { lines: statement, skipped } = statementLinesFromExtraction(extraction, supplierName);
+  if (!statement.length) throw new ReconciliationError("The statement has no invoice or credit-note lines that could be read with confidence; nothing to reconcile.");
+  return recordReconciliation(
+    supabase,
+    companyId,
+    {
+      statement,
+      skipped,
+      sha256: extraction.fileSha256,
+      fileName: input.fileName,
+      extraSummary: {
+        statement: {
+          source: "pdf",
+          extractionDigest: extraction.digest,
+          approvedBy: input.approvedBy,
+          approvedAt: new Date().toISOString(),
+          supplierDetected: extraction.supplier.value,
+          supplierApproved: supplierName,
+          accountNumber: extraction.accountNumber.value,
+          statementDate: extraction.statementDate.value,
+          periodFrom: extraction.periodFrom.value,
+          periodTo: extraction.periodTo.value,
+          openingBalance: extraction.openingBalance.value,
+          closingBalance: extraction.closingBalance.value,
+          balanceCheck: extraction.balanceCheck,
+          counts: extraction.counts,
+          pageCount: extraction.pageCount,
+          layout: extraction.layout,
+          dateOrder: extraction.dateOrder,
+          warnings: extraction.warnings,
+          unreadLines: extraction.unreadLines.length,
+        },
+      },
+    },
+    actor
+  );
+}
+
+/** Reconcile statement lines against this company's register and keep the run. Writes only the reconciliation record. */
+async function recordReconciliation(
+  supabase: SupabaseClient,
+  companyId: string,
+  input: { statement: StatementLine[]; skipped: Array<{ row: number; reason: string }>; sha256: string; fileName: string; extraSummary?: Record<string, unknown> },
+  actor: string
+) {
+  const { statement, skipped } = input;
   const { invoices } = await listSupplierInvoiceRegister(supabase, companyId);
   const { lines, summary } = reconcileStatement(statement, invoices);
   const suppliers = [...new Set(statement.map((l) => l.supplierName))];
@@ -264,7 +361,7 @@ export async function runSupplierReconciliation(
       source_sha256: input.sha256,
       period_from: summary.periodFrom,
       period_to: summary.periodTo,
-      summary: { ...summary, skippedRows: skipped },
+      summary: { ...summary, skippedRows: skipped, ...(input.extraSummary || {}) },
       created_by: actor,
     })
     .select("*")
@@ -296,6 +393,21 @@ export async function runSupplierReconciliation(
     if (linesError) throw new Error(linesError.message);
   }
   return { reconciliation: header, lines, summary, skipped };
+}
+
+/** This company's own name(s) — never read as the supplier — and its supplier names, for the review screen. Read-only. */
+export async function loadStatementContext(supabase: SupabaseClient, companyId: string): Promise<{ ownCompanyNames: string[]; supplierNames: string[] }> {
+  const [{ data: workspaces, error: wsError }, { data: suppliers, error: supError }] = await Promise.all([
+    supabase.from("vyron_workspaces").select("company_name").eq("company_id", companyId),
+    supabase.from("vyron_cost_suppliers").select("supplier_name").eq("company_id", companyId).limit(2000),
+  ]);
+  if (wsError) throw new Error(wsError.message);
+  if (supError) throw new Error(supError.message);
+  const clean = (v: unknown) => String(v ?? "").trim();
+  return {
+    ownCompanyNames: [...new Set((workspaces || []).map((w) => clean(w.company_name)).filter(Boolean))].sort(),
+    supplierNames: [...new Set((suppliers || []).map((s) => clean(s.supplier_name)).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+  };
 }
 
 export async function listSupplierReconciliations(supabase: SupabaseClient, companyId: string) {
