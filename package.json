@@ -54,6 +54,7 @@
     "test:business-controls": "node scripts/test-business-controls.mjs",
     "test:stock-take-upload": "node scripts/test-stock-take-upload.mjs",
     "test:supplier-statement-pdf": "node scripts/test-supplier-statement-pdf.mjs",
+    "test:supplier-statement-pdf-runtime": "node scripts/test-supplier-statement-pdf-runtime.mjs",
     "test:kf-gp-correction": "node scripts/test-kf-gp-correction.mjs",
     "test:sales-order-cost-capture": "node scripts/test-sales-order-cost-capture.mjs",
     "test:manufacture-reversal-pg": "node scripts/test-manufacture-reversal-pg.mjs",
@@ -81,6 +82,7 @@
     "demo:order-engine": "node scripts/order-engine-demo.mjs"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^1.0.0",
     "@supabase/supabase-js": "^2.105.3",
     "exceljs": "^4.4.0",
     "jspdf": "^4.2.1",

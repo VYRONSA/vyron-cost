@@ -116,12 +116,40 @@ export function groupTextItems(page: number, items: RawItem[]): PdfLine[] {
   });
 }
 
+/**
+ * pdfjs-dist, ready to run in Node.
+ *
+ * pdfjs needs DOMMatrix, ImageData and Path2D the moment its module loads (it builds a DOMMatrix at
+ * module level). Browsers have them; in Node pdfjs takes them from its companion package
+ * @napi-rs/canvas — but it loads that package with a runtime `require` the production bundler cannot
+ * see, so the deployed function did not ship it, pdfjs could not install the classes, and every
+ * upload failed with "DOMMatrix is not defined". Here the same package is loaded with an import the
+ * bundle tracer does follow (and kept external: next.config.ts serverExternalPackages), and its real
+ * classes are installed exactly as pdfjs itself would install them — before pdfjs loads.
+ */
+async function loadPdfjsForNode() {
+  const g = globalThis as unknown as Record<"DOMMatrix" | "ImageData" | "Path2D", unknown>;
+  if (!g.DOMMatrix || !g.ImageData || !g.Path2D) {
+    let canvas: { DOMMatrix?: unknown; ImageData?: unknown; Path2D?: unknown };
+    try {
+      canvas = await import("@napi-rs/canvas");
+    } catch (error) {
+      throw new Error(`The PDF reader cannot start on this server: @napi-rs/canvas could not be loaded (${error instanceof Error ? error.message : String(error)}).`);
+    }
+    if (!canvas.DOMMatrix) throw new Error("The PDF reader cannot start on this server: @napi-rs/canvas provides no DOMMatrix.");
+    g.DOMMatrix ??= canvas.DOMMatrix;
+    g.ImageData ??= canvas.ImageData;
+    g.Path2D ??= canvas.Path2D;
+  }
+  return import("pdfjs-dist/legacy/build/pdf.mjs");
+}
+
 /** Read the text layer of a PDF as lines. Refuses encrypted, oversized and scanned (text-less) PDFs. */
 export async function readPdfLines(bytes: Uint8Array): Promise<{ pageCount: number; lines: PdfLine[] }> {
   if (!bytes || bytes.byteLength === 0) throw new StatementPdfError("The file is empty.");
   if (bytes.byteLength > STATEMENT_PDF_MAX_BYTES) throw new StatementPdfError("The PDF is larger than 5 MB.");
   if (!isPdfBytes(bytes)) throw new StatementPdfError("The file is not a PDF.");
-  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const pdfjs = await loadPdfjsForNode();
   // standardFontDataUrl is deliberately not set: text positions do not need font data, and the
   // path does not exist inside a deployed function (see vyron-document-page-images.ts).
   const task = pdfjs.getDocument({ data: new Uint8Array(bytes), useSystemFonts: false });

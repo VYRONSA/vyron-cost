@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   turbopack: {},
+  // Native module: required at runtime from node_modules (not bundled), and traced into every server
+  // function that imports it — the supplier statement PDF reader (src/lib/vyron-supplier-statement-pdf.ts).
+  serverExternalPackages: ["@napi-rs/canvas"],
   staticPageGenerationTimeout: 180,
   async headers() {
     return [
