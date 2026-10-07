@@ -3,7 +3,8 @@
 
 import Link from "next/link";
 import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import CustomerPricingWorkspace, { type PricingCustomer } from "@/components/customers/CustomerPricingWorkspace";
 
 type PriceList = {
   id: string;
@@ -18,7 +19,7 @@ type PriceList = {
 };
 
 type Product = { id: string; product_name: string; sku?: string | null };
-type Customer = { id: string; customer_name: string; customer_code?: string | null };
+type Customer = PricingCustomer;
 
 type Assignment = {
   id: string;
@@ -72,9 +73,11 @@ export default function CustomerPriceListsClient() {
   const [gpPct, setGpPct] = useState("0");
   const [overridePrice, setOverridePrice] = useState("");
 
-  const [assignCustomerId, setAssignCustomerId] = useState("");
-  const [assignDefaultList, setAssignDefaultList] = useState("");
-  const [assignContractList, setAssignContractList] = useState("");
+  const [newListFrom, setNewListFrom] = useState("");
+  const [newListTo, setNewListTo] = useState("");
+  // Customer pricing is the main workflow; list administration is secondary.
+  const [tab, setTab] = useState<"customers" | "lists">("customers");
+  const [openCustomerId, setOpenCustomerId] = useState<string | null>(null);
 
   // Price list detail / editor
   const [detail, setDetail] = useState<ListDetail | null>(null);
@@ -91,8 +94,6 @@ export default function CustomerPriceListsClient() {
   // Only the most recently opened list may fill the editor.
   const detailRequest = useRef(0);
 
-  const customerById = useMemo(() => new Map(customers.map((item) => [item.id, item])), [customers]);
-  const listById = useMemo(() => new Map(lists.map((item) => [item.id, item])), [lists]);
 
   async function loadDetail(listId: string) {
     const request = ++detailRequest.current;
@@ -140,7 +141,7 @@ export default function CustomerPriceListsClient() {
     }
   }
 
-  async function loadData() {
+  async function loadData(): Promise<{ lists: PriceList[]; assignments: Assignment[] }> {
     const [listRes, productRes, customerRes] = await Promise.all([
       fetch("/api/customer-price-lists"),
       fetch("/api/products"),
@@ -166,6 +167,7 @@ export default function CustomerPriceListsClient() {
       setSelectedListId(firstId);
       void loadDetail(firstId);
     }
+    return { lists: Array.isArray(listData.lists) ? listData.lists : [], assignments: Array.isArray(listData.assignments) ? listData.assignments : [] };
   }
 
   useEffect(() => {
@@ -271,12 +273,16 @@ export default function CustomerPriceListsClient() {
           mode: "create_list",
           listName: newListName,
           listType: newListType,
+          effectiveFrom: newListFrom || null,
+          effectiveTo: newListTo || null,
         }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "Create list failed.");
       setMessage("Price list created.");
       setNewListName("");
+      setNewListFrom("");
+      setNewListTo("");
       await loadData();
       openList(String(data.list?.id || selectedListId));
     } catch (e) {
@@ -324,55 +330,35 @@ export default function CustomerPriceListsClient() {
     }
   }
 
-  async function saveAssignment() {
-    if (!assignCustomerId) {
-      setError("Customer is required.");
-      return;
-    }
-    if (!assignDefaultList && !assignContractList) {
-      setError("Select at least one price list.");
-      return;
-    }
-    setBusy(true);
-    setError("");
-    setMessage("");
-    try {
-      const res = await fetch("/api/customer-price-lists", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "assign",
-          customerId: assignCustomerId,
-          defaultPriceListId: assignDefaultList || null,
-          contractPriceListId: assignContractList || null,
-        }),
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || "Assignment failed.");
-      setMessage("Customer assignment saved.");
-      await loadData();
-      await loadDetail(selectedListId);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Assignment failed.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   const activeItems = detail?.items.filter((item) => item.status === "Active") || [];
   const inactiveItems = detail?.items.filter((item) => item.status === "Inactive") || [];
   const visibleItems = showInactive ? detail?.items || [] : activeItems;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap justify-end gap-2 text-xs font-semibold">
-        <Link href="/reports/customer-price-list" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-700 hover:border-slate-400">Price List Report</Link>
-        <Link href="/reports/sales-by-customer-item" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-700 hover:border-slate-400">Sales by Customer / Item</Link>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div role="tablist" aria-label="Customer pricing" className="inline-flex rounded-xl border border-slate-200 bg-white p-1 text-sm font-semibold">
+          <button type="button" role="tab" aria-selected={tab === "customers"} onClick={() => setTab("customers")} className={`rounded-lg px-4 py-1.5 ${tab === "customers" ? "bg-slate-900 text-white" : "text-slate-600 hover:text-slate-900"}`}>
+            Customer Pricing
+          </button>
+          <button type="button" role="tab" aria-selected={tab === "lists"} onClick={() => setTab("lists")} className={`rounded-lg px-4 py-1.5 ${tab === "lists" ? "bg-slate-900 text-white" : "text-slate-600 hover:text-slate-900"}`}>
+            Price Lists ({lists.length})
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+          <Link href="/reports/customer-price-list" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-700 hover:border-slate-400">Price List Report</Link>
+          <Link href="/reports/sales-by-customer-item" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-700 hover:border-slate-400">Sales by Customer / Item</Link>
+        </div>
       </div>
+
+      {tab === "customers" ? (
+        <CustomerPricingWorkspace customers={customers} lists={lists} assignments={assignments} initialCustomerId={openCustomerId} reload={loadData} />
+      ) : (
+      <div className="space-y-4">
       {message ?<div className="rounded-xl border border-[var(--vyron-success-border)] bg-[var(--vyron-success-bg)] px-4 py-2 text-sm text-[var(--vyron-success-fg)]">{message}</div> : null}
       {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-800">{error}</div> : null}
 
-      <section className="grid gap-4 lg:grid-cols-2">
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start">
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <h2 className="text-base font-bold text-slate-900">Create Price List</h2>
           <div className="mt-3 grid gap-2">
@@ -381,6 +367,16 @@ export default function CustomerPriceListsClient() {
               <option value="Standard">Standard</option>
               <option value="Contract">Contract</option>
             </select>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="grid gap-1 text-xs text-slate-600">
+                Effective from (optional)
+                <input type="date" value={newListFrom} onChange={(e) => setNewListFrom(e.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              </label>
+              <label className="grid gap-1 text-xs text-slate-600">
+                Effective to (optional)
+                <input type="date" value={newListTo} onChange={(e) => setNewListTo(e.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              </label>
+            </div>
             <button type="button" onClick={() => void createList()} disabled={busy} className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">Create</button>
           </div>
 
@@ -401,6 +397,7 @@ export default function CustomerPriceListsClient() {
                 </div>
                 <div className="text-xs text-slate-500">
                   {list.list_type} · {list.status} · v{list.version}
+                  {list.effective_from || list.effective_to ? ` · ${list.effective_from || "…"} – ${list.effective_to || "open"}` : ""}
                   {list.is_company_default ? <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 font-bold text-emerald-800">Company default</span> : null}
                 </div>
               </button>
@@ -408,27 +405,9 @@ export default function CustomerPriceListsClient() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 className="text-base font-bold text-slate-900">Add Product Pricing</h2>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <select value={lineProductId} onChange={(e) => setLineProductId(e.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm sm:col-span-2">
-              <option value="">Select product</option>
-              {products.map((product) => (
-                <option key={product.id} value={product.id}>{product.product_name}{product.sku ? ` (${product.sku})` : ""}</option>
-              ))}
-            </select>
-            <input value={basePrice} onChange={(e) => setBasePrice(e.target.value)} placeholder="Base price" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-            <input value={markupPct} onChange={(e) => setMarkupPct(e.target.value)} placeholder="Markup %" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-            <input value={discountPct} onChange={(e) => setDiscountPct(e.target.value)} placeholder="Discount %" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-            <input value={gpPct} onChange={(e) => setGpPct(e.target.value)} placeholder="GP %" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-            <input value={overridePrice} onChange={(e) => setOverridePrice(e.target.value)} placeholder="Override price (optional)" className="rounded-lg border border-slate-300 px-3 py-2 text-sm sm:col-span-2" />
-            <button type="button" onClick={() => void addItem()} disabled={busy} className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60 sm:col-span-2">Save Product Price</button>
-          </div>
-        </div>
-      </section>
 
       {selectedListId ? (
-        <section className="rounded-2xl border border-slate-200 bg-white p-4" aria-label="Price list details">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4" aria-label="Price list details">
           {detailLoading && !detail ? <p className="text-sm text-slate-500">Opening price list…</p> : null}
           {detailError ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-800">{detailError}</div> : null}
 
@@ -462,9 +441,26 @@ export default function CustomerPriceListsClient() {
               <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                 <span className="font-semibold text-slate-900">Customers on this list: </span>
                 {detail.assignedCustomers.length
-                  ? detail.assignedCustomers.map((c) => `${c.customerName} (${c.role}${c.status === "Active" ? "" : `, ${c.status}`})`).join(" · ")
-                  : "none yet"}
-                <span className="text-slate-500"> — change assignments under “Assign Lists to Customers” below.</span>
+                  ? detail.assignedCustomers.map((c, i) => (
+                      <span key={c.customerId}>
+                        {i ? " · " : ""}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenCustomerId(c.customerId);
+                            setTab("customers");
+                          }}
+                          className="font-semibold text-slate-800 underline decoration-slate-300 hover:decoration-slate-700"
+                        >
+                          {c.customerName}
+                        </button>
+                        {` (${c.role}${c.status === "Active" ? "" : `, ${c.status}`})`}
+                      </span>
+                    ))
+                  : detail.list.is_company_default
+                    ? "none assigned directly — as the company default it prices every customer without a list"
+                    : "none yet"}
+                <span className="text-slate-500"> — assign lists to a customer in Customer Pricing.</span>
               </div>
 
               <h3 className="mt-5 text-sm font-semibold text-slate-900">Add a product to this list</h3>
@@ -619,58 +615,31 @@ export default function CustomerPriceListsClient() {
                   ) : null}
                 </div>
               ) : null}
+              <details className="mt-4 rounded-xl border border-slate-200 px-3 py-2">
+                <summary className="cursor-pointer text-xs font-semibold text-slate-600">Calculated price (base price, markup, discount, GP) for this list</summary>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <select value={lineProductId} onChange={(e) => setLineProductId(e.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm sm:col-span-2">
+                      <option value="">Select product</option>
+                      {products.map((product) => (
+                        <option key={product.id} value={product.id}>{product.product_name}{product.sku ? ` (${product.sku})` : ""}</option>
+                      ))}
+                    </select>
+                    <input value={basePrice} onChange={(e) => setBasePrice(e.target.value)} placeholder="Base price" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                    <input value={markupPct} onChange={(e) => setMarkupPct(e.target.value)} placeholder="Markup %" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                    <input value={discountPct} onChange={(e) => setDiscountPct(e.target.value)} placeholder="Discount %" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                    <input value={gpPct} onChange={(e) => setGpPct(e.target.value)} placeholder="GP %" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                    <input value={overridePrice} onChange={(e) => setOverridePrice(e.target.value)} placeholder="Override price (optional)" className="rounded-lg border border-slate-300 px-3 py-2 text-sm sm:col-span-2" />
+                    <button type="button" onClick={() => void addItem()} disabled={busy} className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60 sm:col-span-2">Save Product Price</button>
+                  </div>
+              </details>
             </>
           ) : null}
-        </section>
-      ) : null}
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-4">
-        <h2 className="text-base font-bold text-slate-900">Assign Lists to Customers</h2>
-        <div className="mt-3 grid gap-2 sm:grid-cols-3">
-          <select value={assignCustomerId} onChange={(e) => setAssignCustomerId(e.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
-            <option value="">Select customer</option>
-            {customers.map((customer) => (
-              <option key={customer.id} value={customer.id}>{customer.customer_name}{customer.customer_code ? ` (${customer.customer_code})` : ""}</option>
-            ))}
-          </select>
-          <select value={assignDefaultList} onChange={(e) => setAssignDefaultList(e.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
-            <option value="">Default list</option>
-            {lists.filter((list) => list.list_type === "Standard").map((list) => (
-              <option key={list.id} value={list.id}>{list.list_name}</option>
-            ))}
-          </select>
-          <select value={assignContractList} onChange={(e) => setAssignContractList(e.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
-            <option value="">Contract list</option>
-            {lists.filter((list) => list.list_type === "Contract").map((list) => (
-              <option key={list.id} value={list.id}>{list.list_name}</option>
-            ))}
-          </select>
         </div>
-        <button type="button" onClick={() => void saveAssignment()} disabled={busy} className="mt-3 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">Save Assignment</button>
-
-        <EnterpriseScrollContainer className="mt-4">
-          <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-2 py-2">Customer</th>
-                <th className="px-2 py-2">Default List</th>
-                <th className="px-2 py-2">Contract List</th>
-                <th className="px-2 py-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignments.map((assignment) => (
-                <tr key={assignment.id} className="border-t border-slate-100">
-                  <td className="px-2 py-2">{customerById.get(assignment.customer_id)?.customer_name || assignment.customer_id}</td>
-                  <td className="px-2 py-2">{assignment.default_price_list_id ? listById.get(assignment.default_price_list_id)?.list_name || assignment.default_price_list_id : "-"}</td>
-                  <td className="px-2 py-2">{assignment.contract_price_list_id ? listById.get(assignment.contract_price_list_id)?.list_name || assignment.contract_price_list_id : "-"}</td>
-                  <td className="px-2 py-2">{assignment.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </EnterpriseScrollContainer>
+      ) : null}
       </section>
+
+      </div>
+      )}
     </div>
   );
 }

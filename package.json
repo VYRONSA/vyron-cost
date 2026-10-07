@@ -73,6 +73,7 @@
     "test:customer-ordering-multi-tenant": "node scripts/test-customer-ordering-multi-tenant.mjs",
     "test:customer-price-list-security": "node scripts/test-customer-price-list-security.mjs",
     "test:customer-price-list-editor": "node scripts/test-customer-price-list-editor.mjs",
+    "test:customer-pricing-view": "node scripts/test-customer-pricing-view.mjs",
     "test:customer-sales-reports": "node scripts/test-customer-sales-reports.mjs",
     "test:workspace-permission-map": "node scripts/test-workspace-permission-map.mjs",
     "test:store-sales-shopify": "node scripts/test-store-sales-shopify.mjs",
