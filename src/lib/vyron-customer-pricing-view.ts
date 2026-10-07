@@ -204,19 +204,53 @@ export function assignmentRequest(input: {
   };
 }
 
-/** Customers matching a search (name, code, trading name), best matches first. */
-export function searchCustomers<T extends { customer_name: string; customer_code?: string | null; trading_name?: string | null }>(customers: T[], query: string, limit = 50): T[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return customers.slice(0, limit);
+export type SearchableCustomer = {
+  customer_name: string;
+  customer_code?: string | null;
+  trading_name?: string | null;
+  vat_number?: string | null;
+  registration_number?: string | null;
+};
+
+const searchText = (s: unknown) =>
+  String(s ?? "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+/**
+ * Customers matching a search over the WHOLE list — name, trading name, customer code, VAT and
+ * registration number — best matches first. Every word typed must appear somewhere ("cash carry"
+ * finds "1-UP CASH & CARRY"), so the exact name is never needed. An empty search returns every
+ * customer, A–Z. No limit: the picker renders only the rows in view.
+ */
+export function searchCustomers<T extends SearchableCustomer>(customers: T[], query: string): T[] {
+  const byName = (a: T, b: T) => String(a.customer_name || "").localeCompare(String(b.customer_name || ""));
+  const words = searchText(query).split(" ").filter(Boolean);
+  if (!words.length) return [...customers].sort(byName);
+  const phrase = words.join(" ");
   const scored: Array<{ c: T; score: number }> = [];
   for (const c of customers) {
-    const name = String(c.customer_name || "").toLowerCase();
-    const code = String(c.customer_code || "").toLowerCase();
-    const trading = String(c.trading_name || "").toLowerCase();
-    const score = name.startsWith(q) || code === q ? 0 : name.split(/\s+/).some((w) => w.startsWith(q)) ? 1 : name.includes(q) || code.includes(q) || trading.includes(q) ? 2 : -1;
-    if (score >= 0) scored.push({ c, score });
+    const name = searchText(c.customer_name);
+    const trading = searchText(c.trading_name);
+    const ids = [c.customer_code, c.vat_number, c.registration_number].map(searchText).filter(Boolean);
+    const haystack = [name, trading, ...ids].join(" ");
+    if (!words.every((w) => haystack.includes(w))) continue;
+    const score = ids.some((id) => id === phrase) ? 0 : name.startsWith(phrase) ? 1 : trading.startsWith(phrase) ? 2 : name.split(" ").some((w) => w.startsWith(words[0])) ? 3 : 4;
+    scored.push({ c, score });
   }
-  return scored.sort((a, b) => a.score - b.score || a.c.customer_name.localeCompare(b.c.customer_name)).slice(0, limit).map((s) => s.c);
+  return scored.sort((a, b) => a.score - b.score || byName(a.c, b.c)).map((s) => s.c);
+}
+
+/** Which rows of a long list to render for a scroll position (a few extra above and below). */
+export function visibleWindow(input: { scrollTop: number; viewportHeight: number; rowHeight: number; total: number; overscan?: number }): { start: number; end: number } {
+  const overscan = input.overscan ?? 6;
+  const first = Math.floor(Math.max(0, input.scrollTop) / input.rowHeight);
+  const count = Math.ceil(Math.max(0, input.viewportHeight) / input.rowHeight);
+  const start = Math.max(0, first - overscan);
+  const end = Math.min(input.total, first + count + overscan);
+  return { start, end: Math.max(start, end) };
 }
 
 export function customerIsActive(c: { active?: boolean | null; status?: string | null }): boolean {

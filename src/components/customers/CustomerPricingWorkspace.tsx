@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import EnterpriseScrollContainer from "@/components/vyron-ui/EnterpriseScrollContainer";
+import CustomerPicker from "@/components/customers/CustomerPicker";
 import {
   assignmentRequest,
   customerIsActive,
   customerPriceRows,
   customerPricingSummary,
-  searchCustomers,
   type CustomerPriceRow,
   type CustomerPricingSummary,
   type PricingAssignment,
@@ -15,7 +15,16 @@ import {
   type PricingList,
 } from "@/lib/vyron-customer-pricing-view";
 
-export type PricingCustomer = { id: string; customer_name: string; customer_code?: string | null; trading_name?: string | null; active?: boolean | null; status?: string | null };
+export type PricingCustomer = {
+  id: string;
+  customer_name: string;
+  customer_code?: string | null;
+  trading_name?: string | null;
+  vat_number?: string | null;
+  registration_number?: string | null;
+  active?: boolean | null;
+  status?: string | null;
+};
 type ListDetail = { list: PricingList; items: PricingItem[]; assignedCustomers: Array<{ customerId: string; customerName: string; role: string; status: string }> };
 type SearchResult = { id: string; product_name: string; sku?: string | null };
 
@@ -47,9 +56,6 @@ export default function CustomerPricingWorkspace({
   initialCustomerId: string | null;
   reload: () => Promise<{ lists: PricingList[]; assignments: PricingAssignment[] }>;
 }) {
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
-  const [highlight, setHighlight] = useState(0);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [details, setDetails] = useState<Record<string, ListDetail>>({});
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -75,7 +81,17 @@ export default function CustomerPricingWorkspace({
     () => (customerId ? customerPricingSummary({ customerId, assignments, lists, today }) : null),
     [customerId, assignments, lists, today]
   );
-  const matches = useMemo(() => searchCustomers(customers, query), [customers, query]);
+  // Each customer's own list (for the picker rows), computed once rather than per row.
+  const pricingLabel = useMemo(() => {
+    const names = new Map(lists.map((l) => [l.id, l.list_name]));
+    const out = new Map<string, string>();
+    for (const a of assignments) {
+      if (a.status !== "Active") continue;
+      const listId = a.contract_price_list_id || a.default_price_list_id;
+      if (listId) out.set(a.customer_id, names.get(listId) || "Assigned list");
+    }
+    return out;
+  }, [lists, assignments]);
   // An assigned list always appears in its own slot's options, even if its type does not match the slot.
   const slotOptions = (type: PricingList["list_type"], currentId: string | null | undefined) => lists.filter((l) => l.list_type === type || l.id === currentId);
   const standardLists = slotOptions("Standard", customerId ? assignments.find((a) => a.customer_id === customerId)?.default_price_list_id : null);
@@ -108,8 +124,6 @@ export default function CustomerPricingWorkspace({
   function selectCustomer(id: string, data = { lists, assignments }) {
     const s = customerPricingSummary({ customerId: id, assignments: data.assignments, lists: data.lists, today });
     setCustomerId(id);
-    setQuery("");
-    setOpen(false);
     setMessage("");
     setError("");
     setEditing(null);
@@ -239,56 +253,14 @@ export default function CustomerPricingWorkspace({
             </p>
           </div>
         </div>
-        <div className="relative mt-3">
-          <input
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setOpen(true);
-              setHighlight(0);
-            }}
-            onFocus={() => setOpen(true)}
-            onBlur={() => window.setTimeout(() => setOpen(false), 150)}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowDown") setHighlight((h) => Math.min(h + 1, matches.length - 1));
-              else if (e.key === "ArrowUp") setHighlight((h) => Math.max(h - 1, 0));
-              else if (e.key === "Enter" && matches[highlight]) selectCustomer(matches[highlight].id);
-              else if (e.key === "Escape") setOpen(false);
-            }}
-            placeholder={customer ? `Change customer — currently ${customer.customer_name}` : "Search customers by name or code"}
-            aria-label="Search customers"
-            role="combobox"
-            aria-expanded={open}
-            aria-controls="customer-search-results"
-            className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold"
+        <div className="mt-3">
+          <CustomerPicker
+            customers={customers}
+            selectedName={customer?.customer_name ?? null}
+            describe={(c) => pricingLabel.get(c.id) || (companyDefault ? "Company default" : "Product master")}
+            isActive={customerIsActive}
+            onSelect={(c) => selectCustomer(c.id)}
           />
-          {open && matches.length ? (
-            <ul id="customer-search-results" role="listbox" className="absolute z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
-              {matches.map((c, i) => {
-                const a = assignments.find((x) => x.customer_id === c.id && x.status === "Active" && (x.default_price_list_id || x.contract_price_list_id));
-                const listName = a ? lists.find((l) => l.id === (a.contract_price_list_id || a.default_price_list_id))?.list_name : null;
-                return (
-                  <li key={c.id}>
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={i === highlight}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => selectCustomer(c.id)}
-                      className={`flex w-full items-center justify-between gap-3 px-4 py-2 text-left text-sm ${i === highlight ? "bg-slate-50" : ""}`}
-                    >
-                      <span>
-                        <span className="font-semibold text-slate-900">{c.customer_name}</span>
-                        {c.customer_code ? <span className="text-slate-500"> · {c.customer_code}</span> : null}
-                        {!customerIsActive(c) ? <span className="ml-2 text-xs text-slate-400">Inactive</span> : null}
-                      </span>
-                      <span className="text-xs text-slate-500">{listName ? listName : companyDefault ? `Company default` : "Product master"}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : null}
         </div>
       </section>
 

@@ -242,5 +242,107 @@ section("5. Customer search and status");
   check("active / inactive from the customer record", view.customerIsActive(customers[0]) && !view.customerIsActive(customers.find((c) => c.id === C.lapsed)) && view.customerIsActive({ active: true, status: null }));
 }
 
+// ---------------------------------------------------------------------------
+section("6. Customer picker: 405 customers, search over all of them, tenant-scoped");
+{
+  const CO_B = uuid("b", 1);
+  const WS_B = uuid("b", 2);
+  const prefixes = ["Alpha", "Bay", "Cape", "Delta", "Eagle", "Fern", "Garden", "Harbour", "Ivy", "Jade", "Karoo", "Lion", "Metro", "North", "Ocean", "Peak", "Quay", "River", "Sun", "Table", "Union", "Vine", "West", "Xcel", "Yellow"];
+  const kinds = ["Foods", "Deli", "Market", "Catering", "Bakery", "Butchery", "Grocers", "Kitchen", "Traders", "Bistro", "Cafe", "Wholesale", "Supplies", "Fresh", "Pantry", "Store"];
+  const many = [];
+  for (let i = 0; many.length < 403; i++) {
+    const name = `${prefixes[i % prefixes.length]} ${kinds[Math.floor(i / prefixes.length) % kinds.length]} ${String(i).padStart(3, "0")}`;
+    many.push({ id: uuid("9", i + 1), company_id: CO, customer_name: name, active: i % 37 !== 0, status: i % 37 === 0 ? "Inactive" : "Active", trading_name: i % 5 === 0 ? `${name} t/a Shop ${i}` : null, vat_number: i % 3 === 0 ? `41${String(100000 + i)}` : null });
+  }
+  many.push({ id: uuid("9", 900), company_id: CO, customer_name: "1-UP CASH & CARRY", active: true, status: "Active", trading_name: null, vat_number: null });
+  // The last customer in the dataset AND alphabetically: must still be found and browsable.
+  const ZW = uuid("9", 999);
+  many.push({ id: ZW, company_id: CO, customer_name: "Zwartkops Butchery", customer_code: "ZWB-404", trading_name: "Karoo Biltong Depot", vat_number: "4999999999", registration_number: "2019/555555/07", active: true, status: "Active" });
+  const otherTenant = Array.from({ length: 30 }, (_, i) => ({ id: uuid("8", i + 1), company_id: CO_B, customer_name: i === 0 ? "Zwartkops Butchery" : `Tenant B Customer ${i}`, active: true, status: "Active" }));
+
+  const s = seed();
+  s.vyron_workspaces.push({ id: WS_B, company_id: CO_B, company_name: "Other Tenant", package_name: "Enterprise", status: "Setup", default_vat_rate: 15 });
+  s.vyron_workspace_memberships.push({ id: "m3", workspace_id: WS_B, user_id: uuid("b", 10), role: "SALES", status: "Active", permissions: {} });
+  s.vyron_customers = [...many, ...otherTenant];
+  s.vyron_contacts = [];
+  s.vyron_customer_invoices = [];
+  s.vyron_customer_sales_orders = [];
+  s.vyron_customer_price_list_assignments.push({ id: uuid("d", 9), company_id: CO, customer_id: ZW, default_price_list_id: L.wholesale, contract_price_list_id: null, status: "Active" });
+  s.vyron_customer_price_list_assignments.push({ id: uuid("d", 10), company_id: CO_B, customer_id: uuid("8", 1), default_price_list_id: L.hfp, contract_price_list_id: L.contractAbc, status: "Active" });
+  const db = createFakeSupabase(s, { honourOrder: true });
+  globalThis.__VYRON_SESSION_TEST__ = {
+    supabase: db,
+    browserSupabase: db,
+    users: [
+      { id: uuid("a", 10), email: "sales@qa.test", password: "qa-pass-sales" },
+      { id: uuid("b", 10), email: "sales@qa-b.test", password: "qa-pass-b" },
+    ],
+    cookies: new Map(),
+    headers: {},
+  };
+  const { NextRequest } = await import("next/server");
+  const loginRoute = await importFromRoot("src/app/api/workspace/login/route.ts");
+  const customersRoute = await importFromRoot("src/app/api/customers/route.ts");
+  const listsRoute = await importFromRoot("src/app/api/customer-price-lists/route.ts");
+  const setJar = (jar) => (globalThis.__VYRON_SESSION_TEST__.cookies = new Map(Object.entries(jar || {})));
+  const login = async (email, password) => {
+    setJar({});
+    const res = await loginRoute.POST(new NextRequest(new URL("/api/workspace/login", "http://qa.local"), { method: "POST", body: JSON.stringify({ email, password }), headers: { "content-type": "application/json" } }));
+    return Object.fromEntries(res.cookies.getAll().filter((c) => c.value).map((c) => [c.name, c.value]));
+  };
+  const get = async (jar, route, url) => {
+    setJar(jar);
+    const res = await route.GET(new NextRequest(new URL(url, "http://qa.local")));
+    return { status: res.status, json: await res.json().catch(() => null) };
+  };
+  const a = await login("sales@qa.test", "qa-pass-sales");
+  const b = await login("sales@qa-b.test", "qa-pass-b");
+
+  const fromApi = await get(a, customersRoute, "/api/customers");
+  const pickerData = fromApi.json.customers;
+  check("the picker's source (GET /api/customers) returns all 405 of this company's customers", fromApi.status === 200 && pickerData.length === 405, `got ${pickerData?.length}`);
+  check("…and none of the other tenant's", pickerData.every((c) => c.company_id === CO) && !pickerData.some((c) => String(c.id).startsWith("8888")));
+  const bData = (await get(b, customersRoute, "/api/customers")).json.customers;
+  check("the other tenant sees only its own 30 (its own 'Zwartkops Butchery' is a different record)", bData.length === 30 && bData.every((c) => c.company_id === CO_B) && bData.find((c) => c.customer_name === "Zwartkops Butchery").id !== ZW);
+
+  const all = view.searchCustomers(pickerData, "");
+  check("empty search → every customer (405), A–Z, browsable to the end", all.length === 405 && all[404].id === ZW && all[0].customer_name === "1-UP CASH & CARRY");
+  const first = view.visibleWindow({ scrollTop: 0, viewportHeight: 440, rowHeight: 56, total: all.length });
+  check("only the rows in view are rendered (not all 405)", first.end - first.start <= 20 && first.start === 0, JSON.stringify(first));
+  const bottom = view.visibleWindow({ scrollTop: 405 * 56 - 440, viewportHeight: 440, rowHeight: 56, total: all.length });
+  check("scrolled to the bottom → the last customer (#405, Zwartkops) is rendered", bottom.end === 405 && bottom.start <= 404 && bottom.end - bottom.start <= 20, JSON.stringify(bottom));
+  const mid = view.visibleWindow({ scrollTop: 200 * 56, viewportHeight: 440, rowHeight: 56, total: all.length });
+  check("scrolled to the middle → rows around #200 are rendered", mid.start <= 200 && mid.end > 200);
+
+  const find = (q) => view.searchCustomers(pickerData, q);
+  check("search by name finds the last customer", find("zwartkops")[0]?.id === ZW && find("zwartkops").length === 1);
+  check("search by part of the name, any case", find("BUTCH").some((c) => c.id === ZW) && find("butch").length > 1);
+  check("search by customer code", find("ZWB-404")[0]?.id === ZW && find("zwb 404")[0]?.id === ZW);
+  check("search by trading name", find("biltong depot")[0]?.id === ZW && find("karoo biltong").length === 1);
+  check("search by VAT number", find("4999999999")[0]?.id === ZW);
+  check("search by words in any order, punctuation ignored ('cash carry')", find("cash carry")[0]?.customer_name === "1-UP CASH & CARRY" && find("1 up")[0]?.customer_name === "1-UP CASH & CARRY");
+  check("a search covers the whole list (matches beyond the first 50 are returned)", find("butchery").length > 20 && find("butchery").some((c) => all.indexOf(c) > 300));
+  check("a trading-name match deep in the list", find("shop 395").some((c) => c.customer_name.endsWith("395")));
+  check("inactive customers are still listed (status shown, not hidden)", all.filter((c) => !view.customerIsActive(c)).length === 11);
+
+  // Selecting the last customer loads their pricing, exactly as the resolver prices them.
+  const lists = (await get(a, listsRoute, "/api/customer-price-lists")).json;
+  check("tenant A's price-list data has no tenant-B assignment", lists.assignments.every((x) => x.customer_id !== uuid("8", 1)));
+  const sum = view.customerPricingSummary({ customerId: ZW, assignments: lists.assignments, lists: lists.lists, today: TODAY });
+  check("Zwartkops (the last customer) → its own list, Wholesale", sum.source === "assigned" && sum.standardList?.list_name === "Wholesale");
+  const detail = await prices.getCustomerPriceListDetail(db, CO, L.wholesale);
+  const rows = view.customerPriceRows({ lists: [{ list: detail.list, items: detail.items }], contractListId: null, today: TODAY });
+  let agree = true;
+  for (const p of products) {
+    const r = await prices.resolveCustomerProductPrice(db, CO, { customerId: ZW, productId: p.id, asOfDate: TODAY });
+    const row = rows.find((x) => x.productId === p.id && x.state === "Active");
+    if (r.source === "default" ? !(row && row.price === r.sellingPrice) : Boolean(row)) agree = false;
+  }
+  check("…and every price shown for Zwartkops is what the resolver charges", agree);
+  const lastNoList = all[403];
+  const s2 = view.customerPricingSummary({ customerId: lastNoList.id, assignments: lists.assignments, lists: lists.lists, today: TODAY });
+  check(`second-to-last customer (${lastNoList.customer_name}) without a list → company default`, s2.source === "company_default" && s2.companyDefault?.list_name === "HFP 2026/2027");
+}
+
 console.log(`\n${checks - failures}/${checks} checks passed`);
 if (failures) process.exit(1);
