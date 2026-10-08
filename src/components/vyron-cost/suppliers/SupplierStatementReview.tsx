@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Card, KpiCard, Notice, Pill, PrimaryButton, SecondaryButton, money } from "@/components/vyron-order-engine/ui";
 import type { InterpretedLine, StatementInterpretation } from "@/lib/vyron-supplier-statement-ai";
-import type { DocumentDifference, LineMatch, StatementMatchResult } from "@/lib/vyron-supplier-statement-match";
+import type { LineMatch, StatementMatchResult } from "@/lib/vyron-supplier-statement-match";
+import type { DifferencesReportData } from "@/lib/vyron-supplier-differences-report";
 
 // The reconciliation population (mirrors SUPPLIER_DOCUMENT_TYPES; the match module is server-only).
 const isSupplierDocument = (l: InterpretedLine) => l.type === "invoice" || l.type === "credit_note" || l.type === "debit_note";
@@ -30,15 +31,6 @@ const MATCH_LABEL: Record<LineMatch["status"], { label: string; tone: "green" | 
   DUPLICATE: { label: "Duplicate on statement", tone: "rose" },
   NEEDS_REVIEW: { label: "Needs review", tone: "amber" },
   NOT_RECONCILED: { label: "—", tone: "slate" },
-};
-const DIFFERENCE_LABEL: Record<DocumentDifference["category"], { label: string; tone: "green" | "amber" | "rose" | "blue" | "slate" }> = {
-  AMOUNT_DIFFERENCE: MATCH_LABEL.AMOUNT_DIFFERENCE,
-  DATE_DIFFERENCE: MATCH_LABEL.DATE_DIFFERENCE,
-  NOTE_DIFFERENCE: MATCH_LABEL.NOTE_DIFFERENCE,
-  MISSING_IN_VOLORA: MATCH_LABEL.MISSING_IN_VOLORA,
-  DUPLICATE: MATCH_LABEL.DUPLICATE,
-  NEEDS_REVIEW: MATCH_LABEL.NEEDS_REVIEW,
-  NOT_ON_STATEMENT: { label: "Not on statement", tone: "blue" },
 };
 const METHOD_LABEL: Record<NonNullable<LineMatch["method"]>, string> = { document_number: "by document number", reference: "by reference", amount_date: "by amount + date — confirm" };
 
@@ -110,6 +102,7 @@ export default function SupplierStatementReview({
   onCancel,
   interpretation,
   onMatch,
+  onOpenReport,
 }: {
   fileName: string;
   extraction: StatementExtraction;
@@ -121,6 +114,8 @@ export default function SupplierStatementReview({
   interpretation?: StatementInterpretation | null;
   /** Deterministic match preview for the confirmed supplier (writes nothing). */
   onMatch?: (supplierName: string) => Promise<StatementMatchResult>;
+  /** Open the Differences Report for the current match preview (display only). */
+  onOpenReport?: (data: DifferencesReportData) => void;
 }) {
   const e = extraction;
   const [supplier, setSupplier] = useState(e.supplier.value || "");
@@ -238,6 +233,25 @@ export default function SupplierStatementReview({
           matchError={matchError}
           canMatch={Boolean(onMatch) && supplier.trim() !== "" && !busy}
           onMatchClick={() => void runMatch(supplier)}
+          onViewReport={
+            onOpenReport && currentMatch
+              ? () =>
+                  onOpenReport({
+                    supplierName: currentMatch.supplierName,
+                    fileName,
+                    statementDate: e.statementDate.value ?? ip.metadata.statementDate.value,
+                    // The period printed on the statement; otherwise the range of its document dates.
+                    periodFrom: e.periodFrom.value ?? currentMatch.summary.periodFrom,
+                    periodTo: e.periodTo.value ?? currentMatch.summary.periodTo,
+                    accountNumber: e.accountNumber.value ?? ip.metadata.supplierAccountNumber.value,
+                    generatedAt: new Date().toISOString(),
+                    basis: "preview",
+                    savedAt: null,
+                    summary: currentMatch.summary,
+                    differences: currentMatch.differences,
+                  })
+              : undefined
+          }
         />
       ) : null}
 
@@ -378,6 +392,7 @@ function InterpretedView({
   matchError,
   canMatch,
   onMatchClick,
+  onViewReport,
 }: {
   ip: StatementInterpretation;
   matchByIndex: Map<number, LineMatch>;
@@ -386,6 +401,7 @@ function InterpretedView({
   matchError: string | null;
   canMatch: boolean;
   onMatchClick: () => void;
+  onViewReport?: () => void;
 }) {
   const [filter, setFilter] = useState<DocumentFilter>("ALL");
   const documents = ip.lines.filter(isSupplierDocument);
@@ -432,6 +448,7 @@ function InterpretedView({
         actions={
           <div className="flex flex-wrap gap-2">
             <SecondaryButton onClick={() => setFilter(filter === "DIFFERENCES" ? "ALL" : "DIFFERENCES")}>{filter === "DIFFERENCES" ? "Show all documents" : "Differences only"}</SecondaryButton>
+            {currentMatch && onViewReport ? <SecondaryButton onClick={onViewReport}>View Differences Report</SecondaryButton> : null}
             <PrimaryButton disabled={!canMatch || matching} onClick={onMatchClick}>
               {matching ? "Matching…" : currentMatch ? "Match again" : "Match against VOLORA"}
             </PrimaryButton>
@@ -528,60 +545,26 @@ function InterpretedView({
         </div>
       </Card>
 
-      {currentMatch ? <DifferencesReport differences={currentMatch.differences} /> : null}
+      {currentMatch && onViewReport ? <DifferencesReportCallout count={currentMatch.differences.length} onView={onViewReport} /> : null}
     </>
   );
 }
 
-/** Every supplier document where the statement and VOLORA disagree — including VOLORA documents not on the statement. */
-export function DifferencesReport({ differences }: { differences: DocumentDifference[] }) {
+/** The way into the Differences Report from a reconciliation (the report itself is SupplierDifferencesReport). */
+export function DifferencesReportCallout({ count, onView }: { count: number; onView: () => void }) {
   return (
-    <Card title={`All Differences (${differences.length})`}>
-      <p className="mb-2 text-xs font-semibold text-slate-500">Supplier documents only. Payments and receipts are not part of this report.</p>
-      <div className="w-full overflow-x-auto">
-        <table className="w-full min-w-[1180px] text-left text-sm">
-          <thead className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">
-            <tr>
-              <th className="py-2 pr-3">Difference</th>
-              <th className="py-2 pr-3">Type</th>
-              <th className="py-2 pr-3">Document no.</th>
-              <th className="py-2 pr-3">Statement date</th>
-              <th className="py-2 pr-3">VOLORA date</th>
-              <th className="py-2 pr-3">Date diff.</th>
-              <th className="py-2 pr-3 text-right">Statement amount</th>
-              <th className="py-2 pr-3 text-right">VOLORA amount</th>
-              <th className="py-2 pr-3 text-right">Amount diff.</th>
-              <th className="py-2 pr-3">Detail</th>
-            </tr>
-          </thead>
-          <tbody>
-            {differences.map((d, i) => (
-              <tr key={`${d.row ?? "v"}-${d.voloraId ?? i}`} className="border-t border-slate-100 align-top font-semibold text-slate-700">
-                <td className="py-2 pr-3">
-                  <Pill tone={DIFFERENCE_LABEL[d.category].tone}>{DIFFERENCE_LABEL[d.category].label}</Pill>
-                  {d.row !== null ? <span className="block text-xs text-slate-400">row {d.row}</span> : null}
-                </td>
-                <td className="py-2 pr-3">{AI_TYPE_LABEL[d.documentType]}</td>
-                <td className="py-2 pr-3 font-black text-slate-900">{d.documentNumber || "—"}</td>
-                <td className="py-2 pr-3 whitespace-nowrap">{d.statementDate || "—"}</td>
-                <td className="py-2 pr-3 whitespace-nowrap">{d.voloraDate || "—"}</td>
-                <td className={`py-2 pr-3 whitespace-nowrap ${d.dateDifferenceDays ? "font-black text-rose-700" : "text-slate-400"}`}>{d.statementDate && d.voloraDate ? signedDays(d.dateDifferenceDays) : "—"}</td>
-                <td className="py-2 pr-3 text-right tabular-nums">{amt(d.statementAmount)}</td>
-                <td className="py-2 pr-3 text-right tabular-nums">{amt(d.voloraAmount)}</td>
-                <td className={`py-2 pr-3 text-right tabular-nums ${d.amountDifference !== null && Math.abs(d.amountDifference) > 0.01 ? "font-black text-rose-700" : "text-slate-400"}`}>{amt(d.amountDifference)}</td>
-                <td className="py-2 pr-3 text-xs text-slate-600">{d.note}</td>
-              </tr>
-            ))}
-            {!differences.length ? (
-              <tr>
-                <td colSpan={10} className="py-6 text-center text-sm font-semibold text-emerald-700">
-                  Every supplier document on the statement agrees with VOLORA.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+    <Card
+      title="Differences Report"
+      actions={
+        <PrimaryButton onClick={onView}>
+          View Differences Report
+        </PrimaryButton>
+      }
+    >
+      <p className="text-sm font-semibold text-slate-600">
+        {count ? `${count} supplier document difference(s) between the statement and VOLORA, grouped by type, ready to view and print.` : "Every supplier document on the statement agrees with VOLORA."} Payments and receipts are not part of the report. Viewing or printing it
+        changes nothing.
+      </p>
     </Card>
   );
 }

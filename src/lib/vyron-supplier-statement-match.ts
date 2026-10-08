@@ -72,8 +72,17 @@ export type LineMatch = {
   candidates: number;
   /** True when several VOLORA records carry this document number. */
   duplicateInVolora: boolean;
+  /**
+   * The VOLORA records this row was compared with: the one identified, or every candidate when none
+   * was chosen (duplicate number, several references, several amount + date fits). Reporting only —
+   * it never changes the outcome.
+   */
+  voloraCandidates: VoloraRecord[];
   note: string;
 };
+
+/** A VOLORA supplier document as shown on the differences report. */
+export type VoloraRecord = { id: string; invoiceNumber: string | null; invoiceDate: string | null; total: number | null; origin: string };
 
 export type DifferenceCategory = Exclude<StatementMatchStatus, "MATCHED" | "NOT_RECONCILED"> | "NOT_ON_STATEMENT";
 
@@ -92,6 +101,14 @@ export type DocumentDifference = {
   amountDifference: number | null;
   voloraId: string | null;
   voloraInvoiceNumber: string | null;
+  /** Every VOLORA record involved (all of them for a duplicate — none was selected). */
+  voloraCandidates: VoloraRecord[];
+  /** The row's other printed references (supplier reference, customer order / PO). */
+  references: string[];
+  /** Why the statement row itself needs review (from the reading), if it does. */
+  reviewReasons: string[];
+  /** What the row says, as read (description meaning and the evidence relied on). */
+  evidence: string | null;
   note: string;
 };
 
@@ -153,6 +170,8 @@ function statementAmount(l: InterpretedLine): number | null {
   return null;
 }
 
+const brief = (c: MatchCandidate): VoloraRecord => ({ id: c.id, invoiceNumber: c.invoiceNumber, invoiceDate: c.invoiceDate, total: c.total === null ? null : r2(Number(c.total)), origin: c.origin });
+
 const label = (t: SupplierDocumentType) => (t === "invoice" ? "Invoice" : t === "credit_note" ? "Credit note" : "Debit note");
 
 /**
@@ -206,6 +225,7 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
     dateDifferenceDays: null,
     candidates: 0,
     duplicateInVolora: false,
+    voloraCandidates: [],
     note: "",
   });
   /*
@@ -224,7 +244,7 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
     const notes = [note];
     if (amountDiffers) notes.push(`Amount: statement ${m.statementAmount!.toFixed(2)}, VOLORA ${volora!.toFixed(2)}, difference ${diff!.toFixed(2)}.`);
     if (dateDiffers) notes.push(`Date: statement ${l.date}, VOLORA ${c.invoiceDate} (${days! > 0 ? "+" : ""}${days} day${Math.abs(days!) === 1 ? "" : "s"}).`);
-    results.set(l.index, { ...m, status, method, voloraId: c.id, voloraInvoiceNumber: c.invoiceNumber, voloraTotal: volora, difference: diff, voloraDate: c.invoiceDate, dateDifferenceDays: days, candidates: 1, note: notes.join(" ") });
+    results.set(l.index, { ...m, status, method, voloraId: c.id, voloraInvoiceNumber: c.invoiceNumber, voloraTotal: volora, difference: diff, voloraDate: c.invoiceDate, dateDifferenceDays: days, candidates: 1, voloraCandidates: [brief(c)], note: notes.join(" ") });
   };
 
   // A and B, row by row.
@@ -233,7 +253,8 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
     const m = base(l);
     const key = documentKey(l.documentNumber);
     if (key && (docCount.get(key) || 0) > 1) {
-      results.set(l.index, { ...m, status: "DUPLICATE", note: `Document ${l.documentNumber} appears ${docCount.get(key)} times on the statement; none is chosen.` });
+      // VOLORA records with this number are listed for the report only; a duplicate is never matched.
+      results.set(l.index, { ...m, status: "DUPLICATE", voloraCandidates: (byDoc.get(key) || []).map(brief), note: `Document ${l.documentNumber} appears ${docCount.get(key)} times on the statement; none is chosen.` });
       continue;
     }
     if (key) {
@@ -245,7 +266,7 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
       if (found.length > 1) {
         for (const c of found) implicated.add(c.id);
         const listed = found.map((c) => `${c.invoiceNumber} dated ${c.invoiceDate ?? "—"}, ${c.total === null ? "no total" : r2(Number(c.total)).toFixed(2)}`).join("; ");
-        results.set(l.index, { ...m, status: "NEEDS_REVIEW", candidates: found.length, duplicateInVolora: true, note: `Duplicate in VOLORA: ${found.length} records carry document number ${l.documentNumber} (${listed}); none is chosen.` });
+        results.set(l.index, { ...m, status: "NEEDS_REVIEW", candidates: found.length, duplicateInVolora: true, voloraCandidates: found.map(brief), note: `Duplicate in VOLORA: ${found.length} records carry document number ${l.documentNumber} (${listed}); none is chosen.` });
         continue;
       }
     }
@@ -258,7 +279,7 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
     }
     if (refHits.size > 1) {
       for (const id of refHits.keys()) implicated.add(id);
-      results.set(l.index, { ...m, status: "NEEDS_REVIEW", candidates: refHits.size, note: `The row's references match ${refHits.size} VOLORA invoices; none is chosen.` });
+      results.set(l.index, { ...m, status: "NEEDS_REVIEW", candidates: refHits.size, voloraCandidates: [...refHits.values()].map((h) => brief(h.c)), note: `The row's references match ${refHits.size} VOLORA invoices; none is chosen.` });
       continue;
     }
     awaitingAmountDate.push(l);
@@ -287,6 +308,7 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
       ...m,
       status: "NEEDS_REVIEW",
       candidates: cands.length,
+      voloraCandidates: cands.map(brief),
       note: l.documentNumber
         ? `Document ${l.documentNumber} is not in VOLORA, but the amount and date fit ${cands.length === 1 ? `VOLORA invoice ${cands[0].invoiceNumber}` : `${cands.length} VOLORA invoices`} — check which is right.`
         : `The amount and date fit ${cands.length} VOLORA invoice(s) and ${reverse || "more than one"} statement row(s); none is chosen.`,
@@ -311,6 +333,7 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
         dateDifferenceDays: null,
         candidates: 0,
         duplicateInVolora: false,
+        voloraCandidates: [],
         note: "Not a supplier document — excluded from reconciliation.",
       }
   );
@@ -319,6 +342,8 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
   const periodTo = dates[dates.length - 1] ?? null;
   const notOnStatement = pool.filter((c) => !used.has(c.id) && !implicated.has(c.id) && c.invoiceDate && periodFrom && periodTo && c.invoiceDate >= periodFrom && c.invoiceDate <= periodTo);
   const documentLines = lines.filter((x) => x.documentType !== null);
+  const rowOf = new Map(population.map((l) => [l.index, l]));
+  const evidenceOf = (l: InterpretedLine | undefined) => [l?.descriptionMeaning, l?.evidence].filter(Boolean).join(" — ") || null;
   const differences: DocumentDifference[] = [
     ...documentLines
       .filter((x) => x.status !== "MATCHED")
@@ -335,6 +360,10 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
         amountDifference: x.difference,
         voloraId: x.voloraId,
         voloraInvoiceNumber: x.voloraInvoiceNumber,
+        voloraCandidates: x.voloraCandidates,
+        references: rowOf.get(x.index)?.secondaryReferences ?? [],
+        reviewReasons: rowOf.get(x.index)?.reviewReasons ?? [],
+        evidence: evidenceOf(rowOf.get(x.index)),
         note: x.note,
       })),
     ...notOnStatement.map((c) => ({
@@ -350,6 +379,10 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
       amountDifference: null,
       voloraId: c.id,
       voloraInvoiceNumber: c.invoiceNumber,
+      voloraCandidates: [brief(c)],
+      references: c.poNumber ? [`PO ${c.poNumber}`] : [],
+      reviewReasons: [],
+      evidence: null,
       note: "In VOLORA for this supplier and period, but not on the supplier statement.",
     })),
   ];

@@ -516,6 +516,10 @@ export async function runApprovedInterpretedStatementReconciliation(
           supplierSuggested: interpretation.metadata.supplierName.value,
           supplierApproved: supplierName,
           statementDate: interpretation.metadata.statementDate.value ?? extraction.statementDate.value,
+          // For the Differences Report header (reporting only).
+          accountNumber: extraction.accountNumber.value ?? interpretation.metadata.supplierAccountNumber.value,
+          statementPeriodFrom: extraction.periodFrom.value,
+          statementPeriodTo: extraction.periodTo.value,
           openingBalance: extraction.openingBalance.value,
           closingBalance: extraction.closingBalance.value,
           balanceCheck: extraction.balanceCheck,

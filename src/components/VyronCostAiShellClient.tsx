@@ -330,8 +330,17 @@ export default function VyronCostAiShellClient({
 
     const phoneMedia = window.matchMedia("(max-width: 767px)");
     const tabletMedia = window.matchMedia("(min-width: 768px) and (max-width: 1023px)");
+    const printMedia = window.matchMedia("print");
+    let printing = false;
 
     const update = () => {
+      /*
+       * Printing lays the page out at paper width, which matches the phone or
+       * tablet query. Swapping shells then re-mounts the page mid-print and the
+       * printout shows an empty shell instead of the report, so the screen's
+       * shell is kept until printing ends.
+       */
+      if (printing || printMedia.matches) return;
       if (phoneMedia.matches) {
         setShellMode("mobile");
         return;
@@ -345,12 +354,24 @@ export default function VyronCostAiShellClient({
 
     update();
 
+    const beforePrint = () => {
+      printing = true;
+    };
+    const afterPrint = () => {
+      printing = false;
+      update();
+    };
+    window.addEventListener("beforeprint", beforePrint);
+    window.addEventListener("afterprint", afterPrint);
+
     if (typeof phoneMedia.addEventListener === "function" && typeof tabletMedia.addEventListener === "function") {
       phoneMedia.addEventListener("change", update);
       tabletMedia.addEventListener("change", update);
       return () => {
         phoneMedia.removeEventListener("change", update);
         tabletMedia.removeEventListener("change", update);
+        window.removeEventListener("beforeprint", beforePrint);
+        window.removeEventListener("afterprint", afterPrint);
       };
     }
 
@@ -359,6 +380,8 @@ export default function VyronCostAiShellClient({
     return () => {
       phoneMedia.removeListener(update);
       tabletMedia.removeListener(update);
+      window.removeEventListener("beforeprint", beforePrint);
+      window.removeEventListener("afterprint", afterPrint);
     };
   }, []);
 

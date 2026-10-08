@@ -45,6 +45,7 @@ const ex = await importFromRoot("src/lib/vyron-supplier-statement-pdf.ts");
 const ai = await importFromRoot("src/lib/vyron-supplier-statement-ai.ts");
 const mt = await importFromRoot("src/lib/vyron-supplier-statement-match.ts");
 const recon = await importFromRoot("src/lib/vyron-supplier-reconciliation.ts");
+const rep = await importFromRoot("src/lib/vyron-supplier-differences-report.ts");
 const { createFakeSupabase } = await import("./support/document-email-test-stubs/fake-supabase.mjs");
 
 const SUP = "Fresh Pantry Wholesale";
@@ -211,6 +212,48 @@ section("4b. Supplier documents only");
   check("a date difference in the report carries both dates and the day difference", dd.category === "DATE_DIFFERENCE" && dd.statementDate === "2026-10-01" && dd.voloraDate === "2026-01-10" && dd.dateDifferenceDays === 264);
   const other = mt.matchInterpretedStatement(ip(lines), reg.map((c) => (c.id === "a" ? { ...c, supplierName: "Gourmet Foods on the Go" } : c)), GC);
   check("no supplier alias: the same number under another supplier name is not a candidate", other.lines.find((l) => l.index === 1).status === "MISSING_IN_VOLORA");
+
+  section("4c. Differences Report (built from the reconciliation result)");
+  const sections = rep.reportSections(r.differences);
+  const sec = (c) => sections.find((x) => x.category === c);
+  const cell = (c, docNo, col) => {
+    const x = sec(c);
+    const row = x.rows.find((rw) => rw.cells[0] === docNo);
+    return row ? row.cells[x.columns.indexOf(col)] : undefined;
+  };
+  const allCells = sections.flatMap((x) => x.rows.map((rw) => rw.cells.join(" | ")));
+  check("1. only supplier-document differences: one section per difference type present, rows = All Differences", sections.map((x) => x.category).join() === "AMOUNT_DIFFERENCE,DATE_DIFFERENCE,NOTE_DIFFERENCE,DUPLICATE,MISSING_IN_VOLORA,NEEDS_REVIEW,NOT_ON_STATEMENT" && sections.reduce((t, x) => t + x.rows.length, 0) === r.differences.length);
+  check("2. payments are excluded (no payment row or allocation appears)", !allCells.some((c) => /payment/i.test(c)) && sections.every((x) => x.rows.every((rw) => !["14", "15", "17"].includes(rw.key.split("-")[1]))));
+  check("3. _CR receipts are excluded", !allCells.some((c) => /_CR/i.test(c)));
+  check("…and a non-document difference is filtered out even if one were passed in", rep.reportableDifferences([...r.differences, { ...r.differences[0], documentType: "payment", documentNumber: "_CR00001" }]).length === r.differences.length);
+  check("4. amount difference shows both amounts and the exact difference (02262503 style: -0.02)", /^R 300[.,]02$/.test(cell("AMOUNT_DIFFERENCE", "02262503", "Statement amount")) && /^R 300[.,]04$/.test(cell("AMOUNT_DIFFERENCE", "02262503", "VOLORA amount")) && /^-R 0[.,]02$/.test(cell("AMOUNT_DIFFERENCE", "02262503", "Difference")), JSON.stringify(sec("AMOUNT_DIFFERENCE").rows[0]));
+  check("5. date difference shows both dates and the days (02291553: 2026-10-01 vs 2026-01-10, +264 days)", cell("DATE_DIFFERENCE", "02291553", "Statement date") === "2026-10-01" && cell("DATE_DIFFERENCE", "02291553", "VOLORA date") === "2026-01-10" && cell("DATE_DIFFERENCE", "02291553", "Days difference") === "+264 days" && cell("DATE_DIFFERENCE", "02287458", "Days difference") === "+1457 days");
+  const dupVolora = cell("NEEDS_REVIEW", "02284252", "VOLORA records found");
+  check("6. a duplicate VOLORA number lists every VOLORA record (3), and says none was chosen", dupVolora.split("\n").length === 3 && ["d1", "d2", "d3"].every((id) => dupVolora.includes(`id ${id}`)) && /none is chosen/.test(cell("NEEDS_REVIEW", "02284252", "Reason")), dupVolora);
+  check("…a duplicate on the statement states that no VOLORA record was selected automatically", sec("DUPLICATE").rows.length === 2 && sec("DUPLICATE").rows.every((rw) => /no VOLORA record was selected automatically/.test(rw.cells.at(-1))));
+  check("7. missing documents are clearly identified", cell("MISSING_IN_VOLORA", "02299999", "Result") === "Not found in VOLORA" && cell("MISSING_IN_VOLORA", "02299999", "Statement amount") !== "—");
+  check("8. needs review includes the reason", /Duplicate in VOLORA: 3 records/.test(cell("NEEDS_REVIEW", "02284252", "Reason")));
+  check("credit / debit note differences carry the note type and exact difference", cell("NOTE_DIFFERENCE", "CN-2", "Note type") === "Credit note" && /^R 5[.,]00$/.test(cell("NOTE_DIFFERENCE", "CN-2", "Difference")) && cell("NOTE_DIFFERENCE", "DN-2", "Note type") === "Debit note");
+  const tiles = Object.fromEntries(rep.reportSummary(r.summary, r.differences).map((t) => [t.label, t.value]));
+  check("9. summary counts come from the reconciliation result", tiles["Supplier documents reviewed"] === String(r.summary.documents) && tiles.Matched === String(r.summary.matched) && tiles["Amount differences"] === String(r.summary.amountDifferences) && tiles["Date differences"] === String(r.summary.dateDifferences) && tiles.Duplicates === String(r.summary.duplicates) && tiles["Missing in VOLORA"] === String(r.summary.missing) && tiles["Credit/debit note differences"] === String(r.summary.noteDifferences) && tiles["Needs review"] === String(r.summary.needsReview) && tiles["Total differences"] === String(r.differences.length), JSON.stringify(tiles));
+  check("…and are not hardcoded (a different result gives different figures)", rep.reportSummary({ ...r.summary, documents: 999, missing: 7 }, []).find((t) => t.label === "Supplier documents reviewed").value === "999" && rep.reportSummary({ ...r.summary, missing: 7 }, []).find((t) => t.label === "Total differences").value === "0");
+  check("search finds a document by number or reference", r.differences.filter((d) => rep.matchesSearch(d, "02291553")).length === 1 && r.differences.filter((d) => rep.matchesSearch(d, "")).length === r.differences.length);
+}
+
+section("4d. Print layout");
+{
+  const css = readFileSync(path.join(ROOT, "src/app/globals.css"), "utf8");
+  const frame = readFileSync(path.join(ROOT, "src/components/reports/ReportDocument.tsx"), "utf8");
+  const view = readFileSync(path.join(ROOT, "src/components/vyron-cost/suppliers/SupplierDifferencesReport.tsx"), "utf8");
+  const printCss = css.slice(css.indexOf("Report printing"));
+  check("10. the report renders in the shared report frame (print scope), with its tables as report tables", /from "@\/components\/reports\/ReportDocument"/.test(view) && /<ReportDocument/.test(view) && /<ReportTable/.test(view));
+  check("…printing hides everything but the report (application navigation included)", /body\.vyron-printing-report \*\s*\{\s*visibility: hidden/.test(printCss) && /classList\.add\("vyron-printing-report"\)/.test(frame) && /window\.print\(\)/.test(frame));
+  check("…buttons, inputs, selects and the controls bar are not printed", /\.vyron-report-controls,[\s\S]*?button,[\s\S]*?input,[\s\S]*?select \{\s*display: none !important/.test(printCss));
+  check("…the search, filter and Back controls live in the unprinted controls bar", /controls=\{/.test(view) && /Back to reconciliation/.test(view) && /<select/.test(view) && /<input/.test(view));
+  check("…table headers repeat on each page and rows are not split", /thead \{\s*display: table-header-group/.test(printCss) && /tr \{\s*break-inside: avoid/.test(printCss));
+  check("…a visible Print Report button", /Print Report/.test(frame));
+  const lib = readFileSync(path.join(ROOT, "src/lib/vyron-supplier-differences-report.ts"), "utf8");
+  check("12. viewing / printing writes nothing: the report and its builder make no request and no database call", !/fetch\(|supabase|\.insert\(|\.update\(|\.delete\(/.test(view) && !/fetch\(|supabase|\.insert\(|\.update\(|\.delete\(/.test(lib.replace(/^\s*\*.*$/gm, "")));
 }
 
 section("5. Signed review → approval (in-memory database)");
@@ -264,6 +307,13 @@ const seedDb = () => ({
   check("the run carries the supplier-document summary and the All Differences report", summary.statement.matching.method === "supplier-documents-v2" && summary.statement.matching.documents === 5 && summary.statement.differences.length === 3);
   check("the run is recorded under the confirmed supplier", db.tables.vyron_supplier_reconciliations[0].supplier_name === SUP);
   check("the approval response carries the differences report for the screen", res.summary.statement.differences.length === 3);
+  const writesBefore = writes.length;
+  const savedRun = structuredClone(db.tables.vyron_supplier_reconciliations[0].summary);
+  const fromSaved = rep.reportSections(savedRun.statement.differences);
+  const fromPreview = rep.reportSections(preview.differences);
+  check("11. a saved run produces the same Differences Report as the preview, from its stored result (no AI, no re-match)", JSON.stringify(fromSaved) === JSON.stringify(fromPreview) && JSON.stringify(rep.reportSummary(savedRun.statement.matching, savedRun.statement.differences).slice(1)) === JSON.stringify(rep.reportSummary(preview.summary, preview.differences).slice(1)));
+  check("…the saved run keeps the report header facts (statement date, account number, statement period)", ["statementDate", "accountNumber", "statementPeriodFrom", "statementPeriodTo", "supplierApproved"].every((k) => k in savedRun.statement));
+  check("12. building the report from a saved run writes nothing", writes.length === writesBefore);
   check("supplier recorded as confirmed by the user; the AI's suggestion kept separately", summary.statement.supplierApproved === SUP && "supplierSuggested" in summary.statement);
   check("only the reconciliation record was written — no invoice, payment, allocation or stock change", [...new Set(writes)].sort().join() === "vyron_supplier_reconciliation_lines,vyron_supplier_reconciliations" && db.tables.vyron_cost_supplier_invoices.length === voloraRegister.length);
 }

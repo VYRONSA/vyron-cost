@@ -748,15 +748,67 @@ html:has(.vyron-public-page) body {
     visibility: visible;
   }
 
-  /* Lift the document out of the shell's scroll container to the page origin. */
-  body.vyron-printing-report .vyron-report-document {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
+  /*
+   * The report prints in normal flow, from the page origin, across as many
+   * pages as it needs. The app shell around it is built for the screen — one
+   * viewport high with overflow clipped, a scroll container offset by the fixed
+   * sidebar — and lifting the document out with absolute positioning left it
+   * clipped to the first screen and pushed off the page (a blank printout),
+   * and Chrome mis-places content after an absolutely positioned block that
+   * breaks across pages. So, while a report prints:
+   *   - every ancestor of the report document becomes a plain flowing block
+   *     (no height limit, no clipping, no offset), and
+   *   - everything beside that ancestor chain is removed from the layout.
+   * Both are found from the report document itself, not from shell class
+   * names, so they hold for any report and survive changes to the shell.
+   */
+  body.vyron-printing-report :has(.vyron-report-document) {
+    position: static;
+    display: block;
+    width: auto;
+    max-width: none;
+    height: auto;
+    min-height: 0;
+    max-height: none;
     margin: 0;
     padding: 0;
+    overflow: visible;
+    transform: none;
+  }
+  body.vyron-printing-report > :not(:has(.vyron-report-document)),
+  body.vyron-printing-report :has(.vyron-report-document) > :not(:has(.vyron-report-document)):not(.vyron-report-document) {
+    display: none !important;
+  }
+
+  /* The workspace wash is screen decoration, not part of the report. */
+  html:has(body.vyron-printing-report),
+  html:has(body.vyron-printing-report) body,
+  body.vyron-printing-report .vyron-cost-shell {
+    background: none;
+  }
+  body.vyron-printing-report .vyron-cost-shell::before {
+    display: none;
+  }
+
+  /*
+   * The bottom padding repeats on every printed page (cloned at each page
+   * break), keeping the strip under the fixed footer clear of report content.
+   */
+  body.vyron-printing-report .vyron-report-document {
+    position: static;
+    width: 100%;
+    margin: 0;
+    padding: 0 0 9mm;
     gap: 10px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  /* A section heading stays with the table it introduces. */
+  body.vyron-printing-report .vyron-report-body :is(h2, h3),
+  body.vyron-printing-report .vyron-report-body :has(> :is(h2, h3)) {
+    break-after: avoid;
+    break-inside: avoid;
   }
 
   /* Interactive chrome is not part of the report. */

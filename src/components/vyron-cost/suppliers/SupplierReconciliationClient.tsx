@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Card, KpiCard, Notice, Pill, money } from "@/components/vyron-order-engine/ui";
 import FileDropZone from "@/components/vyron-ui/FileDropZone";
-import SupplierStatementReview, { DifferencesReport, SupplierDocumentTiles, type StatementExtraction } from "@/components/vyron-cost/suppliers/SupplierStatementReview";
+import SupplierStatementReview, { DifferencesReportCallout, SupplierDocumentTiles, type StatementExtraction } from "@/components/vyron-cost/suppliers/SupplierStatementReview";
+import SupplierDifferencesReport from "@/components/vyron-cost/suppliers/SupplierDifferencesReport";
+import type { DifferencesReportData } from "@/lib/vyron-supplier-differences-report";
 import type { StatementInterpretation } from "@/lib/vyron-supplier-statement-ai";
 import type { DocumentDifference, StatementMatchResult } from "@/lib/vyron-supplier-statement-match";
 
@@ -38,7 +40,15 @@ type Summary = {
   periodTo: string | null;
   skippedRows?: Array<{ row: number; reason: string }>;
   /** Interpreted PDF statements: the supplier-document matching summary and differences report. */
-  statement?: { matching?: StatementMatchResult["summary"] & { method?: string }; differences?: DocumentDifference[] };
+  statement?: {
+    matching?: StatementMatchResult["summary"] & { method?: string };
+    differences?: DocumentDifference[];
+    supplierApproved?: string;
+    statementDate?: string | null;
+    accountNumber?: string | null;
+    statementPeriodFrom?: string | null;
+    statementPeriodTo?: string | null;
+  };
 };
 type Run = { id: string; supplier_name: string | null; source_file_name: string; created_at: string; summary: Summary };
 
@@ -74,7 +84,9 @@ export default function SupplierReconciliationClient() {
   const [supplierName, setSupplierName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [current, setCurrent] = useState<{ id: string; fileName: string; summary: Summary; lines: Line[] } | null>(null);
+  const [current, setCurrent] = useState<{ id: string; fileName: string; summary: Summary; lines: Line[]; supplierName?: string | null; createdAt?: string | null } | null>(null);
+  // The Differences Report being viewed (display only); the page underneath stays mounted.
+  const [report, setReport] = useState<DifferencesReportData | null>(null);
   const [filter, setFilter] = useState<Status | "EXCEPTIONS" | "ALL">("EXCEPTIONS");
   const [history, setHistory] = useState<Run[]>([]);
   const [review, setReview] = useState<{
@@ -147,7 +159,7 @@ export default function SupplierReconciliationClient() {
       const res = await fetch("/api/supplier-reconciliations", { method: "POST", body: form });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "Reconciliation failed.");
-      setCurrent({ id: data.reconciliation.id, fileName: review.file.name, summary: { ...data.summary, skippedRows: data.skipped }, lines: data.lines.map(toLine) });
+      setCurrent({ id: data.reconciliation.id, fileName: review.file.name, summary: { ...data.summary, skippedRows: data.skipped }, lines: data.lines.map(toLine), supplierName: data.reconciliation.supplier_name, createdAt: data.reconciliation.created_at });
       setReview(null);
       setFilter("EXCEPTIONS");
       await loadHistory();
@@ -174,16 +186,36 @@ export default function SupplierReconciliationClient() {
   const open = async (run: Run) => {
     const res = await fetch(`/api/supplier-reconciliations/${run.id}`, { cache: "no-store" });
     const data = await res.json();
-    if (data.ok) setCurrent({ id: run.id, fileName: run.source_file_name, summary: run.summary, lines: data.lines.map(toLine) });
+    if (data.ok) setCurrent({ id: run.id, fileName: run.source_file_name, summary: run.summary, lines: data.lines.map(toLine), supplierName: run.supplier_name, createdAt: run.created_at });
   };
 
   const s = current?.summary;
   // A supplier-document statement run: its own summary and differences report replace the invoice-list tiles.
   const documentRun = s?.statement?.matching?.method === "supplier-documents-v2" ? s.statement : null;
+  // The saved run's own stored result — the AI is not asked again and nothing is matched again.
+  const openSavedReport = () => {
+    if (!current || !documentRun?.matching) return;
+    setReport({
+      supplierName: documentRun.supplierApproved || current.supplierName || "—",
+      fileName: current.fileName,
+      statementDate: documentRun.statementDate ?? null,
+      periodFrom: documentRun.statementPeriodFrom ?? documentRun.matching.periodFrom,
+      periodTo: documentRun.statementPeriodTo ?? documentRun.matching.periodTo,
+      accountNumber: documentRun.accountNumber ?? null,
+      generatedAt: new Date().toISOString(),
+      basis: "saved",
+      savedAt: current.createdAt ?? null,
+      summary: documentRun.matching,
+      differences: documentRun.differences || [],
+    });
+    window.scrollTo({ top: 0 });
+  };
   const lines = (current?.lines || []).filter((l) => (filter === "ALL" ? true : filter === "EXCEPTIONS" ? l.status !== "MATCHED" : l.status === filter));
 
   return (
-    <div className="grid w-full max-w-full min-w-0 gap-6">
+    <>
+    {report ? <SupplierDifferencesReport data={report} onClose={() => setReport(null)} /> : null}
+    <div className={`grid w-full max-w-full min-w-0 gap-6 ${report ? "hidden" : ""}`}>
       <div>
         <h1 className="text-2xl font-black text-slate-900">Supplier Invoice Reconciliation</h1>
         <p className="mt-1 max-w-3xl text-sm font-semibold text-slate-500">
@@ -219,13 +251,17 @@ export default function SupplierReconciliationClient() {
           onCancel={() => setReview(null)}
           interpretation={review.reviewToken ? review.interpretation : null}
           onMatch={review.reviewToken ? (supplier) => matchPreview(review.reviewToken!, supplier) : undefined}
+          onOpenReport={(data) => {
+            setReport(data);
+            window.scrollTo({ top: 0 });
+          }}
         />
       ) : null}
 
       {current && s ? (
         <>
           {documentRun?.matching ? <SupplierDocumentTiles summary={documentRun.matching} /> : null}
-          {documentRun ? <DifferencesReport differences={documentRun.differences || []} /> : null}
+          {documentRun?.matching ? <DifferencesReportCallout count={(documentRun.differences || []).length} onView={openSavedReport} /> : null}
           {documentRun ? null : (
           <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
             <KpiCard label="Supplier invoices" value={String(s.supplierInvoices)} active={filter === "ALL"} onClick={() => setFilter("ALL")} />
@@ -324,5 +360,6 @@ export default function SupplierReconciliationClient() {
         </ul>
       </Card>
     </div>
+    </>
   );
 }
