@@ -34,26 +34,36 @@ process.env.SUPABASE_SERVICE_ROLE_KEY ||= "qa-bundle-probe";
   for (const c of chunks) R.c(c);
   out.chunks = chunks.length;
 
-  // The bundled module that defines the reader: the module whose factory contains MARKER.
+  // The bundled module that defines the reader: the module whose factory contains MARKER. Module ids
+  // are read from the chunk text; the nearest ones before MARKER are tried in turn until one exports
+  // the reader (other modules can be compiled into the same chunk).
   let moduleId = null;
+  let api = null;
   for (const c of chunks) {
     const text = fs.readFileSync(path.join(NEXT, c), "utf8");
     const at = text.indexOf(MARKER);
     if (at < 0) continue;
-    const ids = [...text.slice(0, at).matchAll(/(?:^|[,\[{])\s*(\d{3,8})\s*,\s*(?:\(?[A-Za-z_$,\s]*\)?\s*=>|function)/g)];
-    if (ids.length) moduleId = Number(ids[ids.length - 1][1]);
     out.readerChunk = c;
+    // A chunk lists one or more module ids in front of each factory: "[499307,119084,405663,e=>{…".
+    const ids = [...new Set([...text.slice(0, at).matchAll(/(?<=[,[])\s*(\d{3,8})\s*(?=,)/g)].map((m) => Number(m[1])).reverse())];
+    for (const id of ids.slice(0, 40)) {
+      try {
+        const mod = R.m(id);
+        const exp = mod.exports && typeof mod.exports.then === "function" ? await mod.exports : mod.exports;
+        if (exp && typeof exp.extractSupplierStatementPdf === "function") {
+          moduleId = id;
+          api = exp;
+          break;
+        }
+      } catch {
+        // not this module
+      }
+    }
     break;
   }
   out.moduleId = moduleId;
-  if (moduleId === null) {
+  if (!api) {
     out.fatal = "The bundled statement reader was not found in the route's chunks.";
-    return finish(out);
-  }
-  const mod = R.m(moduleId);
-  const api = mod.exports && typeof mod.exports.then === "function" ? await mod.exports : mod.exports;
-  if (!api || typeof api.extractSupplierStatementPdf !== "function") {
-    out.fatal = `Bundled module ${moduleId} does not export extractSupplierStatementPdf.`;
     return finish(out);
   }
 

@@ -54,9 +54,18 @@ export type StatementTransaction = {
   status: StatementLineStatus;
   flags: Flag[];
   sourceText: string;
+  /** The row's text cells with their horizontal bounds, exactly as read (for semantic interpretation). */
+  cells: PdfCell[];
 };
 
 export type UnreadLine = { page: number; text: string; reason: string };
+
+/** The statement's layout as read: the column-heading cells and the text around the table. */
+export type StatementStructure = {
+  headerCells: PdfCell[] | null;
+  /** Page-1 lines above the table and the lines below the last transaction (letterhead, ageing, totals). */
+  contextLines: Array<{ page: number; text: string }>;
+};
 
 export type StatementExtraction = {
   fileSha256: string;
@@ -76,6 +85,7 @@ export type StatementExtraction = {
   unreadLines: UnreadLine[];
   warnings: string[];
   counts: { transactions: number; toReconcile: number; notReconciled: number; excluded: number; withWarnings: number };
+  structure: StatementStructure;
   digest: string;
 };
 
@@ -518,6 +528,7 @@ export function interpretStatement(input: { lines: PdfLine[]; pageCount: number;
   let inTable = false;
   let afterTable = false;
   let lastTxnLine: PdfLine | null = null;
+  let lastTxnLineIndex = -1;
   const txnRegionEnd = { seen: false };
 
   for (let i = 0; i < lines.length; i++) {
@@ -744,8 +755,10 @@ export function interpretStatement(input: { lines: PdfLine[]; pageCount: number;
       status,
       flags,
       sourceText: text,
+      cells: line.cells.map((c) => ({ text: c.text, x0: Math.round(c.x0 * 10) / 10, x1: Math.round(c.x1 * 10) / 10 })),
     });
     lastTxnLine = line;
+    lastTxnLineIndex = i;
   }
   if (layout === "rows" && !transactions.length) warnings.push("No transaction lines could be recognised in this statement.");
 
@@ -794,6 +807,15 @@ export function interpretStatement(input: { lines: PdfLine[]; pageCount: number;
   if (unreadAmounts) warnings.push("Some lines have no readable amount, so the statement's balances cannot be checked.");
 
   const columnsFound = [...new Set(lines.filter((_, i) => headerIdx.has(i)).flatMap((l) => (headerColumns(l) || []).map((c) => c.role)))];
+  const structure: StatementStructure = {
+    headerCells: firstHeader >= 0 ? lines[firstHeader].cells.map((c) => ({ text: c.text, x0: Math.round(c.x0 * 10) / 10, x1: Math.round(c.x1 * 10) / 10 })) : null,
+    contextLines: [
+      ...lines.slice(0, topEnd).filter((l) => l.page === 1),
+      ...(lastTxnLineIndex >= 0 ? lines.slice(lastTxnLineIndex + 1).filter((l) => !BOILERPLATE_RE.test(l.text.trim())) : []),
+    ]
+      .slice(0, 80)
+      .map((l) => ({ page: l.page, text: l.text })),
+  };
   const body = {
     fileSha256: input.fileSha256,
     pageCount: input.pageCount,
@@ -818,6 +840,7 @@ export function interpretStatement(input: { lines: PdfLine[]; pageCount: number;
       excluded: transactions.filter((t) => t.status === "EXCLUDED").length,
       withWarnings: transactions.filter((t) => t.flags.some((f) => f.severity === "warning")).length,
     },
+    structure,
   };
   return { ...body, digest: createHash("sha256").update(JSON.stringify(body)).digest("hex") };
 }

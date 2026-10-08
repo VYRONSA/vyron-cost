@@ -4,6 +4,13 @@ import { listSupplierInvoiceRegister, type SupplierInvoiceRegisterRow } from "@/
 import { parseAmount, parseDateCell, pickColumn } from "@/lib/vyron-upload-table";
 import type { CsvTable } from "@/lib/data-migration/csv";
 import { extractSupplierStatementPdf, type StatementExtraction } from "@/lib/vyron-supplier-statement-pdf";
+import {
+  AMOUNT_DATE_WINDOW_DAYS,
+  matchInterpretedStatement,
+  verifyReviewedInterpretation,
+  type MatchCandidate,
+  type StatementMatchResult,
+} from "@/lib/vyron-supplier-statement-match";
 
 /**
  * VOLORA — supplier invoice reconciliation.
@@ -14,7 +21,8 @@ import { extractSupplierStatementPdf, type StatementExtraction } from "@/lib/vyr
  * or changed in the books; the run itself is kept as a record.
  */
 
-export type ReconStatus = "MATCHED" | "MISSING_IN_VOLORA" | "TOTAL_DIFFERENCE" | "VAT_DIFFERENCE" | "DUPLICATE" | "CREDIT_NOTE" | "NOT_ON_SUPPLIER_DOCUMENT";
+/** NEEDS_REVIEW is produced only by the interpreted PDF statement path (more than one candidate, or conflicting evidence). */
+export type ReconStatus = "MATCHED" | "MISSING_IN_VOLORA" | "TOTAL_DIFFERENCE" | "VAT_DIFFERENCE" | "DUPLICATE" | "CREDIT_NOTE" | "NOT_ON_SUPPLIER_DOCUMENT" | "NEEDS_REVIEW";
 
 export type StatementLine = {
   row: number;
@@ -61,6 +69,8 @@ export type ReconSummary = {
   difference: number;
   periodFrom: string | null;
   periodTo: string | null;
+  /** Interpreted PDF statements only. */
+  needsReview?: number;
 };
 
 export class ReconciliationError extends Error {}
@@ -341,16 +351,179 @@ export async function runApprovedStatementReconciliation(
   );
 }
 
+// ---------------------------------------------------------------------------------------------
+// Interpreted PDF statements (Phase 2): matching on the reviewed AI interpretation
+// ---------------------------------------------------------------------------------------------
+
+/** VOLORA's supplier invoices with the PO numbers linked to them, as match candidates. Read-only. */
+export async function loadStatementMatchCandidates(supabase: SupabaseClient, companyId: string): Promise<MatchCandidate[]> {
+  const { invoices } = await listSupplierInvoiceRegister(supabase, companyId);
+  const poIds = [...new Set(invoices.map((i) => i.matched_po_id).filter((id): id is string => Boolean(id)))];
+  const poNumber = new Map<string, string>();
+  for (let i = 0; i < poIds.length; i += 200) {
+    const { data, error } = await supabase.from("vyron_cost_purchase_orders").select("id, po_number").eq("company_id", companyId).in("id", poIds.slice(i, i + 200));
+    if (error) throw new Error(error.message);
+    for (const po of data || []) if (po.po_number) poNumber.set(String(po.id), String(po.po_number));
+  }
+  return invoices.map((i) => ({
+    id: i.id,
+    invoiceNumber: i.invoice_number && i.invoice_number !== "—" ? i.invoice_number : null,
+    invoiceDate: i.invoice_date,
+    total: i.total === null ? null : Number(i.total),
+    supplierName: i.supplier_name,
+    poNumber: i.matched_po_id ? poNumber.get(i.matched_po_id) ?? null : null,
+    origin: i.origin,
+  }));
+}
+
+function verifiedReview(companyId: string, body: string, signature: string) {
+  const payload = verifyReviewedInterpretation(body, signature, { companyId });
+  if (!payload) throw new ReconciliationError("The reviewed statement could not be verified (it was changed, has expired, or belongs to another company). Upload it again and review it before approving.");
+  return payload;
+}
+
+/** Match a reviewed (signed) interpretation against VOLORA for the confirmed supplier. Writes nothing. */
+export async function previewInterpretedStatementMatch(supabase: SupabaseClient, companyId: string, input: { reviewBody: string; reviewSignature: string; supplierName: string }): Promise<StatementMatchResult> {
+  const supplierName = String(input.supplierName || "").trim();
+  if (!supplierName) throw new ReconciliationError("Choose the supplier this statement is from first.");
+  const payload = verifiedReview(companyId, input.reviewBody, input.reviewSignature);
+  return matchInterpretedStatement(payload.interpretation, await loadStatementMatchCandidates(supabase, companyId), supplierName);
+}
+
+/**
+ * Reconcile an interpreted PDF statement the user reviewed and approved. The PDF is read again and must
+ * give exactly the extraction that was reviewed; the interpretation must carry the server's signature
+ * for that extraction and company, and its dates and amounts must be the reader's. The AI is not asked
+ * again. Matching is deterministic (vyron-supplier-statement-match.ts). Writes only the reconciliation
+ * record — payment allocations and unallocated receipts are kept as statement evidence, never posted.
+ */
+export async function runApprovedInterpretedStatementReconciliation(
+  supabase: SupabaseClient,
+  companyId: string,
+  input: { bytes: Uint8Array; fileName: string; approvedDigest: string; supplierName: string; ownCompanyNames: string[]; approvedBy: string; reviewBody: string; reviewSignature: string },
+  actor: string
+) {
+  const supplierName = String(input.supplierName || "").trim();
+  if (!supplierName) throw new ReconciliationError("Choose the supplier this statement is from before approving it.");
+  const extraction = await extractSupplierStatementPdf(input.bytes, { ownCompanyNames: input.ownCompanyNames });
+  if (!input.approvedDigest || extraction.digest !== input.approvedDigest)
+    throw new ReconciliationError("The statement is not the one that was reviewed. Upload it again and review the extracted lines before approving.");
+  const payload = verifiedReview(companyId, input.reviewBody, input.reviewSignature);
+  if (payload.extractionDigest !== extraction.digest || payload.fileSha256 !== extraction.fileSha256)
+    throw new ReconciliationError("The reviewed interpretation belongs to a different statement. Upload it again and review it before approving.");
+  const interpretation = payload.interpretation;
+  const sameNumbers =
+    interpretation.lines.length === extraction.transactions.length &&
+    interpretation.lines.every((l, i) => {
+      const t = extraction.transactions[i];
+      return l.index === t.index && l.date === t.date && l.debit === t.debit && l.credit === t.credit && l.balance === t.balance;
+    });
+  if (!sameNumbers) throw new ReconciliationError("The reviewed interpretation does not carry the statement's own dates and amounts. Upload it again and review it before approving.");
+
+  const match = matchInterpretedStatement(interpretation, await loadStatementMatchCandidates(supabase, companyId), supplierName);
+  const byIndex = new Map(interpretation.lines.map((l) => [l.index, l]));
+  const reconLines: ReconLine[] = [];
+  for (const m of match.lines) {
+    if (m.status === "NOT_RECONCILED") continue;
+    const l = byIndex.get(m.index)!;
+    const refs = l.secondaryReferences.length ? ` References: ${l.secondaryReferences.join(", ")}.` : "";
+    const review = l.needsReview ? ` Review: ${l.reviewReasons.join(" ")}` : "";
+    reconLines.push({
+      status: m.status,
+      supplierName,
+      invoiceNumber: l.documentNumber,
+      documentType: l.type === "credit_note" ? "CREDIT_NOTE" : "INVOICE",
+      supplierDate: l.date,
+      dueDate: null,
+      supplierTotal: m.statementAmount,
+      supplierVat: null,
+      amountPaid: null,
+      voloraTotal: m.voloraTotal,
+      voloraVat: null,
+      difference: m.difference,
+      vatDifference: null,
+      voloraRef: m.voloraInvoiceNumber ? `${m.method === "amount_date" ? "Amount + date" : m.method === "reference" ? "Reference" : "Document number"}: ${m.voloraInvoiceNumber}` : null,
+      sourceRow: l.index,
+      notes: `${m.note}${refs}${review}`.trim(),
+    });
+  }
+  for (const c of match.notOnStatement)
+    reconLines.push({ status: "NOT_ON_SUPPLIER_DOCUMENT", supplierName: c.supplierName, invoiceNumber: c.invoiceNumber, documentType: "INVOICE", supplierDate: null, dueDate: null, supplierTotal: null, supplierVat: null, amountPaid: null, voloraTotal: c.total, voloraVat: null, difference: null, vatDifference: null, voloraRef: `${c.origin === "document" ? "Invoice Intelligence" : "Register"} ${c.invoiceNumber} (${c.invoiceDate})`, sourceRow: null, notes: "In VOLORA, but not on the supplier statement." });
+  if (!reconLines.some((l) => l.sourceRow !== null)) throw new ReconciliationError("The statement has no invoice or credit-note lines to reconcile.");
+
+  const onStatement = reconLines.filter((l) => l.sourceRow !== null);
+  const supplierValue = Math.round(onStatement.reduce((t, l) => t + (l.supplierTotal ?? 0), 0) * 100) / 100;
+  const voloraValue = Math.round(onStatement.reduce((t, l) => t + (l.voloraTotal ?? 0), 0) * 100) / 100;
+  const summary: ReconSummary = {
+    supplierInvoices: onStatement.length,
+    matched: match.summary.matched,
+    missing: match.summary.missing,
+    totalDifferences: match.summary.totalDifferences,
+    vatDifferences: 0,
+    duplicates: match.summary.duplicates,
+    creditNotes: match.summary.creditNotes,
+    notOnSupplierDocument: match.summary.notOnStatement,
+    supplierValue,
+    voloraValue,
+    difference: Math.round((supplierValue - voloraValue) * 100) / 100,
+    periodFrom: match.summary.periodFrom,
+    periodTo: match.summary.periodTo,
+    needsReview: match.summary.needsReview,
+  };
+  const skipped = interpretation.lines.filter((l) => l.type !== "invoice" && l.type !== "credit_note").map((l) => ({ row: l.index, reason: `${l.type.replace("_", " ")} — statement evidence, not reconciled against invoices.` }));
+  return recordReconciliation(
+    supabase,
+    companyId,
+    {
+      statement: [],
+      skipped,
+      sha256: extraction.fileSha256,
+      fileName: input.fileName,
+      precomputed: { lines: reconLines, summary },
+      extraSummary: {
+        statement: {
+          source: "pdf",
+          interpretation: { aiStatus: interpretation.aiStatus, model: interpretation.model, usage: interpretation.usage, counts: interpretation.counts, columns: interpretation.columns },
+          matching: { method: "interpreted-statement-v1", windowDays: AMOUNT_DATE_WINDOW_DAYS, ...match.summary },
+          extractionDigest: extraction.digest,
+          approvedBy: input.approvedBy,
+          approvedAt: new Date().toISOString(),
+          supplierDetected: extraction.supplier.value,
+          supplierSuggested: interpretation.metadata.supplierName.value,
+          supplierApproved: supplierName,
+          statementDate: interpretation.metadata.statementDate.value ?? extraction.statementDate.value,
+          openingBalance: extraction.openingBalance.value,
+          closingBalance: extraction.closingBalance.value,
+          balanceCheck: extraction.balanceCheck,
+          pageCount: extraction.pageCount,
+          // Evidence only — nothing is allocated, posted or changed.
+          paymentAllocations: interpretation.lines.filter((l) => l.type === "payment" && l.paymentAllocatesDocumentNumber).map((l) => ({ row: l.index, date: l.date, credit: l.credit, settles: l.paymentAllocatesDocumentNumber, source: l.allocationSource, kind: l.allocationKind })),
+          unallocatedReceipts: interpretation.lines.filter((l) => l.type === "unallocated_receipt").map((l) => ({ row: l.index, date: l.date, documentNumber: l.documentNumber, balanceMovement: l.balanceMovement })),
+          reviewItems: interpretation.lines.filter((l) => l.needsReview).map((l) => ({ row: l.index, type: l.type, reasons: l.reviewReasons })),
+        },
+      },
+    },
+    actor
+  );
+}
+
 /** Reconcile statement lines against this company's register and keep the run. Writes only the reconciliation record. */
 async function recordReconciliation(
   supabase: SupabaseClient,
   companyId: string,
-  input: { statement: StatementLine[]; skipped: Array<{ row: number; reason: string }>; sha256: string; fileName: string; extraSummary?: Record<string, unknown> },
+  input: {
+    statement: StatementLine[];
+    skipped: Array<{ row: number; reason: string }>;
+    sha256: string;
+    fileName: string;
+    extraSummary?: Record<string, unknown>;
+    /** Lines already decided by the interpreted-statement matcher (PDF path); otherwise reconcileStatement decides. */
+    precomputed?: { lines: ReconLine[]; summary: ReconSummary };
+  },
   actor: string
 ) {
   const { statement, skipped } = input;
-  const { invoices } = await listSupplierInvoiceRegister(supabase, companyId);
-  const { lines, summary } = reconcileStatement(statement, invoices);
+  const { lines, summary } = input.precomputed ?? reconcileStatement(statement, (await listSupplierInvoiceRegister(supabase, companyId)).invoices);
   const suppliers = [...new Set(statement.map((l) => l.supplierName))];
   const { data: header, error } = await supabase
     .from("vyron_supplier_reconciliations")

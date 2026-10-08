@@ -1,0 +1,402 @@
+{
+ "layout": "layoutErp",
+ "model": "gpt-4o",
+ "recordedAt": "2026-10-08T08:04:04.555Z",
+ "calls": [
+  {
+   "name": "supplier_statement_identity",
+   "firstLineIndex": null,
+   "status": 200,
+   "response": {
+    "id": "resp_007a34bd02e89daa016ac74e6d35ec87d28db0886823a25852",
+    "object": "response",
+    "created_at": 1791446637,
+    "status": "completed",
+    "access_programs": null,
+    "background": false,
+    "billing": {
+     "payer": "developer"
+    },
+    "completed_at": 1791446638,
+    "error": null,
+    "frequency_penalty": 0,
+    "incomplete_details": null,
+    "instructions": "You interpret a supplier's account statement for an accounting system. The text was already extracted from the PDF.\nMoney amounts have been replaced by the placeholder {amount}; you never see, return or calculate amounts, balances or totals.\n\nReturn:\n- columns: one entry per column-heading cell given, \"header\" copied exactly, with its role:\n  documentNumber = the supplier's own document identity on each row (headings such as Invoice, Inv No, Invoice Number, Document, Doc No, Document Number, Number, Tran No). At most ONE column is documentNumber.\n  supplierReference = another reference of the supplier (Our Ref, Our Reference, Sales Order, Delivery Note, Reference when a document-number column also exists).\n  customerOrderReference = the customer's own reference or order (Your Ref, Your Reference, Customer Ref, Order No, PO, Purchase Order).\n  paymentReference = a column only for payment references. date / dueDate / description / type / debit / credit / amount / balance as named; other for anything else.\n  When a statement has both \"Invoice\" and \"Our Reference\", Invoice is documentNumber and Our Reference is supplierReference — never the same role.\n- supplierName, supplierEmail, supplierWebsite, supplierVatNumber, supplierAccountNumber: copy exactly as written in the statement text; null when not written.\n  supplierAccountNumber is the CUSTOMER'S account number with the supplier (Account No, Customer No, Acc Ref next to the customer details) — never a bank account number from banking / payment details (Bank, Branch Code, SWIFT).\n  The statement's recipient (the customer, named below) is never the supplier. Do not derive a supplier name from an email or web address.\n- statementDate, periodFrom, periodTo: the date text copied exactly as written next to a statement-date / period label; null when absent. Never compute a date.\n- currency: as written (e.g. ZAR, R) or null.\n- ordering: newest_first when the rows run from the latest date down to the earliest, oldest_first for the reverse, unknown otherwise.",
+    "max_output_tokens": 12000,
+    "max_tool_calls": null,
+    "model": "gpt-4o-2024-08-06",
+    "moderation": null,
+    "output": [
+     {
+      "id": "msg_007a34bd02e89daa016ac74e6d8e7487d2b83c654cc6dff753",
+      "type": "message",
+      "status": "completed",
+      "content": [
+       {
+        "type": "output_text",
+        "annotations": [],
+        "logprobs": [],
+        "text": "{\"supplierName\":\"METRO PACKAGING LIMITED\",\"supplierEmail\":null,\"supplierWebsite\":null,\"supplierVatNumber\":null,\"supplierAccountNumber\":null,\"statementDate\":null,\"periodFrom\":\"2026-10-01\",\"periodTo\":\"2026-10-31\",\"currency\":null,\"ordering\":\"oldest_first\",\"columns\":[{\"header\":\"Doc No.\",\"role\":\"documentNumber\"},{\"header\":\"Type\",\"role\":\"type\"},{\"header\":\"Doc Date\",\"role\":\"date\"},{\"header\":\"Due Date\",\"role\":\"dueDate\"},{\"header\":\"Amount\",\"role\":\"amount\"}]}"
+       }
+      ],
+      "role": "assistant"
+     }
+    ],
+    "parallel_tool_calls": true,
+    "presence_penalty": 0,
+    "previous_response_id": null,
+    "prompt_cache_key": null,
+    "prompt_cache_retention": "in_memory",
+    "reasoning": {
+     "context": null,
+     "effort": null,
+     "summary": null
+    },
+    "safety_identifier": null,
+    "service_tier": "default",
+    "store": false,
+    "temperature": 0,
+    "text": {
+     "format": {
+      "type": "json_schema",
+      "description": null,
+      "name": "supplier_statement_identity",
+      "schema": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "supplierName",
+        "supplierEmail",
+        "supplierWebsite",
+        "supplierVatNumber",
+        "supplierAccountNumber",
+        "statementDate",
+        "periodFrom",
+        "periodTo",
+        "currency",
+        "ordering",
+        "columns"
+       ],
+       "properties": {
+        "supplierName": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "supplierEmail": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "supplierWebsite": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "supplierVatNumber": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "supplierAccountNumber": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "statementDate": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "periodFrom": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "periodTo": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "currency": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "ordering": {
+         "type": "string",
+         "enum": [
+          "newest_first",
+          "oldest_first",
+          "unknown"
+         ]
+        },
+        "columns": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "header",
+           "role"
+          ],
+          "properties": {
+           "header": {
+            "type": "string"
+           },
+           "role": {
+            "type": "string",
+            "enum": [
+             "documentNumber",
+             "supplierReference",
+             "customerOrderReference",
+             "paymentReference",
+             "date",
+             "dueDate",
+             "description",
+             "type",
+             "debit",
+             "credit",
+             "amount",
+             "balance",
+             "other"
+            ]
+           }
+          }
+         }
+        }
+       }
+      },
+      "strict": true
+     },
+     "verbosity": "medium"
+    },
+    "tool_choice": "auto",
+    "tool_usage": {
+     "image_gen": {
+      "input_tokens": 0,
+      "input_tokens_details": {
+       "image_tokens": 0,
+       "text_tokens": 0
+      },
+      "output_tokens": 0,
+      "output_tokens_details": {
+       "image_tokens": 0,
+       "text_tokens": 0
+      },
+      "total_tokens": 0
+     },
+     "web_search": {
+      "num_requests": 0
+     }
+    },
+    "tools": [],
+    "top_logprobs": 0,
+    "top_p": 1,
+    "truncation": "disabled",
+    "usage": {
+     "input_tokens": 986,
+     "input_tokens_details": {
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+     },
+     "output_tokens": 117,
+     "output_tokens_details": {
+      "reasoning_tokens": 0
+     },
+     "total_tokens": 1103
+    },
+    "user": null,
+    "metadata": {}
+   }
+  },
+  {
+   "name": "supplier_statement_rows",
+   "firstLineIndex": 1,
+   "status": 200,
+   "response": {
+    "id": "resp_0fecc8e9de3f9ab7016ac74e6eb9ec87d2a6d62f74342ff87c",
+    "object": "response",
+    "created_at": 1791446638,
+    "status": "completed",
+    "access_programs": null,
+    "background": false,
+    "billing": {
+     "payer": "developer"
+    },
+    "completed_at": 1791446643,
+    "error": null,
+    "frequency_penalty": 0,
+    "incomplete_details": null,
+    "instructions": "You classify the rows of a supplier's account statement for an accounting system. The text was already extracted from the PDF.\nMoney amounts are shown as {amount}; you never see, return or calculate amounts, dates as values, balances or totals.\n\nEach row gives: lineIndex; direction (debit = increases what the customer owes the supplier; credit = reduces it; none = no amount on the row);\nbalanceJump (true when the row has no amount but the running balance still changes); byColumn (the row's text split under each column heading by horizontal position — usually right, but text that ran together may be split imperfectly); text (the whole row).\n\nFor EVERY row return exactly one entry:\n- type: invoice | credit_note | payment | unallocated_receipt | journal | adjustment | interest | discount | balance_line | unknown.\n  Decide from the column structure, the direction and the description together. A debit row carrying a number in the document-number column is an invoice unless its description says otherwise (interest, journal, debit note, adjustment).\n  Credit rows described as payment, receipt, EFT, transfer, deposit are payments; a credit row that is a credit note says so (credit note, CN, return).\n  A credit row whose description does not say what it is (for example \"Misc\", \"Sundry\", or only a reference) is unknown with low confidence — never assume it is a payment.\n  Rows such as \"Unapplied cash\", \"Unallocated\", \"On account\", \"Cash on account\" are unallocated_receipt. An unallocated receipt settles nothing yet: put its own number in documentNumberCell and leave paymentAllocatesDocumentNumber null.\n  Brought/carried forward or balance-only rows are balance_line. Use unknown when the evidence is not enough — never guess.\n- documentNumberCell: the row's own document number copied EXACTLY as printed (keep leading zeros and punctuation), normally from the documentNumber column; null when there is none.\n  On a payment row the document-number column usually holds the invoice being paid: put that number in paymentAllocatesDocumentNumber and set documentNumberCell to null unless the row also shows the payment's own number.\n- secondaryReferenceCells: the row's other references (supplier reference, customer order / PO) copied exactly; [] when none.\n- paymentAllocatesDocumentNumber: for payment or credit_note rows, the document number the row says it settles, copied exactly; otherwise null.\n- descriptionMeaning: what the description means, at most 12 words.\n- evidence: the headings, words and direction you relied on, at most 20 words.\n- confidence: high, medium or low.\nCopy identifiers exactly; never invent, complete or reformat one. Return the rows in the order given.",
+    "max_output_tokens": 12000,
+    "max_tool_calls": null,
+    "model": "gpt-4o-2024-08-06",
+    "moderation": null,
+    "output": [
+     {
+      "id": "msg_0fecc8e9de3f9ab7016ac74e6f571487d2b2fb79a61033f740",
+      "type": "message",
+      "status": "completed",
+      "content": [
+       {
+        "type": "output_text",
+        "annotations": [],
+        "logprobs": [],
+        "text": "{\"transactions\":[{\"lineIndex\":1,\"type\":\"invoice\",\"documentNumberCell\":\"INV-5501\",\"secondaryReferenceCells\":[],\"paymentAllocatesDocumentNumber\":null,\"descriptionMeaning\":\"Invoice issued\",\"evidence\":\"Doc No. INV-5501, Type INV, debit\",\"confidence\":\"high\"},{\"lineIndex\":2,\"type\":\"invoice\",\"documentNumberCell\":\"INV-5502\",\"secondaryReferenceCells\":[],\"paymentAllocatesDocumentNumber\":null,\"descriptionMeaning\":\"Invoice issued\",\"evidence\":\"Doc No. INV-5502, Type INV, debit\",\"confidence\":\"high\"},{\"lineIndex\":3,\"type\":\"credit_note\",\"documentNumberCell\":\"CRN-0091\",\"secondaryReferenceCells\":[],\"paymentAllocatesDocumentNumber\":null,\"descriptionMeaning\":\"Credit note issued\",\"evidence\":\"Doc No. CRN-0091, Type CRN, credit\",\"confidence\":\"high\"},{\"lineIndex\":4,\"type\":\"payment\",\"documentNumberCell\":\"RCP-7781\",\"secondaryReferenceCells\":[],\"paymentAllocatesDocumentNumber\":null,\"descriptionMeaning\":\"Payment received\",\"evidence\":\"Doc No. RCP-7781, Type PMT, credit\",\"confidence\":\"high\"},{\"lineIndex\":5,\"type\":\"journal\",\"documentNumberCell\":\"JNL-12\",\"secondaryReferenceCells\":[],\"paymentAllocatesDocumentNumber\":null,\"descriptionMeaning\":\"Journal entry\",\"evidence\":\"Doc No. JNL-12, Type JNL, debit\",\"confidence\":\"high\"}]}"
+       }
+      ],
+      "role": "assistant"
+     }
+    ],
+    "parallel_tool_calls": true,
+    "presence_penalty": 0,
+    "previous_response_id": null,
+    "prompt_cache_key": null,
+    "prompt_cache_retention": "in_memory",
+    "reasoning": {
+     "context": null,
+     "effort": null,
+     "summary": null
+    },
+    "safety_identifier": null,
+    "service_tier": "default",
+    "store": false,
+    "temperature": 0,
+    "text": {
+     "format": {
+      "type": "json_schema",
+      "description": null,
+      "name": "supplier_statement_rows",
+      "schema": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "transactions"
+       ],
+       "properties": {
+        "transactions": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "lineIndex",
+           "type",
+           "documentNumberCell",
+           "secondaryReferenceCells",
+           "paymentAllocatesDocumentNumber",
+           "descriptionMeaning",
+           "evidence",
+           "confidence"
+          ],
+          "properties": {
+           "lineIndex": {
+            "type": "integer"
+           },
+           "type": {
+            "type": "string",
+            "enum": [
+             "invoice",
+             "credit_note",
+             "payment",
+             "unallocated_receipt",
+             "journal",
+             "adjustment",
+             "interest",
+             "discount",
+             "balance_line",
+             "unknown"
+            ]
+           },
+           "documentNumberCell": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "secondaryReferenceCells": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "paymentAllocatesDocumentNumber": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "descriptionMeaning": {
+            "type": "string"
+           },
+           "evidence": {
+            "type": "string"
+           },
+           "confidence": {
+            "type": "string",
+            "enum": [
+             "high",
+             "medium",
+             "low"
+            ]
+           }
+          }
+         }
+        }
+       }
+      },
+      "strict": true
+     },
+     "verbosity": "medium"
+    },
+    "tool_choice": "auto",
+    "tool_usage": {
+     "image_gen": {
+      "input_tokens": 0,
+      "input_tokens_details": {
+       "image_tokens": 0,
+       "text_tokens": 0
+      },
+      "output_tokens": 0,
+      "output_tokens_details": {
+       "image_tokens": 0,
+       "text_tokens": 0
+      },
+      "total_tokens": 0
+     },
+     "web_search": {
+      "num_requests": 0
+     }
+    },
+    "tools": [],
+    "top_logprobs": 0,
+    "top_p": 1,
+    "truncation": "disabled",
+    "usage": {
+     "input_tokens": 1164,
+     "input_tokens_details": {
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+     },
+     "output_tokens": 300,
+     "output_tokens_details": {
+      "reasoning_tokens": 0
+     },
+     "total_tokens": 1464
+    },
+    "user": null,
+    "metadata": {}
+   }
+  }
+ ]
+}

@@ -16,7 +16,8 @@ export type AiFeatureId =
   | "supplier_intelligence"
   | "manufacturing_intelligence"
   | "executive_decision_centre"
-  | "forecasting";
+  | "forecasting"
+  | "supplier_statement";
 
 export type AiProductId = VyronProductId;
 

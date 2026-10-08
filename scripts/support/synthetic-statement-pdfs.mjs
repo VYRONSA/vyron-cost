@@ -186,4 +186,55 @@ export function layoutTwoCompanies() {
   return bytes(d);
 }
 
+/**
+ * H — "Invoice + Our Reference": separate document-number and supplier-reference columns, short
+ * descriptions printed so close to the invoice number that the text runs together (and on some rows
+ * runs into the reference too), newest-first rows whose running balance is kept in display order,
+ * 15-digit zero-padded document numbers, payment rows carrying the invoice they settle in the Invoice
+ * column, an "Unapplied cash" row printed as R 0,00 while the balance moves, no brought-forward line,
+ * an ageing summary, and a letterhead without the supplier's name in text (logo only) — just an
+ * email address and a website. Invented supplier; no real document is represented.
+ */
+export function layoutInvoiceAndOurReference() {
+  const d = doc();
+  row(d, 40, [["T 011 555 0100  E accounts@freshpantry.example  W www.freshpantry.example", 40]], 8);
+  row(d, 60, [["STATEMENT", 40]], 12);
+  row(d, 76, [[OWN, 40], ["Account: HFP77", 400]], 8);
+  row(d, 88, [["Example Bank  Branch Code: 250655  Account Number: 62-1234-5678", 40]], 7);
+  const head = [["Date", 17], ["Invoice", 74], ["Description", 158], ["Our Reference", 260], ["Debit", 431, "right"], ["Credit", 505, "right"], ["Balance", 578, "right"]];
+  row(d, 100, head, 8);
+  // [date, invoice, description, our reference, debit, credit, balance]; description drawn 4pt after
+  // the invoice number so the two run together, and on "long" rows the reference follows closely too.
+  const lines = [
+    ["06/10/2026", "000000000002005", "PO-100001_aB3dE5fG_DELIVERY_NOTE_77", "000000000010905", "R 1 200,00", "", "R 1 200,00"],
+    ["01/10/2026", "000000000002004", "Sam", "000000000010904", "R 800,00", "", "R 2 000,00"],
+    ["28/09/2026", "000000000002001", "Payment", "", "", "-R 500,00", "R 1 500,00"],
+    ["25/09/2026", "_CR00002", "Unapplied cash", "", "R 0,00", "", "R 1 750,00"],
+    ["20/09/2026", "000000000002003", "add on_X1", "000000000010903", "R 650,50", "", "R 2 400,50"],
+    ["15/09/2026", "000000000002002", "IMMEDIATE TRF CR Payment", "", "", "-R 300,00", "R 2 100,50"],
+    ["10/09/2026", "000000000002002", "PO-077_LONGREF_x9q", "000000000010902", "R 300,00", "", "R 2 400,50"],
+    ["05/09/2026", "000000000002001", "Kitchen", "000000000010901", "R 500,00", "", "R 2 900,50"],
+  ];
+  let y = 116;
+  d.setFontSize(7);
+  for (const [date, inv, desc, ref, dr, cr, bal] of lines) {
+    d.text(date, 17, y);
+    d.text(inv, 74, y);
+    const invEnd = 74 + d.getTextWidth(inv);
+    const descX = invEnd + 4;
+    if (desc) d.text(desc, descX, y);
+    if (ref) {
+      const descEnd = descX + d.getTextWidth(desc);
+      d.text(ref, Math.max(260, descEnd + 4), y);
+    }
+    if (dr) d.text(dr, 431, y, { align: "right" });
+    if (cr) d.text(cr, 505, y, { align: "right" });
+    d.text(bal, 578, y, { align: "right" });
+    y += 12;
+  }
+  row(d, y + 20, [["90+ days", 120, "right"], ["60 days", 220, "right"], ["30 Day", 320, "right"], ["Current", 420, "right"], ["Total Due", 550, "right"]], 8);
+  row(d, y + 32, [["R 0,00", 120, "right"], ["R 0,00", 220, "right"], ["R 800,00", 320, "right"], ["R 2 100,50", 420, "right"], ["2 900,50", 550, "right"]], 8);
+  return bytes(d);
+}
+
 export const OWN_COMPANY = OWN;

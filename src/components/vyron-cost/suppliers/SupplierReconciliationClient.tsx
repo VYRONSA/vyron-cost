@@ -4,8 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Card, KpiCard, Notice, Pill, money } from "@/components/vyron-order-engine/ui";
 import FileDropZone from "@/components/vyron-ui/FileDropZone";
 import SupplierStatementReview, { type StatementExtraction } from "@/components/vyron-cost/suppliers/SupplierStatementReview";
+import type { StatementInterpretation } from "@/lib/vyron-supplier-statement-ai";
+import type { StatementMatchResult } from "@/lib/vyron-supplier-statement-match";
 
-type Status = "MATCHED" | "MISSING_IN_VOLORA" | "TOTAL_DIFFERENCE" | "VAT_DIFFERENCE" | "DUPLICATE" | "CREDIT_NOTE" | "NOT_ON_SUPPLIER_DOCUMENT";
+type Status = "MATCHED" | "MISSING_IN_VOLORA" | "TOTAL_DIFFERENCE" | "VAT_DIFFERENCE" | "DUPLICATE" | "CREDIT_NOTE" | "NOT_ON_SUPPLIER_DOCUMENT" | "NEEDS_REVIEW";
 type Line = {
   id?: string;
   status: Status;
@@ -46,6 +48,7 @@ const STATUS: Record<Status, { label: string; tone: "green" | "amber" | "rose" |
   DUPLICATE: { label: "Duplicate", tone: "rose" },
   CREDIT_NOTE: { label: "Credit note", tone: "blue" },
   NOT_ON_SUPPLIER_DOCUMENT: { label: "Not on supplier document", tone: "slate" },
+  NEEDS_REVIEW: { label: "Needs review", tone: "amber" },
 };
 
 const toLine = (l: Record<string, unknown>): Line =>
@@ -72,7 +75,13 @@ export default function SupplierReconciliationClient() {
   const [current, setCurrent] = useState<{ id: string; fileName: string; summary: Summary; lines: Line[] } | null>(null);
   const [filter, setFilter] = useState<Status | "EXCEPTIONS" | "ALL">("EXCEPTIONS");
   const [history, setHistory] = useState<Run[]>([]);
-  const [review, setReview] = useState<{ file: File; extraction: StatementExtraction; knownSuppliers: string[] } | null>(null);
+  const [review, setReview] = useState<{
+    file: File;
+    extraction: StatementExtraction;
+    knownSuppliers: string[];
+    interpretation: StatementInterpretation | null;
+    reviewToken: { body: string; signature: string } | null;
+  } | null>(null);
   const isPdf = (file: File) => file.type === "application/pdf" || /\.pdf$/i.test(file.name);
 
   const loadHistory = useCallback(async () => {
@@ -98,7 +107,7 @@ export default function SupplierReconciliationClient() {
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || "The statement could not be read.");
         setCurrent(null);
-        setReview({ file, extraction: data.extraction, knownSuppliers: data.knownSuppliers || [] });
+        setReview({ file, extraction: data.extraction, knownSuppliers: data.knownSuppliers || [], interpretation: data.interpretation || null, reviewToken: data.reviewToken || null });
         return;
       }
       const form = new FormData();
@@ -127,6 +136,11 @@ export default function SupplierReconciliationClient() {
       form.append("action", "approve");
       form.append("approved", "true");
       form.append("digest", review.extraction.digest);
+      // The reviewed AI interpretation travels back exactly as the server signed it.
+      if (review.reviewToken) {
+        form.append("reviewBody", review.reviewToken.body);
+        form.append("reviewSignature", review.reviewToken.signature);
+      }
       form.append("supplierName", supplier);
       const res = await fetch("/api/supplier-reconciliations", { method: "POST", body: form });
       const data = await res.json();
@@ -140,6 +154,19 @@ export default function SupplierReconciliationClient() {
     } finally {
       setBusy(false);
     }
+  };
+
+  /** Deterministic match preview for the reviewed interpretation (writes nothing). */
+  const matchPreview = async (token: { body: string; signature: string }, supplier: string): Promise<StatementMatchResult> => {
+    const form = new FormData();
+    form.append("action", "match");
+    form.append("reviewBody", token.body);
+    form.append("reviewSignature", token.signature);
+    form.append("supplierName", supplier);
+    const res = await fetch("/api/supplier-reconciliations", { method: "POST", body: form });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "Matching failed.");
+    return data.match;
   };
 
   const open = async (run: Run) => {
@@ -186,6 +213,8 @@ export default function SupplierReconciliationClient() {
           busy={busy}
           onApprove={(supplier) => void approve(supplier)}
           onCancel={() => setReview(null)}
+          interpretation={review.reviewToken ? review.interpretation : null}
+          onMatch={review.reviewToken ? (supplier) => matchPreview(review.reviewToken!, supplier) : undefined}
         />
       ) : null}
 

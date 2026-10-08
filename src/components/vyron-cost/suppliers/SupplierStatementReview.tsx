@@ -2,6 +2,31 @@
 
 import { useState } from "react";
 import { Card, KpiCard, Notice, Pill, PrimaryButton, SecondaryButton, money } from "@/components/vyron-order-engine/ui";
+import type { InterpretedLine, StatementInterpretation } from "@/lib/vyron-supplier-statement-ai";
+import type { LineMatch, StatementMatchResult } from "@/lib/vyron-supplier-statement-match";
+
+const AI_TYPE_LABEL: Record<InterpretedLine["type"], string> = {
+  invoice: "Invoice",
+  credit_note: "Credit note",
+  payment: "Payment",
+  unallocated_receipt: "Unallocated receipt",
+  journal: "Journal",
+  adjustment: "Adjustment",
+  interest: "Interest",
+  discount: "Discount",
+  balance_line: "Balance line",
+  unknown: "Unknown",
+};
+const MATCH_LABEL: Record<LineMatch["status"], { label: string; tone: "green" | "amber" | "rose" | "blue" | "slate" }> = {
+  MATCHED: { label: "Matched", tone: "green" },
+  TOTAL_DIFFERENCE: { label: "Amount differs", tone: "amber" },
+  MISSING_IN_VOLORA: { label: "Not in VOLORA", tone: "rose" },
+  DUPLICATE: { label: "Duplicate on statement", tone: "rose" },
+  CREDIT_NOTE: { label: "Credit note", tone: "blue" },
+  NEEDS_REVIEW: { label: "Needs review", tone: "amber" },
+  NOT_RECONCILED: { label: "—", tone: "slate" },
+};
+const METHOD_LABEL: Record<NonNullable<LineMatch["method"]>, string> = { document_number: "by document number", reference: "by reference", amount_date: "by amount + date — confirm" };
 
 /** The extracted statement as the API returns it (see src/lib/vyron-supplier-statement-pdf.ts). */
 type Flag = { severity: "error" | "warning"; message: string };
@@ -69,6 +94,8 @@ export default function SupplierStatementReview({
   busy,
   onApprove,
   onCancel,
+  interpretation,
+  onMatch,
 }: {
   fileName: string;
   extraction: StatementExtraction;
@@ -76,14 +103,39 @@ export default function SupplierStatementReview({
   busy: boolean;
   onApprove: (supplierName: string) => void;
   onCancel: () => void;
+  /** The statement AI's interpretation (SUPPLIER_STATEMENT_AI=on); absent → the reader's view below. */
+  interpretation?: StatementInterpretation | null;
+  /** Deterministic match preview for the confirmed supplier (writes nothing). */
+  onMatch?: (supplierName: string) => Promise<StatementMatchResult>;
 }) {
   const e = extraction;
   const [supplier, setSupplier] = useState(e.supplier.value || "");
   const [reviewed, setReviewed] = useState(false);
   const [view, setView] = useState<"ALL" | "FLAGGED">("ALL");
+  const [match, setMatch] = useState<{ supplier: string; result: StatementMatchResult } | null>(null);
+  const [matching, setMatching] = useState(false);
+  const [matchError, setMatchError] = useState<string | null>(null);
   const known = knownSuppliers.some((s) => s.trim().toLowerCase() === supplier.trim().toLowerCase());
   const rows = e.transactions.filter((t) => view === "ALL" || t.flags.length > 0);
-  const canApprove = reviewed && supplier.trim() !== "" && e.counts.toReconcile > 0 && !busy;
+  const ip = interpretation || null;
+  const currentMatch = match && match.supplier === supplier.trim() ? match.result : null;
+  const matchByIndex = new Map((currentMatch?.lines || []).map((m) => [m.index, m]));
+  const reconcilable = ip ? ip.lines.filter((l) => l.type === "invoice" || l.type === "credit_note").length : 0;
+  const canApprove = ip ? reviewed && supplier.trim() !== "" && Boolean(currentMatch) && reconcilable > 0 && !busy : reviewed && supplier.trim() !== "" && e.counts.toReconcile > 0 && !busy;
+  const runMatch = async (name: string) => {
+    if (!onMatch || !name.trim()) return;
+    setMatching(true);
+    setMatchError(null);
+    try {
+      setMatch({ supplier: name.trim(), result: await onMatch(name.trim()) });
+    } catch (err) {
+      setMatchError(err instanceof Error ? err.message : "Matching failed.");
+    } finally {
+      setMatching(false);
+    }
+  };
+  const lineNeedsReview = (l: InterpretedLine) => l.needsReview || matchByIndex.get(l.index)?.status === "NEEDS_REVIEW";
+  const ipRows = ip ? ip.lines.filter((l) => view === "ALL" || lineNeedsReview(l)) : [];
 
   return (
     <div className="grid gap-4">
@@ -126,6 +178,19 @@ export default function SupplierStatementReview({
               </div>
             ) : null}
             {supplier.trim() && !known ? <span className="text-xs font-semibold text-amber-700">No VOLORA supplier has exactly this name; invoices are matched by supplier name, so choose the VOLORA supplier if it is listed.</span> : null}
+            {ip?.metadata.supplierName.value && ip.metadata.supplierName.value !== supplier.trim() ? (
+              <span className="text-xs font-semibold text-slate-500">
+                Suggested from the statement: <b>{ip.metadata.supplierName.value}</b>{" "}
+                <button type="button" className="font-black underline" onClick={() => setSupplier(ip.metadata.supplierName.value || "")}>
+                  Use
+                </button>
+              </span>
+            ) : null}
+            {ip && (ip.metadata.supplierEmail.value || ip.metadata.supplierVatNumber.value || ip.metadata.supplierWebsite.value) ? (
+              <span className="text-xs font-semibold text-slate-400">
+                {[ip.metadata.supplierEmail.value, ip.metadata.supplierWebsite.value, ip.metadata.supplierVatNumber.value ? `VAT ${ip.metadata.supplierVatNumber.value}` : null].filter(Boolean).join(" · ")}
+              </span>
+            ) : null}
           </div>
           <FieldRow label="Statement date" field={e.statementDate} />
           <FieldRow label="Period from" field={e.periodFrom} />
@@ -152,6 +217,23 @@ export default function SupplierStatementReview({
         </p>
       </Card>
 
+      {ip ? (
+        <InterpretedView
+          ip={ip}
+          rows={ipRows}
+          view={view}
+          setView={setView}
+          matchByIndex={matchByIndex}
+          currentMatch={currentMatch}
+          matching={matching}
+          matchError={matchError}
+          canMatch={Boolean(onMatch) && supplier.trim() !== "" && !busy}
+          onMatchClick={() => void runMatch(supplier)}
+          lineNeedsReview={lineNeedsReview}
+        />
+      ) : null}
+
+      {ip ? null : (
       <section className="grid grid-cols-2 gap-3 md:grid-cols-5">
         <KpiCard label="Lines read" value={String(e.counts.transactions)} active={view === "ALL"} onClick={() => setView("ALL")} />
         <KpiCard label="To reconcile" value={String(e.counts.toReconcile)} />
@@ -159,7 +241,9 @@ export default function SupplierStatementReview({
         <KpiCard label="Excluded" value={String(e.counts.excluded)} active={view === "FLAGGED"} onClick={() => setView("FLAGGED")} />
         <KpiCard label="Lines to check" value={String(e.counts.withWarnings)} active={view === "FLAGGED"} onClick={() => setView("FLAGGED")} />
       </section>
+      )}
 
+      {ip ? null : (
       <Card
         title="Extracted transactions"
         actions={<SecondaryButton onClick={() => setView(view === "ALL" ? "FLAGGED" : "ALL")}>{view === "ALL" ? "Flagged lines only" : "Show all lines"}</SecondaryButton>}
@@ -221,6 +305,7 @@ export default function SupplierStatementReview({
           </table>
         </div>
       </Card>
+      )}
 
       {e.unreadLines.length ? (
         <Card title={`Lines not read (${e.unreadLines.length})`}>
@@ -240,11 +325,19 @@ export default function SupplierStatementReview({
       <Card title="Approve">
         <label className="flex items-start gap-2 text-sm font-semibold text-slate-700">
           <input type="checkbox" className="mt-1" checked={reviewed} onChange={(ev) => setReviewed(ev.target.checked)} />
-          <span>
-            I have checked the extracted statement against the PDF. Reconcile the {e.counts.toReconcile} invoice / credit-note line(s) marked &ldquo;Will be reconciled&rdquo; for{" "}
-            <b>{supplier.trim() || "the supplier"}</b>
-            {e.counts.excluded ? `; the ${e.counts.excluded} excluded line(s) are left out` : ""}.
-          </span>
+          {ip ? (
+            <span>
+              I have checked the interpreted statement against the PDF. Reconcile its {reconcilable} invoice / credit-note line(s) as matched above for <b>{supplier.trim() || "the supplier"}</b>; payments and unallocated receipts are kept as
+              statement evidence only, and lines marked Needs Review are recorded as such.
+              {!currentMatch ? <span className="block text-xs font-semibold text-amber-700">Run &ldquo;Match against VOLORA&rdquo; for this supplier first.</span> : null}
+            </span>
+          ) : (
+            <span>
+              I have checked the extracted statement against the PDF. Reconcile the {e.counts.toReconcile} invoice / credit-note line(s) marked &ldquo;Will be reconciled&rdquo; for{" "}
+              <b>{supplier.trim() || "the supplier"}</b>
+              {e.counts.excluded ? `; the ${e.counts.excluded} excluded line(s) are left out` : ""}.
+            </span>
+          )}
         </label>
         <div className="mt-3 flex flex-wrap gap-2">
           <PrimaryButton disabled={!canApprove} onClick={() => onApprove(supplier.trim())}>
@@ -254,8 +347,152 @@ export default function SupplierStatementReview({
             Discard
           </SecondaryButton>
         </div>
-        {!e.counts.toReconcile ? <p className="mt-2 text-xs font-semibold text-rose-700">No invoice or credit-note line was read with confidence, so there is nothing to reconcile.</p> : null}
+        {!ip && !e.counts.toReconcile ? <p className="mt-2 text-xs font-semibold text-rose-700">No invoice or credit-note line was read with confidence, so there is nothing to reconcile.</p> : null}
       </Card>
     </div>
+  );
+}
+
+/** The interpreted statement: what each row is, its identifiers, the deterministic match, and why anything needs review. */
+function InterpretedView({
+  ip,
+  rows,
+  view,
+  setView,
+  matchByIndex,
+  currentMatch,
+  matching,
+  matchError,
+  canMatch,
+  onMatchClick,
+  lineNeedsReview,
+}: {
+  ip: StatementInterpretation;
+  rows: InterpretedLine[];
+  view: "ALL" | "FLAGGED";
+  setView: (v: "ALL" | "FLAGGED") => void;
+  matchByIndex: Map<number, LineMatch>;
+  currentMatch: StatementMatchResult | null;
+  matching: boolean;
+  matchError: string | null;
+  canMatch: boolean;
+  onMatchClick: () => void;
+  lineNeedsReview: (l: InterpretedLine) => boolean;
+}) {
+  const reviewCount = ip.lines.filter(lineNeedsReview).length;
+  const s = currentMatch?.summary;
+  return (
+    <>
+      {ip.aiStatus !== "ok" ? <Notice tone="warning">{ip.aiMessage || "The AI interpretation is not available; the reader's own reading is shown and every row needs review."}</Notice> : null}
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+        <KpiCard label="Lines" value={String(ip.lines.length)} active={view === "ALL"} onClick={() => setView("ALL")} />
+        <KpiCard label="Invoices" value={String(ip.counts.invoice)} />
+        <KpiCard label="Credit notes" value={String(ip.counts.credit_note)} />
+        <KpiCard label="Payments" value={String(ip.counts.payment)} />
+        <KpiCard label="Unallocated" value={String(ip.counts.unallocated_receipt)} />
+        <KpiCard label="Needs review" value={String(reviewCount)} active={view === "FLAGGED"} onClick={() => setView("FLAGGED")} />
+        <KpiCard label="Matched" value={s ? String(s.matched) : "—"} />
+        <KpiCard label="Not in VOLORA" value={s ? String(s.missing) : "—"} />
+      </section>
+      <Card
+        title="Statement transactions (interpreted)"
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <SecondaryButton onClick={() => setView(view === "ALL" ? "FLAGGED" : "ALL")}>{view === "ALL" ? "Needs review only" : "Show all lines"}</SecondaryButton>
+            <PrimaryButton disabled={!canMatch || matching} onClick={onMatchClick}>
+              {matching ? "Matching…" : currentMatch ? "Match again" : "Match against VOLORA"}
+            </PrimaryButton>
+          </div>
+        }
+      >
+        {matchError ? <Notice tone="error">{matchError}</Notice> : null}
+        {s ? (
+          <p className="mb-2 text-xs font-semibold text-slate-500">
+            {s.matchedByDocumentNumber} by document number · {s.matchedByReference} by reference · {s.matchedByAmountDate} by amount + date · {s.totalDifferences} amount differences · {s.missing} not in VOLORA · {s.needsReview} need review · {s.notOnStatement} VOLORA invoice(s) in this period not on the statement.
+            Payment allocations are statement evidence only — nothing is allocated or changed.
+          </p>
+        ) : (
+          <p className="mb-2 text-xs font-semibold text-slate-500">Confirm the supplier above, then match the statement against the invoices VOLORA holds. Matching writes nothing.</p>
+        )}
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[1280px] text-left text-sm">
+            <thead className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">
+              <tr>
+                <th className="py-2 pr-3">#</th>
+                <th className="py-2 pr-3">Date</th>
+                <th className="py-2 pr-3">Type</th>
+                <th className="py-2 pr-3">Document no.</th>
+                <th className="py-2 pr-3">Secondary ref.</th>
+                <th className="py-2 pr-3">Settles</th>
+                <th className="py-2 pr-3 text-right">Amount</th>
+                <th className="py-2 pr-3">Match</th>
+                <th className="py-2 pr-3">Confidence</th>
+                <th className="py-2 pr-3">Evidence / reason</th>
+                <th className="py-2 pr-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((l) => {
+                const m = matchByIndex.get(l.index);
+                const review = lineNeedsReview(l);
+                const amount = l.debit ? l.debit : l.credit ? -l.credit : null;
+                return (
+                  <tr key={l.index} className={`border-t border-slate-100 align-top font-semibold text-slate-700 ${review ? "bg-amber-50/60" : ""}`}>
+                    <td className="py-2 pr-3 text-slate-400">{l.index}</td>
+                    <td className="py-2 pr-3 whitespace-nowrap">{l.date || "—"}</td>
+                    <td className="py-2 pr-3">
+                      {AI_TYPE_LABEL[l.type]}
+                      {l.typeSource === "reader" ? <span className="block text-xs text-slate-400">reader&apos;s reading</span> : null}
+                    </td>
+                    <td className="py-2 pr-3 font-black text-slate-900">{l.documentNumber || "—"}</td>
+                    <td className="py-2 pr-3 text-xs">{l.secondaryReferences.join(", ") || "—"}</td>
+                    <td className="py-2 pr-3 text-xs">{l.paymentAllocatesDocumentNumber || "—"}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">
+                      {amount !== null ? amt(amount) : "—"}
+                      {l.type === "unallocated_receipt" && l.balanceMovement !== null ? <span className="block text-xs text-amber-700">balance {l.balanceMovement > 0 ? "+" : ""}{amt(l.balanceMovement)}</span> : null}
+                    </td>
+                    <td className="py-2 pr-3">
+                      {m && m.status !== "NOT_RECONCILED" ? (
+                        <>
+                          <Pill tone={MATCH_LABEL[m.status].tone}>{MATCH_LABEL[m.status].label}</Pill>
+                          {m.method ? <span className="block text-xs text-slate-400">{METHOD_LABEL[m.method]}</span> : null}
+                          {m.note ? <span className="block text-xs text-slate-500">{m.note}</span> : null}
+                        </>
+                      ) : (
+                        <span className="text-xs text-slate-400">{l.type === "invoice" || l.type === "credit_note" ? (currentMatch ? "—" : "not checked") : "evidence only"}</span>
+                      )}
+                    </td>
+                    <td className="py-2 pr-3 text-xs">
+                      {l.confidence}
+                      {l.structurallyConfirmed ? <span className="block text-emerald-700">confirmed by the statement layout</span> : null}
+                    </td>
+                    <td className="py-2 pr-3 text-xs">
+                      {l.descriptionMeaning ? <span className="block text-slate-700">{l.descriptionMeaning}</span> : null}
+                      {l.evidence ? <span className="block text-slate-400">{l.evidence}</span> : null}
+                      {l.allocationNote ? <span className="block text-slate-500">{l.allocationNote}</span> : null}
+                      {l.reviewReasons.map((r) => (
+                        <span key={r} className="block font-semibold text-amber-700">
+                          {r}
+                        </span>
+                      ))}
+                    </td>
+                    <td className="py-2 pr-3">
+                      <Pill tone={review ? "amber" : l.type === "invoice" || l.type === "credit_note" ? "green" : "slate"}>{review ? "Needs review" : l.type === "invoice" || l.type === "credit_note" ? "Reconcile" : "Evidence only"}</Pill>
+                    </td>
+                  </tr>
+                );
+              })}
+              {!rows.length ? (
+                <tr>
+                  <td colSpan={11} className="py-6 text-center text-sm font-semibold text-slate-400">
+                    No lines need review.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </>
   );
 }
