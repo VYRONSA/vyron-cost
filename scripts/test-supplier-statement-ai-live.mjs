@@ -39,7 +39,7 @@ const check = (name, cond, detail = "") => {
 
 const ex = await import(pathToFileURL(path.join(ROOT, "src/lib/vyron-supplier-statement-pdf.ts")).href);
 const ai = await import(pathToFileURL(path.join(ROOT, "src/lib/vyron-supplier-statement-ai.ts")).href);
-const expect = { lines: 472, invoice: 232, payment: 232, unallocated_receipt: 8, needsReview: 8, ...(process.env.VOLORA_STATEMENT_AI_EXPECT ? JSON.parse(process.env.VOLORA_STATEMENT_AI_EXPECT) : {}) };
+const expect = { lines: 472, invoice: 232, payment: 232, unallocated_receipt: 8, needsReview: 0, ...(process.env.VOLORA_STATEMENT_AI_EXPECT ? JSON.parse(process.env.VOLORA_STATEMENT_AI_EXPECT) : {}) };
 const own = (process.env.VOLORA_OWN_COMPANY || "Handcrafted Food Products (Pty) Ltd").split("|");
 
 const extraction = await ex.extractSupplierStatementPdf(new Uint8Array(readFileSync(file)), { ownCompanyNames: own });
@@ -85,8 +85,8 @@ check("dates, amounts and balances are the reader's on every row", r.lines.every
 const mediumOnly = r.lines.filter((l) => l.needsReview && l.reviewReasons.length === 1 && /moderately confident/.test(l.reviewReasons[0]));
 check("0 review items caused solely by medium AI confidence", mediumOnly.length === 0, mediumOnly.slice(0, 3).map((l) => `#${l.index} ${l.type}`).join("; "));
 check(`${expect.needsReview} review items in total`, r.counts.needsReview === expect.needsReview, String(r.counts.needsReview));
-check("every review item is an unallocated receipt", r.lines.filter((l) => l.needsReview).every((l) => l.type === "unallocated_receipt"));
+check("no payment or receipt is a review item (not supplier documents)", r.lines.filter((l) => l.needsReview).every((l) => ["invoice", "credit_note", "debit_note"].includes(l.type) || l.reviewReasons.some((x) => /may be a supplier document/.test(x))));
 check("every invoice is structurally confirmed by the Invoice column", invoices.every((l) => l.structurallyConfirmed), String(invoices.filter((l) => l.structurallyConfirmed).length));
-check("every unallocated receipt is flagged for review", r.lines.filter((l) => l.type === "unallocated_receipt").every((l) => l.needsReview));
+check("unapplied cash (_CR…) is not flagged; what was observed is kept as an audit note", r.lines.filter((l) => l.type === "unallocated_receipt").every((l) => !l.needsReview && l.auditNotes.length > 0));
 console.log(`\n${checks - failures}/${checks} checks passed`);
 if (failures) process.exit(1);

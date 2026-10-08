@@ -6,9 +6,11 @@ import type { CsvTable } from "@/lib/data-migration/csv";
 import { extractSupplierStatementPdf, type StatementExtraction } from "@/lib/vyron-supplier-statement-pdf";
 import {
   AMOUNT_DATE_WINDOW_DAYS,
+  isSupplierDocument,
   matchInterpretedStatement,
   verifyReviewedInterpretation,
   type MatchCandidate,
+  type StatementMatchStatus,
   type StatementMatchResult,
 } from "@/lib/vyron-supplier-statement-match";
 
@@ -71,6 +73,8 @@ export type ReconSummary = {
   periodTo: string | null;
   /** Interpreted PDF statements only. */
   needsReview?: number;
+  /** Interpreted PDF statements only: documents matched on their number whose date differs in VOLORA (stored as MATCHED lines). */
+  dateDifferences?: number;
 };
 
 export class ReconciliationError extends Error {}
@@ -395,7 +399,11 @@ export async function previewInterpretedStatementMatch(supabase: SupabaseClient,
  * give exactly the extraction that was reviewed; the interpretation must carry the server's signature
  * for that extraction and company, and its dates and amounts must be the reader's. The AI is not asked
  * again. Matching is deterministic (vyron-supplier-statement-match.ts). Writes only the reconciliation
- * record — payment allocations and unallocated receipts are kept as statement evidence, never posted.
+ * record, and only for supplier documents (invoices, credit notes, debit notes): payments, receipts and
+ * other rows are excluded and nothing is allocated or posted. The categories the database's line
+ * status does not hold are stored on an allowed status with the detail in the notes, and in full in
+ * summary.statement.differences: Date Difference → MATCHED (identified by number; the date is
+ * reported), Amount / Credit-Debit Note Difference → TOTAL_DIFFERENCE, debit notes → INVOICE lines.
  */
 export async function runApprovedInterpretedStatementReconciliation(
   supabase: SupabaseClient,
@@ -423,13 +431,23 @@ export async function runApprovedInterpretedStatementReconciliation(
   const match = matchInterpretedStatement(interpretation, await loadStatementMatchCandidates(supabase, companyId), supplierName);
   const byIndex = new Map(interpretation.lines.map((l) => [l.index, l]));
   const reconLines: ReconLine[] = [];
+  const storedStatus: Record<Exclude<StatementMatchStatus, "NOT_RECONCILED">, ReconStatus> = {
+    MATCHED: "MATCHED",
+    DATE_DIFFERENCE: "MATCHED",
+    AMOUNT_DIFFERENCE: "TOTAL_DIFFERENCE",
+    NOTE_DIFFERENCE: "TOTAL_DIFFERENCE",
+    DUPLICATE: "DUPLICATE",
+    MISSING_IN_VOLORA: "MISSING_IN_VOLORA",
+    NEEDS_REVIEW: "NEEDS_REVIEW",
+  };
   for (const m of match.lines) {
     if (m.status === "NOT_RECONCILED") continue;
     const l = byIndex.get(m.index)!;
     const refs = l.secondaryReferences.length ? ` References: ${l.secondaryReferences.join(", ")}.` : "";
     const review = l.needsReview ? ` Review: ${l.reviewReasons.join(" ")}` : "";
+    const kind = m.status === "DATE_DIFFERENCE" ? "Date difference. " : m.status === "NOTE_DIFFERENCE" ? `${m.documentType === "debit_note" ? "Debit" : "Credit"} note difference. ` : m.documentType === "debit_note" ? "Debit note. " : "";
     reconLines.push({
-      status: m.status,
+      status: storedStatus[m.status],
       supplierName,
       invoiceNumber: l.documentNumber,
       documentType: l.type === "credit_note" ? "CREDIT_NOTE" : "INVOICE",
@@ -444,12 +462,12 @@ export async function runApprovedInterpretedStatementReconciliation(
       vatDifference: null,
       voloraRef: m.voloraInvoiceNumber ? `${m.method === "amount_date" ? "Amount + date" : m.method === "reference" ? "Reference" : "Document number"}: ${m.voloraInvoiceNumber}` : null,
       sourceRow: l.index,
-      notes: `${m.note}${refs}${review}`.trim(),
+      notes: `${kind}${m.note}${refs}${review}`.trim(),
     });
   }
   for (const c of match.notOnStatement)
     reconLines.push({ status: "NOT_ON_SUPPLIER_DOCUMENT", supplierName: c.supplierName, invoiceNumber: c.invoiceNumber, documentType: "INVOICE", supplierDate: null, dueDate: null, supplierTotal: null, supplierVat: null, amountPaid: null, voloraTotal: c.total, voloraVat: null, difference: null, vatDifference: null, voloraRef: `${c.origin === "document" ? "Invoice Intelligence" : "Register"} ${c.invoiceNumber} (${c.invoiceDate})`, sourceRow: null, notes: "In VOLORA, but not on the supplier statement." });
-  if (!reconLines.some((l) => l.sourceRow !== null)) throw new ReconciliationError("The statement has no invoice or credit-note lines to reconcile.");
+  if (!reconLines.some((l) => l.sourceRow !== null)) throw new ReconciliationError("The statement has no invoices, credit notes or debit notes to reconcile.");
 
   const onStatement = reconLines.filter((l) => l.sourceRow !== null);
   const supplierValue = Math.round(onStatement.reduce((t, l) => t + (l.supplierTotal ?? 0), 0) * 100) / 100;
@@ -458,7 +476,7 @@ export async function runApprovedInterpretedStatementReconciliation(
     supplierInvoices: onStatement.length,
     matched: match.summary.matched,
     missing: match.summary.missing,
-    totalDifferences: match.summary.totalDifferences,
+    totalDifferences: match.summary.amountDifferences + match.summary.noteDifferences,
     vatDifferences: 0,
     duplicates: match.summary.duplicates,
     creditNotes: match.summary.creditNotes,
@@ -469,14 +487,18 @@ export async function runApprovedInterpretedStatementReconciliation(
     periodFrom: match.summary.periodFrom,
     periodTo: match.summary.periodTo,
     needsReview: match.summary.needsReview,
+    dateDifferences: match.summary.dateDifferences,
   };
-  const skipped = interpretation.lines.filter((l) => l.type !== "invoice" && l.type !== "credit_note").map((l) => ({ row: l.index, reason: `${l.type.replace("_", " ")} — statement evidence, not reconciled against invoices.` }));
+  const excludedByType: Record<string, number> = {};
+  for (const l of interpretation.lines) if (!isSupplierDocument(l)) excludedByType[l.type] = (excludedByType[l.type] || 0) + 1;
   return recordReconciliation(
     supabase,
     companyId,
     {
       statement: [],
-      skipped,
+      supplierName,
+      // Payments, receipts and other rows are not supplier documents: counted under statement.excludedRows, never listed as skipped.
+      skipped: [],
       sha256: extraction.fileSha256,
       fileName: input.fileName,
       precomputed: { lines: reconLines, summary },
@@ -484,7 +506,9 @@ export async function runApprovedInterpretedStatementReconciliation(
         statement: {
           source: "pdf",
           interpretation: { aiStatus: interpretation.aiStatus, model: interpretation.model, usage: interpretation.usage, counts: interpretation.counts, columns: interpretation.columns },
-          matching: { method: "interpreted-statement-v1", windowDays: AMOUNT_DATE_WINDOW_DAYS, ...match.summary },
+          matching: { method: "supplier-documents-v2", windowDays: AMOUNT_DATE_WINDOW_DAYS, ...match.summary },
+          // Every supplier document where the statement and VOLORA disagree (all categories, incl. Date Difference).
+          differences: match.differences,
           extractionDigest: extraction.digest,
           approvedBy: input.approvedBy,
           approvedAt: new Date().toISOString(),
@@ -496,9 +520,8 @@ export async function runApprovedInterpretedStatementReconciliation(
           closingBalance: extraction.closingBalance.value,
           balanceCheck: extraction.balanceCheck,
           pageCount: extraction.pageCount,
-          // Evidence only — nothing is allocated, posted or changed.
-          paymentAllocations: interpretation.lines.filter((l) => l.type === "payment" && l.paymentAllocatesDocumentNumber).map((l) => ({ row: l.index, date: l.date, credit: l.credit, settles: l.paymentAllocatesDocumentNumber, source: l.allocationSource, kind: l.allocationKind })),
-          unallocatedReceipts: interpretation.lines.filter((l) => l.type === "unallocated_receipt").map((l) => ({ row: l.index, date: l.date, documentNumber: l.documentNumber, balanceMovement: l.balanceMovement })),
+          // Rows outside the population, by type — kept for audit only; not matched, counted or reported as differences.
+          excludedRows: excludedByType,
           reviewItems: interpretation.lines.filter((l) => l.needsReview).map((l) => ({ row: l.index, type: l.type, reasons: l.reviewReasons })),
         },
       },
@@ -513,6 +536,8 @@ async function recordReconciliation(
   companyId: string,
   input: {
     statement: StatementLine[];
+    /** The confirmed supplier when the lines are precomputed (the statement list is then empty). */
+    supplierName?: string;
     skipped: Array<{ row: number; reason: string }>;
     sha256: string;
     fileName: string;
@@ -529,7 +554,7 @@ async function recordReconciliation(
     .from("vyron_supplier_reconciliations")
     .insert({
       company_id: companyId,
-      supplier_name: suppliers.length === 1 ? suppliers[0] : `${suppliers.length} suppliers`,
+      supplier_name: input.supplierName ?? (suppliers.length === 1 ? suppliers[0] : `${suppliers.length} suppliers`),
       source_file_name: input.fileName.slice(0, 300),
       source_sha256: input.sha256,
       period_from: summary.periodFrom,
@@ -565,7 +590,7 @@ async function recordReconciliation(
     );
     if (linesError) throw new Error(linesError.message);
   }
-  return { reconciliation: header, lines, summary, skipped };
+  return { reconciliation: header, lines, summary: input.extraSummary ? { ...summary, ...input.extraSummary } : summary, skipped };
 }
 
 /** This company's own name(s) — never read as the supplier — and its supplier names, for the review screen. Read-only. */

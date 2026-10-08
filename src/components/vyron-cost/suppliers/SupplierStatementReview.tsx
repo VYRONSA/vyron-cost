@@ -3,11 +3,15 @@
 import { useState } from "react";
 import { Card, KpiCard, Notice, Pill, PrimaryButton, SecondaryButton, money } from "@/components/vyron-order-engine/ui";
 import type { InterpretedLine, StatementInterpretation } from "@/lib/vyron-supplier-statement-ai";
-import type { LineMatch, StatementMatchResult } from "@/lib/vyron-supplier-statement-match";
+import type { DocumentDifference, LineMatch, StatementMatchResult } from "@/lib/vyron-supplier-statement-match";
+
+// The reconciliation population (mirrors SUPPLIER_DOCUMENT_TYPES; the match module is server-only).
+const isSupplierDocument = (l: InterpretedLine) => l.type === "invoice" || l.type === "credit_note" || l.type === "debit_note";
 
 const AI_TYPE_LABEL: Record<InterpretedLine["type"], string> = {
   invoice: "Invoice",
   credit_note: "Credit note",
+  debit_note: "Debit note",
   payment: "Payment",
   unallocated_receipt: "Unallocated receipt",
   journal: "Journal",
@@ -19,12 +23,22 @@ const AI_TYPE_LABEL: Record<InterpretedLine["type"], string> = {
 };
 const MATCH_LABEL: Record<LineMatch["status"], { label: string; tone: "green" | "amber" | "rose" | "blue" | "slate" }> = {
   MATCHED: { label: "Matched", tone: "green" },
-  TOTAL_DIFFERENCE: { label: "Amount differs", tone: "amber" },
-  MISSING_IN_VOLORA: { label: "Not in VOLORA", tone: "rose" },
+  AMOUNT_DIFFERENCE: { label: "Amount difference", tone: "rose" },
+  DATE_DIFFERENCE: { label: "Date difference", tone: "amber" },
+  NOTE_DIFFERENCE: { label: "Credit / debit note difference", tone: "rose" },
+  MISSING_IN_VOLORA: { label: "Missing in VOLORA", tone: "rose" },
   DUPLICATE: { label: "Duplicate on statement", tone: "rose" },
-  CREDIT_NOTE: { label: "Credit note", tone: "blue" },
   NEEDS_REVIEW: { label: "Needs review", tone: "amber" },
   NOT_RECONCILED: { label: "—", tone: "slate" },
+};
+const DIFFERENCE_LABEL: Record<DocumentDifference["category"], { label: string; tone: "green" | "amber" | "rose" | "blue" | "slate" }> = {
+  AMOUNT_DIFFERENCE: MATCH_LABEL.AMOUNT_DIFFERENCE,
+  DATE_DIFFERENCE: MATCH_LABEL.DATE_DIFFERENCE,
+  NOTE_DIFFERENCE: MATCH_LABEL.NOTE_DIFFERENCE,
+  MISSING_IN_VOLORA: MATCH_LABEL.MISSING_IN_VOLORA,
+  DUPLICATE: MATCH_LABEL.DUPLICATE,
+  NEEDS_REVIEW: MATCH_LABEL.NEEDS_REVIEW,
+  NOT_ON_STATEMENT: { label: "Not on statement", tone: "blue" },
 };
 const METHOD_LABEL: Record<NonNullable<LineMatch["method"]>, string> = { document_number: "by document number", reference: "by reference", amount_date: "by amount + date — confirm" };
 
@@ -120,7 +134,7 @@ export default function SupplierStatementReview({
   const ip = interpretation || null;
   const currentMatch = match && match.supplier === supplier.trim() ? match.result : null;
   const matchByIndex = new Map((currentMatch?.lines || []).map((m) => [m.index, m]));
-  const reconcilable = ip ? ip.lines.filter((l) => l.type === "invoice" || l.type === "credit_note").length : 0;
+  const reconcilable = ip ? ip.lines.filter(isSupplierDocument).length : 0;
   const canApprove = ip ? reviewed && supplier.trim() !== "" && Boolean(currentMatch) && reconcilable > 0 && !busy : reviewed && supplier.trim() !== "" && e.counts.toReconcile > 0 && !busy;
   const runMatch = async (name: string) => {
     if (!onMatch || !name.trim()) return;
@@ -134,8 +148,6 @@ export default function SupplierStatementReview({
       setMatching(false);
     }
   };
-  const lineNeedsReview = (l: InterpretedLine) => l.needsReview || matchByIndex.get(l.index)?.status === "NEEDS_REVIEW";
-  const ipRows = ip ? ip.lines.filter((l) => view === "ALL" || lineNeedsReview(l)) : [];
 
   return (
     <div className="grid gap-4">
@@ -220,16 +232,12 @@ export default function SupplierStatementReview({
       {ip ? (
         <InterpretedView
           ip={ip}
-          rows={ipRows}
-          view={view}
-          setView={setView}
           matchByIndex={matchByIndex}
           currentMatch={currentMatch}
           matching={matching}
           matchError={matchError}
           canMatch={Boolean(onMatch) && supplier.trim() !== "" && !busy}
           onMatchClick={() => void runMatch(supplier)}
-          lineNeedsReview={lineNeedsReview}
         />
       ) : null}
 
@@ -327,8 +335,8 @@ export default function SupplierStatementReview({
           <input type="checkbox" className="mt-1" checked={reviewed} onChange={(ev) => setReviewed(ev.target.checked)} />
           {ip ? (
             <span>
-              I have checked the interpreted statement against the PDF. Reconcile its {reconcilable} invoice / credit-note line(s) as matched above for <b>{supplier.trim() || "the supplier"}</b>; payments and unallocated receipts are kept as
-              statement evidence only, and lines marked Needs Review are recorded as such.
+              I have checked the interpreted statement against the PDF. Reconcile its {reconcilable} supplier document(s) — invoices, credit notes and debit notes — as matched above for <b>{supplier.trim() || "the supplier"}</b>, with every
+              difference recorded. Payments and receipts are not supplier documents and are not reconciled; documents marked Needs Review are recorded as such.
               {!currentMatch ? <span className="block text-xs font-semibold text-amber-700">Run &ldquo;Match against VOLORA&rdquo; for this supplier first.</span> : null}
             </span>
           ) : (
@@ -353,52 +361,77 @@ export default function SupplierStatementReview({
   );
 }
 
-/** The interpreted statement: what each row is, its identifiers, the deterministic match, and why anything needs review. */
+type DocumentFilter = "ALL" | "DIFFERENCES" | Exclude<LineMatch["status"], "NOT_RECONCILED">;
+
+const signedDays = (d: number | null) => (d === null ? "—" : `${d > 0 ? "+" : ""}${d} day${Math.abs(d) === 1 ? "" : "s"}`);
+
+/**
+ * The interpreted statement as a supplier-document reconciliation: only invoices, credit notes and
+ * debit notes, matched against VOLORA, with every disagreement listed. Payments, receipts and other
+ * rows are not supplier documents — they are counted as excluded and never shown as exceptions.
+ */
 function InterpretedView({
   ip,
-  rows,
-  view,
-  setView,
   matchByIndex,
   currentMatch,
   matching,
   matchError,
   canMatch,
   onMatchClick,
-  lineNeedsReview,
 }: {
   ip: StatementInterpretation;
-  rows: InterpretedLine[];
-  view: "ALL" | "FLAGGED";
-  setView: (v: "ALL" | "FLAGGED") => void;
   matchByIndex: Map<number, LineMatch>;
   currentMatch: StatementMatchResult | null;
   matching: boolean;
   matchError: string | null;
   canMatch: boolean;
   onMatchClick: () => void;
-  lineNeedsReview: (l: InterpretedLine) => boolean;
 }) {
-  const reviewCount = ip.lines.filter(lineNeedsReview).length;
+  const [filter, setFilter] = useState<DocumentFilter>("ALL");
+  const documents = ip.lines.filter(isSupplierDocument);
+  const excluded = ip.lines.length - documents.length;
+  // Rows read as something other than a supplier document that may be one: the one way a missed invoice or credit note can hide.
+  const possibleDocuments = ip.lines.filter((l) => !isSupplierDocument(l) && l.needsReview);
   const s = currentMatch?.summary;
+  const statusOf = (l: InterpretedLine) => matchByIndex.get(l.index)?.status;
+  const needsReview = (l: InterpretedLine) => l.needsReview || statusOf(l) === "NEEDS_REVIEW";
+  const shown = documents.filter((l) => {
+    if (filter === "ALL") return true;
+    const st = statusOf(l);
+    if (filter === "DIFFERENCES") return (st && st !== "MATCHED") || l.needsReview;
+    if (filter === "NEEDS_REVIEW") return needsReview(l);
+    return st === filter;
+  });
+  const tile = (label: string, value: number | undefined, f: DocumentFilter) => <KpiCard label={label} value={s ? String(value ?? 0) : "—"} active={filter === f} onClick={() => setFilter(filter === f ? "ALL" : f)} />;
   return (
     <>
-      {ip.aiStatus !== "ok" ? <Notice tone="warning">{ip.aiMessage || "The AI interpretation is not available; the reader's own reading is shown and every row needs review."}</Notice> : null}
+      {ip.aiStatus !== "ok" ? <Notice tone="warning">{ip.aiMessage || "The AI interpretation is not available; the reader's own reading is shown and every supplier document needs review."}</Notice> : null}
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
-        <KpiCard label="Lines" value={String(ip.lines.length)} active={view === "ALL"} onClick={() => setView("ALL")} />
-        <KpiCard label="Invoices" value={String(ip.counts.invoice)} />
-        <KpiCard label="Credit notes" value={String(ip.counts.credit_note)} />
-        <KpiCard label="Payments" value={String(ip.counts.payment)} />
-        <KpiCard label="Unallocated" value={String(ip.counts.unallocated_receipt)} />
-        <KpiCard label="Needs review" value={String(reviewCount)} active={view === "FLAGGED"} onClick={() => setView("FLAGGED")} />
-        <KpiCard label="Matched" value={s ? String(s.matched) : "—"} />
-        <KpiCard label="Not in VOLORA" value={s ? String(s.missing) : "—"} />
+        <KpiCard label="Supplier documents" value={String(documents.length)} active={filter === "ALL"} onClick={() => setFilter("ALL")} />
+        {tile("Matched", s?.matched, "MATCHED")}
+        {tile("Amount difference", s?.amountDifferences, "AMOUNT_DIFFERENCE")}
+        {tile("Date difference", s?.dateDifferences, "DATE_DIFFERENCE")}
+        {tile("Duplicate", s?.duplicates, "DUPLICATE")}
+        {tile("Missing in VOLORA", s?.missing, "MISSING_IN_VOLORA")}
+        {tile("Credit / debit note difference", s?.noteDifferences, "NOTE_DIFFERENCE")}
+        <KpiCard label="Needs review" value={String(s ? s.needsReview + documents.filter((l) => l.needsReview && statusOf(l) !== "NEEDS_REVIEW").length : documents.filter((l) => l.needsReview).length)} active={filter === "NEEDS_REVIEW"} onClick={() => setFilter(filter === "NEEDS_REVIEW" ? "ALL" : "NEEDS_REVIEW")} />
       </section>
+      <p className="-mt-2 text-xs font-semibold text-slate-500">
+        {ip.counts.invoice} invoice(s) · {ip.counts.credit_note} credit note(s) · {ip.counts.debit_note} debit note(s). {excluded} other statement row(s) — payments, receipts / unapplied cash and balance lines — are not supplier documents and are excluded from
+        matching, counts and differences.
+      </p>
+      {possibleDocuments.length ? (
+        <Notice tone="warning">
+          {possibleDocuments.length} row(s) were not read as a supplier document but may be one — check them in the PDF:{" "}
+          {possibleDocuments.map((l) => `row ${l.index} (${[l.date, l.debit ? `debit ${amt(l.debit)}` : l.credit ? `credit ${amt(l.credit)}` : null, AI_TYPE_LABEL[l.type].toLowerCase()].filter(Boolean).join(", ")})`).join("; ")}.
+        </Notice>
+      ) : null}
+
       <Card
-        title="Statement transactions (interpreted)"
+        title="Supplier Documents — Reconciled"
         actions={
           <div className="flex flex-wrap gap-2">
-            <SecondaryButton onClick={() => setView(view === "ALL" ? "FLAGGED" : "ALL")}>{view === "ALL" ? "Needs review only" : "Show all lines"}</SecondaryButton>
+            <SecondaryButton onClick={() => setFilter(filter === "DIFFERENCES" ? "ALL" : "DIFFERENCES")}>{filter === "DIFFERENCES" ? "Show all documents" : "Differences only"}</SecondaryButton>
             <PrimaryButton disabled={!canMatch || matching} onClick={onMatchClick}>
               {matching ? "Matching…" : currentMatch ? "Match again" : "Match against VOLORA"}
             </PrimaryButton>
@@ -408,84 +441,85 @@ function InterpretedView({
         {matchError ? <Notice tone="error">{matchError}</Notice> : null}
         {s ? (
           <p className="mb-2 text-xs font-semibold text-slate-500">
-            {s.matchedByDocumentNumber} by document number · {s.matchedByReference} by reference · {s.matchedByAmountDate} by amount + date · {s.totalDifferences} amount differences · {s.missing} not in VOLORA · {s.needsReview} need review · {s.notOnStatement} VOLORA invoice(s) in this period not on the statement.
-            Payment allocations are statement evidence only — nothing is allocated or changed.
+            Identified {s.matchedByDocumentNumber} by document number · {s.matchedByReference} by reference · {s.matchedByAmountDate} by amount + date. A document identified by its number stays identified when its date or amount differs in VOLORA — the
+            difference is shown against it. Matching writes nothing.
           </p>
         ) : (
-          <p className="mb-2 text-xs font-semibold text-slate-500">Confirm the supplier above, then match the statement against the invoices VOLORA holds. Matching writes nothing.</p>
+          <p className="mb-2 text-xs font-semibold text-slate-500">Confirm the supplier above, then match the statement&apos;s supplier documents against the invoices VOLORA holds. Matching writes nothing.</p>
         )}
         <div className="w-full overflow-x-auto">
           <table className="w-full min-w-[1280px] text-left text-sm">
             <thead className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">
               <tr>
                 <th className="py-2 pr-3">#</th>
-                <th className="py-2 pr-3">Date</th>
                 <th className="py-2 pr-3">Type</th>
                 <th className="py-2 pr-3">Document no.</th>
-                <th className="py-2 pr-3">Secondary ref.</th>
-                <th className="py-2 pr-3">Settles</th>
-                <th className="py-2 pr-3 text-right">Amount</th>
-                <th className="py-2 pr-3">Match</th>
-                <th className="py-2 pr-3">Confidence</th>
-                <th className="py-2 pr-3">Evidence / reason</th>
-                <th className="py-2 pr-3">Status</th>
+                <th className="py-2 pr-3">Statement date</th>
+                <th className="py-2 pr-3">VOLORA date</th>
+                <th className="py-2 pr-3">Date diff.</th>
+                <th className="py-2 pr-3 text-right">Statement amount</th>
+                <th className="py-2 pr-3 text-right">VOLORA amount</th>
+                <th className="py-2 pr-3 text-right">Difference</th>
+                <th className="py-2 pr-3">Result</th>
+                <th className="py-2 pr-3">Detail</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((l) => {
+              {shown.map((l) => {
                 const m = matchByIndex.get(l.index);
-                const review = lineNeedsReview(l);
-                const amount = l.debit ? l.debit : l.credit ? -l.credit : null;
+                const review = needsReview(l);
+                const amount = l.type === "credit_note" ? (l.credit !== null ? -l.credit : null) : l.debit;
+                const dateDiffers = Boolean(m?.dateDifferenceDays);
+                const amountDiffers = m?.difference !== null && m?.difference !== undefined && Math.abs(m.difference) > 0.01;
                 return (
-                  <tr key={l.index} className={`border-t border-slate-100 align-top font-semibold text-slate-700 ${review ? "bg-amber-50/60" : ""}`}>
+                  <tr key={l.index} className={`border-t border-slate-100 align-top font-semibold text-slate-700 ${review ? "bg-amber-50/60" : m && m.status !== "MATCHED" ? "bg-rose-50/40" : ""}`}>
                     <td className="py-2 pr-3 text-slate-400">{l.index}</td>
-                    <td className="py-2 pr-3 whitespace-nowrap">{l.date || "—"}</td>
                     <td className="py-2 pr-3">
                       {AI_TYPE_LABEL[l.type]}
                       {l.typeSource === "reader" ? <span className="block text-xs text-slate-400">reader&apos;s reading</span> : null}
                     </td>
-                    <td className="py-2 pr-3 font-black text-slate-900">{l.documentNumber || "—"}</td>
-                    <td className="py-2 pr-3 text-xs">{l.secondaryReferences.join(", ") || "—"}</td>
-                    <td className="py-2 pr-3 text-xs">{l.paymentAllocatesDocumentNumber || "—"}</td>
-                    <td className="py-2 pr-3 text-right tabular-nums">
-                      {amount !== null ? amt(amount) : "—"}
-                      {l.type === "unallocated_receipt" && l.balanceMovement !== null ? <span className="block text-xs text-amber-700">balance {l.balanceMovement > 0 ? "+" : ""}{amt(l.balanceMovement)}</span> : null}
+                    <td className="py-2 pr-3 font-black text-slate-900">
+                      {l.documentNumber || "—"}
+                      {l.secondaryReferences.length ? <span className="block text-xs font-semibold text-slate-400">{l.secondaryReferences.join(", ")}</span> : null}
                     </td>
+                    <td className="py-2 pr-3 whitespace-nowrap">{l.date || "—"}</td>
+                    <td className={`py-2 pr-3 whitespace-nowrap ${dateDiffers ? "text-rose-700" : ""}`}>{m?.voloraDate || "—"}</td>
+                    <td className={`py-2 pr-3 whitespace-nowrap ${dateDiffers ? "font-black text-rose-700" : "text-slate-400"}`}>{m && m.voloraDate ? signedDays(m.dateDifferenceDays) : "—"}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{amount !== null ? amt(amount) : "—"}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{m && m.voloraTotal !== null ? amt(m.voloraTotal) : "—"}</td>
+                    <td className={`py-2 pr-3 text-right tabular-nums ${amountDiffers ? "font-black text-rose-700" : "text-slate-400"}`}>{m && m.difference !== null ? amt(m.difference) : "—"}</td>
                     <td className="py-2 pr-3">
-                      {m && m.status !== "NOT_RECONCILED" ? (
+                      {m ? (
                         <>
                           <Pill tone={MATCH_LABEL[m.status].tone}>{MATCH_LABEL[m.status].label}</Pill>
                           {m.method ? <span className="block text-xs text-slate-400">{METHOD_LABEL[m.method]}</span> : null}
-                          {m.note ? <span className="block text-xs text-slate-500">{m.note}</span> : null}
                         </>
                       ) : (
-                        <span className="text-xs text-slate-400">{l.type === "invoice" || l.type === "credit_note" ? (currentMatch ? "—" : "not checked") : "evidence only"}</span>
+                        <span className="text-xs text-slate-400">not checked</span>
                       )}
+                      {l.needsReview && m?.status !== "NEEDS_REVIEW" ? (
+                        <span className="mt-1 block">
+                          <Pill tone="amber">Needs review</Pill>
+                        </span>
+                      ) : null}
                     </td>
                     <td className="py-2 pr-3 text-xs">
-                      {l.confidence}
+                      {m?.note ? <span className="block text-slate-600">{m.note}</span> : null}
+                      {l.descriptionMeaning ? <span className="block text-slate-400">{l.descriptionMeaning}</span> : null}
                       {l.structurallyConfirmed ? <span className="block text-emerald-700">confirmed by the statement layout</span> : null}
-                    </td>
-                    <td className="py-2 pr-3 text-xs">
-                      {l.descriptionMeaning ? <span className="block text-slate-700">{l.descriptionMeaning}</span> : null}
-                      {l.evidence ? <span className="block text-slate-400">{l.evidence}</span> : null}
-                      {l.allocationNote ? <span className="block text-slate-500">{l.allocationNote}</span> : null}
                       {l.reviewReasons.map((r) => (
                         <span key={r} className="block font-semibold text-amber-700">
                           {r}
                         </span>
                       ))}
                     </td>
-                    <td className="py-2 pr-3">
-                      <Pill tone={review ? "amber" : l.type === "invoice" || l.type === "credit_note" ? "green" : "slate"}>{review ? "Needs review" : l.type === "invoice" || l.type === "credit_note" ? "Reconcile" : "Evidence only"}</Pill>
-                    </td>
                   </tr>
                 );
               })}
-              {!rows.length ? (
+              {!shown.length ? (
                 <tr>
                   <td colSpan={11} className="py-6 text-center text-sm font-semibold text-slate-400">
-                    No lines need review.
+                    {documents.length ? "No supplier documents in this view." : "No invoices, credit notes or debit notes were read from this statement."}
                   </td>
                 </tr>
               ) : null}
@@ -493,6 +527,77 @@ function InterpretedView({
           </table>
         </div>
       </Card>
+
+      {currentMatch ? <DifferencesReport differences={currentMatch.differences} /> : null}
     </>
+  );
+}
+
+/** Every supplier document where the statement and VOLORA disagree — including VOLORA documents not on the statement. */
+export function DifferencesReport({ differences }: { differences: DocumentDifference[] }) {
+  return (
+    <Card title={`All Differences (${differences.length})`}>
+      <p className="mb-2 text-xs font-semibold text-slate-500">Supplier documents only. Payments and receipts are not part of this report.</p>
+      <div className="w-full overflow-x-auto">
+        <table className="w-full min-w-[1180px] text-left text-sm">
+          <thead className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">
+            <tr>
+              <th className="py-2 pr-3">Difference</th>
+              <th className="py-2 pr-3">Type</th>
+              <th className="py-2 pr-3">Document no.</th>
+              <th className="py-2 pr-3">Statement date</th>
+              <th className="py-2 pr-3">VOLORA date</th>
+              <th className="py-2 pr-3">Date diff.</th>
+              <th className="py-2 pr-3 text-right">Statement amount</th>
+              <th className="py-2 pr-3 text-right">VOLORA amount</th>
+              <th className="py-2 pr-3 text-right">Amount diff.</th>
+              <th className="py-2 pr-3">Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            {differences.map((d, i) => (
+              <tr key={`${d.row ?? "v"}-${d.voloraId ?? i}`} className="border-t border-slate-100 align-top font-semibold text-slate-700">
+                <td className="py-2 pr-3">
+                  <Pill tone={DIFFERENCE_LABEL[d.category].tone}>{DIFFERENCE_LABEL[d.category].label}</Pill>
+                  {d.row !== null ? <span className="block text-xs text-slate-400">row {d.row}</span> : null}
+                </td>
+                <td className="py-2 pr-3">{AI_TYPE_LABEL[d.documentType]}</td>
+                <td className="py-2 pr-3 font-black text-slate-900">{d.documentNumber || "—"}</td>
+                <td className="py-2 pr-3 whitespace-nowrap">{d.statementDate || "—"}</td>
+                <td className="py-2 pr-3 whitespace-nowrap">{d.voloraDate || "—"}</td>
+                <td className={`py-2 pr-3 whitespace-nowrap ${d.dateDifferenceDays ? "font-black text-rose-700" : "text-slate-400"}`}>{d.statementDate && d.voloraDate ? signedDays(d.dateDifferenceDays) : "—"}</td>
+                <td className="py-2 pr-3 text-right tabular-nums">{amt(d.statementAmount)}</td>
+                <td className="py-2 pr-3 text-right tabular-nums">{amt(d.voloraAmount)}</td>
+                <td className={`py-2 pr-3 text-right tabular-nums ${d.amountDifference !== null && Math.abs(d.amountDifference) > 0.01 ? "font-black text-rose-700" : "text-slate-400"}`}>{amt(d.amountDifference)}</td>
+                <td className="py-2 pr-3 text-xs text-slate-600">{d.note}</td>
+              </tr>
+            ))}
+            {!differences.length ? (
+              <tr>
+                <td colSpan={10} className="py-6 text-center text-sm font-semibold text-emerald-700">
+                  Every supplier document on the statement agrees with VOLORA.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
+/** The supplier-document summary of a saved statement reconciliation. */
+export function SupplierDocumentTiles({ summary }: { summary: StatementMatchResult["summary"] }) {
+  return (
+    <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+      <KpiCard label="Supplier documents" value={String(summary.documents)} />
+      <KpiCard label="Matched" value={String(summary.matched)} />
+      <KpiCard label="Amount difference" value={String(summary.amountDifferences)} />
+      <KpiCard label="Date difference" value={String(summary.dateDifferences)} />
+      <KpiCard label="Duplicate" value={String(summary.duplicates)} />
+      <KpiCard label="Missing in VOLORA" value={String(summary.missing)} />
+      <KpiCard label="Credit / debit note difference" value={String(summary.noteDifferences)} />
+      <KpiCard label="Needs review" value={String(summary.needsReview)} />
+    </section>
   );
 }

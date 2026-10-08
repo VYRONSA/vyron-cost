@@ -88,8 +88,9 @@ const H = await extract("layoutInvoiceAndOurReference");
   const pays = r.lines.filter((l) => l.type === "payment");
   check("payments name the invoice they settle", pays.map((l) => l.paymentAllocatesDocumentNumber).join(",") === "000000000002001,000000000002002", JSON.stringify(pays.map((l) => l.paymentAllocatesDocumentNumber)));
   const un = r.lines.find((l) => l.type === "unallocated_receipt");
-  check("'Unapplied cash' (R 0,00, balance moves) is an unallocated receipt, flagged for review", un.direction === "none" && un.needsReview && un.reviewReasons.some((x) => /Unallocated receipt: no amount is printed/.test(x)) && un.paymentAllocatesDocumentNumber === null && un.documentNumber === "_CR00002");
-  check("only the unallocated receipt needs review", r.counts.needsReview === 1);
+  check("'Unapplied cash' (R 0,00, balance moves) is an unallocated receipt — not a supplier document, so not a review item; the observation is kept as an audit note", un.direction === "none" && !un.needsReview && un.reviewReasons.length === 0 && un.auditNotes.some((x) => /Unallocated receipt: no amount is printed/.test(x)) && un.paymentAllocatesDocumentNumber === null && un.documentNumber === "_CR00002");
+  check("no row needs review: every supplier document is confirmed, payments and the receipt are excluded", r.counts.needsReview === 0, JSON.stringify(r.lines.filter((l) => l.needsReview).map((l) => [l.index, l.type, l.reviewReasons])));
+  check("debit_note is a line type the AI may return (schema and instructions)", ai.STATEMENT_LINE_TYPES.includes("debit_note") && /debit_note/.test(ai.LINES_INSTRUCTIONS) && JSON.stringify(ai.LINES_SCHEMA).includes("debit_note"));
   check("dates, amounts and balances are the reader's on every row", r.lines.every((l, i) => l.date === H.transactions[i].date && l.debit === H.transactions[i].debit && l.credit === H.transactions[i].credit && l.balance === H.transactions[i].balance));
   check("supplier name not invented (logo only); email and website read from the text", r.metadata.supplierName.value === null && r.metadata.supplierEmail.value === "accounts@freshpantry.example" && r.metadata.supplierWebsite.value === "www.freshpantry.example");
   check("the account with the supplier is the customer's account, not the bank account", r.metadata.supplierAccountNumber.value !== "62-1234-5678", JSON.stringify(r.metadata.supplierAccountNumber));
@@ -123,7 +124,7 @@ for (const [name, expect] of [
   const { fetch } = replay(fixture("layoutMonthFirst"));
   const r = await ai.interpretStatementWithAi(e, { companyId: "co-1", ownCompanyNames: OWN, deps: deps({ fetch }) });
   const misc = r.lines.find((l) => /Misc/.test(l.sourceText));
-  check("an undescribed credit ('Misc') is unknown and needs review — not guessed as a payment", misc.type === "unknown" && misc.needsReview);
+  check("an undescribed credit ('Misc') is unknown and needs review as a possible credit note — not guessed as a payment", misc.type === "unknown" && misc.needsReview && misc.reviewReasons.some((x) => /may be a supplier document \(credit note\)/.test(x)), JSON.stringify(misc.reviewReasons));
   check("month-first statement date read by the reader's rules (10/31/2026 → 2026-10-31)", r.metadata.statementDate.value === "2026-10-31");
 }
 
@@ -187,8 +188,8 @@ section("3b. Structural confirmation: the document's own evidence outranks AI co
   const invoices = r.lines.filter((l) => l.type === "invoice");
   check("structurally confirmed invoices with AI 'medium' confidence are NOT Needs Review", invoices.length === 5 && invoices.every((l) => l.structurallyConfirmed && !l.needsReview), JSON.stringify(invoices.map((l) => [l.index, l.structurallyConfirmed, l.reviewReasons])));
   check("…and keep 'medium' for audit", invoices.every((l) => l.confidence === "medium"));
-  check("medium confidence on rows that are not structurally confirmed (payments) still needs review", r.lines.filter((l) => l.type === "payment").every((l) => l.needsReview && l.reviewReasons.some((x) => /moderately confident/.test(x))));
-  check("the unallocated receipt still needs review", r.lines.find((l) => l.type === "unallocated_receipt").needsReview);
+  check("medium confidence on payments raises no review item (not supplier documents) — kept as an audit note", r.lines.filter((l) => l.type === "payment").every((l) => !l.needsReview && l.auditNotes.some((x) => /moderately confident/.test(x))));
+  check("the unallocated receipt raises no review item", !r.lines.find((l) => l.type === "unallocated_receipt").needsReview);
   const { fetch: f2 } = replay(fxH, {
     "rows:1": () =>
       new Response(
@@ -197,6 +198,7 @@ section("3b. Structural confirmation: the document's own evidence outranks AI co
             const t = allMedium(j).transactions;
             t[1].documentNumberCell = "000000000010904"; // its Our Reference — printed, but not under "Invoice"
             t[2].type = "invoice"; // a credit row called an invoice
+            t[0].type = "payment"; // a debit row called a payment
             return { transactions: t };
           })
         ),
@@ -206,7 +208,8 @@ section("3b. Structural confirmation: the document's own evidence outranks AI co
   const r2 = await ai.interpretStatementWithAi(H, { companyId: "co-1", ownCompanyNames: OWN, deps: deps({ fetch: f2 }) });
   check("a number taken from outside the Invoice column is not structurally confirmed → Needs Review", !r2.lines[1].structurallyConfirmed && r2.lines[1].needsReview && r2.lines[1].reviewReasons.some((x) => /not under the "Invoice" heading/.test(x)));
   check("contradictory evidence (invoice on a credit row) stays Needs Review", !r2.lines[2].structurallyConfirmed && r2.lines[2].needsReview && r2.lines[2].reviewReasons.some((x) => /but the row is a credit/.test(x)));
-  check("high confidence is unaffected: the recorded answer still gives exactly 1 review item (the unallocated receipt)", (await ai.interpretStatementWithAi(H, { companyId: "co-1", ownCompanyNames: OWN, deps: deps({ fetch: replay(fxH).fetch }) })).counts.needsReview === 1);
+  check("a debit row read as a payment may be a missed invoice → Needs Review", r2.lines[0].type === "payment" && r2.lines[0].needsReview && r2.lines[0].reviewReasons.some((x) => /may be a supplier document \(invoice or debit note\)/.test(x)));
+  check("high confidence is unaffected: the recorded answer gives no review item", (await ai.interpretStatementWithAi(H, { companyId: "co-1", ownCompanyNames: OWN, deps: deps({ fetch: replay(fxH).fetch }) })).counts.needsReview === 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -259,12 +262,17 @@ section("3c. Payment allocation is read from the document-number column, not inf
   check("…and an unallocated payment is not a review exception on its own", !c.lines[1].needsReview);
   check("a payment whose Invoice cell holds an unallocated receipt's reference is labelled a receipt, not an invoice", c.lines[2].paymentAllocatesDocumentNumber === "_CR00009" && c.lines[2].allocationKind === "receipt" && /not an invoice/.test(c.lines[2].allocationNote || ""));
   const cm = mt.matchInterpretedStatement(c, [], "Any Supplier");
-  check("…and is not counted as a payment settling an invoice", cm.summary.paymentsWithAllocation === 1);
+  check("…and payments are not part of the reconciliation at all (no documents, all rows excluded, no payment figures)", cm.summary.documents === 0 && cm.summary.excludedRows === c.lines.length && !("paymentsWithAllocation" in cm.summary) && cm.differences.length === 0);
 }
 
 // ---------------------------------------------------------------------------
 section("4. Contract: failures fall back to the reader, marked Needs Review");
-const allReader = (r) => r.lines.length === H.transactions.length && r.lines.every((l, i) => l.typeSource === "reader" && l.needsReview && l.debit === H.transactions[i].debit);
+const isDoc = (l) => ["invoice", "credit_note", "debit_note"].includes(l.type);
+// Reader fallback: every supplier document is Needs Review; payments are not (the AI failure is kept as an audit note).
+const allReader = (r) =>
+  r.lines.length === H.transactions.length &&
+  r.lines.every((l, i) => l.typeSource === "reader" && l.debit === H.transactions[i].debit && (isDoc(l) ? l.needsReview : l.type !== "payment" || (!l.needsReview && l.auditNotes.length > 0))) &&
+  r.lines.some(isDoc);
 {
   const bad = await ai.interpretStatementWithAi(H, { companyId: "co-1", ownCompanyNames: OWN, deps: deps({ fetch: replay(fxH, { identity: () => new Response(JSON.stringify(withOutput(identityResponse, "this is not json")), { status: 200 }) }).fetch }) });
   check("invalid JSON → invalid_response, every row from the reader, Needs Review", bad.aiStatus === "invalid_response" && allReader(bad), bad.aiStatus);
@@ -287,7 +295,7 @@ const allReader = (r) => r.lines.length === H.transactions.length && r.lines.eve
   const slow = await ai.interpretStatementWithAi(H, { companyId: "co-1", ownCompanyNames: OWN, deps: deps({ fetch: hang, timeoutMs: 30 }) });
   check("no answer within the timeout → timeout, reader's rows", slow.aiStatus === "timeout" && allReader(slow));
   const parts = await ai.interpretStatementWithAi(H, { companyId: "co-1", ownCompanyNames: OWN, deps: deps({ fetch: async (u, i) => (JSON.parse(i.body).text.format.name === "supplier_statement_rows" && JSON.parse(JSON.parse(i.body).input[0].content[0].text).rows[0].lineIndex === 5 ? new Response("{}", { status: 500 }) : replayHalf(u, i)), batchSize: 4 }) });
-  check("one batch failing → partial: those rows from the reader, the rest from the AI", parts.aiStatus === "partial" && parts.lines.slice(0, 4).every((l) => l.typeSource === "ai") && parts.lines.slice(4).every((l) => l.typeSource === "reader" && l.needsReview), parts.aiStatus);
+  check("one batch failing → partial: those rows from the reader, the rest from the AI", parts.aiStatus === "partial" && parts.lines.slice(0, 4).every((l) => l.typeSource === "ai") && parts.lines.slice(4).every((l) => l.typeSource === "reader" && (isDoc(l) ? l.needsReview : true)), parts.aiStatus);
   const noKey = await ai.interpretStatementWithAi(H, { companyId: "co-1", ownCompanyNames: OWN, deps: deps({ apiKey: undefined, fetch: async () => (called++, new Response("{}")) }) });
   check("no API key → no_api_key, no call", noKey.aiStatus === "no_api_key" && allReader(noKey));
   check("statement AI is off unless SUPPLIER_STATEMENT_AI=on", ai.statementAiEnabled() === (process.env.SUPPLIER_STATEMENT_AI === "on"));

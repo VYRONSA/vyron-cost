@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Card, KpiCard, Notice, Pill, money } from "@/components/vyron-order-engine/ui";
 import FileDropZone from "@/components/vyron-ui/FileDropZone";
-import SupplierStatementReview, { type StatementExtraction } from "@/components/vyron-cost/suppliers/SupplierStatementReview";
+import SupplierStatementReview, { DifferencesReport, SupplierDocumentTiles, type StatementExtraction } from "@/components/vyron-cost/suppliers/SupplierStatementReview";
 import type { StatementInterpretation } from "@/lib/vyron-supplier-statement-ai";
-import type { StatementMatchResult } from "@/lib/vyron-supplier-statement-match";
+import type { DocumentDifference, StatementMatchResult } from "@/lib/vyron-supplier-statement-match";
 
 type Status = "MATCHED" | "MISSING_IN_VOLORA" | "TOTAL_DIFFERENCE" | "VAT_DIFFERENCE" | "DUPLICATE" | "CREDIT_NOTE" | "NOT_ON_SUPPLIER_DOCUMENT" | "NEEDS_REVIEW";
 type Line = {
@@ -37,6 +37,8 @@ type Summary = {
   periodFrom: string | null;
   periodTo: string | null;
   skippedRows?: Array<{ row: number; reason: string }>;
+  /** Interpreted PDF statements: the supplier-document matching summary and differences report. */
+  statement?: { matching?: StatementMatchResult["summary"] & { method?: string }; differences?: DocumentDifference[] };
 };
 type Run = { id: string; supplier_name: string | null; source_file_name: string; created_at: string; summary: Summary };
 
@@ -176,6 +178,8 @@ export default function SupplierReconciliationClient() {
   };
 
   const s = current?.summary;
+  // A supplier-document statement run: its own summary and differences report replace the invoice-list tiles.
+  const documentRun = s?.statement?.matching?.method === "supplier-documents-v2" ? s.statement : null;
   const lines = (current?.lines || []).filter((l) => (filter === "ALL" ? true : filter === "EXCEPTIONS" ? l.status !== "MATCHED" : l.status === filter));
 
   return (
@@ -220,6 +224,9 @@ export default function SupplierReconciliationClient() {
 
       {current && s ? (
         <>
+          {documentRun?.matching ? <SupplierDocumentTiles summary={documentRun.matching} /> : null}
+          {documentRun ? <DifferencesReport differences={documentRun.differences || []} /> : null}
+          {documentRun ? null : (
           <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
             <KpiCard label="Supplier invoices" value={String(s.supplierInvoices)} active={filter === "ALL"} onClick={() => setFilter("ALL")} />
             <KpiCard label="Matched" value={String(s.matched)} active={filter === "MATCHED"} onClick={() => setFilter("MATCHED")} />
@@ -230,6 +237,7 @@ export default function SupplierReconciliationClient() {
             <KpiCard label="Not on supplier doc" value={String(s.notOnSupplierDocument)} active={filter === "NOT_ON_SUPPLIER_DOCUMENT"} onClick={() => setFilter("NOT_ON_SUPPLIER_DOCUMENT")} />
             <KpiCard label="Exceptions" value={String(current.lines.filter((l) => l.status !== "MATCHED").length)} active={filter === "EXCEPTIONS"} onClick={() => setFilter("EXCEPTIONS")} />
           </section>
+          )}
           <Card
             title={`Reconciliation — ${current.fileName}${s.periodFrom ? ` (${s.periodFrom} → ${s.periodTo})` : ""}`}
             actions={

@@ -18,9 +18,15 @@ import { normalisedNameKey } from "@/lib/vyron-supplier-resolution";
  *
  * More than one candidate at any step → Needs Review; nothing is ever chosen among several. No fuzzy
  * or nearest matching, never amount alone. A row whose number VOLORA does not hold but whose amount
- * and date fit a VOLORA invoice numbered differently is Needs Review, not a match. Payments and
- * unallocated receipts are carried as statement evidence only; nothing here allocates or changes any
- * record. The global CSV / Excel matching (vyron-supplier-reconciliation.ts) is untouched.
+ * and date fit a VOLORA invoice numbered differently is Needs Review, not a match.
+ *
+ * Supplier documents only: the population is the statement's invoices, credit notes and debit notes.
+ * Payments, receipts (including unapplied cash) and every other row stay in the extraction for audit
+ * but are excluded from matching, counts, exceptions and the differences report. A document matched on
+ * its number stays matched on its number: a date or amount that differs in VOLORA is reported against
+ * the document (Date Difference / Amount Difference), never as Missing in VOLORA. Nothing here
+ * allocates or changes any record. The global CSV / Excel matching (vyron-supplier-reconciliation.ts)
+ * is untouched.
  */
 
 export type MatchCandidate = {
@@ -33,19 +39,59 @@ export type MatchCandidate = {
   origin: string;
 };
 
-export type StatementMatchStatus = "MATCHED" | "TOTAL_DIFFERENCE" | "MISSING_IN_VOLORA" | "DUPLICATE" | "CREDIT_NOTE" | "NEEDS_REVIEW" | "NOT_RECONCILED";
+export type StatementMatchStatus =
+  | "MATCHED"
+  | "AMOUNT_DIFFERENCE"
+  | "DATE_DIFFERENCE"
+  | "NOTE_DIFFERENCE"
+  | "DUPLICATE"
+  | "MISSING_IN_VOLORA"
+  | "NEEDS_REVIEW"
+  /** Not a supplier document (payment, receipt, balance line, …): kept in the extraction, never reconciled. */
+  | "NOT_RECONCILED";
 export type MatchMethod = "document_number" | "reference" | "amount_date" | null;
+export type SupplierDocumentType = "invoice" | "credit_note" | "debit_note";
 
 export type LineMatch = {
   index: number;
   status: StatementMatchStatus;
   method: MatchMethod;
+  /** Null for rows outside the population (not a supplier document). */
+  documentType: SupplierDocumentType | null;
+  documentNumber: string | null;
   voloraId: string | null;
   voloraInvoiceNumber: string | null;
   voloraTotal: number | null;
   statementAmount: number | null;
+  /** Statement amount minus VOLORA amount, exact to the cent; null when not compared. */
   difference: number | null;
+  statementDate: string | null;
+  voloraDate: string | null;
+  /** Statement date minus VOLORA date, in days; null when either date is missing or not compared. */
+  dateDifferenceDays: number | null;
   candidates: number;
+  /** True when several VOLORA records carry this document number. */
+  duplicateInVolora: boolean;
+  note: string;
+};
+
+export type DifferenceCategory = Exclude<StatementMatchStatus, "MATCHED" | "NOT_RECONCILED"> | "NOT_ON_STATEMENT";
+
+/** One supplier document on which the statement and VOLORA disagree. */
+export type DocumentDifference = {
+  category: DifferenceCategory;
+  /** Statement row; null for a VOLORA document that is not on the statement. */
+  row: number | null;
+  documentType: SupplierDocumentType;
+  documentNumber: string | null;
+  statementDate: string | null;
+  voloraDate: string | null;
+  dateDifferenceDays: number | null;
+  statementAmount: number | null;
+  voloraAmount: number | null;
+  amountDifference: number | null;
+  voloraId: string | null;
+  voloraInvoiceNumber: string | null;
   note: string;
 };
 
@@ -53,26 +99,34 @@ export type StatementMatchResult = {
   supplierName: string;
   lines: LineMatch[];
   notOnStatement: MatchCandidate[];
+  /** Every supplier document where the statement and VOLORA disagree, in statement order, then VOLORA-only. */
+  differences: DocumentDifference[];
   summary: {
-    statementInvoices: number;
+    /** The reconciliation population: invoices, credit notes and debit notes on the statement. */
+    documents: number;
+    invoices: number;
+    creditNotes: number;
+    debitNotes: number;
     matched: number;
+    amountDifferences: number;
+    dateDifferences: number;
+    duplicates: number;
+    missing: number;
+    noteDifferences: number;
+    needsReview: number;
+    notOnStatement: number;
     matchedByDocumentNumber: number;
     matchedByReference: number;
     matchedByAmountDate: number;
-    totalDifferences: number;
-    missing: number;
-    duplicates: number;
-    creditNotes: number;
-    needsReview: number;
-    notOnStatement: number;
-    paymentsWithAllocation: number;
-    unallocatedReceipts: number;
+    /** Statement rows outside the population (payments, receipts, balance lines, …) — not reconciled. */
+    excludedRows: number;
     periodFrom: string | null;
     periodTo: string | null;
   };
 };
 
 export const AMOUNT_DATE_WINDOW_DAYS = 7;
+export const SUPPLIER_DOCUMENT_TYPES: readonly SupplierDocumentType[] = ["invoice", "credit_note", "debit_note"];
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Comparison key for a document number. All-digit numbers (separators ignored) lose leading zeros; others keep letters and digits. */
@@ -86,17 +140,26 @@ export function documentKey(value: string | null | undefined): string | null {
 }
 
 const dayDiff = (a: string, b: string) => Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000;
+const signedDays = (a: string, b: string) => Math.round((Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000);
 
-/** The amount the statement shows for a row: invoices positive, credit notes negative (as VOLORA holds them). */
+type DocumentLine = InterpretedLine & { type: SupplierDocumentType };
+/** True for the rows in the reconciliation population: invoices, credit notes and debit notes. */
+export const isSupplierDocument = (l: InterpretedLine): l is DocumentLine => (SUPPLIER_DOCUMENT_TYPES as readonly string[]).includes(l.type);
+
+/** The amount the statement shows for a document: invoices and debit notes positive, credit notes negative (as VOLORA holds them). */
 function statementAmount(l: InterpretedLine): number | null {
-  if (l.type === "invoice") return l.debit !== null ? r2(l.debit) : null;
+  if (l.type === "invoice" || l.type === "debit_note") return l.debit !== null ? r2(l.debit) : null;
   if (l.type === "credit_note") return l.credit !== null ? -r2(l.credit) : null;
   return null;
 }
 
+const label = (t: SupplierDocumentType) => (t === "invoice" ? "Invoice" : t === "credit_note" ? "Credit note" : "Debit note");
+
 /**
- * Match an interpreted statement against VOLORA's supplier invoices for the confirmed supplier. Pure.
- * `supplierName` is the supplier the user confirmed — never the AI's suggestion.
+ * Match an interpreted statement's supplier documents against VOLORA's supplier invoices for the
+ * confirmed supplier. Pure. `supplierName` is the supplier the user confirmed — never the AI's
+ * suggestion. Only invoices, credit notes and debit notes are reconciled; payments, receipts and every
+ * other row are excluded from matching, counts and differences.
  */
 export function matchInterpretedStatement(interpretation: StatementInterpretation, register: MatchCandidate[], supplierName: string, options: { windowDays?: number } = {}): StatementMatchResult {
   const windowDays = options.windowDays ?? AMOUNT_DATE_WINDOW_DAYS;
@@ -116,9 +179,9 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
     add(byRef, documentKey(c.poNumber), c);
   }
 
-  const reconcilable = interpretation.lines.filter((l) => l.type === "invoice" || l.type === "credit_note");
+  const population = interpretation.lines.filter(isSupplierDocument);
   const docCount = new Map<string, number>();
-  for (const l of reconcilable) {
+  for (const l of population) {
     const k = documentKey(l.documentNumber);
     if (k) docCount.set(k, (docCount.get(k) || 0) + 1);
   }
@@ -127,22 +190,50 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
   // VOLORA invoices named in a Needs Review (several candidates) are on the statement, just not decided.
   const implicated = new Set<string>();
   const results = new Map<number, LineMatch>();
-  const base = (l: InterpretedLine): LineMatch => ({ index: l.index, status: "MISSING_IN_VOLORA", method: null, voloraId: null, voloraInvoiceNumber: null, voloraTotal: null, statementAmount: statementAmount(l), difference: null, candidates: 0, note: "" });
-  const settle = (l: InterpretedLine, m: LineMatch, c: MatchCandidate, method: Exclude<MatchMethod, null>, note: string) => {
+  const base = (l: DocumentLine): LineMatch => ({
+    index: l.index,
+    status: "MISSING_IN_VOLORA",
+    method: null,
+    documentType: l.type,
+    documentNumber: l.documentNumber,
+    voloraId: null,
+    voloraInvoiceNumber: null,
+    voloraTotal: null,
+    statementAmount: statementAmount(l),
+    difference: null,
+    statementDate: l.date,
+    voloraDate: null,
+    dateDifferenceDays: null,
+    candidates: 0,
+    duplicateInVolora: false,
+    note: "",
+  });
+  /*
+   * A document identified in VOLORA. The identification stands on its own — a wrong date or amount in
+   * VOLORA never turns it into Missing in VOLORA; each disagreement is reported against the document.
+   * The status names the amount first (it moves the balance owed), then the date; both are always shown.
+   */
+  const settle = (l: DocumentLine, m: LineMatch, c: MatchCandidate, method: Exclude<MatchMethod, null>, note: string) => {
     used.add(c.id);
     const volora = c.total === null ? null : r2(Number(c.total));
     const diff = m.statementAmount !== null && volora !== null ? r2(m.statementAmount - volora) : null;
-    const status: StatementMatchStatus = l.type === "credit_note" ? "CREDIT_NOTE" : diff !== null && Math.abs(diff) > 0.01 ? "TOTAL_DIFFERENCE" : "MATCHED";
-    results.set(l.index, { ...m, status, method, voloraId: c.id, voloraInvoiceNumber: c.invoiceNumber, voloraTotal: volora, difference: diff, candidates: 1, note: diff !== null && Math.abs(diff) > 0.01 ? `${note} The statement differs from VOLORA by ${diff.toFixed(2)}.` : note });
+    const days = l.date && c.invoiceDate ? signedDays(l.date, c.invoiceDate) : null;
+    const amountDiffers = diff !== null && Math.abs(diff) > 0.01;
+    const dateDiffers = days !== null && days !== 0;
+    const status: StatementMatchStatus = amountDiffers ? (l.type === "invoice" ? "AMOUNT_DIFFERENCE" : "NOTE_DIFFERENCE") : dateDiffers ? "DATE_DIFFERENCE" : "MATCHED";
+    const notes = [note];
+    if (amountDiffers) notes.push(`Amount: statement ${m.statementAmount!.toFixed(2)}, VOLORA ${volora!.toFixed(2)}, difference ${diff!.toFixed(2)}.`);
+    if (dateDiffers) notes.push(`Date: statement ${l.date}, VOLORA ${c.invoiceDate} (${days! > 0 ? "+" : ""}${days} day${Math.abs(days!) === 1 ? "" : "s"}).`);
+    results.set(l.index, { ...m, status, method, voloraId: c.id, voloraInvoiceNumber: c.invoiceNumber, voloraTotal: volora, difference: diff, voloraDate: c.invoiceDate, dateDifferenceDays: days, candidates: 1, note: notes.join(" ") });
   };
 
   // A and B, row by row.
-  const awaitingAmountDate: InterpretedLine[] = [];
-  for (const l of reconcilable) {
+  const awaitingAmountDate: DocumentLine[] = [];
+  for (const l of population) {
     const m = base(l);
     const key = documentKey(l.documentNumber);
     if (key && (docCount.get(key) || 0) > 1) {
-      results.set(l.index, { ...m, status: "DUPLICATE", note: `Document ${l.documentNumber} appears ${docCount.get(key)} times on the statement.` });
+      results.set(l.index, { ...m, status: "DUPLICATE", note: `Document ${l.documentNumber} appears ${docCount.get(key)} times on the statement; none is chosen.` });
       continue;
     }
     if (key) {
@@ -153,7 +244,8 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
       }
       if (found.length > 1) {
         for (const c of found) implicated.add(c.id);
-        results.set(l.index, { ...m, status: "NEEDS_REVIEW", candidates: found.length, note: `${found.length} VOLORA invoices (${found.map((c) => c.invoiceNumber).join(", ")}) have number ${l.documentNumber} when leading zeros are ignored; none is chosen.` });
+        const listed = found.map((c) => `${c.invoiceNumber} dated ${c.invoiceDate ?? "—"}, ${c.total === null ? "no total" : r2(Number(c.total)).toFixed(2)}`).join("; ");
+        results.set(l.index, { ...m, status: "NEEDS_REVIEW", candidates: found.length, duplicateInVolora: true, note: `Duplicate in VOLORA: ${found.length} records carry document number ${l.documentNumber} (${listed}); none is chosen.` });
         continue;
       }
     }
@@ -182,7 +274,7 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
     const m = base(l);
     const cands = free.filter((c) => fits(l, c));
     if (!cands.length) {
-      results.set(l.index, { ...m, note: l.documentNumber ? `Document ${l.documentNumber} is not in VOLORA.` : "No VOLORA invoice matches this row." });
+      results.set(l.index, { ...m, note: l.documentNumber ? `${label(l.type)} ${l.documentNumber} is not in VOLORA.` : `No VOLORA document matches this ${label(l.type).toLowerCase()}.` });
       continue;
     }
     if (cands.length > 1 || l.documentNumber) for (const c of cands) implicated.add(c.id);
@@ -201,31 +293,89 @@ export function matchInterpretedStatement(interpretation: StatementInterpretatio
     });
   }
 
-  const lines: LineMatch[] = interpretation.lines.map((l) => results.get(l.index) || { ...base(l), status: "NOT_RECONCILED", statementAmount: null, note: "" });
-  const dates = reconcilable.map((l) => l.date).filter((d): d is string => Boolean(d)).sort();
+  const lines: LineMatch[] = interpretation.lines.map(
+    (l) =>
+      results.get(l.index) || {
+        index: l.index,
+        status: "NOT_RECONCILED",
+        method: null,
+        documentType: null,
+        documentNumber: l.documentNumber,
+        voloraId: null,
+        voloraInvoiceNumber: null,
+        voloraTotal: null,
+        statementAmount: null,
+        difference: null,
+        statementDate: l.date,
+        voloraDate: null,
+        dateDifferenceDays: null,
+        candidates: 0,
+        duplicateInVolora: false,
+        note: "Not a supplier document — excluded from reconciliation.",
+      }
+  );
+  const dates = population.map((l) => l.date).filter((d): d is string => Boolean(d)).sort();
   const periodFrom = dates[0] ?? null;
   const periodTo = dates[dates.length - 1] ?? null;
   const notOnStatement = pool.filter((c) => !used.has(c.id) && !implicated.has(c.id) && c.invoiceDate && periodFrom && periodTo && c.invoiceDate >= periodFrom && c.invoiceDate <= periodTo);
-  const count = (s: StatementMatchStatus) => lines.filter((x) => x.status === s).length;
+  const documentLines = lines.filter((x) => x.documentType !== null);
+  const differences: DocumentDifference[] = [
+    ...documentLines
+      .filter((x) => x.status !== "MATCHED")
+      .map((x) => ({
+        category: x.status as DifferenceCategory,
+        row: x.index,
+        documentType: x.documentType!,
+        documentNumber: x.documentNumber,
+        statementDate: x.statementDate,
+        voloraDate: x.voloraDate,
+        dateDifferenceDays: x.dateDifferenceDays,
+        statementAmount: x.statementAmount,
+        voloraAmount: x.voloraTotal,
+        amountDifference: x.difference,
+        voloraId: x.voloraId,
+        voloraInvoiceNumber: x.voloraInvoiceNumber,
+        note: x.note,
+      })),
+    ...notOnStatement.map((c) => ({
+      category: "NOT_ON_STATEMENT" as const,
+      row: null,
+      documentType: (c.total !== null && Number(c.total) < 0 ? "credit_note" : "invoice") as SupplierDocumentType,
+      documentNumber: c.invoiceNumber,
+      statementDate: null,
+      voloraDate: c.invoiceDate,
+      dateDifferenceDays: null,
+      statementAmount: null,
+      voloraAmount: c.total === null ? null : r2(Number(c.total)),
+      amountDifference: null,
+      voloraId: c.id,
+      voloraInvoiceNumber: c.invoiceNumber,
+      note: "In VOLORA for this supplier and period, but not on the supplier statement.",
+    })),
+  ];
+  const count = (s: StatementMatchStatus) => documentLines.filter((x) => x.status === s).length;
   return {
     supplierName,
     lines,
     notOnStatement,
+    differences,
     summary: {
-      statementInvoices: reconcilable.length,
+      documents: population.length,
+      invoices: population.filter((l) => l.type === "invoice").length,
+      creditNotes: population.filter((l) => l.type === "credit_note").length,
+      debitNotes: population.filter((l) => l.type === "debit_note").length,
       matched: count("MATCHED"),
-      matchedByDocumentNumber: lines.filter((x) => x.method === "document_number").length,
-      matchedByReference: lines.filter((x) => x.method === "reference").length,
-      matchedByAmountDate: lines.filter((x) => x.method === "amount_date").length,
-      totalDifferences: count("TOTAL_DIFFERENCE"),
-      missing: count("MISSING_IN_VOLORA"),
+      amountDifferences: count("AMOUNT_DIFFERENCE"),
+      dateDifferences: count("DATE_DIFFERENCE"),
       duplicates: count("DUPLICATE"),
-      creditNotes: count("CREDIT_NOTE"),
+      missing: count("MISSING_IN_VOLORA"),
+      noteDifferences: count("NOTE_DIFFERENCE"),
       needsReview: count("NEEDS_REVIEW"),
       notOnStatement: notOnStatement.length,
-      // Payments the statement links to a document — counting only invoices, never a receipt reference.
-      paymentsWithAllocation: interpretation.lines.filter((l) => l.type === "payment" && l.paymentAllocatesDocumentNumber && l.allocationKind !== "receipt").length,
-      unallocatedReceipts: interpretation.lines.filter((l) => l.type === "unallocated_receipt").length,
+      matchedByDocumentNumber: documentLines.filter((x) => x.method === "document_number").length,
+      matchedByReference: documentLines.filter((x) => x.method === "reference").length,
+      matchedByAmountDate: documentLines.filter((x) => x.method === "amount_date").length,
+      excludedRows: interpretation.lines.length - population.length,
       periodFrom,
       periodTo,
     },

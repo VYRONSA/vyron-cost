@@ -61,7 +61,7 @@ const H = await ex.extractSupplierStatementPdf(pdfBytes, { ownCompanyNames: OWN 
 const interpretation = await ai.interpretStatementWithAi(H, { companyId: "co", ownCompanyNames: OWN, deps: { fetch: replayFetch, apiKey: "k", model: "gpt-4o", checkAllowance: async () => ({ allowed: true }), recordUsage: async () => null } });
 
 // A synthetic line for the pure rules.
-const line = (index, over = {}) => ({ index, page: 1, date: "2026-09-10", debit: 100, credit: 0, balance: null, direction: "debit", type: "invoice", typeSource: "ai", documentNumber: null, secondaryReferences: [], paymentAllocatesDocumentNumber: null, descriptionMeaning: null, evidence: null, confidence: "high", structurallyConfirmed: false, balanceMovement: null, needsReview: false, reviewReasons: [], sourceText: "", ...over });
+const line = (index, over = {}) => ({ index, page: 1, date: "2026-09-10", debit: 100, credit: 0, balance: null, direction: "debit", type: "invoice", typeSource: "ai", documentNumber: null, secondaryReferences: [], paymentAllocatesDocumentNumber: null, descriptionMeaning: null, evidence: null, confidence: "high", structurallyConfirmed: false, balanceMovement: null, needsReview: false, reviewReasons: [], auditNotes: [], sourceText: "", ...over });
 const ip = (lines) => ({ ...interpretation, lines });
 const cand = (id, over = {}) => ({ id, invoiceNumber: null, invoiceDate: "2026-09-10", total: 100, supplierName: SUP, poNumber: null, origin: "register", ...over });
 const matchOf = (lines, register, supplier = SUP) => mt.matchInterpretedStatement(ip(lines), register, supplier);
@@ -80,7 +80,7 @@ section("1. Document numbers");
   const r3 = matchOf([line(1, { documentNumber: "000000002252489" })], [cand("a", { invoiceNumber: "02252489" }), cand("b", { invoiceNumber: "2252489" })]);
   check("leading-zero collision (02252489 and 2252489 in VOLORA) → Needs Review, none chosen", r3.lines[0].status === "NEEDS_REVIEW" && r3.lines[0].candidates === 2 && r3.lines[0].voloraId === null);
   const r4 = matchOf([line(1, { documentNumber: "1001", debit: 120 })], [cand("v", { invoiceNumber: "1001", total: 100 })]);
-  check("matched number with a different amount → amount differs", r4.lines[0].status === "TOTAL_DIFFERENCE" && r4.lines[0].difference === 20);
+  check("matched number with a different amount → Amount Difference with both amounts", r4.lines[0].status === "AMOUNT_DIFFERENCE" && r4.lines[0].difference === 20 && r4.lines[0].statementAmount === 120 && r4.lines[0].voloraTotal === 100);
   const r5 = matchOf([line(1, { documentNumber: "1001" }), line(2, { documentNumber: "0001001" })], [cand("v", { invoiceNumber: "1001" })]);
   check("the same number twice on the statement → duplicate", r5.lines.every((l) => l.status === "DUPLICATE"));
   const r6 = matchOf([line(1, { documentNumber: "1001" })], [cand("v", { invoiceNumber: "1001", supplierName: "Another Supplier" })]);
@@ -100,7 +100,9 @@ section("2. Secondary references only after the document number fails");
 section("3. Amount + date: one candidate in both directions, never amount alone");
 {
   const r = matchOf([line(1, { debit: 432.1, date: "2026-09-10" })], [cand("v", { invoiceNumber: "Z1", total: 432.1, invoiceDate: "2026-09-12" })]);
-  check("no number printed, exactly one VOLORA invoice with this amount within 7 days, unique both ways → matched (confirm)", r.lines[0].status === "MATCHED" && r.lines[0].method === "amount_date" && /confirm/.test(r.lines[0].note));
+  check("no number printed, exactly one VOLORA invoice with this amount within 7 days, unique both ways → identified (confirm); the 2-day gap is reported as a date difference", r.lines[0].status === "DATE_DIFFERENCE" && r.lines[0].method === "amount_date" && r.lines[0].voloraId === "v" && r.lines[0].dateDifferenceDays === -2 && /confirm/.test(r.lines[0].note));
+  const r1 = matchOf([line(1, { debit: 432.1, date: "2026-09-10" })], [cand("v", { invoiceNumber: "Z1", total: 432.1, invoiceDate: "2026-09-10" })]);
+  check("…on the same date → Matched", r1.lines[0].status === "MATCHED" && r1.lines[0].method === "amount_date");
   const r2 = matchOf([line(1, { debit: 432.1 })], [cand("a", { total: 432.1 }), cand("b", { total: 432.1 })]);
   check("two VOLORA candidates → Needs Review", r2.lines[0].status === "NEEDS_REVIEW" && r2.lines[0].voloraId === null);
   const r3 = matchOf([line(1, { debit: 432.1 }), line(2, { debit: 432.1 })], [cand("a", { total: 432.1 })]);
@@ -129,14 +131,86 @@ const voloraRegister = [
   check("Invoice column beats Our Reference: row 7 keyed on 000000000002002, not 000000000010902", interpretation.lines[6].documentNumber === "000000000002002");
   check("2005: statement 000000000002005 = VOLORA 2005", at(1).status === "MATCHED" && at(1).voloraId === "v2005");
   check("2004: exact number", at(2).status === "MATCHED" && at(2).voloraId === "v2004");
-  check("2003: matched, R0.50 difference reported", at(5).status === "TOTAL_DIFFERENCE" && at(5).difference === 0.5);
+  check("2003: matched, R0.50 difference reported", at(5).status === "AMOUNT_DIFFERENCE" && at(5).difference === 0.5);
   check("2002: VOLORA holds 2002 and 02002 → Needs Review", at(7).status === "NEEDS_REVIEW" && at(7).candidates === 2);
   check("2001: not in VOLORA by number, matched by its Our Reference = PO 10901", at(8).status === "MATCHED" && at(8).method === "reference" && at(8).voloraId === "vpo");
-  check("payments and the unallocated receipt are not matched against invoices", [3, 4, 6].every((i) => at(i).status === "NOT_RECONCILED"));
+  check("payments and the unallocated receipt are not matched against invoices", [3, 4, 6].every((i) => at(i).status === "NOT_RECONCILED" && at(i).documentType === null));
+  check("…and are not in the differences report", r.differences.every((d) => d.row === null || ![3, 4, 6].includes(d.row)));
   check("VOLORA invoice in the period but not on the statement is reported", r.notOnStatement.map((c) => c.id).join() === "vextra");
-  check("summary counts", r.summary.matched === 3 && r.summary.totalDifferences === 1 && r.summary.needsReview === 1 && r.summary.paymentsWithAllocation === 2 && r.summary.unallocatedReceipts === 1, JSON.stringify(r.summary));
+  check("summary counts (supplier documents only)", r.summary.documents === 5 && r.summary.matched === 3 && r.summary.amountDifferences === 1 && r.summary.needsReview === 1 && r.summary.notOnStatement === 1 && r.summary.excludedRows === 3, JSON.stringify(r.summary));
+  check("no payment or receipt figure in the reconciliation summary", !("paymentsWithAllocation" in r.summary) && !("unallocatedReceipts" in r.summary));
+  check("differences report: 2003 amount, 2002 needs review, 2999 not on statement", r.differences.map((d) => `${d.category}:${d.documentNumber}`).join() === "AMOUNT_DIFFERENCE:000000000002003,NEEDS_REVIEW:000000000002002,NOT_ON_STATEMENT:2999", JSON.stringify(r.differences.map((d) => [d.category, d.documentNumber])));
   const other = mt.matchInterpretedStatement(interpretation, voloraRegister, "Some Other Supplier");
   check("the supplier is the one the user confirmed — never the AI's suggestion (other supplier → nothing matches)", other.summary.matched === 0 && other.lines.filter((l) => l.status === "MISSING_IN_VOLORA").length === 5);
+}
+
+section("4b. Supplier documents only");
+{
+  const GC = "Gourmet Cape Distributors (Pty) Ltd";
+  const doc = (i, over) => line(i, over);
+  const pay = (i, over) => line(i, { type: "payment", direction: "credit", debit: null, credit: 500, ...over });
+  const lines = [
+    doc(1, { documentNumber: "02291553", debit: 1000, date: "2026-10-01" }),
+    doc(2, { documentNumber: "02287458", debit: 2000, date: "2026-09-22" }),
+    doc(3, { documentNumber: "02262503", debit: 300.02, date: "2026-07-14" }),
+    doc(4, { documentNumber: "02284252", debit: 400, date: "2026-09-08" }),
+    doc(5, { documentNumber: "02252489", debit: 150.01, date: "2026-07-01" }),
+    doc(6, { documentNumber: "02299999", debit: 99, date: "2026-10-03" }),
+    doc(7, { type: "credit_note", direction: "credit", debit: null, credit: 50, documentNumber: "CN-1", date: "2026-09-01" }),
+    doc(8, { type: "credit_note", direction: "credit", debit: null, credit: 70, documentNumber: "CN-2", date: "2026-09-02" }),
+    doc(9, { type: "debit_note", documentNumber: "DN-1", debit: 25, date: "2026-09-03" }),
+    doc(10, { type: "debit_note", documentNumber: "DN-2", debit: 30, date: "2026-09-04" }),
+    doc(11, { documentNumber: "02262503X", debit: 10, date: "2026-09-05" }),
+    doc(12, { documentNumber: "02262503X", debit: 10, date: "2026-09-05" }),
+    doc(13, { documentNumber: "02270000", debit: 600, date: "2026-08-10" }),
+    pay(14, { paymentAllocatesDocumentNumber: "02291553", allocationKind: "invoice_on_statement" }),
+    pay(15, { paymentAllocatesDocumentNumber: "_CR00001", allocationKind: "receipt" }),
+    line(16, { type: "unallocated_receipt", direction: "none", debit: null, credit: null, documentNumber: "_CR00001", needsReview: true, reviewReasons: ["Unallocated receipt: check how the supplier applied it."] }),
+    pay(17, { paymentAllocatesDocumentNumber: "02299999", allocationKind: "invoice_on_statement" }),
+  ];
+  const reg = [
+    cand("a", { supplierName: GC, invoiceNumber: "02291553", invoiceDate: "2026-01-10", total: 1000 }),
+    cand("b", { supplierName: GC, invoiceNumber: "02287458", invoiceDate: "2022-09-26", total: 2000 }),
+    cand("c", { supplierName: GC, invoiceNumber: "02262503", invoiceDate: "2026-07-14", total: 300.04 }),
+    cand("d1", { supplierName: GC, invoiceNumber: "02284252", invoiceDate: "2026-09-08", total: 400 }),
+    cand("d2", { supplierName: GC, invoiceNumber: "02284252", invoiceDate: "2026-09-08", total: 400 }),
+    cand("d3", { supplierName: GC, invoiceNumber: "02284252", invoiceDate: "2026-09-09", total: 400 }),
+    cand("e", { supplierName: GC, invoiceNumber: "02252489", invoiceDate: "2026-07-01", total: 150 }),
+    cand("cn1", { supplierName: GC, invoiceNumber: "CN-1", invoiceDate: "2026-09-01", total: -50 }),
+    cand("cn2", { supplierName: GC, invoiceNumber: "CN-2", invoiceDate: "2026-09-02", total: -75 }),
+    cand("dn1", { supplierName: GC, invoiceNumber: "DN-1", invoiceDate: "2026-09-03", total: 25 }),
+    cand("dn2", { supplierName: GC, invoiceNumber: "DN-2", invoiceDate: "2026-09-04", total: 35 }),
+    cand("f", { supplierName: GC, invoiceNumber: "02270000", invoiceDate: "2026-08-01", total: 650 }),
+    cand("g", { supplierName: GC, invoiceNumber: "02275555", invoiceDate: "2026-08-15", total: 80 }),
+  ];
+  const r = mt.matchInterpretedStatement(ip(lines), reg, GC);
+  const at = (i) => r.lines.find((l) => l.index === i);
+  check("a wrong VOLORA date keeps the document matched by number: 02291553 → Date Difference, not Missing", at(1).status === "DATE_DIFFERENCE" && at(1).voloraId === "a" && at(1).method === "document_number");
+  check("…showing statement date, VOLORA date and the difference", at(1).statementDate === "2026-10-01" && at(1).voloraDate === "2026-01-10" && at(1).dateDifferenceDays === 264 && /statement 2026-10-01, VOLORA 2026-01-10/.test(at(1).note), at(1).note);
+  check("02287458 dated four years apart in VOLORA → Date Difference, identified by number", at(2).status === "DATE_DIFFERENCE" && at(2).voloraId === "b" && at(2).dateDifferenceDays === 1457, String(at(2).dateDifferenceDays));
+  check("02262503: amount differs by exactly −0.02 → Amount Difference with both amounts", at(3).status === "AMOUNT_DIFFERENCE" && at(3).statementAmount === 300.02 && at(3).voloraTotal === 300.04 && at(3).difference === -0.02 && /difference -0\.02/.test(at(3).note), at(3).note);
+  check("02284252 three times in VOLORA → Needs Review, never auto-selected", at(4).status === "NEEDS_REVIEW" && at(4).voloraId === null && at(4).duplicateInVolora && at(4).candidates === 3 && /Duplicate in VOLORA/.test(at(4).note));
+  check("…and its VOLORA records are not reported as 'not on statement'", !r.notOnStatement.some((c) => c.id.startsWith("d")));
+  check("a one-cent difference stays within tolerance (Matched, the cent still shown)", at(5).status === "MATCHED" && at(5).difference === 0.01);
+  check("a document VOLORA does not hold → Missing in VOLORA", at(6).status === "MISSING_IN_VOLORA");
+  check("credit note that agrees → Matched (negative amounts)", at(7).status === "MATCHED" && at(7).statementAmount === -50 && at(7).documentType === "credit_note");
+  check("credit note that differs → Credit/Debit Note Difference", at(8).status === "NOTE_DIFFERENCE" && at(8).difference === 5);
+  check("debit note matched by number (positive amount)", at(9).status === "MATCHED" && at(9).documentType === "debit_note" && at(9).statementAmount === 25);
+  check("debit note that differs → Credit/Debit Note Difference", at(10).status === "NOTE_DIFFERENCE" && at(10).difference === -5);
+  check("the same number twice on the statement → Duplicate, none chosen", at(11).status === "DUPLICATE" && at(12).status === "DUPLICATE" && at(11).voloraId === null);
+  check("amount and date both differ → Amount Difference, the date difference still shown", at(13).status === "AMOUNT_DIFFERENCE" && at(13).difference === -50 && at(13).dateDifferenceDays === 9);
+  check("payments, receipt allocations and unapplied cash (_CR00001) are not reconciled — even when flagged", [14, 15, 16, 17].every((i) => at(i).status === "NOT_RECONCILED" && at(i).documentType === null));
+  const s = r.summary;
+  check("summary: documents only (13 = 9 invoices + 2 credit notes + 2 debit notes); 4 payment/receipt rows excluded", s.documents === 13 && s.invoices === 9 && s.creditNotes === 2 && s.debitNotes === 2 && s.excludedRows === 4, JSON.stringify(s));
+  check("summary categories: 3 matched, 2 amount, 2 date, 2 duplicate, 1 missing, 2 note, 1 needs review", s.matched === 3 && s.amountDifferences === 2 && s.dateDifferences === 2 && s.duplicates === 2 && s.missing === 1 && s.noteDifferences === 2 && s.needsReview === 1, JSON.stringify(s));
+  check("every document is in exactly one category", s.matched + s.amountDifferences + s.dateDifferences + s.duplicates + s.missing + s.noteDifferences + s.needsReview === s.documents);
+  const cats = r.differences.map((d) => d.category);
+  check("All Differences: every disagreeing document (10) plus the VOLORA document not on the statement", r.differences.length === 11 && cats.filter((c) => c === "NOT_ON_STATEMENT").length === 1 && r.differences.find((d) => d.category === "NOT_ON_STATEMENT").documentNumber === "02275555", JSON.stringify(cats));
+  check("All Differences holds no payment, receipt or matched document", r.differences.every((d) => d.row === null || (d.row <= 13 && ![5, 7, 9].includes(d.row))));
+  const dd = r.differences.find((d) => d.documentNumber === "02291553");
+  check("a date difference in the report carries both dates and the day difference", dd.category === "DATE_DIFFERENCE" && dd.statementDate === "2026-10-01" && dd.voloraDate === "2026-01-10" && dd.dateDifferenceDays === 264);
+  const other = mt.matchInterpretedStatement(ip(lines), reg.map((c) => (c.id === "a" ? { ...c, supplierName: "Gourmet Foods on the Go" } : c)), GC);
+  check("no supplier alias: the same number under another supplier name is not a candidate", other.lines.find((l) => l.index === 1).status === "MISSING_IN_VOLORA");
 }
 
 section("5. Signed review → approval (in-memory database)");
@@ -183,10 +257,13 @@ const seedDb = () => ({
   const lines = db.tables.vyron_supplier_reconciliation_lines.filter((l) => l.reconciliation_id === res.reconciliation.id);
   const by = (n) => lines.find((l) => l.invoice_number === n);
   check("approval records the run with the deterministic outcomes", by("000000000002005").status === "MATCHED" && by("000000000002003").status === "TOTAL_DIFFERENCE" && by("000000000002002").status === "NEEDS_REVIEW" && by("000000000002001").status === "MATCHED");
+  check("only supplier documents are written as statement lines (5) — no payment or receipt line", lines.filter((l) => l.source_row !== null).length === 5 && lines.every((l) => ["INVOICE", "CREDIT_NOTE"].includes(l.document_type)));
   check("…the VOLORA invoice not on the statement", lines.some((l) => l.status === "NOT_ON_SUPPLIER_DOCUMENT" && l.invoice_number === "2999"));
   const summary = db.tables.vyron_supplier_reconciliations[0].summary;
-  check("payment allocations kept as statement evidence", summary.statement.paymentAllocations.map((p) => p.settles).join() === "000000000002001,000000000002002");
-  check("the unallocated receipt kept with its balance impact, and as a review item", summary.statement.unallocatedReceipts.length === 1 && summary.statement.unallocatedReceipts[0].balanceMovement === 250 && summary.statement.reviewItems.some((x) => x.type === "unallocated_receipt"));
+  check("payments and the receipt are excluded: counted for audit only, not skipped rows, not review items", summary.statement.excludedRows.payment === 2 && summary.statement.excludedRows.unallocated_receipt === 1 && summary.skippedRows.length === 0 && !("paymentAllocations" in summary.statement) && !("unallocatedReceipts" in summary.statement) && summary.statement.reviewItems.every((x) => ["invoice", "credit_note", "debit_note"].includes(x.type)), JSON.stringify(summary.statement.excludedRows));
+  check("the run carries the supplier-document summary and the All Differences report", summary.statement.matching.method === "supplier-documents-v2" && summary.statement.matching.documents === 5 && summary.statement.differences.length === 3);
+  check("the run is recorded under the confirmed supplier", db.tables.vyron_supplier_reconciliations[0].supplier_name === SUP);
+  check("the approval response carries the differences report for the screen", res.summary.statement.differences.length === 3);
   check("supplier recorded as confirmed by the user; the AI's suggestion kept separately", summary.statement.supplierApproved === SUP && "supplierSuggested" in summary.statement);
   check("only the reconciliation record was written — no invoice, payment, allocation or stock change", [...new Set(writes)].sort().join() === "vyron_supplier_reconciliation_lines,vyron_supplier_reconciliations" && db.tables.vyron_cost_supplier_invoices.length === voloraRegister.length);
 }
@@ -215,9 +292,12 @@ section("6. Through the real route, with the AI unavailable (no API key): safe f
   };
   const file = () => new File([pdfBytes], "fresh-pantry.pdf", { type: "application/pdf" });
   const ext = await post({ file: file(), action: "extract" });
-  check("extract with the AI unavailable still succeeds: reader's reading, every row Needs Review, signed for review", ext.status === 200 && ext.json.interpretation.aiStatus === "no_api_key" && ext.json.interpretation.lines.every((l) => l.needsReview) && Boolean(ext.json.reviewToken?.signature));
+  const docs = ext.json.interpretation.lines.filter((l) => ["invoice", "credit_note", "debit_note"].includes(l.type));
+  const payments = ext.json.interpretation.lines.filter((l) => l.type === "payment");
+  check("extract with the AI unavailable still succeeds: reader's reading, every supplier document Needs Review, signed for review", ext.status === 200 && ext.json.interpretation.aiStatus === "no_api_key" && docs.length > 0 && docs.every((l) => l.needsReview) && Boolean(ext.json.reviewToken?.signature));
+  check("…payments raise no review item (the AI note is kept as an audit note)", payments.length > 0 && payments.every((l) => !l.needsReview && l.auditNotes.length > 0));
   const m = await post({ action: "match", reviewBody: ext.json.reviewToken.body, reviewSignature: ext.json.reviewToken.signature, supplierName: SUP });
-  check("match preview through the route (read-only)", m.status === 200 && m.json.match.summary.statementInvoices > 0 && db.tables.vyron_supplier_reconciliations.length === 0);
+  check("match preview through the route (read-only)", m.status === 200 && m.json.match.summary.documents > 0 && db.tables.vyron_supplier_reconciliations.length === 0);
   const forged = await post({ action: "match", reviewBody: ext.json.reviewToken.body, reviewSignature: "x".repeat(43), supplierName: SUP });
   check("a forged signature is refused by the route (400)", forged.status === 400);
   const ok = await post({ file: file(), action: "approve", approved: "true", digest: ext.json.extraction.digest, supplierName: SUP, reviewBody: ext.json.reviewToken.body, reviewSignature: ext.json.reviewToken.signature });

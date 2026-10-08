@@ -25,7 +25,7 @@ import { normalisedNameKey } from "@/lib/vyron-supplier-resolution";
  * usage services and the provider-failure classification.
  */
 
-export const STATEMENT_LINE_TYPES = ["invoice", "credit_note", "payment", "unallocated_receipt", "journal", "adjustment", "interest", "discount", "balance_line", "unknown"] as const;
+export const STATEMENT_LINE_TYPES = ["invoice", "credit_note", "debit_note", "payment", "unallocated_receipt", "journal", "adjustment", "interest", "discount", "balance_line", "unknown"] as const;
 export type StatementLineType = (typeof STATEMENT_LINE_TYPES)[number];
 export const STATEMENT_COLUMN_ROLES = ["documentNumber", "supplierReference", "customerOrderReference", "paymentReference", "date", "dueDate", "description", "type", "debit", "credit", "amount", "balance", "other"] as const;
 export type StatementColumnRole = (typeof STATEMENT_COLUMN_ROLES)[number];
@@ -64,8 +64,11 @@ export type InterpretedLine = {
   structurallyConfirmed: boolean;
   /** How much the running balance moved on this row, in the statement's display order (deterministic; null when unknown). */
   balanceMovement: number | null;
+  /** Only supplier documents (invoice, credit note, debit note) — or a debit row that may be one — need review. */
   needsReview: boolean;
   reviewReasons: string[];
+  /** Observations on rows outside the reconciliation population (payments, receipts, …): audit only, never a review item. */
+  auditNotes: string[];
   sourceText: string;
 };
 
@@ -214,8 +217,9 @@ Each row gives: lineIndex; direction (debit = increases what the customer owes t
 balanceJump (true when the row has no amount but the running balance still changes); byColumn (the row's text split under each column heading by horizontal position — usually right, but text that ran together may be split imperfectly); text (the whole row).
 
 For EVERY row return exactly one entry:
-- type: invoice | credit_note | payment | unallocated_receipt | journal | adjustment | interest | discount | balance_line | unknown.
+- type: invoice | credit_note | debit_note | payment | unallocated_receipt | journal | adjustment | interest | discount | balance_line | unknown.
   Decide from the column structure, the direction and the description together. A debit row carrying a number in the document-number column is an invoice unless its description says otherwise (interest, journal, debit note, adjustment).
+  A debit row described as a debit note (debit note, DN) is debit_note.
   Credit rows described as payment, receipt, EFT, transfer, deposit are payments; a credit row that is a credit note says so (credit note, CN, return).
   A credit row whose description does not say what it is (for example "Misc", "Sundry", or only a reference) is unknown with low confidence — never assume it is a payment.
   Rows such as "Unapplied cash", "Unallocated", "On account", "Cash on account" are unallocated_receipt. An unallocated receipt settles nothing yet: put its own number in documentNumberCell and leave paymentAllocatesDocumentNumber null.
@@ -337,7 +341,7 @@ function checkIdentifier(row: string, value: string | null, field: string, lineI
   return v;
 }
 
-const DEBIT_TYPES: StatementLineType[] = ["invoice", "interest"];
+const DEBIT_TYPES: StatementLineType[] = ["invoice", "debit_note", "interest"];
 const CREDIT_TYPES: StatementLineType[] = ["payment", "credit_note", "discount"];
 
 // ---------------------------------------------------------------------------------------------
@@ -383,6 +387,7 @@ function readerLine(t: StatementTransaction, reason: string): InterpretedLine {
     balanceMovement: null,
     needsReview: true,
     reviewReasons: [reason],
+    auditNotes: [],
     sourceText: t.sourceText,
   };
 }
@@ -397,7 +402,32 @@ function deterministicOrdering(transactions: StatementTransaction[]): "newest_fi
   return "unknown";
 }
 
-function buildResult(extraction: StatementExtraction, partial: Partial<StatementInterpretation> & { lines: InterpretedLine[] }): StatementInterpretation {
+const DOCUMENT_TYPES: StatementLineType[] = ["invoice", "credit_note", "debit_note"];
+// Debit rows the AI itself classified as a non-document charge; any other debit outside the population may be a missed supplier document.
+const NON_DOCUMENT_DEBITS: StatementLineType[] = ["interest", "journal", "adjustment", "balance_line"];
+
+/**
+ * The reconciliation population is supplier documents only. A row outside it (payment, receipt,
+ * unapplied cash, balance line, …) raises no review item: what was observed about it is kept as an
+ * audit note. The one exception is a row that may itself be a supplier document the reading missed —
+ * a debit not explained as a non-document charge, or a credit whose meaning is unknown (a possible
+ * credit note) — because a missed document would understate the population.
+ */
+function confineReviewToDocuments(l: InterpretedLine): InterpretedLine {
+  if (DOCUMENT_TYPES.includes(l.type)) return l;
+  const possibleDocument =
+    (l.direction === "debit" && !(l.typeSource === "ai" && NON_DOCUMENT_DEBITS.includes(l.type))) || (l.direction === "credit" && (l.type === "unknown" || (l.typeSource === "reader" && l.type === "adjustment")));
+  const could = l.direction === "debit" ? "invoice or debit note" : "credit note";
+  return {
+    ...l,
+    needsReview: possibleDocument,
+    reviewReasons: possibleDocument ? [`A ${l.direction} row read as ${l.type.replace("_", " ")} — it may be a supplier document (${could}); check it before relying on the reconciliation.`] : [],
+    auditNotes: [...l.auditNotes, ...l.reviewReasons],
+  };
+}
+
+function buildResult(extraction: StatementExtraction, input: Partial<StatementInterpretation> & { lines: InterpretedLine[] }): StatementInterpretation {
+  const partial = { ...input, lines: input.lines.map(confineReviewToDocuments) };
   const counts = Object.fromEntries(STATEMENT_LINE_TYPES.map((k) => [k, 0])) as Record<StatementLineType, number>;
   for (const l of partial.lines) counts[l.type]++;
   return {
@@ -423,7 +453,7 @@ function buildResult(extraction: StatementExtraction, partial: Partial<Statement
     counts: {
       ...counts,
       needsReview: partial.lines.filter((l) => l.needsReview).length,
-      invoicesWithoutDocumentNumber: partial.lines.filter((l) => (l.type === "invoice" || l.type === "credit_note") && !l.documentNumber).length,
+      invoicesWithoutDocumentNumber: partial.lines.filter((l) => DOCUMENT_TYPES.includes(l.type) && !l.documentNumber).length,
       aiLines: partial.lines.filter((l) => l.typeSource === "ai").length,
       readerLines: partial.lines.filter((l) => l.typeSource === "reader").length,
     },
@@ -766,7 +796,7 @@ export async function interpretStatementWithAi(
     }
     if (type === "unknown") reasons.push("The row's meaning could not be established.");
     if (a.confidence === "low") reasons.push("The AI was not confident about this row.");
-    if ((type === "invoice" || type === "credit_note") && !documentNumber) reasons.push(`Identified as ${type === "invoice" ? "an invoice" : "a credit note"}, but no document number is printed on the row.`);
+    if (DOCUMENT_TYPES.includes(type) && !documentNumber) reasons.push(`Identified as ${type === "invoice" ? "an invoice" : type === "credit_note" ? "a credit note" : "a debit note"}, but no document number is printed on the row.`);
     /*
      * Structural confirmation: the document itself proves an invoice when the row is a debit, its
      * validated number sits under the statement's document-number column, the reader found no
@@ -800,6 +830,7 @@ export async function interpretStatementWithAi(
       balanceMovement: movement.get(t.index) ?? null,
       needsReview: reasons.length > 0,
       reviewReasons: reasons,
+      auditNotes: [] as string[],
       sourceText: t.sourceText,
     };
   });
