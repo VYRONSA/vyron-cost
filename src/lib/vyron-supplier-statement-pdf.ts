@@ -141,6 +141,19 @@ async function loadPdfjsForNode() {
     g.ImageData ??= canvas.ImageData;
     g.Path2D ??= canvas.Path2D;
   }
+  /*
+   * In Node pdfjs parses on this thread (its "fake worker"). Left to itself it loads that parser with
+   * import("./pdf.worker.mjs") relative to its own file — in the production bundle a .next/server
+   * chunk with no worker beside it, so every PDF failed ("Setting up fake worker failed: Cannot find
+   * module '…/.next/server/chunks/pdf.worker.mjs'"). Importing pdfjs's own worker module here, by a
+   * literal path the bundler includes, registers globalThis.pdfjsWorker, which pdfjs then uses
+   * instead of that import — its supported way of running the parser on the main thread.
+   */
+  const w = globalThis as unknown as { pdfjsWorker?: { WorkerMessageHandler?: unknown } };
+  if (!w.pdfjsWorker?.WorkerMessageHandler) {
+    await import("pdfjs-dist/legacy/build/pdf.worker.mjs");
+    if (!w.pdfjsWorker?.WorkerMessageHandler) throw new Error("The PDF reader cannot start on this server: the pdfjs worker did not register.");
+  }
   return import("pdfjs-dist/legacy/build/pdf.mjs");
 }
 
@@ -159,7 +172,9 @@ export async function readPdfLines(bytes: Uint8Array): Promise<{ pageCount: numb
   } catch (error) {
     const name = (error as { name?: string })?.name || "";
     if (/password/i.test(name)) throw new StatementPdfError("The PDF is password-protected. Upload an unprotected copy of the statement.");
-    throw new StatementPdfError("The PDF could not be read.");
+    // The user sees the safe message; the server log keeps what actually went wrong.
+    console.error("Supplier statement PDF: pdfjs could not open the document:", error);
+    throw new StatementPdfError("The PDF could not be read.", { cause: error });
   }
   try {
     if (pdf.numPages > STATEMENT_PDF_MAX_PAGES) throw new StatementPdfError(`The PDF has ${pdf.numPages} pages; a statement can have at most ${STATEMENT_PDF_MAX_PAGES}.`);

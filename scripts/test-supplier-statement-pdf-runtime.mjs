@@ -76,6 +76,12 @@ section("3. The production build ships the PDF reader's native helper");
     check("route trace includes its native binary for this platform", files.some((f) => /node_modules\/@napi-rs\/canvas-[a-z0-9-]+\/.*\.node$/.test(f)));
     const chunks = files.filter((f) => /\/chunks\/.*\.js$/.test(f)).map((f) => path.join(path.dirname(trace), f));
     check("@napi-rs/canvas is external (not compiled into a server chunk)", chunks.length > 0 && !chunks.some((c) => existsSync(c) && /napi-rs\/canvas\/js-binding|loadBinding\(/.test(readFileSync(c, "utf8"))));
+    // pdfjs's parser ("worker") must be in the route's build output, not left to a runtime import of
+    // ./pdf.worker.mjs beside the bundled chunk (where it does not exist).
+    check(
+      "the pdfjs worker (WorkerMessageHandler registration) is part of the route's build output",
+      files.some((f) => /pdfjs-dist\/legacy\/build\/pdf\.worker\.mjs$/.test(f)) || chunks.some((c) => existsSync(c) && /pdfjsWorker\s*=\s*\{/.test(readFileSync(c, "utf8")))
+    );
   }
 }
 

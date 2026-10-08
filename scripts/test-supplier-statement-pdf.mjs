@@ -166,6 +166,15 @@ section("7. Supplier not guessed; ambiguous dates; refusals");
   check("a password-protected PDF is refused", lockedErr instanceof ex.StatementPdfError && /password/i.test(lockedErr.message), lockedErr?.message);
   const notPdf = await rejects(extract(new TextEncoder().encode("Date,Reference,Amount\n2026-10-01,INV-1,10.00\n")));
   check("a non-PDF file is refused", notPdf instanceof ex.StatementPdfError && /not a PDF/.test(notPdf.message));
+  // A PDF pdfjs cannot open: the user keeps the safe message, the server log keeps the real exception.
+  const logged = [];
+  const origError = console.error;
+  console.error = (...a) => logged.push(a.map((x) => (x instanceof Error ? `${x.name}: ${x.message}` : String(x))).join(" "));
+  const corrupt = await rejects(extract(new TextEncoder().encode("%PDF-1.4\n% not a real PDF body\n1 0 obj <<>> garbage\n%%EOF\n")));
+  console.error = origError;
+  check("an unreadable PDF keeps the safe user message", corrupt instanceof ex.StatementPdfError && corrupt.message === "The PDF could not be read.", corrupt?.message);
+  check("…the underlying pdfjs exception is logged server-side", logged.some((l) => /Supplier statement PDF: pdfjs could not open the document/.test(l) && /Invalid PDF|InvalidPDF/i.test(l)), JSON.stringify(logged));
+  check("…and kept as the error's cause", Boolean(corrupt?.cause) && /Invalid PDF/i.test(String(corrupt.cause?.message || corrupt.cause)));
   const sameBytes = pdfs.layoutClassic();
   const a1 = await extract(sameBytes);
   const a2 = await extract(sameBytes);
