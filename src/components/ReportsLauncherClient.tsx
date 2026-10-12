@@ -18,6 +18,7 @@ const reportCards = [
   { href: "/supplier-intelligence", title: "Supplier Price Increases", description: "Supplier price movement from approved invoices and cost history.", icon: TrendingUp, badge: "Supplier" },
   { href: "/supplier-intelligence", title: "Supplier Performance", description: "Supplier movement, risk, reliability and procurement exposure.", icon: Truck, badge: "Supplier" },
   { href: "/inventory", title: "Stock Valuation", description: "Inventory master value, low stock and slow-moving stock visibility.", icon: Boxes, badge: "Inventory" },
+  { href: "/inventory/stock-on-hand", title: "Stock on Hand (As At Date)", description: "Raw materials and finished goods on hand at the end of any date, rebuilt from the stock ledger.", icon: Boxes, badge: "Inventory" },
   { href: "/inventory/counts", title: "Stock Variance", description: "Stock count variance workflow: draft, submit, approve and post.", icon: PackageSearch, badge: "Inventory" },
   { href: "/reports/gp?view=customer", title: "Customer GP Report", description: "Gross profit by customer for a date range, with invoice and product counts.", icon: Percent, badge: "Sales GP" },
   { href: "/reports/gp?view=product", title: "Product GP Report", description: "Gross profit by product sold: quantity, average price, average cost and margin.", icon: Percent, badge: "Sales GP" },

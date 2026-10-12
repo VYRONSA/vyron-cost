@@ -4,8 +4,10 @@ import * as XLSX from "xlsx";
 import type { TenantReportExportPayload } from "@/lib/vyron-report-exports";
 
 function drawHeader(doc: jsPDF, payload: TenantReportExportPayload) {
+  // Portrait keeps the original 210 mm layout exactly; a landscape page uses its own width.
+  const pageWidth = payload.pdfOrientation === "landscape" ? doc.internal.pageSize.getWidth() : 210;
   doc.setFillColor(15, 23, 42);
-  doc.rect(0, 0, 210, 38, "F");
+  doc.rect(0, 0, pageWidth, 38, "F");
 
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
@@ -17,11 +19,11 @@ function drawHeader(doc: jsPDF, payload: TenantReportExportPayload) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.text(`Company: ${payload.branding.tradingName || payload.branding.companyName}`, 14, 30);
-  doc.text(`Generated: ${new Date(payload.generatedAt).toLocaleString()}`, 110, 30);
+  doc.text(`Generated: ${new Date(payload.generatedAt).toLocaleString()}`, pageWidth - 100, 30);
 }
 
 export function exportTenantReportPdf(payload: TenantReportExportPayload) {
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: payload.pdfOrientation === "landscape" ? "landscape" : "portrait" });
 
   drawHeader(doc, payload);
 
@@ -76,7 +78,7 @@ export function exportTenantReportPdf(payload: TenantReportExportPayload) {
       const pageHeight = doc.internal.pageSize.getHeight();
       doc.setTextColor(100);
       doc.setFontSize(8);
-      doc.text(`Page ${data.pageNumber}`, 190, pageHeight - 8, { align: "right" });
+      doc.text(`Page ${data.pageNumber}`, payload.pdfOrientation === "landscape" ? doc.internal.pageSize.getWidth() - 20 : 190, pageHeight - 8, { align: "right" });
     },
   });
 

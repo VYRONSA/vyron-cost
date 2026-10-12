@@ -99,6 +99,7 @@ export const vyronNavSections: VyronNavSection[] = [
     items: [
       { label: "Inventory", icon: PackageSearch, href: "/inventory" },
       { label: "Stock Master", icon: Boxes, href: "/inventory/stock" },
+      { label: "Stock on Hand Report", icon: ClipboardList, href: "/inventory/stock-on-hand" },
       { label: "Stock Movements", icon: PackageCheck, href: "/stock-movements" },
       { label: "Inventory Ledger", icon: ClipboardList, href: "/inventory-ledger" },
       { label: "Inventory Counts", icon: ClipboardList, href: "/inventory/counts" },

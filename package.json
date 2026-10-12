@@ -53,6 +53,7 @@
     "test:supplier-cost-gp": "node scripts/test-supplier-cost-gp-reconciliation.mjs",
     "test:business-controls": "node scripts/test-business-controls.mjs",
     "test:stock-take-upload": "node scripts/test-stock-take-upload.mjs",
+    "test:stock-on-hand-report": "node scripts/test-stock-on-hand-report.mjs",
     "test:supplier-statement-pdf": "node scripts/test-supplier-statement-pdf.mjs",
     "test:supplier-statement-pdf-runtime": "node scripts/test-supplier-statement-pdf-runtime.mjs",
     "test:supplier-statement-pdf-bundle": "node scripts/test-supplier-statement-pdf-bundle.mjs",
