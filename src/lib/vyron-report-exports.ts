@@ -30,6 +30,8 @@ export type TenantReportExportPayload = {
   summary: ReportSummaryMetric[];
   columns: ReportColumn[];
   rows: string[][];
+  /** PDF page orientation; portrait unless a wide report asks for landscape. */
+  pdfOrientation?: "portrait" | "landscape";
 };
 
 function sanitizeFilePart(value: string) {

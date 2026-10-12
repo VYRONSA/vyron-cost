@@ -6,9 +6,11 @@ import { useReportsPermissions } from "@/hooks/useModulePermissions";
 import type { ReportFilter } from "@/lib/vyron-report-exports";
 import {
   STOCK_ON_HAND_GROUPS,
+  STOCK_ON_HAND_SECTIONS,
   filterStockOnHandLines,
   stockOnHandExportTable,
   stockOnHandLineNotes,
+  stockOnHandSummary,
   stockOnHandTotals,
   type StockOnHandGroup,
   type StockOnHandReport,
@@ -17,10 +19,11 @@ import {
 const money = (v: number) => `R${Number(v || 0).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const qty = (v: number) => Number(v || 0).toLocaleString("en-ZA", { maximumFractionDigits: 6 });
 const controlClass = "mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.12)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none";
+const UNAVAILABLE = "History unavailable";
 
 /**
  * Stock on Hand as at a chosen date, rebuilt from the stock ledger (see vyron-stock-on-hand). The
- * figures, totals and export all come from vyron-stock-on-hand-view, so the export matches the screen.
+ * figures, totals, notes and export all come from vyron-stock-on-hand-view, so the export matches the screen.
  */
 export default function StockOnHandReportClient({ companyName, today }: { companyName: string; today: string }) {
   const { canExport } = useReportsPermissions();
@@ -56,10 +59,12 @@ export default function StockOnHandReportClient({ companyName, today }: { compan
   const categories = useMemo(() => [...new Set(lines.map((l) => l.category))].sort(), [lines]);
   const filtered = useMemo(() => filterStockOnHandLines(lines, { search, category, group, hideZero }), [lines, search, category, group, hideZero]);
   const totals = useMemo(() => stockOnHandTotals(filtered), [filtered]);
-  const groupTotals = useMemo(
-    () => STOCK_ON_HAND_GROUPS.map((g) => ({ ...g, totals: stockOnHandTotals(filtered.filter((l) => l.group === g.key)) })).filter((g) => g.totals.items > 0),
+  const sectionTotals = useMemo(
+    () => STOCK_ON_HAND_SECTIONS.map((s) => ({ ...s, totals: stockOnHandTotals(filtered.filter(s.matches)) })).filter((s) => s.totals.items > 0),
     [filtered]
   );
+  const rawTotals = useMemo(() => stockOnHandTotals(filtered.filter((l) => l.group === "raw_materials")), [filtered]);
+  const established = report?.historyAvailable !== false;
 
   const activeFilters = useMemo<ReportFilter[]>(() => {
     const list: ReportFilter[] = [];
@@ -70,48 +75,46 @@ export default function StockOnHandReportClient({ companyName, today }: { compan
     return list;
   }, [group, category, search, hideZero]);
 
-  const summary = useMemo(
-    () => [
-      ...groupTotals.map((g) => ({ label: `${g.label} (Net)`, value: money(g.totals.netValue) })),
-      { label: "Combined Net Value", value: money(totals.netValue) },
-      { label: "Positive Stock Value", value: money(totals.positiveValue) },
-      { label: "Negative Balances Value", value: money(totals.negativeValue) },
-      { label: "Items / Negative / Not Valued", value: `${totals.items} / ${totals.negative} / ${totals.unvalued}` },
-    ],
-    [groupTotals, totals]
-  );
-
+  const summary = useMemo(() => (report ? stockOnHandSummary(report, filtered) : []), [report, filtered]);
+  // On screen the as-at date and basis are already in the report header; the exports keep them.
+  const screenSummary = useMemo(() => summary.filter((m) => m.label !== "As At" && m.label !== "Basis"), [summary]);
   const period = useMemo(() => ({ kind: "asAt" as const, date: report?.asAt || asAt }), [report, asAt]);
   const generatedAt = report?.generatedAt || `${today}T00:00:00.000Z`;
 
   const getExportPayload = useCallback(() => {
     const table = stockOnHandExportTable(filtered);
-    return buildReportPayload({
-      reportKey: "stock-on-hand",
-      title: "Stock on Hand",
-      companyName,
-      generatedAt,
-      period,
-      filters: activeFilters,
-      summary: [...summary, ...(report?.disclosures || []).map((d, i) => ({ label: `Note ${i + 1}`, value: d }))],
-      columns: table.columns,
-      rows: table.rows,
-    });
+    // Eleven columns do not fit a portrait page legibly.
+    return {
+      ...buildReportPayload({
+        reportKey: "stock-on-hand",
+        title: "Stock on Hand",
+        companyName,
+        generatedAt,
+        period,
+        filters: activeFilters,
+        summary: [...summary, ...(report?.disclosures || []).map((d, i) => ({ label: `Note ${i + 1} (${d.level === "critical" ? "Critical" : d.level === "warning" ? "Warning" : "Information"})`, value: d.text }))],
+        columns: table.columns,
+        rows: table.rows,
+      }),
+      pdfOrientation: "landscape" as const,
+    };
   }, [filtered, companyName, generatedAt, period, activeFilters, summary, report]);
 
   const r = report?.reconciliation;
-  const differing = useMemo(() => lines.filter((l) => Math.abs(l.masterDifference) >= 1e-6), [lines]);
+  const differing = useMemo(() => lines.filter((l) => l.masterDifference !== null && Math.abs(l.masterDifference) >= 1e-6), [lines]);
+  const critical = report?.disclosures.filter((d) => d.level === "critical") ?? [];
+  const other = report?.disclosures.filter((d) => d.level !== "critical") ?? [];
 
   return (
     <ReportDocument
       reportKey="stock-on-hand"
       title="Stock on Hand"
-      subtitle="Raw materials and finished goods on hand at the end of the chosen date, rebuilt from the stock ledger."
+      subtitle="Ledger balances of raw materials and finished goods at the end of the chosen date, reconstructed from recorded stock movements — not a physical count."
       companyName={companyName}
       period={period}
       generatedAt={generatedAt}
       filters={activeFilters}
-      summary={summary}
+      summary={screenSummary}
       onRefresh={() => void load(asAt)}
       refreshing={loading}
       getExportPayload={canExport && report ? getExportPayload : undefined}
@@ -157,69 +160,98 @@ export default function StockOnHandReportClient({ companyName, today }: { compan
         </>
       }
     >
-      {report?.disclosures.length ? (
-        <div className="mb-4 rounded-[18px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          <div className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-800">About these figures</div>
+      {critical.length ? (
+        <div role="alert" data-testid="soh-critical" className="mb-4 rounded-[18px] border-2 border-red-300 bg-red-50 px-4 py-3 text-sm text-red-950">
+          <div className="text-[11px] font-black uppercase tracking-[0.14em] text-red-800">Historical stock cannot be established</div>
           <ul className="mt-1 list-disc space-y-1 pl-5 font-semibold">
-            {report.disclosures.map((d) => (
-              <li key={d}>{d}</li>
+            {critical.map((d) => (
+              <li key={d.text}>{d.text}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {other.length ? (
+        <div data-testid="soh-disclosures" className="mb-4 rounded-[18px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <div className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-800">How to read these figures</div>
+          <ul className="mt-1 list-disc space-y-1 pl-5 font-semibold">
+            {other.map((d) => (
+              <li key={d.text}>
+                {d.level === "warning" ? <span className="mr-1 font-black text-amber-800">Incomplete:</span> : null}
+                {d.text}
+              </li>
             ))}
           </ul>
         </div>
       ) : null}
 
-      <ReportTable minWidth={1180}>
+      <ReportTable minWidth={1280}>
         <thead className="bg-slate-950 text-xs font-black uppercase tracking-[0.10em] text-white">
           <tr>
             <th className="px-3 py-2.5">Item Code / SKU</th>
             <th className="px-3 py-2.5">Description</th>
             <th className="px-3 py-2.5">Category</th>
             <th className="px-3 py-2.5">Unit</th>
-            <th className="px-3 py-2.5 text-right">Qty On Hand</th>
+            <th className="px-3 py-2.5 text-right">Ledger Balance</th>
+            <th className="px-3 py-2.5 text-right">Verified Count</th>
             <th className="px-3 py-2.5 text-right">Unit Cost</th>
-            <th className="px-3 py-2.5 text-right">Stock Value</th>
+            <th className="px-3 py-2.5 text-right">Ledger Value</th>
             <th className="px-3 py-2.5">Notes</th>
           </tr>
         </thead>
         <tbody>
-          {groupTotals.map((g) => (
+          {sectionTotals.map((g) => (
             <Fragment key={g.key}>
               <tr className="border-t-2 border-slate-900 bg-slate-100">
-                <td colSpan={8} className="px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-900">
+                <td colSpan={9} className="px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-900">
                   {g.label}
                 </td>
               </tr>
               {filtered
-                .filter((l) => l.group === g.key)
-                .map((l) => {
-                  const notes = stockOnHandLineNotes(l);
-                  return (
-                    <tr key={l.stockItemId} className="border-t border-slate-100 hover:bg-slate-50/70">
-                      <td className="px-3 py-2 whitespace-nowrap font-black text-slate-900">{l.itemCode}</td>
-                      <td className="px-3 py-2 font-semibold text-slate-800">{l.description}</td>
-                      <td className="px-3 py-2 whitespace-nowrap text-slate-600">{l.category}</td>
-                      <td className="px-3 py-2 whitespace-nowrap text-slate-600">{l.unit}</td>
-                      <td className={`px-3 py-2 whitespace-nowrap text-right tabular-nums ${l.qty < 0 ? "font-black text-red-700" : "text-slate-900"}`}>{qty(l.qty)}</td>
-                      <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-slate-900">{l.unitCost === null ? "Not available" : money(l.unitCost)}</td>
-                      <td className="px-3 py-2 whitespace-nowrap text-right font-black tabular-nums text-slate-900">{l.value === null ? "Not available" : money(l.value)}</td>
-                      <td className="px-3 py-2 text-xs font-semibold text-amber-800">{notes.join("; ")}</td>
-                    </tr>
-                  );
-                })}
+                .filter(g.matches)
+                .map((l) => (
+                  <tr key={l.stockItemId} className="border-t border-slate-100 hover:bg-slate-50/70">
+                    <td className="px-3 py-2 whitespace-nowrap font-black text-slate-900">{l.itemCode}</td>
+                    <td className="px-3 py-2 font-semibold text-slate-800">{l.description}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-slate-600">{l.category}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-slate-600">{l.unit}</td>
+                    <td className={`px-3 py-2 whitespace-nowrap text-right tabular-nums ${l.qty === null ? "font-black text-red-700" : l.qty < 0 ? "font-black text-red-700" : "text-slate-900"}`}>
+                      {l.qty === null ? UNAVAILABLE : qty(l.qty)}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-slate-900">{l.verifiedQty === null ? "—" : qty(l.verifiedQty)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-slate-900">{l.unitCost === null ? "Not available" : money(l.unitCost)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-right font-black tabular-nums text-slate-900">
+                      {l.qty === null ? UNAVAILABLE : l.value === null ? "Not available" : money(l.value)}
+                    </td>
+                    <td className="px-3 py-2 text-xs font-semibold text-amber-800">
+                      {[...stockOnHandLineNotes(l), ...(l.lastCount && l.verifiedQty === null ? [`Last counted ${l.lastCount.date}: ${qty(l.lastCount.countedQty)}`] : [])].join("; ")}
+                    </td>
+                  </tr>
+                ))}
               <tr className="border-t border-slate-300 bg-slate-50 font-black text-slate-900">
-                <td className="px-3 py-2" colSpan={6}>
+                <td className="px-3 py-2" colSpan={7}>
                   {g.label} — {g.totals.items} item(s), {g.totals.negative} negative, {g.totals.unvalued} not valued
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">{money(g.totals.netValue)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{established ? money(g.totals.netValue) : "Not established"}</td>
                 <td className="px-3 py-2 text-xs font-semibold text-slate-600">
-                  Positive {money(g.totals.positiveValue)}; negative {money(g.totals.negativeValue)}
+                  {established ? `Positive ${money(g.totals.positiveValue)}; negative ${money(g.totals.negativeValue)}` : ""}
                 </td>
               </tr>
+              {g.key === "packaging" || (g.key === "ingredients" && !sectionTotals.some((s) => s.key === "packaging")) ? (
+                <tr className="border-t-2 border-slate-400 bg-slate-100 font-black text-slate-900">
+                  <td className="px-3 py-2" colSpan={7}>
+                    Raw Materials — {rawTotals.items} item(s), {rawTotals.negative} negative, {rawTotals.unvalued} not valued
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums">{established ? money(rawTotals.netValue) : "Not established"}</td>
+                  <td className="px-3 py-2 text-xs font-semibold text-slate-600">
+                    {established ? `Positive ${money(rawTotals.positiveValue)}; negative ${money(rawTotals.negativeValue)}` : ""}
+                  </td>
+                </tr>
+              ) : null}
             </Fragment>
           ))}
           {filtered.length === 0 && lines.length > 0 ? (
             <tr>
-              <td colSpan={8} className="px-3 py-10 text-center text-sm font-bold text-slate-500">
+              <td colSpan={9} className="px-3 py-10 text-center text-sm font-bold text-slate-500">
                 No stock items match these filters.
               </td>
             </tr>
@@ -227,29 +259,33 @@ export default function StockOnHandReportClient({ companyName, today }: { compan
         </tbody>
         <tfoot>
           <tr className="border-t-2 border-slate-900 bg-slate-50 font-black text-slate-900">
-            <td className="px-3 py-2.5" colSpan={6}>
+            <td className="px-3 py-2.5" colSpan={7}>
               Combined — {totals.items} item(s), {totals.negative} negative, {totals.unvalued} not valued
             </td>
-            <td className="px-3 py-2.5 text-right tabular-nums">{money(totals.netValue)}</td>
+            <td className="px-3 py-2.5 text-right tabular-nums">{established ? money(totals.netValue) : "Not established"}</td>
             <td className="px-3 py-2.5 text-xs font-semibold text-slate-600">
-              Positive {money(totals.positiveValue)}; negative {money(totals.negativeValue)}
+              {established ? `Positive ${money(totals.positiveValue)}; negative ${money(totals.negativeValue)}` : ""}
             </td>
           </tr>
         </tfoot>
       </ReportTable>
 
-      {r ? (
-        <div className="mt-4 rounded-[18px] border border-[rgba(11,32,43,0.10)] bg-white px-4 py-3 text-sm text-slate-800">
+      {r && established ? (
+        <div data-testid="soh-reconciliation" className="mt-4 rounded-[18px] border border-[rgba(11,32,43,0.10)] bg-white px-4 py-3 text-sm text-slate-800">
           <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Reconciliation (all items, before filters)</div>
           <ul className="mt-1 space-y-1 font-semibold">
             <li>
-              Ledger movements to the end of {report?.asAt}: {r.ledgerRowsToDate} row(s), net quantity {qty(r.movementQtyTotal)}. Item balances total {qty(r.reportQtyTotal)} —{" "}
-              {r.reconciled ? "reconciled." : "NOT reconciled."}
+              Arithmetic check: {r.ledgerRowsToDate} recorded movement(s) to the end of {report?.asAt} net to {qty(r.movementQtyTotal)}; the item balances total {qty(r.reportQtyTotal)} —{" "}
+              {r.reconciled ? "they agree." : "they DO NOT agree."} This confirms the report adds up the recorded movements. It does not confirm that the ledger is complete or that physical stock agreed.
+            </li>
+            <li>
+              Physical counts: {r.itemsVerified} item(s) verified by a posted count dated {report?.asAt}
+              {r.itemsVerified ? `; ${r.itemsVerifiedDiffering} of them differ from the ledger balance.` : "."}
             </li>
             <li>
               Stock Master basis (today&apos;s on hand less {r.ledgerRowsAfter} later movement(s)): {qty(r.masterQtyTotal)}; {r.itemsDifferingFromMaster} item(s) differ from the ledger.
             </li>
-            {r.costChecked ? <li>Nothing has moved since this date: ledger cost differs from the Stock Master&apos;s average cost for {r.itemsCostDiffersFromMaster} item(s).</li> : null}
+            {r.costChecked ? <li>Nothing has moved since this date: the ledger cost differs from the Stock Master&apos;s average cost for {r.itemsCostDiffersFromMaster} item(s).</li> : null}
           </ul>
           {differing.length ? (
             <ReportTable minWidth={760}>
@@ -257,7 +293,7 @@ export default function StockOnHandReportClient({ companyName, today }: { compan
                 <tr>
                   <th className="px-3 py-2">Item Code</th>
                   <th className="px-3 py-2">Description</th>
-                  <th className="px-3 py-2 text-right">Ledger Qty</th>
+                  <th className="px-3 py-2 text-right">Ledger Balance</th>
                   <th className="px-3 py-2 text-right">Stock Master Qty</th>
                   <th className="px-3 py-2 text-right">Difference</th>
                 </tr>
@@ -267,9 +303,9 @@ export default function StockOnHandReportClient({ companyName, today }: { compan
                   <tr key={l.stockItemId} className="border-t border-slate-100">
                     <td className="px-3 py-1.5 font-black">{l.itemCode}</td>
                     <td className="px-3 py-1.5">{l.description}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{qty(l.qty)}</td>
+                    <td className="px-3 py-1.5 text-right tabular-nums">{qty(l.qty ?? 0)}</td>
                     <td className="px-3 py-1.5 text-right tabular-nums">{qty(l.masterQty)}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{qty(l.masterDifference)}</td>
+                    <td className="px-3 py-1.5 text-right tabular-nums">{qty(l.masterDifference ?? 0)}</td>
                   </tr>
                 ))}
               </tbody>
