@@ -312,6 +312,25 @@ section("6. Variance % stays within the production column (numeric(8,4))");
   await updateStockCountLine(cdb, CO_C, "cl-manual-2", 90);
   const manual2 = cdb.tables.vyron_cost_stock_count_lines.find((l) => l.id === "cl-manual-2");
   check("manual entry: an ordinary −10% is stored unchanged (signed) and classified as before", manual2.variance_pct === -10 && manual2.variance_class === "minor");
+
+  // ---------------------------------------------------------------------------
+  section("7. Count review screen and CSV export show the true % from quantities, not the stored cap");
+  // The Variance % cell exportCsv writes (InventoryCountReviewClient), from a count line as loaded.
+  const EXPORT_PCT_EXPR = "String(Math.round(countLineVariancePct(num(line.system_qty), num(line.draft_counted_qty ?? line.counted_qty)) * 10000) / 10000)";
+  const num = (v) => (Number.isFinite(Number(v || 0)) ? Number(v || 0) : 0);
+  const exportPct = (line) => String(Math.round(rules.countLineVariancePct(num(line.system_qty), num(line.draft_counted_qty ?? line.counted_qty)) * 10000) / 10000);
+  const { readFileSync } = await import("node:fs");
+  const source = readFileSync(path.join(ROOT, "src/components/InventoryCountReviewClient.tsx"), "utf8");
+  const exportBody = source.slice(source.indexOf("function exportCsv()"), source.indexOf("const csv =", source.indexOf("function exportCsv()")));
+  check("the CSV export computes Variance % from system and counted quantities (no longer the stored variance_pct)", exportBody.includes(EXPORT_PCT_EXPR) && !exportBody.includes("line.variance_pct"));
+  check("the review table uses the same calculation", source.includes("const variancePct = countLineVariancePct(system, counted);"));
+  check("Grease Proof Paper (upload): stored 9,999.9999 but exports 14900, quantities and value as stored", gpp2.variance_pct === 9999.9999 && exportPct(gpp2) === "14900" && gpp2.system_qty === 0.5 && gpp2.counted_qty === 75 && gpp2.variance_qty === 74.5 && gpp2.variance_value === 105.04, exportPct(gpp2));
+  check("Grease Proof Paper (manual entry): stored 9,999.9999 but exports 14900", manual.variance_pct === 9999.9999 && exportPct(manual) === "14900");
+  check("an unsaved draft count is exported as shown on screen (0.5 → 30 = 5900)", exportPct({ system_qty: 0.5, counted_qty: 75, draft_counted_qty: 30 }) === "5900");
+  check("ordinary and negative variances export unchanged: −10, +5, −50, −100", exportPct(manual2) === "-10" && exportPct({ system_qty: 20, counted_qty: 21 }) === "5" && exportPct({ system_qty: 100, counted_qty: 50 }) === "-50" && exportPct({ system_qty: 120, counted_qty: 0 }) === "-100");
+  check("no system stock: counted > 0 → 100, nothing either way → 0 (as before)", exportPct({ system_qty: 0, counted_qty: 4 }) === "100" && exportPct({ system_qty: 0, counted_qty: 0 }) === "0");
+  const legacy = (system, counted) => (system > 0 ? ((counted - system) / system) * 100 : counted > 0 ? 100 : 0);
+  check("the shared calculation equals the screen's previous inline formula", [[0.5, 75], [100, 90], [20, 21], [3, 1], [0, 4], [0, 0], [952.99152, 20000]].every(([s, c]) => rules.countLineVariancePct(s, c) === legacy(s, c)));
 }
 
 console.log(`\n${checks - failures}/${checks} checks passed`);

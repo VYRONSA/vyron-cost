@@ -10,6 +10,7 @@ import { useInventoryPermissions } from "@/hooks/useModulePermissions";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
 import { DocumentPdfActions } from "@/components/vyron-platform/documents/DocumentPdfActions";
+import { countLineVariancePct } from "@/lib/vyron-stock-take-rules";
 
 type LineRow = Record<string, unknown>;
 
@@ -116,7 +117,7 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
       String(num(line.system_qty)),
       String(num(line.draft_counted_qty ?? line.counted_qty)),
       String(num(line.variance_qty)),
-      String(num(line.variance_pct)),
+      String(Math.round(countLineVariancePct(num(line.system_qty), num(line.draft_counted_qty ?? line.counted_qty)) * 10000) / 10000),
       String(num(line.variance_value)),
       String(line.variance_class || "minor"),
     ]);
@@ -222,7 +223,7 @@ export default function InventoryCountReviewClient({ countId }: { countId: strin
               const counted = num(line.draft_counted_qty ?? line.counted_qty);
               const system = num(line.system_qty);
               const varianceQty = counted - system;
-              const variancePct = system > 0 ? (varianceQty / system) * 100 : counted > 0 ? 100 : 0;
+              const variancePct = countLineVariancePct(system, counted);
               const varianceValue = Math.abs(varianceQty * num(line.unit_cost));
               const varianceClass = String(line.variance_class || (Math.abs(variancePct) >= 10 ? "major" : "minor"));
               return (

@@ -56,6 +56,14 @@ export function storedVariancePct(pct: number): number {
   return Math.max(-STOCK_COUNT_VARIANCE_PCT_LIMIT, Math.min(STOCK_COUNT_VARIANCE_PCT_LIMIT, pct));
 }
 
+/**
+ * A count line's true variance % from its quantities, as the count review screen shows and exports it
+ * — never capped (the stored variance_pct may be).
+ */
+export function countLineVariancePct(systemQty: number, countedQty: number): number {
+  return systemQty > 0 ? ((countedQty - systemQty) / systemQty) * 100 : countedQty > 0 ? 100 : 0;
+}
+
 /** The template's columns, in order. Item Code and Counted Quantity are required; the rest are for reference. */
 export const STOCK_TAKE_TEMPLATE_COLUMNS = [
   { header: "Item Code", required: true, help: "VOLORA stock item code (or barcode / SKU / alias). Do not change it." },
