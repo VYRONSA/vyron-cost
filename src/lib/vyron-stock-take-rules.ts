@@ -44,6 +44,18 @@ export function stockTakeEffectiveAt(stockTakeDate: string): string {
   return new Date(new Date(stockTakeCutoff(stockTakeDate)).getTime() - 1).toISOString();
 }
 
+/** The largest variance % a count line can store: vyron_cost_stock_count_lines.variance_pct is numeric(8,4) in production. */
+export const STOCK_COUNT_VARIANCE_PCT_LIMIT = 9999.9999;
+
+/**
+ * The variance % as stored on a count line, held within ±STOCK_COUNT_VARIANCE_PCT_LIMIT. A tiny system
+ * quantity (0.5 counted as 75 is 14,900%) would otherwise overflow the column and fail the whole write.
+ * Only the stored figure is capped — classify major / minor on the uncapped percentage.
+ */
+export function storedVariancePct(pct: number): number {
+  return Math.max(-STOCK_COUNT_VARIANCE_PCT_LIMIT, Math.min(STOCK_COUNT_VARIANCE_PCT_LIMIT, pct));
+}
+
 /** The template's columns, in order. Item Code and Counted Quantity are required; the rest are for reference. */
 export const STOCK_TAKE_TEMPLATE_COLUMNS = [
   { header: "Item Code", required: true, help: "VOLORA stock item code (or barcode / SKU / alias). Do not change it." },

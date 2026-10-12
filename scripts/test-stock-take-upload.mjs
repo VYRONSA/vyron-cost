@@ -44,7 +44,7 @@ const { createFakeSupabase } = await import("./support/document-email-test-stubs
 const rules = await importFromRoot("src/lib/vyron-stock-take-rules.ts");
 const stockTake = await importFromRoot("src/lib/vyron-stock-take-import.ts");
 const { readUploadedTable } = await importFromRoot("src/lib/vyron-upload-table.ts");
-const { approveStockCount, postStockCount } = await importFromRoot("src/lib/vyron-inventory.ts");
+const { approveStockCount, postStockCount, updateStockCountLine } = await importFromRoot("src/lib/vyron-inventory.ts");
 
 const CO = "aaaaaaaa-0000-4000-8000-000000000001";
 const CO_B = "bbbbbbbb-0000-4000-8000-000000000001";
@@ -231,6 +231,87 @@ section("5. Other counts and companies are unaffected");
   const bTable = await readUploadedTable(enc("Item Code,Counted Quantity\nCHK-BR,1\nFG-TGC-B,350\n"), "b.csv", "text/csv");
   const b = await stockTake.previewStockTake(db, CO_B, bTable, { stockTakeDate: "2026-10-01" });
   check("company B never matches company A's items, and uses only its own ledger (400 + 50 sold since = 450)", b.lines.find((l) => l.sku === "CHK-BR").status === "UNMATCHED" && b.lines.find((l) => l.sku === "FG-TGC-B").systemQty === 450);
+}
+
+// ---------------------------------------------------------------------------
+section("6. Variance % stays within the production column (numeric(8,4))");
+{
+  // The fake does not know column types; apply production's limits to count-line writes, as Postgres
+  // does: round to the column's scale, then refuse anything too wide with "numeric field overflow".
+  const LIMITS = { variance_pct: [4, 4], system_qty: [4, 10], counted_qty: [4, 10], variance_qty: [4, 10], unit_cost: [4, 10], variance_value: [2, 12] };
+  const overflows = (row) => Object.entries(LIMITS).some(([c, [scale, digits]]) => row[c] != null && Math.abs(Math.round(Number(row[c]) * 10 ** scale) / 10 ** scale) >= 10 ** digits);
+  const enforceColumnLimits = (fake) => {
+    const from = fake.from.bind(fake);
+    fake.from = (table) => {
+      const q = from(table);
+      if (table !== "vyron_cost_stock_count_lines") return q;
+      for (const op of ["insert", "update"]) {
+        const original = q[op].bind(q);
+        q[op] = (payload) => {
+          if ([].concat(payload).some(overflows)) q.castError = { message: "numeric field overflow" };
+          return original(payload);
+        };
+      }
+      return q;
+    };
+    return fake;
+  };
+  const CO_C = "cccccccc-0000-4000-8000-000000000001";
+  const item = (id, code, qty, cost) => ({ id, company_id: CO_C, item_code: code, description: code, entity_type: "ingredient", entity_id: `ing-${id}`, unit: "each", qty_on_hand: qty, average_cost: cost, current_cost: cost, aliases: [], is_active: true });
+  const fresh = (majorVariancePct) =>
+    enforceColumnLimits(
+      createFakeSupabase(
+        {
+          vyron_cost_stock_items: [item("si-gpp", "GPP", 0.5, 1.41), item("si-salt", "SALT", 100, 10), item("si-pep", "PEP", 20, 50)],
+          vyron_cost_products: [],
+          vyron_cost_stock_ledger: [],
+          vyron_inventory_audit_log: [],
+          vyron_inventory_settings: majorVariancePct ? [{ company_id: CO_C, major_variance_pct: majorVariancePct, minor_variance_pct: 2 }] : [],
+          vyron_cost_stock_counts: [],
+          vyron_cost_stock_count_lines: [],
+          vyron_cost_low_stock_alerts: [],
+        },
+        { honourOrder: true }
+      )
+    );
+
+  check("cap helper: within ±9,999.9999, ordinary values untouched", rules.STOCK_COUNT_VARIANCE_PCT_LIMIT === 9999.9999 && rules.storedVariancePct(14900) === 9999.9999 && rules.storedVariancePct(-14900) === -9999.9999 && rules.storedVariancePct(-10) === -10 && rules.storedVariancePct(5) === 5 && rules.storedVariancePct(9999.9999) === 9999.9999 && rules.storedVariancePct(0) === 0);
+
+  let cdb = fresh();
+  const { error: rawError } = await cdb.from("vyron_cost_stock_count_lines").insert({ company_id: CO_C, variance_pct: 14900 });
+  const { error: rawNegative } = await cdb.from("vyron_cost_stock_count_lines").insert({ company_id: CO_C, variance_pct: -10000 });
+  check("harness: an uncapped 14,900% or −10,000% is refused like production (numeric field overflow)", rawError?.message === "numeric field overflow" && rawNegative?.message === "numeric field overflow" && cdb.tables.vyron_cost_stock_count_lines.length === 0);
+
+  // Grease Proof Paper: 0.5 on hand, 75 counted → 14,900%.
+  const table = await readUploadedTable(enc("Item Code,Counted Quantity\nGPP,75\nSALT,90\nPEP,21\n"), "tiny-system.csv", "text/csv");
+  const { count } = await stockTake.createStockTakeFromUpload(cdb, CO_C, { table, sha256: table.sha256, fileName: "tiny-system.csv", countDate: "2026-09-30" }, ACTOR);
+  const line = (id) => cdb.tables.vyron_cost_stock_count_lines.find((l) => l.stock_count_id === count.id && l.stock_item_id === id);
+  check("upload with a 14,900% line is recorded (no overflow): all 3 lines written", cdb.tables.vyron_cost_stock_count_lines.length === 3 && cdb.tables.vyron_cost_stock_counts.length === 1);
+  check("the over-limit line stores 9,999.9999%; quantities and value are exact", line("si-gpp").variance_pct === 9999.9999 && line("si-gpp").system_qty === 0.5 && line("si-gpp").counted_qty === 75 && line("si-gpp").variance_qty === 74.5 && line("si-gpp").variance_value === 105.04, JSON.stringify(line("si-gpp")));
+  check("ordinary percentages are unchanged (−10% → 10, +5% → 5) and classified as before", line("si-salt").variance_pct === 10 && line("si-salt").variance_class === "major" && line("si-pep").variance_pct === 5 && line("si-pep").variance_class === "minor");
+  check("the item's system stock is not touched by the upload", cdb.tables.vyron_cost_stock_items.find((i) => i.id === "si-gpp").qty_on_hand === 0.5);
+  check("the capped count still needs approval before posting", count.status === "Submitted" && /approved before posting/.test((await rejects(postStockCount(cdb, CO_C, count.id, "QA Supervisor")))?.message || ""));
+  check("the same file again is still refused", /already loaded/.test((await rejects(stockTake.createStockTakeFromUpload(cdb, CO_C, { table, sha256: table.sha256, fileName: "tiny-system.csv", countDate: "2026-09-30" }, ACTOR)))?.message || ""));
+  check("upload audit still written", cdb.tables.vyron_inventory_audit_log.some((a) => a.event_type === "Stock Take Uploaded" && a.reference_id === count.id));
+
+  // Classification uses the uncapped figure: with a 12,000% major threshold, the capped 9,999.9999 would
+  // read as minor; the real 14,900% is major.
+  cdb = fresh(12000);
+  const t2 = await readUploadedTable(enc("Item Code,Counted Quantity\nGPP,75\nPEP,21\n"), "threshold.csv", "text/csv");
+  const { count: c2 } = await stockTake.createStockTakeFromUpload(cdb, CO_C, { table: t2, sha256: t2.sha256, fileName: "threshold.csv", countDate: "2026-09-30" }, ACTOR);
+  const gpp2 = cdb.tables.vyron_cost_stock_count_lines.find((l) => l.stock_count_id === c2.id && l.stock_item_id === "si-gpp");
+  check("upload: classified major on the uncapped 14,900% (threshold 12,000%) while storing 9,999.9999", gpp2.variance_class === "major" && gpp2.variance_pct === 9999.9999);
+
+  // Manual count entry: the same protection on updateStockCountLine.
+  cdb.tables.vyron_cost_stock_count_lines.push({ id: "cl-manual", company_id: CO_C, stock_count_id: "cnt-man", stock_item_id: "si-gpp", system_qty: 0.5, counted_qty: 0, variance_qty: -0.5, variance_pct: -100, unit_cost: 1.41 });
+  await updateStockCountLine(cdb, CO_C, "cl-manual", 75);
+  const manual = cdb.tables.vyron_cost_stock_count_lines.find((l) => l.id === "cl-manual");
+  check("manual entry of 75 on 0.5 is saved (no overflow), stored as 9,999.9999%", manual.counted_qty === 75 && manual.variance_qty === 74.5 && manual.variance_pct === 9999.9999, JSON.stringify(manual));
+  check("manual entry: classified major on the uncapped 14,900% (threshold 12,000%)", manual.variance_class === "major");
+  cdb.tables.vyron_cost_stock_count_lines.push({ id: "cl-manual-2", company_id: CO_C, stock_count_id: "cnt-man", stock_item_id: "si-salt", system_qty: 100, counted_qty: 0, variance_qty: -100, variance_pct: -100, unit_cost: 10 });
+  await updateStockCountLine(cdb, CO_C, "cl-manual-2", 90);
+  const manual2 = cdb.tables.vyron_cost_stock_count_lines.find((l) => l.id === "cl-manual-2");
+  check("manual entry: an ordinary −10% is stored unchanged (signed) and classified as before", manual2.variance_pct === -10 && manual2.variance_class === "minor");
 }
 
 console.log(`\n${checks - failures}/${checks} checks passed`);

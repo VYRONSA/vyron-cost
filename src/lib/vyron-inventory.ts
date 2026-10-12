@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { stockTakeEffectiveAt } from "@/lib/vyron-stock-take-rules";
+import { stockTakeEffectiveAt, storedVariancePct } from "@/lib/vyron-stock-take-rules";
 
 export type StockEntityType = "ingredient" | "packaging" | "finished_goods";
 export type StockStatus = "In Stock" | "Low Stock" | "Out Of Stock" | "Overstock" | "Slow Moving";
@@ -1310,7 +1310,7 @@ export async function updateStockCountLine(
     .update({
       counted_qty: countedQty,
       variance_qty: varianceQty,
-      variance_pct: variancePct,
+      variance_pct: storedVariancePct(variancePct),
       variance_value: varianceValue,
       variance_class: varianceClass,
     })

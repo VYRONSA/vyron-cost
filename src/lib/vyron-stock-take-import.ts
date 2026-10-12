@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import ExcelJS from "exceljs";
 import type { CsvTable } from "@/lib/data-migration/csv";
 import { getInventorySettings, writeInventoryAudit } from "@/lib/vyron-inventory";
-import { STOCK_TAKE_TEMPLATE_COLUMNS, STOCK_TAKE_TEMPLATE_EXAMPLE, stockTakeCutoff, stockTakeDateProblem } from "@/lib/vyron-stock-take-rules";
+import { STOCK_TAKE_TEMPLATE_COLUMNS, STOCK_TAKE_TEMPLATE_EXAMPLE, stockTakeCutoff, stockTakeDateProblem, storedVariancePct } from "@/lib/vyron-stock-take-rules";
 import { readAllPages } from "@/lib/vyron-supabase-paging";
 import { parseAmount, pickColumn } from "@/lib/vyron-upload-table";
 
@@ -355,7 +355,7 @@ export async function createStockTakeFromUpload(
       counted_qty: l.countedQty,
       expected_qty: l.systemQty,
       variance_qty: l.varianceQty,
-      variance_pct: Math.round(pct * 100) / 100,
+      variance_pct: storedVariancePct(Math.round(pct * 100) / 100),
       variance_value: l.varianceValue,
       variance_class: pct >= settings.majorVariancePct ? "major" : "minor",
       unit_cost: l.unitCost,
