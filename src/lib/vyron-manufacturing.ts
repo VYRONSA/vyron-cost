@@ -10,6 +10,7 @@ import {
 } from "@/lib/vyron-inventory";
 import { postInventoryTransaction } from "@/lib/vyron-inventory-transactions";
 import { explodeBomLines } from "@/lib/vyron-cost-sub-boms";
+import { MAX_AUTOMATIC_COST_RATIO } from "@/lib/vyron-supplier-cost-guard";
 
 /**
  * Thrown when a completed run cannot be safely reversed because the finished
@@ -457,6 +458,38 @@ export async function validateProductionStock(
   return { ok: shortages.length === 0, shortages };
 }
 
+/*
+ * Whether a completed run's cost per unit may replace the product's master cost.
+ *
+ * The master cost (vyron_cost_products.total_cost) is what every sales invoice
+ * raised afterwards captures as its cost of sales. A run's cost per unit carries
+ * its labour and per-run overhead spread over however many units it made, so a
+ * one-unit run (Kingdom Foods PR-77293281, 13 Oct 2026: R4.08 of materials +
+ * R170 labour + R120 overhead) turned R4.08 into R294.08, and 372 pies from
+ * earlier batches were then invoiced at R294.08 each.
+ *
+ * The run's own units are still received at the run's real cost — stock
+ * valuation is the run's business. Only the master cost waits for a person when
+ * the change is implausible, using the same band as supplier cost updates
+ * (MAX_AUTOMATIC_COST_RATIO): more than double, or under half, the current cost.
+ *
+ * Pure. Nothing here reads or writes.
+ */
+export type RunProductCostDecision = { apply: true } | { apply: false; reason: string };
+
+export function decideRunProductCost(previous: number | null, next: number): RunProductCostDecision {
+  if (!(next > 0)) return { apply: false, reason: `The run's cost per unit (${next}) is not a usable cost.` };
+  if (previous === null || !(previous > 0)) return { apply: true };
+  const ratio = next / previous;
+  if (ratio > MAX_AUTOMATIC_COST_RATIO || ratio < 1 / MAX_AUTOMATIC_COST_RATIO) {
+    return {
+      apply: false,
+      reason: `The run's cost per unit (${next.toFixed(4)}) is ${ratio.toFixed(2)}× the product's current cost (${previous.toFixed(4)}). Product cost unchanged until a person confirms it (a small run carrying a full run's labour and overhead is the usual cause).`,
+    };
+  }
+  return { apply: true };
+}
+
 function calcOverheadAllocated(
   row: { allocation_method: string; amount: number; percent_value?: number | null },
   baseCost: number,
@@ -840,6 +873,14 @@ export async function completeProductionRun(
     throw new Error(`Cannot complete from status ${run.status}. Start production first.`);
   }
 
+  // A stock override is recorded with who and why. "Why" was optional, so a run
+  // could complete despite a shortage with no reason on record.
+  const overrideReason = String(input.stock_override_reason ?? "").trim();
+  if (input.stock_override && !overrideReason) {
+    throw new Error("A stock override needs a reason. Say why this run may complete despite the shortage.");
+  }
+  if (overrideReason.length > 500) throw new Error("An override reason must be 500 characters or fewer.");
+
   /*
    * A run with nothing to consume and nothing to receive would post no stock at
    * all, yet still be marked Completed — which is exactly how a completed run
@@ -1022,6 +1063,7 @@ export async function completeProductionRun(
   // immediately BEFORE completion overwrites it, so a later reversal can restore
   // that exact value. Captured once, here, never recalculated.
   let previousProductTotalCost: number | null = null;
+  let productCostDecision: RunProductCostDecision | null = null;
   if (run.product_id && actualQty > 0) {
     const { data: priorProduct } = await supabase
       .from("vyron_cost_products")
@@ -1031,11 +1073,14 @@ export async function completeProductionRun(
       .maybeSingle();
     previousProductTotalCost = priorProduct ? Number(priorProduct.total_cost || 0) : null;
 
-    await supabase
-      .from("vyron_cost_products")
-      .update({ total_cost: costPerUnit })
-      .eq("id", run.product_id)
-      .eq("company_id", companyId);
+    productCostDecision = decideRunProductCost(previousProductTotalCost, costPerUnit);
+    if (productCostDecision.apply) {
+      await supabase
+        .from("vyron_cost_products")
+        .update({ total_cost: costPerUnit })
+        .eq("id", run.product_id)
+        .eq("company_id", companyId);
+    }
 
     const { data: fgStock } = await supabase
       .from("vyron_cost_stock_items")
@@ -1111,7 +1156,7 @@ export async function completeProductionRun(
       production_efficiency_pct: efficiency,
       stock_override: Boolean(input.stock_override),
       stock_override_by: input.stock_override ? actor : null,
-      stock_override_reason: input.stock_override_reason || null,
+      stock_override_reason: input.stock_override ? overrideReason : null,
       completed_by: actor,
       completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -1135,7 +1180,20 @@ export async function completeProductionRun(
       productionRunId: runId,
       eventType: "Stock Override",
       actor,
-      detail: input.stock_override_reason || "Completed despite stock shortage",
+      detail: overrideReason,
+    });
+  }
+
+  if (productCostDecision && !productCostDecision.apply) {
+    await writeProductionAudit(supabase, {
+      companyId: run.company_id,
+      productionRunId: runId,
+      eventType: "Product Cost Update Held",
+      actor,
+      fieldName: "product.total_cost",
+      oldValue: previousProductTotalCost === null ? undefined : String(previousProductTotalCost),
+      newValue: String(costPerUnit),
+      detail: productCostDecision.reason,
     });
   }
 

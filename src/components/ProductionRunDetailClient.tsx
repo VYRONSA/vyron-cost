@@ -159,7 +159,12 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
       setMessage(data.error === "Stock shortage" ? "Insufficient stock — override required to complete." : data.error);
       return;
     }
-    setMessage("Production completed. Stock ledger and product costs updated.");
+    const held = (data.run?.audit || []).find((a: { event_type: string }) => a.event_type === "Product Cost Update Held");
+    setMessage(
+      held
+        ? `Production completed and posted to stock. Product cost NOT updated: ${held.detail}`
+        : "Production completed. Stock ledger and product costs updated."
+    );
     refresh();
   }
 
@@ -382,7 +387,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
           </div>
           {shortages.length > 0 ? (
             <div className="mt-4">
-              <label className="text-xs font-black uppercase text-red-700">Override reason (required if short)</label>
+              <label className="text-xs font-black uppercase text-red-700">Override reason (required)</label>
               <input value={overrideReason} onChange={(e) => setOverrideReason(e.target.value)} className="mt-1 w-full rounded-xl border px-4 py-2 text-sm" />
             </div>
           ) : null}
@@ -390,7 +395,7 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
             <div className="mt-4 flex flex-wrap gap-3">
               <button
                 type="button"
-                disabled={loading}
+                disabled={loading || (shortages.length > 0 && !overrideReason.trim())}
                 onClick={() => void complete(shortages.length > 0)}
                 className="rounded-2xl vyron-grad-surface border border-transparent px-5 py-3 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
               >

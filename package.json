@@ -51,6 +51,7 @@
     "test:invoice-cost-capture": "node scripts/test-invoice-cost-capture.mjs",
     "test:customer-gp-report": "node scripts/test-customer-gp-report-margin.mjs",
     "test:supplier-cost-gp": "node scripts/test-supplier-cost-gp-reconciliation.mjs",
+    "test:production-cost-master-guard": "node scripts/test-production-cost-master-guard.mjs",
     "test:business-controls": "node scripts/test-business-controls.mjs",
     "test:stock-take-upload": "node scripts/test-stock-take-upload.mjs",
     "test:supplier-statement-pdf": "node scripts/test-supplier-statement-pdf.mjs",
