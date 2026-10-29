@@ -363,51 +363,6 @@ export async function generateCalculatedRecoveryOpportunities(): Promise<Recover
   return opportunities.sort((a, b) => Number(b.annual_value || 0) - Number(a.annual_value || 0));
 }
 
-export async function saveCalculatedOpportunities(): Promise<number> {
-  try {
-    const v2Rows = await recomputeRecoveryIntelligenceV2();
-    if (v2Rows.length) return v2Rows.length;
-  } catch {
-    // fallback to legacy save path if V2 table is not available yet
-  }
-
-  if (!supabase) return 0;
-
-  const generated = await generateCalculatedRecoveryOpportunities();
-
-  const rows = generated
-    .filter((item) => !String(item.id).startsWith("demo"))
-    .map((item) => ({
-      opportunity_type: item.opportunity_type,
-      title: item.title,
-      description: item.description,
-      formula: item.formula,
-      monthly_value: item.monthly_value,
-      annual_value: item.annual_value,
-      confidence: item.confidence,
-      status: item.status,
-      product_id: item.product_id && uuidLike(item.product_id) ? item.product_id : null,
-      product_name: item.product_name || null,
-      supplier_id: item.supplier_id && uuidLike(item.supplier_id) ? item.supplier_id : null,
-      supplier_name: item.supplier_name || null,
-      ingredient_id: item.ingredient_id && uuidLike(item.ingredient_id) ? item.ingredient_id : null,
-      ingredient_name: item.ingredient_name || null,
-      recommended_action: item.recommended_action,
-      data_source: item.data_source,
-      updated_at: new Date().toISOString(),
-    }));
-
-  if (!rows.length) return 0;
-
-  const { error } = await supabase
-    .from("vyron_cost_recovery_opportunities")
-    .insert(rows);
-
-  if (error) throw error;
-
-  return rows.length;
-}
-
 export async function getRecoveryTrackingByKey(opportunityKey: string): Promise<RecoveryTrackingSnapshot | null> {
   if (!supabase) return null;
   const { data } = await supabase

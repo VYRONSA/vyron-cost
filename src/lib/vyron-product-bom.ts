@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase";
 import {
   calculateGpPercent,
   calculateSuggestedPrice,
@@ -86,32 +85,6 @@ export async function getLinkedRecipeForProduct(productId: string): Promise<Prod
     suggestedSellingPrice,
     marginStatus,
   };
-}
-
-export async function linkProductToRecipe(productId: string, recipeId: string, companyId: string) {
-  const [products, recipes] = await Promise.all([getProducts(500), getRecipes(500)]);
-  const product = products.find((p) => p.id === productId);
-  const recipe = recipes.find((r) => r.id === recipeId);
-  if (!product || !recipe) return null;
-
-  const payload = {
-    company_id: companyId,
-    product_id: productId,
-    recipe_id: recipeId,
-    recipe_name_snapshot: recipe.recipe_name,
-    portion_qty: 1,
-    portion_cost: Number(recipe.total_cost || 0),
-  };
-
-  if (supabase && companyId !== "demo-company") {
-    await supabase.from("vyron_cost_product_recipe_links").upsert(payload, { onConflict: "product_id,recipe_id" });
-    await supabase
-      .from("vyron_cost_products")
-      .update({ total_cost: Number(recipe.total_cost || product.total_cost) })
-      .eq("id", productId);
-  }
-
-  return payload as ProductRecipeLink;
 }
 
 export async function getFinishedProductsWithBom() {

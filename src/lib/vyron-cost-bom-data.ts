@@ -139,18 +139,6 @@ export async function getBomById(id: string): Promise<{ bom: BomHeader | null; l
   return { bom: bom as BomHeader, lines: (lines || []) as BomLine[] };
 }
 
-export async function deleteBom(id: string) {
-  if (id.startsWith("demo")) return;
-  const { companyId } = await workspaceScope();
-  if (!supabase || !companyId) return;
-  const { error } = await supabase
-    .from("vyron_cost_boms")
-    .update({ status: "Archived", updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("company_id", companyId);
-  if (error) throw error;
-}
-
 export const demoBoms: BomHeader[] = [
   {
     id: "demo-pepper-steak-bom",

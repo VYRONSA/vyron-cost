@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import StatusPill from "@/components/StatusPill";
 import { formatMoney, Ingredient, Recipe, RecipeItem } from "@/lib/vyron-cost-data";
-import { supabase } from "@/lib/supabase";
+import { COSTING_UUID, sendCostingLine } from "@/lib/vyron-costing-lines-client";
 
 export default function CostingEngineManager({
   recipes,
@@ -60,13 +60,17 @@ export default function CostingEngineManager({
       true_unit_cost: Number(selectedIngredient.true_unit_cost),
     };
 
-    if (supabase && companyId !== "demo-company") {
-      const { data, error } = await supabase.from("vyron_cost_recipe_items").insert(payload).select("*").single();
-      if (error || !data) {
-        setMessage(error?.message || "Could not add recipe line.");
+    if (companyId !== "demo-company") {
+      const { item, error } = await sendCostingLine("/api/cost-calculator/lines", "POST", {
+        recipe_id: payload.recipe_id,
+        ingredient_id: payload.ingredient_id,
+        quantity: payload.quantity,
+      });
+      if (error || !item) {
+        setMessage(error || "Could not add recipe line.");
         return;
       }
-      setItems((current) => [...current, data as RecipeItem]);
+      setItems((current) => [...current, item]);
     } else {
       setItems((current) => [...current, { id: crypto.randomUUID(), ...payload, line_cost: previewCost } as RecipeItem]);
     }
@@ -75,9 +79,14 @@ export default function CostingEngineManager({
   }
 
   async function deleteItem(id: string) {
+    const before = items;
     setItems((current) => current.filter((item) => item.id !== id));
-    if (supabase && !id.startsWith("ri")) {
-      await supabase.from("vyron_cost_recipe_items").delete().eq("id", id);
+    if (companyId !== "demo-company" && COSTING_UUID.test(id)) {
+      const { error } = await sendCostingLine(`/api/cost-calculator/lines/${encodeURIComponent(id)}`, "DELETE");
+      if (error) {
+        setItems(before);
+        setMessage(error);
+      }
     }
   }
 

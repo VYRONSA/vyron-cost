@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase";
 import { HANDCRAFTED_COMPANY_ID } from "@/lib/vyron-handcrafted-intelligence";
 import type { PurchaseOrder } from "@/lib/vyron-cost-data";
 import { getPurchaseOrders, getSuppliers } from "@/lib/vyron-cost-data";
@@ -130,46 +129,6 @@ export async function getPurchaseOrderSuppliers() {
         { id: "s2", supplier_name: "Cape Dry Goods", category: "Dry Goods", contact_email: null, invoice_email: null, risk_status: "Stable", last_price_movement: 2.1 },
       ]
     : [];
-}
-
-export async function savePurchaseOrderHeader(
-  po: Partial<PurchaseOrderDetail> & { po_number: string; status: string; expected_total: number; invoice_total: number },
-  companyId: string
-) {
-  if (!supabase || companyId === "demo-company") return po as PurchaseOrderDetail;
-
-  const payload = {
-    company_id: companyId,
-    supplier_id: po.supplier_id || null,
-    po_number: po.po_number,
-    supplier_name_snapshot: po.supplier_name_snapshot || null,
-    status: po.status,
-    expected_total: po.expected_total,
-    invoice_total: po.invoice_total,
-  };
-
-  if (po.id && !po.id.startsWith("demo-")) {
-    const { data, error } = await supabase
-      .from("vyron_cost_purchase_orders")
-      .update(payload)
-      .eq("id", po.id)
-      .eq("company_id", companyId)
-      .select("*")
-      .single();
-    if (error) throw new Error(error.message);
-    return { ...data, lines: po.lines || [], order_date: po.order_date, notes: po.notes } as PurchaseOrderDetail;
-  }
-
-  const { data, error } = await supabase.from("vyron_cost_purchase_orders").insert(payload).select("*").single();
-  if (error) throw new Error(error.message);
-  return { ...data, lines: po.lines || [], order_date: po.order_date, notes: po.notes } as PurchaseOrderDetail;
-}
-
-export async function deletePurchaseOrder(id: string, companyId?: string) {
-  if (!supabase || id.startsWith("demo-")) return;
-  let query = supabase.from("vyron_cost_purchase_orders").delete().eq("id", id);
-  if (companyId) query = query.eq("company_id", companyId);
-  await query;
 }
 
 export function calculatePoLineTotal(quantity: number, unitCost: number) {

@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import StatusPill from "@/components/StatusPill";
 import { Category, statusTone } from "@/lib/vyron-cost-data";
-import { supabase } from "@/lib/supabase";
 import {
   filterXeroAccountsForRole,
   type XeroAccountCatalogEntry,
@@ -14,6 +13,27 @@ import {
 } from "@/lib/vyron-xero-integration";
 
 const emptyForm = { category_name: "", category_type: "Product", description: "", status: "Active" };
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Categories are written by the server (/api/categories), which checks the
+ * member's permission and company and records who changed what. They used to be
+ * written from this screen with the public key.
+ */
+async function sendCategory(url: string, method: "POST" | "PATCH" | "DELETE", body?: Record<string, unknown>): Promise<{ data: Category | null; error: string | null }> {
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.ok) return { data: null, error: json.error || "The change could not be saved." };
+    return { data: (json.category as Category) || null, error: null };
+  } catch {
+    return { data: null, error: "The change could not be saved." };
+  }
+}
 const emptyMapping: XeroAccountMapping = {
   salesAccount: "",
   costOfSalesAccount: "",
@@ -151,9 +171,9 @@ export default function CategoriesManager({ initialCategories, companyId }: { in
     const normalizedCategoryName = form.category_name.trim();
     const payload = { company_id: companyId, category_name: normalizedCategoryName, category_type: form.category_type, description: form.description || null, status: form.status };
     if (editingId) {
-      if (supabase && companyId !== "demo-company" && !editingId.startsWith("cat")) {
-        const { data, error } = await supabase.from("vyron_cost_categories").update(payload).eq("id", editingId).select("*").single();
-        if (error || !data) { setMessage(error?.message || "Could not update category."); return; }
+      if (companyId !== "demo-company" && UUID.test(editingId)) {
+        const { data, error } = await sendCategory(`/api/categories/${encodeURIComponent(editingId)}`, "PATCH", payload);
+        if (error || !data) { setMessage(error || "Could not update category."); return; }
         const savedFinancial = await saveCategoryFinancialMapping(normalizedCategoryName);
         if (savedFinancial === false) return;
         const next = { ...(data as Category), ...savedFinancial } as Category;
@@ -163,9 +183,9 @@ export default function CategoriesManager({ initialCategories, companyId }: { in
       }
       resetForm(); setMessage("Category updated."); return;
     }
-    if (supabase && companyId !== "demo-company") {
-      const { data, error } = await supabase.from("vyron_cost_categories").insert(payload).select("*").single();
-      if (error || !data) { setMessage(error?.message || "Could not save category."); return; }
+    if (companyId !== "demo-company") {
+      const { data, error } = await sendCategory("/api/categories", "POST", payload);
+      if (error || !data) { setMessage(error || "Could not save category."); return; }
       const savedFinancial = await saveCategoryFinancialMapping(normalizedCategoryName);
       if (savedFinancial === false) return;
       const next = { ...(data as Category), ...savedFinancial } as Category;
@@ -177,8 +197,12 @@ export default function CategoriesManager({ initialCategories, companyId }: { in
   }
 
   async function deleteCategory(id: string) {
+    const before = categories;
     setCategories((current) => current.filter((item) => item.id !== id));
-    if (supabase && !id.startsWith("cat")) await supabase.from("vyron_cost_categories").delete().eq("id", id);
+    if (companyId !== "demo-company" && UUID.test(id)) {
+      const { error } = await sendCategory(`/api/categories/${encodeURIComponent(id)}`, "DELETE");
+      if (error) { setCategories(before); setMessage(error); }
+    }
   }
 
   function renderAccountSelector(role: XeroAccountRole, value: string, onChange: (next: string) => void) {

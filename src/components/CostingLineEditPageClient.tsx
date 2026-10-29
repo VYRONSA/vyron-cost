@@ -10,7 +10,7 @@ import {
   Recipe,
   RecipeItem,
 } from "@/lib/vyron-cost-data";
-import { supabase } from "@/lib/supabase";
+import { COSTING_UUID, sendCostingLine } from "@/lib/vyron-costing-lines-client";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 
 export default function CostingLineEditPageClient({
@@ -58,14 +58,15 @@ export default function CostingLineEditPageClient({
       true_unit_cost: Number(selectedIngredient.true_unit_cost),
     };
 
-    if (supabase && companyId !== "demo-company" && !line.id.startsWith("ri")) {
-      const { error } = await supabase
-        .from("vyron_cost_recipe_items")
-        .update(payload)
-        .eq("id", line.id);
+    if (companyId !== "demo-company" && COSTING_UUID.test(line.id)) {
+      const { error } = await sendCostingLine(`/api/cost-calculator/lines/${encodeURIComponent(line.id)}`, "PATCH", {
+        recipe_id: payload.recipe_id,
+        ingredient_id: payload.ingredient_id,
+        quantity: payload.quantity,
+      });
 
       if (error) {
-        setMessage(error.message);
+        setMessage(error);
         return;
       }
     }
@@ -75,8 +76,12 @@ export default function CostingLineEditPageClient({
   }
 
   async function deleteLine() {
-    if (supabase && !line.id.startsWith("ri")) {
-      await supabase.from("vyron_cost_recipe_items").delete().eq("id", line.id);
+    if (companyId !== "demo-company" && COSTING_UUID.test(line.id)) {
+      const { error } = await sendCostingLine(`/api/cost-calculator/lines/${encodeURIComponent(line.id)}`, "DELETE");
+      if (error) {
+        setMessage(error);
+        return;
+      }
     }
 
     router.push("/cost-calculator");

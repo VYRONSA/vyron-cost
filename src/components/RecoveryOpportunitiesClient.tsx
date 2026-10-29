@@ -9,7 +9,6 @@ import {
   RecoveryOpportunity,
   money,
   type RecoveryExecutiveSummary,
-  saveCalculatedOpportunities,
 } from "@/lib/vyron-cost-recovery-data";
 
 export default function RecoveryOpportunitiesClient({
@@ -52,10 +51,13 @@ export default function RecoveryOpportunitiesClient({
     setSaving(true);
 
     try {
-      const count = await saveCalculatedOpportunities();
-      setMessage(`${count} calculated opportunities saved to the recovery register.`);
-    } catch (error: any) {
-      setErrorMessage(error?.message || "Could not save calculated opportunities.");
+      // Recalculated on the server for the member's own company (recovery.manage).
+      const res = await fetch("/api/recovery/recompute", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || "Could not save calculated opportunities.");
+      setMessage(`${Number(data.count || 0)} calculated opportunities saved to the recovery register.`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not save calculated opportunities.");
     } finally {
       setSaving(false);
     }

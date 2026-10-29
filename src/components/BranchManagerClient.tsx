@@ -4,8 +4,9 @@ import { Building2, MapPin, Plus, Save, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import StatusPill from "@/components/StatusPill";
 import { VyronBranch } from "@/lib/vyron-enterprise-data";
-import { supabase } from "@/lib/supabase";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const emptyForm = {
   branch_name: "",
@@ -67,15 +68,20 @@ export default function BranchManagerClient({
       is_active: true,
     };
 
-    if (supabase && companyId !== "company-demo") {
-      const { data, error } = await supabase.from("vyron_branches").insert(payload).select("*").single();
-
-      if (error || !data) {
-        setMessage(error?.message || "Could not create branch.");
+    // Saved by the server (POST /api/branches) for the member's own company; demo pages stay on screen only.
+    if (companyId !== "company-demo") {
+      const res = await fetch("/api/branches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        setMessage(data.error || "Could not create branch.");
         return;
       }
 
-      setItems((current) => [...current, data as VyronBranch]);
+      setItems((current) => [...current, data.branch as VyronBranch]);
     } else {
       setItems((current) => [...current, { id: crypto.randomUUID(), ...payload } as VyronBranch]);
     }
@@ -85,10 +91,16 @@ export default function BranchManagerClient({
   }
 
   async function deleteBranch(id: string) {
+    const before = items;
     setItems((current) => current.filter((branch) => branch.id !== id));
 
-    if (supabase && !id.startsWith("branch")) {
-      await supabase.from("vyron_branches").delete().eq("id", id);
+    if (UUID.test(id) && companyId !== "company-demo") {
+      const res = await fetch(`/api/branches/${encodeURIComponent(id)}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        setItems(before);
+        setMessage(data.error || "Could not delete branch.");
+      }
     }
   }
 
