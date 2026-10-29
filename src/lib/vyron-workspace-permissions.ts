@@ -100,6 +100,13 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    label: "Approvals & Recovery",
+    permissions: [
+      { key: "approvals.decide", label: "Decide price, GP and yield approvals" },
+      { key: "recovery.manage", label: "Update cost-recovery tracking and evidence" },
+    ],
+  },
+  {
     label: "Inventory",
     permissions: [
       { key: "inventory.view", label: "View inventory" },
@@ -223,6 +230,8 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "goods_receipts.approve": true,
     "supplier_invoices.override": true,
     "supplier_invoices.rollback_cost": true,
+    "approvals.decide": true,
+    "recovery.manage": true,
     "inventory.counts.approve": true,
     "inventory.minimums.edit": true,
     "manufacturing.runs.complete": true,
@@ -243,6 +252,8 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "goods_receipts.approve": true,
     "supplier_invoices.override": true,
     "supplier_invoices.rollback_cost": true,
+    "approvals.decide": true,
+    "recovery.manage": true,
     "inventory.counts.approve": true,
     "inventory.minimums.edit": true,
     "finished_goods.export": true,

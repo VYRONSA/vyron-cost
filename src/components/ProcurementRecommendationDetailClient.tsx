@@ -4,16 +4,30 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import {
-  addProcurementEvidence,
   getProcurementAuditTrail,
   getProcurementEvidence,
   getProcurementTrackingByKey,
   procurementMoney,
-  saveProcurementTracking,
   type ProcurementAuditRow,
   type ProcurementEvidenceRow,
   type ProcurementRecommendation,
 } from "@/lib/vyron-procurement-ai-data";
+
+/**
+ * Tracking and evidence are written by the server
+ * (/api/procurement/recommendations/[key]/…), which checks purchase_orders.edit
+ * and the member's company and records who made the change. This screen used
+ * to write them itself with the public key, bypassing the tracking route.
+ */
+async function sendRecommendation(key: string, path: "tracking" | "evidence", body: Record<string, unknown>) {
+  const res = await fetch(`/api/procurement/recommendations/${encodeURIComponent(key)}/${path}`, {
+    method: path === "tracking" ? "PATCH" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok) throw new Error(data.error || "The change could not be saved.");
+}
 
 export default function ProcurementRecommendationDetailClient({
   recommendation,
@@ -76,8 +90,8 @@ export default function ProcurementRecommendationDetailClient({
     setMessage("");
     setErrorMessage("");
     try {
-      await saveProcurementTracking(key, {
-        status: nextStatus as any,
+      await sendRecommendation(key, "tracking", {
+        status: nextStatus,
         ownerName,
         ownerEmail,
         notes,
@@ -102,12 +116,16 @@ export default function ProcurementRecommendationDetailClient({
       setErrorMessage("Evidence title is required.");
       return;
     }
-    await addProcurementEvidence(key, {
-      evidenceType: newEvidenceType,
-      title: newEvidenceTitle.trim(),
-      content: newEvidenceContent.trim() || undefined,
-      createdBy: ownerName || "Procurement Manager",
-    });
+    try {
+      await sendRecommendation(key, "evidence", {
+        evidenceType: newEvidenceType,
+        title: newEvidenceTitle.trim(),
+        content: newEvidenceContent.trim() || undefined,
+      });
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Evidence could not be added.");
+      return;
+    }
     setNewEvidenceTitle("");
     setNewEvidenceContent("");
     setEvidenceRows(await getProcurementEvidence(key));

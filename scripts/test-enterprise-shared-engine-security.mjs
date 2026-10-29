@@ -477,11 +477,12 @@ check("E. the synthetic env default tenant was never written", ![...sessionWrite
 
 console.log("\nKey-based tracking / evidence writers: no fallback company");
 browser(jarA);
+// Server-only since 2026-10-29: the routes pass the service client and the member's verified company.
 for (const [name, fn] of [
-  ["saveRecoveryTracking", () => recoveryData.saveRecoveryTracking("qa-unknown-key", { status: "Investigating" }, "qa")],
-  ["addRecoveryEvidence", () => recoveryData.addRecoveryEvidence("qa-unknown-key", { evidenceType: "note", title: "qa" })],
-  ["saveProcurementTracking", () => procurementData.saveProcurementTracking("qa-unknown-key", { status: "In Review" }, "qa")],
-  ["addProcurementEvidence", () => procurementData.addProcurementEvidence("qa-unknown-key", { evidenceType: "note", title: "qa" })],
+  ["saveRecoveryTracking", () => recoveryData.saveRecoveryTracking(db, CO_A, "qa-unknown-key", { status: "Investigating" }, "qa")],
+  ["addRecoveryEvidence", () => recoveryData.addRecoveryEvidence(db, CO_A, "qa-unknown-key", { evidenceType: "note", title: "qa" }, "qa")],
+  ["saveProcurementTracking", () => procurementData.saveProcurementTracking(db, CO_A, "qa-unknown-key", { status: "In Review" }, "qa")],
+  ["addProcurementEvidence", () => procurementData.addProcurementEvidence(db, CO_A, "qa-unknown-key", { evidenceType: "note", title: "qa" }, "qa")],
 ]) {
   reseed();
   const run = await observe(fn);

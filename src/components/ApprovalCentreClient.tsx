@@ -5,8 +5,9 @@ import { useMemo, useState } from "react";
 import StatusPill from "@/components/StatusPill";
 import { formatMoney } from "@/lib/vyron-cost-data";
 import { VyronApproval } from "@/lib/vyron-approval-data";
-import { supabase } from "@/lib/supabase";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function tone(level: string | null): "red" | "amber" | "emerald" | "slate" {
   const value = String(level || "").toLowerCase();
@@ -23,6 +24,7 @@ export default function ApprovalCentreClient({
 }) {
   const [items, setItems] = useState(approvals);
   const [search, setSearch] = useState("");
+  const [error, setError] = useState("");
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -43,29 +45,32 @@ export default function ApprovalCentreClient({
     );
   }, [items, search]);
 
+  /*
+   * The decision is made on the server (POST /api/approvals/[id]/decision),
+   * which checks the member's approvals.decide permission and company and
+   * records who decided. This used to write the row from the browser with the
+   * public key, under a fixed placeholder name. Demo rows (no database id) change on screen only.
+   */
   async function decide(id: string, status: "Approved" | "Rejected") {
+    setError("");
+    const before = items;
     setItems((current) =>
-      current.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status,
-              approved_by: "Current User",
-              decided_at: new Date().toISOString(),
-            }
-          : item
-      )
+      current.map((item) => (item.id === id ? { ...item, status, decided_at: new Date().toISOString() } : item))
     );
+    if (!UUID.test(id)) return;
 
-    if (supabase && !id.startsWith("approval")) {
-      await supabase
-        .from("vyron_cost_approvals")
-        .update({
-          status,
-          approved_by: "Current User",
-          decided_at: new Date().toISOString(),
-        })
-        .eq("id", id);
+    try {
+      const res = await fetch(`/api/approvals/${encodeURIComponent(id)}/decision`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || "The decision could not be saved.");
+      setItems((current) => current.map((item) => (item.id === id ? { ...item, ...data.approval } : item)));
+    } catch (err) {
+      setItems(before);
+      setError(err instanceof Error ? err.message : "The decision could not be saved.");
     }
   }
 
@@ -92,6 +97,12 @@ export default function ApprovalCentreClient({
                 </div>
               </div>
             </div>
+
+            {error ? (
+              <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-800">
+                {error}
+              </p>
+            ) : null}
 
             <div className="grid gap-4">
               {filtered.map((approval) => (

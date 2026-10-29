@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import {
   computeProcurementHealthScore,
@@ -383,24 +384,54 @@ export async function getProcurementTrackingByKey(
   };
 }
 
+/**
+ * Update one procurement recommendation's tracking, SERVER-SIDE ONLY.
+ *
+ * Called by PATCH /api/procurement/recommendations/[key]/tracking with the
+ * service client, the signed-in member's verified company and their name. The
+ * detail screen used to call this directly with the public key, bypassing that
+ * route's checks; the audit trail then read "Procurement Manager". Owner name /
+ * e-mail are business fields (who is assigned) and are kept as entered.
+ */
 export async function saveProcurementTracking(
+  client: SupabaseClient,
+  tenantId: string,
   recommendationKey: string,
   input: ProcurementTrackingInput,
-  changedBy = "Procurement Manager"
+  changedBy: string
 ) {
-  if (!supabase) return;
-  const previous = await getProcurementTrackingByKey(recommendationKey);
-
-  const { data: rec } = await supabase
+  const { data: rec, error: recError } = await client
     .from("vyron_procurement_recommendations")
     .select("tenant_id, potential_benefit_annual")
     .eq("recommendation_key", recommendationKey)
+    .eq("tenant_id", tenantId)
     .maybeSingle();
+  if (recError) throw new Error(recError.message);
+  // Only the member's own company's recommendation: an unknown or foreign key writes nothing.
+  if (!rec) throw new Error("Recommendation not found.");
+  const defaultExpected = Number(rec.potential_benefit_annual || 0);
 
-  // No fallback company: an unknown (or ambiguous) key writes nothing.
-  if (!rec?.tenant_id) throw new Error("Recommendation not found.");
-  const tenantId = String(rec.tenant_id);
-  const defaultExpected = Number(rec?.potential_benefit_annual || 0);
+  const { data: prevRow, error: prevError } = await client
+    .from("vyron_procurement_recommendation_tracking")
+    .select("*")
+    .eq("tenant_id", tenantId)
+    .eq("recommendation_key", recommendationKey)
+    .maybeSingle();
+  if (prevError) throw new Error(prevError.message);
+  const previous = prevRow
+    ? {
+        status: String(prevRow.status || "New"),
+        ownerName: String(prevRow.owner_name || ""),
+        ownerEmail: String(prevRow.owner_email || ""),
+        notes: String(prevRow.notes || ""),
+        dueDate: String(prevRow.due_date || ""),
+        scheduledReviewDate: String(prevRow.scheduled_review_date || ""),
+        expectedBenefit: Number(prevRow.expected_benefit || 0),
+        actualBenefit: Number(prevRow.actual_benefit || 0),
+        implementationDate: String(prevRow.implementation_date || ""),
+        evidence: String(prevRow.evidence || ""),
+      }
+    : null;
 
   const payload = {
     tenant_id: tenantId,
@@ -418,10 +449,10 @@ export async function saveProcurementTracking(
     updated_at: new Date().toISOString(),
   };
 
-  const { error } = await supabase
+  const { error } = await client
     .from("vyron_procurement_recommendation_tracking")
     .upsert(payload, { onConflict: "tenant_id,recommendation_key" });
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 
   const auditChanges: Array<{ field: string; oldValue: string | null; newValue: string | null }> = [];
   if ((previous?.status || "New") !== input.status) {
@@ -436,7 +467,7 @@ export async function saveProcurementTracking(
   }
 
   if (auditChanges.length) {
-    await supabase.from("vyron_procurement_recommendation_audit").insert(
+    const { error: auditError } = await client.from("vyron_procurement_recommendation_audit").insert(
       auditChanges.map((change) => ({
         tenant_id: tenantId,
         recommendation_key: recommendationKey,
@@ -446,31 +477,41 @@ export async function saveProcurementTracking(
         new_value: change.newValue,
       }))
     );
+    if (auditError) throw new Error(auditError.message);
   }
 }
 
+/**
+ * Add evidence to one procurement recommendation, SERVER-SIDE ONLY (POST
+ * /api/procurement/recommendations/[key]/evidence). `createdBy` is the signed-in
+ * member; the browser used to send the assigned owner's typed name, or
+ * "Procurement Manager".
+ */
 export async function addProcurementEvidence(
+  client: SupabaseClient,
+  tenantId: string,
   recommendationKey: string,
-  evidence: { evidenceType: string; title: string; content?: string; documentUrl?: string; createdBy?: string }
+  evidence: { evidenceType: string; title: string; content?: string; documentUrl?: string },
+  createdBy: string
 ) {
-  if (!supabase) return;
-  const { data: rec } = await supabase
+  const { data: rec, error: recError } = await client
     .from("vyron_procurement_recommendations")
     .select("tenant_id")
     .eq("recommendation_key", recommendationKey)
+    .eq("tenant_id", tenantId)
     .maybeSingle();
-  if (!rec?.tenant_id) throw new Error("Recommendation not found.");
-  const tenantId = String(rec.tenant_id);
-  const { error } = await supabase.from("vyron_procurement_recommendation_evidence").insert({
+  if (recError) throw new Error(recError.message);
+  if (!rec) throw new Error("Recommendation not found.");
+  const { error } = await client.from("vyron_procurement_recommendation_evidence").insert({
     tenant_id: tenantId,
     recommendation_key: recommendationKey,
     evidence_type: evidence.evidenceType,
     title: evidence.title,
     content: evidence.content || null,
     document_url: evidence.documentUrl || null,
-    created_by: evidence.createdBy || "Procurement Manager",
+    created_by: createdBy,
   });
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 }
 
 export async function getProcurementEvidence(recommendationKey: string): Promise<ProcurementEvidenceRow[]> {

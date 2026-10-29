@@ -3,14 +3,27 @@
 import { useEffect, useState } from "react";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
 import {
-  addRecoveryEvidence,
   getRecoveryAuditTrail,
   getRecoveryEvidence,
   getRecoveryTrackingByKey,
-  saveRecoveryTracking,
   type RecoveryAuditRow,
   type RecoveryEvidenceRow,
 } from "@/lib/vyron-cost-recovery-data";
+
+/**
+ * Tracking and evidence are written by the server (/api/recovery/[key]/…),
+ * which checks recovery.manage and the member's company and records who made
+ * the change. They used to be written from this screen with the public key.
+ */
+async function postRecovery(opportunityKey: string, path: "tracking" | "evidence", body: Record<string, unknown>) {
+  const res = await fetch(`/api/recovery/${encodeURIComponent(opportunityKey)}/${path}`, {
+    method: path === "tracking" ? "PATCH" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok) throw new Error(data.error || "The change could not be saved.");
+}
 
 export default function RecoveryStatusClient({
   opportunityId,
@@ -76,8 +89,8 @@ export default function RecoveryStatusClient({
     setErrorMessage("");
 
     try {
-      await saveRecoveryTracking(opportunityId, {
-        status: nextStatus as any,
+      await postRecovery(opportunityId, "tracking", {
+        status: nextStatus,
         ownerName,
         ownerEmail,
         notes,
@@ -110,13 +123,17 @@ export default function RecoveryStatusClient({
       return;
     }
     setErrorMessage("");
-    await addRecoveryEvidence(opportunityId, {
-      evidenceType: newEvidenceType,
-      title: newEvidenceTitle.trim(),
-      content: newEvidenceContent.trim() || undefined,
-      documentUrl: newEvidenceUrl.trim() || undefined,
-      createdBy: ownerName || "Finance Manager",
-    });
+    try {
+      await postRecovery(opportunityId, "evidence", {
+        evidenceType: newEvidenceType,
+        title: newEvidenceTitle.trim(),
+        content: newEvidenceContent.trim() || undefined,
+        documentUrl: newEvidenceUrl.trim() || undefined,
+      });
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Evidence could not be added.");
+      return;
+    }
     setNewEvidenceTitle("");
     setNewEvidenceContent("");
     setNewEvidenceUrl("");

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { saveProcurementTracking, type ProcurementTrackingInput } from "@/lib/vyron-procurement-ai-data";
 import { resolveApiCompanyId } from "@/lib/vyron-api-workspace";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
@@ -98,7 +99,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ k
       );
     }
 
-    await saveProcurementTracking(key, input, session.userId);
+    await saveProcurementTracking(supabase, companyId, key, input, await memberDisplayName(supabase, session));
     return NextResponse.json({ ok: true }, { headers: NO_STORE });
   } catch (error) {
     const response = workspaceAccessErrorResponse(error, "Save failed.");

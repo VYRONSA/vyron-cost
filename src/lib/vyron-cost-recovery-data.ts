@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { resolveEngineTenant } from "@/lib/vyron-engine-tenant";
 import { getProducts, calcSuggestedPrice, formatMoney } from "@/lib/vyron-cost-product-data";
@@ -407,24 +408,6 @@ export async function saveCalculatedOpportunities(): Promise<number> {
   return rows.length;
 }
 
-export async function updateRecoveryStatus(id: string, status: string) {
-  if (!supabase) return;
-
-  if (!uuidLike(id)) {
-    await saveRecoveryTracking(id, {
-      status: status as RecoveryTrackingInput["status"],
-    });
-    return;
-  }
-
-  const { error } = await supabase
-    .from("vyron_cost_recovery_opportunities")
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", id);
-
-  if (error) throw error;
-}
-
 export async function getRecoveryTrackingByKey(opportunityKey: string): Promise<RecoveryTrackingSnapshot | null> {
   if (!supabase) return null;
   const { data } = await supabase
@@ -475,11 +458,59 @@ async function getRecoveryTrackingMap(opportunityKeys: string[], tenantId: strin
   return map;
 }
 
-export async function saveRecoveryTracking(opportunityKey: string, input: RecoveryTrackingInput, changedBy = "Finance Manager") {
-  if (!supabase) return;
-  const previous = await getRecoveryTrackingByKey(opportunityKey);
+/**
+ * Update one recovery opportunity's tracking, SERVER-SIDE ONLY.
+ *
+ * Called by PATCH /api/recovery/[key]/tracking with the service client, the
+ * signed-in member's verified company and their name. The browser used to call
+ * this directly with the public key: the company came from whichever
+ * calculation carried the key, and every audit row read "Finance Manager".
+ * Owner name / e-mail are business fields (who is assigned) and are kept as
+ * entered; `changedBy` is who made the change.
+ */
+export async function saveRecoveryTracking(
+  client: SupabaseClient,
+  tenantId: string,
+  opportunityKey: string,
+  input: RecoveryTrackingInput,
+  changedBy: string
+) {
+  const { data: calc, error: calcError } = await client
+    .from("vyron_recovery_calculations")
+    .select("tenant_id, potential_recovery")
+    .eq("opportunity_key", opportunityKey)
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
+  if (calcError) throw new Error(calcError.message);
+  // Only the member's own company's opportunity: an unknown or foreign key writes nothing.
+  if (!calc) throw new Error("Recovery opportunity not found.");
+
+  const { data: prevRow, error: prevError } = await client
+    .from("vyron_recovery_tracking")
+    .select("*")
+    .eq("tenant_id", tenantId)
+    .eq("opportunity_key", opportunityKey)
+    .maybeSingle();
+  if (prevError) throw new Error(prevError.message);
+  const previous = prevRow
+    ? {
+        status: String(prevRow.status || "New"),
+        ownerName: String(prevRow.owner_name || ""),
+        ownerEmail: String(prevRow.owner_email || ""),
+        notes: String(prevRow.notes || ""),
+        dueDate: String(prevRow.due_date || ""),
+        actionTaken: Boolean(prevRow.action_taken),
+        actualRecovery: Number(prevRow.actual_recovery || 0),
+        recoveryDate: String(prevRow.recovery_date || ""),
+        recoveryMethod: String(prevRow.recovery_method || ""),
+        recoveryEvidence: String(prevRow.recovery_evidence || ""),
+      }
+    : null;
+
   const status = input.status;
   const payload = {
+    tenant_id: tenantId,
+    potential_recovery: Number(calc.potential_recovery || 0),
     opportunity_key: opportunityKey,
     status,
     owner_name: input.ownerName || previous?.ownerName || null,
@@ -495,25 +526,8 @@ export async function saveRecoveryTracking(opportunityKey: string, input: Recove
     updated_at: new Date().toISOString(),
   };
 
-  const { data: calc } = await supabase
-    .from("vyron_recovery_calculations")
-    .select("tenant_id, potential_recovery")
-    .eq("opportunity_key", opportunityKey)
-    .maybeSingle();
-
-  // No fallback company: an unknown (or ambiguous) key writes nothing.
-  if (!calc?.tenant_id) throw new Error("Recovery opportunity not found.");
-  const tenantId = String(calc.tenant_id);
-
-  const { error } = await supabase.from("vyron_recovery_tracking").upsert(
-    {
-      tenant_id: tenantId,
-      potential_recovery: Number(calc?.potential_recovery || 0),
-      ...payload,
-    },
-    { onConflict: "tenant_id,opportunity_key" }
-  );
-  if (error) throw error;
+  const { error } = await client.from("vyron_recovery_tracking").upsert(payload, { onConflict: "tenant_id,opportunity_key" });
+  if (error) throw new Error(error.message);
 
   const auditChanges: Array<{ field: string; oldValue: string | null; newValue: string | null }> = [];
   const prevStatus = previous?.status || null;
@@ -530,7 +544,7 @@ export async function saveRecoveryTracking(opportunityKey: string, input: Recove
   }
 
   if (auditChanges.length) {
-    await supabase.from("vyron_recovery_audit_trail").insert(
+    const { error: auditError } = await client.from("vyron_recovery_audit_trail").insert(
       auditChanges.map((change) => ({
         tenant_id: tenantId,
         opportunity_key: opportunityKey,
@@ -540,32 +554,40 @@ export async function saveRecoveryTracking(opportunityKey: string, input: Recove
         new_value: change.newValue,
       }))
     );
+    if (auditError) throw new Error(auditError.message);
   }
 }
 
+/**
+ * Add evidence to one recovery opportunity, SERVER-SIDE ONLY (POST
+ * /api/recovery/[key]/evidence). `createdBy` is the signed-in member; the
+ * browser used to send the assigned owner's typed name, or "Finance Manager".
+ */
 export async function addRecoveryEvidence(
+  client: SupabaseClient,
+  tenantId: string,
   opportunityKey: string,
-  evidence: { evidenceType: string; title: string; content?: string; documentUrl?: string; createdBy?: string }
+  evidence: { evidenceType: string; title: string; content?: string; documentUrl?: string },
+  createdBy: string
 ) {
-  if (!supabase) return;
-  const { data: calc } = await supabase
+  const { data: calc, error: calcError } = await client
     .from("vyron_recovery_calculations")
     .select("tenant_id")
     .eq("opportunity_key", opportunityKey)
+    .eq("tenant_id", tenantId)
     .maybeSingle();
-  // No fallback company: an unknown (or ambiguous) key writes nothing.
-  if (!calc?.tenant_id) throw new Error("Recovery opportunity not found.");
-  const tenantId = String(calc.tenant_id);
-  const { error } = await supabase.from("vyron_recovery_evidence").insert({
+  if (calcError) throw new Error(calcError.message);
+  if (!calc) throw new Error("Recovery opportunity not found.");
+  const { error } = await client.from("vyron_recovery_evidence").insert({
     tenant_id: tenantId,
     opportunity_key: opportunityKey,
     evidence_type: evidence.evidenceType,
     title: evidence.title,
     content: evidence.content || null,
     document_url: evidence.documentUrl || null,
-    created_by: evidence.createdBy || "Finance Manager",
+    created_by: createdBy,
   });
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 }
 
 export async function getRecoveryEvidence(opportunityKey: string): Promise<RecoveryEvidenceRow[]> {
