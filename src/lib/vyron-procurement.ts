@@ -1309,12 +1309,15 @@ export async function listBackOrders(supabase: SupabaseClient, companyId = VYRON
 
 export async function linkDocumentToPurchaseOrder(
   supabase: SupabaseClient,
-  params: { documentId: string; purchaseOrderId: string; actor?: string }
+  params: { companyId: string; documentId: string; purchaseOrderId: string; actor?: string }
 ) {
+  // Scoped to the invoice's company: an id alone used to reach another
+  // company's purchase order, return its details and write its match and audit.
   const { data: po } = await supabase
     .from("vyron_cost_purchase_orders")
     .select("id, company_id, po_number, supplier_name_snapshot, total, outstanding_amount")
     .eq("id", params.purchaseOrderId)
+    .eq("company_id", params.companyId)
     .maybeSingle();
   if (!po) throw new Error("Purchase order not found.");
 
@@ -1325,7 +1328,8 @@ export async function linkDocumentToPurchaseOrder(
       purchase_order_number: po.po_number,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", params.documentId);
+    .eq("id", params.documentId)
+    .eq("tenant_id", params.companyId);
   if (error) throw new Error(error.message);
 
   const match = await computeThreeWayMatch(supabase, {

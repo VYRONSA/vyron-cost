@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { getStoreProductionRunDetail } from "@/lib/vyron-store-production-planning";
 import { completeStoreProductionRunInventory } from "@/lib/vyron-inventory-transactions";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
@@ -40,7 +41,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   try {
     await requirePackageFeature("production_planning");
-    await requireWorkspacePermission("manufacturing.runs.create");
+    const session = await requireWorkspacePermission("manufacturing.runs.create");
     const companyId = await requireApiCompanyId();
     const { id } = await context.params;
 
@@ -49,7 +50,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         supabase,
         companyId,
         id,
-        body.completed_by || body.actor
+        await memberDisplayName(supabase, session)
       );
       return NextResponse.json({ ok: true, run });
     }

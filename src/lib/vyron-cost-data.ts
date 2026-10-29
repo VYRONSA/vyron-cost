@@ -451,9 +451,6 @@ export async function getInvoiceExtractedLines(limit = 250) {
   return fetchRows<InvoiceExtractedLine>("vyron_cost_invoice_extracted_lines", demoInvoiceLines, "raw_description", limit);
 }
 
-export async function getUsers(limit = 100) {
-  return fetchRows<VyronUser>("vyron_cost_users", demoUsers, "full_name", limit);
-}
 
 export async function getAuditLog(limit = 100) {
   return fetchRows<AuditEvent>("vyron_cost_audit_log", demoAudit, "created_at", limit);

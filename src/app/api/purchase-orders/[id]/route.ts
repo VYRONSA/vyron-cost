@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import {
   deletePurchaseOrder,
   getPurchaseOrderArchiveState,
@@ -105,7 +106,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   const body = await request.json().catch(() => ({}));
   try {
     await requirePackageFeature("purchase_orders");
-    await requireWorkspacePermission("purchase_orders.edit");
+    const session = await requireWorkspacePermission("purchase_orders.edit");
     const companyId = await requirePoCompanyId(supabase, companyContextFromRequest(request, body));
     const po = await savePurchaseOrder(
       supabase,
@@ -122,7 +123,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         header_discount_value: body.header_discount_value,
         lines: Array.isArray(body.lines) ? body.lines : [],
       },
-      String(body.actor || "user")
+      // Who saved is the verified member; a browser-sent `actor` is ignored.
+      await memberDisplayName(supabase, session)
     );
     return NextResponse.json({ ok: true, purchaseOrder: po });
   } catch (error) {
@@ -151,7 +153,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       "Awaiting Revision",
       "Returned for Changes",
     ]);
-    await requireWorkspacePermission(
+    const session = await requireWorkspacePermission(
       approvalStatuses.has(status) ? "purchase_orders.approve" : "purchase_orders.edit"
     );
     const companyId = await requirePoCompanyId(supabase, companyContextFromRequest(request, body));
@@ -161,10 +163,13 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       .filter((part) => String(part || "").trim().length > 0)
       .map((part) => String(part).trim())
       .join(" · ");
+    // Approver and audit actor are the verified member. Browser-sent
+    // `approvedBy` / `actor` used to be recorded as written.
+    const actor = await memberDisplayName(supabase, session);
     const { purchaseOrder, approvalTier } = await transitionPurchaseOrder(supabase, id, status, companyId, {
-      approvedBy: body.approvedBy,
+      approvedBy: actor,
       approvalNotes: combinedNotes || body.approvalNotes,
-      actor: body.actor,
+      actor,
     });
     return NextResponse.json({ ok: true, purchaseOrder, approvalTier });
   } catch (error) {

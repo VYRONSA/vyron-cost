@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { listPurchaseOrders, savePurchaseOrder } from "@/lib/vyron-procurement";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   try {
     await requirePackageFeature("purchase_orders");
-    await requireWorkspacePermission("purchase_orders.create");
+    const session = await requireWorkspacePermission("purchase_orders.create");
     const companyId = await resolveApiCompanyIdWithContext(supabase, companyContextFromBody(body));
     if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
     const po = await savePurchaseOrder(supabase, companyId, {
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       header_discount_pct: body.header_discount_pct,
       header_discount_value: body.header_discount_value,
       lines: Array.isArray(body.lines) ? body.lines : [],
-    });
+    }, await memberDisplayName(supabase, session));
     return NextResponse.json({ ok: true, purchaseOrder: po });
   } catch (error) {
     return workspaceAccessErrorResponse(error, "Save failed.");

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { createReplenishmentPoFromAlert } from "@/lib/vyron-inventory";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import {
@@ -22,9 +23,9 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   if (!body.alertId) return NextResponse.json({ ok: false, error: "alertId is required." }, { status: 400 });
   try {
-    await requireWorkspacePermission("purchase_orders.create");
+    const session = await requireWorkspacePermission("purchase_orders.create");
     const companyId = await requireInventoryCompanyId(supabase, inventoryCompanyContextFromRequest(request, body));
-    const po = await createReplenishmentPoFromAlert(supabase, companyId, String(body.alertId), String(body.actor || "user"));
+    const po = await createReplenishmentPoFromAlert(supabase, companyId, String(body.alertId), await memberDisplayName(supabase, session));
     return NextResponse.json({ ok: true, po });
   } catch (error) {
     return workspaceAccessErrorResponse(error, "PO creation failed.");

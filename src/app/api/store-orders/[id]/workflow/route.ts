@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import {
   STORE_ORDER_WORKFLOW_ACTIONS,
   applyStoreOrderWorkflowAction,
@@ -30,12 +31,13 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     await requirePackageFeature("store_ordering");
     const permission = APPROVAL_ACTIONS.has(action) ? "store_orders.approve" : "store_orders.edit";
-    await requireWorkspacePermission(permission);
+    const session = await requireWorkspacePermission(permission);
     const companyId = await requireApiCompanyId();
     const { id } = await context.params;
     const order = await applyStoreOrderWorkflowAction(supabase, companyId, id, action, {
       note: typeof body.note === "string" ? body.note : undefined,
-      actor: typeof body.actor === "string" ? body.actor : undefined,
+      // The actor (approver, picker, dispatcher) is the verified member; a browser-sent `actor` is ignored.
+      actor: await memberDisplayName(supabase, session),
     });
     return NextResponse.json({ ok: true, order });
   } catch (error) {

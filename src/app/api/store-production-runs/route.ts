@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import {
   createStoreProductionRun,
   listStoreProductionRuns,
@@ -62,12 +63,12 @@ export async function POST(request: NextRequest) {
 
   try {
     await requirePackageFeature("production_planning");
-    await requireWorkspacePermission("manufacturing.runs.create");
+    const session = await requireWorkspacePermission("manufacturing.runs.create");
     const companyId = await requireApiCompanyId();
     const run = await createStoreProductionRun(supabase, companyId, {
       production_date: body.production_date,
       notes: body.notes,
-      created_by: body.created_by,
+      created_by: await memberDisplayName(supabase, session),
       lines: Array.isArray(body.lines) ? body.lines : [],
     });
     return NextResponse.json({ ok: true, run });

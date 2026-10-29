@@ -51,6 +51,7 @@ export async function resolve(specifier, context, next) {
   if (stub) return { url: new URL(stub, import.meta.url).href, shortCircuit: true };
   if (specifier === "next/server") return next("next/server.js", context);
   if (specifier === "next/cache") return next("next/cache.js", context);
+  if (specifier === "next/navigation") return next("next/navigation.js", context);
   if (specifier === "jspdf" && context.parentURL?.startsWith(SRC_URL)) {
     return { url: JSPDF_INTEROP_URL, shortCircuit: true };
   }

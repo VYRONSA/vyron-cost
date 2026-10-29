@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { receivePurchaseOrderStock } from "@/lib/vyron-purchase-order-engine";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   try {
     await requirePackageFeature("purchase_orders");
-    await requireWorkspacePermission("goods_receipts.create");
+    const session = await requireWorkspacePermission("goods_receipts.create");
     const companyId = await resolveApiCompanyIdWithContext(supabase, {
       workspaceId: request.nextUrl.searchParams.get("workspaceId"),
       companyId: request.nextUrl.searchParams.get("companyId") || (typeof body.companyId === "string" ? body.companyId : null),
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const purchaseOrder = await receivePurchaseOrderStock(supabase, companyId, id, {
       mode,
       lines: Array.isArray(body.lines) ? body.lines : undefined,
-      actor: body.actor || body.received_by || "user",
+      actor: await memberDisplayName(supabase, session),
     });
     return NextResponse.json({ ok: true, purchaseOrder });
   } catch (error) {

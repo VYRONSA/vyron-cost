@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import {
   createProcurementRequisition,
   listProcurementRequisitions,
@@ -43,12 +44,12 @@ export async function POST(request: NextRequest) {
 
   try {
     await requirePackageFeature("procurement");
-    await requireWorkspacePermission("procurement.requisitions.create");
+    const session = await requireWorkspacePermission("procurement.requisitions.create");
     const companyId = await requireApiCompanyId();
     const requisition = await createProcurementRequisition(supabase, companyId, {
       required_date: body.required_date,
       notes: body.notes,
-      created_by: body.created_by,
+      created_by: await memberDisplayName(supabase, session),
       lines: Array.isArray(body.lines) ? body.lines : undefined,
       source: body.source,
     });

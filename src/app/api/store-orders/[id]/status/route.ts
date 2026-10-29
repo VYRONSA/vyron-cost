@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { STORE_ORDER_STATUSES, transitionStoreOrder } from "@/lib/vyron-store-orders";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { requireApiCompanyId } from "@/lib/vyron-api-workspace";
@@ -26,11 +27,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     await requirePackageFeature("store_ordering");
     const permission =
       status === "Approved" || status === "Cancelled" ? "store_orders.approve" : "store_orders.edit";
-    await requireWorkspacePermission(permission);
+    const session = await requireWorkspacePermission(permission);
     const companyId = await requireApiCompanyId();
     const { id } = await context.params;
     const order = await transitionStoreOrder(supabase, companyId, id, status, {
-      approvedBy: typeof body.approvedBy === "string" ? body.approvedBy : undefined,
+      // The approver is the verified member; a browser-sent `approvedBy` is ignored.
+      approvedBy: await memberDisplayName(supabase, session),
     });
     return NextResponse.json({ ok: true, order });
   } catch (error) {

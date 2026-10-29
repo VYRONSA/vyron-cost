@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { createGoodsReceipt, listGoodsReceipts } from "@/lib/vyron-procurement";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
@@ -57,15 +58,17 @@ export async function POST(request: NextRequest) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
   const body = await request.json().catch(() => ({}));
   try {
-    await requireWorkspacePermission("goods_receipts.create");
+    const session = await requireWorkspacePermission("goods_receipts.create");
     const companyId = await requireGrnCompanyId(supabase, companyContextFromRequest(request, body));
+    // `received_by` is the GRN's own field (who physically took delivery, typed
+    // on the form). The audit actor is the verified member.
     const result = await createGoodsReceipt(supabase, companyId, {
       purchase_order_id: String(body.purchase_order_id),
       receipt_type: body.receipt_type === "full" ? "full" : "partial",
       received_by: body.received_by,
       notes: body.notes,
       lines: Array.isArray(body.lines) ? body.lines : [],
-    });
+    }, await memberDisplayName(supabase, session));
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     return workspaceAccessErrorResponse(error, "GRN failed.");

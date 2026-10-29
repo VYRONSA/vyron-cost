@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { setPurchaseOrderArchiveState } from "@/lib/vyron-procurement";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   try {
     await requirePackageFeature("purchase_orders");
-    await requireWorkspacePermission("purchase_orders.delete");
+    const session = await requireWorkspacePermission("purchase_orders.delete");
 
     const companyId = await resolveApiCompanyIdWithContext(supabase, companyContextFromRequest(request, body));
     if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       companyId,
       poId: id,
       archived: action === "archive",
-      actor: String(body.actor || "user"),
+      actor: await memberDisplayName(supabase, session),
       reason: String(body.reason || "").trim() || undefined,
     });
 

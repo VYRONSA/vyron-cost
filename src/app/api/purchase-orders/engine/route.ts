@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import {
   getPurchaseOrderEngineDetail,
   getPurchaseOrderEngineDashboardStats,
@@ -8,6 +9,14 @@ import {
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { requireApiCompanyId, resolveAndAlignApiCompanyId } from "@/lib/vyron-api-workspace";
 import { requirePackageFeature, requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
+import { writeProcurementAudit } from "@/lib/vyron-procurement";
+
+/**
+ * Statuses that are an approval decision. Same set as PATCH /api/purchase-orders/[id]:
+ * setting one needs purchase_orders.approve, not edit. This route used to let any
+ * editor set any status (including Approved and Sent) with no audit record.
+ */
+const APPROVAL_STATUSES = new Set(["Approved", "Sent", "Closed", "Cancelled", "Rejected", "Awaiting Revision", "Returned for Changes"]);
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -74,15 +83,27 @@ export async function POST(request: NextRequest) {
 
   try {
     await requirePackageFeature("purchase_orders");
-    await requireWorkspacePermission("purchase_orders.edit");
+    const status = String(body.status || "Sent");
+    const session = await requireWorkspacePermission(APPROVAL_STATUSES.has(status) ? "purchase_orders.approve" : "purchase_orders.edit");
     const companyId = await requireApiCompanyId();
     const poId = String(body.id);
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from("vyron_cost_purchase_orders")
-      .update({ status: String(body.status || "Sent"), updated_at: new Date().toISOString() })
+      .update({ status, updated_at: new Date().toISOString() })
       .eq("id", poId)
-      .eq("company_id", companyId);
+      .eq("company_id", companyId)
+      .select("id, po_number");
     if (error) throw new Error(error.message);
+    if (!updated?.length) return NextResponse.json({ ok: false, error: "Purchase order not found." }, { status: 404 });
+    await writeProcurementAudit(supabase, {
+      companyId,
+      eventType: "PO Status Changed",
+      entityType: "purchase_order",
+      entityId: poId,
+      entityLabel: String(updated[0].po_number || poId),
+      detail: `Status set to ${status}.`,
+      actor: await memberDisplayName(supabase, session),
+    });
     const purchaseOrder = await getPurchaseOrderEngineDetail(supabase, companyId, poId);
     return NextResponse.json({ ok: true, purchaseOrder });
   } catch (error) {

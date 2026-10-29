@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { reverseGoodsReceipt, writeProcurementAudit } from "@/lib/vyron-procurement";
 import { hasGrnPostedStock } from "@/lib/vyron-inventory";
@@ -100,11 +101,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   if (body.action === "reverse") {
     try {
-      await requireWorkspacePermission("goods_receipts.approve");
+      const session = await requireWorkspacePermission("goods_receipts.approve");
       const companyId = await requireGrnCompanyId(supabase, companyContextFromRequest(request, body));
       const result = await reverseGoodsReceipt(supabase, companyId, id, {
         reason: String(body.reason || ""),
-        actor: String(body.actor || body.received_by || "user"),
+        actor: await memberDisplayName(supabase, session),
       });
       return NextResponse.json({ ok: true, ...result });
     } catch (error) {
@@ -115,7 +116,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const lines = Array.isArray(body.lines) ? body.lines : [];
 
   try {
-    await requireWorkspacePermission("goods_receipts.create");
+    const session = await requireWorkspacePermission("goods_receipts.create");
     const companyId = await requireGrnCompanyId(supabase, companyContextFromRequest(request, body));
 
     const { data: grn, error: grnLoadError } = await supabase
@@ -292,7 +293,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       entityId: id,
       entityLabel: String(grn.grn_number || id),
       detail: `Goods received note ${grn.grn_number || id} was updated.`,
-      actor: "user",
+      actor: await memberDisplayName(supabase, session),
     });
 
     return NextResponse.json({ ok: true });
@@ -310,7 +311,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase admin unavailable." }, { status: 500 });
 
   try {
-    await requireWorkspacePermission("goods_receipts.create");
+    const session = await requireWorkspacePermission("goods_receipts.create");
     const companyId = await requireGrnCompanyId(supabase, companyContextFromRequest(request));
 
     const { data: grn, error: grnLoadError } = await supabase
@@ -345,7 +346,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       entityId: id,
       entityLabel: String(grn.grn_number || id),
       detail: `Goods received note ${grn.grn_number || id} was deleted.`,
-      actor: "user",
+      actor: await memberDisplayName(supabase, session),
     });
 
     return NextResponse.json({ ok: true });

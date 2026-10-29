@@ -32,6 +32,7 @@
     "test:approval-safety": "node scripts/test-approval-safety.mjs",
     "test:supervisor-override": "node scripts/test-supervisor-override.mjs",
     "test:supervisor-permission-gates": "node scripts/test-supervisor-permission-gates.mjs",
+    "test:order-audit-identity": "node scripts/test-order-audit-identity.mjs",
     "test:crop-fidelity": "node scripts/test-crop-fidelity.mjs",
     "test:document-email": "node scripts/test-document-email.mjs",
     "test:data-migration": "node scripts/test-data-migration.mjs",

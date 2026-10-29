@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { linkDocumentToPurchaseOrder } from "@/lib/vyron-procurement";
 import {
   documentTenantAccessErrorResponse,
@@ -6,6 +7,7 @@ import {
   requireDocumentTenantId,
 } from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import { requireWorkspacePermission, WorkspaceAccessError, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 
@@ -26,15 +28,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   try {
+    // The invoice review screen's own access (suppliers.view). The actor is the
+    // verified member, and the purchase order must belong to the same company.
+    const session = await requireWorkspacePermission("suppliers.view");
     const tenantId = await requireDocumentTenantId();
     await loadDocumentForTenant(supabase, documentId, tenantId, "id, tenant_id");
     const result = await linkDocumentToPurchaseOrder(supabase, {
+      companyId: tenantId,
       documentId,
       purchaseOrderId,
-      actor: body.actor || "reviewer",
+      actor: await memberDisplayName(supabase, session),
     });
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
+    if (error instanceof WorkspaceAccessError) return workspaceAccessErrorResponse(error, "Link failed.");
     return documentTenantAccessErrorResponse(error, "Link failed.");
   }
 }
