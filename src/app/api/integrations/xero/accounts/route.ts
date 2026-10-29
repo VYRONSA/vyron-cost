@@ -18,6 +18,7 @@ import {
 } from "@/lib/vyron-financial-engine";
 import { XERO_ACCOUNT_ROLE_LABELS, type XeroAccountRole } from "@/lib/vyron-xero-integration";
 import {
+  requireAuditActorName,
   requireWorkspacePermission,
   workspaceAccessErrorResponse,
 } from "@/lib/vyron-workspace-access";
@@ -238,7 +239,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { workspaceId, companyId } = await requireXeroWorkspaceContext(xeroContextFromRequest(request, body));
-    const actor = String(body.actor || "user");
+    const actor = await requireAuditActorName();
     const supabase = getSupabaseAdmin();
     if (!isSupabaseServiceRoleConfigured() || !supabase) {
       return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });

@@ -5,6 +5,7 @@ import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabas
 import { importContactsFromXero } from "@/lib/vyron-xero-import-contacts";
 import { isXeroOAuthConfigured } from "@/lib/vyron-xero-integration";
 import {
+  requireAuditActorName,
   requireWorkspacePermission,
   workspaceAccessErrorResponse,
 } from "@/lib/vyron-workspace-access";
@@ -32,10 +33,10 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const actor = String(body.actor || "user");
 
   try {
     await requireWorkspacePermission("xero.sync");
+    const actor = await requireAuditActorName();
     const { workspaceId, companyId } = await requireXeroWorkspaceContext(xeroContextFromRequest(request, body));
 
     const result = await importContactsFromXero(supabase, workspaceId, companyId, actor);

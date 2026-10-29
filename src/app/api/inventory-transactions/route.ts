@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import {
   listInventoryTransactions,
   postInventoryStockCount,
@@ -44,8 +45,10 @@ export async function POST(request: NextRequest) {
 
   try {
     await requirePackageFeature("inventory");
-    await requireWorkspacePermission("inventory.adjustments.post");
+    const session = await requireWorkspacePermission("inventory.adjustments.post");
     const companyId = await requireApiCompanyId();
+    // Who posted is the verified member; a browser-sent `created_by` is ignored.
+    const createdBy = await memberDisplayName(supabase, session);
     const action = String(body.action || body.transaction_type || "Receipt");
 
     if (action === "transfer") {
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
         quantity: Number(body.quantity),
         unitCost: body.unit_cost != null ? Number(body.unit_cost) : undefined,
         notes: body.notes,
-        createdBy: body.created_by,
+        createdBy,
       });
       return NextResponse.json({ ok: true, ...result });
     }
@@ -67,7 +70,7 @@ export async function POST(request: NextRequest) {
         stockItemId: String(body.stock_item_id),
         countedQty: Number(body.counted_qty),
         notes: body.notes,
-        createdBy: body.created_by,
+        createdBy,
       });
       return NextResponse.json({ ok: true, transaction });
     }
@@ -97,7 +100,7 @@ export async function POST(request: NextRequest) {
       referenceId: body.reference_id,
       referenceLabel: body.reference_label,
       notes: body.notes,
-      createdBy: body.created_by,
+      createdBy,
       itemCode: body.item_code,
       itemDescription: body.item_description,
       allowNegative: Boolean(body.allow_negative),

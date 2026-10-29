@@ -4,6 +4,7 @@ import {
   deletePurchaseOrder,
   getPurchaseOrderArchiveState,
   getPurchaseOrderDetail,
+  PurchaseOrderStatusError,
   savePurchaseOrder,
   transitionPurchaseOrder,
 } from "@/lib/vyron-procurement";
@@ -13,6 +14,14 @@ import { requirePackageFeature, requireWorkspacePermission, workspaceAccessError
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** A change the order's status does not allow is the caller's conflict, not a server fault. */
+function poErrorResponse(error: unknown, fallbackMessage: string) {
+  if (error instanceof PurchaseOrderStatusError) {
+    return NextResponse.json({ ok: false, error: error.message }, { status: error.status });
+  }
+  return workspaceAccessErrorResponse(error, fallbackMessage);
+}
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -128,7 +137,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     );
     return NextResponse.json({ ok: true, purchaseOrder: po });
   } catch (error) {
-    return workspaceAccessErrorResponse(error, "Update failed.");
+    return poErrorResponse(error, "Update failed.");
   }
 }
 

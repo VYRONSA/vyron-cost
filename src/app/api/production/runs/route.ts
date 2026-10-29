@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { createProductionRun, listProductionRuns } from "@/lib/vyron-manufacturing";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   const body = await request.json().catch(() => ({}));
   try {
-    await requireWorkspacePermission("manufacturing.runs.create");
+    const session = await requireWorkspacePermission("manufacturing.runs.create");
     const companyId = await requireManufacturingCompanyId(supabase, manufacturingCompanyContextFromRequest(request, body));
     const run = await createProductionRun(supabase, companyId, {
       bom_id: String(body.bom_id || ""),
@@ -49,7 +50,8 @@ export async function POST(request: NextRequest) {
       batch_multiplier: body.batch_multiplier != null ? Number(body.batch_multiplier) : undefined,
       planned_qty: body.planned_qty != null ? Number(body.planned_qty) : undefined,
       notes: body.notes,
-      created_by: body.created_by || "user",
+      // Who created the run is the verified member; a browser-sent `created_by` is ignored.
+      created_by: await memberDisplayName(supabase, session),
       labour: body.labour,
       overhead: body.overhead,
     });

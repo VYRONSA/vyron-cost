@@ -2,6 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { VYRON_DEFAULT_TENANT_ID } from "@/lib/vyron-documents";
 import { receiveStockFromGrn, reverseStockFromGrn, rollbackGrnStockPostings, hasGrnPostedStock } from "@/lib/vyron-inventory";
 import { computeThreeWayMatch, upsertThreeWayMatch } from "@/lib/vyron-three-way-match";
+import {
+  assertPoSaveStatus,
+  isPoEditableStatus,
+  lockedOrderError,
+  PO_EDITABLE_STATUSES,
+  PurchaseOrderStatusError,
+} from "@/lib/vyron-po-status";
 
 export const PO_STATUSES = [
   "Draft",
@@ -15,6 +22,14 @@ export const PO_STATUSES = [
 ] as const;
 
 export type PoItemType = "ingredient" | "packaging" | "product" | "non_stock";
+
+export {
+  assertPoSaveStatus,
+  isPoEditableStatus,
+  lockedOrderError,
+  PO_EDITABLE_STATUSES,
+  PurchaseOrderStatusError,
+} from "@/lib/vyron-po-status";
 
 export type PurchaseOrderLineInput = {
   id?: string;
@@ -420,6 +435,42 @@ export async function savePurchaseOrder(
   },
   actor = "user"
 ) {
+  /*
+   * The order's status decides whether it may be saved at all, checked here on
+   * the server. A save used to take its status from the request, so a member
+   * with only create or edit permission could save an order straight to
+   * Approved (or Sent, Closed, ...) without the approve permission, and
+   * re-saving replaced the lines of approved and received orders.
+   */
+  if (input.id) {
+    const { data: current, error: currentError } = await supabase
+      .from("vyron_cost_purchase_orders")
+      .select("id, status")
+      .eq("id", input.id)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    if (currentError) throw new Error(currentError.message);
+    if (!current) throw new Error("Purchase order not found.");
+    const currentStatus = String(current.status || "Draft");
+    if (!isPoEditableStatus(currentStatus)) throw lockedOrderError(currentStatus);
+    assertPoSaveStatus(currentStatus, input.status || "Draft");
+
+    const { data: movedLines, error: movedError } = await supabase
+      .from("vyron_cost_purchase_order_lines")
+      .select("id, received_qty, damaged_qty, rejected_qty")
+      .eq("purchase_order_id", input.id)
+      .eq("company_id", companyId);
+    if (movedError) throw new Error(movedError.message);
+    const hasReceipts = (movedLines || []).some(
+      (row) => Number(row.received_qty || 0) > 0 || Number(row.damaged_qty || 0) > 0 || Number(row.rejected_qty || 0) > 0
+    );
+    if (hasReceipts) {
+      throw new PurchaseOrderStatusError("Goods have been received against this purchase order, so its lines can no longer be edited.");
+    }
+  } else {
+    assertPoSaveStatus(null, input.status || "Draft");
+  }
+
   const lineBaseRows = input.lines.map((line) => {
     const qty = Number(line.quantity || 0);
     const baseSubtotal = Math.round(qty * Number(line.unit_price || 0) * 100) / 100;
@@ -599,12 +650,18 @@ export async function savePurchaseOrder(
       outstanding_amount:
         Math.round(lineRows.reduce((sum, row) => sum + Number(row._outstandingValue || 0), 0) * 100) / 100,
     };
-    const { error } = await supabase
+    // Only while it is still editable: an approval landing mid-save wins, and the lines stay as approved.
+    const { data: updatedHeader, error } = await supabase
       .from("vyron_cost_purchase_orders")
       .update(headerPayload)
       .eq("id", poId)
-      .eq("company_id", companyId);
+      .eq("company_id", companyId)
+      .in("status", [...PO_EDITABLE_STATUSES])
+      .select("id");
     if (error) throw new Error(error.message);
+    if (!updatedHeader || updatedHeader.length === 0) {
+      throw new PurchaseOrderStatusError("This purchase order changed status while it was being saved. Reload it and try again.");
+    }
     await supabase
       .from("vyron_cost_purchase_order_lines")
       .delete()

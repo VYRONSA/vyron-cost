@@ -420,9 +420,12 @@ console.log("\nAn override that cannot be recorded does not approve");
 console.log("\nA sound invoice needs no override");
 {
   useDb(seed({ extraction: { classification: "Verified", quality: 100, completenessStatus: "Complete", reconciliationStatus: "Reconciled", columnMappingFailed: false } }));
-  const r = await approve(jarA, { force: false, forceTotalsMismatch: false });
+  const r = await approve(jarA, { force: false, forceTotalsMismatch: false, approvedBy: "Someone Else (spoofed)" });
   check("clean invoice approves normally (200)", r.status === 200 && doc().status === "archived");
   check("no override recorded", rows("vyron_document_approval_override_audit").length === 0);
+  // The approver is the signed-in member (no profile row here, so the user id), never the body's approvedBy.
+  check("approved_by is the signed-in member, not the browser's approvedBy", doc().approved_by === U_SUPERVISOR, String(doc().approved_by));
+  check("no approval record carries the spoofed name", !JSON.stringify([db.tables.vyron_documents, rows("vyron_document_approval_audit")]).includes("spoofed"));
 }
 
 console.log(`\n${checks - failures}/${checks} checks passed`);

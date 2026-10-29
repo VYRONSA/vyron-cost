@@ -11,6 +11,7 @@ import {
   type XeroSyncConfig,
 } from "@/lib/vyron-xero-mapping";
 import {
+  requireAuditActorName,
   requireWorkspacePermission,
   workspaceAccessErrorResponse,
 } from "@/lib/vyron-workspace-access";
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { workspaceId, companyId } = await requireXeroWorkspaceContext(xeroContextFromRequest(request, body));
-    const actor = String(body.actor || "user");
+    const actor = await requireAuditActorName();
 
     if (action === "save-sync-config") {
       await requireWorkspacePermission("xero.mapping.edit");

@@ -19,6 +19,7 @@ import { syncFinancialAccountCatalogFromXero } from "@/lib/vyron-financial-engin
 import { requireXeroWorkspaceContext, xeroContextFromRequest } from "@/lib/vyron-xero-api-context";
 import { getServerActiveWorkspace, getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
 import {
+  requireAuditActorName,
   requireWorkspacePermission,
   workspaceAccessErrorResponse,
 } from "@/lib/vyron-workspace-access";
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { workspaceId, companyId } = await requireXeroWorkspaceContext(xeroContextFromRequest(request, body));
-    const actor = String(body.actor || "user");
+    const actor = await requireAuditActorName();
 
     if (action === "reset-connection-state") {
       await requireWorkspacePermission("xero.connect");

@@ -11,7 +11,12 @@ import { updateStockCostsFromApprovedInvoice } from "@/lib/vyron-inventory";
 import { getPoApprovalRules, writeProcurementAudit } from "@/lib/vyron-procurement";
 import { computeThreeWayMatch, upsertThreeWayMatch } from "@/lib/vyron-three-way-match";
 import { SUPPLIER_INVOICE_OVERRIDE_PERMISSION } from "@/lib/vyron-document-approval-audit";
-import { requireWorkspacePermission, WorkspaceAccessError } from "@/lib/vyron-workspace-access";
+import {
+  requireAuditActorName,
+  requireWorkspacePermission,
+  WorkspaceAccessError,
+  workspaceAccessErrorResponse,
+} from "@/lib/vyron-workspace-access";
 import type { WorkspaceSession } from "@/lib/vyron-workspace-session";
 import { insertDocumentCostAudit } from "@/lib/vyron-document-cost-audit";
 import { decideSupplierCostUpdate } from "@/lib/vyron-supplier-cost-guard";
@@ -84,7 +89,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const forceApproval = Boolean(body?.force);
   const forceTotalsMismatch = Boolean(body?.forceTotalsMismatch);
   const reconciliationNote = String(body?.reconciliationNote || "").trim() || null;
-  const approvedBy = String(body?.approvedBy || "invoice-review").trim() || "invoice-review";
   const approvedAt = new Date().toISOString();
   const supervisorOverride = body?.supervisorOverride as
     | { reason?: string; overriddenBy?: string }
@@ -102,6 +106,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     tenantId = await requireDocumentTenantId();
   } catch (error) {
     return documentTenantAccessErrorResponse(error);
+  }
+  // Who approved is the verified member. A browser-sent `approvedBy` used to be
+  // recorded as written, and without one every approval read "invoice-review".
+  let approvedBy: string;
+  try {
+    approvedBy = await requireAuditActorName();
+  } catch (error) {
+    return workspaceAccessErrorResponse(error, "Approval failed.");
   }
 
   const { data: document, error: docError } = await supabase

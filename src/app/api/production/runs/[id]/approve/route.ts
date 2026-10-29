@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { transitionProductionRun } from "@/lib/vyron-manufacturing";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import {
@@ -22,9 +23,9 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   const { id } = await context.params;
   const body = await request.json().catch(() => ({}));
   try {
-    await requireWorkspacePermission("manufacturing.runs.complete");
+    const session = await requireWorkspacePermission("manufacturing.runs.complete");
     const companyId = await requireManufacturingCompanyId(supabase, manufacturingCompanyContextFromRequest(request, body));
-    const run = await transitionProductionRun(supabase, companyId, id, "approve", String(body.actor || "user"));
+    const run = await transitionProductionRun(supabase, companyId, id, "approve", await memberDisplayName(supabase, session));
     return NextResponse.json({ ok: true, run });
   } catch (error) {
     return workspaceAccessErrorResponse(error, "Approve failed.");

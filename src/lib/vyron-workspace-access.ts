@@ -13,6 +13,8 @@ import {
   sessionHasPermission,
 } from "@/lib/vyron-workspace-permissions";
 import type { WorkspaceSession } from "@/lib/vyron-workspace-session";
+import { memberDisplayName, sessionAuditActor } from "@/lib/vyron-audit-actor";
+import { getSupabaseAdmin } from "@/lib/supabase-server";
 import {
   OPERATIONS_CATCHUP_SQL,
   OPERATIONS_SCHEMA_TABLES,
@@ -84,6 +86,20 @@ export async function requireWorkspacePermission(
     throw new WorkspaceAccessError("Access denied.", 403);
   }
   return session;
+}
+
+/**
+ * The verified member's name for an audit record, from the signed workspace
+ * session. For routes that check permissions per action but record one actor
+ * for all of them. Never take an actor from the request body.
+ */
+export async function requireAuditActorName(): Promise<string> {
+  const session = await getServerWorkspaceSession();
+  if (!session) {
+    throw new WorkspaceAccessError("Workspace session required.", 401);
+  }
+  const supabase = getSupabaseAdmin();
+  return supabase ? memberDisplayName(supabase, session) : sessionAuditActor(session);
 }
 
 /**

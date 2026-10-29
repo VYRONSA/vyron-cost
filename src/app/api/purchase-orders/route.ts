@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { memberDisplayName } from "@/lib/vyron-audit-actor";
-import { listPurchaseOrders, savePurchaseOrder } from "@/lib/vyron-procurement";
+import { listPurchaseOrders, PurchaseOrderStatusError, savePurchaseOrder } from "@/lib/vyron-procurement";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
 import { requirePackageFeature, requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** A change the order's status does not allow is the caller's conflict, not a server fault. */
+function poErrorResponse(error: unknown, fallbackMessage: string) {
+  if (error instanceof PurchaseOrderStatusError) {
+    return NextResponse.json({ ok: false, error: error.message }, { status: error.status });
+  }
+  return workspaceAccessErrorResponse(error, fallbackMessage);
+}
 
 function companyContextFromBody(body: Record<string, unknown>) {
   return {
@@ -66,6 +74,6 @@ export async function POST(request: NextRequest) {
     }, await memberDisplayName(supabase, session));
     return NextResponse.json({ ok: true, purchaseOrder: po });
   } catch (error) {
-    return workspaceAccessErrorResponse(error, "Save failed.");
+    return poErrorResponse(error, "Save failed.");
   }
 }

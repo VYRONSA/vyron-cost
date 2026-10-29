@@ -20,6 +20,7 @@ import {
 } from "@/lib/vyron-xero-sync-engine";
 import { isXeroOAuthConfigured } from "@/lib/vyron-xero-integration";
 import {
+  requireAuditActorName,
   requireWorkspacePermission,
   workspaceAccessErrorResponse,
 } from "@/lib/vyron-workspace-access";
@@ -55,10 +56,9 @@ async function handleSyncNowAction(
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   if (!isXeroOAuthConfigured()) return oauthNotConfiguredResponse();
 
-  const actor = String(body.actor || "user");
-
   try {
     await requireWorkspacePermission("xero.sync");
+    const actor = await requireAuditActorName();
     const { workspaceId, companyId } = await requireXeroWorkspaceContext(xeroContextFromRequest(request, body));
     const result = await run(supabase, workspaceId, companyId, actor);
 
@@ -113,7 +113,6 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const id = String(body.id || "");
   const action = String(body.action || "");
-  const actor = String(body.actor || "user");
 
   if (action === "sync-all-customers-now") {
     return handleSyncNowAction(request, body, action, syncAllCustomersNow, "Customer sync");
@@ -129,6 +128,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const { workspaceId, companyId } = await requireXeroWorkspaceContext(xeroContextFromRequest(request, body));
+    // The verified member, for every action below; a browser-sent `actor` is ignored.
+    const actor = await requireAuditActorName();
 
     if (action === "queue-customer") {
       await requireWorkspacePermission("xero.sync");
@@ -301,6 +302,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "fail") {
+      // Marking a queue item failed is a sync action like cancel and retry; it had no permission check.
+      await requireWorkspacePermission("xero.sync");
       const message = String(body.error || body.reason || "Sync failed.").trim();
       const { data, error } = await supabase
         .from("vyron_xero_sync_queue")
