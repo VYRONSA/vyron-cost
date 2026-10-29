@@ -20,7 +20,6 @@ VYRON COST Document Intelligence — Demo Sprint (Batch A complete)
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key   <-- REQUIRED for uploads (anon sees 0 companies due to RLS)
    OPENAI_API_KEY=your_openai_key                      <-- REQUIRED for extraction
    VYRON_DEFAULT_TENANT_ID=48002864-8800-4000-9000-000000000001
-   VYRON_DOCUMENT_SUPERVISOR_PIN=vyron-supervisor    <-- Supervisor override PIN (demo default)
 
    Debug: GET http://localhost:3007/api/documents/tenant-debug
 

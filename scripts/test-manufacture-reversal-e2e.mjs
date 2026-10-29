@@ -9,8 +9,11 @@
  *   - raw restored / finished goods removed, status Completed→Reversed, audit,
  *   - a second reversal returns already_reversed with no duplicate set,
  *   - a downstream-issued run is blocked with a structured 409,
- *   - the route rejects unauthenticated / supervisor=false / missing reason /
- *     >500-char reason, and never exposes a browser-direct write path.
+ *   - the route rejects unauthenticated / missing reason / >500-char reason,
+ *     and never exposes a browser-direct write path. Supervisor authority is
+ *     the member's manufacturing.runs.reverse permission (2026-10-29); a
+ *     browser-sent `supervisor` flag is ignored — see
+ *     test-supervisor-permission-gates.mjs for the permission matrix.
  *
  *   NODE_TLS_REJECT_UNAUTHORIZED=0 node scripts/test-manufacture-reversal-e2e.mjs
  */
@@ -86,7 +89,6 @@ async function run() {
   check("8. unauthenticated reversal -> 401/403", await (async () => { const r = await api(`/api/production/runs/${runId}/reverse`, { body: { reason: "x", supervisor: true } }); return r.status === 401 || r.status === 403; })());
   check("8. missing/blank reason -> 400", (await rev({ reason: "   ", supervisor: true }, cookie)).status === 400);
   check("8. reason >500 chars -> 400", (await rev({ reason: "x".repeat(501), supervisor: true }, cookie)).status === 400);
-  check("8. supervisor=false rejected (not reversed)", !(await rev({ reason: "valid reason", supervisor: false }, cookie)).data.ok);
   check("8. no writes after rejected reversals; run stays Completed", (await revTxns(runId)) === 0 && (await supabase.from("vyron_cost_production_runs").select("status").eq("id", runId).single()).data.status === "Completed");
 
   // ── Step 7 happy path through the route ──

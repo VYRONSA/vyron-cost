@@ -91,8 +91,8 @@ export default function DocumentSupervisorSettings() {
         </Link>
         <h2 className="text-2xl font-black text-slate-950">Supervisor settings</h2>
         <p className="mt-1 text-sm font-semibold text-slate-500">
-          Company approval policy for invoice review. Override PIN defaults to <code className="text-xs">vyron-supervisor</code>{" "}
-          (set <code className="text-xs">VYRON_DOCUMENT_SUPERVISOR_PIN</code> in env).
+          Company approval policy for invoice review. Overrides are approved by members with the “Override invoice approval
+          policy” permission (Admin → User Setup); each override records who approved it and why.
         </p>
       </div>
 

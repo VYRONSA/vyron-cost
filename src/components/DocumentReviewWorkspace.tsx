@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
+import { useWorkspacePermissions } from "@/hooks/useWorkspacePermissions";
 import PoLinkPanel from "@/components/PoLinkPanel";
 import ExtractionQualityPanel from "@/components/ExtractionQualityPanel";
 import InvoiceReviewTotalsFooter, { InvoiceTotalsWarningBanner } from "@/components/InvoiceReviewTotalsFooter";
@@ -95,6 +96,8 @@ type EditIngredientModal = {
 
 export default function DocumentReviewWorkspace({ documentId, embedded = false }: { documentId: string; embedded?: boolean }) {
   const router = useRouter();
+  const { can } = useWorkspacePermissions();
+  const canOverridePolicy = can("supplier_invoices.override");
   const extractionTriggeredRef = useRef(false);
   const loadSequenceRef = useRef(0);
   const activeLoadRef = useRef<{ id: number; controller: AbortController } | null>(null);
@@ -131,7 +134,6 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
   const [overrideModal, setOverrideModal] = useState<{
     open: boolean;
     violations: ApprovalViolation[];
-    pin: string;
     reason: string;
     error?: string;
     draftToSave: ReviewDraft | null;
@@ -514,7 +516,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
   async function completeApproval(
     draftToSave: ReviewDraft,
     approveOpts: { force: boolean; forceTotalsMismatch: boolean; reconciliationNote?: string },
-    supervisorOverride?: { pin: string; reason: string }
+    supervisorOverride?: { reason: string }
   ) {
     setApproving(true);
     setErrorMessage("");
@@ -529,7 +531,6 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
         setOverrideModal({
           open: true,
           violations: validation.validation.violations,
-          pin: "",
           reason: "",
           draftToSave,
           approveOpts,
@@ -553,10 +554,10 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           alreadyApproved?: boolean;
         };
         // A refused override is not a fresh block: keep the dialog, the findings
-        // and the reason, and say why. Only the PIN is cleared.
+        // and the reason, and say why.
         if (approvalError.supervisorOverrideRejected) {
           setOverrideModal((current) =>
-            current ? { ...current, pin: "", error: approvalError.message } : current
+            current ? { ...current, error: approvalError.message } : current
           );
           return;
         }
@@ -566,7 +567,6 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           setOverrideModal({
             open: true,
             violations: approvalError.violations,
-            pin: "",
             reason: "",
             draftToSave,
             approveOpts,
@@ -662,13 +662,12 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
 
   async function submitSupervisorOverride() {
     if (!overrideModal?.draftToSave) return;
-    if (!overrideModal.pin.trim() || !overrideModal.reason.trim()) {
-      setOverrideModal({ ...overrideModal, error: "Supervisor PIN and override reason are required." });
+    if (!overrideModal.reason.trim()) {
+      setOverrideModal({ ...overrideModal, error: "An override reason is required." });
       return;
     }
     setOverrideModal({ ...overrideModal, error: undefined });
     await completeApproval(overrideModal.draftToSave, overrideModal.approveOpts, {
-      pin: overrideModal.pin.trim(),
       reason: overrideModal.reason.trim(),
     });
   }
@@ -1672,15 +1671,11 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
               ))}
             </ul>
             <p className="mt-4 text-xs font-bold text-slate-600">Supervisor override</p>
-            <label className="mt-2 block text-xs font-black uppercase text-slate-500">
-              PIN
-              <input
-                type="password"
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold"
-                value={overrideModal.pin}
-                onChange={(e) => setOverrideModal({ ...overrideModal, pin: e.target.value })}
-              />
-            </label>
+            <p className="mt-1 text-xs font-semibold text-slate-500">
+              {canOverridePolicy
+                ? "You are authorised to override company approval policy. Your name, the reason and every finding above are recorded."
+                : "Overriding company approval policy needs the “Override invoice approval policy” permission. Ask an owner or supervisor to approve this invoice."}
+            </p>
             <label className="mt-2 block text-xs font-black uppercase text-slate-500">
               Override reason
               <textarea
@@ -1705,7 +1700,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
               </button>
               <button
                 type="button"
-                disabled={approving}
+                disabled={approving || !canOverridePolicy}
                 onClick={() => void submitSupervisorOverride()}
                 className="rounded-xl bg-[var(--vyron-warning-solid)] px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
               >

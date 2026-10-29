@@ -1244,6 +1244,8 @@ export async function reverseProductionRun(
   input: { reason: string; actor?: string; supervisor?: boolean }
 ) {
   // Supervisor + reason gates (defence in depth; the route enforces them too).
+  // `supervisor` is set by the route only after the signed-in member's
+  // manufacturing.runs.reverse permission has been verified — never by the browser.
   if (!input.supervisor) {
     throw new Error("Supervisor approval required to reverse a completed batch.");
   }

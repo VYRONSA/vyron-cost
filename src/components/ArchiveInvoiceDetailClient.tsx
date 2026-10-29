@@ -7,6 +7,7 @@ import InvoiceDocumentViewer from "@/components/InvoiceDocumentViewer";
 import { fetchDocumentPreview } from "@/lib/vyron-document-review-client";
 import { priceMovementClass, priceMovementLabel, type PriceMovement } from "@/lib/vyron-price-history";
 import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPageShell";
+import { useWorkspacePermissions } from "@/hooks/useWorkspacePermissions";
 
 type ArchiveDetail = {
   document: Record<string, unknown>;
@@ -28,8 +29,9 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
   const [message, setMessage] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewMime, setPreviewMime] = useState<string | null>(null);
+  const { can } = useWorkspacePermissions();
+  const canRollbackCost = can("supplier_invoices.rollback_cost");
   const [rollbackOpen, setRollbackOpen] = useState(false);
-  const [supervisorPin, setSupervisorPin] = useState("");
   const [rollbackNotes, setRollbackNotes] = useState("");
   const [rollingBack, setRollingBack] = useState(false);
 
@@ -70,6 +72,10 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
   }, [load]);
 
   async function handleRollback() {
+    if (!rollbackNotes.trim()) {
+      setError("A rollback reason is required.");
+      return;
+    }
     setRollingBack(true);
     setMessage("");
     setError("");
@@ -77,13 +83,13 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
       const res = await fetch(`/api/documents/${documentId}/rollback-cost`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ supervisorPin, notes: rollbackNotes, rolledBackBy: "supervisor" }),
+        body: JSON.stringify({ notes: rollbackNotes.trim() }),
       });
       const json = await res.json();
       if (!json.ok) throw new Error(json.error || "Rollback failed.");
       setMessage(json.message || "Cost update rolled back.");
       setRollbackOpen(false);
-      setSupervisorPin("");
+      setRollbackNotes("");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Rollback failed.");
@@ -135,14 +141,16 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
             {String(doc.approved_by || approval?.approved_by || "—")}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setRollbackOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-2 text-xs font-black uppercase text-[var(--vyron-warning-fg)]"
-        >
-          <RotateCcw size={14} />
-          Rollback cost update
-        </button>
+        {canRollbackCost ? (
+          <button
+            type="button"
+            onClick={() => setRollbackOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-2 text-xs font-black uppercase text-[var(--vyron-warning-fg)]"
+          >
+            <RotateCcw size={14} />
+            Rollback cost update
+          </button>
+        ) : null}
       </div>
 
       {message ? <p className="rounded-xl border border-[#2C5A6B]/25 bg-[#2C5A6B]/10 px-4 py-2 text-sm font-semibold text-[#2F7C40]">{message}</p> : null}
@@ -351,19 +359,10 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-black text-slate-950">Rollback cost update</h3>
             <p className="mt-2 text-sm font-semibold text-slate-600">
-              Supervisor only. Reverses the latest cost updates for this invoice. Price history is preserved.
+              Reverses the latest cost updates for this invoice. Price history is preserved. Your name and the reason are recorded.
             </p>
-            <label className="mt-4 block text-xs font-black uppercase text-slate-500">
-              Supervisor PIN
-              <input
-                type="password"
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold"
-                value={supervisorPin}
-                onChange={(e) => setSupervisorPin(e.target.value)}
-              />
-            </label>
             <label className="mt-3 block text-xs font-black uppercase text-slate-500">
-              Notes
+              Reason (required)
               <textarea
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold"
                 rows={3}
@@ -377,7 +376,7 @@ export default function ArchiveInvoiceDetailClient({ documentId }: { documentId:
               </button>
               <button
                 type="button"
-                disabled={rollingBack}
+                disabled={rollingBack || !rollbackNotes.trim()}
                 onClick={() => void handleRollback()}
                 className="rounded-xl bg-[var(--vyron-warning-solid)] px-4 py-2 text-sm font-black text-[#F8FAFC] disabled:opacity-60"
               >

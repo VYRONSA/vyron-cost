@@ -379,7 +379,8 @@ export async function approveAndUpdateCosts(
     force?: boolean;
     forceTotalsMismatch?: boolean;
     reconciliationNote?: string;
-    supervisorOverride?: { pin: string; reason: string; overriddenBy?: string };
+    /** Authorised server-side by the signed-in member's supplier_invoices.override permission. */
+    supervisorOverride?: { reason: string; overriddenBy?: string };
   }
 ) {
   const response = await fetch(`/api/documents/${documentId}/review/approve`, {
@@ -391,7 +392,6 @@ export async function approveAndUpdateCosts(
       reconciliationNote: options?.reconciliationNote ?? null,
       supervisorOverride: options?.supervisorOverride
         ? {
-            pin: options.supervisorOverride.pin,
             reason: options.supervisorOverride.reason,
             overriddenBy: options.supervisorOverride.overriddenBy || "supervisor",
           }

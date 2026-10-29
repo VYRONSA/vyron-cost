@@ -93,6 +93,13 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
   {
+    label: "Supplier Invoices",
+    permissions: [
+      { key: "supplier_invoices.override", label: "Override invoice approval policy" },
+      { key: "supplier_invoices.rollback_cost", label: "Roll back invoice cost updates" },
+    ],
+  },
+  {
     label: "Inventory",
     permissions: [
       { key: "inventory.view", label: "View inventory" },
@@ -214,6 +221,8 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "purchase_orders.approve": true,
     "store_orders.approve": true,
     "goods_receipts.approve": true,
+    "supplier_invoices.override": true,
+    "supplier_invoices.rollback_cost": true,
     "inventory.counts.approve": true,
     "inventory.minimums.edit": true,
     "manufacturing.runs.complete": true,
@@ -232,6 +241,8 @@ const ROLE_DEFAULTS: Record<WorkspaceUserRole, Record<string, boolean>> = {
     "purchase_orders.approve": true,
     "store_orders.approve": true,
     "goods_receipts.approve": true,
+    "supplier_invoices.override": true,
+    "supplier_invoices.rollback_cost": true,
     "inventory.counts.approve": true,
     "inventory.minimums.edit": true,
     "finished_goods.export": true,

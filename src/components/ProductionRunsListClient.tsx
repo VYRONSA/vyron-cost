@@ -39,7 +39,6 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
   const [runs, setRuns] = useState<Run[]>([]);
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
-  const [supervisorMode, setSupervisorMode] = useState(false);
   const [message, setMessage] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -60,7 +59,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
   }, [refresh]);
 
   async function reverseBatch(run: Run) {
-    const reason = window.prompt("Supervisor reversal reason (required):", "Incorrect batch quantity captured");
+    const reason = window.prompt(`Reverse batch ${run.run_number}? Reversal reason (required):`, "Incorrect batch quantity captured");
     if (!reason?.trim()) return;
     setBusyId(run.id);
     setMessage("");
@@ -68,7 +67,7 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
     const res = await fetch(`/api/production/runs/${run.id}/reverse`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...workspaceBody, reason, actor: "supervisor", supervisor: true }),
+      body: JSON.stringify({ ...workspaceBody, reason }),
     });
     const data = await res.json();
     setBusyId(null);
@@ -148,12 +147,6 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
           onChange={(e) => setSearch(e.target.value)}
           className="min-w-[200px] flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm"
         />
-        {canReverse ? (
-          <label className="flex items-center gap-2 rounded-xl border border-[var(--vyron-warning-border)] bg-[var(--vyron-warning-bg)] px-4 py-2 text-xs font-black text-[var(--vyron-warning-fg)]">
-            <input type="checkbox" checked={supervisorMode} onChange={(e) => setSupervisorMode(e.target.checked)} />
-            Supervisor mode
-          </label>
-        ) : null}
       </div>
 
       {message ? <p className="rounded-xl bg-[var(--vyron-success-bg)] px-4 py-3 text-sm font-bold text-[var(--vyron-success-fg)]">{message}</p> : null}
@@ -185,8 +178,8 @@ export default function ProductionRunsListClient({ title = "Manufacturing Histor
             runs.map((run) => {
               const qty = run.status === "Completed" || run.status === "Reversed" ? run.actual_qty : run.planned_qty;
               const date = run.completed_at || run.created_at;
-              const canReverseRun = canReverse && supervisorMode && run.status === "Completed";
-              const canAdjust = canReverse && supervisorMode && ["Planned", "Approved", "In Production", "Completed"].includes(run.status);
+              const canReverseRun = canReverse && run.status === "Completed";
+              const canAdjust = canReverse && ["Planned", "Approved", "In Production", "Completed"].includes(run.status);
               return (
                 <div
                   key={run.id}

@@ -10,8 +10,9 @@ import {
 import { updateStockCostsFromApprovedInvoice } from "@/lib/vyron-inventory";
 import { getPoApprovalRules, writeProcurementAudit } from "@/lib/vyron-procurement";
 import { computeThreeWayMatch, upsertThreeWayMatch } from "@/lib/vyron-three-way-match";
-import { isSupervisorAuthorized } from "@/lib/vyron-document-approval-audit";
-import { getServerWorkspaceSession } from "@/lib/vyron-workspace-admin-server";
+import { SUPPLIER_INVOICE_OVERRIDE_PERMISSION } from "@/lib/vyron-document-approval-audit";
+import { requireWorkspacePermission, WorkspaceAccessError } from "@/lib/vyron-workspace-access";
+import type { WorkspaceSession } from "@/lib/vyron-workspace-session";
 import { insertDocumentCostAudit } from "@/lib/vyron-document-cost-audit";
 import { decideSupplierCostUpdate } from "@/lib/vyron-supplier-cost-guard";
 import { roundMoney } from "@/lib/vyron-invoice-line-math";
@@ -86,12 +87,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const approvedBy = String(body?.approvedBy || "invoice-review").trim() || "invoice-review";
   const approvedAt = new Date().toISOString();
   const supervisorOverride = body?.supervisorOverride as
-    | { pin?: string; reason?: string; overriddenBy?: string }
+    | { reason?: string; overriddenBy?: string }
     | undefined;
-  const overridePin = String(supervisorOverride?.pin || "");
   const overrideReason = String(supervisorOverride?.reason || "").trim();
-  const overrideRequested = Boolean(supervisorOverride && (overridePin || overrideReason));
-  const hasSupervisorOverride = Boolean(overridePin && overrideReason && isSupervisorAuthorized(overridePin));
+  const overrideRequested = Boolean(supervisorOverride && typeof supervisorOverride === "object");
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
   }
@@ -134,10 +133,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   /*
-   * A supervisor override that is not accepted is refused as such. It used to
-   * fall through as "no override", so the response was identical to the
-   * original policy block and the dialog reopened blank: the supervisor could
-   * not tell a rejected PIN from an override the system ignored.
+   * A supervisor override is authorised by the signed-in member's own
+   * permission (supplier_invoices.override), checked against the database on
+   * this request. It used to be a PIN shared by every tenant, which said
+   * nothing about who was overriding and blocked owners who never had it.
+   *
+   * An override that is not authorised is refused as such, never treated as
+   * "no override": the response must be distinguishable from the original
+   * policy block, or the dialog reopens blank with no explanation.
    */
   if (overrideRequested && !overrideReason) {
     return NextResponse.json(
@@ -145,13 +148,24 @@ export async function POST(request: NextRequest, context: RouteContext) {
       { status: 400 }
     );
   }
-  if (overrideRequested && !hasSupervisorOverride) {
-    traceEvent("APPROVAL OVERRIDE REJECTED", documentId, { reason: "supervisor PIN not accepted" });
-    return NextResponse.json(
-      { ok: false, supervisorOverrideRejected: true, error: "Supervisor PIN not accepted. The invoice was not approved." },
-      { status: 403 }
-    );
+  let overrideSession: WorkspaceSession | null = null;
+  if (overrideRequested) {
+    try {
+      overrideSession = await requireWorkspacePermission(SUPPLIER_INVOICE_OVERRIDE_PERMISSION);
+    } catch (error) {
+      traceEvent("APPROVAL OVERRIDE REJECTED", documentId, { reason: "override permission not held" });
+      const status = error instanceof WorkspaceAccessError ? error.status : 403;
+      return NextResponse.json(
+        {
+          ok: false,
+          supervisorOverrideRejected: true,
+          error: "You do not have permission to override company approval policy. The invoice was not approved.",
+        },
+        { status }
+      );
+    }
   }
+  const hasSupervisorOverride = Boolean(overrideSession);
 
   const rules = await getDocumentApprovalRules(supabase, tenantId);
   const poRules = await getPoApprovalRules(supabase, tenantId);
@@ -223,8 +237,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
    * failure to record it stops the approval: an exception to company policy
    * that leaves no evidence is not an authorised exception.
    *
-   * Identity comes from the verified workspace session. The name the browser
-   * sends ("supervisor") is kept only as the label the operator declared.
+   * Identity comes from the verified workspace session that holds the override
+   * permission. The name the browser sends ("supervisor") is kept only as the
+   * label the operator declared.
    */
   let supervisorOverrideRecord: {
     overrideAuditId: string | null;
@@ -232,14 +247,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
     overrideReason: string;
     rulesOverridden: string[];
   } | null = null;
-  if (overridingPolicy) {
-    const session = await getServerWorkspaceSession().catch(() => null);
+  if (overridingPolicy && overrideSession) {
+    const session = overrideSession;
     const declaredBy = String(supervisorOverride?.overriddenBy || "").trim() || null;
-    const overriddenBy = session?.email || session?.userId || declaredBy || approvedBy;
+    const overriddenBy = session.email || session.userId;
     const rulesOverridden = validation.violations.filter((v) => v.severity === "error").map((v) => v.rule);
     const overrideMetadata = {
-      sessionUserId: session?.userId ?? null,
-      sessionWorkspaceId: session?.workspaceId ?? null,
+      sessionUserId: session.userId,
+      sessionWorkspaceId: session.workspaceId,
+      sessionRole: session.role,
+      authorisedBy: `permission:${SUPPLIER_INVOICE_OVERRIDE_PERMISSION}`,
       declaredBy,
       approvedBy,
       resultingStatus: "archived",

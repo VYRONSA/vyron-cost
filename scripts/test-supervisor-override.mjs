@@ -22,6 +22,14 @@
  *   3. Saving corrections on an approved invoice set status back to "reviewed",
  *      and re-approving it re-raised the overridden findings as a fresh block.
  *
+ * 2026-10-29 — THE SHARED PIN IS GONE. The override is authorised by the
+ * signed-in member's own `supplier_invoices.override` permission, checked on the
+ * server against the database. Owners hold it with every other permission (an
+ * active Kingdom Foods owner was blocked by a PIN shared across every tenant
+ * that they had never been given); SUPERVISOR holds it by role default; a
+ * clerk does not, and no PIN — the old built-in default, or the old env value —
+ * grants it.
+ *
  * Drives the REAL approve / corrections / validate route handlers with the real
  * session, tenant and policy code. Only the process boundary is replaced (an
  * in-memory database, cookies). Family A: no network, no database, no
@@ -40,8 +48,9 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = `qa-${randomBytes(32).toString("hex")}`;
 delete process.env.VYRON_WORKSPACE_SESSION_SECRET;
 process.env.NEXT_PUBLIC_SUPABASE_URL = "http://qa.invalid";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "qa-anon";
-const SUPERVISOR_PIN = `qa-pin-${randomBytes(4).toString("hex")}`;
-process.env.VYRON_DOCUMENT_SUPERVISOR_PIN = SUPERVISOR_PIN;
+// A leftover deployment may still carry the old variable. It must grant nothing.
+const LEFTOVER_PIN = `qa-pin-${randomBytes(4).toString("hex")}`;
+process.env.VYRON_DOCUMENT_SUPERVISOR_PIN = LEFTOVER_PIN;
 
 const ROOT = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const importFromRoot = (relative) => import(pathToFileURL(path.join(ROOT, relative)).href);
@@ -59,11 +68,16 @@ const check = (name, cond, detail = "") => {
 const uuid = (t, n) => `${t}${t}${t}${t}0000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const CO_A = uuid("a", 1), CO_B = uuid("b", 1);
 const WS_A = uuid("a", 2), WS_B = uuid("b", 2);
+// U_SUPERVISOR is the tenant's OWNER (the Kingdom Foods shape: an owner, no PIN).
 const U_SUPERVISOR = uuid("a", 10), U_B = uuid("b", 10);
+const U_CLERK = uuid("a", 11), U_SUP_ROLE = uuid("a", 12), U_SUP_REVOKED = uuid("a", 13);
 const DOC = uuid("d", 1);
 const USERS = [
   { id: U_SUPERVISOR, email: "supervisor@qa-a.test", password: "qa-pass-supervisor" },
   { id: U_B, email: "owner@qa-b.test", password: "qa-pass-b" },
+  { id: U_CLERK, email: "clerk@qa-a.test", password: "qa-pass-clerk" },
+  { id: U_SUP_ROLE, email: "sup@qa-a.test", password: "qa-pass-sup" },
+  { id: U_SUP_REVOKED, email: "sup-revoked@qa-a.test", password: "qa-pass-sup-revoked" },
 ];
 
 /** The extraction verdicts behind the three OCR blockers in the screenshots. */
@@ -89,6 +103,9 @@ function seed({ requirePoLinked = false, extraction = FAILED_EXTRACTION, lines, 
     vyron_workspace_memberships: [
       { id: "m1", workspace_id: WS_A, user_id: U_SUPERVISOR, role: "OWNER", status: "Active", permissions: {} },
       { id: "m2", workspace_id: WS_B, user_id: U_B, role: "OWNER", status: "Active", permissions: {} },
+      { id: "m3", workspace_id: WS_A, user_id: U_CLERK, role: "PROCUREMENT", status: "Active", permissions: {} },
+      { id: "m4", workspace_id: WS_A, user_id: U_SUP_ROLE, role: "SUPERVISOR", status: "Active", permissions: {} },
+      { id: "m5", workspace_id: WS_A, user_id: U_SUP_REVOKED, role: "SUPERVISOR", status: "Active", permissions: { "supplier_invoices.override": false } },
     ],
     vyron_documents: [
       {
@@ -195,11 +212,11 @@ const saveCorrections = (jar) =>
   });
 
 /** Exactly what the review screen sends from the override dialog. */
-const overrideBody = (pin, reason) => ({
+const overrideBody = (reason, extra = {}) => ({
   force: false,
   forceTotalsMismatch: false,
   reconciliationNote: null,
-  supervisorOverride: { pin, reason, overriddenBy: "supervisor" },
+  supervisorOverride: { reason, overriddenBy: "supervisor", ...extra },
 });
 
 const doc = () => db.tables.vyron_documents.find((d) => d.id === DOC);
@@ -213,7 +230,13 @@ const SCREENSHOT_2_RULES = [...SCREENSHOT_1_RULES.split(","), "require_po_linked
 useDb(seed());
 const jarA = await login("supervisor@qa-a.test", "qa-pass-supervisor");
 const jarB = await login("owner@qa-b.test", "qa-pass-b");
-check("synthetic members sign in through the real login route", Boolean(jarA.vyron_workspace_user_session && jarB.vyron_workspace_user_session));
+const jarClerk = await login("clerk@qa-a.test", "qa-pass-clerk");
+const jarSup = await login("sup@qa-a.test", "qa-pass-sup");
+const jarSupRevoked = await login("sup-revoked@qa-a.test", "qa-pass-sup-revoked");
+check(
+  "synthetic members sign in through the real login route",
+  [jarA, jarB, jarClerk, jarSup, jarSupRevoked].every((jar) => Boolean(jar.vyron_workspace_user_session))
+);
 
 console.log("\n1. Invoice blocked by policy stays blocked");
 {
@@ -243,36 +266,54 @@ console.log("\n10. Normal approval without override still respects every blocker
   check("a tenant with no PO rules row still requires a linked PO (default on)", ruleSet(d.json?.violations).includes("require_po_linked"));
 }
 
-console.log("\n6. Invalid supervisor PIN → override fails, and says so");
+console.log("\n6. A member without the override permission → override fails, and says so");
 {
   useDb(seed());
-  const r = await approve(jarA, overrideBody("1234", "Checked every line against the paper invoice"));
-  check("wrong PIN → 403 supervisorOverrideRejected", r.status === 403 && r.json?.supervisorOverrideRejected === true, JSON.stringify(r.json));
-  check("the refusal is distinguishable from a fresh policy block", r.json?.policyBlocked !== true && /PIN not accepted/.test(r.json?.error || ""));
+  const reason = "Checked every line against the paper invoice";
+  const r = await approve(jarClerk, overrideBody(reason));
+  check("PROCUREMENT clerk → 403 supervisorOverrideRejected", r.status === 403 && r.json?.supervisorOverrideRejected === true, JSON.stringify(r.json));
+  check("the refusal is distinguishable from a fresh policy block", r.json?.policyBlocked !== true && /permission to override/.test(r.json?.error || ""));
   check("not approved, nothing recorded, no cost written", doc().status === "reviewed" && rows("vyron_document_approval_override_audit").length === 0 && costWrites() === 0);
-  const def = await approve(jarA, overrideBody("vyron-supervisor", "Checked every line against the paper invoice"));
-  check("the built-in default PIN is refused once a tenant PIN is configured", def.status === 403 && doc().status === "reviewed");
+  const revoked = await approve(jarSupRevoked, overrideBody(reason));
+  check("a SUPERVISOR whose override permission was switched off → 403", revoked.status === 403 && revoked.json?.supervisorOverrideRejected === true);
+  // No PIN is a credential any more: not the old built-in default, not the old env value.
+  const builtIn = await approve(jarClerk, overrideBody(reason, { pin: "vyron-supervisor" }));
+  const leftover = await approve(jarClerk, overrideBody(reason, { pin: LEFTOVER_PIN }));
+  check("the old built-in default PIN grants a clerk nothing", builtIn.status === 403 && doc().status === "reviewed");
+  check("the old VYRON_DOCUMENT_SUPERVISOR_PIN value grants a clerk nothing", leftover.status === 403 && doc().status === "reviewed");
+  check("no response echoes a PIN", ![r, revoked, builtIn, leftover].some((x) => JSON.stringify(x.json).includes(LEFTOVER_PIN) || JSON.stringify(x.json).includes("vyron-supervisor")));
+  check("a clerk's normal approval still meets the policy block (400), not a permission error", (await approve(jarClerk, { force: false, forceTotalsMismatch: false })).json?.policyBlocked === true);
 }
 
 console.log("\n7. Missing override reason → override fails");
 {
   useDb(seed());
-  const r = await approve(jarA, overrideBody(SUPERVISOR_PIN, "   "));
-  check("valid PIN, blank reason → 400 supervisorOverrideRejected", r.status === 400 && r.json?.supervisorOverrideRejected === true && /reason is required/.test(r.json?.error || ""), JSON.stringify(r.json));
+  const r = await approve(jarA, overrideBody("   "));
+  check("owner, blank reason → 400 supervisorOverrideRejected", r.status === 400 && r.json?.supervisorOverrideRejected === true && /reason is required/.test(r.json?.error || ""), JSON.stringify(r.json));
   check("not approved, nothing recorded", doc().status === "reviewed" && rows("vyron_document_approval_override_audit").length === 0 && costWrites() === 0);
 }
 
 console.log("\n8. Unauthorised callers cannot override");
 {
   useDb(seed());
-  const anon = await approve({}, overrideBody(SUPERVISOR_PIN, "reason"));
-  check("no session, correct PIN → refused (401/403)", anon.status === 401 || anon.status === 403, String(anon.status));
-  const otherTenant = await approve(jarB, overrideBody(SUPERVISOR_PIN, "reason"));
-  check("another tenant's member, correct PIN → refused (403)", otherTenant.status === 403, String(otherTenant.status));
+  const anon = await approve({}, overrideBody("reason"));
+  check("no session → refused (401/403)", anon.status === 401 || anon.status === 403, String(anon.status));
+  const otherTenant = await approve(jarB, overrideBody("reason"));
+  check("another tenant's OWNER → refused (403)", otherTenant.status === 403, String(otherTenant.status));
   check("neither approved nor recorded anything", doc().status === "reviewed" && rows("vyron_document_approval_override_audit").length === 0 && costWrites() === 0);
 }
 
-console.log("\n2-5. Kingdom Foods screenshot scenario: valid override approves and is fully recorded");
+console.log("\n8b. A SUPERVISOR-role member overrides by role default, without a PIN");
+{
+  useDb(seed());
+  const reason = "Weight column misread; checked against the delivery note";
+  const r = await approve(jarSup, overrideBody(reason));
+  check("SUPERVISOR → approved (200)", r.status === 200 && doc().status === "archived", JSON.stringify(r.json).slice(0, 300));
+  const o = rows("vyron_document_approval_override_audit")[0] || {};
+  check("the override is attributed to the supervisor, with role and permission", o.overridden_by === U_SUP_ROLE && o.metadata?.sessionRole === "SUPERVISOR" && o.metadata?.authorisedBy === "permission:supplier_invoices.override");
+}
+
+console.log("\n2-5. Kingdom Foods screenshot scenario: the owner overrides without a PIN; fully recorded");
 for (const [label, requirePoLinked, expectedRules] of [
   ["screenshot 1 (OCR findings)", false, SCREENSHOT_1_RULES],
   ["screenshot 2 (OCR findings + PO must be linked)", true, SCREENSHOT_2_RULES],
@@ -283,8 +324,8 @@ for (const [label, requirePoLinked, expectedRules] of [
   check("the dialog's findings", ruleSet(blocked.json?.violations) === expectedRules, ruleSet(blocked.json?.violations));
 
   const reason = "Checked every line against the paper invoice; OCR misread the weight column";
-  const r = await approve(jarA, overrideBody(SUPERVISOR_PIN, reason));
-  check("2. valid PIN + reason → approved (200)", r.status === 200 && r.json?.ok === true, JSON.stringify(r.json).slice(0, 300));
+  const r = await approve(jarA, overrideBody(reason));
+  check("2. OWNER + reason, no PIN → approved (200)", r.status === 200 && r.json?.ok === true, JSON.stringify(r.json).slice(0, 300));
   check("   costs were applied once", rows("vyron_document_cost_audit").length === 2);
 
   const audit = rows("vyron_document_approval_override_audit");
@@ -293,6 +334,7 @@ for (const [label, requirePoLinked, expectedRules] of [
   check("3. overridden_by is the signed-in user, not the browser's label", o.overridden_by === U_SUPERVISOR, String(o.overridden_by));
   check("3. reason, tenant and document recorded", o.override_reason === reason && o.tenant_id === CO_A && o.document_id === DOC);
   check("3. resulting approval state recorded", o.metadata?.resultingStatus === "archived" && Boolean(o.metadata?.approvedAt) && o.metadata?.declaredBy === "supervisor");
+  check("3. the authorising role and permission are recorded", o.metadata?.sessionRole === "OWNER" && o.metadata?.authorisedBy === "permission:supplier_invoices.override");
   check("5. every original blocker is in rules_bypassed", [...(o.rules_bypassed || [])].sort().join(",") === expectedRules, [...(o.rules_bypassed || [])].sort().join(","));
   check("5. the findings' text is preserved", ruleSet(o.violations_snapshot) === expectedRules && (o.violations_snapshot || []).every((v) => v.message));
   const po = rows("vyron_document_po_link_override_audit");
@@ -309,7 +351,7 @@ for (const [label, requirePoLinked, expectedRules] of [
   check("9. …and re-validating does not change the approval", doc().status === "archived");
   const again = await approve(jarA, { force: false, forceTotalsMismatch: false });
   check("9. re-approving reports 'already approved', not a fresh policy block", again.status === 409 && again.json?.alreadyApproved === true && again.json?.policyBlocked !== true, JSON.stringify(again.json));
-  const againOverride = await approve(jarA, overrideBody(SUPERVISOR_PIN, reason));
+  const againOverride = await approve(jarA, overrideBody(reason));
   check("9. a second override cannot re-apply costs", againOverride.status === 409 && rows("vyron_document_cost_audit").length === 2 && rows("vyron_document_approval_override_audit").length === 1);
   const saved = await saveCorrections(jarA);
   check("9. saving corrections cannot flip it back to 'reviewed'", saved.status === 409 && doc().status === "archived", `${saved.status} ${doc().status}`);
@@ -348,7 +390,7 @@ console.log("\nC. A clerk's \"Approve anyway?\" cannot bypass supervisor-only bl
   const pre = await validate(jarA, { force: true, forceTotalsMismatch: true });
   check("the pre-check agrees, so the supervisor dialog opens up front", pre.status === 200 && pre.json?.policyBlocked === true);
 
-  const sup = await approve(jarA, { ...CLERK_APPROVE_ANYWAY, supervisorOverride: { pin: SUPERVISOR_PIN, reason: "Credit note agreed with supplier", overriddenBy: "supervisor" } });
+  const sup = await approve(jarA, { ...CLERK_APPROVE_ANYWAY, supervisorOverride: { reason: "Credit note agreed with supplier", overriddenBy: "supervisor" } });
   check("the same invoice is approvable through the explicit supervisor override", sup.status === 200 && doc().status === "archived", JSON.stringify(sup.json).slice(0, 200));
   const o = rows("vyron_document_approval_override_audit")[0] || {};
   check("…and the override records the totals findings the clerk could not clear", (o.rules_bypassed || []).includes("major_totals_mismatch") && o.overridden_by === U_SUPERVISOR);
@@ -370,7 +412,7 @@ console.log("\nC. A clerk's \"Approve anyway?\" cannot bypass supervisor-only bl
 console.log("\nAn override that cannot be recorded does not approve");
 {
   useDb(seed(), { missingTables: ["vyron_document_approval_override_audit"] });
-  const r = await approve(jarA, overrideBody(SUPERVISOR_PIN, "reason"));
+  const r = await approve(jarA, overrideBody("reason"));
   check("audit table unavailable → 500, not approved", r.status === 500 && doc().status === "reviewed", JSON.stringify(r.json));
   check("no cost written", costWrites() === 0);
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberDisplayName } from "@/lib/vyron-audit-actor";
 import { reverseProductionRun, ManufactureReversalBlockedError } from "@/lib/vyron-manufacturing";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import {
@@ -24,10 +25,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   const body = await request.json().catch(() => ({}));
   try {
-    await requireWorkspacePermission("manufacturing.runs.reverse");
+    // Supervisor authority is the signed-in member's own reversal permission,
+    // verified here against the database. The browser's `supervisor` flag and
+    // `actor` name are ignored: neither can grant authority or name who acted.
+    const session = await requireWorkspacePermission("manufacturing.runs.reverse");
     const companyId = await requireManufacturingCompanyId(supabase, manufacturingCompanyContextFromRequest(request, body));
     // A reversal reason is mandatory and never defaulted — the audit trail must
-    // record WHY. Supervisor acknowledgement must be explicit, not assumed.
+    // record WHY.
     const reason = String(body.reason || "").trim();
     if (!reason) {
       return NextResponse.json({ ok: false, error: "A reversal reason is required." }, { status: 400 });
@@ -37,8 +41,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
     const run = await reverseProductionRun(supabase, companyId, id, {
       reason,
-      actor: String(body.actor || "supervisor"),
-      supervisor: body.supervisor === true,
+      actor: await memberDisplayName(supabase, session),
+      supervisor: true,
     });
     return NextResponse.json({ ok: true, run });
   } catch (error) {

@@ -8,6 +8,8 @@ export async function rollbackDocumentCostUpdates(
     documentId: string;
     rolledBackBy: string;
     notes?: string | null;
+    /** The verified member who authorised the rollback, and by which permission. */
+    authorisation?: { userId: string; role: string; permission: string };
   }
 ) {
   const { data: auditRows, error } = await supabase
@@ -31,7 +33,7 @@ export async function rollbackDocumentCostUpdates(
       rolled_back_by: params.rolledBackBy,
       reversal_count: pending.length,
       approval_notes: params.notes ?? null,
-      metadata: { source: "supervisor_rollback" },
+      metadata: { source: "supervisor_rollback", ...(params.authorisation ? { authorisation: params.authorisation } : {}) },
     })
     .select("id")
     .single();

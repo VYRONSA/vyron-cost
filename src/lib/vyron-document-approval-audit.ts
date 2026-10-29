@@ -50,8 +50,11 @@ export async function listDocumentApprovalAudit(supabase: SupabaseClient, docume
   return data || [];
 }
 
-export function isSupervisorAuthorized(supervisorPin: string | null | undefined) {
-  const expected = process.env.VYRON_DOCUMENT_SUPERVISOR_PIN || "vyron-supervisor";
-  const pin = supervisorPin?.trim() || "";
-  return pin.length > 0 && pin === expected;
-}
+/*
+ * Supervisor authority over supplier invoices is a workspace permission held by
+ * the signed-in member, checked server-side on each request. There is no shared
+ * PIN: the former VYRON_DOCUMENT_SUPERVISOR_PIN was one secret for every tenant
+ * and recorded nothing about who used it.
+ */
+export const SUPPLIER_INVOICE_OVERRIDE_PERMISSION = "supplier_invoices.override";
+export const SUPPLIER_INVOICE_COST_ROLLBACK_PERMISSION = "supplier_invoices.rollback_cost";
