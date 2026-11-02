@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { RecipeCostUnitError } from "@/lib/vyron-recipe-cost-policy";
+import { recipeCostPolicyForRequest } from "@/lib/vyron-recipe-cost-policy-server";
 
 import { createRecipeLine, listRecipeLines } from "@/lib/vyron-cost-recipes-data";
 
@@ -50,6 +52,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
   } catch (error) {
 
+    if (error instanceof RecipeCostUnitError) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
     return workspaceAccessErrorResponse(error, "List lines failed.");
 
   }
@@ -84,6 +87,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const companyId = await requireApiCompanyId();
 
+    const costPolicy = await recipeCostPolicyForRequest();
     const line = await createRecipeLine(supabase, companyId, id, {
 
       line_type: String(body.line_type || "Ingredient"),
@@ -103,13 +107,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       wastage_percent: Number(body.wastage_percent || 0),
 
       sort_order: body.sort_order,
+      cost_override_reason: body.cost_override_reason ?? null,
 
-    });
+    }, costPolicy);
 
-    return NextResponse.json({ ok: true, line });
+    return NextResponse.json({ ok: true, line, costCorrections: costPolicy.corrections });
 
   } catch (error) {
 
+    if (error instanceof RecipeCostUnitError) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
     return workspaceAccessErrorResponse(error, "Create line failed.");
 
   }

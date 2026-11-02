@@ -46,7 +46,20 @@ export function pickColumn(header: string[], names: string[]): string | null {
   return null;
 }
 
-/** A money / quantity cell: "R 1 234,50", "1,234.50", "(500.00)", "-500" → number; blank → null. */
+/**
+ * A money / quantity cell → number; blank or unreadable → null.
+ *
+ *   "R 1 234,50" → 1234.5    "1,234.50" → 1234.5    "1.234,50" → 1234.5
+ *   "0,125" → 0.125          "R18,45" → 18.45        "1,5" → 1.5
+ *   "(500.00)" / "500-" / "-500" → -500
+ *
+ * A comma is a DECIMAL comma (the South African convention; thousands are
+ * grouped with spaces) unless the cell also has a dot, or several commas in
+ * groups of three. One comma followed by exactly three digits and a non-zero
+ * whole part ("12,345") is ambiguous — 12.345 or 12345 — and returns null
+ * rather than a guess, so the row is reported instead of loading 1000× wrong.
+ * "0,125" is never thousands (a thousands group never follows a lone 0).
+ */
 export function parseAmount(raw: string | null | undefined): number | null {
   let text = String(raw ?? "").trim();
   if (!text) return null;
@@ -55,7 +68,7 @@ export function parseAmount(raw: string | null | undefined): number | null {
     negative = true;
     text = text.slice(1, -1);
   }
-  text = text.replace(/[Rr$€£\s ]/g, "");
+  text = text.replace(/^(ZAR|R|\$|€|£)/i, "").replace(/[Rr$€£\s\u00a0\u202f']/g, "");
   if (text.endsWith("-")) {
     negative = true;
     text = text.slice(0, -1);
@@ -64,9 +77,23 @@ export function parseAmount(raw: string | null | undefined): number | null {
     negative = !negative;
     text = text.slice(1);
   }
-  // Decimal comma ("1234,50" or "1.234,50") vs thousands comma ("1,234.50").
-  if (/,\d{1,2}$/.test(text) && !/\.\d{1,2}$/.test(text)) text = text.replace(/\./g, "").replace(",", ".");
-  else text = text.replace(/,/g, "");
+  const lastComma = text.lastIndexOf(",");
+  const lastDot = text.lastIndexOf(".");
+  if (lastComma >= 0 && lastDot >= 0) {
+    // Both separators: the last one is the decimal point ("1.234,50" / "1,234.50").
+    text = lastComma > lastDot ? text.replace(/\./g, "").replace(",", ".") : text.replace(/,/g, "");
+  } else if (lastComma >= 0) {
+    const commas = (text.match(/,/g) || []).length;
+    if (commas > 1) {
+      // "1,234,567": thousands groups of exactly three; anything else is not a number.
+      if (!/^\d{1,3}(,\d{3})+$/.test(text)) return null;
+      text = text.replace(/,/g, "");
+    } else {
+      const [whole, fraction] = text.split(",");
+      if (fraction.length === 3 && whole !== "0" && whole !== "") return null; // "12,345": ambiguous
+      text = `${whole}.${fraction}`;
+    }
+  }
   if (!/^\d*\.?\d+$/.test(text)) return null;
   const value = Number(text);
   return Number.isFinite(value) ? (negative ? -value : value) : null;

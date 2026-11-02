@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { readAllIn, readAllPages } from "@/lib/vyron-supabase-paging";
+import { assertSupplierInvoiceNotDuplicate, normaliseInvoiceNumber, supplierInvoiceLinkKey } from "@/lib/vyron-supplier-invoice-uniqueness";
 
 /**
  * Supplier invoice management — server side, company scoped.
@@ -105,14 +106,13 @@ export type SupplierInvoiceRegisterRow = SupplierInvoiceRow & {
   origin: "register" | "document";
   /** Where the row opens. */
   href: string;
+  /** A register invoice whose PDF was approved in Invoice Intelligence and linked to it (not a second invoice). */
+  linked_document_id?: string | null;
+  linked_document_href?: string | null;
 };
 
 /** Supplier + invoice number; null when there is no number to compare (a blank number is not evidence of a duplicate). */
-const invoiceKey = (row: { supplier_name: string | null; invoice_number: string | null }) => {
-  const number = String(row.invoice_number || "").trim().toLowerCase();
-  if (!number || number === "—") return null;
-  return `${String(row.supplier_name || "").trim().toLowerCase()}|${number}`;
-};
+const invoiceKey = (row: { supplier_name: string | null; invoice_number: string | null }) => supplierInvoiceLinkKey(row.supplier_name, row.invoice_number);
 
 /**
  * Every processed supplier invoice for the register, whichever way it was captured.
@@ -152,9 +152,25 @@ export async function listSupplierInvoiceRegister(
     documentCounts[line.document_id] = (documentCounts[line.document_id] || 0) + 1;
   }
 
+  const registerRows: SupplierInvoiceRegisterRow[] = imported.map((row) => ({ ...row, duplicate_risk: Boolean(row.duplicate_risk), origin: "register" as const, href: `/supplier-invoices/${row.id}` }));
+  // A document for an invoice already in the register is that invoice's linked PDF: shown on its row, never as a second invoice.
+  const registerByKey = new Map<string, SupplierInvoiceRegisterRow>();
+  for (const row of registerRows) {
+    const key = invoiceKey(row);
+    if (key && !registerByKey.has(key)) registerByKey.set(key, row);
+  }
+  const unlinkedDocuments = documents.filter((doc) => {
+    const key = supplierInvoiceLinkKey(doc.supplier_name, doc.invoice_number);
+    const target = key ? registerByKey.get(key) : undefined;
+    if (!target || target.linked_document_id) return true;
+    target.linked_document_id = String(doc.id);
+    target.linked_document_href = `/document-intelligence/archive/${doc.id}`;
+    return false;
+  });
+
   const rows: SupplierInvoiceRegisterRow[] = [
-    ...imported.map((row) => ({ ...row, duplicate_risk: Boolean(row.duplicate_risk), origin: "register" as const, href: `/supplier-invoices/${row.id}` })),
-    ...documents.map((doc) => ({
+    ...registerRows,
+    ...unlinkedDocuments.map((doc) => ({
       id: String(doc.id),
       invoice_number: String(doc.invoice_number || "—"),
       supplier_id: null,
@@ -356,6 +372,19 @@ export async function updateSupplierInvoice(
   if (patch.sourceType !== undefined) update.source_type = patch.sourceType || null;
   if (patch.matchedPoId !== undefined) update.matched_po_id = patch.matchedPoId || null;
   if (patch.duplicateRisk !== undefined) update.duplicate_risk = Boolean(patch.duplicateRisk);
+
+  // Changing the number or supplier must not make this a copy of another captured invoice.
+  const numberChanged = update.invoice_number !== undefined && normaliseInvoiceNumber(update.invoice_number) !== normaliseInvoiceNumber(existing.invoice.invoice_number);
+  const supplierChanged = update.supplier_id !== undefined && String(update.supplier_id) !== String(existing.invoice.supplier_id || "");
+  if (numberChanged || supplierChanged) {
+    await assertSupplierInvoiceNotDuplicate(supabase, {
+      companyId,
+      invoiceNumber: update.invoice_number ?? existing.invoice.invoice_number,
+      supplierId: String(update.supplier_id ?? existing.invoice.supplier_id ?? ""),
+      supplierName: String(update.supplier_name ?? existing.invoice.supplier_name ?? ""),
+      excludeInvoiceId: id,
+    });
+  }
 
   const { error } = await supabase
     .from("vyron_cost_supplier_invoices")

@@ -8,6 +8,11 @@ import {
   verifyDocumentTenantAccess,
 } from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import {
+  DuplicateSupplierInvoiceError,
+  duplicateSupplierInvoiceBody,
+  findDuplicateSupplierInvoice,
+} from "@/lib/vyron-supplier-invoice-uniqueness";
 
 export const runtime = "nodejs";
 
@@ -94,6 +99,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
       { ok: false, alreadyApproved: true, error: "This invoice is already approved and cannot be edited." },
       { status: 409 }
     );
+  }
+
+  // Capturing a number already processed here for this supplier is refused, with the original named.
+  // (A number that exists only in the Supplier Invoice Register is allowed: approval links this PDF to it.)
+  const duplicate = await findDuplicateSupplierInvoice(supabase, {
+    companyId: String(existing.tenant_id),
+    invoiceNumber: body.fields.invoiceNumber,
+    supplierName: body.fields.supplierName,
+    excludeDocumentId: documentId,
+  });
+  if (duplicate?.store === "document") {
+    return NextResponse.json(duplicateSupplierInvoiceBody(new DuplicateSupplierInvoiceError(duplicate)), { status: 409 });
   }
 
   await supabase

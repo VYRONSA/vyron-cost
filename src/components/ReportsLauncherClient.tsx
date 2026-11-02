@@ -17,6 +17,7 @@ const reportCards = [
   { href: "/financial-leakage", title: "Duplicate Invoice Risks", description: "Once-off duplicate invoice exposure, potential recovery and confidence.", icon: ShieldAlert, badge: "Recovery" },
   { href: "/supplier-intelligence", title: "Supplier Price Increases", description: "Supplier price movement from approved invoices and cost history.", icon: TrendingUp, badge: "Supplier" },
   { href: "/supplier-intelligence", title: "Supplier Performance", description: "Supplier movement, risk, reliability and procurement exposure.", icon: Truck, badge: "Supplier" },
+  { href: "/reports/reorder", title: "Low Stock & Minimum Order Levels", description: "Items below their minimum: on hand, on order, minimum, quantity to order and the reason.", icon: PackageSearch, badge: "Inventory" },
   { href: "/inventory", title: "Stock Valuation", description: "Inventory master value, low stock and slow-moving stock visibility.", icon: Boxes, badge: "Inventory" },
   { href: "/inventory/counts", title: "Stock Variance", description: "Stock count variance workflow: draft, submit, approve and post.", icon: PackageSearch, badge: "Inventory" },
   { href: "/reports/gp?view=customer", title: "Customer GP Report", description: "Gross profit by customer for a date range, with invoice and product counts.", icon: Percent, badge: "Sales GP" },

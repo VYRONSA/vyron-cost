@@ -256,7 +256,14 @@ export default function RecipeDetailClient({
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.ok === false) throw new Error(data.error || "Request failed.");
       await refresh();
-      setNotice(success);
+      const corrections: Array<{ lineName: string; unit: string; suppliedCost: number; verifiedCost: number; action: string }> = Array.isArray(data.costCorrections) ? data.costCorrections : [];
+      const corrected = corrections.filter((c) => c.action === "corrected");
+      const held = corrections.filter((c) => c.action === "held");
+      const notes = [
+        ...corrected.map((c) => `${c.lineName}: R${c.suppliedCost} per ${c.unit} replaced by the verified supplier cost R${c.verifiedCost} per ${c.unit}`),
+        ...held.map((c) => `${c.lineName}: R${c.suppliedCost} per ${c.unit} kept for review — the supplier cost works out at R${c.verifiedCost} per ${c.unit}; check the line's unit`),
+      ];
+      setNotice(notes.length ? `${success} ${notes.join("; ")}.` : success);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Request failed.");
     } finally {

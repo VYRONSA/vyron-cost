@@ -42,6 +42,9 @@ export type GpProductRow = {
   gpPct: number;
   avgSellingPrice: number;
   avgCostPrice: number;
+  /** Sold with no measured cost: the GP % is not a measurement. */
+  costMissing?: boolean;
+  missingCostRevenue?: number;
 };
 
 export type GpInvoiceRow = {
@@ -58,6 +61,7 @@ export type GpMonthRow = { month: string; revenue: number; cost: number; gp: num
 
 export type GpReportData = {
   metrics: { revenue: number; costOfSales: number; grossProfit: number; gpPct: number; qtySold: number };
+  costWarnings?: { linesWithoutCost: number; revenueWithoutCost: number; products: string[] };
   byCustomer: GpCustomerRow[];
   byProduct: GpProductRow[];
   byInvoice: GpInvoiceRow[];
@@ -396,6 +400,13 @@ export default function CustomerProductGpReportClient({
         </>
       }
     >
+      {data.costWarnings && data.costWarnings.linesWithoutCost > 0 ? (
+        <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+          {data.costWarnings.linesWithoutCost} sold line(s), {formatMoney(data.costWarnings.revenueWithoutCost)} of revenue, carry no measured cost
+          {data.costWarnings.products.length ? ` (${data.costWarnings.products.slice(0, 6).join(", ")}${data.costWarnings.products.length > 6 ? ", …" : ""})` : ""}.
+          {" "}Their cost is counted as zero, so gross profit is overstated by up to that amount. Cost those products (BOM or supplier invoice) to measure it.
+        </div>
+      ) : null}
       {view === "customer" ? (
         <ReportTable minWidth={1120}>
           <thead className="bg-slate-950 text-xs font-black uppercase tracking-[0.10em] text-white">
@@ -471,7 +482,13 @@ export default function CustomerProductGpReportClient({
                 <td className={`${num} font-semibold text-slate-900`}>{formatMoney(r.revenue)}</td>
                 <td className={`${num} font-semibold text-slate-900`}>{formatMoney(r.cost)}</td>
                 <td className={`${num} font-black text-slate-900`}>{formatMoney(r.gp)}</td>
-                <td className={gpClass(r.gpPct)}>{r.gpPct.toFixed(1)}%</td>
+                {r.costMissing ? (
+                  <td className={`${num} font-black text-amber-700`} title="Some of this product's sales carry no measured cost, so its GP % would read as profit that may not exist.">
+                    Cost not measured
+                  </td>
+                ) : (
+                  <td className={gpClass(r.gpPct)}>{r.gpPct.toFixed(1)}%</td>
+                )}
               </tr>
             ))}
             {productRows.length === 0 ? (

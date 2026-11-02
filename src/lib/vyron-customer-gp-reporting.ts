@@ -64,6 +64,11 @@ export type CustomerGpProductBreakdown = {
   productId: string | null;
   productName: string;
   category: string;
+  /** Sold lines with no measured cost (cost_per_unit 0): their GP is not real. */
+  missingCostLines?: number;
+  missingCostRevenue?: number;
+  /** True when ANY sold line had no measured cost: the GP % is not a measurement. */
+  costMissing?: boolean;
   qty: number;
   revenue: number;
   cost: number;
@@ -132,6 +137,8 @@ export type CustomerGpReport = {
   topPerformingProducts: CustomerGpProductBreakdown[];
   lowestMarginProducts: CustomerGpProductBreakdown[];
   lossMakingProducts: CustomerGpProductBreakdown[];
+  /** Revenue whose cost was never measured: counted at zero cost, so GP is overstated by it. */
+  costWarnings: { linesWithoutCost: number; revenueWithoutCost: number; products: string[] };
   charts: {
     gpTrend: Array<{ period: string; gpPct: number }>;
     monthlyGp: Array<{ month: string; gp: number }>;
@@ -276,6 +283,7 @@ export async function getCustomerGpReport(
       topPerformingProducts: [],
       lowestMarginProducts: [],
       lossMakingProducts: [],
+      costWarnings: { linesWithoutCost: 0, revenueWithoutCost: 0, products: [] },
       charts: {
         gpTrend: [],
         monthlyGp: [],
@@ -508,7 +516,7 @@ export async function getCustomerGpReport(
     };
   });
 
-  const byProductMap = new Map<string, { productId: string | null; productName: string; category: string; qty: number; revenue: number; cost: number }>();
+  const byProductMap = new Map<string, { productId: string | null; productName: string; category: string; qty: number; revenue: number; cost: number; missingCostLines: number; missingCostRevenue: number }>();
 
   for (const line of filteredLines) {
     const productId = line.product_id ? String(line.product_id) : null;
@@ -522,11 +530,17 @@ export async function getCustomerGpReport(
       qty: 0,
       revenue: 0,
       cost: 0,
+      missingCostLines: 0,
+      missingCostRevenue: 0,
     };
     const qty = Number(line.quantity || 0);
     bucket.qty += qty;
     bucket.revenue += qty * Number(line.selling_price || 0);
     bucket.cost += qty * Number(line.cost_per_unit || 0);
+    if (qty > 0 && !(Number(line.cost_per_unit || 0) > 0)) {
+      bucket.missingCostLines += 1;
+      bucket.missingCostRevenue += qty * Number(line.selling_price || 0);
+    }
     byProductMap.set(key, bucket);
   }
 
@@ -537,6 +551,9 @@ export async function getCustomerGpReport(
         productId: row.productId,
         productName: row.productName,
         category: row.category,
+        missingCostLines: row.missingCostLines,
+        missingCostRevenue: round2(row.missingCostRevenue),
+        costMissing: row.missingCostLines > 0,
         qty: round4(row.qty),
         revenue: metrics.revenue,
         cost: metrics.cost,
@@ -690,8 +707,14 @@ export async function getCustomerGpReport(
     byInvoice: normalizedInvoices.sort((a, b) => String(b.invoiceDate).localeCompare(String(a.invoiceDate))),
     byMonth,
     byYear,
-    topPerformingProducts: byProduct.slice(0, 10),
-    lowestMarginProducts: [...byProduct].sort((a, b) => a.marginPct - b.marginPct).slice(0, 10),
+    // A product with unmeasured cost is not a "top performer": its GP is the selling price.
+    topPerformingProducts: byProduct.filter((row) => !row.costMissing).slice(0, 10),
+    lowestMarginProducts: [...byProduct].filter((row) => !row.costMissing).sort((a, b) => a.marginPct - b.marginPct).slice(0, 10),
+    costWarnings: {
+      linesWithoutCost: byProduct.reduce((sum, row) => sum + (row.missingCostLines || 0), 0),
+      revenueWithoutCost: round2(byProduct.reduce((sum, row) => sum + (row.missingCostRevenue || 0), 0)),
+      products: byProduct.filter((row) => row.costMissing).map((row) => row.productName),
+    },
     lossMakingProducts: byProduct.filter((row) => row.gp < 0).sort((a, b) => a.gp - b.gp),
     charts: {
       gpTrend: byMonth.map((row) => ({ period: row.month, gpPct: row.gpPct })),

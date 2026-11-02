@@ -9,6 +9,12 @@ import {
   verifyDocumentTenantAccess,
 } from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
+import {
+  DuplicateSupplierInvoiceError,
+  duplicateSupplierInvoiceBody,
+  findDuplicateSupplierInvoice,
+  linkedToRegisterMessage,
+} from "@/lib/vyron-supplier-invoice-uniqueness";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
@@ -83,6 +89,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
     .eq("document_id", documentId);
   if (linesError) return NextResponse.json({ ok: false, error: linesError.message }, { status: 500 });
 
+  // The pre-check shows a duplicate (refused) or a register invoice (will be linked) before Approve.
+  const duplicate = await findDuplicateSupplierInvoice(supabase, {
+    companyId: String(document.tenant_id),
+    invoiceNumber: document.invoice_number,
+    supplierName: document.supplier_name,
+    excludeDocumentId: documentId,
+  });
+  if (duplicate?.store === "document") {
+    return NextResponse.json(duplicateSupplierInvoiceBody(new DuplicateSupplierInvoiceError(duplicate)), { status: 409 });
+  }
+  const linkedRegisterInvoice = duplicate?.store === "register" ? duplicate : null;
+
   const rules = await getDocumentApprovalRules(supabase, tenantId);
   const validation = validateDocumentApproval({
     document,
@@ -102,6 +120,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
     ok: true,
     validation,
     policyBlocked: validation.blocked,
+    linkedRegisterInvoice,
+    linkedRegisterMessage: linkedRegisterInvoice ? linkedToRegisterMessage(linkedRegisterInvoice) : null,
     message: validation.blocked ? "Approval blocked by company policy." : "Ready for approval.",
   });
 }

@@ -20,6 +20,8 @@ import {
 import type { WorkspaceSession } from "@/lib/vyron-workspace-session";
 import { insertDocumentCostAudit } from "@/lib/vyron-document-cost-audit";
 import { decideSupplierCostUpdate } from "@/lib/vyron-supplier-cost-guard";
+import { trueUnitCostFromYield } from "@/lib/vyron-actual-cost";
+import { recalculateBomsUsingIngredient } from "@/lib/vyron-cost-ingredient-intelligence";
 import { roundMoney } from "@/lib/vyron-invoice-line-math";
 import { reconcileInvoiceTotals } from "@/lib/vyron-invoice-reconciliation";
 import { recomputeRecoveryIntelligenceV2 } from "@/lib/vyron-recovery-intelligence-v2";
@@ -34,6 +36,12 @@ import {
 } from "@/lib/vyron-document-tenant-access";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { parseExtractionQualityRecord } from "@/lib/vyron-extraction-quality";
+import {
+  DuplicateSupplierInvoiceError,
+  duplicateSupplierInvoiceBody,
+  findDuplicateSupplierInvoice,
+  linkedToRegisterMessage,
+} from "@/lib/vyron-supplier-invoice-uniqueness";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
@@ -143,6 +151,26 @@ export async function POST(request: NextRequest, context: RouteContext) {
       { status: 409 }
     );
   }
+
+  /*
+   * A supplier invoice is financially processed once.
+   *   - Already approved here (or its PDF already linked): refused before any
+   *     write; a supervisor override does not lift it.
+   *   - Already in the Supplier Invoice Register (imported or captured): this
+   *     PDF is LINKED to that invoice. Its lines are compared and update supplier
+   *     costing (behind the same cost guard), but nothing is processed a second
+   *     time — no stock movement or stock cost, no PO invoice total, no Xero bill.
+   */
+  const duplicate = await findDuplicateSupplierInvoice(supabase, {
+    companyId: String(document.tenant_id),
+    invoiceNumber: document.invoice_number,
+    supplierName: document.supplier_name,
+    excludeDocumentId: documentId,
+  });
+  if (duplicate?.store === "document") {
+    return NextResponse.json(duplicateSupplierInvoiceBody(new DuplicateSupplierInvoiceError(duplicate)), { status: 409 });
+  }
+  const linkedRegisterInvoice = duplicate?.store === "register" ? duplicate : null;
 
   /*
    * A supervisor override is authorised by the signed-in member's own
@@ -448,13 +476,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     });
   };
 
+  const recalcIngredientIds = new Set<string>();
   for (const line of targetLines as any[]) {
     const newPrice = Number(line.unit_price || 0);
 
     if (line.matched_entity_type === "ingredient" || line.matched_entity_type === "packaging") {
       const { data: ingredient } = await supabase
         .from("vyron_cost_ingredients")
-        .select("id, ingredient_name, purchase_cost, purchase_unit")
+        .select("id, ingredient_name, purchase_cost, purchase_unit, yield_percent")
         .eq("id", line.matched_entity_id)
         .eq("company_id", document.tenant_id)
         .maybeSingle();
@@ -507,11 +536,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
         .update({
           previous_cost: prev,
           purchase_cost: newPrice,
-          true_unit_cost: newPrice,
+          // The usable cost: what is paid, divided by the yield (an 80% yield makes R14 cost R17.50 usable).
+          true_unit_cost: trueUnitCostFromYield(newPrice, ingredient.yield_percent),
           current_alert: pct !== null && Math.abs(pct) >= 1 ? `Invoice update ${pct > 0 ? "+" : ""}${pct.toFixed(2)}%` : null,
         })
         .eq("id", ingredient.id);
 
+      if (line.matched_entity_type === "ingredient") recalcIngredientIds.add(String(ingredient.id));
       updatesApplied.push({
         entityType: line.matched_entity_type,
         entityId: ingredient.id,
@@ -778,11 +809,29 @@ export async function POST(request: NextRequest, context: RouteContext) {
       archived_at: approvedAt,
       processed_at: approvedAt,
       reconciliation_note: hasMajorMismatch || hasRoundingDifference ? reconciliationNote : null,
-      processing_notes: approvalNotesWithOverride,
+      processing_notes: linkedRegisterInvoice
+        ? [approvalNotesWithOverride, `Linked to Supplier Invoice Register invoice ${linkedRegisterInvoice.id}; not processed again.`].filter(Boolean).join(" ")
+        : approvalNotesWithOverride,
     })
     .eq("id", documentId);
 
-  try {
+  if (linkedRegisterInvoice) {
+    const { data: registerRow } = await supabase
+      .from("vyron_cost_supplier_invoices")
+      .select("notes")
+      .eq("id", linkedRegisterInvoice.id)
+      .eq("company_id", document.tenant_id)
+      .maybeSingle();
+    const linkNote = `PDF linked: Invoice Intelligence document ${documentId} (approved ${approvedAt.slice(0, 10)} by ${approvedBy}).`;
+    await supabase
+      .from("vyron_cost_supplier_invoices")
+      .update({ notes: [registerRow?.notes, linkNote].filter(Boolean).join(" | "), updated_at: approvedAt })
+      .eq("id", linkedRegisterInvoice.id)
+      .eq("company_id", document.tenant_id);
+  }
+
+  // Stock, the PO's invoice total and the Xero bill belong to the invoice's one financial processing.
+  if (!linkedRegisterInvoice) try {
     await updateStockCostsFromApprovedInvoice(supabase, {
       companyId: document.tenant_id as string,
       documentId,
@@ -801,7 +850,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     console.warn("[approve] inventory cost update failed", invCostErr);
   }
 
-  if (document.purchase_order_id) {
+  if (document.purchase_order_id && !linkedRegisterInvoice) {
     const invoiceTotal = Number(document.total || 0);
     await supabase
       .from("vyron_cost_purchase_orders")
@@ -841,6 +890,30 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
   }
 
+  /*
+   * A supplier price that changed an ingredient's cost flows on into every BOM
+   * using it and the products those BOMs cost, so GP and new sales invoices use
+   * the invoiced cost, not the old one (it used to wait for a manual edit).
+   */
+  const bomRecalculation = {
+    bomCount: 0,
+    productCount: 0,
+    skippedLines: [] as Array<{ lineId: string; bomId: string; lineUnit: string; purchaseUnit: string }>,
+    heldLines: [] as Array<{ lineId: string; bomId: string; lineName: string; lineUnit: string; currentCost: number; verifiedCost: number }>,
+    errors: [] as string[],
+  };
+  for (const ingredientId of recalcIngredientIds) {
+    try {
+      const result = await recalculateBomsUsingIngredient(supabase, String(document.tenant_id), ingredientId);
+      bomRecalculation.bomCount += result.bomCount;
+      bomRecalculation.productCount += result.productCount;
+      bomRecalculation.skippedLines.push(...(result.skippedLines || []));
+      bomRecalculation.heldLines.push(...(result.heldLines || []));
+    } catch (recalcError) {
+      bomRecalculation.errors.push(recalcError instanceof Error ? recalcError.message : String(recalcError));
+    }
+  }
+
   let recoveryRecomputed = false;
   let recoveryRecomputeWarning: string | null = null;
   try {
@@ -851,7 +924,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       recoveryError instanceof Error ? recoveryError.message : "Recovery intelligence refresh failed.";
   }
 
-  try {
+  if (!linkedRegisterInvoice) try {
     await queueXeroSupplierBill(supabase, document.tenant_id as string, {
       documentId,
       invoiceNumber: document.invoice_number as string | null,
@@ -877,7 +950,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
     updatesApplied,
     heldCount: costUpdatesHeld.length,
     costUpdatesHeld,
-    message: costUpdatesHeld.length
+    linkedRegisterInvoice,
+    bomRecalculation,
+    message: linkedRegisterInvoice
+      ? linkedToRegisterMessage(linkedRegisterInvoice)
+      : costUpdatesHeld.length
       ? `Approved. ${updatesApplied.length} cost(s) updated; ${costUpdatesHeld.length} held for review (unit or price could not be verified).`
       : recoveryRecomputed
       ? "Approved. Costs, price history, and recovery intelligence updated."

@@ -53,8 +53,10 @@ export default function DocumentIntelligenceDashboard() {
       const raw = sessionStorage.getItem("vyron-doc-approved");
       if (!raw) return;
       sessionStorage.removeItem("vyron-doc-approved");
-      const payload = JSON.parse(raw) as { highlightDocumentId?: string; openNeedsReview?: boolean };
+      const payload = JSON.parse(raw) as { highlightDocumentId?: string; openNeedsReview?: boolean; linkedMessage?: string | null };
       if (payload.highlightDocumentId) setHighlightDocumentId(payload.highlightDocumentId);
+      // The invoice already existed in the Supplier Invoice Register: say it was linked, not processed again.
+      if (payload.linkedMessage) setMessage(payload.linkedMessage);
       if (payload.openNeedsReview) setWorkflowTab("needs-review");
     } catch {
       /* ignore */

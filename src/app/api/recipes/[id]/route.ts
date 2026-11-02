@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { RecipeCostUnitError } from "@/lib/vyron-recipe-cost-policy";
+import { recipeCostPolicyForRequest } from "@/lib/vyron-recipe-cost-policy-server";
 import {
   deleteRecipe,
   getRecipe,
@@ -31,6 +33,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     if (!recipe) return NextResponse.json({ ok: false, error: "Recipe not found." }, { status: 404 });
     return NextResponse.json({ ok: true, recipe });
   } catch (error) {
+    if (error instanceof RecipeCostUnitError) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
     return workspaceAccessErrorResponse(error, "Load failed.");
   }
 }
@@ -48,6 +51,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   try {
     await requireWorkspacePermission("boms.edit");
     const companyId = await requireApiCompanyId();
+    const costPolicy = await recipeCostPolicyForRequest();
     const { recipe, linkedProducts } = await updateRecipe(supabase, companyId, id, {
       recipe_name: body.recipe_name ?? body.bom_name,
       category: body.category,
@@ -61,8 +65,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       bom_purpose: body.bom_purpose ?? body.purpose,
       selling_price_includes_vat: body.selling_price_includes_vat,
       lines: body.lines,
-    });
-    return NextResponse.json({ ok: true, recipe, linkedProducts });
+    }, costPolicy);
+    return NextResponse.json({ ok: true, recipe, linkedProducts, costCorrections: costPolicy.corrections });
   } catch (error) {
     if (error instanceof CircularBomError) {
       return NextResponse.json({ ok: false, error: error.message, path: error.path }, { status: 409 });
@@ -73,6 +77,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         { status: 409 }
       );
     }
+    if (error instanceof RecipeCostUnitError) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
     return workspaceAccessErrorResponse(error, "Update failed.");
   }
 }
@@ -97,6 +102,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     if (error instanceof BomInUseError) {
       return NextResponse.json({ ok: false, error: error.message, parents: error.parents }, { status: 409 });
     }
+    if (error instanceof RecipeCostUnitError) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
     return workspaceAccessErrorResponse(error, "Archive failed.");
   }
 }

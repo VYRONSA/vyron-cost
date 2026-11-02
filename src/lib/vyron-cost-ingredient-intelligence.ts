@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { convertCostPerUnit, decideLineCostReplacement } from "@/lib/vyron-actual-cost";
 import {
   calculateMovementPercent,
   CostIngredient,
@@ -206,10 +207,14 @@ export async function recalculateBomsUsingIngredient(
 ): Promise<{
   bomCount: number;
   productCount: number;
+  /** Lines left unchanged because their unit cannot be converted from the ingredient's purchase unit. */
+  skippedLines?: Array<{ lineId: string; bomId: string; lineUnit: string; purchaseUnit: string }>;
+  /** Lines left unchanged because the new cost is more than 2x away from theirs (e.g. a per-piece cost on a pack-unit line). */
+  heldLines?: Array<{ lineId: string; bomId: string; lineName: string; lineUnit: string; currentCost: number; verifiedCost: number }>;
 }> {
   const { data: ingredient, error: ingredientError } = await supabase
     .from("vyron_cost_ingredients")
-    .select("true_unit_cost, purchase_cost")
+    .select("true_unit_cost, purchase_cost, purchase_unit")
     .eq("id", ingredientId)
     .eq("company_id", companyId)
     .maybeSingle();
@@ -221,32 +226,49 @@ export async function recalculateBomsUsingIngredient(
 
   const { data: lines, error: linesError } = await supabase
     .from("vyron_cost_bom_lines")
-    .select("id, bom_id, quantity, wastage_percent")
+    .select("id, bom_id, line_name, quantity, unit, unit_cost, wastage_percent")
     .eq("company_id", companyId)
     .eq("ingredient_id", ingredientId);
 
   if (linesError) throw new Error(linesError.message);
   if (!lines || lines.length === 0) return { bomCount: 0, productCount: 0 };
 
+  const skippedLines: Array<{ lineId: string; bomId: string; lineUnit: string; purchaseUnit: string }> = [];
+  const heldLines: Array<{ lineId: string; bomId: string; lineName: string; lineUnit: string; currentCost: number; verifiedCost: number }> = [];
+  const pricedLines: typeof lines = [];
   for (const line of lines) {
+    // The cost is per purchase unit (e.g. kg); the line may be in g. A unit that cannot be converted is left alone.
+    const lineUnitCost = convertCostPerUnit(newUnitCost, ingredient.purchase_unit, line.unit || ingredient.purchase_unit);
+    if (lineUnitCost === null) {
+      skippedLines.push({ lineId: String(line.id), bomId: String(line.bom_id), lineUnit: String(line.unit || ""), purchaseUnit: String(ingredient.purchase_unit || "") });
+      continue;
+    }
+    const unitCostForLine = Math.round(lineUnitCost * 100000000) / 100000000;
+    const decision = decideLineCostReplacement(Number(line.unit_cost || 0), unitCostForLine, newUnitCost);
+    if (decision === "same") continue;
+    if (decision === "hold") {
+      heldLines.push({ lineId: String(line.id), bomId: String(line.bom_id), lineName: String(line.line_name || ""), lineUnit: String(line.unit || ""), currentCost: Number(line.unit_cost || 0), verifiedCost: unitCostForLine });
+      continue;
+    }
+    pricedLines.push(line);
     const lineCost = round2(
       calcLineCost({
         quantity: Number(line.quantity || 0),
-        unit_cost: newUnitCost,
+        unit_cost: unitCostForLine,
         wastage_percent: Number(line.wastage_percent || 0),
       })
     );
 
     let updateLineResult = await supabase
       .from("vyron_cost_bom_lines")
-      .update({ unit_cost: newUnitCost, line_cost: lineCost })
+      .update({ unit_cost: unitCostForLine, line_cost: lineCost })
       .eq("id", line.id)
       .eq("company_id", companyId);
 
     if (updateLineResult.error && isGeneratedColumnWriteError(updateLineResult.error)) {
       updateLineResult = await supabase
         .from("vyron_cost_bom_lines")
-        .update({ unit_cost: newUnitCost })
+        .update({ unit_cost: unitCostForLine })
         .eq("id", line.id)
         .eq("company_id", companyId);
     }
@@ -254,7 +276,7 @@ export async function recalculateBomsUsingIngredient(
     if (updateLineResult.error) throw new Error(updateLineResult.error.message);
   }
 
-  const bomIds = Array.from(new Set(lines.map((line) => String(line.bom_id))));
+  const bomIds = Array.from(new Set(pricedLines.map((line) => String(line.bom_id))));
   let productCount = 0;
 
   for (const bomId of bomIds) {
@@ -262,5 +284,15 @@ export async function recalculateBomsUsingIngredient(
     productCount += result.productCount;
   }
 
-  return { bomCount: bomIds.length, productCount };
+  for (const h of heldLines) {
+    await supabase.from("vyron_cost_audit_log").insert({
+      company_id: companyId,
+      event_type: "BOM Cost Update Held",
+      entity_name: h.lineName,
+      event_detail: `Kept R${h.currentCost} per ${h.lineUnit}: the supplier cost works out at R${h.verifiedCost} per ${h.lineUnit}, more than 2x different. Check the line's unit (a per-piece cost on a pack unit?) before changing it.`,
+      risk_level: "Medium",
+    });
+  }
+
+  return { bomCount: bomIds.length, productCount, skippedLines, heldLines };
 }

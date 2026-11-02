@@ -409,6 +409,7 @@ export async function approveAndUpdateCosts(
       requiresSupervisorOverride?: boolean;
       supervisorOverrideRejected?: boolean;
       alreadyApproved?: boolean;
+      duplicateInvoice?: boolean;
     };
     err.lowConfidenceFields = data.lowConfidenceFields;
     err.minRequiredConfidence = data.minRequiredConfidence;
@@ -418,6 +419,7 @@ export async function approveAndUpdateCosts(
     err.requiresSupervisorOverride = data.requiresSupervisorOverride;
     err.supervisorOverrideRejected = data.supervisorOverrideRejected;
     err.alreadyApproved = data.alreadyApproved;
+    err.duplicateInvoice = data.duplicateInvoice;
     throw err;
   }
   return data;

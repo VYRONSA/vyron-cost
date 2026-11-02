@@ -579,9 +579,14 @@ export default function DocumentHubdocClient({
         costUpdates?: number;
         history?: number;
         highlightDocumentId?: string | null;
+        linkedMessage?: string | null;
       };
       if (payload.highlightDocumentId) {
         setActiveHighlightId(payload.highlightDocumentId);
+      }
+      if (payload.linkedMessage) {
+        setMessage(payload.linkedMessage);
+        return;
       }
       setMessage(
         `Invoice approved. Updated ${payload.costUpdates ?? 0} cost item(s), stored ${payload.history ?? 0} price history row(s).${

@@ -94,7 +94,8 @@ const key = (s: string | null | undefined) => String(s ?? "").trim().toUpperCase
 const r2 = (n: number) => Math.round(n * 100) / 100;
 const r6 = (n: number) => Math.round(n * 1e6) / 1e6;
 
-async function loadStockIndex(supabase: SupabaseClient, companyId: string) {
+/** Every stock item by each identifier it answers to (code, barcode, supplier/customer code, alias, SKU). Shared with opening-stock imports. */
+export async function loadStockIndex(supabase: SupabaseClient, companyId: string) {
   const items = await readAllPages<StockItem>((from, to) =>
     supabase
       .from("vyron_cost_stock_items")

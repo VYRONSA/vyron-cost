@@ -190,12 +190,19 @@ export default function CustomerPricingWorkspace({
     setMessage(success);
   }
 
+  /**
+   * A price edited here is THIS customer's price: it is saved on the customer's own
+   * contract list (created on first use), never on a list other customers share.
+   */
   async function savePrice(row: CustomerPriceRow) {
-    if (!editing) return;
-    const ok = await request(`/api/customer-price-lists/${encodeURIComponent(row.listId)}`, "PATCH", { itemId: row.itemId, price: editing.value }, `${row.productName}: price updated on ${row.listName}.`);
+    if (!editing || !customerId) return;
+    const ok = await request(`/api/customers/${encodeURIComponent(customerId)}/price`, "PATCH", { productId: row.productId, price: editing.value }, `${row.productName}: price updated for this customer only.`);
     if (ok) {
       setEditing(null);
-      await loadDetails(summary?.governingLists.map((l) => l.id) || []);
+      const fresh = await reload();
+      selectCustomer(customerId, fresh);
+      // Selecting the customer clears the message; say what was saved after it.
+      setMessage(`${row.productName}: price updated for this customer only.`);
     }
   }
 
@@ -227,9 +234,10 @@ export default function CustomerPricingWorkspace({
   /** Who else a change to this list affects. */
   function sharedNote(listId: string): string {
     const list = lists.find((l) => l.id === listId);
-    if (summary?.source === "company_default" || (list?.is_company_default && summary?.source !== "assigned")) return "This is the company default list: the change applies to every customer without their own list.";
+    // Price edits are saved for this customer only; adding or removing a product changes the list itself.
+    if (summary?.source === "company_default" || (list?.is_company_default && summary?.source !== "assigned")) return "This is the company default list: adding or removing a product changes it for every customer without their own list. Price changes are saved for this customer only.";
     const others = (details[listId]?.assignedCustomers || []).filter((c) => c.customerId !== customerId && c.status === "Active").length;
-    return others ? `This list is shared: the change also applies to ${others} other customer${others === 1 ? "" : "s"}.` : "";
+    return others ? `This list is shared with ${others} other customer${others === 1 ? "" : "s"}: adding or removing a product changes it for them too. Price changes are saved for this customer only.` : "";
   }
 
   const governing = summary?.governingLists || [];
@@ -547,7 +555,7 @@ export default function CustomerPricingWorkspace({
                     </tbody>
                   </table>
                 </EnterpriseScrollContainer>
-                {editing && sharedNote(editing.listId) ? <p className="mt-2 text-xs text-amber-800">{sharedNote(editing.listId)}</p> : null}
+                {editing ? <p className="mt-2 text-xs text-slate-600">This price is saved for this customer only. Other customers keep their own prices.</p> : null}
               </>
             ) : null}
           </section>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { DuplicateSupplierInvoiceError, duplicateSupplierInvoiceBody } from "@/lib/vyron-supplier-invoice-uniqueness";
 import {
   deleteSupplierInvoice,
   deleteSupplierInvoiceLine,
@@ -97,6 +98,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     });
     return NextResponse.json({ ok: true, invoice });
   } catch (error) {
+    if (error instanceof DuplicateSupplierInvoiceError) {
+      return NextResponse.json(duplicateSupplierInvoiceBody(error), { status: 409 });
+    }
     return workspaceAccessErrorResponse(error, "Update failed.");
   }
 }

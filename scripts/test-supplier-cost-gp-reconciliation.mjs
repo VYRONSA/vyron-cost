@@ -162,6 +162,7 @@ function seed() {
       { id: "si-flour", company_id: CO_A, entity_type: "ingredient", entity_id: "ing-flour", item_code: "FLOUR", qty_on_hand: 100, average_cost: 13, current_cost: 13, unit: "kg" },
       { id: "si-foil", company_id: CO_A, entity_type: "packaging", entity_id: "pkg-foil", item_code: "FOIL", qty_on_hand: 5000, average_cost: 0.14, current_cost: 0.14, unit: "each" },
       { id: "si-skp", company_id: CO_A, entity_type: "finished_goods", entity_id: "p-skp", item_code: "SKP", qty_on_hand: 1000, average_cost: 4.74, current_cost: 4.74, unit: "each" },
+      { id: "si-butter", company_id: CO_A, entity_type: "ingredient", entity_id: "ing-butter", item_code: "BUTTER", qty_on_hand: 20, average_cost: 90, current_cost: 90, unit: "kg" },
     ],
     vyron_cost_products: [
       { id: "p-skp", company_id: CO_A, product_name: "Steak & Kidney Pie 150g", selling_price: 10.9, total_cost: 4.74 },
@@ -283,6 +284,10 @@ check("synthetic owners sign in through the real login route", Boolean(jarA.vyro
 
   const r30 = await approve(jarA, DOC_SEP30);
   check("30 Sep (period boundary) invoice: Butter 90 → 95 per kg applies", r30.status === 200 && Number(ingredient("ing-butter").purchase_cost) === 95 && r30.json?.updatedCount === 1);
+  // SUP-0930 was already imported into the Supplier Invoice Register: this PDF is LINKED to it, not processed a second time.
+  check("SUP-0930 already in the register: the PDF is linked to it and says so", r30.json?.linkedRegisterInvoice?.id === "si-0930" && /already exists in the Supplier Invoice Register.*This PDF is linked to it/.test(r30.json?.message || ""), r30.json?.message);
+  check("…its costing is compared, but no stock cost, no Xero bill and no second register invoice", Number(stockItem("si-butter").current_cost) === 90 && !(t("vyron_xero_sync_queue") || []).some((q) => JSON.stringify(q).includes(DOC_SEP30)) && t("vyron_cost_supplier_invoices").filter((i) => i.invoice_number === "SUP-0930").length === 1);
+  check("…and the register invoice records the linked PDF", /PDF linked: Invoice Intelligence document/.test(t("vyron_cost_supplier_invoices").find((i) => i.id === "si-0930")?.notes || ""));
 
   const again = await approve(jarA, DOC_SEP);
   check("re-approving the 15 Sep invoice changes nothing (no second cost, no second audit)", again.status === 409 && t("vyron_document_cost_audit").length === 2 && Number(ingredient("ing-flour").purchase_cost) === 14);
@@ -301,8 +306,8 @@ section("Supplier Invoice Register: every processed supplier invoice, however it
   const { invoices, lineCounts } = await listSupplierInvoiceRegister(db, CO_A);
   const byNumber = (n) => invoices.filter((r) => r.invoice_number === n);
   const sep = byNumber("SUP-0915")[0];
-  const sep30 = byNumber("SUP-0930").find((r) => r.origin === "document");
-  check("both September invoices approved in Invoice Intelligence are in the register", Boolean(sep) && Boolean(sep30), JSON.stringify(invoices.map((r) => [r.invoice_number, r.origin])));
+  const sep30 = byNumber("SUP-0930")[0];
+  check("both September invoices are in the register (SUP-0930 as its register invoice, with the approved PDF linked)", Boolean(sep) && sep30?.origin === "register" && sep30?.linked_document_id === DOC_SEP30 && sep30?.linked_document_href === `/document-intelligence/archive/${DOC_SEP30}`, JSON.stringify(invoices.map((r) => [r.invoice_number, r.origin, r.linked_document_id || null])));
   check("imported invoices are still there", byNumber("SUP-0812").length === 1 && byNumber("SUP-0812")[0].origin === "register");
   check("an approved document opens the approved document, read-only", sep?.origin === "document" && sep?.href === `/document-intelligence/archive/${DOC_SEP}` && sep?.status === "Approved" && sep?.source_type === "Invoice Intelligence");
   check("an imported invoice still opens the register's own page", byNumber("SUP-0812")[0]?.href === "/supplier-invoices/si-0812");
@@ -311,10 +316,10 @@ section("Supplier Invoice Register: every processed supplier invoice, however it
   check("documents still under review, or deleted, are not processed invoices", !byNumber("SUP-PENDING").length && !byNumber("SUP-DELETED").length);
   check("another tenant's approved invoice never appears", !invoices.some((r) => r.id === DOC_B || r.invoice_number === "SUP-B-1"));
   const dup = byNumber("SUP-0930");
-  check("the same supplier invoice imported AND approved is shown twice and flagged, not hidden", dup.length === 2 && dup.every((r) => r.duplicate_risk === true));
+  check("the same supplier invoice imported AND its PDF approved is ONE invoice (linked), not two", dup.length === 1 && dup[0].duplicate_risk === false);
   check("a single invoice is not flagged", sep?.duplicate_risk === false && byNumber("SUP-0812")[0].duplicate_risk === false);
   const september = invoices.filter((r) => String(r.invoice_date).startsWith("2026-09"));
-  check("September lists every processed invoice: 2 approved documents + 1 imported", september.length === 3, JSON.stringify(september.map((r) => r.invoice_number)));
+  check("September lists every processed invoice once: SUP-0915 (approved document) + SUP-0930 (imported, PDF linked)", september.length === 2, JSON.stringify(september.map((r) => r.invoice_number)));
   check("newest invoice date first", invoices.every((r, i) => i === 0 || String(invoices[i - 1].invoice_date || "") >= String(r.invoice_date || "")));
   const b = await listSupplierInvoiceRegister(db, CO_B);
   check("tenant B's register lists only its own approved invoice", b.invoices.length === 1 && b.invoices[0].id === DOC_B);

@@ -2,6 +2,7 @@ import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabas
 import { getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
 import { getCustomerGpReport, type CustomerGpReport } from "@/lib/vyron-customer-gp-reporting";
 import { getBomCompletenessReport, type BomCompletenessReport } from "@/lib/vyron-bom-completeness";
+import { buildReorderReport, type ReorderReport } from "@/lib/vyron-reorder-report";
 
 /**
  * Server data for the Reports centre.
@@ -168,6 +169,17 @@ export async function loadManufacturingBatches(
  * here, so the analysis can only ever see this tenant's products, BOMs, BOM
  * lines, ingredients and sales.
  */
+/** Low stock & minimum order levels for the active workspace's company. */
+export async function loadReorderReport(): Promise<ReportLoad<ReorderReport | null>> {
+  const { supabase, companyId, error } = await scope();
+  if (!supabase || !companyId) return { data: null, error, companyId };
+  try {
+    return { data: await buildReorderReport(supabase, companyId), error: null, companyId };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : "Reorder report failed.", companyId };
+  }
+}
+
 export async function loadBomCompletenessReport(
   filters: { from?: string; to?: string } = {}
 ): Promise<ReportLoad<BomCompletenessReport | null>> {

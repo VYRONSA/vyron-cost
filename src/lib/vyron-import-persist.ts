@@ -10,6 +10,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ImportEntityType } from "@/lib/vyron-import-centre";
 import { findOrCreateStockItem, postStockMovement, type StockEntityType } from "@/lib/vyron-inventory";
 import { loadSupplierIndex, matchSupplierInIndex, resolveSupplier } from "@/lib/vyron-supplier-resolution";
+import { duplicateSupplierInvoiceMessage, findDuplicateSupplierInvoice } from "@/lib/vyron-supplier-invoice-uniqueness";
+import { loadStockIndex } from "@/lib/vyron-stock-take-import";
+import { parseAmount } from "@/lib/vyron-upload-table";
 
 /**
  * Import outcome.
@@ -480,26 +483,64 @@ export async function postOpeningStockBalances(
   let skipped = 0;
   const errors: string[] = [];
 
+  /*
+   * Stock is matched by a real identifier (item code, barcode, supplier or
+   * customer code, alias, SKU) — the same index the stock take uses. It used to
+   * invent a code from the first 12 letters of the name, so it never found the
+   * existing item, created duplicates, and two long names collided. Numbers go
+   * through parseAmount ("0,125" → 0.125, "R18,45" → 18.45); an unreadable cost
+   * is refused rather than loaded as zero. A second opening balance for an item
+   * is refused by postOpeningStockMovement, so re-importing cannot double stock.
+   */
+  const index = await loadStockIndex(supabase, companyId);
+  const idKey = (v: unknown) => String(v ?? "").trim().toLowerCase();
+
   for (const row of rows) {
     const name = row.item_name?.trim();
-    const qty = Number(row.qty_on_hand || 0);
-    const unitCost = Number(row.unit_cost || 0);
-    if (!name || qty <= 0) {
+    const identifier = String(row.item_code || row.barcode || row.sku || "").trim();
+    const label = identifier || name || "Row";
+    const qty = parseAmount(row.qty_on_hand);
+    const unitCost = parseAmount(row.unit_cost);
+    if (!identifier) {
       skipped += 1;
-      errors.push(`${name || "Row"}: invalid quantity`);
+      errors.push(`${label}: item code (or barcode / SKU) is required; stock is not matched by name`);
+      continue;
+    }
+    if (qty === null || qty <= 0) {
+      skipped += 1;
+      errors.push(`${label}: quantity "${row.qty_on_hand ?? ""}" is not a readable number above zero`);
+      continue;
+    }
+    if (unitCost === null || unitCost < 0) {
+      skipped += 1;
+      errors.push(`${label}: unit cost "${row.unit_cost ?? ""}" is missing or not a readable amount`);
+      continue;
+    }
+    const matches = [...(index.byIdentifier.get(idKey(identifier)) || [])];
+    if (matches.length > 1) {
+      skipped += 1;
+      errors.push(`${label}: matches ${matches.length} stock items; correct the item codes first`);
+      continue;
+    }
+    if (!matches.length && !name) {
+      skipped += 1;
+      errors.push(`${label}: no stock item has this code (give an item name to create it)`);
       continue;
     }
 
     try {
       const entityType = entityTypeFromRow(row.entity_type || "ingredient");
-      const stockItem = await findOrCreateStockItem(supabase, companyId, {
-        entityType,
-        itemCode: `OB-${name.slice(0, 12).replace(/\s+/g, "-").toUpperCase()}`,
-        description: name,
-        category: row.category || entityType,
-        unit: row.unit || "kg",
-        currentCost: unitCost,
-      });
+      const existing = matches.length ? index.items.get(matches[0]) : null;
+      const stockItem = existing
+        ? { id: String(existing.id) }
+        : await findOrCreateStockItem(supabase, companyId, {
+            entityType,
+            itemCode: identifier,
+            description: name || identifier,
+            category: row.category || entityType,
+            unit: row.unit || "kg",
+            currentCost: unitCost,
+          });
 
       const { postOpeningStockMovement } = await import("@/lib/vyron-inventory");
       await postOpeningStockMovement(supabase, {
@@ -1107,7 +1148,7 @@ async function persistSupplierInvoices(
 ): Promise<ImportPersistResult> {
   const errors: string[] = [];
   let inserted = 0;
-  let updated = 0;
+  const updated = 0; // a duplicate is refused, never overwritten
   let failed = 0;
   let skippedRows = 0;
 
@@ -1118,18 +1159,16 @@ async function persistSupplierInvoices(
       skippedRows += 1;
       continue;
     }
-    const bucket = groups.get(number) || [];
+    // One invoice per supplier and number: two suppliers may use the same number.
+    const supplierKey = (row.supplier_name || row.SupplierName || "").trim().toLowerCase();
+    const key = JSON.stringify([supplierKey, number]);
+    const bucket = groups.get(key) || [];
     bucket.push(row);
-    groups.set(number, bucket);
+    groups.set(key, bucket);
   }
 
-  const { data: companySuppliers } = await supabase
-    .from("vyron_cost_suppliers")
-    .select("id")
-    .eq("company_id", companyId);
-  const supplierIds = (companySuppliers || []).map((s) => String(s.id));
-
-  for (const [invoiceNumber, lineRows] of groups) {
+  for (const lineRows of groups.values()) {
+    const invoiceNumber = (lineRows[0].invoice_number || lineRows[0].InvoiceNumber || "").trim();
     const head = lineRows[0];
     const supplierName = (head.supplier_name || head.SupplierName || "").trim();
     if (!supplierName) {
@@ -1194,6 +1233,7 @@ async function persistSupplierInvoices(
     const total = headerTotal > 0 ? headerTotal : subtotal + vat;
 
     const invoicePayload = {
+      company_id: companyId,
       invoice_number: invoiceNumber,
       supplier_id: supplier.id,
       supplier_name: supplier.supplier_name,
@@ -1206,44 +1246,33 @@ async function persistSupplierInvoices(
     };
 
     /**
-     * vyron_cost_supplier_invoices carries no company_id, so company scope is
-     * enforced through supplier_id — the idempotency lookup is restricted to
-     * suppliers belonging to this company.
+     * A supplier invoice is captured once. An invoice this supplier already has
+     * — in the register or as an approved Invoice Intelligence document — is
+     * reported and skipped; it used to be overwritten in place, silently
+     * replacing the original (and the lookup ignored which supplier it was).
      */
-    const { data: existingInvoice } = await supabase
-      .from("vyron_cost_supplier_invoices")
-      .select("id")
-      .ilike("invoice_number", invoiceNumber)
-      .in("supplier_id", supplierIds.length ? supplierIds : [randomUUID()])
-      .limit(1);
-
-    let invoiceId: string;
-
-    if (existingInvoice?.length) {
-      invoiceId = String(existingInvoice[0].id);
-      const { error } = await supabase
-        .from("vyron_cost_supplier_invoices")
-        .update({ ...invoicePayload, updated_at: new Date().toISOString() })
-        .eq("id", invoiceId);
-      if (error) {
-        errors.push(`${invoiceNumber}: ${error.message}`);
-        failed += 1;
-        continue;
-      }
-      await supabase.from("vyron_cost_supplier_invoice_lines").delete().eq("invoice_id", invoiceId);
-      updated += 1;
-    } else {
-      invoiceId = randomUUID();
-      const { error } = await supabase
-        .from("vyron_cost_supplier_invoices")
-        .insert({ id: invoiceId, ...invoicePayload });
-      if (error) {
-        errors.push(`${invoiceNumber}: ${error.message}`);
-        failed += 1;
-        continue;
-      }
-      inserted += 1;
+    const duplicate = await findDuplicateSupplierInvoice(supabase, {
+      companyId,
+      invoiceNumber,
+      supplierId: String(supplier.id),
+      supplierName: String(supplier.supplier_name),
+    });
+    if (duplicate) {
+      errors.push(`${invoiceNumber}: ${duplicateSupplierInvoiceMessage(duplicate)}`);
+      failed += 1;
+      continue;
     }
+
+    const invoiceId = randomUUID();
+    const { error: insertError } = await supabase
+      .from("vyron_cost_supplier_invoices")
+      .insert({ id: invoiceId, ...invoicePayload });
+    if (insertError) {
+      errors.push(`${invoiceNumber}: ${insertError.message}`);
+      failed += 1;
+      continue;
+    }
+    inserted += 1;
 
     // line_excl, line_vat and line_total are database-derived — never supplied.
     const { error: linesError } = await supabase

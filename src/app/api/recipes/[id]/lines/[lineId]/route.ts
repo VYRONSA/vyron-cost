@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { RecipeCostUnitError } from "@/lib/vyron-recipe-cost-policy";
+import { recipeCostPolicyForRequest } from "@/lib/vyron-recipe-cost-policy-server";
 
 import { deleteRecipeLine, updateRecipeLine } from "@/lib/vyron-cost-recipes-data";
 
@@ -46,12 +48,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const companyId = await requireApiCompanyId();
 
-    const line = await updateRecipeLine(supabase, companyId, id, lineId, body);
+    const costPolicy = await recipeCostPolicyForRequest();
+    const line = await updateRecipeLine(supabase, companyId, id, lineId, body, costPolicy);
 
-    return NextResponse.json({ ok: true, line });
+    return NextResponse.json({ ok: true, line, costCorrections: costPolicy.corrections });
 
   } catch (error) {
 
+    if (error instanceof RecipeCostUnitError) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
     return workspaceAccessErrorResponse(error, "Update line failed.");
 
   }
@@ -90,6 +94,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
 
   } catch (error) {
 
+    if (error instanceof RecipeCostUnitError) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
     return workspaceAccessErrorResponse(error, "Delete line failed.");
 
   }

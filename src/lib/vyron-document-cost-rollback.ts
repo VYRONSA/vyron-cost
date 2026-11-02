@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { trueUnitCostFromYield } from "@/lib/vyron-actual-cost";
 import { insertDocumentCostAudit } from "@/lib/vyron-document-cost-audit";
 
 export async function rollbackDocumentCostUpdates(
@@ -51,11 +52,13 @@ export async function rollbackDocumentCostUpdates(
     if (!entityId) continue;
 
     if (entityType === "ingredient" || entityType === "packaging") {
+      const { data: yieldRow } = await supabase.from("vyron_cost_ingredients").select("yield_percent").eq("id", entityId).maybeSingle();
       const { error: updateError } = await supabase
         .from("vyron_cost_ingredients")
         .update({
           purchase_cost: previousCost,
-          true_unit_cost: previousCost,
+          // The same yield rule as approval, so a rollback restores the usable cost too.
+          true_unit_cost: trueUnitCostFromYield(previousCost, yieldRow?.yield_percent),
           current_alert: `Cost rollback from invoice approval (${params.rolledBackBy})`,
         })
         .eq("id", entityId);

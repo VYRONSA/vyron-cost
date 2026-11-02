@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { RecipeCostUnitError } from "@/lib/vyron-recipe-cost-policy";
+import { recipeCostPolicyForRequest } from "@/lib/vyron-recipe-cost-policy-server";
 import {
   createRecipe,
   listRecipeCategories,
@@ -43,6 +45,7 @@ export async function GET(request: NextRequest) {
     ]);
     return NextResponse.json({ ok: true, recipes, categories });
   } catch (error) {
+    if (error instanceof RecipeCostUnitError) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
     return workspaceAccessErrorResponse(error, "List failed.");
   }
 }
@@ -59,6 +62,7 @@ export async function POST(request: NextRequest) {
   try {
     await requireWorkspacePermission("boms.create");
     const companyId = await requireApiCompanyId();
+    const costPolicy = await recipeCostPolicyForRequest();
     const { recipe, linkedProducts } = await createRecipe(supabase, companyId, {
       recipe_name: String(body.recipe_name || body.bom_name || ""),
       category: body.category,
@@ -72,8 +76,8 @@ export async function POST(request: NextRequest) {
       bom_purpose: body.bom_purpose ?? body.purpose,
       selling_price_includes_vat: body.selling_price_includes_vat,
       lines: body.lines,
-    });
-    return NextResponse.json({ ok: true, recipe, linkedProducts });
+    }, costPolicy);
+    return NextResponse.json({ ok: true, recipe, linkedProducts, costCorrections: costPolicy.corrections });
   } catch (error) {
     if (error instanceof ProductAlreadyLinkedError) {
       return NextResponse.json(
@@ -81,6 +85,7 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       );
     }
+    if (error instanceof RecipeCostUnitError) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
     return workspaceAccessErrorResponse(error, "Create failed.");
   }
 }

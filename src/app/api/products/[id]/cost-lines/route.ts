@@ -48,6 +48,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const line = await createProductCostLine(supabase, companyId, id, {
       line_type: body.line_type,
       line_name: body.line_name,
+      ingredient_id: body.ingredient_id ?? null,
       quantity: body.quantity,
       unit: body.unit,
       unit_cost: body.unit_cost,

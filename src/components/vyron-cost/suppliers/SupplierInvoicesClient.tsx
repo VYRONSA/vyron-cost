@@ -24,6 +24,8 @@ type SupplierInvoice = {
   /** "document": approved in Supplier Invoice Intelligence — opens the document, changed only through its workflow. */
   origin?: "register" | "document";
   href?: string;
+  /** The approved Invoice Intelligence PDF linked to this register invoice (one invoice, not a duplicate). */
+  linked_document_href?: string | null;
 };
 
 type SupplierOption = { id: string; supplier_name: string };
@@ -406,6 +408,15 @@ export default function SupplierInvoicesClient() {
                         <AlertTriangle size={11} />
                         Duplicate risk
                       </span>
+                    ) : null}
+                    {invoice.linked_document_href ? (
+                      <Link
+                        href={invoice.linked_document_href}
+                        className="ml-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-emerald-800 hover:underline"
+                        title="This invoice's PDF was approved in Invoice Intelligence and linked here. It was processed once."
+                      >
+                        PDF linked
+                      </Link>
                     ) : null}
                   </td>
                   <td className="px-4 py-2.5 whitespace-nowrap font-black text-slate-950">{invoice.supplier_name || "—"}</td>

@@ -552,6 +552,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           lowConfidenceFields?: string[];
           supervisorOverrideRejected?: boolean;
           alreadyApproved?: boolean;
+          duplicateInvoice?: boolean;
         };
         // A refused override is not a fresh block: keep the dialog, the findings
         // and the reason, and say why.
@@ -561,8 +562,8 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           );
           return;
         }
-        // Never silently retry an approval that carries a supervisor override.
-        if (approvalError.alreadyApproved || supervisorOverride) throw error;
+        // Never silently retry an approval that carries a supervisor override, or a duplicate invoice.
+        if (approvalError.alreadyApproved || approvalError.duplicateInvoice || supervisorOverride) throw error;
         if (approvalError.policyBlocked && approvalError.violations?.length) {
           setOverrideModal({
             open: true,
@@ -604,6 +605,7 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
             costUpdates: result.updatedCount ?? 0,
             history: result.historyCount ?? 0,
             highlightDocumentId: nextDocumentId,
+            linkedMessage: result.linkedRegisterInvoice ? result.message : null,
             openNeedsReview: true,
           })
         );

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { MasterDataInputError, requireId } from "@/lib/vyron-master-data-server";
+import { convertCostPerUnit } from "@/lib/vyron-actual-cost";
 
 /**
  * A Cost Calculator line as the server writes it. The recipe and ingredient
@@ -24,7 +25,7 @@ export async function buildCostingLine(
     supabase.from("vyron_cost_recipes").select("id, recipe_name").eq("id", recipeId).eq("company_id", companyId).maybeSingle(),
     supabase
       .from("vyron_cost_ingredients")
-      .select("id, ingredient_name, recipe_unit, true_unit_cost")
+      .select("id, ingredient_name, recipe_unit, purchase_unit, true_unit_cost")
       .eq("id", ingredientId)
       .eq("company_id", companyId)
       .maybeSingle(),
@@ -34,6 +35,15 @@ export async function buildCostingLine(
   if (!recipe) throw new MasterDataInputError("Recipe not found.", 404);
   if (!ingredient) throw new MasterDataInputError("Ingredient not found.", 404);
 
+  // true_unit_cost is per purchase unit (e.g. kg); the line is in the recipe unit (e.g. g).
+  const recipeUnit = String(ingredient.recipe_unit || ingredient.purchase_unit || "kg");
+  const costPerRecipeUnit = convertCostPerUnit(Number(ingredient.true_unit_cost || 0), ingredient.purchase_unit || recipeUnit, recipeUnit);
+  if (costPerRecipeUnit === null) {
+    throw new MasterDataInputError(
+      `${ingredient.ingredient_name || "This ingredient"} is bought per ${ingredient.purchase_unit} but used per ${recipeUnit}; those units cannot be converted. Correct the ingredient's units before costing it.`
+    );
+  }
+
   return {
     recipeName: String(recipe.recipe_name || recipeId),
     line: {
@@ -42,8 +52,8 @@ export async function buildCostingLine(
       ingredient_id: ingredientId,
       ingredient_name_snapshot: String(ingredient.ingredient_name || ""),
       quantity,
-      unit: String(ingredient.recipe_unit || "kg"),
-      true_unit_cost: Number(ingredient.true_unit_cost || 0),
+      unit: recipeUnit,
+      true_unit_cost: Math.round(costPerRecipeUnit * 10000) / 10000,
     },
   };
 }

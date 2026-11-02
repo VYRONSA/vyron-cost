@@ -9,9 +9,10 @@ type OpeningStockRow = {
   productCode?: string;
   productName: string;
   warehouse: string;
-  qty: number;
-  cost: number;
-  value?: number;
+  /** Sent as typed ("0,125", "R18,45"): the server parses them. */
+  qty: string;
+  cost: string;
+  value?: string;
   batch?: string;
   bin?: string;
   date?: string;
@@ -22,20 +23,39 @@ function normalizeKey(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, "_");
 }
 
+/** One CSV line into cells, honouring quotes ("1 234,50" stays one cell). */
+function splitCsvLine(line: string): string[] {
+  const cells: string[] = [];
+  let cell = "";
+  let quoted = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i];
+    if (quoted) {
+      if (ch === '"' && line[i + 1] === '"') { cell += '"'; i += 1; }
+      else if (ch === '"') quoted = false;
+      else cell += ch;
+    } else if (ch === '"') quoted = true;
+    else if (ch === "," || ch === ";") { cells.push(cell.trim()); cell = ""; }
+    else cell += ch;
+  }
+  cells.push(cell.trim());
+  return cells;
+}
+
 function parseCsv(text: string): OpeningStockRow[] {
   const lines = text.split(/\r?\n/).filter((line) => line.trim());
   if (lines.length < 2) return [];
-  const headers = lines[0].split(",").map((h) => normalizeKey(h));
+  const headers = splitCsvLine(lines[0]).map((h) => normalizeKey(h));
   const get = (cells: string[], key: string) => cells[headers.indexOf(key)] || "";
   return lines.slice(1).map((line) => {
-    const cells = line.split(",").map((cell) => cell.trim());
+    const cells = splitCsvLine(line);
     return {
       productCode: get(cells, "product_code") || undefined,
       productName: get(cells, "product_name"),
       warehouse: get(cells, "warehouse"),
-      qty: Number(get(cells, "qty") || 0),
-      cost: Number(get(cells, "cost") || 0),
-      value: get(cells, "value") ? Number(get(cells, "value")) : undefined,
+      qty: get(cells, "qty"),
+      cost: get(cells, "cost"),
+      value: get(cells, "value") || undefined,
       batch: get(cells, "batch") || undefined,
       bin: get(cells, "bin") || undefined,
       date: get(cells, "date") || undefined,
@@ -57,9 +77,9 @@ function parseXlsx(buffer: ArrayBuffer): OpeningStockRow[] {
       productCode: map.get("product_code") || undefined,
       productName: map.get("product_name") || "",
       warehouse: map.get("warehouse") || "",
-      qty: Number(map.get("qty") || 0),
-      cost: Number(map.get("cost") || 0),
-      value: map.get("value") ? Number(map.get("value")) : undefined,
+      qty: map.get("qty") || "",
+      cost: map.get("cost") || "",
+      value: map.get("value") || undefined,
       batch: map.get("batch") || undefined,
       bin: map.get("bin") || undefined,
       date: map.get("date") || undefined,
@@ -76,7 +96,8 @@ export default function OpeningStockImportClient() {
   const [error, setError] = useState("");
 
   const invalidCount = useMemo(() => {
-    return rows.filter((row) => !row.productName || !row.warehouse || Number(row.qty) <= 0 || Number(row.cost) < 0).length;
+    // Numbers are checked on the server (decimal commas, currency); here only what is plainly missing.
+    return rows.filter((row) => !row.productCode || !row.warehouse || !String(row.qty).trim() || !String(row.cost).trim()).length;
   }, [rows]);
 
   async function upload(file: File | null) {

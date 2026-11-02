@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { receiptUnitCost } from "@/lib/vyron-actual-cost";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { postInventoryTransaction } from "@/lib/vyron-inventory-transactions";
 import {
@@ -412,13 +413,15 @@ export async function receivePurchaseOrderStock(
       .eq("company_id", companyId);
 
     if (line.item_type === "ingredient" && line.item_id && qty > 0) {
+      // Valued at the invoiced cost; the PO price is only an estimate (used when no invoiced cost exists).
+      const receiptCost = await receiptUnitCost(supabase, companyId, { entityType: "ingredient", entityId: line.item_id, unit: line.unit, poPrice: Number(line.unit_price || 0) });
       await postInventoryTransaction(supabase, {
         companyId,
         transactionType: "Receipt",
         entityType: "ingredient",
         entityId: line.item_id,
         quantity: qty,
-        unitCost: round4(Number(line.unit_price || 0)),
+        unitCost: round4(receiptCost.unitCost),
         referenceType: "purchase_order_receive",
         referenceId: poId,
         referenceLabel: po.po_number,

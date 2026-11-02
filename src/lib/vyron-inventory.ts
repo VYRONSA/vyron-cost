@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { receiptUnitCost } from "@/lib/vyron-actual-cost";
 import { stockTakeEffectiveAt, storedVariancePct } from "@/lib/vyron-stock-take-rules";
 
 export type StockEntityType = "ingredient" | "packaging" | "finished_goods";
@@ -818,7 +819,15 @@ export async function receiveStockFromGrn(
     const entityType: StockEntityType =
       itemType === "product" ? "finished_goods" : itemType === "packaging" ? "packaging" : "ingredient";
     const entityId = (line.item_id || poLine?.item_id) as string | null;
-    const unitCost = Number(line.unit_price ?? poLine?.unit_price ?? 0);
+    // Valued at the invoiced cost; the PO price is only an estimate (used when no invoiced cost exists).
+    const unitCost = (
+      await receiptUnitCost(supabase, params.companyId, {
+        entityType,
+        entityId,
+        unit: line.unit || poLine?.unit,
+        poPrice: Number(line.unit_price ?? poLine?.unit_price ?? 0),
+      })
+    ).unitCost;
     const stockItem = await findOrCreateStockItem(supabase, params.companyId, {
       entityType,
       entityId,
@@ -1429,6 +1438,21 @@ export async function requestStockCountRecount(
     .eq("company_id", companyId);
 }
 
+/**
+ * Post an approved stock count.
+ *
+ * The variance is recalculated HERE, from the stock as it is at posting time,
+ * never taken from the figure stored when the file was uploaded: deliveries,
+ * production and sales between upload and posting would otherwise be
+ * adjusted away (or doubled). For a count with a Stock Take Date the system
+ * quantity at that date is today's balance minus every movement dated after
+ * it; for any other count it is today's balance.
+ *
+ * It is posted once: the count is claimed (Approved → Posting) by a
+ * conditional update, so a second click or a second user is refused; a line
+ * that already has its ledger movement for this count is never posted again
+ * (a retry after a failure part-way through finishes the rest).
+ */
 export async function postStockCount(
   supabase: SupabaseClient,
   companyId: string,
@@ -1437,7 +1461,11 @@ export async function postStockCount(
   options?: { movementDate?: string }
 ) {
   const header = await getStockCountForCompany(supabase, companyId, countId);
-  if (String(header.status || "") !== "Approved") {
+  const currentStatus = String(header.status || "");
+  if (currentStatus === "Posted" || currentStatus === "Posting") {
+    throw new Error(currentStatus === "Posted" ? "This stock count has already been posted." : "This stock count is already being posted.");
+  }
+  if (currentStatus !== "Approved") {
     throw new Error("Stock count must be approved before posting.");
   }
   // An uploaded stock take posts on its Stock Take Date (the day the physical count was performed),
@@ -1446,44 +1474,105 @@ export async function postStockCount(
   const movementDate = options?.movementDate ?? (stockTakeDate ? stockTakeEffectiveAt(stockTakeDate) : undefined);
   const movementMetadata = stockTakeDate ? { stockTakeDate } : undefined;
 
-  const { data: lines } = await supabase
-    .from("vyron_cost_stock_count_lines")
-    .select("*")
-    .eq("stock_count_id", countId)
-    .eq("company_id", companyId);
-  for (const line of lines || []) {
-    const variance = Number(line.variance_qty || 0);
-    if (Math.abs(variance) < 0.0001) continue;
-    const unitCost = Number(line.unit_cost || 0);
-    if (variance > 0) {
+  const { data: claimed, error: claimError } = await supabase
+    .from("vyron_cost_stock_counts")
+    .update({ status: "Posting", updated_at: new Date().toISOString() })
+    .eq("id", countId)
+    .eq("company_id", companyId)
+    .eq("status", "Approved")
+    .select("id");
+  if (claimError) throw new Error(claimError.message);
+  if (!claimed || claimed.length === 0) throw new Error("This stock count is already being posted or has been posted.");
+
+  const recalculated: Array<{ stockItemId: string; uploadedVariance: number; postedVariance: number; systemQtyAtCount: number }> = [];
+  try {
+    const { data: lines, error: linesError } = await supabase
+      .from("vyron_cost_stock_count_lines")
+      .select("*")
+      .eq("stock_count_id", countId)
+      .eq("company_id", companyId);
+    if (linesError) throw new Error(linesError.message);
+
+    for (const line of lines || []) {
+      const stockItemId = line.stock_item_id ? String(line.stock_item_id) : null;
+      if (!stockItemId) continue;
+
+      // Already posted for this count (a retry after a failure part-way through)?
+      const { data: alreadyPosted, error: postedError } = await supabase
+        .from("vyron_cost_stock_ledger")
+        .select("id")
+        .eq("company_id", companyId)
+        .eq("stock_item_id", stockItemId)
+        .eq("reference_type", "stock_count")
+        .eq("reference_id", countId)
+        .limit(1);
+      if (postedError) throw new Error(postedError.message);
+      if (alreadyPosted && alreadyPosted.length > 0) continue;
+
+      const { data: item, error: itemError } = await supabase
+        .from("vyron_cost_stock_items")
+        .select("id, qty_on_hand")
+        .eq("company_id", companyId)
+        .eq("id", stockItemId)
+        .maybeSingle();
+      if (itemError) throw new Error(itemError.message);
+      if (!item) throw new Error(`Stock item ${line.item_name || stockItemId} no longer exists; the count cannot be posted.`);
+
+      let movedSince = 0;
+      if (movementDate) {
+        const { data: after, error: afterError } = await supabase
+          .from("vyron_cost_stock_ledger")
+          .select("quantity_in, quantity_out")
+          .eq("company_id", companyId)
+          .eq("stock_item_id", stockItemId)
+          .gt("movement_date", movementDate);
+        if (afterError) throw new Error(afterError.message);
+        movedSince = (after || []).reduce((sum, m) => sum + Number(m.quantity_in || 0) - Number(m.quantity_out || 0), 0);
+      }
+      const systemQtyAtCount = Math.round((Number(item.qty_on_hand || 0) - movedSince) * 10000) / 10000;
+      const counted = Number(line.counted_qty || 0);
+      const variance = Math.round((counted - systemQtyAtCount) * 10000) / 10000;
+      const unitCost = Number(line.unit_cost || 0);
+      const uploadedVariance = Number(line.variance_qty || 0);
+      recalculated.push({ stockItemId, uploadedVariance, postedVariance: variance, systemQtyAtCount });
+
+      // The line records what was actually posted.
+      const { error: lineUpdateError } = await supabase
+        .from("vyron_cost_stock_count_lines")
+        .update({
+          system_qty: systemQtyAtCount,
+          variance_qty: variance,
+          variance_value: Math.round(variance * unitCost * 100) / 100,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", line.id)
+        .eq("company_id", companyId);
+      if (lineUpdateError) throw new Error(lineUpdateError.message);
+
+      if (Math.abs(variance) < 0.0001) continue;
       await postStockMovement(supabase, {
         companyId: header.company_id as string,
-        stockItemId: line.stock_item_id as string,
+        stockItemId,
         movementType: "Stock Count Variance",
-        quantityIn: variance,
+        ...(variance > 0 ? { quantityIn: variance } : { quantityOut: Math.abs(variance) }),
         unitCost,
         referenceType: "stock_count",
         referenceId: countId,
         referenceLabel: header.count_number as string,
         actor,
         movementDate,
-        metadata: movementMetadata,
-      });
-    } else {
-      await postStockMovement(supabase, {
-        companyId: header.company_id as string,
-        stockItemId: line.stock_item_id as string,
-        movementType: "Stock Count Variance",
-        quantityOut: Math.abs(variance),
-        unitCost,
-        referenceType: "stock_count",
-        referenceId: countId,
-        referenceLabel: header.count_number as string,
-        actor,
-        movementDate,
-        metadata: movementMetadata,
+        metadata: { ...(movementMetadata || {}), uploadedVariance, systemQtyAtCount, countedQty: counted },
       });
     }
+  } catch (error) {
+    // Hand it back to Approved so it can be posted again; lines already posted are skipped next time.
+    await supabase
+      .from("vyron_cost_stock_counts")
+      .update({ status: "Approved", updated_at: new Date().toISOString() })
+      .eq("id", countId)
+      .eq("company_id", companyId)
+      .eq("status", "Posting");
+    throw error;
   }
 
   const postedAt = new Date().toISOString();
@@ -1493,14 +1582,20 @@ export async function postStockCount(
     .eq("id", countId)
     .eq("company_id", companyId);
 
+  const changedSinceUpload = recalculated.filter((r) => Math.abs(r.postedVariance - r.uploadedVariance) >= 0.0001);
   await writeInventoryAudit(supabase, {
     companyId: header.company_id as string,
     eventType: "Stock Count Posted",
     actor,
-    detail: stockTakeDate ? `Posted count ${header.count_number} with stock take date ${stockTakeDate}` : `Posted count ${header.count_number}`,
+    detail: (stockTakeDate ? `Posted count ${header.count_number} with stock take date ${stockTakeDate}` : `Posted count ${header.count_number}`) +
+      (changedSinceUpload.length ? `; ${changedSinceUpload.length} line(s) recalculated because stock moved after the count was prepared` : ""),
     referenceType: "stock_count",
     referenceId: countId,
-    metadata: stockTakeDate ? { stockTakeDate, effectiveMovementDate: movementDate, uploadedAt: header.created_at ?? null, submittedAt: header.submitted_at ?? null, postedAt } : undefined,
+    metadata: {
+      ...(stockTakeDate ? { stockTakeDate, effectiveMovementDate: movementDate, uploadedAt: header.created_at ?? null, submittedAt: header.submitted_at ?? null } : {}),
+      postedAt,
+      recalculatedLines: changedSinceUpload,
+    },
   });
 }
 

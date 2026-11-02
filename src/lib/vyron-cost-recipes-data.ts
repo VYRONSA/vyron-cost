@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { enforceVerifiedLineCosts, type RecipeCostPolicy } from "@/lib/vyron-recipe-cost-policy";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { calcGp, calcLineCost, calcSuggestedPrice } from "@/lib/vyron-cost-bom-data";
 import { createProduct } from "@/lib/vyron-cost-master-data";
@@ -26,6 +27,8 @@ export type RecipeLineInput = {
   component_id?: string | null;
   /** The BOM this line stands for. Mutually exclusive with ingredient_id. */
   child_bom_id?: string | null;
+  /** Keep a typed cost that differs from the verified supplier cost (needs boms.cost_override; audited). */
+  cost_override_reason?: string | null;
 };
 
 /**
@@ -898,7 +901,8 @@ export async function createRecipe(
     bom_purpose?: string | null;
     selling_price_includes_vat?: boolean;
     lines?: RecipeLineInput[];
-  }
+  },
+  costPolicy?: RecipeCostPolicy
 ) {
   const purpose = normaliseBomPurpose(input.bom_purpose);
   const recipeId = randomUUID();
@@ -908,7 +912,9 @@ export async function createRecipe(
 
   // No parent id exists yet, so a new BOM cannot be part of a cycle; the
   // database still refuses a self-reference.
-  const lines = await resolveSubBomLines(supabase, companyId, null, input.lines || []);
+  // Ingredient lines are costed from the verified supplier cost, in the line's unit.
+  const verifiedLines = await enforceVerifiedLineCosts(supabase, companyId, input.lines || [], costPolicy);
+  const lines = await resolveSubBomLines(supabase, companyId, null, verifiedLines);
   const includesVat = input.selling_price_includes_vat === true;
   const costs = computeRecipeCosts(
     lines,
@@ -994,7 +1000,8 @@ export async function updateRecipe(
     bom_purpose?: string | null;
     selling_price_includes_vat?: boolean;
     lines?: RecipeLineInput[];
-  }
+  },
+  costPolicy?: RecipeCostPolicy
 ) {
   const existing = await getRecipe(supabase, companyId, recipeId);
   if (!existing) throw new Error("Recipe not found.");
@@ -1019,7 +1026,9 @@ export async function updateRecipe(
   if (purpose !== "Sub-BOM" && input.product_id !== undefined) {
     await assertProductFree(supabase, companyId, input.product_id, recipeId);
   }
-  const lines = await resolveSubBomLines(supabase, companyId, recipeId, requestedLines);
+  // Edited lines are costed from the verified supplier cost; a header-only save leaves the lines alone.
+  const costedLines = input.lines ? await enforceVerifiedLineCosts(supabase, companyId, requestedLines, costPolicy) : requestedLines;
+  const lines = await resolveSubBomLines(supabase, companyId, recipeId, costedLines);
 
   const yieldQty = input.yield_qty ?? existing.yield_qty;
   const sellingPrice = input.selling_price ?? Number(existing.selling_price || 0);
@@ -1205,12 +1214,14 @@ export async function createRecipeLine(
   supabase: SupabaseClient,
   companyId: string,
   recipeId: string,
-  input: RecipeLineInput
+  input: RecipeLineInput,
+  costPolicy?: RecipeCostPolicy
 ) {
   const recipe = await getRecipe(supabase, companyId, recipeId);
   if (!recipe) throw new Error("Recipe not found.");
 
-  const [line] = await insertRecipeLines(supabase, companyId, recipeId, [input]);
+  const [costed] = await enforceVerifiedLineCosts(supabase, companyId, [input], costPolicy);
+  const [line] = await insertRecipeLines(supabase, companyId, recipeId, [costed]);
   const lines = await listRecipeLines(supabase, companyId, recipeId);
   const costs = computeRecipeCosts(
     lines,
@@ -1252,7 +1263,8 @@ export async function updateRecipeLine(
   companyId: string,
   recipeId: string,
   lineId: string,
-  input: Partial<RecipeLineInput>
+  input: Partial<RecipeLineInput>,
+  costPolicy?: RecipeCostPolicy
 ) {
   const recipe = await getRecipe(supabase, companyId, recipeId);
   if (!recipe) throw new Error("Recipe not found.");
@@ -1286,6 +1298,23 @@ export async function updateRecipeLine(
     unit_cost: Number(patch.unit_cost ?? existing.unit_cost ?? 0),
     wastage_percent: Number(patch.wastage_percent ?? existing.wastage_percent ?? 0),
   };
+  // A change to what is costed (ingredient, unit or cost) is re-costed from the verified supplier cost.
+  if (input.ingredient_id !== undefined || input.unit !== undefined || input.unit_cost !== undefined) {
+    // A new unit or ingredient with no new cost: the old cost belonged to the old unit/ingredient, so it is not kept.
+    const unitChanged = input.unit !== undefined && String(input.unit) !== String(existing.unit ?? "");
+    const ingredientChanged = input.ingredient_id !== undefined && String(input.ingredient_id ?? "") !== String(existing.ingredient_id ?? "");
+    if ((unitChanged || ingredientChanged) && input.unit_cost === undefined) merged.unit_cost = 0;
+    const [costed] = await enforceVerifiedLineCosts(
+      supabase,
+      companyId,
+      [{ ...merged, child_bom_id: (existing.child_bom_id as string | null) ?? null, cost_override_reason: input.cost_override_reason ?? null }],
+      costPolicy
+    );
+    patch.unit = costed.unit;
+    patch.unit_cost = costed.unit_cost;
+    merged.unit = costed.unit;
+    merged.unit_cost = costed.unit_cost;
+  }
   const { data, error } = await supabase
     .from("vyron_cost_bom_lines")
     .update(patch)

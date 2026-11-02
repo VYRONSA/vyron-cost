@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { cascadeIngredientRename } from "@/lib/vyron-ingredient-rename";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CostIngredient, CostSupplier } from "@/lib/vyron-cost-core-data";
 import type { CostProduct } from "@/lib/vyron-cost-product-data";
@@ -297,6 +298,13 @@ export async function updateIngredient(
     patch.true_unit_cost = calculateTrueUnitCost(cost, yieldPct);
   }
 
+  // The name before the change, so a rename can be carried into every copy of it.
+  let previousName: string | null = null;
+  if (patch.ingredient_name !== undefined) {
+    const { data: before } = await supabase.from("vyron_cost_ingredients").select("ingredient_name").eq("id", ingredientId).eq("company_id", companyId).maybeSingle();
+    previousName = before ? String(before.ingredient_name ?? "") : null;
+  }
+
   const { data, error } = await supabase
     .from("vyron_cost_ingredients")
     .update(patch)
@@ -305,6 +313,9 @@ export async function updateIngredient(
     .select("*")
     .single();
   if (error) throw new Error(error.message);
+  if (patch.ingredient_name !== undefined && previousName !== null && previousName !== patch.ingredient_name) {
+    await cascadeIngredientRename(supabase, companyId, ingredientId, String(patch.ingredient_name));
+  }
   return data as CostIngredient;
 }
 

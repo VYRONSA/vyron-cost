@@ -1,18 +1,27 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   findOrCreateStockItem,
+  hasOpeningBalance,
   postOpeningStockMovement,
   postStockMovement,
   writeInventoryAudit,
 } from "@/lib/vyron-inventory";
+import { parseAmount } from "@/lib/vyron-upload-table";
+
+/** A cell as sent by the screen (text) or an older client (number): text is parsed, never Number()-ed. */
+function cellAmount(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  return parseAmount(String(value));
+}
 
 export type OpeningStockImportRow = {
   productCode?: string;
   productName: string;
   warehouse: string;
-  qty: number;
-  cost: number;
-  value?: number;
+  qty: number | string;
+  cost: number | string;
+  value?: number | string;
   batch?: string;
   bin?: string;
   date?: string;
@@ -52,8 +61,14 @@ export async function importOpeningStockRows(
     .eq("company_id", companyId);
   if (productError) throw new Error(productError.message);
 
-  const bySku = new Map((products || []).map((row) => [String(row.sku || "").toLowerCase(), row]));
-  const byName = new Map((products || []).map((row) => [String(row.product_name || "").toLowerCase(), row]));
+  // Matched by product code (SKU) only. A name is not an identifier: two products can share it,
+  // and it used to resolve last-one-wins. A code two products share is refused, not guessed.
+  const bySku = new Map<string, NonNullable<typeof products>[number][]>();
+  for (const row of products || []) {
+    const sku = String(row.sku || "").trim().toLowerCase();
+    if (!sku) continue;
+    bySku.set(sku, [...(bySku.get(sku) || []), row]);
+  }
 
   const validRows: Array<{
     index: number;
@@ -77,15 +92,33 @@ export async function importOpeningStockRows(
     seen.add(key);
 
     const code = String(input.productCode || "").trim().toLowerCase();
-    const name = String(input.productName || "").trim().toLowerCase();
-    const product = (code ? bySku.get(code) : null) || (name ? byName.get(name) : null) || null;
+    if (!code) {
+      errors.push({ row: rowNumber, error: `Product code (SKU) is required${input.productName ? ` for "${input.productName}"` : ""}; products are not matched by name.` });
+      continue;
+    }
+    const matches = bySku.get(code) || [];
+    if (matches.length > 1) {
+      errors.push({ row: rowNumber, error: `Product code ${input.productCode} belongs to ${matches.length} products; correct the product master first.` });
+      continue;
+    }
+    const product = matches[0];
     if (!product) {
-      errors.push({ row: rowNumber, error: `Product not found (${input.productCode || input.productName}).` });
+      errors.push({ row: rowNumber, error: `Product code not found (${input.productCode}).` });
       continue;
     }
 
-    const qty = Number(input.qty || 0);
-    const cost = Number(input.cost || 0);
+    const parsedQty = cellAmount(input.qty);
+    const parsedCost = cellAmount(input.cost);
+    if (parsedQty === null) {
+      errors.push({ row: rowNumber, error: `Qty "${input.qty ?? ""}" is not a readable number (use 0,125 or 0.125; 12,345 is ambiguous).` });
+      continue;
+    }
+    if (parsedCost === null) {
+      errors.push({ row: rowNumber, error: `Cost "${input.cost ?? ""}" is missing or not a readable amount; opening stock is never loaded at zero cost by accident.` });
+      continue;
+    }
+    const qty = parsedQty;
+    const cost = parsedCost;
     const warehouse = String(input.warehouse || "").trim();
     if (!warehouse) {
       errors.push({ row: rowNumber, error: "Warehouse is required." });
@@ -100,7 +133,8 @@ export async function importOpeningStockRows(
       continue;
     }
 
-    const value = input.value == null ? round4(qty * cost) : round4(Number(input.value));
+    const parsedValue = cellAmount(input.value);
+    const value = parsedValue === null ? round4(qty * cost) : round4(parsedValue);
     if (value < 0) {
       errors.push({ row: rowNumber, error: "Value cannot be negative." });
       continue;
@@ -117,6 +151,42 @@ export async function importOpeningStockRows(
     });
   }
 
+  if (!validRows.length) {
+    await supabase.from("vyron_opening_stock_import_runs").insert({
+      company_id: companyId,
+      file_name: params.fileName,
+      status: "Failed",
+      total_rows: params.rows.length,
+      imported_rows: 0,
+      rejected_rows: errors.length,
+      error_report: errors,
+      created_by: actor,
+    });
+    return { imported: 0, rejected: errors.length, errors };
+  }
+
+  /*
+   * Loading opening stock twice doubled it (every row was posted with
+   * allowDuplicate). A product that already has an opening balance is refused;
+   * several rows for one product in THIS file (warehouses, batches) still load.
+   */
+  const alreadyOpened = new Set<string>();
+  for (const productId of new Set(validRows.map((row) => row.productId))) {
+    const { data: stockItem } = await supabase
+      .from("vyron_cost_stock_items")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("entity_type", "finished_goods")
+      .eq("entity_id", productId)
+      .maybeSingle();
+    if (stockItem && (await hasOpeningBalance(supabase, companyId, String(stockItem.id)))) alreadyOpened.add(productId);
+  }
+  for (let i = validRows.length - 1; i >= 0; i -= 1) {
+    if (alreadyOpened.has(validRows[i].productId)) {
+      errors.push({ row: validRows[i].index, error: `Opening stock for ${validRows[i].productName} was already loaded; importing it again would double it. Use a stock take or adjustment instead.` });
+      validRows.splice(i, 1);
+    }
+  }
   if (!validRows.length) {
     await supabase.from("vyron_opening_stock_import_runs").insert({
       company_id: companyId,

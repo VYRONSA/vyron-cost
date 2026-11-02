@@ -64,7 +64,10 @@ export default async function GpReportPage({
       gpPct: Number(p.gpPct || 0),
       avgSellingPrice: Number(p.avgSellingPrice || 0),
       avgCostPrice: Number(p.avgCostPrice || 0),
+      costMissing: Boolean(p.costMissing),
+      missingCostRevenue: Number(p.missingCostRevenue || 0),
     })),
+    costWarnings: report?.costWarnings,
     byInvoice: (report?.byInvoice ?? []).map((i) => ({
       invoiceNumber: String(i.invoiceNumber || "—"),
       invoiceDate: String(i.invoiceDate || "").slice(0, 10),
