@@ -86,6 +86,11 @@ export default function ProcurementPoFormClient({
       .catch(() => setSupplierOptions([]));
   }, [suppliers]);
 
+  /*
+   * Loads the saved purchase order once per PO. It used to re-run whenever the
+   * supplier list arrived, and that reload put every line back to its saved
+   * snapshot — discarding an item the user had just picked.
+   */
   useEffect(() => {
     if (!poId) return;
     setLoading(true);
@@ -96,7 +101,7 @@ export default function ProcurementPoFormClient({
         if (!data.ok) throw new Error(data.error || "Could not load PO.");
         const po = data.purchaseOrder;
         setPoNumber(String(po.po_number || ""));
-        setSupplierId(String(po.supplier_id || supplierOptions[0]?.id || ""));
+        setSupplierId((current) => String(po.supplier_id || current || ""));
         setOrderDate(String(po.order_date || new Date().toISOString().slice(0, 10)).slice(0, 10));
         setNotes(String(po.notes || ""));
         setStatus(String(po.status || "Draft"));
@@ -116,7 +121,7 @@ export default function ProcurementPoFormClient({
       })
       .catch((error) => setMessage(error instanceof Error ? error.message : "Could not load PO."))
       .finally(() => setLoading(false));
-  }, [poId, supplierOptions]);
+  }, [poId]);
 
   const supplierName = supplierOptions.find((s) => s.id === supplierId)?.supplier_name || "";
   const totals = useMemo(() => {
