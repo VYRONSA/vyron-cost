@@ -69,10 +69,17 @@ export function demoSeed(): Record<string, Array<Record<string, unknown>>> {
     vyron_customer_price_list_assignments: [
       { id: "de3a0000-0000-4000-8000-000000000001", company_id: CO, customer_id: C.northside.id, default_price_list_id: null, contract_price_list_id: "de310000-0000-4000-8000-000000000001", status: "Active" },
     ],
+    // Northside's contract list prices everything they buy: a customer with a list is priced by that
+    // list alone (no product-master fallback), so a product missing from it would have no price.
     vyron_customer_price_list_items: [
       { id: "de3e0000-0000-4000-8000-000000000001", company_id: CO, price_list_id: "de310000-0000-4000-8000-000000000001", product_id: P.beefPie.id, final_price: 35, status: "Active", effective_from: "2026-01-01" },
+      { id: "de3e0000-0000-4000-8000-000000000002", company_id: CO, price_list_id: "de310000-0000-4000-8000-000000000001", product_id: P.chickenPie.id, final_price: 36, status: "Active", effective_from: "2026-01-01" },
+      { id: "de3e0000-0000-4000-8000-000000000003", company_id: CO, price_list_id: "de310000-0000-4000-8000-000000000001", product_id: P.soup.id, final_price: 28, status: "Active", effective_from: "2026-01-01" },
+      { id: "de3e0000-0000-4000-8000-000000000004", company_id: CO, price_list_id: "de310000-0000-4000-8000-000000000001", product_id: P.sauce.id, final_price: 24, status: "Active", effective_from: "2026-01-01" },
     ],
-    vyron_customer_price_lists: [],
+    vyron_customer_price_lists: [
+      { id: "de310000-0000-4000-8000-000000000001", company_id: CO, list_name: "Northside contract", list_type: "Contract", status: "Active", effective_from: "2026-01-01", effective_to: null, version: 1, is_company_default: false },
+    ],
     vyron_customer_price_list_versions: [],
     vyron_customer_branches: [],
     vyron_cost_product_pack_sizes: [
@@ -206,7 +213,7 @@ export const DEMO_SCENARIOS: readonly DemoScenario[] = [
   {
     id: "multi-product",
     title: "Several products, contract price",
-    story: "Northside Grocers orders four products; their contract price for beef pies applies.",
+    story: "Northside Grocers orders four products, all on their contract list; its R35 beef-pie price applies.",
     input: manual({
       customerName: "Northside Grocers",
       customerPoNumber: "NG-7781",
