@@ -73,24 +73,33 @@ function matchesQuery(q: string | undefined, ...fields: Array<string | null | un
 }
 
 /**
- * The Finished Goods record a stock item was created for, if it still exists.
+ * The current name of the master record a stock item was created for, if it still exists.
  *
- * A stock item copies its product's name once, when it is created. The product
- * record is what Finished Goods edits, so its name is the one a document shows.
+ * A stock item copies its product's or raw material's name once, when it is
+ * created. Finished Goods and Raw Materials edit the master record, so its name
+ * is the one a document shows. Only the name is taken from the master: category,
+ * supplier, unit, cost and quantity stay as the stock item has them.
  */
-function productForStockRow(row: StockItemRow, productById: Map<string, ProductFinancialRow>) {
-  if (row.entity_type !== "finished_goods" || !row.entity_id) return null;
-  return productById.get(String(row.entity_id)) ?? null;
+function masterNameForStockRow(
+  row: StockItemRow,
+  productById: Map<string, ProductFinancialRow>,
+  ingredientById: Map<string, IngredientMasterRow>
+): string | null {
+  if (!row.entity_id) return null;
+  const id = String(row.entity_id);
+  if (row.entity_type === "finished_goods") return productById.get(id)?.product_name || null;
+  if (row.entity_type === "ingredient" || row.entity_type === "packaging") return ingredientById.get(id)?.ingredient_name || null;
+  return null;
 }
 
 function buildResultFromStockRow(
   row: StockItemRow,
   financialByProductId: Map<string, ProductFinancialRow>,
-  product: ProductFinancialRow | null = null
+  masterName: string | null = null
 ): ItemLookupResult {
   const financial = row.entity_id ? financialByProductId.get(row.entity_id) : undefined;
-  // A finished good is named by its product record; anything else by its stock item.
-  const name = product?.product_name || row.description;
+  // Named by its master record where it has one; otherwise by its stock item.
+  const name = masterName || row.description;
   return {
     id: row.id,
     stockItemId: row.id,
@@ -301,30 +310,35 @@ export async function searchItemLookupPage(
   const financialByProductId = new Map<string, ProductFinancialRow>();
   for (const row of products) financialByProductId.set(row.id, row);
 
+  const ingredientById = new Map<string, IngredientMasterRow>();
+  for (const row of ingredients) ingredientById.set(String(row.id), row);
+
   /*
-   * A typed search also reads the stock items of products whose current name
-   * matches. Those stock items may still carry the name the product had when
-   * they were created, so searching their own text alone missed a renamed
-   * finished good entirely: its stock item did not match the new name, and the
-   * product itself is left out because a stock item stands for it.
+   * A typed search also reads the stock items of master records whose current
+   * name matches. Those stock items may still carry the name the record had
+   * when they were created, so searching their own text alone missed a renamed
+   * finished good or raw material entirely ("Suitcase Box", still "Packaging
+   * Box - Pie" on its stock item): the stock item did not match the new name,
+   * and the master record is left out because a stock item stands for it.
    */
   let stockRows = (stockData || []) as StockItemRow[];
-  if (q && (!filtersByEntityType || params.type === "finished_goods")) {
-    const renamedIds = products
-      .filter((prod) => coveredEntityIds.has(String(prod.id)) && matchesQuery(q, prod.product_name))
-      .map((prod) => String(prod.id));
-    const behindProducts = await readAllIn<StockItemRow>(renamedIds, (chunk, from, to) =>
-      stockItems().eq("entity_type", "finished_goods").in("entity_id", chunk).order("id").range(from, to)
+  if (q) {
+    const renamedIds = [
+      ...products.filter((prod) => matchesQuery(q, prod.product_name)).map((prod) => String(prod.id)),
+      ...ingredients.filter((ing) => matchesQuery(q, ing.ingredient_name)).map((ing) => String(ing.id)),
+    ].filter((id) => coveredEntityIds.has(id));
+    const behindMasters = await readAllIn<StockItemRow>(renamedIds, (chunk, from, to) =>
+      stockItems().in("entity_id", chunk).order("id").range(from, to)
     );
     const byId = new Map(stockRows.map((row) => [String(row.id), row]));
-    for (const row of behindProducts) if (!byId.has(String(row.id))) byId.set(String(row.id), row);
+    for (const row of behindMasters) if (!byId.has(String(row.id))) byId.set(String(row.id), row);
     stockRows = [...byId.values()];
   }
 
   const pending: PendingEntry[] = [];
   for (const row of stockRows) {
-    const result = buildResultFromStockRow(row, financialByProductId, productForStockRow(row, financialByProductId));
-    // Matched on the name shown, so a finished good is no longer found by a name it has dropped.
+    const result = buildResultFromStockRow(row, financialByProductId, masterNameForStockRow(row, financialByProductId, ingredientById));
+    // Matched on the name shown, so an item is no longer found by a name it has dropped.
     if (!matchesQuery(q, row.item_code, result.productName, row.barcode, row.supplier_item_code, row.customer_item_code)) {
       continue;
     }
@@ -402,7 +416,7 @@ export async function searchItemLookupPage(
           minLevel: 10,
           maxLevel: 200,
         });
-        return buildResultFromStockRow(created as unknown as StockItemRow, financialByProductId);
+        return buildResultFromStockRow(created as unknown as StockItemRow, financialByProductId, entry.row.ingredient_name);
       }
 
       const created = await findOrCreateStockItem(supabase, companyId, {
@@ -417,7 +431,7 @@ export async function searchItemLookupPage(
         minLevel: 20,
         maxLevel: 1000,
       });
-      return buildResultFromStockRow(created as unknown as StockItemRow, financialByProductId, entry.row);
+      return buildResultFromStockRow(created as unknown as StockItemRow, financialByProductId, entry.row.product_name);
     })
   );
 

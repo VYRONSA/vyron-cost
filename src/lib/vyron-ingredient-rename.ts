@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { renameStockItemsForEntity } from "@/lib/vyron-inventory";
 
 /**
  * Carry a raw material's new name into every record that keeps a copy of it.
@@ -46,10 +47,11 @@ export async function cascadeIngredientRename(
     result.productCostLines = error ? 0 : (data || []).length;
   }
   await run("recipeItems", supabase.from("vyron_cost_recipe_items").update({ ingredient_name_snapshot: name }).eq("company_id", companyId).eq("ingredient_id", ingredientId).select("id"));
-  await run(
-    "stockItems",
-    supabase.from("vyron_cost_stock_items").update({ description: name, updated_at: new Date().toISOString() }).eq("company_id", companyId).in("entity_type", ["ingredient", "packaging"]).eq("entity_id", ingredientId).select("id")
-  );
+  try {
+    result.stockItems = await renameStockItemsForEntity(supabase, companyId, ["ingredient", "packaging"], ingredientId, name);
+  } catch (error) {
+    throw new Error(`stockItems: ${error instanceof Error ? error.message : String(error)}`);
+  }
   await run(
     "supplierLineMappings",
     supabase.from("vyron_supplier_line_item_mappings").update({ entity_name: name }).eq("tenant_id", companyId).in("entity_type", ["ingredient", "packaging"]).eq("entity_id", ingredientId).select("id")

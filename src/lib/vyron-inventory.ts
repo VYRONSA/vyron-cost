@@ -132,6 +132,37 @@ function weightedAverageCost(oldQty: number, oldAvg: number, inQty: number, inCo
   return round4((oldQty * oldAvg + inQty * inCost) / totalQty);
 }
 
+/**
+ * Give a master record's stock items its new name.
+ *
+ * A stock item copies the name of the product or raw material it was created
+ * for. When that master record is renamed, its stock items follow, so stock
+ * screens and document pickers show the name the business now uses. Only the
+ * name moves: quantity, cost and value are never touched here. Scoped to the
+ * company, the entity types given and the master record's id. Returns how many
+ * stock items were renamed.
+ */
+export async function renameStockItemsForEntity(
+  supabase: SupabaseClient,
+  companyId: string,
+  entityTypes: StockEntityType[],
+  entityId: string,
+  name: string
+): Promise<number> {
+  const newName = name.trim();
+  if (!newName || !entityId || !entityTypes.length) return 0;
+  const { data, error } = await supabase
+    .from("vyron_cost_stock_items")
+    .update({ description: newName, updated_at: new Date().toISOString() })
+    .eq("company_id", companyId)
+    .in("entity_type", entityTypes)
+    .eq("entity_id", entityId)
+    .neq("description", newName)
+    .select("id");
+  if (error) throw new Error(error.message);
+  return (data || []).length;
+}
+
 export async function findOrCreateStockItem(
   supabase: SupabaseClient,
   companyId: string,

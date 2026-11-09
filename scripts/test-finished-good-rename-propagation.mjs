@@ -188,16 +188,34 @@ section("Stock items named before this fix");
   check("its stale name is not what is offered", !byOld.some((i) => i.productName === "Sausage Roll"), JSON.stringify(byOld.map((i) => i.productName)));
 }
 
-section("Release scope: everything else searches as before");
+section("Raw materials renamed after their stock item was created (PO, BOM, recipe pickers)");
 {
   const ING = "f0000000-0000-4000-8000-000000000001";
+  const BOX = "f0000000-0000-4000-8000-000000000002";
   const s = seed();
   s.vyron_cost_ingredients.push({ id: ING, company_id: CO, ingredient_name: "Cake Flour", category: "Dry", purchase_unit: "kg", purchase_cost: 18, supplier_id: null });
-  s.vyron_cost_stock_items.push({ ...stockItem("d0000000-0000-4000-8000-0000000000f1", CO, ING, "Flour"), entity_type: "ingredient", item_code: "ING-FLOUR" });
+  s.vyron_cost_stock_items.push({ ...stockItem("d0000000-0000-4000-8000-0000000000f1", CO, ING, "Flour"), entity_type: "ingredient", item_code: "ING-FLOUR", unit: "kg", supplier_id: "sup-1", supplier_name_snapshot: "Mill Co", current_cost: 17.25, qty_on_hand: 40 });
+  // The reported case: renamed in Raw Materials, its stock item still says "Packaging Box - Pie".
+  s.vyron_cost_ingredients.push({ id: BOX, company_id: CO, ingredient_name: "Suitcase Box", category: "Packaging", purchase_unit: "each", purchase_cost: 4.1, supplier_id: null });
+  s.vyron_cost_stock_items.push({ ...stockItem("d0000000-0000-4000-8000-0000000000f2", CO, BOX, "Packaging Box - Pie"), entity_type: "packaging", item_code: "ING-BOX", category: "Packaging", unit: "each", qty_on_hand: 0 });
   const db3 = createFakeSupabase(s);
+  const before = structuredClone(db3.tables);
+
+  const { items: box } = await searchItemLookupPage(db3, CO, { q: "Suitcase", type: "packaging", status: "active", limit: 200 });
+  check("Suitcase Box is found by its Raw Materials name", box.some((i) => i.entityId === BOX && i.productName === "Suitcase Box"), JSON.stringify(box.map((i) => i.productName)));
+  const { items: boxOld } = await searchItemLookupPage(db3, CO, { q: "Packaging Box", type: "all", status: "active", limit: 200 });
+  check("it is not offered under its old stock-item name", !boxOld.some((i) => i.productName === "Packaging Box - Pie"), JSON.stringify(boxOld.map((i) => i.productName)));
+
   const { items } = await searchItemLookupPage(db3, CO, { q: "Flour", type: "all", status: "active", limit: 200 });
   const flour = items.filter((i) => i.entityId === ING);
-  check("a raw material is still shown by its stock item, as in production", flour.length === 1 && flour[0].productName === "Flour", JSON.stringify(flour.map((i) => i.productName)));
+  check("a raw material is offered once, under its Raw Materials name", flour.length === 1 && flour[0].productName === "Cake Flour", JSON.stringify(flour.map((i) => i.productName)));
+  check("its stock item still supplies unit, supplier, cost and quantity", flour[0]?.unit === "kg" && flour[0]?.supplierName === "Mill Co" && flour[0]?.currentCost === 17.25 && flour[0]?.qtyOnHand === 40, JSON.stringify(flour[0]));
+  check("searching writes nothing", JSON.stringify(db3.tables) === JSON.stringify(before));
+}
+
+section("Release scope: item codes and tenants");
+{
+  const db3 = createFakeSupabase(seed());
   const { items: byCode } = await searchItemLookupPage(db3, CO, { q: "B0000000", type: "finished_goods", status: "active", limit: 200 });
   check("a finished good with no stock item is still found by part of its item code", byCode.some((i) => i.entityId === P_TART), JSON.stringify(byCode.map((i) => i.itemCode)));
   const { items: other } = await searchItemLookupPage(db3, CO_B, { q: "Chicken", type: "finished_goods", status: "active", limit: 200 });

@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { cascadeIngredientRename } from "@/lib/vyron-ingredient-rename";
+import { renameStockItemsForEntity } from "@/lib/vyron-inventory";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CostIngredient, CostSupplier } from "@/lib/vyron-cost-core-data";
 import type { CostProduct } from "@/lib/vyron-cost-product-data";
@@ -811,15 +812,12 @@ async function syncFinishedGoodStockItemName(
   productId: string,
   productName: string
 ) {
-  const { error } = await supabase
-    .from("vyron_cost_stock_items")
-    .update({ description: productName, updated_at: new Date().toISOString() })
-    .eq("company_id", companyId)
-    .eq("entity_type", "finished_goods")
-    .eq("entity_id", productId)
-    .neq("description", productName);
-  if (error) {
-    console.error(`Finished good ${productId} renamed, but its stock item name was not updated: ${error.message}`);
+  try {
+    await renameStockItemsForEntity(supabase, companyId, ["finished_goods"], productId, productName);
+  } catch (error) {
+    console.error(
+      `Finished good ${productId} renamed, but its stock item name was not updated: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
