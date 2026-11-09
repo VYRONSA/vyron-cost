@@ -110,7 +110,8 @@ export function ItemLookupField({
       // Enough to show a company's whole master list rather than the first 20.
       params.set("limit", String(PAGE_SIZE));
       if (materialise) params.set("materialise", "1");
-      const response = await fetch(`/api/item-lookup/search?${params.toString()}`);
+      // Every opening reads the master records afresh; nothing is served from cache.
+      const response = await fetch(`/api/item-lookup/search?${params.toString()}`, { cache: "no-store" });
       const payload = (await response.json()) as ItemLookupSearchResponse;
       if (seq !== requestSeq.current) return;
       /*

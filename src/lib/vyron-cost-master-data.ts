@@ -780,7 +780,47 @@ export async function updateProduct(
 
   if (response.error) throw new Error(response.error.message);
   const data = response.data;
+
+  if (typeof patch.product_name === "string" && patch.product_name) {
+    await syncFinishedGoodStockItemName(supabase, companyId, productId, patch.product_name);
+  }
+
   return data as CostProduct;
+}
+
+/**
+ * Carry a renamed finished good through to its stock item.
+ *
+ * A stock item copies the product's name once, when it is created, and the
+ * document item lookup searched and displayed that copy. A product renamed in
+ * Finished Goods therefore kept appearing on new customer invoices under its old
+ * name, and could not be found by its new one. The product record is the
+ * authority for the name, so its stock item follows it.
+ *
+ * Only the name moves. Quantity, cost and value are untouched, and documents
+ * already raised keep the name they were saved with: invoice lines carry their
+ * own copy in `product_name`.
+ *
+ * The product is already saved when this runs, so a failure here is reported
+ * rather than turned into a failed save; the lookup reads the master name
+ * regardless.
+ */
+async function syncFinishedGoodStockItemName(
+  supabase: SupabaseClient,
+  companyId: string,
+  productId: string,
+  productName: string
+) {
+  const { error } = await supabase
+    .from("vyron_cost_stock_items")
+    .update({ description: productName, updated_at: new Date().toISOString() })
+    .eq("company_id", companyId)
+    .eq("entity_type", "finished_goods")
+    .eq("entity_id", productId)
+    .neq("description", productName);
+  if (error) {
+    console.error(`Finished good ${productId} renamed, but its stock item name was not updated: ${error.message}`);
+  }
 }
 
 export async function deleteProduct(

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ItemLookupResult, ItemLookupSearchParams } from "@/lib/platform/item-lookup/ItemLookupTypes";
 import { findOrCreateStockItem } from "@/lib/vyron-inventory";
+import { readAllIn } from "@/lib/vyron-supabase-paging";
 
 /*
  * A picker that silently stops at 20 rows tells the operator their ingredient
@@ -71,19 +72,33 @@ function matchesQuery(q: string | undefined, ...fields: Array<string | null | un
   return fields.some((field) => String(field || "").toLowerCase().includes(needle));
 }
 
+/**
+ * The Finished Goods record a stock item was created for, if it still exists.
+ *
+ * A stock item copies its product's name once, when it is created. The product
+ * record is what Finished Goods edits, so its name is the one a document shows.
+ */
+function productForStockRow(row: StockItemRow, productById: Map<string, ProductFinancialRow>) {
+  if (row.entity_type !== "finished_goods" || !row.entity_id) return null;
+  return productById.get(String(row.entity_id)) ?? null;
+}
+
 function buildResultFromStockRow(
   row: StockItemRow,
-  financialByProductId: Map<string, ProductFinancialRow>
+  financialByProductId: Map<string, ProductFinancialRow>,
+  product: ProductFinancialRow | null = null
 ): ItemLookupResult {
   const financial = row.entity_id ? financialByProductId.get(row.entity_id) : undefined;
+  // A finished good is named by its product record; anything else by its stock item.
+  const name = product?.product_name || row.description;
   return {
     id: row.id,
     stockItemId: row.id,
     entityType: (row.entity_type as ItemLookupResult["entityType"]) || "finished_goods",
     entityId: row.entity_id,
     itemCode: row.item_code,
-    productName: row.description,
-    description: row.description,
+    productName: name,
+    description: name,
     category: row.category,
     unit: row.unit,
     barcode: row.barcode,
@@ -227,18 +242,18 @@ export async function searchItemLookupPage(
   const filtersByEntityType =
     Boolean(params.type) && params.type !== "all" && params.type !== "consumables" && params.type !== "services";
 
-  let stockQuery = supabase
-    .from("vyron_cost_stock_items")
-    .select(
-      "id,item_code,description,category,entity_type,entity_id,unit,supplier_id,supplier_name_snapshot,current_cost,qty_on_hand,stock_status,barcode,supplier_item_code,customer_item_code,aliases,is_active,default_warehouse"
-    )
-    .eq("company_id", companyId);
+  /** Stock items for this company, narrowed exactly as the request asks. */
+  const stockItems = () => {
+    let query = supabase.from("vyron_cost_stock_items").select(STOCK_COLUMNS).eq("company_id", companyId);
+    if (filtersByEntityType) query = query.eq("entity_type", params.type as string);
+    if (params.status === "active") query = query.eq("is_active", true);
+    if (params.status === "inactive") query = query.eq("is_active", false);
+    if (params.category) query = query.eq("category", params.category);
+    if (params.supplierId) query = query.eq("supplier_id", params.supplierId);
+    return query;
+  };
 
-  if (filtersByEntityType) stockQuery = stockQuery.eq("entity_type", params.type as string);
-  if (params.status === "active") stockQuery = stockQuery.eq("is_active", true);
-  if (params.status === "inactive") stockQuery = stockQuery.eq("is_active", false);
-  if (params.category) stockQuery = stockQuery.eq("category", params.category);
-  if (params.supplierId) stockQuery = stockQuery.eq("supplier_id", params.supplierId);
+  let stockQuery = stockItems();
 
   if (q) {
     const escaped = escapeIlike(q);
@@ -278,7 +293,6 @@ export async function searchItemLookupPage(
   if (ingredientError) throw new Error(ingredientError.message);
   if (productError) throw new Error(productError.message);
 
-  const stockRows = (stockData || []) as StockItemRow[];
   const ingredients = (ingredientRows || []) as IngredientMasterRow[];
   const products = (productRows || []) as ProductFinancialRow[];
 
@@ -287,11 +301,35 @@ export async function searchItemLookupPage(
   const financialByProductId = new Map<string, ProductFinancialRow>();
   for (const row of products) financialByProductId.set(row.id, row);
 
-  const pending: PendingEntry[] = stockRows.map((row) => ({
-    kind: "resolved",
-    description: row.description,
-    result: buildResultFromStockRow(row, financialByProductId),
-  }));
+  /*
+   * A typed search also reads the stock items of products whose current name
+   * matches. Those stock items may still carry the name the product had when
+   * they were created, so searching their own text alone missed a renamed
+   * finished good entirely: its stock item did not match the new name, and the
+   * product itself is left out because a stock item stands for it.
+   */
+  let stockRows = (stockData || []) as StockItemRow[];
+  if (q && (!filtersByEntityType || params.type === "finished_goods")) {
+    const renamedIds = products
+      .filter((prod) => coveredEntityIds.has(String(prod.id)) && matchesQuery(q, prod.product_name))
+      .map((prod) => String(prod.id));
+    const behindProducts = await readAllIn<StockItemRow>(renamedIds, (chunk, from, to) =>
+      stockItems().eq("entity_type", "finished_goods").in("entity_id", chunk).order("id").range(from, to)
+    );
+    const byId = new Map(stockRows.map((row) => [String(row.id), row]));
+    for (const row of behindProducts) if (!byId.has(String(row.id))) byId.set(String(row.id), row);
+    stockRows = [...byId.values()];
+  }
+
+  const pending: PendingEntry[] = [];
+  for (const row of stockRows) {
+    const result = buildResultFromStockRow(row, financialByProductId, productForStockRow(row, financialByProductId));
+    // Matched on the name shown, so a finished good is no longer found by a name it has dropped.
+    if (!matchesQuery(q, row.item_code, result.productName, row.barcode, row.supplier_item_code, row.customer_item_code)) {
+      continue;
+    }
+    pending.push({ kind: "resolved", description: result.productName, result });
+  }
 
   const includeIngredientLike = !filtersByEntityType || params.type === "ingredient" || params.type === "packaging";
   const includeFinishedGoods = !filtersByEntityType || params.type === "finished_goods";
@@ -379,9 +417,12 @@ export async function searchItemLookupPage(
         minLevel: 20,
         maxLevel: 1000,
       });
-      return buildResultFromStockRow(created as unknown as StockItemRow, financialByProductId);
+      return buildResultFromStockRow(created as unknown as StockItemRow, financialByProductId, entry.row);
     })
   );
 
   return { items: results, total };
 }
+
+const STOCK_COLUMNS =
+  "id,item_code,description,category,entity_type,entity_id,unit,supplier_id,supplier_name_snapshot,current_cost,qty_on_hand,stock_status,barcode,supplier_item_code,customer_item_code,aliases,is_active,default_warehouse";
