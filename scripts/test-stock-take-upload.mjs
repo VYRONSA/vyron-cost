@@ -458,5 +458,63 @@ section("9. The route and screen use the new reader and the visible drop zone");
   check("the drop zone handles drop and a real file input, and offers Replace / Remove", zone.includes("onDrop=") && zone.includes('type="file"') && zone.includes("Replace") && zone.includes("Remove"));
 }
 
+// ---------------------------------------------------------------------------
+section("10. Item codes with harmless spacing; duplicates report both counts");
+{
+  const seed10 = seed();
+  seed10.vyron_cost_stock_items.push(
+    { id: "si-echt", company_id: CO, item_code: "FG-ECD3E1BD", description: "Echt Sweet & Sour Sauce", entity_type: "finished_goods", entity_id: "p-echt", unit: "each", qty_on_hand: 12, average_cost: 30, current_cost: 30, aliases: [], is_active: true },
+    // Two codes that differ only by spacing: the loose form is shared, so it can never pick one.
+    { id: "si-twin-1", company_id: CO, item_code: "AB-1", description: "Twin one", entity_type: "ingredient", entity_id: "ing-t1", unit: "each", qty_on_hand: 1, average_cost: 1, current_cost: 1, aliases: [], is_active: true },
+    { id: "si-twin-2", company_id: CO, item_code: "AB - 1", description: "Twin two", entity_type: "ingredient", entity_id: "ing-t2", unit: "each", qty_on_hand: 1, average_cost: 1, current_cost: 1, aliases: [], is_active: true },
+    { id: "si-b-echt", company_id: CO_B, item_code: "FG-B0B0B0B0", description: "Company B sauce", entity_type: "finished_goods", entity_id: "p-b-echt", unit: "each", qty_on_hand: 5, average_cost: 1, current_cost: 1, aliases: [], is_active: true }
+  );
+  const db10 = createFakeSupabase(seed10, { honourOrder: true });
+  const before = JSON.stringify(db10.tables.vyron_cost_stock_items);
+  const t = await readStockTakeFile(
+    enc(
+      [
+        "Item Code,Description,Counted Quantity",
+        "FG - ECD3E1BD,Echt Sweet/Sour,10", // row 2: spaces around the hyphen
+        "  chk-br  ,Chicken,100", // row 3: case + outer spaces (exact match, not 'normalised')
+        "FG-ECD3E1B,Typo — one character short,1", // row 4: a different code, never matched
+        "AB-1,Twin exact,1", // row 5: exact code wins outright
+        "AB -1,Twin loose,1", // row 6: loose form fits both twins → ambiguous
+        "FG  -  B0B0B0B0,Other company's code,1", // row 7: company B's code — unmatched for A
+        "Echt Sweet & Sour Sauce,description in the code column,1", // row 8: never matched by name
+        "RICE,Rice,40", // row 9
+        "RICE,Rice again,41", // row 10: duplicate, different quantity
+        "BOX-01,Boxes,7", // row 11
+        "BOX-01,Boxes again,7", // row 12: duplicate, same quantity — still an error
+      ].join("\n")
+    ),
+    "codes.csv",
+    "text/csv"
+  );
+  const p = await stockTake.previewStockTake(db10, CO, t, { stockTakeDate: "2026-10-03" });
+  const at = (n) => p.lines.find((l) => l.row === n);
+  check("'FG - ECD3E1BD' matches the one stock item FG-ECD3E1BD; the uploaded and matched codes are both shown", at(2).status === "MATCHED" && at(2).stockItemId === "si-echt" && at(2).sku === "FG - ECD3E1BD" && at(2).matchedCode === "FG-ECD3E1BD" && at(2).codeNormalised === true && /Uploaded code "FG - ECD3E1BD" matched stock code FG-ECD3E1BD/.test(at(2).note), JSON.stringify(at(2)));
+  check("trimmed, case-insensitive exact codes match as before (not marked as normalised)", at(3).status === "MATCHED" && at(3).stockItemId === "si-chk" && at(3).codeNormalised === false && at(3).matchedCode === "CHK-BR");
+  check("letters and digits are never changed: FG-ECD3E1B stays unmatched", at(4).status === "UNMATCHED");
+  check("an exact code is used outright even when a spacing twin exists", at(5).status === "MATCHED" && at(5).stockItemId === "si-twin-1");
+  check("a loose code fitting two stock items is ambiguous; none is chosen", at(6).status === "AMBIGUOUS" && at(6).stockItemId === null && /none is chosen/.test(at(6).note));
+  check("company isolation holds for normalised codes (company B's code is unmatched for A)", at(7).status === "UNMATCHED");
+  check("a description in the code column is never matched by name", at(8).status === "UNMATCHED");
+  check("duplicate with a different quantity: both rows and both counts named, nothing chosen", at(10).status === "DUPLICATE_IN_FILE" && /row 9 counted 40, this row 41 \(different quantity\)/.test(at(10).note), at(10).note);
+  check("duplicate with the same quantity is still an error (no silent drop)", at(12).status === "DUPLICATE_IN_FILE" && /\(same quantity\)/.test(at(12).note));
+  check("preview never changes a stock item's code, description or quantity", JSON.stringify(db10.tables.vyron_cost_stock_items) === before);
+  check("looseStockCode only removes spacing around separators and collapses spaces", stockTake.looseStockCode(" fg - ecd3e1bd ") === "FG-ECD3E1BD" && stockTake.looseStockCode("A  B") === "A B" && stockTake.looseStockCode("ING_ 01 / 2") === "ING_01/2");
+}
+
+// ---------------------------------------------------------------------------
+section("11. Opening-stock imports keep exact matching (the shared index is unchanged)");
+{
+  const db11 = createFakeSupabase(seed(), { honourOrder: true });
+  const index = await stockTake.loadStockIndex(db11, CO);
+  check("exact index is keyed as before; loose index is separate", index.byIdentifier.has("CHK-BR") && !index.byIdentifier.has("CHK - BR") && index.byLooseIdentifier instanceof Map);
+  const persist = (await import("node:fs")).readFileSync(path.join(ROOT, "src/lib/vyron-import-persist.ts"), "utf8");
+  check("opening-stock import uses only the exact index", persist.includes("index.byIdentifier.get(") && !persist.includes("byLooseIdentifier"));
+}
+
 console.log(`\n${checks - failures}/${checks} checks passed`);
 if (failures) process.exit(1);

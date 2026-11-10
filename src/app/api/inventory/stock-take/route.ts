@@ -5,7 +5,8 @@ import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabas
 import { StockTakeError, createStockTakeFromUpload, previewStockTake } from "@/lib/vyron-stock-take-import";
 import { stockTakeDateProblem } from "@/lib/vyron-stock-take-rules";
 import { readStockTakeFile } from "@/lib/vyron-stock-take-file";
-import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
+import { getServerWorkspaceSession } from "@/lib/vyron-workspace-admin-server";
+import { WorkspaceAccessError, requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,10 +24,20 @@ export async function POST(request: Request) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ ok: false, error: "Supabase unavailable." }, { status: 500 });
   try {
-    const form = await request.formData();
-    const action = String(form.get("action") || "preview");
-    const session = await requireWorkspacePermission(action === "create" ? "inventory.counts.create" : "inventory.view");
+    // Who is asking comes first: no session → 401 before the body is touched (an empty or
+    // malformed body from a signed-out caller is still a 401, never a 500).
+    // The permission per action is unchanged (preview: inventory.view, create: inventory.counts.create).
+    if (!(await getServerWorkspaceSession())) throw new WorkspaceAccessError("Workspace session required.", 401);
     const companyId = await requireApiCompanyId();
+    let form: FormData;
+    try {
+      form = await request.formData();
+    } catch {
+      return NextResponse.json({ ok: false, error: "Upload the stock take file as a form (multipart/form-data) with the file and the Stock Take Date." }, { status: 400 });
+    }
+    const action = String(form.get("action") || "preview");
+    if (action !== "preview" && action !== "create") return NextResponse.json({ ok: false, error: `Unknown action "${action.slice(0, 40)}".` }, { status: 400 });
+    const session = await requireWorkspacePermission(action === "create" ? "inventory.counts.create" : "inventory.view");
     const file = form.get("file");
     if (!(file instanceof File)) return NextResponse.json({ ok: false, error: "Choose a stock take file to upload." }, { status: 400 });
     const countDate = String(form.get("countDate") || "").trim();

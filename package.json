@@ -69,6 +69,7 @@
     "test:production-cost-master-guard": "node scripts/test-production-cost-master-guard.mjs",
     "test:business-controls": "node scripts/test-business-controls.mjs",
     "test:stock-take-upload": "node scripts/test-stock-take-upload.mjs",
+    "test:stock-take-route": "node scripts/test-stock-take-route.mjs",
     "test:supplier-statement-pdf": "node scripts/test-supplier-statement-pdf.mjs",
     "test:supplier-statement-pdf-runtime": "node scripts/test-supplier-statement-pdf-runtime.mjs",
     "test:supplier-statement-pdf-bundle": "node scripts/test-supplier-statement-pdf-bundle.mjs",

@@ -10,6 +10,8 @@ type Line = {
   row: number;
   status: "MATCHED" | "NOT_COUNTED" | "UNMATCHED" | "AMBIGUOUS" | "DUPLICATE_IN_FILE" | "INVALID_QUANTITY" | "MISSING_IDENTIFIER" | "INVALID_ROW";
   sku: string | null;
+  matchedCode?: string | null;
+  codeNormalised?: boolean;
   description: string | null;
   location: string | null;
   itemName: string | null;
@@ -40,6 +42,20 @@ type Summary = {
 };
 type FileInfo = { format: "xlsx" | "csv"; sheetName: string | null; ignoredSheets: string[]; layout: "header" | "headerless" };
 
+const ERROR_STATUSES: Line["status"][] = ["UNMATCHED", "AMBIGUOUS", "DUPLICATE_IN_FILE", "INVALID_QUANTITY", "MISSING_IDENTIFIER", "INVALID_ROW"];
+const csvCell = (v: unknown) => {
+  const t = v === null || v === undefined ? "" : String(v);
+  // Text a spreadsheet would run as a formula is prefixed with ' — numbers (e.g. -5) are left alone.
+  const formula = typeof v === "string" && /^[=+\-@]/.test(t) && !/^[-+]?\d+(\.\d+)?$/.test(t);
+  return formula || /[",\r\n]/.test(t) ? `"${(formula ? "'" : "") + t.replace(/"/g, '""')}"` : t;
+};
+/** The validation report as CSV: one row per file row, with the reason and (only when unique) the matched code. */
+function validationReportCsv(lines: Line[], fileName: string, stockTakeDate: string | null) {
+  const head = ["Excel row", "Uploaded item code", "Matched stock code", "Description (file)", "Stock item", "Location", "Counted quantity", "System quantity", "Variance", "Status", "Reason / correction"];
+  const body = lines.map((l) => [l.row, l.sku, l.matchedCode, l.description, l.itemName, l.location, l.countedQty, l.systemQty, l.varianceQty, STATUS[l.status].label, l.note].map(csvCell).join(","));
+  return [`File,${csvCell(fileName)}`, `Stock Take Date,${csvCell(stockTakeDate)}`, "", head.join(","), ...body].join("\r\n");
+}
+
 const STATUS: Record<Line["status"], { label: string; tone: "green" | "amber" | "rose" | "slate" }> = {
   MATCHED: { label: "Matched", tone: "green" },
   NOT_COUNTED: { label: "Not counted", tone: "slate" },
@@ -58,6 +74,7 @@ export default function StockTakeUploadClient() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [onlyExceptions, setOnlyExceptions] = useState(false);
+  const [onlyErrors, setOnlyErrors] = useState(false);
   const [stockTakeDate, setStockTakeDate] = useState("");
   const today = todayInSouthAfrica();
   const dateProblem = stockTakeDate ? stockTakeDateProblem(stockTakeDate, today) : null;
@@ -106,7 +123,7 @@ export default function StockTakeUploadClient() {
   };
 
   const s = preview?.summary;
-  const lines = (preview?.lines || []).filter((l) => !onlyExceptions || (l.status !== "MATCHED" && l.status !== "NOT_COUNTED") || Math.abs(l.varianceQty || 0) >= 0.0001);
+  const lines = (preview?.lines || []).filter((l) => !onlyErrors || ERROR_STATUSES.includes(l.status)).filter((l) => !onlyExceptions || (l.status !== "MATCHED" && l.status !== "NOT_COUNTED") || Math.abs(l.varianceQty || 0) >= 0.0001);
 
   return (
     <div className="grid w-full max-w-full min-w-0 gap-6">
@@ -252,6 +269,20 @@ export default function StockTakeUploadClient() {
             title="Stock take report"
             actions={
               <div className="flex gap-2">
+                {s.errors ? <SecondaryButton onClick={() => setOnlyErrors(!onlyErrors)}>{onlyErrors ? "Show all rows" : `Errors only (${s.errors})`}</SecondaryButton> : null}
+                <SecondaryButton
+                  onClick={() => {
+                    const blob = new Blob(["﻿" + validationReportCsv(preview.lines, file?.name || "stock-take", s.stockTakeDate)], { type: "text/csv;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `stock-take-validation-${(file?.name || "file").replace(/\.[^.]+$/, "").replace(/[^A-Za-z0-9 _-]+/g, "").trim() || "file"}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  Download validation report
+                </SecondaryButton>
                 <SecondaryButton onClick={() => setOnlyExceptions(!onlyExceptions)}>{onlyExceptions ? "Show all rows" : "Variances & exceptions only"}</SecondaryButton>
                 <PrimaryButton disabled={busy || !file || !dateReady || Boolean(created) || !s.itemsCounted || s.errors > 0} onClick={() => file && void send(file, "create")}>
                   Confirm — create count for approval
@@ -265,7 +296,8 @@ export default function StockTakeUploadClient() {
                   <tr>
                     <th className="py-2 pr-3">Row</th>
                     <th className="py-2 pr-3">Product</th>
-                    <th className="py-2 pr-3">SKU</th>
+                    <th className="py-2 pr-3">Uploaded code</th>
+                    <th className="py-2 pr-3">Stock code</th>
                     <th className="py-2 pr-3">Location</th>
                     <th className="py-2 pr-3 text-right">System at {s.stockTakeDate}</th>
                     <th className="py-2 pr-3 text-right">Counted</th>
@@ -283,7 +315,8 @@ export default function StockTakeUploadClient() {
                         {l.itemName || l.description || "—"}
                         {l.note ? <span className="block text-xs font-semibold text-slate-500">{l.note}</span> : null}
                       </td>
-                      <td className="py-2 pr-3">{l.sku || "—"}</td>
+                      <td className="py-2 pr-3">{l.sku || <span className="font-black text-rose-700">missing</span>}</td>
+                      <td className={`py-2 pr-3 ${l.codeNormalised ? "font-black text-amber-700" : ""}`}>{l.matchedCode || "—"}</td>
                       <td className="py-2 pr-3">{l.location || "—"}</td>
                       <td className="py-2 pr-3 text-right tabular-nums">{l.systemQty === null ? "—" : `${qty(l.systemQty)} ${l.unit || ""}`}</td>
                       <td className="py-2 pr-3 text-right tabular-nums">{qty(l.countedQty)}</td>

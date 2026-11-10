@@ -52,6 +52,10 @@ export type StockTakeLine = {
   description: string | null;
   location: string | null;
   stockItemId: string | null;
+  /** The matched stock item's own code (shown beside the uploaded code). */
+  matchedCode: string | null;
+  /** True when the uploaded code matched only after harmless spacing around separators was ignored. */
+  codeNormalised: boolean;
   itemName: string | null;
   unit: string | null;
   /** System stock as at the end of the Stock Take Date (current on hand less movements since). */
@@ -95,6 +99,15 @@ export const STOCK_TAKE_COLUMNS = {
   location: ["location", "warehouse", "store", "bin"],
 };
 const key = (s: string | null | undefined) => String(s ?? "").trim().toUpperCase();
+/**
+ * A code with harmless spacing removed: spaces around separators ("FG - ECD3E1BD" → "FG-ECD3E1BD")
+ * and runs of spaces collapsed. Letters and digits are never changed, so two different codes can
+ * only meet here if they differ by spacing alone — and then the row is ambiguous, never guessed.
+ */
+export const looseStockCode = (s: string | null | undefined) =>
+  key(s)
+    .replace(/\s*([-_/.:])\s*/g, "$1")
+    .replace(/\s+/g, " ");
 const r2 = (n: number) => Math.round(n * 100) / 100;
 const r6 = (n: number) => Math.round(n * 1e6) / 1e6;
 
@@ -122,7 +135,15 @@ export async function loadStockIndex(supabase: SupabaseClient, companyId: string
     for (const code of [item.item_code, item.barcode, item.supplier_item_code, item.customer_item_code, ...(item.aliases || [])]) add(key(code), item.id);
     if (item.entity_type === "finished_goods" && item.entity_id) add(skuByProduct.get(String(item.entity_id)) || "", item.id);
   }
-  return { items: new Map(items.map((i) => [i.id, i])), byIdentifier };
+  // Stock take only: the same identifiers keyed loosely (see looseStockCode), used when the exact
+  // code finds nothing.
+  const byLooseIdentifier = new Map<string, Set<string>>();
+  for (const [k, ids] of byIdentifier) {
+    const loose = looseStockCode(k);
+    if (!byLooseIdentifier.has(loose)) byLooseIdentifier.set(loose, new Set());
+    for (const id of ids) byLooseIdentifier.get(loose)!.add(id);
+  }
+  return { items: new Map(items.map((i) => [i.id, i])), byIdentifier, byLooseIdentifier };
 }
 
 /** Net quantity per stock item moved on or after the cutoff (i.e. after the Stock Take Date). */
@@ -163,7 +184,7 @@ export async function previewStockTake(
   const later = stockTakeDate ? await movementsSince(supabase, companyId, stockTakeCutoff(stockTakeDate)) : new Map<string, number>();
 
   const lines: StockTakeLine[] = [];
-  const seen = new Map<string, number>();
+  const seen = new Map<string, { row: number; qty: number }>();
   // A row with fewer cells than the header is only missing trailing blanks (the Excel reader drops
   // them), which read as blank. A row with more cells has spilled — e.g. an unquoted "1,5" — and
   // then the last column holds a value; such a row is never read.
@@ -176,7 +197,7 @@ export async function previewStockTake(
     const location = v("location") || null;
     const rawCount = v("counted");
     if (!sku && !description && !rawCount) continue;
-    const base = { row: record.row, sku, description, location, stockItemId: null, itemName: null, unit: null, systemQty: null, laterMovementQty: null, countedQty: null, varianceQty: null, unitCost: null, varianceValue: null };
+    const base = { row: record.row, sku, description, location, stockItemId: null, matchedCode: null, codeNormalised: false, itemName: null, unit: null, systemQty: null, laterMovementQty: null, countedQty: null, varianceQty: null, unitCost: null, varianceValue: null };
     if (malformed.has(record.row)) {
       lines.push({ ...base, status: "INVALID_ROW", note: "This row has a different number of cells from the header (often an unquoted comma, e.g. 1,5 for 1.5), so its columns cannot be trusted." });
       continue;
@@ -194,21 +215,42 @@ export async function previewStockTake(
       lines.push({ ...base, countedQty: counted, status: "MISSING_IDENTIFIER", note: "No item code on this row; every counted row needs one." });
       continue;
     }
-    const ids = index.byIdentifier.get(key(sku));
+    let ids = index.byIdentifier.get(key(sku));
+    let codeNormalised = false;
+    if (!ids || ids.size === 0) {
+      const loose = index.byLooseIdentifier.get(looseStockCode(sku));
+      if (loose && loose.size > 0) {
+        ids = loose;
+        codeNormalised = true;
+      }
+    }
     if (!ids || ids.size === 0) {
       lines.push({ ...base, countedQty: counted, status: "UNMATCHED", note: `No stock item has code / SKU "${sku}".` });
       continue;
     }
     if (ids.size > 1) {
-      lines.push({ ...base, countedQty: counted, status: "AMBIGUOUS", note: `${ids.size} stock items share "${sku}"; none is chosen.` });
+      lines.push({ ...base, countedQty: counted, status: "AMBIGUOUS", note: codeNormalised ? `"${sku}" with its spacing ignored fits ${ids.size} stock items; none is chosen. Enter the exact item code.` : `${ids.size} stock items share "${sku}"; none is chosen.` });
       continue;
     }
     const item = index.items.get([...ids][0])!;
-    if (seen.has(item.id)) {
-      lines.push({ ...base, countedQty: counted, stockItemId: item.id, itemName: item.description, status: "DUPLICATE_IN_FILE", note: `${item.description || sku} is counted again (first on row ${seen.get(item.id)}). Count each item once.` });
+    const matchedCode = item.item_code ? String(item.item_code) : null;
+    const normalisedNote = codeNormalised ? `Uploaded code "${sku}" matched stock code ${matchedCode} (spacing ignored).` : "";
+    const first = seen.get(item.id);
+    if (first) {
+      const same = first.qty === counted;
+      lines.push({
+        ...base,
+        countedQty: counted,
+        stockItemId: item.id,
+        matchedCode,
+        codeNormalised,
+        itemName: item.description,
+        status: "DUPLICATE_IN_FILE",
+        note: `${item.description || sku} is counted again: row ${first.row} counted ${first.qty}, this row ${counted}${same ? " (same quantity)" : " (different quantity)"}. Keep one row with the correct physical count.`,
+      });
       continue;
     }
-    seen.set(item.id, record.row);
+    seen.set(item.id, { row: record.row, qty: counted });
     const movedSince = later.get(item.id) || 0;
     const system = r6(Number(item.qty_on_hand || 0) - movedSince);
     const unitCost = Number(item.average_cost || item.current_cost || 0);
@@ -217,6 +259,8 @@ export async function previewStockTake(
       ...base,
       status: "MATCHED",
       stockItemId: item.id,
+      matchedCode,
+      codeNormalised,
       itemName: item.description,
       unit: item.unit,
       systemQty: system,
@@ -225,7 +269,9 @@ export async function previewStockTake(
       varianceQty: variance,
       unitCost,
       varianceValue: r2(variance * unitCost),
-      note: Math.abs(movedSince) >= 0.0001 ? `System stock as at ${stockTakeDate}; ${movedSince > 0 ? "+" : ""}${movedSince} moved since (on hand now ${r6(Number(item.qty_on_hand || 0))}).` : "",
+      note: [normalisedNote, Math.abs(movedSince) >= 0.0001 ? `System stock as at ${stockTakeDate}; ${movedSince > 0 ? "+" : ""}${movedSince} moved since (on hand now ${r6(Number(item.qty_on_hand || 0))}).` : ""]
+        .filter(Boolean)
+        .join(" "),
     });
   }
   const counted = lines.filter((l) => l.status === "MATCHED");
