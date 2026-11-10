@@ -57,6 +57,19 @@ function formatQty(value: unknown): string {
   return Number.isInteger(qty) ? String(qty) : qty.toFixed(2);
 }
 
+/**
+ * Boxes for display: the invoiced unit quantity divided by the product's confirmed units per box
+ * (vyron_cost_product_pack_sizes). "-" when there is no confirmed pack size or no usable
+ * quantity — never a guess. Part boxes show up to two decimals (12 pies at 24/box → "0.5").
+ * Display only: nothing is billed, stored or recalculated from it.
+ */
+export function formatBoxQty(quantity: unknown, unitsPerBox: number | null | undefined): string {
+  const qty = Number(quantity);
+  if (!unitsPerBox || !(unitsPerBox > 0) || !Number.isFinite(qty)) return "-";
+  const boxes = Math.round((qty / unitsPerBox) * 100) / 100;
+  return Number.isInteger(boxes) ? String(boxes) : boxes.toFixed(2).replace(/0$/, "");
+}
+
 export async function buildCustomerInvoiceDocumentModel(
   supabase: SupabaseClient,
   companyId: string,
@@ -101,6 +114,23 @@ export async function buildCustomerInvoiceDocumentModel(
     const { data: products } = await supabase.from("vyron_cost_products").select("id, sku").in("id", productIds);
     for (const row of products || []) {
       if (row.sku) productCodeById.set(row.id, String(row.sku));
+    }
+  }
+
+  // Confirmed pack sizes for the invoiced products (this company only), for the Box Qty column.
+  const unitsPerBoxByProduct = new Map<string, number>();
+  if (productIds.length) {
+    const { data: packs, error: packError } = await supabase
+      .from("vyron_cost_product_pack_sizes")
+      .select("product_id, units_per_box, confidence")
+      .eq("company_id", companyId)
+      .in("product_id", productIds);
+    // Box Qty is informative; if pack sizes cannot be read the column shows "-" rather than
+    // the invoice failing to render.
+    if (packError) console.error("customer invoice: pack sizes unavailable", packError.message);
+    for (const row of packs || []) {
+      const units = Number(row.units_per_box);
+      if (row.confidence === "Confirmed" && Number.isFinite(units) && units > 0) unitsPerBoxByProduct.set(String(row.product_id), units);
     }
   }
 
@@ -308,15 +338,16 @@ export async function buildCustomerInvoiceDocumentModel(
     // Presentation only: the customer tax invoice layout. Column values below are unchanged.
     layout: "tax-invoice",
     lineColumns: [
-      { key: "code", label: "Code", width: 25 },
+      { key: "code", label: "Code", width: 22 },
       { key: "product", label: "Description" },
-      { key: "qty", label: "Qty", align: "center", width: 13 },
+      { key: "qty", label: "Unit Qty", align: "center", width: 13 },
+      { key: "boxQty", label: "Box Qty", align: "center", width: 13 },
       { key: "unitPrice", label: "Unit Price", align: "right", width: 19 },
       ...(anyDiscount ? [{ key: "discount", label: "Discount", align: "right" as const, width: 17 }] : []),
-      { key: "taxable", label: "Taxable Amount", align: "right", width: 22 },
-      { key: "vatRate", label: "VAT %", align: "center", width: 20 },
-      { key: "vatAmount", label: "VAT Amount", align: "right", width: 21 },
-      { key: "lineTotal", label: "Line Total", align: "right", width: 23 },
+      { key: "taxable", label: "Taxable Amount", align: "right", width: 21 },
+      { key: "vatRate", label: "VAT %", align: "center", width: 17 },
+      { key: "vatAmount", label: "VAT Amount", align: "right", width: 20 },
+      { key: "lineTotal", label: "Line Total", align: "right", width: 22 },
     ],
     lineRows: lines.map((line) => {
       const treatment = line.tax_treatment;
@@ -324,6 +355,7 @@ export async function buildCustomerInvoiceDocumentModel(
         code: (line.product_id && productCodeById.get(line.product_id)) || "-",
         product: String(line.product_name),
         qty: formatQty(line.quantity),
+        boxQty: formatBoxQty(line.quantity, line.product_id ? unitsPerBoxByProduct.get(String(line.product_id)) : null),
         unitPrice: storedMoney(line.selling_price).toFixed(2),
         discount: Number(line.discount_amount || 0) ? storedMoney(line.discount_amount).toFixed(2) : "-",
         /*

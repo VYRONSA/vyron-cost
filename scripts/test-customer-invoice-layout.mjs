@@ -56,7 +56,8 @@ const branding = {
 const columns = [
   { key: "code", label: "Code", width: 20 },
   { key: "product", label: "Description" },
-  { key: "qty", label: "Qty", align: "center", width: 14 },
+  { key: "qty", label: "Unit Qty", align: "center", width: 13 },
+  { key: "boxQty", label: "Box Qty", align: "center", width: 13 },
   { key: "unitPrice", label: "Unit Price", align: "right", width: 20 },
   { key: "taxable", label: "Taxable Amount", align: "right", width: 24 },
   { key: "vatRate", label: "VAT %", align: "center", width: 22 },
@@ -81,7 +82,7 @@ const base = (over = {}) => ({
     { label: "Tax Details", value: "Company tax profile" },
   ],
   lineColumns: columns,
-  lineRows: [{ code: "PIE-1", product: "Chicken & Mushroom Pie 180g", qty: "360", unitPrice: "19.95", taxable: "239.40", vatRate: "15.00%", vatAmount: "35.91", lineTotal: "275.31" }],
+  lineRows: [{ code: "PIE-1", product: "Chicken & Mushroom Pie 180g", qty: "48", boxQty: "2", unitPrice: "19.95", taxable: "239.40", vatRate: "15.00%", vatAmount: "35.91", lineTotal: "275.31" }],
   totals: { subtotal: 239.4, vatAmount: 35.91, vatSummary: [{ rate: "VAT @ 15.00%", base: 239.4, vat: 35.91 }], grandTotal: 275.31, currency: "ZAR" },
   paymentDetails: { heading: "Banking Details", fields: [{ label: "Bank", value: "QA Bank" }, { label: "Account Name", value: "QA Foods" }, { label: "Account Number", value: "123456789" }, { label: "Branch Code", value: "250655" }, { label: "Account Type", value: "Current" }, { label: "Remittance To", value: "pay@qa.test" }], reference: "Please use SI-QA0001 as your payment reference." },
   notes: null,
@@ -99,8 +100,8 @@ console.log("\n1. One line: every block of the reference layout");
   check("no logo → the header names the company", p.some((i) => i.text === "QA Foods (Pty) Ltd" && i.yTop < 15));
   check("FROM / BILL TO", t.includes("FROM") && t.includes("BILL TO") && t.includes("QA Customer"));
   check("invoice information: number, date, due date, status, currency, tax details", ["INVOICE NUMBER", "INVOICE DATE", "DUE DATE", "STATUS", "CURRENCY", "TAX DETAILS", "ZAR (South African Rand)", "Company tax profile"].every((s) => t.includes(s)));
-  check("columns: Code, Description, Qty, Unit Price, Taxable Amount, VAT %, VAT Amount, Line Total (no Box Qty)", ["Code", "Description", "Qty", "Unit Price", "Taxable", "VAT %", "VAT Amount", "Line Total"].every((s) => t.includes(s)) && !/Box/i.test(t));
-  check("line figures printed exactly as supplied", ["360", "19.95", "239.40", "15.00%", "35.91", "275.31"].every((s) => t.includes(s)));
+  check("columns: Code, Description, Unit Qty, Box Qty, Unit Price, Taxable Amount, VAT %, VAT Amount, Line Total", ["Code", "Description", "Unit Qty", "Box Qty", "Unit Price", "Taxable", "VAT %", "VAT Amount", "Line Total"].every((s) => t.includes(s)));
+  check("line figures printed exactly as supplied", ["48", "2", "19.95", "239.40", "15.00%", "35.91", "275.31"].every((s) => t.includes(s)));
   check("totals: subtotal, VAT with rate and base, total incl VAT", norm(t).includes(`Subtotal (excl VAT) ${zar(239.4)}`) && norm(t).includes(`VAT @ 15.00% on ${zar(239.4)} ${zar(35.91)}`) && norm(t).includes(`Total (incl VAT) ZAR ${zar(275.31)}`), norm(t));
   check("banking details: every configured field and the payment reference", ["Banking Details", "BANK", "QA Bank", "ACCOUNT NAME", "ACCOUNT NUMBER", "123456789", "BRANCH CODE", "250655", "ACCOUNT TYPE", "REMITTANCE TO", "pay@qa.test", "Please use SI-QA0001 as your payment reference."].every((s) => t.includes(s)));
   check("footer: company | Tax Invoice number, Page 1 of 1", t.includes("QA Foods (Pty) Ltd | Tax Invoice SI-QA0001") && t.includes("Page 1 of 1"));
@@ -160,8 +161,15 @@ console.log("\n5. The customer invoice adapter selects the layout and changes no
   const fs = await import("node:fs");
   const src = fs.readFileSync(path.join(ROOT, "src/lib/platform/documents/adapters/customer-invoice.ts"), "utf8");
   check("adapter sets layout: \"tax-invoice\"", src.includes('layout: "tax-invoice"'));
-  check("adapter columns are Qty (never Box Qty), Taxable Amount, VAT %, VAT Amount", src.includes('label: "Qty"') && src.includes('label: "Taxable Amount"') && src.includes('label: "VAT %"') && src.includes('label: "VAT Amount"') && !/Box Qty/i.test(src));
-  check("adapter still reads stored figures only (no rate arithmetic introduced)", !/\*\s*0?\.15|\*\s*15\b|\/\s*100/.test(src));
+  check("adapter columns: Unit Qty, Box Qty, Taxable Amount, VAT %, VAT Amount", src.includes('label: "Unit Qty"') && src.includes('label: "Box Qty"') && src.includes('label: "Taxable Amount"') && src.includes('label: "VAT %"') && src.includes('label: "VAT Amount"'));
+  check("Box Qty comes from confirmed pack sizes for this company only", src.includes('.from("vyron_cost_product_pack_sizes")') && src.includes('.eq("company_id", companyId)') && src.includes('row.confidence === "Confirmed"'));
+  const { formatBoxQty } = await importFromRoot("src/lib/platform/documents/adapters/customer-invoice.ts");
+  check("Box Qty = units ÷ units per box: 144 at 24 → 6, 12 at 24 → 0.5, 30 at 24 → 1.25, 10 at 24 → 0.42", formatBoxQty(144, 24) === "6" && formatBoxQty(12, 24) === "0.5" && formatBoxQty(30, 24) === "1.25" && formatBoxQty(10, 24) === "0.42");
+  check("no confirmed pack size (or a bad one) → '-', never a guess", formatBoxQty(48, null) === "-" && formatBoxQty(48, undefined) === "-" && formatBoxQty(48, 0) === "-" && formatBoxQty(48, -3) === "-" && formatBoxQty("abc", 24) === "-");
+  // The Box Qty display helper rounds boxes to 2 decimals; it touches no money, so it is left out of the scan.
+  const moneySrc = src.replace(/export function formatBoxQty[\s\S]*?\r?\n\}\r?\n/, "");
+  check("the Box Qty helper is the only arithmetic excluded from the scan", moneySrc.length < src.length && !moneySrc.includes("formatBoxQty(quantity"));
+  check("adapter still reads stored figures only (no rate arithmetic introduced)", !/\*\s*0?\.15|\*\s*15\b|\/\s*100/.test(moneySrc));
 }
 
 console.log(`\n${checks - failures}/${checks} checks passed`);
