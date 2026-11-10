@@ -3,6 +3,19 @@ import { getWorkspaceCompanyId } from "@/lib/vyron-workspace-server";
 import { getCustomerGpReport, type CustomerGpReport } from "@/lib/vyron-customer-gp-reporting";
 import { getBomCompletenessReport, type BomCompletenessReport } from "@/lib/vyron-bom-completeness";
 import { buildReorderReport, type ReorderReport } from "@/lib/vyron-reorder-report";
+import { listSupplierInvoiceRegister } from "@/lib/vyron-supplier-invoices";
+import {
+  buildPeriodBuckets,
+  isCountedPurchase,
+  mtdWindows,
+  rankFastMovers,
+  totalsOf,
+  type FastMover,
+  type Granularity,
+  type PeriodBucket,
+  type PurchaseInvoiceInput,
+  type SalesInvoiceInput,
+} from "@/lib/vyron-period-performance";
 
 /**
  * Server data for the Reports centre.
@@ -194,5 +207,101 @@ export async function loadBomCompletenessReport(
       error: err instanceof Error ? err.message : "BOM completeness report failed.",
       companyId,
     };
+  }
+}
+
+/* ------------------------------------------------- period performance */
+
+export type PeriodPerformance = {
+  range: { from: string; to: string };
+  granularity: Granularity;
+  buckets: PeriodBucket[];
+  totals: ReturnType<typeof totalsOf>;
+  mtd: {
+    current: { from: string; to: string } & ReturnType<typeof totalsOf>;
+    previous: { from: string; to: string } & ReturnType<typeof totalsOf>;
+  };
+  fastMovers: FastMover[];
+  /** Purchase invoices in the range with no ex-VAT subtotal recorded (counted as R0). */
+  purchasesWithoutSubtotal: number;
+  /** Sold lines in the range with no measured cost: GP for those lines is not real. */
+  costWarnings: CustomerGpReport["costWarnings"] | undefined;
+  salesInvoices: SalesInvoiceInput[];
+  purchaseInvoices: PurchaseInvoiceInput[];
+};
+
+export async function loadPeriodPerformance(filters: { from: string; to: string; granularity: Granularity; today: string }): Promise<ReportLoad<PeriodPerformance | null>> {
+  const { supabase, companyId, error } = await scope();
+  if (!supabase || !companyId) return { data: null, error, companyId };
+  try {
+    const mtd = mtdWindows(filters.today);
+    const [report, mtdReport, prevReport, register] = await Promise.all([
+      getCustomerGpReport(supabase, companyId, { from: filters.from, to: filters.to }),
+      getCustomerGpReport(supabase, companyId, { from: mtd.current.from, to: mtd.current.to }),
+      getCustomerGpReport(supabase, companyId, { from: mtd.previous.from, to: mtd.previous.to }),
+      listSupplierInvoiceRegister(supabase, companyId),
+    ]);
+
+    const toSales = (r: CustomerGpReport): SalesInvoiceInput[] =>
+      r.byInvoice.map((i) => ({
+        invoiceId: i.invoiceId,
+        invoiceNumber: i.invoiceNumber,
+        invoiceDate: i.invoiceDate,
+        customerName: i.customerName,
+        revenue: i.revenue,
+        cost: i.cost,
+        gp: i.gp,
+        qtySold: i.qtySold,
+      }));
+    const purchases: PurchaseInvoiceInput[] = register.invoices.map((row) => ({
+      id: row.id,
+      invoiceNumber: row.invoice_number,
+      supplierName: row.supplier_name || "—",
+      invoiceDate: row.invoice_date,
+      status: row.status,
+      subtotal: row.subtotal,
+      href: row.href,
+    }));
+
+    const sales = toSales(report);
+    const buckets = buildPeriodBuckets(sales, purchases, filters.granularity, filters);
+    const window = (r: CustomerGpReport, w: { from: string; to: string }) => ({
+      ...w,
+      ...totalsOf(buildPeriodBuckets(toSales(r), purchases, "month", w)),
+    });
+
+    const productIds = report.byProduct.map((p) => p.productId).filter((id): id is string => Boolean(id));
+    const codes = new Map<string, string>();
+    for (let i = 0; i < productIds.length; i += 200) {
+      const { data, error: codeError } = await supabase
+        .from("vyron_cost_products")
+        .select("id, sku")
+        .eq("company_id", companyId)
+        .in("id", productIds.slice(i, i + 200));
+      if (codeError) throw new Error(codeError.message);
+      for (const row of data || []) if (row.sku) codes.set(String(row.id), String(row.sku));
+    }
+
+    const inRange = (d: string | null) => Boolean(d) && String(d).slice(0, 10) >= filters.from && String(d).slice(0, 10) <= filters.to;
+    const rangePurchases = purchases.filter((p) => inRange(p.invoiceDate) && isCountedPurchase(p.status));
+
+    return {
+      data: {
+        range: { from: filters.from, to: filters.to },
+        granularity: filters.granularity,
+        buckets,
+        totals: totalsOf(buckets),
+        mtd: { current: window(mtdReport, mtd.current), previous: window(prevReport, mtd.previous) },
+        fastMovers: rankFastMovers(report.byProduct, codes, 10),
+        purchasesWithoutSubtotal: rangePurchases.filter((p) => p.subtotal === null || p.subtotal === undefined).length,
+        costWarnings: report.costWarnings,
+        salesInvoices: sales,
+        purchaseInvoices: rangePurchases,
+      },
+      error: null,
+      companyId,
+    };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : "Performance report failed.", companyId };
   }
 }

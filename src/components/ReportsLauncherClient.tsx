@@ -20,6 +20,8 @@ const reportCards = [
   { href: "/reports/reorder", title: "Low Stock & Minimum Order Levels", description: "Items below their minimum: on hand, on order, minimum, quantity to order and the reason.", icon: PackageSearch, badge: "Inventory" },
   { href: "/inventory", title: "Stock Valuation", description: "Inventory master value, low stock and slow-moving stock visibility.", icon: Boxes, badge: "Inventory" },
   { href: "/inventory/counts", title: "Stock Variance", description: "Stock count variance workflow: draft, submit, approve and post.", icon: PackageSearch, badge: "Inventory" },
+  { href: "/reports/performance", title: "Sales, Purchases & GP", description: "Daily, weekly or monthly sales, purchases and gross profit with Month-to-Date and drill-down to invoices.", icon: LineChart, badge: "Performance" },
+  { href: "/reports/performance#fastest-movers", title: "Top 10 Fastest Movers", description: "Products ranked by units sold on issued customer invoices for any date range.", icon: Percent, badge: "Performance" },
   { href: "/reports/gp?view=customer", title: "Customer GP Report", description: "Gross profit by customer for a date range, with invoice and product counts.", icon: Percent, badge: "Sales GP" },
   { href: "/reports/gp?view=product", title: "Product GP Report", description: "Gross profit by product sold: quantity, average price, average cost and margin.", icon: Percent, badge: "Sales GP" },
   { href: "/reports/gp?view=invoice", title: "Invoice GP Report", description: "Gross profit per customer invoice across the selected period.", icon: FileSpreadsheet, badge: "Sales GP" },
