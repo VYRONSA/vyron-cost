@@ -50,7 +50,7 @@ export type DocumentPdfMetaField = {
 export type DocumentPdfLineColumn = {
   key: string;
   label: string;
-  align?: "left" | "right";
+  align?: "left" | "right" | "center";
   /** Fixed column width in mm. Omit to let the table size the column. */
   width?: number;
 };
@@ -113,7 +113,29 @@ export type DocumentPdfModel = {
   /** Shown beside the document title, e.g. "Full Tax Invoice". */
   docClassLabel?: string | null;
   generatedAtIso?: string;
+  /**
+   * "tax-invoice" — the customer tax invoice layout: charcoal header carrying the logo, title,
+   * document class, number and generation time with the supplier address on the right; accent
+   * section labels; open (unboxed) meta and banking blocks; a prominent total; page footer.
+   * Presentation only — every figure is still exactly what the model supplies.
+   * Omitted / "standard" — the shared layout every other document uses, unchanged.
+   */
+  layout?: "standard" | "tax-invoice";
 };
+
+/* Tax invoice layout palette. */
+const INV_HEADER: [number, number, number] = [45, 47, 51];
+const INV_ACCENT: [number, number, number] = [47, 94, 166];
+const INV_TEXT: [number, number, number] = [17, 24, 39];
+const INV_MUTED: [number, number, number] = [71, 85, 105];
+const INV_GRID: [number, number, number] = [203, 213, 225];
+const INV_FOOTER: [number, number, number] = [71, 98, 140];
+const INV_HEADER_HEIGHT = 40;
+
+/** "2026-10-16 10:03:07" in South African time, as on the printed invoice. */
+function saDateTime(date: Date) {
+  return date.toLocaleString("sv-SE", { timeZone: "Africa/Johannesburg", hour12: false }).replace("T", " ");
+}
 
 const PAGE_MARGIN = 14;
 const PAGE_WIDTH = 210;
@@ -210,7 +232,226 @@ function drawLogoImage(doc: jsPDF, dataUrl: string, x: number, y: number, width:
   }
 }
 
+/**
+ * The customer tax invoice layout. Lays out the figures the model carries; calculates nothing.
+ */
+function renderTaxInvoicePdf(model: DocumentPdfModel): Uint8Array {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const currency = model.totals?.currency || "ZAR";
+  const generatedAt = new Date(model.generatedAtIso || new Date().toISOString());
+  const branding = model.branding;
+  const hasLogo = Boolean(branding.logoDataUrl);
+  const width = PAGE_CONTENT_RIGHT - PAGE_MARGIN;
+
+  /* Header band: logo, title, class, number + generated; supplier address on the right. */
+  doc.setFillColor(...INV_HEADER);
+  doc.rect(0, 0, PAGE_WIDTH, INV_HEADER_HEIGHT, "F");
+  let textX = PAGE_MARGIN;
+  if (hasLogo) {
+    const box = resolveLogoDrawSize(doc, branding, { width: 30, height: 18 });
+    drawLogoImage(doc, branding.logoDataUrl as string, PAGE_MARGIN, 4, box.width, box.height);
+    textX = PAGE_MARGIN + 34;
+  }
+  const addressLines = String(branding.address || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 7);
+  const rightWidth = 62;
+  const leftWidth = PAGE_CONTENT_RIGHT - rightWidth - textX - 4;
+  doc.setTextColor(255, 255, 255);
+  if (!hasLogo) {
+    // Without a logo the header names the company; with one, the logo does (as on the printed invoice).
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(fitText(doc, displayCompanyName(branding), leftWidth), textX, 11);
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text(model.docTitle.toUpperCase(), textX, 25);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(214, 218, 224);
+  if (model.docClassLabel) doc.text(model.docClassLabel, textX, 30);
+  doc.text(fitText(doc, `${model.docNumber} / Generated ${saDateTime(generatedAt)}`, leftWidth), textX, model.docClassLabel ? 35 : 30);
+  doc.setFontSize(8);
+  addressLines.forEach((line, index) => doc.text(fitText(doc, line, rightWidth), PAGE_CONTENT_RIGHT, 9 + index * 4, { align: "right" }));
+
+  let y = INV_HEADER_HEIGHT + 10;
+
+  /* From / Bill To (and any further party, e.g. Branch / Site). */
+  const columnWidth = width / Math.max(1, model.parties.length);
+  const partyTextWidth = columnWidth - 6;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  const partyWrapped = model.parties.map((party) => party.lines.flatMap((line) => doc.splitTextToSize(line, partyTextWidth) as string[]));
+  model.parties.forEach((party, index) => {
+    const x = PAGE_MARGIN + index * columnWidth;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...INV_ACCENT);
+    doc.text(party.heading.toUpperCase(), x, y);
+    doc.setTextColor(...INV_TEXT);
+    doc.setFontSize(11);
+    doc.text(fitText(doc, party.name, partyTextWidth), x, y + 6);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    partyWrapped[index].forEach((line, lineIndex) => doc.text(line, x, y + 11.5 + lineIndex * 4.3));
+  });
+  y += Math.max(...partyWrapped.map((lines) => 11.5 + lines.length * 4.3), 18) + 8;
+
+  /* Invoice information: four columns, no box. */
+  if (model.meta.length) {
+    const metaColumnWidth = width / 4;
+    model.meta.forEach((field, index) => {
+      const x = PAGE_MARGIN + (index % 4) * metaColumnWidth;
+      const fieldY = y + Math.floor(index / 4) * 12;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...INV_ACCENT);
+      doc.text(fitText(doc, field.label.toUpperCase(), metaColumnWidth - 4), x, fieldY);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(...INV_TEXT);
+      doc.text(fitText(doc, field.value || "-", metaColumnWidth - 4), x, fieldY + 5);
+    });
+    y += Math.ceil(model.meta.length / 4) * 12 + 4;
+  }
+
+  /* Lines: header repeats on every page; a row is never split across pages; descriptions wrap. */
+  autoTable(doc, {
+    startY: y,
+    theme: "grid",
+    headStyles: { fillColor: INV_HEADER, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8, halign: "center", valign: "middle", lineColor: INV_HEADER },
+    styles: { fontSize: 8.5, cellPadding: 2.4, overflow: "linebreak", valign: "middle", textColor: INV_TEXT, lineColor: INV_GRID, lineWidth: 0.2 },
+    margin: { left: PAGE_MARGIN, right: PAGE_MARGIN, top: PAGE_CONTENT_TOP, bottom: PAGE_HEIGHT - PAGE_CONTENT_BOTTOM },
+    rowPageBreak: "avoid",
+    showHead: "everyPage",
+    head: [model.lineColumns.map((column) => column.label)],
+    body: model.lineRows.map((row) => model.lineColumns.map((column) => row[column.key] ?? "")),
+    columnStyles: Object.fromEntries(model.lineColumns.map((column, index) => [index, { halign: column.align || "left", cellWidth: column.width ?? "auto" }])),
+  });
+  let sectionY = ((doc as unknown as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || y + 10) + 10;
+
+  /* Totals, kept together; the total is the most prominent figure on the page. */
+  if (model.totals) {
+    const totalsX = 118;
+    const vatRowCount = model.totals.vatSummary?.length || 1;
+    sectionY = ensureSpace(doc, sectionY, 7 + (model.totals.discountTotal ? 7 : 0) + vatRowCount * 7 + 16);
+    let totalsY = sectionY;
+    doc.setTextColor(...INV_TEXT);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Subtotal (excl VAT)", totalsX, totalsY);
+    doc.text(money(model.totals.subtotal, currency), PAGE_CONTENT_RIGHT, totalsY, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    if (model.totals.discountTotal) {
+      totalsY += 7;
+      doc.text("Discount", totalsX, totalsY);
+      doc.text(money(model.totals.discountTotal, currency), PAGE_CONTENT_RIGHT, totalsY, { align: "right" });
+    }
+    if (model.totals.vatSummary?.length) {
+      for (const row of model.totals.vatSummary) {
+        totalsY += 7;
+        doc.text(fitText(doc, `${row.rate} on ${money(row.base, currency)}`, PAGE_CONTENT_RIGHT - totalsX - 30), totalsX, totalsY);
+        doc.text(money(row.vat, currency), PAGE_CONTENT_RIGHT, totalsY, { align: "right" });
+      }
+    } else {
+      totalsY += 7;
+      doc.text("VAT", totalsX, totalsY);
+      doc.text(money(model.totals.vatAmount, currency), PAGE_CONTENT_RIGHT, totalsY, { align: "right" });
+    }
+    totalsY += 4.5;
+    doc.setDrawColor(...INV_MUTED);
+    doc.setLineWidth(0.3);
+    doc.line(totalsX, totalsY, PAGE_CONTENT_RIGHT, totalsY);
+    totalsY += 8.5;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13.5);
+    doc.text(`Total (incl VAT) ${currency}`, totalsX, totalsY);
+    doc.text(money(model.totals.grandTotal, currency), PAGE_CONTENT_RIGHT, totalsY, { align: "right" });
+    sectionY = totalsY + 12;
+  }
+
+  /* Banking details: open block, three columns, payment reference. */
+  if (model.paymentDetails?.fields.length) {
+    const rows = Math.ceil(model.paymentDetails.fields.length / 3);
+    const blockHeight = 7 + rows * 10 + (model.paymentDetails.reference ? 5 : 0);
+    sectionY = ensureSpace(doc, sectionY, blockHeight + 2);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...INV_TEXT);
+    doc.text(model.paymentDetails.heading, PAGE_MARGIN, sectionY);
+    const payColumnWidth = width / 3;
+    model.paymentDetails.fields.forEach((field, index) => {
+      const x = PAGE_MARGIN + (index % 3) * payColumnWidth;
+      const fieldY = sectionY + 7 + Math.floor(index / 3) * 10;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(...INV_ACCENT);
+      doc.text(fitText(doc, field.label.toUpperCase(), payColumnWidth - 4), x, fieldY);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...INV_TEXT);
+      doc.text(fitText(doc, field.value || "-", payColumnWidth - 4), x, fieldY + 4.6);
+    });
+    if (model.paymentDetails.reference) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.text(model.paymentDetails.reference, PAGE_MARGIN, sectionY + 7 + rows * 10 + 1.5);
+    }
+    sectionY += blockHeight + 8;
+  }
+
+  /* Notes and terms, wrapped; a block that would cross the footer moves to the next page. */
+  const termsAndConditions = model.termsAndConditions ?? branding.termsAndConditions ?? null;
+  for (const [heading, body] of [["Notes", model.notes], ["Terms & Conditions", termsAndConditions]] as const) {
+    if (!body) continue;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    const lines = doc.splitTextToSize(body, width) as string[];
+    let remaining = lines;
+    sectionY = ensureSpace(doc, sectionY, 14);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.setTextColor(...INV_TEXT);
+    doc.text(heading, PAGE_MARGIN, sectionY);
+    sectionY += 5;
+    while (remaining.length) {
+      const fit = Math.max(1, Math.floor((PAGE_CONTENT_BOTTOM - sectionY) / 4));
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.text(remaining.slice(0, fit), PAGE_MARGIN, sectionY);
+      sectionY += Math.min(fit, remaining.length) * 4;
+      remaining = remaining.slice(fit);
+      if (remaining.length) {
+        doc.addPage();
+        sectionY = PAGE_CONTENT_TOP;
+      }
+    }
+    sectionY += 6;
+  }
+
+  /* Footer on every page: company | Tax Invoice number, and Page n of N. */
+  const pageCount = doc.getNumberOfPages();
+  for (let page = 1; page <= pageCount; page += 1) {
+    doc.setPage(page);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...INV_FOOTER);
+    doc.text(fitText(doc, `${branding.companyName || displayCompanyName(branding)} | ${model.docTitle} ${model.docNumber}`, width - 30), PAGE_MARGIN, 290);
+    doc.text(`Page ${page} of ${pageCount}`, PAGE_CONTENT_RIGHT, 290, { align: "right" });
+    if (branding.footerText) {
+      doc.setFontSize(7);
+      doc.text(fitText(doc, branding.footerText, width), PAGE_WIDTH / 2, 294.5, { align: "center" });
+    }
+  }
+  return new Uint8Array(doc.output("arraybuffer"));
+}
+
 export function renderDocumentPdf(model: DocumentPdfModel): Uint8Array {
+  if (model.layout === "tax-invoice") return renderTaxInvoicePdf(model);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const currency = model.totals?.currency || "ZAR";
   const generatedAt = new Date(model.generatedAtIso || new Date().toISOString());

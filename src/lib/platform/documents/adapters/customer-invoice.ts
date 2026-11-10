@@ -305,16 +305,18 @@ export async function buildCustomerInvoiceDocumentModel(
           : "Company tax profile",
       },
     ],
+    // Presentation only: the customer tax invoice layout. Column values below are unchanged.
+    layout: "tax-invoice",
     lineColumns: [
-      { key: "code", label: "Code", width: 20 },
+      { key: "code", label: "Code", width: 25 },
       { key: "product", label: "Description" },
-      { key: "qty", label: "Qty", align: "right", width: 14 },
-      { key: "unitPrice", label: "Unit Price", align: "right", width: 22 },
-      ...(anyDiscount ? [{ key: "discount", label: "Discount", align: "right" as const, width: 20 }] : []),
-      { key: "taxable", label: "Taxable Amt", align: "right", width: 24 },
-      { key: "vatRate", label: "VAT", align: "right", width: 26 },
-      { key: "vatAmount", label: "VAT Amt", align: "right", width: 22 },
-      { key: "lineTotal", label: "Line Total", align: "right", width: 24 },
+      { key: "qty", label: "Qty", align: "center", width: 13 },
+      { key: "unitPrice", label: "Unit Price", align: "right", width: 19 },
+      ...(anyDiscount ? [{ key: "discount", label: "Discount", align: "right" as const, width: 17 }] : []),
+      { key: "taxable", label: "Taxable Amount", align: "right", width: 22 },
+      { key: "vatRate", label: "VAT %", align: "center", width: 20 },
+      { key: "vatAmount", label: "VAT Amount", align: "right", width: 21 },
+      { key: "lineTotal", label: "Line Total", align: "right", width: 23 },
     ],
     lineRows: lines.map((line) => {
       const treatment = line.tax_treatment;
