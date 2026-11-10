@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { listSupplierInvoiceRegister } from "@/lib/vyron-supplier-invoices";
+import { isCountedPurchase } from "@/lib/vyron-period-performance";
 import { getCustomerGpReport } from "@/lib/vyron-customer-gp-reporting";
 
 /**
@@ -37,6 +39,20 @@ export type DashboardOverview = {
   /** Change in GP percentage points against three months ago, when measurable. */
   gpTrendChangePct: number | null;
   activity: DashboardActivity[];
+  /** Drill-down figures. Each is null when it cannot be measured. */
+  drill: {
+    /** Same basis as totalCostValue (qty on hand x current cost), split by item type. */
+    finishedGoodsCostValue: number | null;
+    rawMaterialsCostValue: number | null;
+    /** This calendar month, from the same GP report as the trend (issued invoices, excl. VAT). */
+    salesThisMonth: number | null;
+    grossProfitThisMonth: number | null;
+    /** Supplier invoices dated this month, Draft/Cancelled excluded (excl. VAT subtotal). */
+    purchasesThisMonth: number | null;
+    stockMovementsThisMonth: number | null;
+    /** First day of the month (YYYY-MM-DD) these figures cover. */
+    monthFrom: string;
+  };
 };
 
 export const EMPTY_OVERVIEW: DashboardOverview = {
@@ -47,6 +63,7 @@ export const EMPTY_OVERVIEW: DashboardOverview = {
   gpTrend: [],
   gpTrendChangePct: null,
   activity: [],
+  drill: { finishedGoodsCostValue: null, rawMaterialsCostValue: null, salesThisMonth: null, grossProfitThisMonth: null, purchasesThisMonth: null, stockMovementsThisMonth: null, monthFrom: "" },
 };
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -72,8 +89,8 @@ export async function getDashboardOverview(
   const thisMonth = monthStart(now).toISOString();
   const lastMonth = monthStart(now, 1).toISOString();
 
-  const [stockResult, productsResult, newProductsResult, ordersThisResult, ordersLastResult, gpReport] = await Promise.all([
-    supabase.from("vyron_cost_stock_items").select("qty_on_hand, current_cost").eq("company_id", companyId),
+  const [stockResult, productsResult, newProductsResult, ordersThisResult, ordersLastResult, gpReport, register, movementsThisMonth] = await Promise.all([
+    supabase.from("vyron_cost_stock_items").select("qty_on_hand, current_cost, entity_type").eq("company_id", companyId),
     supabase.from("vyron_cost_products").select("id", { count: "exact", head: true }).eq("company_id", companyId),
     supabase.from("vyron_cost_products").select("id", { count: "exact", head: true }).eq("company_id", companyId).gte("created_at", thisMonth),
     supabase.from("vyron_customer_sales_orders").select("id", { count: "exact", head: true }).eq("company_id", companyId).gte("created_at", thisMonth),
@@ -84,12 +101,15 @@ export async function getDashboardOverview(
       .gte("created_at", lastMonth)
       .lt("created_at", thisMonth),
     getCustomerGpReport(supabase, companyId).catch(() => null),
+    listSupplierInvoiceRegister(supabase, companyId).catch(() => null),
+    supabase.from("vyron_cost_stock_ledger").select("id", { count: "exact", head: true }).eq("company_id", companyId).gte("movement_date", `${thisMonth.slice(0, 10)}T00:00:00+02:00`),
   ]);
 
   // ---- Total cost value -----------------------------------------------------
   // Stock on hand at its current cost. There is no history of this figure, so
   // there is no month-on-month change to show, and none is invented.
-  const stockRows = (stockResult.data || []) as Array<{ qty_on_hand: number | null; current_cost: number | null }>;
+  const stockRows = (stockResult.data || []) as Array<{ qty_on_hand: number | null; current_cost: number | null; entity_type: string | null }>;
+  const costValueOf = (rows: typeof stockRows) => Math.round(rows.reduce((sum, row) => sum + Number(row.qty_on_hand || 0) * Number(row.current_cost || 0), 0));
   const totalCostValue = stockRows.length
     ? Math.round(stockRows.reduce((sum, row) => sum + Number(row.qty_on_hand || 0) * Number(row.current_cost || 0), 0))
     : null;
@@ -124,7 +144,26 @@ export async function getDashboardOverview(
       ? round1(((ordersThisMonth - ordersLastMonth) / ordersLastMonth) * 100)
       : null;
 
+  const monthFrom = thisMonth.slice(0, 10);
+  const purchasesThisMonth = register
+    ? Math.round(
+        register.invoices
+          .filter((row) => isCountedPurchase(row.status) && String(row.invoice_date || "").slice(0, 7) === currentMonthKey)
+          .reduce((sum, row) => sum + Number(row.subtotal || 0), 0) * 100
+      ) / 100
+    : null;
+  const drill: DashboardOverview["drill"] = {
+    finishedGoodsCostValue: stockRows.length ? costValueOf(stockRows.filter((r) => r.entity_type === "finished_goods")) : null,
+    rawMaterialsCostValue: stockRows.length ? costValueOf(stockRows.filter((r) => r.entity_type === "ingredient" || r.entity_type === "packaging")) : null,
+    salesThisMonth: gpReport ? Math.round(Number(thisMonthGp?.revenue || 0) * 100) / 100 : null,
+    grossProfitThisMonth: gpReport ? Math.round(Number(thisMonthGp?.gp || 0) * 100) / 100 : null,
+    purchasesThisMonth,
+    stockMovementsThisMonth: typeof movementsThisMonth.count === "number" ? movementsThisMonth.count : null,
+    monthFrom,
+  };
+
   return {
+    drill,
     totalCostValue: { value: totalCostValue, changePct: null, changeAbs: null },
     averageGpPct: { value: averageGp, changePct: gpChange, changeAbs: null },
     activeProducts: { value: activeProducts, changePct: null, changeAbs: newProducts && newProducts > 0 ? newProducts : null },

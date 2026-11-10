@@ -6,6 +6,8 @@ import { formatMoney, formatQty, type ReportFilter } from "@/lib/vyron-report-ex
 import type { StockValuationRow } from "@/lib/vyron-reports-data";
 
 const ALL = "__all__";
+const RAW = "raw_materials";
+const RAW_TYPES = ["ingredient", "packaging"];
 
 /**
  * Complete Stock Valuation.
@@ -19,14 +21,17 @@ export default function StockValuationReportClient({
   companyName,
   generatedAt,
   error,
+  initialType,
 }: {
   rows: StockValuationRow[];
   companyName: string;
   generatedAt: string;
   error: string | null;
+  /** From the URL (dashboard drill-down): an entity type, or "raw_materials" for ingredients + packaging. */
+  initialType?: string;
 }) {
   const [search, setSearch] = useState("");
-  const [type, setType] = useState(ALL);
+  const [type, setType] = useState(initialType || ALL);
   const [onHandOnly, setOnHandOnly] = useState(false);
 
   const types = useMemo(
@@ -37,7 +42,7 @@ export default function StockValuationReportClient({
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return rows.filter((r) => {
-      if (type !== ALL && r.entityType !== type) return false;
+      if (type === RAW ? !RAW_TYPES.includes(r.entityType) : type !== ALL && r.entityType !== type) return false;
       if (onHandOnly && r.qtyOnHand <= 0) return false;
       if (term && !`${r.description} ${r.itemCode} ${r.entityType}`.toLowerCase().includes(term)) return false;
       return true;
@@ -49,6 +54,7 @@ export default function StockValuationReportClient({
       items: filtered.length,
       withStock: filtered.filter((r) => r.qtyOnHand > 0).length,
       value: filtered.reduce((s, r) => s + r.inventoryValue, 0),
+      currentCostValue: filtered.reduce((s, r) => s + r.currentCostValue, 0),
       qty: filtered.reduce((s, r) => s + r.qtyOnHand, 0),
     }),
     [filtered]
@@ -78,6 +84,7 @@ export default function StockValuationReportClient({
           { label: "Items With Stock", value: String(stats.withStock) },
           { label: "Total Quantity", value: formatQty(stats.qty) },
           { label: "Stock Value", value: formatMoney(stats.value) },
+        { label: "At Current Cost (dashboard)", value: formatMoney(stats.currentCostValue) },
         ],
         columns: [
           { key: "item_code", label: "Item Code" },
@@ -140,6 +147,7 @@ export default function StockValuationReportClient({
             <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Item type</span>
             <select value={type} onChange={(e) => setType(e.target.value)} className={controlClass}>
               <option value={ALL}>All types</option>
+              <option value={RAW}>Raw materials (ingredients + packaging)</option>
               {types.map((t) => (
                 <option key={t} value={t}>
                   {t}

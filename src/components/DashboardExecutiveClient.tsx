@@ -66,15 +66,35 @@ function KpiChange({ kpi, unit }: { kpi: DashboardKpi; unit: "pct" | "abs" }) {
   );
 }
 
-function Kpi({ icon: Icon, label, display, kpi, unit }: { icon: typeof Coins; label: string; display: string; kpi: DashboardKpi; unit: "pct" | "abs" }) {
+function Kpi({ icon: Icon, label, display, kpi, unit, href }: { icon: typeof Coins; label: string; display: string; kpi: DashboardKpi; unit: "pct" | "abs"; href: string }) {
   return (
-    <div className="min-w-0">
+    <Link href={href} className="group min-w-0 rounded-xl p-1 -m-1 transition hover:bg-[#F8FAFC]" title={`Open the figures behind ${label}`}>
       <Icon size={22} className="text-[#334155]" aria-hidden />
-      <p className="mt-3 truncate text-[13px] font-medium text-[#64748B]">{label}</p>
+      <p className="mt-3 truncate text-[13px] font-medium text-[#64748B] group-hover:underline">{label}</p>
       <p className="mt-1 text-[1.6rem] font-black leading-none tracking-[-0.02em] text-[#2F7D46]">{display}</p>
       <KpiChange kpi={kpi} unit={unit} />
-    </div>
+    </Link>
   );
+}
+
+/** A smaller drill-down figure under the KPIs. Shows "—" when the figure cannot be measured. */
+function DrillFigure({ label, value, href }: { label: string; value: string; href: string }) {
+  return (
+    <Link href={href} className="group flex min-w-0 items-center justify-between gap-2 rounded-xl border border-[#EEF2F6] px-3 py-2.5 transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]">
+      <span className="min-w-0">
+        <span className="block truncate text-[11px] font-semibold text-[#64748B]">{label}</span>
+        <span className="block truncate text-[0.95rem] font-black text-[#0B202B]">{value}</span>
+      </span>
+      <ChevronRight size={14} className="shrink-0 text-[#CBD5E1] group-hover:text-[#2F7D46]" aria-hidden />
+    </Link>
+  );
+}
+
+function monthRange(month: string) {
+  const [y, m] = month.split("-").map(Number);
+  if (!y || !m) return null;
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return { from: `${y}-${String(m).padStart(2, "0")}-01`, to: `${y}-${String(m).padStart(2, "0")}-${String(last).padStart(2, "0")}` };
 }
 
 /** The gross-profit trend, drawn from measured monthly figures only. */
@@ -115,20 +135,27 @@ function GpTrend({ points }: { points: DashboardOverview["gpTrend"] }) {
       ))}
       <path d={area} fill="url(#volora-gp-fill)" />
       <path d={line} fill="none" stroke="#3E9B52" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" />
-      {points.map((p, i) => (
-        <circle key={p.month} cx={x(i)} cy={y(p.gpPct)} r="3.6" fill="#3E9B52" stroke="#FFFFFF" strokeWidth="1.6" />
-      ))}
-      {points.map((p, i) => (
-        <text key={`${p.month}-label`} x={x(i)} y={height + 14} textAnchor="middle" className="fill-[#94A3B8] text-[10px] font-semibold">
-          {p.label}
-        </text>
-      ))}
+      {points.map((p, i) => {
+        const range = monthRange(p.month);
+        const href = range ? `/reports/performance?from=${range.from}&to=${range.to}&by=day` : "/reports/performance";
+        return (
+          <a key={p.month} href={href} aria-label={`${p.label}: ${p.gpPct}% gross profit — open the month`}>
+            <title>{`${p.label}: ${p.gpPct}% GP — open the month's invoices`}</title>
+            <circle cx={x(i)} cy={y(p.gpPct)} r="3.6" fill="#3E9B52" stroke="#FFFFFF" strokeWidth="1.6" />
+            <circle cx={x(i)} cy={y(p.gpPct)} r="12" fill="transparent" className="cursor-pointer" />
+            <text x={x(i)} y={height + 14} textAnchor="middle" className="cursor-pointer fill-[#94A3B8] text-[10px] font-semibold hover:fill-[#2F7D46]">
+              {p.label}
+            </text>
+          </a>
+        );
+      })}
     </svg>
   );
 }
 
 export default function DashboardExecutiveClient({ overview, attention = null }: { overview: DashboardOverview; attention?: AttentionCentre | null }) {
-  const { totalCostValue, averageGpPct, activeProducts, ordersThisMonth, gpTrend, gpTrendChangePct, activity } = overview;
+  const { totalCostValue, averageGpPct, activeProducts, ordersThisMonth, gpTrend, gpTrendChangePct, activity, drill } = overview;
+  const figure = (v: number | null, fmt: (n: number) => string = money) => (v === null ? "—" : fmt(v));
 
   return (
     <div className="grid w-full max-w-full min-w-0 gap-5">
@@ -201,10 +228,18 @@ export default function DashboardExecutiveClient({ overview, attention = null }:
             <span className="rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-xs font-semibold text-[#475569]">This Month</span>
           </div>
           <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-7 lg:grid-cols-4">
-            <Kpi icon={Coins} label="Total Cost Value" display={totalCostValue.value === null ? "—" : money(totalCostValue.value)} kpi={totalCostValue} unit="pct" />
-            <Kpi icon={TrendingUp} label="Average GP" display={averageGpPct.value === null ? "—" : `${averageGpPct.value}%`} kpi={averageGpPct} unit="pct" />
-            <Kpi icon={Box} label="Active Products" display={activeProducts.value === null ? "—" : String(activeProducts.value)} kpi={activeProducts} unit="abs" />
-            <Kpi icon={ClipboardList} label="Orders (This Month)" display={ordersThisMonth.value === null ? "—" : String(ordersThisMonth.value)} kpi={ordersThisMonth} unit="pct" />
+            <Kpi icon={Coins} label="Total Cost Value" display={totalCostValue.value === null ? "—" : money(totalCostValue.value)} kpi={totalCostValue} unit="pct" href="/reports/inventory-stock" />
+            <Kpi icon={TrendingUp} label="Average GP" display={averageGpPct.value === null ? "—" : `${averageGpPct.value}%`} kpi={averageGpPct} unit="pct" href="/customer-gp-reporting" />
+            <Kpi icon={Box} label="Active Products" display={activeProducts.value === null ? "—" : String(activeProducts.value)} kpi={activeProducts} unit="abs" href="/products" />
+            <Kpi icon={ClipboardList} label="Orders (This Month)" display={ordersThisMonth.value === null ? "—" : String(ordersThisMonth.value)} kpi={ordersThisMonth} unit="pct" href="/customer-sales-orders" />
+          </div>
+          <div className="mt-6 grid grid-cols-2 gap-2 border-t border-[#F1F5F9] pt-4 lg:grid-cols-3" data-testid="dashboard-drilldowns">
+            <DrillFigure label="Sales this month" value={figure(drill.salesThisMonth)} href="/reports/performance" />
+            <DrillFigure label="Purchases this month" value={figure(drill.purchasesThisMonth)} href="/reports/performance" />
+            <DrillFigure label="Gross profit this month" value={figure(drill.grossProfitThisMonth)} href="/reports/performance" />
+            <DrillFigure label="Finished goods (cost value)" value={figure(drill.finishedGoodsCostValue)} href="/reports/finished-goods" />
+            <DrillFigure label="Raw materials (cost value)" value={figure(drill.rawMaterialsCostValue)} href="/reports/inventory-stock?type=raw_materials" />
+            <DrillFigure label="Stock movements this month" value={figure(drill.stockMovementsThisMonth, (n) => n.toLocaleString("en-ZA"))} href={`/reports/stock-movements${drill.monthFrom ? `?from=${drill.monthFrom}` : ""}`} />
           </div>
         </div>
 

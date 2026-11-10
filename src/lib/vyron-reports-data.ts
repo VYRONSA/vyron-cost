@@ -83,6 +83,8 @@ export type StockValuationRow = {
   qtyOnHand: number;
   averageCost: number;
   inventoryValue: number;
+  /** Qty on hand x current cost — the basis of the dashboard's Total Cost Value. */
+  currentCostValue: number;
   stockStatus: string;
   lastMovementAt: string | null;
 };
@@ -116,6 +118,7 @@ export async function loadStockValuation(): Promise<ReportLoad<StockValuationRow
         qtyOnHand: qty,
         averageCost: cost,
         inventoryValue: stored !== null ? stored : Math.round(qty * cost * 100) / 100,
+        currentCostValue: Math.round(qty * (Number(r.current_cost) || 0) * 100) / 100,
         stockStatus: String(r.stock_status || "—"),
         lastMovementAt: r.last_movement_at ? String(r.last_movement_at) : null,
       };
@@ -449,4 +452,83 @@ function sastDay(iso: string) {
   const t = Date.parse(iso);
   if (!Number.isFinite(t)) return String(iso || "").slice(0, 10);
   return new Date(t + 2 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+/* ------------------------------------------------------- stock movements */
+
+export type StockMovementRow = {
+  id: string;
+  date: string;
+  stockItemId: string;
+  itemCode: string;
+  description: string;
+  movementType: string;
+  referenceType: string | null;
+  referenceId: string | null;
+  referenceLabel: string | null;
+  quantityIn: number;
+  quantityOut: number;
+  balanceAfter: number;
+  value: number;
+};
+
+const RAW_TYPES = ["ingredient", "packaging"];
+
+/** Stock ledger rows dated in [from, to] (SAST days), newest first; at most 2000 rows returned, `total` is the full count. */
+export async function loadStockMovements(filters: { from: string; to: string; type: "all" | "finished_goods" | "raw_materials" }): Promise<ReportLoad<{ rows: StockMovementRow[]; total: number } | null>> {
+  const { supabase, companyId, error } = await scope();
+  if (!supabase || !companyId) return { data: null, error, companyId };
+  try {
+    const build = (select: string, head = false) => {
+      let q = supabase
+        .from("vyron_cost_stock_ledger")
+        .select(select, head ? { count: "exact", head: true } : undefined)
+        .eq("company_id", companyId)
+        .gte("movement_date", `${filters.from}T00:00:00+02:00`)
+        .lte("movement_date", `${filters.to}T23:59:59.999+02:00`);
+      if (filters.type === "finished_goods") q = q.eq("vyron_cost_stock_items.entity_type", "finished_goods");
+      if (filters.type === "raw_materials") q = q.in("vyron_cost_stock_items.entity_type", RAW_TYPES);
+      return q;
+    };
+    const join = filters.type === "all" ? "vyron_cost_stock_items(item_code, description, entity_type)" : "vyron_cost_stock_items!inner(item_code, description, entity_type)";
+    const countResult = await build(`id, ${join}`, true);
+    if (countResult.error) throw new Error(countResult.error.message);
+    const rows: Record<string, unknown>[] = [];
+    for (let offset = 0; offset < 2000; offset += 1000) {
+      const page = (await build(`id, stock_item_id, movement_date, movement_type, quantity_in, quantity_out, balance_after, value, reference_type, reference_id, reference_label, ${join}`)
+        .order("movement_date", { ascending: false })
+        .order("id", { ascending: false })
+        .range(offset, offset + 999)) as unknown as { data: Record<string, unknown>[] | null; error: { message: string } | null };
+      if (page.error) throw new Error(page.error.message);
+      rows.push(...(page.data || []));
+      if (!page.data || page.data.length < 1000) break;
+    }
+    return {
+      data: {
+        total: countResult.count ?? rows.length,
+        rows: rows.map((l) => {
+          const item = (l.vyron_cost_stock_items || {}) as Record<string, unknown>;
+          return {
+            id: String(l.id),
+            date: sastDay(String(l.movement_date)),
+            stockItemId: String(l.stock_item_id),
+            itemCode: String(item.item_code || "—"),
+            description: String(item.description || "—"),
+            movementType: String(l.movement_type || "—"),
+            referenceType: l.reference_type ? String(l.reference_type) : null,
+            referenceId: l.reference_id ? String(l.reference_id) : null,
+            referenceLabel: l.reference_label ? String(l.reference_label) : null,
+            quantityIn: Number(l.quantity_in) || 0,
+            quantityOut: Number(l.quantity_out) || 0,
+            balanceAfter: Number(l.balance_after) || 0,
+            value: Number(l.value) || 0,
+          };
+        }),
+      },
+      error: null,
+      companyId,
+    };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : "Stock movements report failed.", companyId };
+  }
 }
