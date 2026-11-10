@@ -134,10 +134,15 @@ export async function getAttentionCentre(supabase: SupabaseClient, companyId: st
 
   // SUPPLIER INVOICES — duplicates in the register; the latest reconciliation per supplier.
   const register = await listSupplierInvoiceRegister(supabase, companyId);
-  const duplicateGroups = new Set(
-    register.invoices.filter((r) => r.duplicate_risk).map((r) => `${String(r.supplier_name || "").trim().toLowerCase()}|${String(r.invoice_number || "").trim().toLowerCase()}`)
-  ).size;
-  add({ key: "supplier.duplicates", area: "SUPPLIER_INVOICES", severity: "warning", count: duplicateGroups, label: plural(duplicateGroups, "supplier invoice captured more than once", "supplier invoices captured more than once"), href: "/supplier-invoices" });
+  // Only groups that still have two or more active (not Cancelled) copies need review; a voided duplicate resolves its group.
+  const activeCopies = new Map<string, number>();
+  for (const r of register.invoices) {
+    if (!r.duplicate_risk || /^cancel/i.test(String(r.status || "").trim())) continue;
+    const k = `${String(r.supplier_name || "").trim().toLowerCase()}|${String(r.invoice_number || "").trim().toLowerCase()}`;
+    activeCopies.set(k, (activeCopies.get(k) || 0) + 1);
+  }
+  const duplicateGroups = [...activeCopies.values()].filter((n) => n > 1).length;
+  add({ key: "supplier.duplicates", area: "SUPPLIER_INVOICES", severity: "warning", count: duplicateGroups, label: plural(duplicateGroups, "supplier invoice captured more than once", "supplier invoices captured more than once"), href: "/supplier-invoices/duplicates" });
 
   const { data: recons, error: reconError } = await supabase
     .from("vyron_supplier_reconciliations")

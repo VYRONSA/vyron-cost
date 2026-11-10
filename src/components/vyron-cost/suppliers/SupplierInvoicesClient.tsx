@@ -404,10 +404,14 @@ export default function SupplierInvoicesClient() {
                       {invoice.invoice_number}
                     </Link>
                     {invoice.duplicate_risk ? (
-                      <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-amber-800">
+                      <Link
+                        href="/supplier-invoices/duplicates"
+                        title="Review duplicate copies"
+                        className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-amber-800 hover:underline"
+                      >
                         <AlertTriangle size={11} />
                         Duplicate risk
-                      </span>
+                      </Link>
                     ) : null}
                     {invoice.linked_document_href ? (
                       <Link
