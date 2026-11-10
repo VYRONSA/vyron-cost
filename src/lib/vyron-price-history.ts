@@ -38,6 +38,11 @@ export type PriceHistoryFilters = {
   supplierName?: string;
   entityId?: string;
   limit?: number;
+  /**
+   * The company's inflation baseline (YYYY-MM-DD). Rows dated before it are left out: their cost
+   * basis is known to be wrong (see vyron-inflation-baseline). The rows are not deleted.
+   */
+  excludeBefore?: string | null;
 };
 
 export function computePriceMovement(previousPrice: number, newPrice: number): PriceMovement {
@@ -164,6 +169,10 @@ export async function listPriceHistory(supabase: SupabaseClient, tenantId: strin
   if (filters.entityId) query = query.eq("entity_id", filters.entityId);
   if (filters.dateFrom) query = query.gte("approved_at", filters.dateFrom);
   if (filters.dateTo) query = query.lte("approved_at", `${filters.dateTo}T23:59:59.999Z`);
+  if (filters.excludeBefore && /^\d{4}-\d{2}-\d{2}$/.test(filters.excludeBefore)) {
+    const b = filters.excludeBefore;
+    query = query.or(`invoice_date.gte.${b},and(invoice_date.is.null,created_at.gte.${b}T00:00:00+02:00)`);
+  }
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);

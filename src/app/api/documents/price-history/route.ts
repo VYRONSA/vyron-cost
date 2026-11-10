@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listPriceHistory, type PriceHistoryScope } from "@/lib/vyron-price-history";
+import { getInflationBaseline } from "@/lib/vyron-inflation-baseline";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import {
   documentTenantAccessErrorResponse,
@@ -25,7 +26,10 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   try {
     const companyId = await requireDocumentTenantId();
+    // The committed inflation baseline applies unless the caller asks for the full history (?history=all).
+    const baseline = params.get("history") === "all" ? null : await getInflationBaseline(supabase, companyId);
     const rows = await listPriceHistory(supabase, companyId, {
+      excludeBefore: baseline,
       scope: parseScope(params.get("scope")),
       search: params.get("search") || undefined,
       dateFrom: params.get("dateFrom") || undefined,
@@ -33,7 +37,7 @@ export async function GET(request: NextRequest) {
       supplierName: params.get("supplier") || undefined,
       limit: Number(params.get("limit") || 300),
     });
-    return NextResponse.json({ ok: true, rows });
+    return NextResponse.json({ ok: true, rows, inflationBaseline: baseline });
   } catch (error) {
     return documentTenantAccessErrorResponse(error, "Could not load price history.");
   }

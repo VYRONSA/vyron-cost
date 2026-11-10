@@ -110,7 +110,8 @@
     "test:finished-goods-import": "node scripts/test-finished-goods-import.mjs",
     "test:duplicate-invoice-resolution": "node scripts/test-duplicate-invoice-resolution.mjs",
     "test:sales-order-adjustment": "node scripts/test-sales-order-adjustment.mjs",
-    "test:production-schedule": "node scripts/test-production-schedule.mjs"
+    "test:production-schedule": "node scripts/test-production-schedule.mjs",
+    "test:inflation-baseline": "node scripts/test-inflation-baseline.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.0",
