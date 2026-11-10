@@ -25,7 +25,12 @@ export async function GET(request: NextRequest) {
     if (!companyId) return NextResponse.json({ ok: true, runs: [] });
 
     const status = request.nextUrl.searchParams.get("status") || undefined;
-    const runs = await listStoreProductionRuns(supabase, companyId, { status });
+    const isoDate = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+    const runs = await listStoreProductionRuns(supabase, companyId, {
+      status,
+      from: isoDate(request.nextUrl.searchParams.get("from")),
+      to: isoDate(request.nextUrl.searchParams.get("to")),
+    });
     if (!runs.length) return NextResponse.json({ ok: true, runs: [] });
 
     const runIds = runs.map((run) => run.id);

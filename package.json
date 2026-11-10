@@ -109,7 +109,8 @@
     "test:minimum-level-import": "node scripts/test-minimum-level-import.mjs",
     "test:finished-goods-import": "node scripts/test-finished-goods-import.mjs",
     "test:duplicate-invoice-resolution": "node scripts/test-duplicate-invoice-resolution.mjs",
-    "test:sales-order-adjustment": "node scripts/test-sales-order-adjustment.mjs"
+    "test:sales-order-adjustment": "node scripts/test-sales-order-adjustment.mjs",
+    "test:production-schedule": "node scripts/test-production-schedule.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.0",

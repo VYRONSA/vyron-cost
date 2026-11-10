@@ -19,7 +19,12 @@ export type StoreContribution = {
   store_code: string;
   store_name: string;
   quantity: number;
+  /** Earliest required (delivery) date on this store's contributing orders, when the orders state one. */
+  required_date?: string | null;
 };
+
+/** Optional filter on the store orders' required date (YYYY-MM-DD, inclusive). */
+export type DemandDateFilter = { requiredFrom?: string | null; requiredTo?: string | null };
 
 export type ConsolidatedDemandRow = {
   product_id: string;
@@ -29,6 +34,10 @@ export type ConsolidatedDemandRow = {
   unit_cost: number;
   total_cost: number;
   store_contributions: StoreContribution[];
+  /** Earliest required date across the contributing store orders; null when none states one. */
+  required_date?: string | null;
+  /** Number of store orders contributing. */
+  order_count?: number;
 };
 
 export type IngredientRequirementRow = {
@@ -151,26 +160,34 @@ async function loadProductBomMap(supabase: SupabaseClient, companyId: string) {
 
 export async function consolidateStoreOrderDemand(
   supabase: SupabaseClient,
-  companyId: string
+  companyId: string,
+  dates: DemandDateFilter = {}
 ): Promise<ConsolidatedDemandRow[]> {
-  const { data: orders, error } = await supabase
+  let orderQuery = supabase
     .from("vyron_cost_store_orders")
-    .select("id, store_id, vyron_cost_stores!inner(store_code, store_name)")
+    .select("id, store_id, required_date, vyron_cost_stores!inner(store_code, store_name)")
     .eq("company_id", companyId)
     .in("status", [...STORE_ORDER_DEMAND_STATUSES]);
+  // A date filter keeps only orders whose required date is in range; an order with no required date cannot be placed in a range.
+  if (dates.requiredFrom) orderQuery = orderQuery.gte("required_date", dates.requiredFrom);
+  if (dates.requiredTo) orderQuery = orderQuery.lte("required_date", dates.requiredTo);
+  const { data: orders, error } = await orderQuery;
 
   if (error) throw new Error(error.message);
   if (!orders?.length) return [];
 
-  const orderMeta = new Map<string, { store_id: string; store_code: string; store_name: string }>();
+  const orderMeta = new Map<string, { store_id: string; store_code: string; store_name: string; required_date: string | null }>();
   for (const order of orders) {
     const store = order.vyron_cost_stores as { store_code?: string; store_name?: string } | null;
     orderMeta.set(String(order.id), {
       store_id: String(order.store_id),
       store_code: store?.store_code || "—",
       store_name: store?.store_name || "—",
+      required_date: order.required_date ? String(order.required_date).slice(0, 10) : null,
     });
   }
+  const earliest = (a: string | null | undefined, b: string | null | undefined) => (!a ? b || null : !b ? a : a < b ? a : b);
+  const ordersByProduct = new Map<string, Set<string>>();
 
   const orderIds = orders.map((order) => String(order.id));
   const { data: lines, error: lineError } = await supabase
@@ -203,19 +220,27 @@ export async function consolidateStoreOrderDemand(
       } satisfies ConsolidatedDemandRow);
 
     existing.required_qty = round4(existing.required_qty + qty);
+    existing.required_date = earliest(existing.required_date, meta?.required_date);
+    const seenOrders = ordersByProduct.get(productId) || new Set<string>();
+    seenOrders.add(String(line.store_order_id));
+    ordersByProduct.set(productId, seenOrders);
+    existing.order_count = seenOrders.size;
     existing.planned_qty = existing.required_qty;
     existing.unit_cost = unitCost;
     existing.total_cost = round2(existing.required_qty * unitCost);
 
     if (meta) {
       const match = existing.store_contributions.find((row) => row.store_id === meta.store_id);
-      if (match) match.quantity = round4(match.quantity + qty);
-      else {
+      if (match) {
+        match.quantity = round4(match.quantity + qty);
+        match.required_date = earliest(match.required_date, meta.required_date);
+      } else {
         existing.store_contributions.push({
           store_id: meta.store_id,
           store_code: meta.store_code,
           store_name: meta.store_name,
           quantity: round4(qty),
+          required_date: meta.required_date,
         });
       }
     }
@@ -296,9 +321,10 @@ export async function enrichIngredientShortages(
 
 export async function getProductionPlanWithBom(
   supabase: SupabaseClient,
-  companyId: string
+  companyId: string,
+  dates: DemandDateFilter = {}
 ) {
-  const demand = await consolidateStoreOrderDemand(supabase, companyId);
+  const demand = await consolidateStoreOrderDemand(supabase, companyId, dates);
   const productBom = await loadProductBomMap(supabase, companyId);
   const ingredientBase = buildIngredientRequirements(
     demand.map((row) => ({ product_id: row.product_id, planned_qty: row.planned_qty })),
@@ -308,24 +334,86 @@ export async function getProductionPlanWithBom(
   return { demand, ingredients };
 }
 
+export type StoreProductionRunSummary = StoreProductionRunRow & {
+  /** Earliest required date stored with the run's demand (store contributions); null when none. */
+  required_date: string | null;
+  planned_qty_total: number;
+  produced_qty_total: number;
+  products: Array<{ product_id: string; product_name: string; planned_qty: number }>;
+  next_statuses: StoreProductionStatus[];
+};
+
+/**
+ * Status tracking for store production runs. Completed is reached only through the "complete"
+ * action (which posts finished goods and raw-material usage), never by setting the status.
+ */
+const STORE_PRODUCTION_TRANSITIONS: Record<StoreProductionStatus, StoreProductionStatus[]> = {
+  Draft: ["Planned", "Cancelled"],
+  Planned: ["Released", "Draft", "Cancelled"],
+  Released: ["Planned", "Cancelled"],
+  Completed: [],
+  Cancelled: [],
+};
+
+export function nextStoreProductionStatuses(current: string): StoreProductionStatus[] {
+  return STORE_PRODUCTION_TRANSITIONS[current as StoreProductionStatus] || [];
+}
+
+export function storeProductionRunRequiredDate(lines: Array<Pick<StoreProductionRunLineRow, "store_contributions">>): string | null {
+  let out: string | null = null;
+  for (const line of lines)
+    for (const c of line.store_contributions || []) {
+      const d = c.required_date ? String(c.required_date).slice(0, 10) : null;
+      if (d && (!out || d < out)) out = d;
+    }
+  return out;
+}
+
 export async function listStoreProductionRuns(
   supabase: SupabaseClient,
   companyId: string,
-  filters?: { status?: string }
-) {
+  filters?: { status?: string; from?: string | null; to?: string | null }
+): Promise<StoreProductionRunSummary[]> {
   let query = supabase
     .from("vyron_cost_store_production_runs")
     .select("*")
     .eq("company_id", companyId)
+    .order("production_date", { ascending: true })
     .order("created_at", { ascending: false });
 
   if (filters?.status && filters.status !== "All") {
     query = query.eq("status", filters.status);
   }
+  if (filters?.from) query = query.gte("production_date", filters.from);
+  if (filters?.to) query = query.lte("production_date", filters.to);
 
   const { data, error } = await query.limit(500);
   if (error) throw new Error(error.message);
-  return (data || []) as StoreProductionRunRow[];
+  const runs = (data || []) as StoreProductionRunRow[];
+  if (!runs.length) return [];
+  const { data: lineRows, error: lineError } = await supabase
+    .from("vyron_cost_store_production_run_lines")
+    .select("*")
+    .eq("company_id", companyId)
+    .in("production_run_id", runs.map((r) => r.id))
+    .order("sort_order", { ascending: true });
+  if (lineError) throw new Error(lineError.message);
+  const byRun = new Map<string, StoreProductionRunLineRow[]>();
+  for (const row of lineRows || []) {
+    const line = mapRunLine(row as Record<string, unknown>);
+    byRun.set(line.production_run_id, [...(byRun.get(line.production_run_id) || []), line]);
+  }
+  return runs.map((run) => {
+    const lines = byRun.get(run.id) || [];
+    return {
+      ...run,
+      required_date: storeProductionRunRequiredDate(lines),
+      planned_qty_total: round4(lines.reduce((s, l) => s + l.planned_qty, 0)),
+      produced_qty_total: round4(lines.reduce((s, l) => s + l.produced_qty, 0)),
+      products: lines.map((l) => ({ product_id: l.product_id, product_name: l.product_name, planned_qty: l.planned_qty })),
+      next_statuses: nextStoreProductionStatuses(run.status),
+    };
+  });
 }
 
 export async function getStoreProductionRunDetail(

@@ -7,7 +7,7 @@ import { requirePackageFeature, requireWorkspacePermission, workspaceAccessError
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!isSupabaseServiceRoleConfigured()) {
     return NextResponse.json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is required." }, { status: 500 });
   }
@@ -21,7 +21,9 @@ export async function GET() {
     if (!companyId) {
       return NextResponse.json({ ok: true, demand: [], ingredients: [] });
     }
-    const plan = await getProductionPlanWithBom(supabase, companyId);
+    const params = new URL(request.url).searchParams;
+    const isoDate = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+    const plan = await getProductionPlanWithBom(supabase, companyId, { requiredFrom: isoDate(params.get("from")), requiredTo: isoDate(params.get("to")) });
     return NextResponse.json({ ok: true, ...plan });
   } catch (error) {
     return workspaceAccessErrorResponse(error, "Production plan failed.");
