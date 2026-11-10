@@ -1,5 +1,6 @@
 "use client";
 
+import { checkBelowCost } from "@/lib/vyron-below-cost";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, ClipboardCheck, PackageCheck, Plus, Send, Truck } from "lucide-react";
@@ -555,6 +556,17 @@ export default function CustomerSalesOrdersClient({
                     <input type="number" value={line.discount_pct} onChange={(event) => setLine(index, { discount_pct: Number(event.target.value || 0) })} placeholder="Discount %" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
                     <input type="number" value={line.tax_rate} onChange={(event) => setLine(index, { tax_rate: Number(event.target.value || 0) })} placeholder="Tax %" className="min-w-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm" />
                     <button type="button" onClick={() => setLines((current) => current.filter((_, i) => i !== index))} className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-black text-rose-700">Remove</button>
+                    {(() => {
+                      // Warn only: the price is not changed and saving is not blocked.
+                      const check = checkBelowCost(line.selling_price, line.cost_per_unit, line.discount_pct);
+                      if (!check.below || !line.selling_price) return null;
+                      return (
+                        <div data-testid="below-cost-warning" className="col-span-full rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-800">
+                          Below cost: net price {money(check.netPrice)} is {money(check.shortfallPerUnit)} under the unit cost of {money(check.cost)}
+                          {line.quantity ? ` (${money(check.shortfallPerUnit * Number(line.quantity))} on this line)` : ""}.
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>
