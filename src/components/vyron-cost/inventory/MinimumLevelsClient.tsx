@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import MinimumLevelsUpload from "@/components/vyron-cost/inventory/MinimumLevelsUpload";
 import { Card, KpiCard, Notice, Pill, PrimaryButton, SecondaryButton, qty } from "@/components/vyron-order-engine/ui";
 
 type Level = {
@@ -29,7 +30,21 @@ const STATUS: Record<Level["status"], { label: string; tone: "green" | "amber" |
   CRITICAL: { label: "Critical", tone: "rose" },
 };
 const inputClass = "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold";
+type Section = "finished_goods" | "raw_materials";
+const SECTION_LABEL: Record<Section, string> = { finished_goods: "Finished Goods", raw_materials: "Raw Materials" };
+const sectionOf = (entityType: string | null): Section => (entityType === "finished_goods" ? "finished_goods" : "raw_materials");
 const empty = { stockItemId: "", minimumQty: "", warningQty: "", criticalQty: "", blockProduction: false };
+
+async function fetchMinimumLevels(): Promise<{ ok: false; error: string } | { ok: true; levels: Level[]; items: Item[]; cadence: string | undefined }> {
+  const data = await fetch("/api/inventory/minimum-levels", { cache: "no-store" })
+    .then((r) => r.json())
+    .catch(() => ({ ok: false }));
+  if (!data.ok) return { ok: false, error: data.error || "Could not load minimum levels." };
+  const c = await fetch("/api/inventory/production-cadence", { cache: "no-store" })
+    .then((r) => r.json())
+    .catch(() => null);
+  return { ok: true, levels: data.levels, items: data.items, cadence: c?.ok ? (c.expectedProductionIntervalHours === null ? "" : String(c.expectedProductionIntervalHours)) : undefined };
+}
 
 export default function MinimumLevelsClient() {
   const [levels, setLevels] = useState<Level[] | null>(null);
@@ -39,20 +54,19 @@ export default function MinimumLevelsClient() {
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [cadence, setCadence] = useState("");
+  const [section, setSection] = useState<Section>("finished_goods");
 
-  const load = useCallback(async () => {
-    const res = await fetch("/api/inventory/minimum-levels", { cache: "no-store" });
-    const data = await res.json();
-    if (!data.ok) {
-      setMessage({ tone: "error", text: data.error || "Could not load minimum levels." });
+  const applyLoaded = useCallback((loaded: Awaited<ReturnType<typeof fetchMinimumLevels>>) => {
+    if (!loaded.ok) {
+      setMessage({ tone: "error", text: loaded.error });
       setLevels([]);
       return;
     }
-    setLevels(data.levels);
-    setItems(data.items);
-    const c = await fetch("/api/inventory/production-cadence", { cache: "no-store" }).then((r) => r.json()).catch(() => null);
-    if (c?.ok) setCadence(c.expectedProductionIntervalHours === null ? "" : String(c.expectedProductionIntervalHours));
+    setLevels(loaded.levels);
+    setItems(loaded.items);
+    if (loaded.cadence !== undefined) setCadence(loaded.cadence);
   }, []);
+  const load = useCallback(() => fetchMinimumLevels().then(applyLoaded), [applyLoaded]);
 
   const saveCadence = async () => {
     setMessage(null);
@@ -65,15 +79,23 @@ export default function MinimumLevelsClient() {
     setMessage(data.ok ? { tone: "success", text: data.expectedProductionIntervalHours === null ? "Production cadence warning switched off." : "Production cadence saved." } : { tone: "error", text: data.error || "Save failed." });
   };
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+    void fetchMinimumLevels().then((loaded) => {
+      if (!cancelled) applyLoaded(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [applyLoaded]);
 
   const counts = useMemo(() => {
     const c = { OK: 0, WARNING: 0, BELOW_MINIMUM: 0, CRITICAL: 0 };
-    for (const l of levels || []) c[l.status]++;
+    for (const l of levels || []) if (sectionOf(l.entity_type) === section) c[l.status]++;
     return c;
-  }, [levels]);
-  const shown = (levels || []).filter((l) => filter === "ALL" || l.status === filter);
+  }, [levels, section]);
+  const sectionLevels = (levels || []).filter((l) => sectionOf(l.entity_type) === section);
+  const sectionItems = items.filter((i) => sectionOf(i.entity_type) === section);
+  const shown = sectionLevels.filter((l) => filter === "ALL" || l.status === filter);
 
   const save = async () => {
     setBusy(true);
@@ -129,21 +151,38 @@ export default function MinimumLevelsClient() {
         </p>
       </div>
       {message ? <Notice tone={message.tone}>{message.text}</Notice> : null}
+      <div className="flex flex-wrap gap-2" role="tablist" data-testid="min-sections">
+        {(Object.keys(SECTION_LABEL) as Section[]).map((s) => (
+          <button
+            key={s}
+            role="tab"
+            aria-selected={section === s}
+            onClick={() => {
+              setSection(s);
+              setFilter("ALL");
+              setForm(empty);
+            }}
+            className={`rounded-2xl px-5 py-2.5 text-sm font-black ${section === s ? "bg-slate-900 text-white" : "border border-slate-200 bg-white text-slate-700"}`}
+          >
+            {SECTION_LABEL[s]} ({(levels || []).filter((l) => sectionOf(l.entity_type) === s).length})
+          </button>
+        ))}
+      </div>
       <section className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <KpiCard label="Configured" value={String(levels?.length ?? 0)} active={filter === "ALL"} onClick={() => setFilter("ALL")} />
+        <KpiCard label={`${SECTION_LABEL[section]} configured`} value={String(sectionLevels.length)} active={filter === "ALL"} onClick={() => setFilter("ALL")} />
         <KpiCard label="OK" value={String(counts.OK)} active={filter === "OK"} onClick={() => setFilter("OK")} />
         <KpiCard label="Warning" value={String(counts.WARNING)} active={filter === "WARNING"} onClick={() => setFilter("WARNING")} />
         <KpiCard label="Below minimum" value={String(counts.BELOW_MINIMUM)} active={filter === "BELOW_MINIMUM"} onClick={() => setFilter("BELOW_MINIMUM")} />
         <KpiCard label="Critical" value={String(counts.CRITICAL)} active={filter === "CRITICAL"} onClick={() => setFilter("CRITICAL")} />
       </section>
 
-      <Card title="Set a minimum level">
+      <Card title={`Set a ${SECTION_LABEL[section]} minimum level`}>
         <div className="grid gap-3 md:grid-cols-6">
           <label className="grid gap-1 text-xs font-black uppercase text-slate-500 md:col-span-2">
             Stock item
             <select className={inputClass} value={form.stockItemId} onChange={(e) => setForm({ ...form, stockItemId: e.target.value })}>
               <option value="">Choose…</option>
-              {items.map((i) => (
+              {sectionItems.map((i) => (
                 <option key={i.id} value={i.id}>
                   {i.description || i.item_code} {i.item_code ? `(${i.item_code})` : ""} — on hand {qty(i.qty_on_hand)} {i.unit || ""}
                 </option>
@@ -175,6 +214,8 @@ export default function MinimumLevelsClient() {
         </div>
       </Card>
 
+      <MinimumLevelsUpload key={section} kind={section} onApplied={() => void load()} />
+
       <Card title="Production cadence warning">
         <div className="flex flex-wrap items-end gap-3">
           <label className="grid gap-1 text-xs font-black uppercase text-slate-500">
@@ -186,7 +227,7 @@ export default function MinimumLevelsClient() {
         </div>
       </Card>
 
-      <Card title="Minimum levels">
+      <Card title={`${SECTION_LABEL[section]} minimum levels`}>
         <div className="w-full overflow-x-auto">
           <table className="w-full min-w-[820px] text-left text-sm">
             <thead className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">
@@ -228,7 +269,7 @@ export default function MinimumLevelsClient() {
               {levels && !shown.length ? (
                 <tr>
                   <td colSpan={9} className="py-6 text-center text-sm font-semibold text-slate-400">
-                    {levels.length ? "Nothing in this status." : "No minimum levels set yet."}
+                    {sectionLevels.length ? "Nothing in this status." : `No ${SECTION_LABEL[section].toLowerCase()} minimum levels set yet.`}
                   </td>
                 </tr>
               ) : null}

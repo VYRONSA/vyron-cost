@@ -118,7 +118,7 @@ function validate(input: MinimumLevelInput) {
 }
 
 /** Create or change the threshold for one of this company's stock items. Audited. */
-export async function saveMinimumLevel(supabase: SupabaseClient, companyId: string, input: MinimumLevelInput, actor: string): Promise<MinimumLevel> {
+export async function saveMinimumLevel(supabase: SupabaseClient, companyId: string, input: MinimumLevelInput, actor: string, source?: string): Promise<MinimumLevel> {
   const { min, warn, crit, block } = validate(input);
   const { data: item, error: itemError } = await supabase.from("vyron_cost_stock_items").select("id, item_code").eq("id", input.stockItemId).eq("company_id", companyId).maybeSingle();
   if (itemError) throw new Error(itemError.message);
@@ -150,7 +150,7 @@ export async function saveMinimumLevel(supabase: SupabaseClient, companyId: stri
     fieldName: "minimum_level",
     oldValue: existing ? JSON.stringify({ minimum: existing.minimum_qty, warning: existing.warning_qty, critical: existing.critical_qty, block: existing.block_production }) : undefined,
     newValue: JSON.stringify({ minimum: min, warning: warn, critical: crit, block }),
-    detail: `${item.item_code || "Stock item"}: minimum ${min}${warn !== null ? `, warning ${warn}` : ""}${crit !== null ? `, critical ${crit}` : ""}${block ? ", blocks production" : ""}`,
+    detail: `${item.item_code || "Stock item"}: minimum ${min}${warn !== null ? `, warning ${warn}` : ""}${crit !== null ? `, critical ${crit}` : ""}${block ? ", blocks production" : ""}${source ? ` (${source})` : ""}`,
   });
   return saved;
 }

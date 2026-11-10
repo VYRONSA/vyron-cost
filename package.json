@@ -105,7 +105,8 @@
     "test:period-performance": "node scripts/test-period-performance.mjs",
     "test:below-cost": "node scripts/test-below-cost.mjs",
     "test:dormant-products": "node scripts/test-dormant-products.mjs",
-    "test:finished-goods-dashboard": "node scripts/test-finished-goods-dashboard.mjs"
+    "test:finished-goods-dashboard": "node scripts/test-finished-goods-dashboard.mjs",
+    "test:minimum-level-import": "node scripts/test-minimum-level-import.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.0",
