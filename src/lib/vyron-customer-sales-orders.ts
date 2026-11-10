@@ -1840,3 +1840,273 @@ export async function getCustomerIntelligence(
     predictedNextOrderDate,
   };
 }
+
+/* ------------------------------------------------------------------ manual adjustments */
+
+/** Orders that may still be adjusted. Picking onwards (and Cancelled) are processed or locked. */
+export const ADJUSTABLE_SALES_ORDER_STATUSES: SalesOrderStatus[] = ["Draft", "Awaiting Approval", "Approved"];
+
+export class SalesOrderAdjustmentError extends Error {
+  status: number;
+  constructor(message: string, status = 400) {
+    super(message);
+    this.status = status;
+  }
+}
+
+export type SalesOrderAdjustmentLine = { id?: string; productId?: string | null; quantity?: number; discountPct?: number; remove?: boolean };
+export type SalesOrderAdjustmentChange = { lineId: string | null; description: string; field: "quantity" | "discount" | "added" | "removed"; from: string; to: string };
+
+function lineRowToInput(line: SalesOrderLineRow): SalesOrderLineInput {
+  return {
+    id: line.id,
+    productId: line.product_id,
+    description: line.description,
+    quantity: Number(line.quantity || 0),
+    unit: line.unit,
+    sellingPrice: Number(line.selling_price || 0),
+    discountPct: Number(line.discount_pct || 0),
+    taxRate: Number(line.tax_rate ?? 15),
+    costPerUnit: Number(line.cost_per_unit || 0),
+  };
+}
+
+/** Pure: apply requested changes to an order's lines. Validates quantities and discounts; lists every change. */
+export function planSalesOrderAdjustment(lines: SalesOrderLineRow[], requestedLines: SalesOrderAdjustmentLine[]) {
+  const requested = new Map<string, SalesOrderAdjustmentLine>();
+  const added: SalesOrderAdjustmentLine[] = [];
+  for (const l of requestedLines || []) {
+    if (l.id) {
+      if (!lines.some((x) => x.id === l.id)) throw new SalesOrderAdjustmentError("A line does not belong to this order.");
+      requested.set(l.id, l);
+    } else added.push(l);
+  }
+  const validQty = (q: unknown) => q !== null && q !== "" && Number.isFinite(Number(q)) && Number(q) > 0 && Number(q) < 1e7;
+  const validDiscount = (d: unknown) => d === undefined || (d !== null && d !== "" && Number.isFinite(Number(d)) && Number(d) >= 0 && Number(d) <= 100);
+
+  const changes: SalesOrderAdjustmentChange[] = [];
+  const kept: SalesOrderLineInput[] = [];
+  const changed: SalesOrderLineInput[] = [];
+  const removed: SalesOrderLineRow[] = [];
+  for (const row of lines) {
+    const req = requested.get(row.id);
+    const current = lineRowToInput(row);
+    if (!req) {
+      kept.push(current);
+      continue;
+    }
+    if (req.remove) {
+      removed.push(row);
+      changes.push({ lineId: row.id, description: row.description, field: "removed", from: String(current.quantity), to: "0" });
+      continue;
+    }
+    const next = { ...current };
+    if (req.quantity !== undefined) {
+      if (!validQty(req.quantity)) throw new SalesOrderAdjustmentError(`Quantity for ${row.description} must be more than zero.`);
+      next.quantity = round4(Number(req.quantity));
+      if (next.quantity !== current.quantity) changes.push({ lineId: row.id, description: row.description, field: "quantity", from: String(current.quantity), to: String(next.quantity) });
+    }
+    if (req.discountPct !== undefined) {
+      if (!validDiscount(req.discountPct)) throw new SalesOrderAdjustmentError(`Discount for ${row.description} must be between 0 and 100%.`);
+      next.discountPct = round4(Number(req.discountPct));
+      if (next.discountPct !== (current.discountPct || 0)) changes.push({ lineId: row.id, description: row.description, field: "discount", from: `${current.discountPct || 0}%`, to: `${next.discountPct}%` });
+    }
+    kept.push(next);
+    if (next.quantity !== current.quantity || next.discountPct !== current.discountPct) changed.push(next);
+  }
+  for (const a of added) {
+    if (!a.productId) throw new SalesOrderAdjustmentError("An added line must name a product.");
+    if (!validQty(a.quantity)) throw new SalesOrderAdjustmentError("An added line needs a quantity more than zero.");
+    if (!validDiscount(a.discountPct)) throw new SalesOrderAdjustmentError("Discount must be between 0 and 100%.");
+  }
+  return { kept, changed, removed, added, changes };
+}
+
+/**
+ * Adjust an order that has not been processed: change quantities or discounts, remove lines, add
+ * products. A reason is required. Existing lines keep the price agreed on the order; added lines
+ * are priced by the customer's price list (applyCustomerPriceList, the same resolver as order
+ * entry) and costed from the product master. Totals and VAT are recalculated with
+ * calculateSalesOrderTotals; approval rules are re-evaluated. An Approved order's stock reservation
+ * is re-made for the new quantities; if stock is short, every change is rolled back.
+ * `dryRun` returns the before/after without writing. The before and after lines and totals are
+ * kept in the order's audit trail, so the original order is always recoverable.
+ */
+export async function adjustCustomerSalesOrder(
+  supabase: SupabaseClient,
+  companyId: string,
+  input: { orderId: string; lines: SalesOrderAdjustmentLine[]; reason: string; actor: string; canAdjustApproved: boolean; dryRun?: boolean }
+) {
+  const loaded = await getCustomerSalesOrder(supabase, companyId, input.orderId);
+  if (!loaded) throw new SalesOrderAdjustmentError("Sales order not found.", 404);
+  const order = loaded.order as SalesOrderRow & { requires_approval?: boolean | null; approval_flags?: unknown };
+  if (!ADJUSTABLE_SALES_ORDER_STATUSES.includes(order.status))
+    throw new SalesOrderAdjustmentError(`Order ${order.order_number} is ${order.status}. Processed or locked orders cannot be adjusted.`, 409);
+  if (loaded.lines.some((l) => Number(l.invoiced_qty || 0) > 0)) throw new SalesOrderAdjustmentError("Part of this order has been invoiced; it cannot be adjusted.", 409);
+  if (order.status === "Approved" && !input.canAdjustApproved)
+    throw new SalesOrderAdjustmentError("Adjusting an approved order needs the Approve sales orders permission.", 403);
+  const reason = String(input.reason || "").trim();
+  if (reason.length < 10) throw new SalesOrderAdjustmentError("Give a reason for the adjustment (at least 10 characters).");
+
+  const plan = planSalesOrderAdjustment(loaded.lines, input.lines);
+  const { kept, changed, removed, changes } = plan;
+
+  let newLines: SalesOrderLineInput[] = [];
+  if (plan.added.length) {
+    const base: SalesOrderLineInput[] = plan.added.map((a) => ({
+      id: randomUUID(),
+      productId: a.productId,
+      description: "",
+      quantity: round4(Number(a.quantity)),
+      unit: "each",
+      sellingPrice: 0,
+      discountPct: Number(a.discountPct || 0),
+      taxRate: 15,
+    }));
+    try {
+      newLines = await applyCustomerPriceList(supabase, companyId, order.customer_id, await enrichProductCosts(supabase, companyId, order.customer_id, base, false));
+    } catch (error) {
+      throw new SalesOrderAdjustmentError(error instanceof Error ? error.message : "Added line could not be priced.");
+    }
+    for (const l of newLines) changes.push({ lineId: null, description: l.description, field: "added", from: "0", to: String(l.quantity) });
+  }
+
+  if (!changes.length) throw new SalesOrderAdjustmentError("Nothing was changed.");
+  const after = [...kept, ...newLines];
+  if (!after.length) throw new SalesOrderAdjustmentError("An order must keep at least one line. Cancel the order instead.");
+
+  const beforeLines = loaded.lines.map(lineRowToInput);
+  const beforeTotals = calculateSalesOrderTotals(beforeLines);
+  const afterTotals = calculateSalesOrderTotals(after);
+  const orderInput: SalesOrderInput = { id: order.id, customerId: order.customer_id, customerName: order.customer_name, lines: after };
+  const approvalRules = await evaluateApprovalRules(supabase, companyId, orderInput, after, afterTotals);
+  const summary = { before: { lines: beforeLines, totals: beforeTotals }, after: { lines: after, totals: afterTotals }, changes, approvalRules };
+  if (input.dryRun) return { ok: true as const, dryRun: true, order, ...summary };
+
+  const now = new Date().toISOString();
+  const lineRow = (l: SalesOrderLineInput, sort: number) => ({
+    id: l.id!,
+    company_id: companyId,
+    sales_order_id: order.id,
+    product_id: l.productId || null,
+    description: l.description || "Line",
+    quantity: round4(Number(l.quantity || 0)),
+    unit: l.unit || "each",
+    selling_price: round4(Number(l.sellingPrice || 0)),
+    discount_pct: round4(Number(l.discountPct || 0)),
+    tax_rate: round4(Number(l.taxRate ?? 15)),
+    line_total: lineAmounts(l).total,
+    cost_per_unit: round4(Number(l.costPerUnit || 0)),
+    invoiced_qty: 0,
+    sort_order: sort,
+    created_at: now,
+    updated_at: now,
+  });
+
+  const writeChanges = async () => {
+    // Header first, compare-and-set on status: a concurrent approval/picking stops the adjustment before any line changes.
+    const { data: updated, error: headerError } = await supabase
+      .from("vyron_customer_sales_orders")
+      .update({
+        subtotal: afterTotals.subtotal,
+        vat_amount: afterTotals.vatAmount,
+        total: afterTotals.total,
+        cost_value: afterTotals.costValue,
+        gross_profit: afterTotals.grossProfit,
+        gp_percentage: afterTotals.gpPercentage,
+        approval_flags: approvalRules,
+        requires_approval: order.status === "Approved" ? Boolean(order.requires_approval) : approvalRules.length > 0,
+        updated_at: now,
+      })
+      .eq("company_id", companyId)
+      .eq("id", order.id)
+      .eq("status", order.status)
+      .select("*")
+      .maybeSingle();
+    if (headerError) throw new Error(headerError.message);
+    if (!updated) throw new SalesOrderAdjustmentError("The order changed status while you were adjusting it. Reload and try again.", 409);
+    for (const l of changed) {
+      const { error } = await supabase
+        .from("vyron_customer_sales_order_lines")
+        .update({ quantity: round4(Number(l.quantity)), discount_pct: round4(Number(l.discountPct || 0)), line_total: lineAmounts(l).total, updated_at: now })
+        .eq("company_id", companyId)
+        .eq("sales_order_id", order.id)
+        .eq("id", l.id!);
+      if (error) throw new Error(error.message);
+    }
+    if (removed.length) {
+      const ids = removed.map((r) => r.id);
+      const { error: allocError } = await supabase.from("vyron_customer_sales_order_allocations").delete().eq("company_id", companyId).in("sales_order_line_id", ids);
+      if (allocError) throw new Error(allocError.message);
+      const { error } = await supabase.from("vyron_customer_sales_order_lines").delete().eq("company_id", companyId).eq("sales_order_id", order.id).in("id", ids);
+      if (error) throw new Error(error.message);
+    }
+    if (newLines.length) {
+      const start = loaded.lines.reduce((m, l) => Math.max(m, Number(l.sort_order || 0)), 0) + 1;
+      const { error } = await supabase.from("vyron_customer_sales_order_lines").insert(newLines.map((l, i) => lineRow(l, start + i)));
+      if (error) throw new Error(error.message);
+    }
+    return updated as SalesOrderRow;
+  };
+
+  const restore = async () => {
+    for (const row of loaded.lines.filter((r) => changed.some((c) => c.id === r.id))) {
+      await supabase
+        .from("vyron_customer_sales_order_lines")
+        .update({ quantity: row.quantity, discount_pct: row.discount_pct, line_total: row.line_total, updated_at: new Date().toISOString() })
+        .eq("company_id", companyId)
+        .eq("id", row.id);
+    }
+    if (newLines.length) await supabase.from("vyron_customer_sales_order_lines").delete().eq("company_id", companyId).in("id", newLines.map((l) => l.id!));
+    if (removed.length) await supabase.from("vyron_customer_sales_order_lines").upsert(removed);
+    await supabase
+      .from("vyron_customer_sales_orders")
+      .update({
+        subtotal: order.subtotal,
+        vat_amount: order.vat_amount,
+        total: order.total,
+        cost_value: order.cost_value,
+        gross_profit: order.gross_profit,
+        gp_percentage: order.gp_percentage,
+        approval_flags: order.approval_flags,
+        requires_approval: order.requires_approval,
+        updated_at: order.updated_at,
+      })
+      .eq("company_id", companyId)
+      .eq("id", order.id);
+  };
+
+  let updatedOrder: SalesOrderRow;
+  try {
+    updatedOrder = await writeChanges();
+    if (order.status === "Approved") {
+      const reloaded = await getCustomerSalesOrder(supabase, companyId, order.id);
+      if (!reloaded) throw new Error("Sales order not found.");
+      await checkAndReserveStock(supabase, companyId, reloaded.order, reloaded.lines);
+    }
+  } catch (error) {
+    // Only roll back what this call wrote: a status conflict means nothing was written.
+    if (!(error instanceof SalesOrderAdjustmentError && error.status === 409)) {
+      await restore().catch((restoreError) => console.error("[sales-order-adjust] restore failed", restoreError));
+      if (order.status === "Approved") {
+        const original = await getCustomerSalesOrder(supabase, companyId, order.id).catch(() => null);
+        if (original) await checkAndReserveStock(supabase, companyId, original.order, original.lines).catch((e) => console.error("[sales-order-adjust] re-reserve failed", e));
+      }
+    }
+    throw error;
+  }
+
+  const describe = (c: SalesOrderAdjustmentChange) =>
+    c.field === "added" ? `added ${c.description} x${c.to}` : c.field === "removed" ? `removed ${c.description}` : `${c.description} ${c.field} ${c.from} → ${c.to}`;
+  await writeSalesOrderAudit(supabase, {
+    companyId,
+    salesOrderId: order.id,
+    eventType: "SALES_ORDER_ADJUSTED",
+    actor: input.actor,
+    fromStatus: order.status,
+    toStatus: order.status,
+    detail: `Adjusted by ${input.actor}: ${reason}. ${changes.map(describe).join("; ")}. Total ${beforeTotals.total.toFixed(2)} → ${afterTotals.total.toFixed(2)} incl. VAT.`,
+    metadata: { reason, ...summary },
+  });
+  return { ok: true as const, dryRun: false, order: updatedOrder, ...summary };
+}

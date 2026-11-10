@@ -3,6 +3,7 @@
 import { checkBelowCost } from "@/lib/vyron-below-cost";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import SalesOrderAdjustPanel from "@/components/vyron-cost/customers/SalesOrderAdjustPanel";
 import { CheckCircle2, ClipboardCheck, PackageCheck, Plus, Send, Truck } from "lucide-react";
 import type { ReactNode } from "react";
 import { useInvoicePermissions, useSalesOrderPermissions } from "@/hooks/useModulePermissions";
@@ -774,6 +775,18 @@ export default function CustomerSalesOrdersClient({
                 ))}
               </div>
             </div>
+
+            <SalesOrderAdjustPanel
+              key={`${selectedOrder.order.id}-${selectedOrder.order.status}`}
+              orderId={selectedOrder.order.id}
+              status={selectedOrder.order.status}
+              lines={selectedOrder.lines}
+              onAdjusted={() => {
+                setMessage(`Order ${selectedOrder.order.order_number} adjusted. The change, reason and original lines are in the audit trail.`);
+                void loadOrders();
+                void loadInsight(selectedOrder.order.id);
+              }}
+            />
 
             {selectedOrder.audits.length ? (
               <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
