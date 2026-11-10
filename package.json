@@ -112,7 +112,8 @@
     "test:sales-order-adjustment": "node scripts/test-sales-order-adjustment.mjs",
     "test:production-schedule": "node scripts/test-production-schedule.mjs",
     "test:inflation-baseline": "node scripts/test-inflation-baseline.mjs",
-    "test:twilio-status": "node scripts/test-twilio-status.mjs"
+    "test:twilio-status": "node scripts/test-twilio-status.mjs",
+    "test:inbound-email-webhook": "node scripts/test-inbound-email-webhook.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.0",
