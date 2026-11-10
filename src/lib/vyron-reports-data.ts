@@ -16,6 +16,15 @@ import {
   type PurchaseInvoiceInput,
   type SalesInvoiceInput,
 } from "@/lib/vyron-period-performance";
+import {
+  buildFinishedGoodsDashboard,
+  ledgerOrder,
+  type FgDashboard,
+  type FgLedgerInput,
+  type FgProductionRunInput,
+  type FgRow,
+  type FgStockItemInput,
+} from "@/lib/vyron-finished-goods-dashboard";
 
 /**
  * Server data for the Reports centre.
@@ -304,4 +313,140 @@ export async function loadPeriodPerformance(filters: { from: string; to: string;
   } catch (err) {
     return { data: null, error: err instanceof Error ? err.message : "Performance report failed.", companyId };
   }
+}
+
+/* ------------------------------------------------- finished goods dashboard */
+
+export type FinishedGoodsDashboardLoad = FgDashboard & {
+  focus: { row: FgRow; movements: FgLedgerInput[] } | null;
+  runsInRange: FgProductionRunInput[];
+};
+
+/** Page through a Supabase select; PostgREST caps a single response at 1000 rows. */
+async function selectAllPages<T>(build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) {
+  const out: T[] = [];
+  for (let offset = 0; offset < 200000; offset += 1000) {
+    const { data, error } = await build(offset, offset + 999);
+    if (error) throw new Error(error.message);
+    out.push(...(data || []));
+    if (!data || data.length < 1000) break;
+  }
+  return out;
+}
+
+export async function loadFinishedGoodsDashboard(filters: { from: string; to: string; focusId?: string | null }): Promise<
+  ReportLoad<FinishedGoodsDashboardLoad | null>
+> {
+  const { supabase, companyId, error } = await scope();
+  if (!supabase || !companyId) return { data: null, error, companyId };
+  try {
+    const itemRows = await selectAllPages<Record<string, unknown>>((a, b) =>
+      supabase
+        .from("vyron_cost_stock_items")
+        .select("id, item_code, description, category, unit, qty_on_hand, average_cost, current_cost, inventory_value, min_level, stock_status, is_active, last_movement_at, entity_id")
+        .eq("company_id", companyId)
+        .eq("entity_type", "finished_goods")
+        .order("description", { ascending: true })
+        .range(a, b)
+    );
+    const items: FgStockItemInput[] = itemRows.map((r) => ({
+      id: String(r.id),
+      itemCode: String(r.item_code || "—"),
+      description: String(r.description || "—"),
+      category: String(r.category || "Uncategorised"),
+      unit: String(r.unit || "each"),
+      qtyOnHand: Number(r.qty_on_hand) || 0,
+      averageCost: Number(r.average_cost) || Number(r.current_cost) || 0,
+      inventoryValue: r.inventory_value === null || r.inventory_value === undefined ? null : Number(r.inventory_value),
+      minLevel: Number(r.min_level) || 0,
+      stockStatus: String(r.stock_status || "—"),
+      isActive: r.is_active !== false,
+      lastMovementAt: r.last_movement_at ? String(r.last_movement_at) : null,
+    }));
+    const itemIds = new Set(items.map((i) => i.id));
+    const productToItem = new Map(itemRows.filter((r) => r.entity_id).map((r) => [String(r.entity_id), String(r.id)]));
+
+    // Ledger rows for finished goods up to the end of the range (opening balance needs history before `from`).
+    const ledgerRows = await selectAllPages<Record<string, unknown>>((a, b) =>
+      supabase
+        .from("vyron_cost_stock_ledger")
+        .select("id, stock_item_id, movement_date, movement_type, quantity_in, quantity_out, balance_after, unit_cost, value, reference_type, reference_id, reference_label, actor, created_at, vyron_cost_stock_items!inner(entity_type)")
+        .eq("company_id", companyId)
+        .eq("vyron_cost_stock_items.entity_type", "finished_goods")
+        .lte("movement_date", `${filters.to}T23:59:59.999+02:00`)
+        .order("movement_date", { ascending: true })
+        .order("id", { ascending: true })
+        .range(a, b)
+    );
+    const ledger: FgLedgerInput[] = ledgerRows
+      .filter((l) => itemIds.has(String(l.stock_item_id)))
+      .map((l) => ({
+        id: String(l.id),
+        stockItemId: String(l.stock_item_id),
+        movementDate: sastDay(String(l.movement_date)),
+        movementType: String(l.movement_type || "—"),
+        quantityIn: Number(l.quantity_in) || 0,
+        quantityOut: Number(l.quantity_out) || 0,
+        balanceAfter: Number(l.balance_after) || 0,
+        unitCost: Number(l.unit_cost) || 0,
+        value: Number(l.value) || 0,
+        referenceType: l.reference_type ? String(l.reference_type) : null,
+        referenceId: l.reference_id ? String(l.reference_id) : null,
+        referenceLabel: l.reference_label ? String(l.reference_label) : null,
+        actor: l.actor ? String(l.actor) : null,
+        createdAt: l.created_at ? String(l.created_at) : null,
+      }));
+
+    const runRows = await selectAllPages<Record<string, unknown>>((a, b) =>
+      supabase
+        .from("vyron_cost_production_runs")
+        .select("id, run_number, product_id, product_name_snapshot, bom_name_snapshot, status, planned_qty, actual_qty, completed_at, created_at")
+        .eq("company_id", companyId)
+        .lte("created_at", `${filters.to}T23:59:59.999+02:00`)
+        .order("created_at", { ascending: false })
+        .range(a, b)
+    );
+    const runs: FgProductionRunInput[] = runRows
+      .map((r) => ({
+        id: String(r.id),
+        runNumber: String(r.run_number || "—"),
+        productId: r.product_id ? String(r.product_id) : null,
+        productName: String(r.product_name_snapshot || r.bom_name_snapshot || "—"),
+        status: String(r.status || "—"),
+        plannedQty: Number(r.planned_qty) || 0,
+        actualQty: Number(r.actual_qty) || 0,
+        date: sastDay(String(r.completed_at || r.created_at)),
+      }))
+      .filter((r) => r.date >= filters.from && r.date <= filters.to);
+
+    const dashboard = buildFinishedGoodsDashboard({ from: filters.from, to: filters.to, items, ledger, runs });
+    let focus: FinishedGoodsDashboardLoad["focus"] = null;
+    const focusRow = filters.focusId ? dashboard.rows.find((r) => r.id === filters.focusId) : null;
+    if (focusRow) {
+      const movements = ledger
+        .filter((l) => l.stockItemId === focusRow.id && l.movementDate >= filters.from)
+        .sort(ledgerOrder)
+        .reverse();
+      focus = { row: focusRow, movements };
+    }
+    const focusProduct = focusRow ? [...productToItem.entries()].find(([, itemId]) => itemId === focusRow.id)?.[0] : null;
+    return {
+      data: {
+        ...dashboard,
+        focus,
+        runsInRange: focusRow ? runs.filter((r) => r.productId && r.productId === focusProduct) : runs,
+      },
+      error: null,
+      companyId,
+    };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : "Finished goods dashboard failed.", companyId };
+  }
+}
+
+/** Calendar day in South Africa (UTC+2, no DST) for a timestamp. */
+function sastDay(iso: string) {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return String(iso || "").slice(0, 10);
+  return new Date(t + 2 * 3600 * 1000).toISOString().slice(0, 10);
 }
