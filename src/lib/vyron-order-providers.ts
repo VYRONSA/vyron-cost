@@ -21,6 +21,8 @@
  * fetch calls are less to carry — and less to audit — than two dependencies.
  */
 
+import { twilioStatusCallbackUrl } from "@/lib/vyron-twilio-status";
+
 export type ProviderResult = {
   status: "Sent" | "Failed" | "Not Configured";
   provider: string;
@@ -209,6 +211,9 @@ async function twilioSend(
 
   try {
     const form = new URLSearchParams({ From: from, To: to, Body: body });
+    // Ask Twilio to report what actually happened (Delivered / Failed) when a public callback URL is set.
+    const callback = twilioStatusCallbackUrl();
+    if (callback) form.set("StatusCallback", callback);
     const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/Messages.json`, {
       method: "POST",
       headers: {
@@ -329,6 +334,8 @@ export async function sendProviderWhatsApp(input: {
       ContentSid: contentSid,
       ContentVariables: JSON.stringify(input.templateVariables || {}),
     });
+    const callback = twilioStatusCallbackUrl();
+    if (callback) form.set("StatusCallback", callback);
     const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/Messages.json`, {
       method: "POST",
       headers: {
@@ -394,9 +401,10 @@ export function providerStatuses(): Record<"inApp" | "email" | "sms" | "whatsapp
           configured: true,
           provider: "Twilio WhatsApp",
           missing: [],
-          detail: env("TWILIO_WHATSAPP_TEMPLATE_SID")
+          detail: (env("TWILIO_WHATSAPP_TEMPLATE_SID")
             ? `Sending from ${env("TWILIO_WHATSAPP_FROM")} using an approved template.`
-            : `Sending from ${env("TWILIO_WHATSAPP_FROM")}. No template configured — messages outside the 24-hour window will be refused by WhatsApp.`,
+            : `Sending from ${env("TWILIO_WHATSAPP_FROM")}. No template configured — messages outside the 24-hour window will be refused by WhatsApp.`) +
+            (twilioStatusCallbackUrl() ? " Delivery reports are on." : " Delivery reports are off (set NEXT_PUBLIC_APP_URL to the public https address)."),
         }
       : { configured: false, provider: null, missing: whatsappMissing, detail: `Not configured. Set ${whatsappMissing.join(", ")}.` },
   };

@@ -111,7 +111,8 @@
     "test:duplicate-invoice-resolution": "node scripts/test-duplicate-invoice-resolution.mjs",
     "test:sales-order-adjustment": "node scripts/test-sales-order-adjustment.mjs",
     "test:production-schedule": "node scripts/test-production-schedule.mjs",
-    "test:inflation-baseline": "node scripts/test-inflation-baseline.mjs"
+    "test:inflation-baseline": "node scripts/test-inflation-baseline.mjs",
+    "test:twilio-status": "node scripts/test-twilio-status.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.0",
