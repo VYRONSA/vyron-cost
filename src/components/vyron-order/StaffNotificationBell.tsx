@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Bell, ChevronRight, Check } from "lucide-react";
 import type { InAppNotification } from "@/lib/vyron-order-notifications";
@@ -40,6 +41,26 @@ export default function StaffNotificationBell() {
   const [items, setItems] = useState<InAppNotification[]>([]);
   const [unread, setUnread] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  // The panel is portalled to <body> with fixed positioning. Rendered inside the
+  // top bar it was trapped in the header's stacking context (backdrop-blur
+  // creates one) and the dashboard hero painted over it.
+  const [anchor, setAnchor] = useState<{ top: number; right: number } | null>(null);
+
+  const place = useCallback(() => {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const width = Math.min(352, window.innerWidth - 32);
+    const right = Math.max(16, Math.round(window.innerWidth - rect.right));
+    // Never let the panel slide off the left edge of a narrow phone.
+    setAnchor({ top: Math.round(rect.bottom + 8), right: Math.min(right, Math.max(16, window.innerWidth - width - 16)) });
+  }, []);
+
+  function toggle() {
+    if (!open) place();
+    setOpen((v) => !v);
+  }
 
   const load = useCallback(async () => {
     try {
@@ -93,11 +114,24 @@ export default function StaffNotificationBell() {
 
   useEffect(() => {
     function onClickOutside(event: MouseEvent) {
-      if (!panelRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (!panelRef.current?.contains(target) && !popoverRef.current?.contains(target)) setOpen(false);
     }
-    if (open) document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [open]);
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    if (!open) return;
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open, place]);
 
   async function markAllRead() {
     setUnread(0);
@@ -112,8 +146,10 @@ export default function StaffNotificationBell() {
   return (
     <div className="relative" ref={panelRef}>
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        data-testid="staff-notification-bell"
+        onClick={toggle}
         aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
         aria-expanded={open}
         className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#E2E8F0] bg-white text-[#0B202B] transition hover:bg-[rgba(11,32,43,0.04)]"
@@ -126,8 +162,15 @@ export default function StaffNotificationBell() {
         ) : null}
       </button>
 
-      {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-xl">
+      {open && anchor && typeof document !== "undefined" ? createPortal(
+        <div
+          ref={popoverRef}
+          role="dialog"
+          aria-label="Notifications"
+          data-testid="staff-notification-panel"
+          style={{ position: "fixed", top: anchor.top, right: anchor.right, zIndex: 1000 }}
+          className="w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-xl"
+        >
           <div className="flex items-center justify-between gap-3 border-b border-[rgba(11,32,43,0.06)] px-4 py-3">
             <span className="vyron-t-label text-[11px] text-[#64748B]">Notifications</span>
             {unread > 0 ? (
@@ -178,7 +221,8 @@ export default function StaffNotificationBell() {
           >
             Open VOLORA Order Centre
           </Link>
-        </div>
+        </div>,
+        document.body,
       ) : null}
     </div>
   );

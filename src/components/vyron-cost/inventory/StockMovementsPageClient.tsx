@@ -16,6 +16,29 @@ type StockItemOption = {
   unit: string;
 };
 
+type LedgerEntry = {
+  id: string;
+  transaction_number: string;
+  transaction_type: string;
+  item_name: string;
+  item_code: string;
+  signed_quantity: number;
+  running_balance: number;
+  unit_cost: number;
+  total_cost: number;
+  reference_label: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+};
+
+const HISTORY_LIMIT = 50;
+
+const qtyFmt = (n: number) => Number(n || 0).toLocaleString("en-ZA", { maximumFractionDigits: 4 });
+const moneyFmt = (n: number) => `R${Number(n || 0).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const whenFmt = (iso: string) =>
+  new Date(iso).toLocaleString("en-ZA", { timeZone: "Africa/Johannesburg", dateStyle: "medium", timeStyle: "short" });
+
 type ActionMode = "receive" | "issue" | "adjust" | "count";
 
 const ACTION_LABELS: Record<ActionMode, string> = {
@@ -38,6 +61,26 @@ export default function StockMovementsPageClient() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [history, setHistory] = useState<LedgerEntry[]>([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyForItem, setHistoryForItem] = useState(false);
+
+  const loadHistory = useCallback(async (itemId?: string) => {
+    try {
+      const qs = itemId ? `?stockItemId=${encodeURIComponent(itemId)}` : "";
+      const response = await fetch(`/api/inventory-transactions/ledger${qs}`, { cache: "no-store" });
+      const data = await response.json();
+      if (!data.ok) {
+        setHistoryError(data.error || "Movement history could not be loaded.");
+        return;
+      }
+      setHistoryError(null);
+      setHistory(((data.entries || []) as LedgerEntry[]).slice(0, HISTORY_LIMIT));
+    } catch {
+      setHistoryError("Movement history could not be loaded.");
+    }
+  }, []);
+
   const loadItems = useCallback(async () => {
     const response = await fetch("/api/inventory-transactions/stock-items", { cache: "no-store" });
     const data = await response.json();
@@ -47,6 +90,10 @@ export default function StockMovementsPageClient() {
   useEffect(() => {
     void loadItems();
   }, [loadItems]);
+
+  useEffect(() => {
+    void loadHistory(historyForItem && stockItemId ? stockItemId : undefined);
+  }, [loadHistory, historyForItem, stockItemId]);
 
   const selectedItem = items.find((item) => item.id === stockItemId);
 
@@ -59,6 +106,23 @@ export default function StockMovementsPageClient() {
   async function submit() {
     if (!mode || !stockItemId) {
       setError("Select a stock item.");
+      return;
+    }
+    const entered = (v: string) => (v.trim() === "" || !Number.isFinite(Number(v)) ? null : Number(v));
+    if (mode === "count" && (entered(countedQty) === null || Number(countedQty) < 0)) {
+      setError("Enter the counted quantity (zero or more).");
+      return;
+    }
+    if (mode === "adjust" && !entered(quantityDelta)) {
+      setError("Enter a non-zero adjustment (+ or −).");
+      return;
+    }
+    if ((mode === "receive" || mode === "issue") && !((entered(quantity) ?? 0) > 0)) {
+      setError("Enter a quantity greater than zero.");
+      return;
+    }
+    if (mode !== "count" && unitCost.trim() !== "" && !((entered(unitCost) ?? -1) >= 0)) {
+      setError("Unit cost must be zero or more.");
       return;
     }
 
@@ -107,7 +171,7 @@ export default function StockMovementsPageClient() {
       setQuantityDelta("");
       setCountedQty("");
       setNotes("");
-      await loadItems();
+      await Promise.all([loadItems(), loadHistory(historyForItem ? stockItemId : undefined)]);
     } catch {
       setError("Transaction failed.");
     } finally {
@@ -169,6 +233,9 @@ export default function StockMovementsPageClient() {
               onSelect={(item) => {
                 setStockItemId(item.stockItemId);
                 setUnitCost(String(item.currentCost || 0));
+                // A just-materialised item is not in the list yet; reload so
+                // its on-hand figure shows before anything is posted.
+                if (!items.some((i) => i.id === item.stockItemId)) void loadItems();
               }}
             />
           </label>
@@ -265,6 +332,66 @@ export default function StockMovementsPageClient() {
           Select an action above to post a stock movement.
         </div>
       )}
+
+      <section className={`${VYRON_MASTER.moduleDataSection} mt-6`} data-testid="stock-movement-history">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-black text-[#0B202B]">Movement history</h2>
+            <p className="text-xs font-semibold text-[#64748B]">
+              Latest {HISTORY_LIMIT} posted movements{historyForItem && selectedItem ? ` for ${selectedItem.description}` : ""}. Posted movements are never edited; a correction posts a new movement.
+            </p>
+          </div>
+          <label className="inline-flex items-center gap-2 text-xs font-bold text-[#334155]">
+            <input type="checkbox" checked={historyForItem} disabled={!stockItemId} onChange={(e) => setHistoryForItem(e.target.checked)} />
+            Selected item only
+          </label>
+        </div>
+        {historyError ? (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">{historyError}</div>
+        ) : history.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-[#E2E8F0] px-4 py-6 text-center text-sm text-[#64748B]">No stock movements posted yet.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead>
+                <tr className="text-left text-[11px] uppercase tracking-wide text-[#64748B]">
+                  <th className="px-3 py-2">Date</th>
+                  <th className="px-3 py-2">Reference</th>
+                  <th className="px-3 py-2">Type</th>
+                  <th className="px-3 py-2">Item</th>
+                  <th className="px-3 py-2 text-right">Qty</th>
+                  <th className="px-3 py-2 text-right">Balance</th>
+                  <th className="px-3 py-2 text-right">Value</th>
+                  <th className="px-3 py-2">By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((row) => (
+                  <tr key={row.id} className="border-t border-[#F1F5F9]">
+                    <td className="whitespace-nowrap px-3 py-2 text-[#64748B]">{whenFmt(row.created_at)}</td>
+                    <td className="whitespace-nowrap px-3 py-2 font-semibold text-[#0B202B]">
+                      {row.transaction_number}
+                      {row.reference_label ? <div className="text-[11px] font-medium text-[#64748B]">{row.reference_label}</div> : null}
+                    </td>
+                    <td className="px-3 py-2">{row.transaction_type}</td>
+                    <td className="px-3 py-2">
+                      <div className="font-semibold text-[#0B202B]">{row.item_name}</div>
+                      <div className="text-[11px] text-[#64748B]">{row.item_code}</div>
+                    </td>
+                    <td className={`px-3 py-2 text-right font-bold ${row.signed_quantity < 0 ? "text-rose-700" : "text-emerald-700"}`}>
+                      {row.signed_quantity > 0 ? "+" : ""}
+                      {qtyFmt(row.signed_quantity)}
+                    </td>
+                    <td className="px-3 py-2 text-right">{qtyFmt(row.running_balance)}</td>
+                    <td className="px-3 py-2 text-right">{moneyFmt(row.total_cost)}</td>
+                    <td className="px-3 py-2 text-[#64748B]">{row.created_by || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </VyronPremiumPageShell>
   );
 }

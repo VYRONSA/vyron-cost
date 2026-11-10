@@ -244,14 +244,25 @@ export function computeSupplierScorecard(input: {
   };
 }
 
+/**
+ * Real columns only. The previous list named contact_phone, account_number and
+ * is_active, none of which exist on vyron_cost_suppliers; PostgREST rejected the
+ * whole select, the error was ignored, and every tenant saw 0 suppliers and a
+ * "Supplier not found" detail page. phone/active are aliased to the names the
+ * mappers below already read; there is no account-number column.
+ */
+const SUPPLIER_INTEL_COLUMNS =
+  "id, supplier_name, category, contact_email, invoice_email, contact_phone:phone, payment_terms, vat_number, is_active:active, risk_status, last_price_movement";
+
 async function loadSupplierRows(supabase: SupabaseClient, companyId: string) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("vyron_cost_suppliers")
     .select(
-      "id, supplier_name, category, contact_email, invoice_email, contact_phone, payment_terms, vat_number, account_number, is_active, risk_status, last_price_movement"
+      SUPPLIER_INTEL_COLUMNS
     )
     .eq("company_id", companyId)
     .order("supplier_name");
+  if (error) throw new Error(`Suppliers could not be loaded: ${error.message}`);
   return data || [];
 }
 
@@ -400,15 +411,16 @@ export async function getSupplierIntelligenceProfile(
   const supabase = getSupabaseAdmin();
   if (!supabase) throw new Error("Supabase admin required");
 
-  const { data: supplierRow } = await supabase
+  const { data: supplierRow, error: supplierError } = await supabase
     .from("vyron_cost_suppliers")
     .select(
-      "id, supplier_name, category, contact_email, invoice_email, contact_phone, payment_terms, vat_number, account_number, is_active, risk_status, last_price_movement"
+      SUPPLIER_INTEL_COLUMNS
     )
     .eq("id", supplierId)
     .eq("company_id", companyId)
     .maybeSingle();
 
+  if (supplierError) throw new Error(`Supplier could not be loaded: ${supplierError.message}`);
   if (!supplierRow) throw new Error("Supplier not found");
 
   const supplierName = String(supplierRow.supplier_name || "");
@@ -824,7 +836,7 @@ export async function getSupplierIntelligenceProfile(
       contactPhone: (supplierRow.contact_phone as string | null) || null,
       paymentTerms: (supplierRow.payment_terms as string | null) || "Net 30",
       vatNumber: (supplierRow.vat_number as string | null) || null,
-      accountNumber: (supplierRow.account_number as string | null) || null,
+      accountNumber: null, // vyron_cost_suppliers has no account-number column
       isActive: supplierRow.is_active !== false,
       riskStatus: supplierRow.risk_status as string | null,
     },
