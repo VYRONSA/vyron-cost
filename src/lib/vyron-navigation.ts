@@ -75,6 +75,7 @@ export const vyronNavSections: VyronNavSection[] = [
       { label: "Raw Materials", icon: Boxes, href: "/ingredients" },
       { label: "Finished Goods", icon: PackageSearch, href: "/products" },
       { label: "Dormant Products", icon: PackageSearch, href: "/products/dormant" },
+      { label: "Finished Goods Import", icon: Upload, href: "/products/import" },
       { label: "Recipes & BOMs", icon: ChefHat, href: "/recipes" },
       { label: "Import Centre", icon: Upload, href: "/admin/imports" },
     ],
@@ -119,6 +120,7 @@ export const vyronNavSections: VyronNavSection[] = [
       { label: "Production Runs (MFG)", icon: ClipboardList, href: "/manufacturing/runs" },
       { label: "Manufacturing History", icon: History, href: "/manufacturing/history" },
       { label: "Finished Goods", icon: PackageSearch, href: "/manufacturing/finished-goods" },
+      { label: "Finished Goods Dashboard", icon: PackageSearch, href: "/reports/finished-goods" },
     ],
   },
 

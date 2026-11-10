@@ -106,7 +106,8 @@
     "test:below-cost": "node scripts/test-below-cost.mjs",
     "test:dormant-products": "node scripts/test-dormant-products.mjs",
     "test:finished-goods-dashboard": "node scripts/test-finished-goods-dashboard.mjs",
-    "test:minimum-level-import": "node scripts/test-minimum-level-import.mjs"
+    "test:minimum-level-import": "node scripts/test-minimum-level-import.mjs",
+    "test:finished-goods-import": "node scripts/test-finished-goods-import.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.0",
