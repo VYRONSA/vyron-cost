@@ -44,8 +44,19 @@ export default function DormantProductsClient() {
   }, [days, query]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    // State is set in the promise callbacks, not synchronously in the effect.
+    let cancelled = false;
+    fetch(`/api/products/dormant?days=${days}&q=${encodeURIComponent(query)}`, { cache: "no-store" })
+      .then((res) => res.json())
+      .then((body) => {
+        if (cancelled) return;
+        if (!body.ok) setError(body.error || "Could not load products.");
+        else { setError(null); setRows(body.rows as Row[]); }
+      })
+      .catch(() => { if (!cancelled) setError("Could not load products."); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [days, query]);
 
   async function act(row: Row, action: "archive" | "delete") {
     const verb = action === "delete" ? "permanently delete" : "deactivate (archive)";

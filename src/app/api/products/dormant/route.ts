@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       metadata: { days, lastSaleDate: row.lastSaleDate, lastMovementAt: row.lastMovementAt },
     }).catch((err) => console.error("[dormant-products] audit write failed", err));
 
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json(result);
   } catch (error) {
     return workspaceAccessErrorResponse(error, "Dormant product action failed.");
   }

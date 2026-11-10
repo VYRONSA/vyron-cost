@@ -92,8 +92,20 @@ export default function StockMovementsPageClient() {
   }, [loadItems]);
 
   useEffect(() => {
-    void loadHistory(historyForItem && stockItemId ? stockItemId : undefined);
-  }, [loadHistory, historyForItem, stockItemId]);
+    // State is set in the promise callbacks, not synchronously in the effect.
+    const itemId = historyForItem && stockItemId ? stockItemId : undefined;
+    let cancelled = false;
+    fetch(`/api/inventory-transactions/ledger${itemId ? `?stockItemId=${encodeURIComponent(itemId)}` : ""}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (!data.ok) return setHistoryError(data.error || "Movement history could not be loaded.");
+        setHistoryError(null);
+        setHistory(((data.entries || []) as LedgerEntry[]).slice(0, HISTORY_LIMIT));
+      })
+      .catch(() => { if (!cancelled) setHistoryError("Movement history could not be loaded."); });
+    return () => { cancelled = true; };
+  }, [historyForItem, stockItemId]);
 
   const selectedItem = items.find((item) => item.id === stockItemId);
 
