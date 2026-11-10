@@ -103,7 +103,8 @@
     "test:store-sales-woocommerce": "node scripts/test-store-sales-woocommerce.mjs",
     "demo:order-engine": "node scripts/order-engine-demo.mjs",
     "test:period-performance": "node scripts/test-period-performance.mjs",
-    "test:below-cost": "node scripts/test-below-cost.mjs"
+    "test:below-cost": "node scripts/test-below-cost.mjs",
+    "test:dormant-products": "node scripts/test-dormant-products.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.0",
