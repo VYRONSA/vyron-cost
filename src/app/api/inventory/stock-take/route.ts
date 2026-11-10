@@ -4,7 +4,7 @@ import { sessionAuditActor } from "@/lib/vyron-audit-actor";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { StockTakeError, createStockTakeFromUpload, previewStockTake } from "@/lib/vyron-stock-take-import";
 import { stockTakeDateProblem } from "@/lib/vyron-stock-take-rules";
-import { UploadTableError, readUploadedTable } from "@/lib/vyron-upload-table";
+import { readStockTakeFile } from "@/lib/vyron-stock-take-file";
 import { requireWorkspacePermission, workspaceAccessErrorResponse } from "@/lib/vyron-workspace-access";
 
 export const runtime = "nodejs";
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * POST multipart { file (CSV/XLSX), action: "preview" | "create", countDate (YYYY-MM-DD, required) }
+ * POST multipart { file (Excel .xlsx or CSV — detected from content; header or headerless), action: "preview" | "create", countDate (YYYY-MM-DD, required) }
  *   countDate — the Stock Take Date: the day the physical count was performed (not the upload day).
  *   preview — read, validate and match the count against system stock as at that date; writes nothing.
  *   create  — record it as a stock count awaiting approval (the existing approve → post workflow
@@ -32,14 +32,14 @@ export async function POST(request: Request) {
     const countDate = String(form.get("countDate") || "").trim();
     const dateProblem = stockTakeDateProblem(countDate);
     if (dateProblem) return NextResponse.json({ ok: false, error: dateProblem }, { status: 400 });
-    const table = await readUploadedTable(new Uint8Array(await file.arrayBuffer()), file.name, file.type);
+    const table = await readStockTakeFile(new Uint8Array(await file.arrayBuffer()), file.name, file.type);
     if (action === "create") {
       const result = await createStockTakeFromUpload(supabase, companyId, { table, sha256: table.sha256, fileName: file.name, countDate }, sessionAuditActor(session));
-      return NextResponse.json({ ok: true, count: result.count, ...result.preview });
+      return NextResponse.json({ ok: true, count: result.count, file: table.file, ...result.preview });
     }
-    return NextResponse.json({ ok: true, ...(await previewStockTake(supabase, companyId, table, { stockTakeDate: countDate })) });
+    return NextResponse.json({ ok: true, file: table.file, ...(await previewStockTake(supabase, companyId, table, { stockTakeDate: countDate })) });
   } catch (error) {
-    if (error instanceof UploadTableError || error instanceof StockTakeError) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    if (error instanceof StockTakeError) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
     return workspaceAccessErrorResponse(error, "Stock take failed.");
   }
 }

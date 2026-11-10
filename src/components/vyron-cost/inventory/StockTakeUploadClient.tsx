@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Card, KpiCard, Notice, Pill, PrimaryButton, SecondaryButton, money, qty } from "@/components/vyron-order-engine/ui";
-import FileDropZone from "@/components/vyron-ui/FileDropZone";
+import StockTakeDropZone from "@/components/vyron-cost/inventory/StockTakeDropZone";
 import { STOCK_TAKE_TEMPLATE_COLUMNS, STOCK_TAKE_TEMPLATE_EXAMPLE, stockTakeDateProblem, todayInSouthAfrica } from "@/lib/vyron-stock-take-rules";
 
 type Line = {
@@ -25,6 +25,8 @@ type Summary = {
   rows: number;
   itemsCounted: number;
   itemsWithVariance: number;
+  zeroCounted?: number;
+  noVariance?: number;
   positiveAdjustments: number;
   negativeAdjustments: number;
   netQuantityVariance: number;
@@ -36,6 +38,7 @@ type Summary = {
   errors: number;
   stockTakeDate: string | null;
 };
+type FileInfo = { format: "xlsx" | "csv"; sheetName: string | null; ignoredSheets: string[]; layout: "header" | "headerless" };
 
 const STATUS: Record<Line["status"], { label: string; tone: "green" | "amber" | "rose" | "slate" }> = {
   MATCHED: { label: "Matched", tone: "green" },
@@ -50,7 +53,7 @@ const STATUS: Record<Line["status"], { label: string; tone: "green" | "amber" | 
 
 export default function StockTakeUploadClient() {
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<{ lines: Line[]; summary: Summary } | null>(null);
+  const [preview, setPreview] = useState<{ lines: Line[]; summary: Summary; file?: FileInfo } | null>(null);
   const [created, setCreated] = useState<{ id: string; count_number: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -74,7 +77,7 @@ export default function StockTakeUploadClient() {
         if (action === "preview") setPreview(null);
         throw new Error(data.error || "Stock take failed.");
       }
-      setPreview({ lines: data.lines, summary: data.summary });
+      setPreview({ lines: data.lines, summary: data.summary, file: data.file });
       if (action === "create") setCreated(data.count);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Stock take failed.");
@@ -185,24 +188,51 @@ export default function StockTakeUploadClient() {
             </p>
           </div>
         </div>
-        <FileDropZone
-          disabled={busy || !dateReady}
-          label={!dateReady ? "Choose the Stock Take Date first" : busy ? "Reading…" : file ? `${file.name} — drop another file to replace it` : "Drag & drop your stock take file here"}
+        <StockTakeDropZone
+          file={file}
+          busy={busy}
           onFile={(f) => {
             setFile(f);
             setCreated(null);
-            void send(f, "preview");
+            setPreview(null);
+            setError(null);
+            if (dateReady) void send(f, "preview");
+          }}
+          onRemove={() => {
+            setFile(null);
+            setPreview(null);
+            setCreated(null);
+            setError(null);
           }}
         />
+        {file && !dateReady && !busy ? (
+          <p className="mt-3 text-sm font-black text-amber-700" data-testid="stock-take-needs-date">
+            File ready. Choose the Stock Take Date above and VOLORA will read and validate it.
+          </p>
+        ) : null}
       </Card>
 
       {preview && s ? (
         <>
+          {preview.file ? (
+            <p className="text-xs font-semibold text-slate-500" data-testid="stock-take-file-info">
+              {file?.name ? `${file.name}: ` : ""}
+              {preview.file.format === "xlsx" ? `Excel workbook, sheet "${preview.file.sheetName}"` : "CSV file"} —{" "}
+              {preview.file.layout === "header" ? "header row recognised" : "no header row; read as Item Code, Description, Unit, Location, Counted Quantity"}
+              {preview.file.ignoredSheets.length ? `; not read: ${preview.file.ignoredSheets.map((n) => `"${n}"`).join(", ")}` : ""}. Stock Take Date {s.stockTakeDate}.
+            </p>
+          ) : null}
+          <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <KpiCard label="Rows read" value={String(s.rows)} />
+            <KpiCard label="Matched items" value={String(s.itemsCounted)} />
+            <KpiCard label="Counted as 0" value={String(s.zeroCounted ?? 0)} />
+            <KpiCard label="No variance" value={String(s.noVariance ?? 0)} />
+          </section>
           <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
             <KpiCard label="Items counted" value={String(s.itemsCounted)} />
             <KpiCard label="With variance" value={String(s.itemsWithVariance)} />
-            <KpiCard label="Positive adj." value={String(s.positiveAdjustments)} />
-            <KpiCard label="Negative adj." value={String(s.negativeAdjustments)} />
+            <KpiCard label="Increasing stock" value={String(s.positiveAdjustments)} />
+            <KpiCard label="Decreasing stock" value={String(s.negativeAdjustments)} />
             <KpiCard label="Net qty variance" value={qty(s.netQuantityVariance)} />
             <KpiCard label="Positive value" value={`R ${money(s.positiveValueVariance)}`} />
             <KpiCard label="Negative value" value={`R ${money(s.negativeValueVariance)}`} />
@@ -210,12 +240,12 @@ export default function StockTakeUploadClient() {
           </section>
           {s.errors ? (
             <Notice tone="error">
-              {s.errors} row(s) have errors (see the rows marked in red). Fix them in the file and upload it again — the stock take cannot proceed until every row is valid. Nothing has been recorded.
+              {s.errors} row(s) have errors (see the rows marked in red). Fix them in the file and upload it again — the stock take cannot proceed until every row is valid. Nothing has been recorded and no stock has changed.
             </Notice>
           ) : (
             <Notice tone="success">
               The file is valid: {s.itemsCounted} item(s) counted as at {s.stockTakeDate}
-              {s.notCounted ? `; ${s.notCounted} row(s) left blank are not counted and stay unchanged` : ""}.
+              {s.notCounted ? `; ${s.notCounted} row(s) left blank are not counted and stay unchanged` : ""}. No stock has changed — confirm to send it for supervisor approval.
             </Notice>
           )}
           <Card

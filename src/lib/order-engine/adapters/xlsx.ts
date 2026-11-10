@@ -22,7 +22,7 @@ export function isXlsxAttachment(file: { fileName?: string | null; contentType?:
   return type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || name.endsWith(".xlsx");
 }
 
-function cellText(value: ExcelJS.CellValue): string {
+export function cellText(value: ExcelJS.CellValue): string {
   if (value === null || value === undefined) return "";
   if (value instanceof Date) return value.toISOString().slice(0, 10);
   if (typeof value === "number") return Number.isInteger(value) ? String(value) : String(value);

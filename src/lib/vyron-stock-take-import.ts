@@ -69,6 +69,10 @@ export type StockTakeSummary = {
   rows: number;
   itemsCounted: number;
   itemsWithVariance: number;
+  /** Matched items counted as 0. */
+  zeroCounted: number;
+  /** Matched items whose count equals system stock. */
+  noVariance: number;
   positiveAdjustments: number;
   negativeAdjustments: number;
   netQuantityVariance: number;
@@ -84,7 +88,7 @@ export type StockTakeSummary = {
 /** The upload reader reads at most this many rows from an Excel sheet. */
 export const STOCK_TAKE_TEMPLATE_MAX_ITEMS = 2000;
 
-const COLUMNS = {
+export const STOCK_TAKE_COLUMNS = {
   sku: ["sku", "item code", "product code", "code", "stock code", "barcode", "item sku", "product sku"],
   description: ["description", "product", "product name", "item", "item name", "name"],
   counted: ["counted", "counted qty", "counted quantity", "count", "physical", "physical count", "quantity", "qty", "stock count"],
@@ -147,7 +151,7 @@ export async function previewStockTake(
   table: CsvTable,
   options: { stockTakeDate?: string | null } = {}
 ): Promise<{ lines: StockTakeLine[]; summary: StockTakeSummary }> {
-  const col = Object.fromEntries(Object.entries(COLUMNS).map(([k, names]) => [k, pickColumn(table.header, names)])) as Record<keyof typeof COLUMNS, string | null>;
+  const col = Object.fromEntries(Object.entries(STOCK_TAKE_COLUMNS).map(([k, names]) => [k, pickColumn(table.header, names)])) as Record<keyof typeof STOCK_TAKE_COLUMNS, string | null>;
   if (!col.counted) throw new StockTakeError("The file has no counted quantity column (e.g. 'Counted Quantity'). Use the stock take template.");
   if (!col.sku) throw new StockTakeError("The file has no item code column (e.g. 'Item Code' or 'SKU'). Use the stock take template.");
   const stockTakeDate = options.stockTakeDate || null;
@@ -166,7 +170,7 @@ export async function previewStockTake(
   const lastColumn = table.header[table.header.length - 1];
   const malformed = new Set((table.malformedRows || []).filter((n) => String(table.records.find((r) => r.row === n)?.values[lastColumn] ?? "").trim() !== ""));
   for (const record of table.records) {
-    const v = (k: keyof typeof COLUMNS) => (col[k] ? String(record.values[col[k]!] ?? "").trim() : "");
+    const v = (k: keyof typeof STOCK_TAKE_COLUMNS) => (col[k] ? String(record.values[col[k]!] ?? "").trim() : "");
     const sku = v("sku") || null;
     const description = v("description") || null;
     const location = v("location") || null;
@@ -232,6 +236,8 @@ export async function previewStockTake(
       rows: lines.length,
       itemsCounted: counted.length,
       itemsWithVariance: withVar.length,
+      zeroCounted: counted.filter((l) => l.countedQty === 0).length,
+      noVariance: counted.length - withVar.length,
       positiveAdjustments: withVar.filter((l) => (l.varianceQty || 0) > 0).length,
       negativeAdjustments: withVar.filter((l) => (l.varianceQty || 0) < 0).length,
       netQuantityVariance: r6(counted.reduce((t, l) => t + (l.varianceQty || 0), 0)),

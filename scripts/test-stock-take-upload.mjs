@@ -44,6 +44,7 @@ const { createFakeSupabase } = await import("./support/document-email-test-stubs
 const rules = await importFromRoot("src/lib/vyron-stock-take-rules.ts");
 const stockTake = await importFromRoot("src/lib/vyron-stock-take-import.ts");
 const { readUploadedTable } = await importFromRoot("src/lib/vyron-upload-table.ts");
+const { readStockTakeFile } = await importFromRoot("src/lib/vyron-stock-take-file.ts");
 const { approveStockCount, postStockCount, updateStockCountLine } = await importFromRoot("src/lib/vyron-inventory.ts");
 
 const CO = "aaaaaaaa-0000-4000-8000-000000000001";
@@ -331,6 +332,130 @@ section("6. Variance % stays within the production column (numeric(8,4))");
   check("no system stock: counted > 0 → 100, nothing either way → 0 (as before)", exportPct({ system_qty: 0, counted_qty: 4 }) === "100" && exportPct({ system_qty: 0, counted_qty: 0 }) === "0");
   const legacy = (system, counted) => (system > 0 ? ((counted - system) / system) * 100 : counted > 0 ? 100 : 0);
   check("the shared calculation equals the screen's previous inline formula", [[0.5, 75], [100, 90], [20, 21], [3, 1], [0, 4], [0, 0], [952.99152, 20000]].every(([s, c]) => rules.countLineVariancePct(s, c) === legacy(s, c)));
+}
+
+// ---------------------------------------------------------------------------
+section("8. Real-world layouts: headerless workbook, header workbook, CSV variants, refusals");
+{
+  const db7 = createFakeSupabase(seed(), { honourOrder: true });
+  const rows7 = (t) => db7.tables[t] || [];
+  const xlsx = async (build) => {
+    const wb = new ExcelJS.Workbook();
+    build(wb);
+    return new Uint8Array(await wb.xlsx.writeBuffer());
+  };
+  // File A shape: sheet named after the file, NO header, five columns, a note in column 6 on one
+  // row, an Instructions sheet second, a blank quantity.
+  const fileA = await xlsx((wb) => {
+    const ws = wb.addWorksheet("15 October 2");
+    ws.addRow(["CHK-BR", "Chicken Breast", "kg", "COLD ROOM", 112]);
+    ws.addRow(["BOX-01", "Meal Boxes", "each", "PACKAGING", 0, "SHEETS (R7,78 PER SHEET)"]);
+    ws.addRow(["RICE", "Basmati Rice", "kg", "DRYSTORE", 48.5]);
+    ws.addRow(["FG-TGC", "Thai Green Curry", "each", "DELETED"]);
+    const help = wb.addWorksheet("Instructions");
+    help.addRow(["Column", "Required", "What to enter"]);
+    help.addRow(["Item Code", "Yes", "VOLORA stock item code"]);
+    help.addRow(["Counted Quantity", "Yes", "999"]);
+  });
+  const a = await readStockTakeFile(fileA, "15 October 2.csv.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  check("A: '.csv.xlsx' is read as an Excel workbook (content, not name)", a.file.format === "xlsx" && a.file.sheetName === "15 October 2");
+  check("A: the Instructions sheet is never read as count data", a.file.ignoredSheets.join("|") === "Instructions" && !a.records.some((r) => /Column|Item Code/.test(r.values["Item Code"])));
+  check("A: headerless layout recognised; the first row is stock data (CHK-BR on Excel row 1)", a.file.layout === "headerless" && a.records.length === 4 && a.records[0].row === 1 && a.records[0].values["Item Code"] === "CHK-BR");
+  check("A: column 5 is the counted quantity; the column-6 note is ignored, not an invalid row", a.records[1].values["Counted Quantity"] === "0" && a.malformedRows.length === 0);
+  const pa = await stockTake.previewStockTake(db7, CO, a, { stockTakeDate: "2026-10-03" });
+  const ra = (code) => pa.lines.find((l) => l.sku === code);
+  check("A: 3 matched, zero kept as a count (Boxes 120 → 0), blank quantity = not counted, no errors", pa.summary.itemsCounted === 3 && pa.summary.zeroCounted === 1 && ra("BOX-01").varianceQty === -120 && ra("FG-TGC").status === "NOT_COUNTED" && pa.summary.errors === 0, JSON.stringify(pa.summary));
+  check("A: summary splits increasing / decreasing / no variance", pa.summary.positiveAdjustments === 1 && pa.summary.negativeAdjustments === 2 && pa.summary.noVariance === 0 && ra("CHK-BR").varianceQty === 2 && ra("RICE").varianceQty === -1.5);
+
+  // File B shape: header row (capitalisation / spacing differ, columns reordered), trailing blank
+  // formatted rows and columns, a note in an unheaded column.
+  const fileB = await xlsx((wb) => {
+    const ws = wb.addWorksheet("15 OCT 2026");
+    ws.addRow([" ITEM CODE ", "description", "Unit", "counted quantity", "Location"]);
+    ws.addRow(["CHK-BR", "Chicken Breast", "kg", 110, "COLD ROOM"]);
+    ws.addRow(["RICE", "Basmati Rice", "kg", 50, "DRYSTORE", "", "14c per sheet"]);
+    ws.getCell("A10").numFmt = "@";
+    ws.getCell("H2").numFmt = "0.00";
+  });
+  const b = await readStockTakeFile(fileB, "Stock Take 15 Oct 2026.xlsx", "");
+  check("B: header recognised despite case, spacing and column order; data starts on Excel row 2", b.file.layout === "header" && b.records.length === 2 && b.records[0].row === 2);
+  const pb = await stockTake.previewStockTake(db7, CO, b, { stockTakeDate: "2026-10-03" });
+  check("B: quantities come from the named column, not position (Chicken 110, Rice 50); trailing blanks ignored", pb.lines.length === 2 && pb.lines.every((l) => l.status === "MATCHED") && pb.lines.find((l) => l.sku === "CHK-BR").countedQty === 110 && pb.summary.noVariance === 2, JSON.stringify(pb.summary));
+
+  // Validation on a headerless workbook — every problem reported with its Excel row number.
+  const bad = await readStockTakeFile(
+    await xlsx((wb) => {
+      const ws = wb.addWorksheet("Count");
+      ws.addRow(["CHK-BR", "Chicken", "kg", "", 100]);
+      ws.addRow(["NOPE-9", "Unknown", "kg", "", 1]);
+      ws.addRow(["RICE", "Rice", "kg", "", "lots"]);
+      ws.addRow(["RICE", "Rice", "kg", "", -3]);
+      ws.addRow(["", "Echt Hot Sauce", "unit", "KITCHEN", 24]);
+      ws.addRow([]);
+      ws.addRow(["CHK-BR", "Chicken again", "kg", "", 101]);
+    }),
+    "count.xlsx",
+    ""
+  );
+  const pbad = await stockTake.previewStockTake(db7, CO, bad, { stockTakeDate: "2026-10-03" });
+  const at = (n) => pbad.lines.find((l) => l.row === n);
+  check("validation: unmatched (row 2), invalid quantity (rows 3, 4), missing item code (row 5), duplicate (row 7, naming row 1)", at(2)?.status === "UNMATCHED" && at(3)?.status === "INVALID_QUANTITY" && at(4)?.status === "INVALID_QUANTITY" && at(5)?.status === "MISSING_IDENTIFIER" && at(7)?.status === "DUPLICATE_IN_FILE" && /row 1/.test(at(7)?.note || ""), JSON.stringify(pbad.lines.map((l) => [l.row, l.status])));
+  check("validation: blank row 6 is skipped but numbering stays true to Excel", !at(6) && pbad.summary.errors === 5);
+  const blocked = await rejects(stockTake.createStockTakeFromUpload(db7, CO, { table: bad, sha256: bad.sha256, fileName: "count.xlsx", countDate: "2026-10-03" }, ACTOR));
+  check("validation: a file with any error is refused whole — nothing written", /5 row\(s\)/.test(blocked?.message || "") && rows7("vyron_cost_stock_counts").length === 0 && rows7("vyron_cost_stock_count_lines").length === 0);
+
+  // CSV variants.
+  const csvQuoted = await readStockTakeFile(enc('﻿Item Code,Description,Unit,Location,Counted Quantity,,\r\nCHK-BR,"Chicken, breast ""A""",kg,,115,,\r\n,,,,,,\r\n\r\n'), "count.csv", "text/csv");
+  check("CSV: BOM, quoted comma/quote description, empty trailing columns and rows", csvQuoted.file.format === "csv" && csvQuoted.records.length === 1 && csvQuoted.records[0].values.Description === 'Chicken, breast "A"' && csvQuoted.records[0].values["Counted Quantity"] === "115" && csvQuoted.malformedRows.length === 0);
+  const cp1252 = new Uint8Array([...enc("CHK-BR,Cr"), 0xe8, ...enc("me fra"), 0xee, ...enc("che,l,,7\n")]);
+  const csvAnsi = await readStockTakeFile(cp1252, "excel-export.csv", "");
+  check("CSV: Excel 'CSV' (Windows-1252) headerless file reads, first row kept", csvAnsi.encoding === "windows-1252" && csvAnsi.file.layout === "headerless" && csvAnsi.records[0].values.Description === "Crème fraîche" && csvAnsi.records[0].values["Counted Quantity"] === "7");
+  const spilled = await readStockTakeFile(enc("Item Code,Counted Quantity\nCHK-BR,1,5\n"), "count.csv", "text/csv");
+  check("CSV: an unquoted 1,5 is still an invalid row, never read as 1", (await stockTake.previewStockTake(db7, CO, spilled, { stockTakeDate: "2026-10-03" })).lines[0].status === "INVALID_ROW");
+  check("xlsx bytes uploaded with a .csv name are still read as Excel", (await readStockTakeFile(fileA, "renamed.csv", "text/csv")).file.format === "xlsx");
+
+  // Refusals.
+  const msg = async (bytes, name) => (await rejects(readStockTakeFile(bytes, name, "")))?.message || "";
+  check("invalid extension (.pdf / .docx) is refused", /\.xlsx\) or a CSV/.test(await msg(enc("%PDF-1.4 ..."), "count.pdf")) && /\.xlsx\) or a CSV/.test(await msg(enc("hello"), "count.docx")));
+  check("corrupt Excel (not a workbook) is refused clearly", /not a valid workbook/.test(await msg(enc("this is not excel"), "count.xlsx")));
+  check("damaged Excel (truncated zip) is refused clearly", /could not be read/.test(await msg(fileA.slice(0, 400), "count.xlsx")));
+  check("legacy .xls is refused with Save As guidance", /older Excel \(\.xls\)/.test(await msg(new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1, 0, 0]), "count.xls")));
+  check("an unrecognised header row is refused rather than read as data", /not the stock take header/.test(await msg(enc("Artikel,Name,Einheit,Ort,Menge\nCHK-BR,x,kg,,1\n"), "count.csv")));
+  check("an Instructions-only workbook is refused", /no stock count sheet/.test(await msg(await xlsx((wb) => wb.addWorksheet("Instructions").addRow(["Column"])), "help.xlsx")));
+  check("an empty file is refused", /empty/.test(await msg(new Uint8Array(), "count.csv")));
+
+  // Company isolation: company B sees none of company A's codes.
+  const pB = await stockTake.previewStockTake(db7, CO_B, a, { stockTakeDate: "2026-10-03" });
+  check("company isolation: company A's file previewed for company B matches nothing", pB.summary.itemsCounted === 0 && pB.summary.unmatched === 3);
+
+  // Preview writes nothing; confirm records a count but posts nothing; approve → post adjusts.
+  const ledgerBefore = rows7("vyron_cost_stock_ledger").length;
+  const qtys = () => JSON.stringify(rows7("vyron_cost_stock_items").map((i) => [i.id, i.qty_on_hand]));
+  const qtyBefore = qtys();
+  check("preview writes nothing (no count, no ledger, stock unchanged)", rows7("vyron_cost_stock_counts").length === 0 && rows7("vyron_cost_stock_ledger").length === ledgerBefore && rows7("vyron_inventory_audit_log").length === 0);
+  const { count } = await stockTake.createStockTakeFromUpload(db7, CO, { table: a, sha256: a.sha256, fileName: "15 October 2.csv.xlsx", countDate: "2026-10-03" }, ACTOR);
+  check("confirm creates a Submitted count only — no movement, stock unchanged before approval", count.status === "Submitted" && rows7("vyron_cost_stock_ledger").length === ledgerBefore && qtys() === qtyBefore);
+  check("duplicate upload of the same workbook is refused", /already loaded/.test((await rejects(stockTake.createStockTakeFromUpload(db7, CO, { table: a, sha256: a.sha256, fileName: "copy.xlsx", countDate: "2026-10-03" }, ACTOR)))?.message || ""));
+  check("posting before supervisor approval is refused", /approved before posting/.test((await rejects(postStockCount(db7, CO, count.id, "QA Supervisor")))?.message || ""));
+  await approveStockCount(db7, CO, count.id, "QA Supervisor");
+  await postStockCount(db7, CO, count.id, "QA Supervisor");
+  const moved = rows7("vyron_cost_stock_ledger").filter((l) => l.reference_id === count.id);
+  const qtyOf = (id) => rows7("vyron_cost_stock_items").find((i) => i.id === id).qty_on_hand;
+  check("after approval: 3 variance movements through the existing engine, dated 23:59:59.999 SAST", moved.length === 3 && moved.every((l) => l.movement_type === "Stock Count Variance" && l.movement_date === "2026-10-03T21:59:59.999Z"), JSON.stringify(moved.map((l) => [l.stock_item_id, l.movement_date])));
+  check("after approval: Chicken 112, Boxes 0, Rice 48.5; Thai Green Curry (not counted) untouched; company B untouched", qtyOf("si-chk") === 112 && qtyOf("si-box") === 0 && qtyOf("si-rice") === 48.5 && qtyOf("si-curry") === 40 && qtyOf("si-b-curry") === 400);
+}
+
+// ---------------------------------------------------------------------------
+section("9. The route and screen use the new reader and the visible drop zone");
+{
+  const fs = await import("node:fs");
+  const route = fs.readFileSync(path.join(ROOT, "src/app/api/inventory/stock-take/route.ts"), "utf8");
+  const client = fs.readFileSync(path.join(ROOT, "src/components/vyron-cost/inventory/StockTakeUploadClient.tsx"), "utf8");
+  const zone = fs.readFileSync(path.join(ROOT, "src/components/vyron-cost/inventory/StockTakeDropZone.tsx"), "utf8");
+  check("the stock take route reads files with readStockTakeFile", route.includes("readStockTakeFile(") && !route.includes("readUploadedTable("));
+  check("the screen uses the stock take drop zone (enabled before a date is chosen)", client.includes("<StockTakeDropZone") && !client.includes("FileDropZone"));
+  check("the drop zone says drag and drop, OR, Browse Files, the formats and the instruction", ["Drag and drop your stock-take file here", ">or<", "Browse Files", "Supported formats: .xlsx, .xls, .csv", "You can drag and drop your completed stock-take file here."].every((t) => zone.includes(t)));
+  check("the drop zone handles drop and a real file input, and offers Replace / Remove", zone.includes("onDrop=") && zone.includes('type="file"') && zone.includes("Replace") && zone.includes("Remove"));
 }
 
 console.log(`\n${checks - failures}/${checks} checks passed`);
