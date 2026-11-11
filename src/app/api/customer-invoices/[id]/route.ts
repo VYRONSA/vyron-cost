@@ -1,6 +1,7 @@
 import {
   InvoiceNotEditableError,
   InvoiceNotFoundError,
+  InvalidBoxQtyError,
   PriceUnavailableError,
   setCustomerInvoiceBranch,
   updateCustomerInvoice,
@@ -158,6 +159,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   } catch (error) {
     if (error instanceof InvoiceNotFoundError) {
       return NextResponse.json({ ok: false, error: error.message }, { status: 404 });
+    }
+    if (error instanceof InvalidBoxQtyError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
     }
     if (error instanceof PriceUnavailableError) {
       return NextResponse.json({ ok: false, code: "NO_PRICE", error: error.message, productIds: error.productIds }, { status: 400 });

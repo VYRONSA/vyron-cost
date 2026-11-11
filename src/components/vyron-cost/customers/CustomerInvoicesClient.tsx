@@ -34,6 +34,8 @@ type InvoiceLine = {
   taxTreatment: TaxTreatment;
   /** Where the pre-filled price came from (the server re-applies the price list on save). */
   priceSource?: string;
+  /** Boxes, entered by the user; null when not given. Never derived from Unit Qty. */
+  boxQty?: number | null;
 };
 
 const PRICE_SOURCE_LABEL: Record<string, string> = {
@@ -132,11 +134,23 @@ function defaultLine(): InvoiceLine {
     id: makeId("line"),
     description: "",
     qty: 1,
+    boxQty: null,
     unitPrice: 0,
     unitCost: 0,
     vatRate: DEFAULT_VAT_RATE,
     taxTreatment: "Standard",
   };
+}
+
+/** A stored box_qty as the screen holds it: null when none was entered. */
+function storedBoxQty(value: unknown): number | null {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
+  const qty = Number(value);
+  return Number.isFinite(qty) ? qty : null;
+}
+
+function invalidBoxQty(value: number | null | undefined) {
+  return value !== null && value !== undefined && !(Number.isFinite(value) && value >= 0);
 }
 
 function parseTermDays(terms: string) {
@@ -216,6 +230,7 @@ function mapApiInvoiceLine(row: Record<string, unknown>): InvoiceLine {
     productId: row.product_id ? String(row.product_id) : undefined,
     description: String(row.product_name || ""),
     qty: Number(row.quantity || 0),
+    boxQty: storedBoxQty(row.box_qty),
     unitPrice: Number(row.selling_price || 0),
     unitCost: Number(row.cost_per_unit || 0),
     // A line that predates the VAT engine has no stored rate; show the workspace
@@ -806,6 +821,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
         productId: line.product_id ? String(line.product_id) : null,
         description: String(line.product_name || ""),
         qty: Number(line.quantity || 0),
+        boxQty: storedBoxQty(line.box_qty),
         unitPrice: Number(line.selling_price || 0),
         unitCost: Number(line.cost_per_unit || 0),
         taxTreatment: String(line.tax_treatment || "Standard"),
@@ -835,6 +851,12 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
       return;
     }
 
+    const badBoxLine = validLines.find((line) => invalidBoxQty(line.boxQty));
+    if (badBoxLine) {
+      alert(`Box Qty on "${badBoxLine.description.trim()}" must be a number of 0 or more, or left empty.`);
+      return;
+    }
+
     if (!demoMode) {
       // The same payload either way; an edit addresses an existing invoice.
       const res = await fetch(
@@ -853,6 +875,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
             productId: line.productId || null,
             productName: line.description.trim(),
             quantity: line.qty,
+            boxQty: line.boxQty ?? null,
             sellingPrice: line.unitPrice,
             // Cost is captured server-side from the authoritative product cost basis;
             // the browser has no genuine cost source, so it sends none.
@@ -1410,7 +1433,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
 
                 return (
                   <div key={line.id} className="rounded-[24px] border border-blue-100 bg-white p-4">
-                    <div className="grid gap-3 lg:grid-cols-[70px_minmax(220px,1fr)_90px_125px_125px_90px] lg:items-start">
+                    <div className="grid gap-3 lg:grid-cols-[70px_minmax(220px,1fr)_90px_90px_125px_125px_90px] lg:items-start">
                       <div className="rounded-2xl bg-blue-100 px-3 py-3 text-center text-sm font-black text-blue-800">Line {index + 1}</div>
 
                       <div className="relative">
@@ -1468,7 +1491,8 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                         )}
                       </div>
 
-                      <NumberInput label="Qty" value={line.qty} onChange={(value) => updateLine(line.id, { qty: value })} />
+                      <NumberInput label="Unit Qty" value={line.qty} onChange={(value) => updateLine(line.id, { qty: value })} />
+                      <BoxQtyInput value={line.boxQty ?? null} onChange={(value) => updateLine(line.id, { boxQty: value })} />
                       <div className="grid gap-1">
                         <NumberInput label="Unit Price Excl" value={line.unitPrice} onChange={(value) => updateLine(line.id, { unitPrice: value })} />
                         {line.priceSource ? (
@@ -1797,7 +1821,8 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
               <thead className="bg-blue-50 text-xs font-black uppercase tracking-[0.12em] text-blue-800">
                 <tr>
                   <th className="whitespace-nowrap px-4 py-3">Description</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right">Qty</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right">Unit Qty</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right">Box Qty</th>
                   <th className="whitespace-nowrap px-4 py-3 text-right">Unit Excl</th>
                   <th className="whitespace-nowrap px-4 py-3 text-right">VAT</th>
                   <th className="whitespace-nowrap px-4 py-3 text-right">Total</th>
@@ -1810,6 +1835,7 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                     <tr key={line.id} className="border-t border-blue-50">
                       <td className="px-4 py-3 font-bold">{line.description}</td>
                       <td className="px-4 py-3 text-right font-bold">{line.qty}</td>
+                      <td className="px-4 py-3 text-right font-bold">{line.boxQty ?? "-"}</td>
                       <td className="px-4 py-3 text-right font-bold">{money(line.unitPrice)}</td>
                       <td className="px-4 py-3 text-right font-bold">{money(t.vat)}</td>
                       <td className="px-4 py-3 text-right font-black">{money(t.total)}</td>
@@ -1872,6 +1898,36 @@ function NumberInput({ label, value, onChange }: { label: string; value: number;
         onChange={(event) => onChange(Number(event.target.value))}
         className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-blue-400"
       />
+    </label>
+  );
+}
+
+/**
+ * Box Qty is typed by the user and kept apart from Unit Qty. Empty means not given (the invoice
+ * shows "-"); decimals are allowed; a negative or non-numeric entry is flagged and refused on save.
+ */
+function BoxQtyInput({ value, onChange }: { value: number | null; onChange: (value: number | null) => void }) {
+  const [text, setText] = useState(value === null || value === undefined ? "" : String(value));
+  const invalid = invalidBoxQty(value);
+  return (
+    <label>
+      <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Box Qty</span>
+      <input
+        type="text"
+        inputMode="decimal"
+        placeholder="-"
+        aria-label="Box Qty"
+        aria-invalid={invalid}
+        value={text}
+        onChange={(event) => {
+          const next = event.target.value;
+          setText(next);
+          const trimmed = next.trim();
+          onChange(trimmed ? Number(trimmed) : null);
+        }}
+        className={`mt-2 w-full rounded-2xl border bg-white px-4 py-3 text-sm font-bold outline-none ${invalid ? "border-rose-400 focus:border-rose-500" : "border-blue-100 focus:border-blue-400"}`}
+      />
+      {invalid ? <span className="mt-1 block text-[11px] font-bold text-rose-700">0 or more</span> : null}
     </label>
   );
 }

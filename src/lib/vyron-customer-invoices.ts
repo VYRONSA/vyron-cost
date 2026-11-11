@@ -53,7 +53,54 @@ export type CustomerInvoiceLineInput = {
   /** Where the selling price came from (set by the server, never trusted from a browser). */
   priceSource?: string | null;
   priceListId?: string | null;
+  /**
+   * Boxes on this line, as entered by the user. Display only (the Box Qty column on the tax
+   * invoice): it never feeds quantity, price, VAT or totals, and it is never derived from the
+   * unit quantity or a pack size. Empty means not given.
+   */
+  boxQty?: number | string | null;
 };
+
+/** A Box Qty that is not a non-negative number. */
+export class InvalidBoxQtyError extends Error {
+  constructor(lineName: string) {
+    super(`Box Qty on "${lineName || "invoice line"}" must be a number of 0 or more, or left empty.`);
+    this.name = "InvalidBoxQtyError";
+  }
+}
+
+/** Box Qty as stored: null when not given, otherwise a non-negative number to 4 decimals. */
+export function normaliseBoxQty(value: unknown, lineName = ""): number | null {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  if (!text) return null;
+  const qty = Number(text);
+  if (!Number.isFinite(qty) || qty < 0) throw new InvalidBoxQtyError(lineName);
+  return Math.round(qty * 10000) / 10000;
+}
+
+/**
+ * The box_qty column is additive (20261111090000). It is written only when a line carries a Box
+ * Qty, so invoices from every other path keep saving exactly as before.
+ */
+function boxQtyColumns(lines: CustomerInvoiceLineInput[]): Array<{ box_qty?: number | null }> {
+  const values = lines.map((line) => normaliseBoxQty(line.boxQty, line.productName));
+  const anyGiven = values.some((value) => value !== null);
+  return values.map((value) => (anyGiven ? { box_qty: value } : {}));
+}
+
+function boxQtyStorageError(message: string) {
+  return /box_qty/i.test(message)
+    ? new Error("Box Qty cannot be saved yet: the invoice line Box Qty column has not been added to the database.")
+    : new Error(message);
+}
+
+/** Refuses before anything is written when a Box Qty is given but cannot be stored. */
+async function assertBoxQtyStorable(supabase: SupabaseClient, boxColumns: Array<{ box_qty?: number | null }>) {
+  if (!boxColumns.some((column) => "box_qty" in column)) return;
+  const { error } = await supabase.from("vyron_customer_invoice_lines").select("box_qty").limit(1);
+  if (error) throw boxQtyStorageError(error.message);
+}
 
 /** No selling price can be determined for a line: the invoice is refused until pricing is resolved. */
 export class PriceUnavailableError extends Error {
@@ -122,6 +169,8 @@ export type CustomerInvoiceLineRow = {
   taxable_amount: number | null;
   tax_amount: number | null;
   line_total_incl_tax: number | null;
+  /** User-entered boxes; NULL (or absent before the column exists) when not given. */
+  box_qty?: number | string | null;
 };
 
 function isMissingTableError(error: unknown) {
@@ -332,6 +381,9 @@ export async function createCustomerInvoice(
     creditedInvoiceId?: string | null;
   }
 ) {
+  // Box Qty is validated before anything is written.
+  const boxColumns = boxQtyColumns(params.lines);
+  await assertBoxQtyStorable(supabase, boxColumns);
   let customerName = params.customerName.trim();
   if (params.customerId) {
     const { data: customer, error: customerError } = await supabase
@@ -432,13 +484,16 @@ export async function createCustomerInvoice(
     discount_percent: Number(line.discountPercent || 0),
     price_source: line.priceSource || null,
     price_list_id: line.priceListId || null,
+    ...boxColumns[index],
     ...taxLineToColumns(tax.lines[index]),
   }));
   const { error: linesError } = await supabase.from("vyron_customer_invoice_lines").insert(lineRows);
   if (linesError) {
     // An automated caller retries; a header without its lines must not be left behind.
-    if (params.source) await supabase.from("vyron_customer_invoices").delete().eq("id", invoice.id).eq("company_id", companyId);
-    throw new Error(linesError.message);
+    // Nor may one when the lines failed only because Box Qty cannot be stored yet.
+    if (params.source || /box_qty/i.test(linesError.message))
+      await supabase.from("vyron_customer_invoices").delete().eq("id", invoice.id).eq("company_id", companyId);
+    throw boxQtyStorageError(linesError.message);
   }
 
   return invoice as CustomerInvoiceRow;
@@ -498,6 +553,9 @@ export async function updateCustomerInvoice(
   if (loaded.invoice.status !== "Draft") {
     throw new InvoiceNotEditableError(String(loaded.invoice.status));
   }
+  // Box Qty is validated, and its storage confirmed, before the lines are replaced.
+  const boxColumns = boxQtyColumns(params.lines);
+  await assertBoxQtyStorable(supabase, boxColumns);
 
   const customerId = params.customerId !== undefined ? params.customerId : loaded.invoice.customer_id;
   let customerName = String(params.customerName ?? loaded.invoice.customer_name ?? "").trim();
@@ -591,11 +649,12 @@ export async function updateCustomerInvoice(
     discount_percent: Number(line.discountPercent || 0),
     price_source: line.priceSource || null,
     price_list_id: line.priceListId || null,
+    ...boxColumns[index],
     ...taxLineToColumns(tax.lines[index]),
   }));
   if (lineRows.length) {
     const { error: linesError } = await supabase.from("vyron_customer_invoice_lines").insert(lineRows);
-    if (linesError) throw new Error(linesError.message);
+    if (linesError) throw boxQtyStorageError(linesError.message);
   }
 
   const after = await getCustomerInvoice(supabase, invoiceId, companyId);

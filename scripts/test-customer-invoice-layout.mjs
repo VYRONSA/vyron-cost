@@ -162,13 +162,13 @@ console.log("\n5. The customer invoice adapter selects the layout and changes no
   const src = fs.readFileSync(path.join(ROOT, "src/lib/platform/documents/adapters/customer-invoice.ts"), "utf8");
   check("adapter sets layout: \"tax-invoice\"", src.includes('layout: "tax-invoice"'));
   check("adapter columns: Unit Qty, Box Qty, Taxable Amount, VAT %, VAT Amount", src.includes('label: "Unit Qty"') && src.includes('label: "Box Qty"') && src.includes('label: "Taxable Amount"') && src.includes('label: "VAT %"') && src.includes('label: "VAT Amount"'));
-  check("Box Qty comes from confirmed pack sizes for this company only", src.includes('.from("vyron_cost_product_pack_sizes")') && src.includes('.eq("company_id", companyId)') && src.includes('row.confidence === "Confirmed"'));
+  check("Box Qty is the stored, user-entered line value — no pack-size lookup, no division of Unit Qty", src.includes("formatBoxQty(line.box_qty)") && !src.includes("vyron_cost_product_pack_sizes") && !src.includes("unitsPerBox"));
   const { formatBoxQty } = await importFromRoot("src/lib/platform/documents/adapters/customer-invoice.ts");
-  check("Box Qty = units ÷ units per box: 144 at 24 → 6, 12 at 24 → 0.5, 30 at 24 → 1.25, 10 at 24 → 0.42", formatBoxQty(144, 24) === "6" && formatBoxQty(12, 24) === "0.5" && formatBoxQty(30, 24) === "1.25" && formatBoxQty(10, 24) === "0.42");
-  check("no confirmed pack size (or a bad one) → '-', never a guess", formatBoxQty(48, null) === "-" && formatBoxQty(48, undefined) === "-" && formatBoxQty(48, 0) === "-" && formatBoxQty(48, -3) === "-" && formatBoxQty("abc", 24) === "-");
-  // The Box Qty display helper rounds boxes to 2 decimals; it touches no money, so it is left out of the scan.
+  check("stored Box Qty prints as entered: 6 → 6, 0.5 → 0.5, 1.25 → 1.25, '2.0000' → 2, 0 → 0, 1.2345 → 1.2345", formatBoxQty(6) === "6" && formatBoxQty(0.5) === "0.5" && formatBoxQty(1.25) === "1.25" && formatBoxQty("2.0000") === "2" && formatBoxQty(0) === "0" && formatBoxQty("1.2345") === "1.2345");
+  check("no Box Qty entered (or an unusable one) → '-', never calculated", formatBoxQty(null) === "-" && formatBoxQty(undefined) === "-" && formatBoxQty("") === "-" && formatBoxQty("abc") === "-" && formatBoxQty(-3) === "-");
+  // The Box Qty display helper only formats a stored number; it touches no money, so it is left out of the scan.
   const moneySrc = src.replace(/export function formatBoxQty[\s\S]*?\r?\n\}\r?\n/, "");
-  check("the Box Qty helper is the only arithmetic excluded from the scan", moneySrc.length < src.length && !moneySrc.includes("formatBoxQty(quantity"));
+  check("the Box Qty helper is the only code excluded from the scan", moneySrc.length < src.length && !moneySrc.includes("export function formatBoxQty"));
   check("adapter still reads stored figures only (no rate arithmetic introduced)", !/\*\s*0?\.15|\*\s*15\b|\/\s*100/.test(moneySrc));
 }
 
