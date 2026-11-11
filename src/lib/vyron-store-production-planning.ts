@@ -21,6 +21,8 @@ export type StoreContribution = {
   quantity: number;
   /** Earliest required (delivery) date on this store's contributing orders, when the orders state one. */
   required_date?: string | null;
+  /** Where the demand came from. Absent on runs saved before customer sales orders counted (store orders). */
+  source?: "store_order" | "customer_order";
 };
 
 /** Optional filter on the store orders' required date (YYYY-MM-DD, inclusive). */
@@ -163,55 +165,30 @@ export async function consolidateStoreOrderDemand(
   companyId: string,
   dates: DemandDateFilter = {}
 ): Promise<ConsolidatedDemandRow[]> {
-  let orderQuery = supabase
-    .from("vyron_cost_store_orders")
-    .select("id, store_id, required_date, vyron_cost_stores!inner(store_code, store_name)")
-    .eq("company_id", companyId)
-    .in("status", [...STORE_ORDER_DEMAND_STATUSES]);
-  // A date filter keeps only orders whose required date is in range; an order with no required date cannot be placed in a range.
-  if (dates.requiredFrom) orderQuery = orderQuery.gte("required_date", dates.requiredFrom);
-  if (dates.requiredTo) orderQuery = orderQuery.lte("required_date", dates.requiredTo);
-  const { data: orders, error } = await orderQuery;
+  const [storeLines, customerLines] = await Promise.all([
+    loadStoreOrderDemandLines(supabase, companyId, dates),
+    loadCustomerSalesOrderDemandLines(supabase, companyId, dates),
+  ]);
+  const lines = [...storeLines, ...customerLines];
+  if (!lines.length) return [];
 
-  if (error) throw new Error(error.message);
-  if (!orders?.length) return [];
-
-  const orderMeta = new Map<string, { store_id: string; store_code: string; store_name: string; required_date: string | null }>();
-  for (const order of orders) {
-    const store = order.vyron_cost_stores as { store_code?: string; store_name?: string } | null;
-    orderMeta.set(String(order.id), {
-      store_id: String(order.store_id),
-      store_code: store?.store_code || "—",
-      store_name: store?.store_name || "—",
-      required_date: order.required_date ? String(order.required_date).slice(0, 10) : null,
-    });
-  }
   const earliest = (a: string | null | undefined, b: string | null | undefined) => (!a ? b || null : !b ? a : a < b ? a : b);
   const ordersByProduct = new Map<string, Set<string>>();
-
-  const orderIds = orders.map((order) => String(order.id));
-  const { data: lines, error: lineError } = await supabase
-    .from("vyron_cost_store_order_lines")
-    .select("store_order_id, product_id, product_name_snapshot, quantity")
-    .eq("company_id", companyId)
-    .in("store_order_id", orderIds);
-
-  if (lineError) throw new Error(lineError.message);
 
   const productCosts = await loadProductUnitCosts(supabase, companyId);
   const byProduct = new Map<string, ConsolidatedDemandRow>();
 
-  for (const line of lines || []) {
-    const productId = String(line.product_id);
-    const qty = Number(line.quantity || 0);
-    const meta = orderMeta.get(String(line.store_order_id));
+  for (const line of lines) {
+    const productId = line.product_id;
+    const qty = line.quantity;
+    const meta = line.contributor;
     const unitCost = productCosts.get(productId)?.unitCost ?? 0;
 
     const existing =
       byProduct.get(productId) ||
       ({
         product_id: productId,
-        product_name: String(line.product_name_snapshot || ""),
+        product_name: line.product_name,
         required_qty: 0,
         planned_qty: 0,
         unit_cost: unitCost,
@@ -222,7 +199,7 @@ export async function consolidateStoreOrderDemand(
     existing.required_qty = round4(existing.required_qty + qty);
     existing.required_date = earliest(existing.required_date, meta?.required_date);
     const seenOrders = ordersByProduct.get(productId) || new Set<string>();
-    seenOrders.add(String(line.store_order_id));
+    seenOrders.add(line.order_key);
     ordersByProduct.set(productId, seenOrders);
     existing.order_count = seenOrders.size;
     existing.planned_qty = existing.required_qty;
@@ -241,6 +218,7 @@ export async function consolidateStoreOrderDemand(
           store_name: meta.store_name,
           quantity: round4(qty),
           required_date: meta.required_date,
+          source: meta.source,
         });
       }
     }
@@ -249,6 +227,112 @@ export async function consolidateStoreOrderDemand(
   }
 
   return [...byProduct.values()].sort((a, b) => b.required_qty - a.required_qty);
+}
+
+/** One order line of production demand, from a store order or a customer sales order. */
+type DemandLine = {
+  order_key: string;
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  contributor: StoreContribution & { quantity: 0 };
+};
+
+async function loadStoreOrderDemandLines(supabase: SupabaseClient, companyId: string, dates: DemandDateFilter): Promise<DemandLine[]> {
+  let orderQuery = supabase
+    .from("vyron_cost_store_orders")
+    .select("id, store_id, required_date, vyron_cost_stores!inner(store_code, store_name)")
+    .eq("company_id", companyId)
+    .in("status", [...STORE_ORDER_DEMAND_STATUSES]);
+  // A date filter keeps only orders whose required date is in range; an order with no required date cannot be placed in a range.
+  if (dates.requiredFrom) orderQuery = orderQuery.gte("required_date", dates.requiredFrom);
+  if (dates.requiredTo) orderQuery = orderQuery.lte("required_date", dates.requiredTo);
+  const { data: orders, error } = await orderQuery;
+  if (error) throw new Error(error.message);
+  if (!orders?.length) return [];
+
+  const orderMeta = new Map<string, DemandLine["contributor"]>();
+  for (const order of orders) {
+    const store = order.vyron_cost_stores as { store_code?: string; store_name?: string } | null;
+    orderMeta.set(String(order.id), {
+      store_id: String(order.store_id),
+      store_code: store?.store_code || "—",
+      store_name: store?.store_name || "—",
+      quantity: 0,
+      required_date: order.required_date ? String(order.required_date).slice(0, 10) : null,
+      source: "store_order",
+    });
+  }
+
+  const { data: lines, error: lineError } = await supabase
+    .from("vyron_cost_store_order_lines")
+    .select("store_order_id, product_id, product_name_snapshot, quantity")
+    .eq("company_id", companyId)
+    .in("store_order_id", [...orderMeta.keys()]);
+  if (lineError) throw new Error(lineError.message);
+
+  return (lines || []).map((line) => ({
+    order_key: `store:${line.store_order_id}`,
+    product_id: String(line.product_id),
+    product_name: String(line.product_name_snapshot || ""),
+    quantity: Number(line.quantity || 0),
+    contributor: orderMeta.get(String(line.store_order_id))!,
+  }));
+}
+
+/**
+ * Customer sales orders are production demand too: a manufacturer selling to customers (not to
+ * its own stores) plans from these. Approved and Picking orders count — the same stage as store
+ * orders (approved, not yet packed). Quantity is what is still to be invoiced; the required date
+ * is the order's requested delivery date. Lines with no product cannot be produced and are left out.
+ */
+export const CUSTOMER_ORDER_DEMAND_STATUSES = ["Approved", "Picking"] as const;
+
+async function loadCustomerSalesOrderDemandLines(supabase: SupabaseClient, companyId: string, dates: DemandDateFilter): Promise<DemandLine[]> {
+  let orderQuery = supabase
+    .from("vyron_customer_sales_orders")
+    .select("id, order_number, customer_id, customer_name, requested_delivery_date")
+    .eq("company_id", companyId)
+    .in("status", [...CUSTOMER_ORDER_DEMAND_STATUSES]);
+  if (dates.requiredFrom) orderQuery = orderQuery.gte("requested_delivery_date", dates.requiredFrom);
+  if (dates.requiredTo) orderQuery = orderQuery.lte("requested_delivery_date", dates.requiredTo);
+  const { data: orders, error } = await orderQuery;
+  if (error) throw new Error(error.message);
+  if (!orders?.length) return [];
+
+  const orderMeta = new Map<string, DemandLine["contributor"]>();
+  for (const order of orders) {
+    orderMeta.set(String(order.id), {
+      store_id: `customer:${order.customer_id || order.customer_name || order.id}`,
+      store_code: "Customer",
+      store_name: String(order.customer_name || "Customer"),
+      quantity: 0,
+      required_date: order.requested_delivery_date ? String(order.requested_delivery_date).slice(0, 10) : null,
+      source: "customer_order",
+    });
+  }
+
+  const { data: lines, error: lineError } = await supabase
+    .from("vyron_customer_sales_order_lines")
+    .select("sales_order_id, product_id, description, quantity, invoiced_qty")
+    .eq("company_id", companyId)
+    .in("sales_order_id", [...orderMeta.keys()]);
+  if (lineError) throw new Error(lineError.message);
+
+  const out: DemandLine[] = [];
+  for (const line of lines || []) {
+    if (!line.product_id) continue;
+    const remaining = round4(Number(line.quantity || 0) - Number(line.invoiced_qty || 0));
+    if (remaining <= 0) continue;
+    out.push({
+      order_key: `customer:${line.sales_order_id}`,
+      product_id: String(line.product_id),
+      product_name: String(line.description || ""),
+      quantity: remaining,
+      contributor: orderMeta.get(String(line.sales_order_id))!,
+    });
+  }
+  return out;
 }
 
 export function buildIngredientRequirements(

@@ -22,6 +22,7 @@ const reportCards = [
   { href: "/inventory/counts", title: "Stock Variance", description: "Stock count variance workflow: draft, submit, approve and post.", icon: PackageSearch, badge: "Inventory" },
   { href: "/reports/finished-goods", title: "Finished Goods Dashboard", description: "Finished goods on hand, value, minimums, production and stock movements for any date range, with drill-down to every ledger movement.", icon: LineChart, badge: "Stock" },
   { href: "/reports/performance", title: "Sales, Purchases & GP", description: "Daily, weekly or monthly sales, purchases and gross profit with Month-to-Date and drill-down to invoices.", icon: LineChart, badge: "Performance" },
+  { href: "/reports/stock-movements", title: "Stock Movements", description: "Every stock ledger movement for any date range, by item type, with drill-down to the source document.", icon: Boxes, badge: "Stock" },
   { href: "/reports/performance#fastest-movers", title: "Top 10 Fastest Movers", description: "Products ranked by units sold on issued customer invoices for any date range.", icon: Percent, badge: "Performance" },
   { href: "/reports/gp?view=customer", title: "Customer GP Report", description: "Gross profit by customer for a date range, with invoice and product counts.", icon: Percent, badge: "Sales GP" },
   { href: "/reports/gp?view=product", title: "Product GP Report", description: "Gross profit by product sold: quantity, average price, average cost and margin.", icon: Percent, badge: "Sales GP" },

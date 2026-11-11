@@ -60,6 +60,7 @@ export const vyronNavSections: VyronNavSection[] = [
       { label: "Supplier Inflation", icon: TrendingUp, href: "/supplier-inflation" },
       { label: "Inflation Baseline", icon: TrendingUp, href: "/supplier-inflation/history" },
       { label: "Supplier Invoices", icon: ReceiptText, href: "/supplier-invoices" },
+      { label: "Duplicate Invoices", icon: ReceiptText, href: "/supplier-invoices/duplicates" },
       { label: "Supplier Reconciliation", icon: FileSearch, href: "/supplier-invoices/reconciliation" },
       { label: "Supplier Invoice Import / Document Intelligence", icon: FileSearch, href: "/document-intelligence" },
       { label: "Email Invoice Inbox", icon: Upload, href: "/email-invoice-inbox" },
@@ -173,6 +174,8 @@ export const vyronNavSections: VyronNavSection[] = [
     section: "REPORTS",
     items: [
       { label: "Reports", icon: FileText, href: "/reports" },
+      { label: "Sales, Purchases & GP", icon: BarChart3, href: "/reports/performance" },
+      { label: "Stock Movements Report", icon: FileText, href: "/reports/stock-movements" },
     ],
   },
 

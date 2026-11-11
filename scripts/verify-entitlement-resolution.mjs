@@ -174,7 +174,7 @@ const ctx = await import("../src/lib/vyron-workspace-context.ts");
 const sorted = (values) => [...values].sort().join(",");
 
 const STARTER_F = ["dashboard", "contacts", "customers", "suppliers", "ingredients", "finished_goods", "recipes", "import_centre", "reports"];
-const PROFESSIONAL_F = [...STARTER_F, "inventory", "procurement", "purchase_orders", "manufacturing", "xero_sync", "supplier_intelligence", "document_intelligence", "customer_invoices"];
+const PROFESSIONAL_F = [...STARTER_F, "inventory", "procurement", "purchase_orders", "manufacturing", "xero_sync", "supplier_intelligence", "document_intelligence", "customer_invoices", "production_planning"];
 const ENTERPRISE_F = [...PROFESSIONAL_F, "forecasting", "cost_intelligence", "advanced_dashboards", "multi_company", "integrations", "developer_tools"];
 const MULTI_STORE_F = ["multi_store", "store_ordering", "stores", "store_performance", "dispatch_board", "production_planning", "store_forecasting"];
 const SUMMARY_STARTER = ["Dashboard", "Suppliers", "Ingredients", "Products", "Recipes", "Basic reports"];
@@ -182,7 +182,8 @@ const SUMMARY_PRO = ["Dashboard", "Suppliers", "Costing", "Procurement", "Invent
 const SUMMARY_ENT = ["All modules", "Advanced intelligence", "Multi-company", "API/integrations"];
 
 check("the platform recognises exactly 30 features", pm.FEATURE_KEYS.length === 30, String(pm.FEATURE_KEYS.length));
-check("the tier lists above cover all 30 features", sorted([...ENTERPRISE_F, ...MULTI_STORE_F]) === sorted(pm.FEATURE_KEYS));
+// production_planning is in Professional (it plans from customer sales orders too) and stays in the Multi-Store set.
+check("the tier lists above cover all 30 features", sorted(new Set([...ENTERPRISE_F, ...MULTI_STORE_F])) === sorted(pm.FEATURE_KEYS));
 
 // Full
 const fullFeatures = pm.resolveWorkspaceFeatures("Full");
@@ -218,7 +219,7 @@ const EXISTING = {
   Demo: { base: "professional", id: "professional", features: PROFESSIONAL_F, credits: 500, summary: SUMMARY_PRO, demo: true },
   "Professional Demo": { base: "professional", id: "professional", features: PROFESSIONAL_F, credits: 500, summary: SUMMARY_PRO, demo: true },
   // Includes its known, separately reported base-tier defect (Professional, not Enterprise).
-  "Multi-Store Operations": { base: "professional", id: "multi_store_operations", features: [...PROFESSIONAL_F, ...MULTI_STORE_F], credits: 5000, summary: SUMMARY_STARTER, demo: false },
+  "Multi-Store Operations": { base: "professional", id: "multi_store_operations", features: [...new Set([...PROFESSIONAL_F, ...MULTI_STORE_F])], credits: 5000, summary: SUMMARY_STARTER, demo: false },
 };
 for (const [name, want] of Object.entries(EXISTING)) {
   check(`${name}: base tier unchanged`, pm.resolveBasePackageId(name) === want.base, pm.resolveBasePackageId(name));

@@ -125,7 +125,9 @@ const FEATURE_MIN_PACKAGE: Record<FeatureKey, PackageId> = {
   stores: "multi_store_operations",
   store_performance: "multi_store_operations",
   dispatch_board: "multi_store_operations",
-  production_planning: "multi_store_operations",
+  // Production planning plans from customer sales orders as well as store orders, so it sits with
+  // manufacturing (Professional) rather than with the multi-store features.
+  production_planning: "professional",
 };
 
 const PACKAGE_DEFINITIONS: Record<PackageId, PackageDefinition> = {
@@ -154,6 +156,7 @@ const PACKAGE_DEFINITIONS: Record<PackageId, PackageDefinition> = {
       "procurement",
       "purchase_orders",
       "manufacturing",
+      "production_planning",
       "xero_sync",
       "supplier_intelligence",
       "document_intelligence",

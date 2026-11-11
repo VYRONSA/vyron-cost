@@ -44,7 +44,7 @@ export default function ProductionPlanningClient() {
       }
       setDemand((data.demand || []) as ConsolidatedDemandRow[]);
       setIngredients((data.ingredients || []) as IngredientRequirementRow[]);
-      setMessage(from || to ? `Production plan generated from approved store orders required ${from || "…"} to ${to || "…"}.` : "Production plan generated from approved store orders.");
+      setMessage(from || to ? `Production plan generated from approved store orders and customer sales orders required ${from || "…"} to ${to || "…"}.` : "Production plan generated from approved store orders and customer sales orders.");
     } catch {
       setError("Could not generate production plan.");
     } finally {
@@ -87,7 +87,7 @@ export default function ProductionPlanningClient() {
       config={{
         badge: "Production Planning",
         title: "Production Plan",
-        subtitle: "Consolidate store order demand into production requirements.",
+        subtitle: "Consolidate store order and customer sales order demand into production requirements.",
         outcomes: [
           "Aggregate Approved, Picking and Ready for Dispatch orders",
           "Link finished goods to BOM ingredient requirements",
@@ -155,7 +155,7 @@ export default function ProductionPlanningClient() {
                   <th className="px-4 py-3 text-right">Required Qty</th>
                   <th className="px-4 py-3 text-right">Planned Qty</th>
                   <th className="px-4 py-3 text-right">Cost</th>
-                  <th className="px-4 py-3 text-left">Stores Contributing</th>
+                  <th className="px-4 py-3 text-left">Orders Contributing</th>
                 </tr>
               </thead>
               <tbody>
@@ -168,7 +168,7 @@ export default function ProductionPlanningClient() {
                 ) : demand.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-8 text-center text-sm font-semibold text-[#64748B]">
-                      No production demand from store orders{requiredFrom || requiredTo ? " required in this date range" : ""}.
+                      No production demand from store orders or customer sales orders{requiredFrom || requiredTo ? " required in this date range" : ""}.
                     </td>
                   </tr>
                 ) : (
@@ -250,7 +250,7 @@ export default function ProductionPlanningClient() {
         <ProductionScheduleSection key={scheduleVersion} canEdit={canCreate} />
 
         <p className="text-sm text-[#64748B]">
-          Source orders: Approved, Picking, Ready for Dispatch. &quot;Required by&quot; is the earliest required date on the store orders; the date filter uses it.{" "}
+          Source orders: store orders that are Approved, Picking or Ready for Dispatch, and customer sales orders that are Approved or Picking (quantity still to be invoiced). &quot;Required by&quot; is the earliest required date (store orders) or requested delivery date (customer sales orders); the date filter uses it.{" "}
           <Link href="/production-runs" className="font-semibold text-[#334155] underline">
             View production runs
           </Link>

@@ -3,7 +3,7 @@ import ProductionPlanningClient from "@/components/vyron-cost/production-plannin
 
 export default function ProductionPlanningPage() {
   return (
-    <VyronCostAiShell hidePageHeader title="Production Planning" subtitle="Convert store orders into production requirements.">
+    <VyronCostAiShell hidePageHeader title="Production Planning" subtitle="Convert store orders and customer sales orders into production requirements.">
       <ProductionPlanningClient />
     </VyronCostAiShell>
   );
