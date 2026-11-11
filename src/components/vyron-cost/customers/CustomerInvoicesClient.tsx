@@ -20,6 +20,8 @@ import {
 import { ItemLookupField } from "@/components/vyron-platform/item-lookup/ItemLookupField";
 import type { ItemLookupResult } from "@/lib/platform/item-lookup/ItemLookupTypes";
 import { DocumentPdfActions } from "@/components/vyron-platform/documents/DocumentPdfActions";
+import CustomerInvoiceBoxQtyEditor from "@/components/vyron-cost/customers/CustomerInvoiceBoxQtyEditor";
+import { checkBelowCost } from "@/lib/vyron-below-cost";
 
 type InvoiceStatus = "Draft" | "Approved" | "Posted" | "Sent" | "Paid" | "Cancelled";
 
@@ -1550,6 +1552,17 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
                         Remove
                       </button>
                     </div>
+                    {(() => {
+                      // Same check as the sales order editor. Warn only: the price is not changed and saving is not blocked.
+                      const check = checkBelowCost(line.unitPrice, line.unitCost);
+                      if (!check.below || !line.unitPrice) return null;
+                      return (
+                        <div data-testid="below-cost-warning" className="mt-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-800">
+                          Below cost: unit price {money(check.netPrice)} is {money(check.shortfallPerUnit)} under the unit cost of {money(check.cost)}
+                          {line.qty ? ` (${money(check.shortfallPerUnit * Number(line.qty))} on this line)` : ""}.
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })}
@@ -1845,6 +1858,21 @@ export default function CustomerInvoicesClient({ initialFormOpen = false }: { in
               </tbody>
             </table>
           </div>
+          {/*
+            Box Qty on an invoice that is already saved, draft or issued (Approved, Sent, Posted,
+            Paid). Only Box Qty is sent; the full edit above stays draft-only. The route enforces
+            the permission and refuses a Cancelled invoice.
+          */}
+          {!demoMode ? (
+            <CustomerInvoiceBoxQtyEditor
+              key={selectedInvoice.id}
+              invoiceId={selectedInvoice.id}
+              status={selectedInvoice.status}
+              canEdit={canCreate}
+              lines={selectedInvoice.lines.map((line) => ({ id: line.id, description: line.description, qty: line.qty, boxQty: line.boxQty ?? null }))}
+              onSaved={() => void refreshSelectedInvoice(selectedInvoice.id)}
+            />
+          ) : null}
         </section>
       ) : null}
     </div>

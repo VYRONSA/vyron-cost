@@ -113,7 +113,9 @@
     "test:production-schedule": "node scripts/test-production-schedule.mjs",
     "test:inflation-baseline": "node scripts/test-inflation-baseline.mjs",
     "test:twilio-status": "node scripts/test-twilio-status.mjs",
-    "test:inbound-email-webhook": "node scripts/test-inbound-email-webhook.mjs"
+    "test:inbound-email-webhook": "node scripts/test-inbound-email-webhook.mjs",
+    "test:customer-invoice-box-qty-edit": "node scripts/test-customer-invoice-box-qty-edit.mjs",
+    "test:production-planning-customer-demand": "node scripts/test-production-planning-customer-demand.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.0",

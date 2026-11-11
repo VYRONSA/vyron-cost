@@ -7,6 +7,7 @@ import EditRouteGuard from "@/components/EditRouteGuard";
 import ModulePageShell from "@/components/vyron-cost/ModulePageShell";
 import StatusPill from "@/components/vyron-cost/StatusPill";
 import CustomerInvoiceDetailActions from "@/components/vyron-cost/customers/CustomerInvoiceDetailActions";
+import CustomerInvoiceBoxQtyEditor, { storedBoxQtyValue } from "@/components/vyron-cost/customers/CustomerInvoiceBoxQtyEditor";
 import { formatCurrency, formatNumber } from "@/lib/vyron-cost/stock-engine";
 import { customerInvoices, getInvoiceTotals } from "@/lib/vyron-cost/manufacturing-data";
 import { readActiveClient } from "@/lib/vyron-developer-client";
@@ -27,17 +28,46 @@ type DetailInvoice = {
   stockPosted: boolean;
   stockReversed: boolean;
   lines: Array<{
+    id: string;
     productId: string;
     productName: string;
     quantity: number;
     sellingPrice: number;
     costPerUnit: number;
+    /** User-entered boxes; null when none was entered. */
+    boxQty: number | null;
   }>;
 };
 
+/** The live invoice as this page shows it, from GET /api/customer-invoices/[id]. */
+function mapLiveInvoice(inv: Record<string, unknown>, lines: Array<Record<string, unknown>>): DetailInvoice {
+  return {
+    id: String(inv.id),
+    invoiceNumber: String(inv.invoice_number || ""),
+    customerName: String(inv.customer_name || ""),
+    invoiceDate: String(inv.invoice_date || ""),
+    status: String(inv.status || "Draft"),
+    stockPosted: Boolean(inv.stock_posted),
+    stockReversed: Boolean(inv.stock_reversed),
+    stockPostingStatus: getInvoiceStockPostingStatus({
+      stock_posted: Boolean(inv.stock_posted),
+      stock_reversed: Boolean(inv.stock_reversed),
+    }),
+    lines: lines.map((line) => ({
+      id: String(line.id || ""),
+      productId: String(line.product_id || ""),
+      productName: String(line.product_name || ""),
+      quantity: Number(line.quantity || 0),
+      sellingPrice: Number(line.selling_price || 0),
+      costPerUnit: Number(line.cost_per_unit || 0),
+      boxQty: storedBoxQtyValue(line.box_qty),
+    })),
+  };
+}
+
 export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { invoiceNumber: string }) {
   const decoded = decodeURIComponent(invoiceNumber);
-  const { canApprove } = useInvoicePermissions();
+  const { canApprove, canCreate } = useInvoicePermissions();
   const { canPostAdjustment } = useInventoryPermissions();
   const [demoMode, setDemoMode] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -60,7 +90,9 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
           stockPostingStatus: "Not Posted" as InvoiceStockPostingStatus,
           stockPosted: false,
           stockReversed: false,
-          lines: demoInvoice.lines.map((line) => ({
+          lines: demoInvoice.lines.map((line, index) => ({
+            id: `${demoInvoice.invoiceNumber}-${index}`,
+            boxQty: null,
             productId: line.productId,
             productName: line.productName,
             quantity: line.quantity,
@@ -85,8 +117,9 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
       try {
         const listRes = await fetch("/api/customer-invoices");
         const list = await listRes.json();
+        // Links arrive with either the invoice number or the invoice id (report drill-downs use the id).
         const row = (list.invoices || []).find(
-          (item: { invoice_number: string }) => item.invoice_number === decoded
+          (item: { id: string; invoice_number: string }) => item.invoice_number === decoded || item.id === decoded
         );
         if (!row) {
           setLiveInvoice(null);
@@ -98,27 +131,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
           setLiveInvoice(null);
           return;
         }
-        const inv = detail.invoice;
-        setLiveInvoice({
-          id: inv.id,
-          invoiceNumber: inv.invoice_number,
-          customerName: inv.customer_name,
-          invoiceDate: inv.invoice_date,
-          status: inv.status,
-          stockPosted: Boolean(inv.stock_posted),
-          stockReversed: Boolean(inv.stock_reversed),
-          stockPostingStatus: getInvoiceStockPostingStatus({
-            stock_posted: Boolean(inv.stock_posted),
-            stock_reversed: Boolean(inv.stock_reversed),
-          }),
-          lines: (detail.lines || []).map((line: Record<string, unknown>) => ({
-            productId: String(line.product_id || ""),
-            productName: String(line.product_name || ""),
-            quantity: Number(line.quantity || 0),
-            sellingPrice: Number(line.selling_price || 0),
-            costPerUnit: Number(line.cost_per_unit || 0),
-          })),
-        });
+        setLiveInvoice(mapLiveInvoice(detail.invoice, detail.lines || []));
       } finally {
         setLoading(false);
       }
@@ -132,27 +145,7 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
     const detailRes = await fetch(`/api/customer-invoices/${liveInvoice.id}`);
     const detail = await detailRes.json();
     if (!detail.ok) return;
-    const inv = detail.invoice;
-    setLiveInvoice({
-      id: inv.id,
-      invoiceNumber: inv.invoice_number,
-      customerName: inv.customer_name,
-      invoiceDate: inv.invoice_date,
-      status: inv.status,
-      stockPosted: Boolean(inv.stock_posted),
-      stockReversed: Boolean(inv.stock_reversed),
-      stockPostingStatus: getInvoiceStockPostingStatus({
-        stock_posted: Boolean(inv.stock_posted),
-        stock_reversed: Boolean(inv.stock_reversed),
-      }),
-      lines: (detail.lines || []).map((line: Record<string, unknown>) => ({
-        productId: String(line.product_id || ""),
-        productName: String(line.product_name || ""),
-        quantity: Number(line.quantity || 0),
-        sellingPrice: Number(line.selling_price || 0),
-        costPerUnit: Number(line.cost_per_unit || 0),
-      })),
-    });
+    setLiveInvoice(mapLiveInvoice(detail.invoice, detail.lines || []));
   }
 
   async function postStock(allowOverride = false) {
@@ -324,7 +317,8 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
                     <thead className="text-xs uppercase text-slate-500">
                       <tr>
                         <th className="py-3">Product</th>
-                        <th className="text-right">Qty</th>
+                        <th className="text-right">Unit Qty</th>
+                        <th className="text-right">Box Qty</th>
                         <th className="text-right">Selling Price</th>
                         <th className="text-right">Cost / Unit</th>
                         <th className="text-right">Line GP</th>
@@ -332,9 +326,10 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {invoice.lines.map((line) => (
-                        <tr key={`${line.productId}-${line.productName}`}>
+                        <tr key={line.id || `${line.productId}-${line.productName}`}>
                           <td className="py-2.5 font-bold">{line.productName}</td>
                           <td className="text-right">{line.quantity}</td>
+                          <td className="text-right">{line.boxQty ?? "-"}</td>
                           <td className="text-right">{formatCurrency(line.sellingPrice)}</td>
                           <td className="text-right">{formatCurrency(line.costPerUnit)}</td>
                           <td className="text-right">
@@ -345,6 +340,16 @@ export default function CustomerInvoiceDetailPageClient({ invoiceNumber }: { inv
                     </tbody>
                   </table>
                 </EnterpriseScrollContainer>
+                {!demoMode ? (
+                  <CustomerInvoiceBoxQtyEditor
+                    key={invoice.id}
+                    invoiceId={invoice.id}
+                    status={invoice.status}
+                    canEdit={canCreate}
+                    lines={invoice.lines.map((line) => ({ id: line.id, description: line.productName, qty: line.quantity, boxQty: line.boxQty }))}
+                    onSaved={() => void reloadLive()}
+                  />
+                ) : null}
               </section>
             </ModulePageShell>
     </EditRouteGuard>

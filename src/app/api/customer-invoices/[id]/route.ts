@@ -1,11 +1,14 @@
 import {
+  BoxQtyNotEditableError,
   InvoiceNotEditableError,
   InvoiceNotFoundError,
   InvalidBoxQtyError,
   PriceUnavailableError,
+  setCustomerInvoiceBoxQuantities,
   setCustomerInvoiceBranch,
   updateCustomerInvoice,
 } from "@/lib/vyron-customer-invoices";
+import { memberDisplayName, sessionAuditActor } from "@/lib/vyron-audit-actor";
 import { BranchNotSelectableError } from "@/lib/vyron-customer-branches";
 import { NextRequest, NextResponse } from "next/server";
 import {
@@ -63,6 +66,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const companyId = await resolveApiCompanyId();
     if (!companyId) return NextResponse.json({ ok: false, error: "No active workspace company." }, { status: 400 });
+
+    if (Array.isArray(body.boxQuantities)) {
+      /*
+       * Box Qty only, on any invoice that is not Cancelled — including an issued one. Writes
+       * vyron_customer_invoice_lines.box_qty and nothing else (no quantity, price, VAT or total),
+       * with an audit record. Gated on the same permission that edits a draft.
+       */
+      const session = await requireWorkspacePermission("invoices.create");
+      const result = await setCustomerInvoiceBoxQuantities(supabase, companyId, id, body.boxQuantities, {
+        id: sessionAuditActor(session),
+        name: await memberDisplayName(supabase, session),
+      });
+      return NextResponse.json({ ok: true, ...result });
+    }
 
     if (Array.isArray(body.lines)) {
       /*
@@ -162,6 +179,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
     if (error instanceof InvalidBoxQtyError) {
       return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    }
+    if (error instanceof BoxQtyNotEditableError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 409 });
     }
     if (error instanceof PriceUnavailableError) {
       return NextResponse.json({ ok: false, code: "NO_PRICE", error: error.message, productIds: error.productIds }, { status: 400 });

@@ -661,6 +661,117 @@ export async function updateCustomerInvoice(
   return after!.invoice;
 }
 
+/** Box Qty cannot be changed on this invoice (Cancelled), or a line is not on it. */
+export class BoxQtyNotEditableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BoxQtyNotEditableError";
+  }
+}
+
+export type BoxQtyEntry = { lineId: string; boxQty: number | string | null | undefined };
+
+/**
+ * Enter or correct Box Qty on the lines of an existing invoice — including one already
+ * Approved, Posted, Sent or Paid.
+ *
+ * Box Qty is packing information typed by the user. It feeds no quantity, price, VAT, total,
+ * stock or GP figure (the generated line columns are built from quantity and price only), so
+ * setting it does not rewrite the financial content of an issued invoice. This writes the
+ * box_qty column of the named lines and nothing else: no other line or header column is
+ * touched, and the lines are updated in place (never deleted and re-inserted).
+ *
+ * Every change is written to the audit log with the previous and new value, the member and
+ * the time. If that audit record cannot be written the Box Qty change is put back and refused.
+ * A Cancelled invoice is closed and is refused.
+ */
+export async function setCustomerInvoiceBoxQuantities(
+  supabase: SupabaseClient,
+  companyId: string,
+  invoiceId: string,
+  entries: BoxQtyEntry[],
+  actor: { id: string; name: string }
+): Promise<{ invoice: CustomerInvoiceRow; lines: CustomerInvoiceLineRow[]; changed: number }> {
+  const loaded = await getCustomerInvoice(supabase, invoiceId, companyId);
+  if (!loaded) throw new InvoiceNotFoundError();
+  const status = String(loaded.invoice.status || "Draft");
+  if (status === "Cancelled") {
+    throw new BoxQtyNotEditableError("This invoice is Cancelled. Box Qty cannot be changed on a cancelled invoice.");
+  }
+  if (!Array.isArray(entries) || !entries.length) {
+    throw new BoxQtyNotEditableError("No Box Qty lines were supplied.");
+  }
+
+  const byId = new Map(loaded.lines.map((line) => [String(line.id), line]));
+  const changes: Array<{ line: CustomerInvoiceLineRow; from: number | null; to: number | null }> = [];
+  for (const entry of entries) {
+    const line = byId.get(String(entry?.lineId || ""));
+    if (!line) throw new BoxQtyNotEditableError("A Box Qty line does not belong to this invoice.");
+    const to = normaliseBoxQty(entry.boxQty, String(line.product_name || ""));
+    const from = line.box_qty === null || line.box_qty === undefined || line.box_qty === "" ? null : normaliseBoxQty(line.box_qty);
+    if (from !== to) changes.push({ line, from, to });
+  }
+  if (!changes.length) return { ...loaded, changed: 0 };
+
+  await assertBoxQtyStorable(supabase, [{ box_qty: null }]);
+
+  const applied: typeof changes = [];
+  const restore = async () => {
+    for (const change of applied) {
+      await supabase
+        .from("vyron_customer_invoice_lines")
+        .update({ box_qty: change.from })
+        .eq("id", change.line.id)
+        .eq("invoice_id", invoiceId);
+    }
+  };
+
+  for (const change of changes) {
+    const { data, error } = await supabase
+      .from("vyron_customer_invoice_lines")
+      .update({ box_qty: change.to })
+      .eq("id", change.line.id)
+      .eq("invoice_id", invoiceId)
+      .select("id")
+      .maybeSingle();
+    if (error || !data) {
+      await restore();
+      throw error ? boxQtyStorageError(error.message) : new BoxQtyNotEditableError("A Box Qty line could not be updated. Nothing was changed.");
+    }
+    applied.push(change);
+  }
+
+  const at = new Date().toISOString();
+  const show = (value: number | null) => (value === null ? "-" : String(value));
+  const { error: auditError } = await supabase.from("vyron_inventory_audit_log").insert({
+    company_id: companyId,
+    stock_item_id: null,
+    event_type: "customer_invoice_box_qty_changed",
+    actor: actor.name || actor.id,
+    field_name: "box_qty",
+    old_value: changes.map((change) => show(change.from)).join(", "),
+    new_value: changes.map((change) => show(change.to)).join(", "),
+    detail: `Invoice ${loaded.invoice.invoice_number || invoiceId} (${status}): Box Qty ${changes
+      .map((change) => `${change.line.product_name || "line"} ${show(change.from)} -> ${show(change.to)}`)
+      .join("; ")}. Quantity, prices, VAT and totals unchanged.`,
+    reference_type: "customer_invoice",
+    reference_id: invoiceId,
+    metadata: {
+      at,
+      actorId: actor.id,
+      invoiceStatus: status,
+      lines: changes.map((change) => ({ lineId: change.line.id, product: change.line.product_name, from: change.from, to: change.to })),
+    },
+  });
+  if (auditError) {
+    await restore();
+    throw new Error(`The audit record could not be written, so the Box Qty was not changed: ${auditError.message}`);
+  }
+
+  const after = await getCustomerInvoice(supabase, invoiceId, companyId);
+  return { ...after!, changed: changes.length };
+}
+
 /**
  * The statuses at which an invoice has become a document in the customer's hands.
  *
