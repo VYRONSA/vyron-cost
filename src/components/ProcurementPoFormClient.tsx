@@ -7,6 +7,7 @@ import { calcLineTotals } from "@/lib/vyron-procurement";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { readActiveClient } from "@/lib/vyron-developer-client";
 import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
+import { isPoEditableStatus } from "@/lib/vyron-po-status";
 import { isDemoWorkspace } from "@/lib/vyron-workspace-context";
 import { ItemLookupField } from "@/components/vyron-platform/item-lookup/ItemLookupField";
 import type { ItemLookupResult } from "@/lib/platform/item-lookup/ItemLookupTypes";
@@ -61,6 +62,7 @@ export default function ProcurementPoFormClient({
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(Boolean(poId));
   const [message, setMessage] = useState("");
+  const [lastRemoved, setLastRemoved] = useState<{ line: LineRow; index: number; placeholderId: string | null } | null>(null);
 
   useEffect(() => {
     const demo = isDemoWorkspace(readActiveClient());
@@ -114,7 +116,7 @@ export default function ProcurementPoFormClient({
             quantity: Number(line.quantity || 0),
             unit: String(line.unit || "kg"),
             unit_price: Number(line.unit_price || 0),
-            vat_rate: Number(line.vat_rate || 15),
+            vat_rate: line.vat_rate === null || line.vat_rate === undefined ? 15 : Number(line.vat_rate),
             expected_delivery_date: String(line.expected_delivery_date || "").slice(0, 10),
           }))
         );
@@ -141,9 +143,40 @@ export default function ProcurementPoFormClient({
     setLines((current) => current.map((l) => (l.id === id ? { ...l, ...patch } : l)));
   }
 
+  /*
+   * Removes one product line; every other line is untouched. Nothing is written
+   * until the order is saved — the server then drops the line and records the
+   * removal in the procurement audit trail. The last line removed can be undone.
+   */
+  function removeLine(id: string) {
+    const index = lines.findIndex((l) => l.id === id);
+    if (index < 0) return;
+    const remaining = lines.filter((l) => l.id !== id);
+    const placeholder = remaining.length ? null : emptyLine();
+    setLines(placeholder ? [placeholder] : remaining);
+    setLastRemoved({ line: lines[index], index, placeholderId: placeholder?.id ?? null });
+    setMessage("");
+  }
+
+  function undoRemoveLine() {
+    if (!lastRemoved) return;
+    const { line, index, placeholderId } = lastRemoved;
+    setLines((current) => {
+      const base = current.filter((l) => l.id !== placeholderId || l.item_name.trim());
+      const at = Math.min(index, base.length);
+      return [...base.slice(0, at), line, ...base.slice(at)];
+    });
+    setLastRemoved(null);
+  }
+
   async function handleSave(submit = false) {
     if (submit ? !canApprove && !canEdit : poId ? !canEdit : !canCreate) {
       setMessage("You do not have permission to save this purchase order.");
+      return;
+    }
+    const namedLines = lines.filter((l) => l.item_name.trim());
+    if (!namedLines.length) {
+      setMessage("Add at least one product line before saving.");
       return;
     }
     setSaving(true);
@@ -157,7 +190,7 @@ export default function ProcurementPoFormClient({
         status: submit ? "Submitted" : status || "Draft",
         order_date: orderDate,
         notes,
-        lines: lines.filter((l) => l.item_name.trim()),
+        lines: namedLines,
         ...workspaceBody,
       };
       const res = await fetch(poId ? `/api/purchase-orders/${poId}` : "/api/purchase-orders", {
@@ -175,6 +208,10 @@ export default function ProcurementPoFormClient({
       setSaving(false);
     }
   }
+
+  // A locked order (approved, sent, received...) is never re-saved; it changes only through its status actions.
+  const statusLocked = Boolean(poId) && !isPoEditableStatus(status);
+  const canEditLines = canSaveDraft && !statusLocked;
 
   if (loading) return <p className="text-sm font-bold text-slate-500">Loading purchase order…</p>;
 
@@ -212,11 +249,11 @@ export default function ProcurementPoFormClient({
       <div className="grid gap-4 md:grid-cols-2">
         <label className="text-xs font-black uppercase text-slate-500">
           PO Number
-          <input disabled={!canSaveDraft} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold disabled:bg-slate-50" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} />
+          <input disabled={!canEditLines} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold disabled:bg-slate-50" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} />
         </label>
         <label className="text-xs font-black uppercase text-slate-500">
           Supplier
-          <select disabled={!canSaveDraft} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold disabled:bg-slate-50" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+          <select disabled={!canEditLines} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold disabled:bg-slate-50" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
             {supplierOptions.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.supplier_name}
@@ -226,25 +263,44 @@ export default function ProcurementPoFormClient({
         </label>
         <label className="text-xs font-black uppercase text-slate-500">
           Order Date
-          <input type="date" disabled={!canSaveDraft} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold disabled:bg-slate-50" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
+          <input type="date" disabled={!canEditLines} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold disabled:bg-slate-50" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
         </label>
         <label className="text-xs font-black uppercase text-slate-500 md:col-span-2">
           Notes
-          <textarea disabled={!canSaveDraft} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold disabled:bg-slate-50" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <textarea disabled={!canEditLines} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm font-semibold disabled:bg-slate-50" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>
       </div>
       <div className="space-y-3">
         <div className="text-sm font-black text-slate-900">Lines</div>
-        {lines.map((line) => (
-          <div key={line.id} className="grid gap-2 rounded-xl border border-slate-100 p-3 md:grid-cols-8">
-            <select disabled={!canSaveDraft} className="rounded-lg border px-2 py-2 text-xs font-bold disabled:bg-slate-50" value={line.item_type} onChange={(e) => updateLine(line.id, { item_type: e.target.value as PoItemType })}>
+        {statusLocked ? (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">
+            This purchase order is {status}. Its lines are locked and cannot be changed or removed here — an approver must hand it back (reject it) before it can be amended.
+          </p>
+        ) : null}
+        <div className="hidden gap-2 px-3 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500 md:grid-cols-[7rem_minmax(0,3fr)_repeat(4,minmax(0,1fr))_8.5rem_7rem_5.5rem] md:grid">
+          <div>Type</div>
+          <div>Item</div>
+          <div className="text-right">Qty</div>
+          <div>Unit</div>
+          <div className="text-right">Unit Price</div>
+          <div className="text-right">VAT %</div>
+          <div>Delivery</div>
+          <div className="text-right">Line Total</div>
+          <div className="sr-only">Remove</div>
+        </div>
+        {lines.map((line, lineIndex) => {
+          const lineCalc = calcLineTotals(line.quantity, line.unit_price, line.vat_rate);
+          const lineLabel = line.item_name.trim() || `line ${lineIndex + 1}`;
+          return (
+          <div key={line.id} data-testid="po-line" className="grid items-center gap-2 rounded-xl border border-slate-100 p-3 md:grid-cols-[7rem_minmax(0,3fr)_repeat(4,minmax(0,1fr))_8.5rem_7rem_5.5rem]">
+            <select aria-label="Item type" disabled={!canEditLines} className="rounded-lg border px-2 py-2 text-xs font-bold disabled:bg-slate-50" value={line.item_type} onChange={(e) => updateLine(line.id, { item_type: e.target.value as PoItemType })}>
               <option value="ingredient">Ingredient</option>
               <option value="packaging">Packaging</option>
               <option value="product">Finished Product</option>
               <option value="non_stock">Non-Stock</option>
             </select>
-            <div className="md:col-span-2">
-              {canSaveDraft ? (
+            <div>
+              {canEditLines ? (
                 <ItemLookupField
                   initialValue={line.item_name}
                   placeholder="Search item..."
@@ -260,17 +316,44 @@ export default function ProcurementPoFormClient({
                   }
                 />
               ) : (
-                <input disabled className="w-full rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" value={line.item_name} readOnly />
+                <input aria-label="Item" disabled className="w-full rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" value={line.item_name} readOnly />
               )}
             </div>
-            <input disabled={!canSaveDraft} type="number" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="Qty" value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: Number(e.target.value) })} />
-            <input disabled={!canSaveDraft} className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="Unit" value={line.unit} onChange={(e) => updateLine(line.id, { unit: e.target.value })} />
-            <input disabled={!canSaveDraft} type="number" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="Unit price" value={line.unit_price} onChange={(e) => updateLine(line.id, { unit_price: Number(e.target.value) })} />
-            <input disabled={!canSaveDraft} type="number" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="VAT %" value={line.vat_rate} onChange={(e) => updateLine(line.id, { vat_rate: Number(e.target.value) })} />
-            <input disabled={!canSaveDraft} type="date" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" value={line.expected_delivery_date} onChange={(e) => updateLine(line.id, { expected_delivery_date: e.target.value })} />
+            <input aria-label="Quantity" disabled={!canEditLines} type="number" className="rounded-lg border px-2 py-2 text-right text-sm disabled:bg-slate-50" placeholder="Qty" value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: Number(e.target.value) })} />
+            <input aria-label="Unit" disabled={!canEditLines} className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" placeholder="Unit" value={line.unit} onChange={(e) => updateLine(line.id, { unit: e.target.value })} />
+            <input aria-label="Unit price" disabled={!canEditLines} type="number" className="rounded-lg border px-2 py-2 text-right text-sm disabled:bg-slate-50" placeholder="Unit price" value={line.unit_price} onChange={(e) => updateLine(line.id, { unit_price: Number(e.target.value) })} />
+            <input aria-label="VAT %" disabled={!canEditLines} type="number" className="rounded-lg border px-2 py-2 text-right text-sm disabled:bg-slate-50" placeholder="VAT %" value={line.vat_rate} onChange={(e) => updateLine(line.id, { vat_rate: Number(e.target.value) })} />
+            <input aria-label="Expected delivery date" disabled={!canEditLines} type="date" className="rounded-lg border px-2 py-2 text-sm disabled:bg-slate-50" value={line.expected_delivery_date} onChange={(e) => updateLine(line.id, { expected_delivery_date: e.target.value })} />
+            <div data-testid="po-line-total" className="text-right tabular-nums">
+              <div className="text-sm font-black text-slate-950">
+                <span className="mr-1 text-[10px] font-black uppercase text-slate-400 md:hidden">Line Total</span>R{lineCalc.lineTotal.toFixed(2)}
+              </div>
+              <div className="text-[10px] font-bold text-slate-500">excl. VAT R{lineCalc.subtotal.toFixed(2)}</div>
+            </div>
+            {canEditLines ? (
+              <button
+                type="button"
+                aria-label={`Remove ${lineLabel}`}
+                onClick={() => removeLine(line.id)}
+                className="rounded-lg border border-red-200 bg-red-50 px-2 py-2 text-xs font-black text-red-700 hover:bg-red-100"
+              >
+                Remove
+              </button>
+            ) : (
+              <span />
+            )}
           </div>
-        ))}
-        <button type="button" disabled={!canSaveDraft} onClick={() => setLines((c) => [...c, emptyLine()])} className="text-xs font-black text-blue-700 disabled:opacity-50">
+          );
+        })}
+        {lastRemoved ? (
+          <p role="status" className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700">
+            Removed {lastRemoved.line.item_name.trim() || "an empty line"}. It is taken off this purchase order when you save.
+            <button type="button" onClick={undoRemoveLine} className="font-black text-blue-700 underline">
+              Undo
+            </button>
+          </p>
+        ) : null}
+        <button type="button" disabled={!canEditLines} onClick={() => setLines((c) => [...c, emptyLine()])} className="text-xs font-black text-blue-700 disabled:opacity-50">
           + Add line
         </button>
       </div>
@@ -281,12 +364,12 @@ export default function ProcurementPoFormClient({
       </div>
       {message ? <p className="text-sm font-bold text-red-600">{message}</p> : null}
       <div className="flex gap-2">
-        {canSaveDraft ? (
+        {canEditLines ? (
           <button type="button" disabled={saving} onClick={() => void handleSave(false)} className="rounded-xl bg-slate-200 px-4 py-2 text-sm font-black">
             Save Draft
           </button>
         ) : null}
-        {(canSaveDraft || canApprove) ? (
+        {(canEditLines || (canApprove && !statusLocked)) ? (
           <button type="button" disabled={saving} onClick={() => void handleSave(true)} className="rounded-xl vyron-grad-surface px-4 py-2 text-sm font-semibold text-white">
             {poId ? "Save Changes" : "Submit for Approval"}
           </button>

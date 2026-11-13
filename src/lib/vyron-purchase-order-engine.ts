@@ -5,6 +5,7 @@ import { postInventoryTransaction } from "@/lib/vyron-inventory-transactions";
 import {
   calcPoLineOutstanding,
   getPurchaseOrderDetail,
+  poLineAmounts,
   savePurchaseOrder,
   type PurchaseOrderRow,
 } from "@/lib/vyron-procurement";
@@ -135,7 +136,7 @@ function mapPoLine(row: Record<string, unknown>): PurchaseOrderEngineLineRow {
     ingredient_name: String(row.item_name || ""),
     quantity: round4(quantity),
     unit_cost: round4(Number(row.unit_price || 0)),
-    line_total: round2(Number(row.line_total || 0)),
+    line_total: round2(poLineAmounts({ quantity, unit_price: row.unit_price, vat_rate: row.vat_rate }).line_total),
     received_qty: round4(received),
     outstanding_qty: round4(
       Number(row.outstanding_qty ?? calcPoLineOutstanding({ ordered_qty: quantity, received_qty: received }))

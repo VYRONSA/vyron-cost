@@ -343,7 +343,42 @@ export async function getProcurementDashboardStats(supabase: SupabaseClient, com
   };
 }
 
+/** A stored VAT rate; only a missing rate defaults to 15%. A zero-rated line stays 0%. */
+export function poLineVatRate(value: unknown) {
+  if (value === null || value === undefined || value === "") return 15;
+  const rate = Number(value);
+  return Number.isFinite(rate) ? rate : 15;
+}
+
+/**
+ * A purchase order line's VAT and total (incl. VAT), from its quantity, unit
+ * price and VAT rate — the same calcLineTotals the header totals are built from
+ * on save, so the lines always add up to the order's subtotal, VAT and total.
+ *
+ * The stored line_total is not used. In production it is a GENERATED column
+ * computed from the legacy unit_cost column, which saves never filled in, so
+ * every saved line read back as R0.00.
+ */
+export function poLineAmounts(row: { quantity?: unknown; unit_price?: unknown; vat_rate?: unknown }) {
+  const { subtotal, vatAmount, lineTotal } = calcLineTotals(
+    Number(row.quantity || 0),
+    Number(row.unit_price || 0),
+    poLineVatRate(row.vat_rate)
+  );
+  return { subtotal, vat_amount: vatAmount, line_total: lineTotal };
+}
+
+/** Line columns that are derived (GENERATED) in some databases or absent in others. */
+const PO_LINE_OPTIONAL_COLUMNS = ["line_total", "vat_amount", "unit_cost"] as const;
+
+/** The optional line column a failed insert names as generated or missing, if any. */
+export function refusedPoLineColumn(message: string): string | null {
+  if (!/non-DEFAULT value|generated column|cannot insert into column|could not find the|does not exist/i.test(message)) return null;
+  return PO_LINE_OPTIONAL_COLUMNS.find((column) => new RegExp(`["'\\s]${column}["'\\s]`).test(` ${message} `)) || null;
+}
+
 function mapPoLine(row: Record<string, unknown>): PurchaseOrderLineRow {
+  const amounts = poLineAmounts(row);
   return {
     id: String(row.id),
     purchase_order_id: String(row.purchase_order_id),
@@ -353,9 +388,9 @@ function mapPoLine(row: Record<string, unknown>): PurchaseOrderLineRow {
     quantity: Number(row.quantity || 0),
     unit: String(row.unit || "kg"),
     unit_price: Number(row.unit_price || 0),
-    vat_rate: Number(row.vat_rate || 15),
-    vat_amount: Number(row.vat_amount || 0),
-    line_total: Number(row.line_total || 0),
+    vat_rate: poLineVatRate(row.vat_rate),
+    vat_amount: amounts.vat_amount,
+    line_total: amounts.line_total,
     expected_delivery_date: (row.expected_delivery_date as string) || null,
     ordered_qty: Number(row.ordered_qty ?? row.quantity ?? 0),
     received_qty: Number(row.received_qty || 0),
@@ -586,7 +621,7 @@ export async function savePurchaseOrder(
 
     const { data: priorLines } = await supabase
       .from("vyron_cost_purchase_order_lines")
-      .select("id, received_qty, damaged_qty, rejected_qty, ordered_qty")
+      .select("id, item_name, quantity, unit, unit_price, vat_rate, received_qty, damaged_qty, rejected_qty, ordered_qty")
       .eq("purchase_order_id", poId)
       .eq("company_id", companyId);
     for (const row of priorLines || []) {
@@ -630,6 +665,8 @@ export async function savePurchaseOrder(
       quantity: line.quantity,
       unit: line.unit,
       unit_price: line.unit_price,
+      // Production derives line_excl / line_vat / line_total (GENERATED) from unit_cost.
+      unit_cost: line.unit_price,
       vat_rate: line.vat_rate ?? 15,
       vat_amount: line.vat_amount,
       line_total: line.line_total,
@@ -669,18 +706,58 @@ export async function savePurchaseOrder(
       .eq("company_id", companyId);
   }
 
-  const insertRows = lineRows.map(({ _outstandingValue, ...row }) => row);
-
-  let { error: lineError } = await supabase.from("vyron_cost_purchase_order_lines").insert(insertRows);
-  if (lineError && /line_total|vat_amount|non-DEFAULT value/i.test(String(lineError.message || ""))) {
-    const dbManagedRows = insertRows.map((row) => {
-      const { line_total, vat_amount, ...rest } = row as Record<string, unknown>;
-      return rest;
+  /*
+   * Schemas differ between databases: production computes line_total from
+   * unit_cost (GENERATED ALWAYS), older ones store it, and some have no
+   * unit_cost column. A column the database refuses or does not have is dropped
+   * and the insert retried — only that column. The retry used to drop
+   * vat_amount as well, so every production line was stored with no VAT.
+   */
+  let insertRows: Array<Record<string, unknown>> = lineRows.map(({ _outstandingValue, ...row }) => row);
+  let lineError: { message?: string } | null = null;
+  for (let attempt = 0; attempt <= PO_LINE_OPTIONAL_COLUMNS.length; attempt++) {
+    ({ error: lineError } = await supabase.from("vyron_cost_purchase_order_lines").insert(insertRows));
+    if (!lineError) break;
+    const refused = refusedPoLineColumn(String(lineError.message || ""));
+    if (!refused || !insertRows.some((row) => refused in row)) break;
+    insertRows = insertRows.map((row) => {
+      const next = { ...row };
+      delete next[refused];
+      return next;
     });
-    const retry = await supabase.from("vyron_cost_purchase_order_lines").insert(dbManagedRows);
-    lineError = retry.error;
   }
   if (lineError) throw new Error(lineError.message);
+
+  /*
+   * A line removed from the order is recorded with who removed it and what it
+   * was. The order keeps its number and identity; only that line is gone.
+   */
+  if (input.id && poId) {
+    const keptIds = new Set(builtLines.map((line) => line.id).filter(Boolean) as string[]);
+    const removed = [...existingLinesById.values()].filter((prior) => !keptIds.has(String(prior.id)));
+    for (const prior of removed) {
+      const qty = Number(prior.quantity ?? prior.ordered_qty ?? 0);
+      const amounts = poLineAmounts({ quantity: qty, unit_price: prior.unit_price, vat_rate: prior.vat_rate });
+      await writeProcurementAudit(supabase, {
+        companyId,
+        eventType: "PO Line Removed",
+        entityType: "purchase_order",
+        entityId: poId,
+        entityLabel: input.po_number,
+        detail: `Removed ${String(prior.item_name || "line")} (${qty} ${String(prior.unit || "")}`.trimEnd() + `) from ${input.po_number}.`,
+        actor,
+        metadata: {
+          line_id: String(prior.id),
+          item_name: String(prior.item_name || ""),
+          quantity: qty,
+          unit: String(prior.unit || ""),
+          unit_price: Number(prior.unit_price || 0),
+          vat_rate: poLineVatRate(prior.vat_rate),
+          line_total: amounts.line_total,
+        },
+      });
+    }
+  }
 
   return getPurchaseOrderDetail(supabase, poId!, companyId);
 }

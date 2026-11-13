@@ -43,6 +43,7 @@
     "test:supervisor-permission-gates": "node scripts/test-supervisor-permission-gates.mjs",
     "test:order-audit-identity": "node scripts/test-order-audit-identity.mjs",
     "test:po-save-and-actor-identity": "node scripts/test-po-save-and-actor-identity.mjs",
+    "test:po-line-remove-and-totals": "node scripts/test-po-line-remove-and-totals.mjs",
     "test:browser-identity-writes": "node scripts/test-browser-identity-writes.mjs",
     "test:master-data-server-writes": "node scripts/test-master-data-server-writes.mjs",
     "test:crop-fidelity": "node scripts/test-crop-fidelity.mjs",
