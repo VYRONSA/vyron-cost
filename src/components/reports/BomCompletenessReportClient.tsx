@@ -138,10 +138,11 @@ export default function BomCompletenessReportClient({
     () =>
       summary
         ? [
-            { label: "Total Finished Goods", value: String(summary.totalFinishedGoods) },
+            { label: "Active Finished Goods", value: String(summary.totalFinishedGoods) },
+            { label: "Archived (Excluded)", value: String(summary.archivedExcluded) },
             { label: "Complete BOMs", value: String(summary.completeBoms) },
             { label: "No BOM", value: String(summary.noBom) },
-            { label: "Incomplete BOMs", value: String(summary.incompleteBoms) },
+            { label: "Empty / Incomplete BOMs", value: String(summary.incompleteBoms) },
             { label: "Missing Components", value: String(summary.missingComponents) },
             { label: "Products With No Cost", value: String(summary.productsWithNoCost) },
             { label: "Sold Without Usable BOM", value: String(summary.soldWithoutUsableBom) },
@@ -333,11 +334,11 @@ export default function BomCompletenessReportClient({
             <tr key={row.productId} className="border-t border-slate-100 align-top hover:bg-slate-50/70">
               <td className="px-3 py-2 font-black text-slate-900">
                 {row.productName}
-                {row.issues.length ? (
-                  <span className="mt-0.5 block max-w-[280px] text-[11px] font-semibold leading-snug text-slate-500">
-                    {row.issues[0]}
+                {row.issues.slice(0, 2).map((issue) => (
+                  <span key={issue} className="mt-0.5 block max-w-[280px] text-[11px] font-semibold leading-snug text-slate-500">
+                    {issue}
                   </span>
-                ) : null}
+                ))}
               </td>
               <td className="px-3 py-2 whitespace-nowrap font-semibold text-slate-600">{row.productCode ?? "—"}</td>
               <td className="px-3 py-2 whitespace-nowrap font-semibold text-slate-600">{row.category}</td>
@@ -437,6 +438,19 @@ export default function BomCompletenessReportClient({
             <td className="px-3 py-2.5 text-right tabular-nums">{totals.gpPct === null ? "—" : `${totals.gpPct.toFixed(1)}%`}</td>
             <td className="px-3 py-2.5" />
           </tr>
+          {summary && (summary.archivedExcluded > 0 || summary.unattributedLines > 0) ? (
+            <tr className="bg-slate-50 text-[11px] font-semibold text-slate-600">
+              <td className="px-3 py-2" colSpan={18}>
+                Not included above:
+                {summary.archivedExcluded > 0
+                  ? ` ${summary.archivedExcluded} archived product${summary.archivedExcluded === 1 ? "" : "s"} (${formatMoney(summary.archivedRevenue)} sales in this period) — archived products are not assessed and are never counted at risk.`
+                  : ""}
+                {summary.unattributedLines > 0
+                  ? ` ${summary.unattributedLines} invoice line${summary.unattributedLines === 1 ? "" : "s"} with no product (${formatMoney(summary.unattributedRevenue)}) cannot be attributed to any finished good.`
+                  : ""}
+              </td>
+            </tr>
+          ) : null}
         </tfoot>
       </ReportTable>
     </ReportDocument>
