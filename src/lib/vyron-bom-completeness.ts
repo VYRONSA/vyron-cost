@@ -58,6 +58,90 @@ export type BomStatus =
 
 export type BomSeverity = "Critical" | "High" | "Medium" | "Low" | "None";
 
+/**
+ * The state of the ingredient a BOM line points at. Ingredient records carry no
+ * active/inactive flag in this schema, so "inactive" cannot be reported — only
+ * whether the record still exists.
+ */
+export type BomLineIngredientState =
+  | "valid" // ingredient_id resolves to a current ingredient record
+  | "deleted" // ingredient_id is set but the record no longer exists
+  | "unlinked" // text-only line, never linked to an ingredient record
+  | "sub-bom" // line points at a Sub-BOM that exists
+  | "sub-bom-deleted" // line points at a Sub-BOM that no longer exists
+  | "blank"; // no ingredient, no Sub-BOM and no name: an invalid line
+
+/** Where the line's cost comes from, and whether it has one. */
+export type BomLineCostState = "costed" | "ingredient-cost-only" | "zero";
+
+export type BomLineDetail = {
+  lineId: string;
+  lineName: string;
+  lineType: string | null;
+  ingredientId: string | null;
+  ingredientName: string | null;
+  childBomId: string | null;
+  quantity: number;
+  unit: string | null;
+  unitCost: number;
+  lineCost: number;
+  ingredientState: BomLineIngredientState;
+  costState: BomLineCostState;
+  zeroQuantity: boolean;
+  /** Exact problems on this line, empty when the line is sound. */
+  problems: string[];
+};
+
+export type BomExceptionCode =
+  | "NO_BOM"
+  | "ONLY_ARCHIVED_BOM"
+  | "LINKED_BOM_DELETED"
+  | "LINKED_BOM_SUB_OR_ARCHIVED"
+  | "LINKED_TO_OTHER_PRODUCT"
+  | "EMPTY_BOM"
+  | "DELETED_INGREDIENT"
+  | "DELETED_SUB_BOM"
+  | "BLANK_LINE"
+  | "UNCOSTED_MISSING_LINE"
+  | "ZERO_QUANTITY"
+  | "NO_BOM_COST"
+  | "NO_PRODUCT_COST"
+  | "DRAFT_BOM"
+  | "NAME_ONLY_LINK"
+  | "SHARED_BOM"
+  | "UNLINKED_TEXT_LINE"
+  | "SOLD_WITHOUT_USABLE_BOM";
+
+/** One precise, correctable reason. `lineIds` names the affected BOM lines. */
+export type BomException = {
+  code: BomExceptionCode;
+  /** True when this exception is (part of) why the row is not COMPLETE. */
+  drivesClassification: boolean;
+  message: string;
+  correction: string;
+  lineIds: string[];
+};
+
+/** A reporting-only override recorded by an authorised user. Never repairs data. */
+export type BomCompletenessOverride = {
+  id: string;
+  productId: string;
+  bomId: string | null;
+  originalStatus: BomStatus;
+  originalSeverity: BomSeverity;
+  originalReason: string | null;
+  reason: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+/**
+ * The three classifications the report distinguishes. OVERRIDDEN never hides
+ * the underlying status: bomStatus, severity and exceptions stay as the system
+ * found them.
+ */
+export type BomClassification = "VERIFIED_COMPLETE" | "INCOMPLETE" | "OVERRIDDEN";
+
 /** How the BOM shown on a row was attached to its product. */
 export type BomLink = "product" | "linked" | "name" | null;
 
@@ -103,6 +187,23 @@ export type BomCompletenessRow = {
   soldWithoutUsableBom: boolean;
   recommendedAction: string;
   issues: string[];
+  /** One sentence: exactly why the row has its bomStatus. */
+  classificationReason: string;
+  /** Structured, correctable reasons (drivers first). */
+  exceptions: BomException[];
+  /** Every line of the resolved BOM, with its exact state. */
+  lines: BomLineDetail[];
+  bomIsDraft: boolean;
+  bomIsArchived: boolean;
+  /** Reporting classification. Set to OVERRIDDEN only by applyBomCompletenessOverrides. */
+  classification: BomClassification;
+  override: BomCompletenessOverride | null;
+  /**
+   * An override recorded against a different classification or BOM than the
+   * system now finds. It is shown but NOT applied — the data changed since it
+   * was approved, so it must be reviewed again.
+   */
+  staleOverride: (BomCompletenessOverride & { staleReason: string }) | null;
 };
 
 export type BomCompletenessSummary = {
@@ -123,6 +224,20 @@ export type BomCompletenessSummary = {
   /** Invoice lines in the period that carry no product, so belong to no row. */
   unattributedLines: number;
   unattributedRevenue: number;
+  /** COMPLETE as determined by the system, no override involved. */
+  systemVerifiedComplete: number;
+  /** Not COMPLETE and not overridden. */
+  systemIdentifiedIncomplete: number;
+  /** Not COMPLETE, but an authorised user overrode the reporting classification. */
+  manuallyOverridden: number;
+  /**
+   * Of totalRevenueAtRisk, the part belonging to overridden rows. Revenue at risk
+   * is NEVER reduced by an override — this figure only discloses how much of it
+   * a user has accepted.
+   */
+  overriddenRevenueAtRisk: number;
+  /** Overrides no longer applied because the underlying data changed. */
+  staleOverrides: number;
 };
 
 export type BomCompletenessReport = {
@@ -131,6 +246,8 @@ export type BomCompletenessReport = {
   categories: string[];
   from: string | null;
   to: string | null;
+  /** False when the override table is not in the database yet (overrides cannot be recorded). */
+  overridesAvailable?: boolean;
 };
 
 export type ProductRow = {
@@ -166,12 +283,20 @@ export type BomLineRow = {
   quantity: number | null;
   unit_cost: number | null;
   line_cost: number | null;
+  unit?: string | null;
+  line_type?: string | null;
 };
 /**
  * Ingredients carry no status column, so "inactive" is not a state that exists
  * here. A component is missing when its ingredient_id no longer resolves.
  */
-export type IngredientRow = { id: string; ingredient_name: string; purchase_cost: number | null; true_unit_cost: number | null };
+export type IngredientRow = {
+  id: string;
+  ingredient_name: string;
+  purchase_cost: number | null;
+  true_unit_cost: number | null;
+  recipe_unit?: string | null;
+};
 
 /** One invoice line already reduced to what this report needs. */
 export type SalesLine = { productId: string | null; quantity: number; revenue: number; cost: number };
@@ -307,10 +432,11 @@ export function buildBomCompletenessReport(input: BomCompletenessInput): BomComp
   const archived = products.filter((p) => isArchivedProduct(p));
 
   /* Resolve every product's BOM first so a BOM shared by several products can be named. */
-  const resolved = new Map<string, { bom: BomRow | null; link: BomLink; notes: string[] }>();
+  const resolved = new Map<string, { bom: BomRow | null; link: BomLink; notes: string[]; noteCodes: BomExceptionCode[] }>();
   for (const product of active) {
     const pid = String(product.id);
     const notes: string[] = [];
+    const noteCodes: BomExceptionCode[] = [];
     let bom: BomRow | null = null;
     let link: BomLink = null;
 
@@ -319,18 +445,22 @@ export function buildBomCompletenessReport(input: BomCompletenessInput): BomComp
     if (bom) link = "product";
     else if (own.length) {
       notes.push(`Only archived BOM(s) are linked to this product (${own.map((b) => b.bom_name || b.id).join(", ")}).`);
+      noteCodes.push("ONLY_ARCHIVED_BOM");
     }
 
     if (!bom && product.linked_bom_id) {
       const linked = bomById.get(String(product.linked_bom_id));
       if (!linked) {
-        notes.push("The product's linked BOM no longer exists.");
+        notes.push(`The product's linked BOM (${product.linked_bom_id}) no longer exists.`);
+        noteCodes.push("LINKED_BOM_DELETED");
       } else if (isSubBom(linked) || isArchivedBom(linked)) {
         notes.push(`The product is linked to "${linked.bom_name}", which is ${isSubBom(linked) ? "a Sub-BOM" : "archived"}.`);
+        noteCodes.push("LINKED_BOM_SUB_OR_ARCHIVED");
       } else if (ownedByAnotherActive(linked, product)) {
         notes.push(
           `The product is linked to "${linked.bom_name}", which is the BOM of another finished good (${ownerOf(linked)?.product_name}). That link is not accepted.`
         );
+        noteCodes.push("LINKED_TO_OTHER_PRODUCT");
       } else {
         bom = linked;
         link = "linked";
@@ -344,7 +474,7 @@ export function buildBomCompletenessReport(input: BomCompletenessInput): BomComp
       bom = pickBest(byName);
       if (bom) link = "name";
     }
-    resolved.set(pid, { bom, link, notes });
+    resolved.set(pid, { bom, link, notes, noteCodes });
   }
   const usersOfBom = new Map<string, string[]>();
   for (const product of active) {
@@ -364,7 +494,7 @@ export function buildBomCompletenessReport(input: BomCompletenessInput): BomComp
     /* GP is only meaningful once the product carries a real cost. */
     const costKnown = productCost > 0;
 
-    const { bom, link, notes } = resolved.get(productId)!;
+    const { bom, link, notes, noteCodes } = resolved.get(productId)!;
     const lines = bom ? linesByBom.get(String(bom.id)) || [] : [];
     const issues: string[] = [...notes];
 
@@ -374,19 +504,25 @@ export function buildBomCompletenessReport(input: BomCompletenessInput): BomComp
     let unlinkedComponents = 0;
     let zeroCostComponents = 0;
     const missingNames: string[] = [];
+    const lineDetails: BomLineDetail[] = [];
     for (const line of lines) {
       const lineOwnCost = num(line.unit_cost) > 0 || num(line.line_cost) > 0;
       let ingredient: IngredientRow | undefined;
       let missing = false;
+      let ingredientState: BomLineIngredientState;
       if (line.ingredient_id) {
         ingredient = ingredientById.get(String(line.ingredient_id));
         missing = !ingredient;
+        ingredientState = missing ? "deleted" : "valid";
       } else if (line.child_bom_id) {
         missing = !bomById.has(String(line.child_bom_id));
+        ingredientState = missing ? "sub-bom-deleted" : "sub-bom";
       } else if (!String(line.line_name || "").trim()) {
         missing = true;
+        ingredientState = "blank";
       } else {
         unlinkedComponents += 1;
+        ingredientState = "unlinked";
       }
       if (missing) {
         missingComponents += 1;
@@ -398,11 +534,47 @@ export function buildBomCompletenessReport(input: BomCompletenessInput): BomComp
        * trace dosing below the column precision, so it does not by itself make
        * the BOM unusable.
        */
-      if (num(line.quantity) <= 0) invalidComponents += 1;
+      const zeroQuantity = num(line.quantity) <= 0;
+      if (zeroQuantity) invalidComponents += 1;
 
       /* A component costing nothing (water) is NOT incomplete — only counted. */
-      const lineHasCost = lineOwnCost || num(ingredient?.true_unit_cost) > 0 || num(ingredient?.purchase_cost) > 0;
+      const ingredientHasCost = num(ingredient?.true_unit_cost) > 0 || num(ingredient?.purchase_cost) > 0;
+      const lineHasCost = lineOwnCost || ingredientHasCost;
       if (!lineHasCost) zeroCostComponents += 1;
+
+      const name = String(line.line_name || "").trim() || ingredient?.ingredient_name || "Unnamed line";
+      const problems: string[] = [];
+      if (ingredientState === "deleted") {
+        problems.push(
+          `Ingredient record ${line.ingredient_id} no longer exists (deleted). The line can no longer be repriced or deducted from stock.`
+        );
+      } else if (ingredientState === "sub-bom-deleted") {
+        problems.push(`Sub-BOM ${line.child_bom_id} no longer exists.`);
+      } else if (ingredientState === "blank") {
+        problems.push("Line names no ingredient, no Sub-BOM and has no description — it is an invalid line.");
+      } else if (ingredientState === "unlinked") {
+        problems.push("Text-only line, not linked to an ingredient record: costed from its own unit cost, never repriced or stock-deducted.");
+      }
+      if (zeroQuantity) problems.push("Required quantity is zero.");
+      if (missing && !lineOwnCost) problems.push("Line carries no cost of its own, so the missing component cannot be costed.");
+      else if (!lineHasCost) problems.push("Component cost is zero (acceptable for items like water; confirm it is intended).");
+
+      lineDetails.push({
+        lineId: String(line.id),
+        lineName: name,
+        lineType: line.line_type ?? null,
+        ingredientId: line.ingredient_id ? String(line.ingredient_id) : null,
+        ingredientName: ingredient?.ingredient_name ?? null,
+        childBomId: line.child_bom_id ? String(line.child_bom_id) : null,
+        quantity: num(line.quantity),
+        unit: line.unit?.trim() || ingredient?.recipe_unit?.trim() || null,
+        unitCost: num(line.unit_cost),
+        lineCost: num(line.line_cost) || num(line.quantity) * num(line.unit_cost),
+        ingredientState,
+        costState: lineOwnCost ? "costed" : ingredientHasCost ? "ingredient-cost-only" : "zero",
+        zeroQuantity,
+        problems,
+      });
     }
 
     const derivedLineCost = lines.reduce(
@@ -523,6 +695,141 @@ export function buildBomCompletenessReport(input: BomCompletenessInput): BomComp
         recommendedAction = "None — BOM is complete.";
     }
 
+    /* -------------------------------------------- precise exceptions */
+    const exceptions: BomException[] = [];
+    const push = (code: BomExceptionCode, drives: boolean, message: string, correction: string, lineIds: string[] = []) =>
+      exceptions.push({ code, drivesClassification: drives, message, correction, lineIds });
+    const bomLabel = bom ? `"${bom.bom_name || "Unnamed BOM"}" (${bom.id})` : "";
+    const bomIsDraft = !!bom && key(bom.status) === "draft";
+    const bomIsArchived = !!bom && isArchivedBom(bom);
+
+    notes.forEach((note, i) => {
+      const code = noteCodes[i];
+      if (!code) return;
+      const correction =
+        code === "ONLY_ARCHIVED_BOM"
+          ? "Restore the archived BOM to Approved, or build a new BOM for this finished good."
+          : code === "LINKED_BOM_DELETED"
+            ? "Link the product to an existing BOM — the BOM it points at was deleted."
+            : code === "LINKED_BOM_SUB_OR_ARCHIVED"
+              ? "Link the product to a finished-good BOM; Sub-BOMs and archived BOMs never stand as a product's BOM."
+              : "Link the product to its own BOM. Its current link belongs to a different finished good (wrong finished good).";
+      push(code, !bom, note, correction);
+    });
+    if (!bom && !noteCodes.length) {
+      push("NO_BOM", true, "No BOM or recipe is linked to this finished good — by product link, BOM link or BOM name.", "Build a BOM for this finished good, or link an existing one to it.");
+    }
+    if (bom && !lines.length) {
+      push(
+        "EMPTY_BOM",
+        true,
+        statedBomCost > 0
+          ? `BOM ${bomLabel} has no component lines, yet carries a stated cost of ${statedBomCost.toFixed(2)} that cannot be substantiated.`
+          : `BOM ${bomLabel} has no component lines.`,
+        "Add the ingredient lines, with quantities and units, to this BOM."
+      );
+    }
+    const byState = (state: BomLineIngredientState) => lineDetails.filter((l) => l.ingredientState === state);
+    const deleted = byState("deleted");
+    if (deleted.length) {
+      push(
+        "DELETED_INGREDIENT",
+        bomStatus === "MISSING COMPONENT",
+        `${deleted.length} line(s) of BOM ${bomLabel} reference a deleted ingredient record: ${deleted
+          .map((l) => `${l.lineName} (ingredient ${l.ingredientId}, ${l.quantity} ${l.unit ?? "no unit"})`)
+          .join("; ")}.`,
+        "Open the BOM and relink each listed line to a current ingredient record. The line's own quantity and cost are kept until you do.",
+        deleted.map((l) => l.lineId)
+      );
+    }
+    const deletedSub = byState("sub-bom-deleted");
+    if (deletedSub.length) {
+      push(
+        "DELETED_SUB_BOM",
+        bomStatus === "MISSING COMPONENT",
+        `${deletedSub.length} line(s) reference a Sub-BOM that no longer exists: ${deletedSub.map((l) => `${l.lineName} (Sub-BOM ${l.childBomId})`).join("; ")}.`,
+        "Relink the line to an existing Sub-BOM or replace it with ingredient lines.",
+        deletedSub.map((l) => l.lineId)
+      );
+    }
+    const blank = byState("blank");
+    if (blank.length) {
+      push(
+        "BLANK_LINE",
+        bomStatus === "MISSING COMPONENT",
+        `${blank.length} line(s) name no ingredient, no Sub-BOM and carry no description.`,
+        "Delete the blank line(s) or link them to the intended ingredient.",
+        blank.map((l) => l.lineId)
+      );
+    }
+    const missingUncosted = lineDetails.filter(
+      (l) => ["deleted", "sub-bom-deleted", "blank"].includes(l.ingredientState) && l.costState !== "costed"
+    );
+    if (missingUncosted.length) {
+      push(
+        "UNCOSTED_MISSING_LINE",
+        true,
+        `${missingUncosted.length} missing component line(s) carry no cost of their own (${missingUncosted.map((l) => l.lineName).join(", ")}), so the BOM cannot substantiate a cost.`,
+        "Relink the line(s) to a costed ingredient record.",
+        missingUncosted.map((l) => l.lineId)
+      );
+    }
+    const zeroQty = lineDetails.filter((l) => l.zeroQuantity);
+    if (zeroQty.length) {
+      push(
+        "ZERO_QUANTITY",
+        bomStatus === "INCOMPLETE",
+        `${zeroQty.length} line(s) have a required quantity of zero: ${zeroQty.map((l) => `${l.lineName}${l.unit ? ` (${l.unit})` : ""}`).join(", ")}.`,
+        "Enter the required quantity per unit produced, or confirm it is a trace dose below the quantity precision.",
+        zeroQty.map((l) => l.lineId)
+      );
+    }
+    if (bom && lines.length && (bomCost === null || bomCost <= 0)) {
+      push("NO_BOM_COST", bomStatus === "NO COST", `BOM ${bomLabel} produces no usable cost: every line totals zero and no stated BOM cost exists.`, "Price the ingredients on the BOM lines (unit cost) so the BOM produces a cost.");
+    }
+    if (productCost <= 0) {
+      push(
+        "NO_PRODUCT_COST",
+        bomStatus === "NO COST",
+        "The finished good itself carries no cost (total cost is zero or blank), so GP cannot be reported.",
+        "Recalculate the product cost from its BOM, or record its cost on the product."
+      );
+    }
+    if (bomIsDraft) {
+      push("DRAFT_BOM", false, `BOM ${bomLabel} is a Draft, not Approved.`, "Review and approve the BOM so it is the authoritative recipe.");
+    }
+    if (bom && link === "name") {
+      push("NAME_ONLY_LINK", false, `BOM ${bomLabel} is attached only because its name matches the product name.`, "Link the BOM to the finished good explicitly.");
+    }
+    if (otherUsers.length) {
+      push("SHARED_BOM", false, `BOM ${bomLabel} is also used by: ${otherUsers.join(", ")}.`, "Check for duplicate finished goods, or give each its own BOM.");
+    }
+    const unlinked = byState("unlinked");
+    if (unlinked.length) {
+      push(
+        "UNLINKED_TEXT_LINE",
+        false,
+        `${unlinked.length} text-only line(s) are not linked to an ingredient record: ${unlinked.map((l) => l.lineName).join(", ")}.`,
+        "Link each line to its ingredient so it is repriced and deducted from stock.",
+        unlinked.map((l) => l.lineId)
+      );
+    }
+    if (soldWithoutUsableBom) {
+      push(
+        "SOLD_WITHOUT_USABLE_BOM",
+        true,
+        `Sold ${sales.qty.toLocaleString("en-ZA")} unit(s) for ${sales.revenue.toFixed(2)} in this period without a usable BOM — that revenue carries an unproven cost.`,
+        "Resolve the BOM exceptions above; the revenue stays at risk until then."
+      );
+    }
+    exceptions.sort((a, b) => Number(b.drivesClassification) - Number(a.drivesClassification));
+
+    const drivers = exceptions.filter((e) => e.drivesClassification && e.code !== "SOLD_WITHOUT_USABLE_BOM");
+    const classificationReason =
+      bomStatus === "COMPLETE"
+        ? `BOM ${bomLabel} has ${lines.length} component line(s), every component resolves, every quantity is above zero and the BOM produces a cost.`
+        : `${bomStatus}: ${drivers.map((e) => e.message).join(" ") || issues[0] || "See the exceptions listed."}`;
+
     return {
       productId,
       productName: String(product.product_name || "—"),
@@ -555,6 +862,14 @@ export function buildBomCompletenessReport(input: BomCompletenessInput): BomComp
       soldWithoutUsableBom,
       recommendedAction,
       issues,
+      classificationReason,
+      exceptions,
+      lines: lineDetails,
+      bomIsDraft,
+      bomIsArchived,
+      classification: bomStatus === "COMPLETE" ? "VERIFIED_COMPLETE" : "INCOMPLETE",
+      override: null,
+      staleOverride: null,
     };
   });
 
@@ -580,11 +895,136 @@ export function buildBomCompletenessReport(input: BomCompletenessInput): BomComp
     archivedRevenue: archived.reduce((s, p) => s + (salesByProduct.get(String(p.id))?.revenue || 0), 0),
     unattributedLines,
     unattributedRevenue,
+    systemVerifiedComplete: rows.filter((r) => r.bomStatus === "COMPLETE").length,
+    systemIdentifiedIncomplete: rows.filter((r) => r.bomStatus !== "COMPLETE").length,
+    manuallyOverridden: 0,
+    overriddenRevenueAtRisk: 0,
+    staleOverrides: 0,
   };
 
   const categories = [...new Set(rows.map((r) => r.category).filter(Boolean))].sort();
 
   return { rows, summary, categories, from, to };
+}
+
+/* ================================================================ OVERRIDES */
+
+/**
+ * Apply active reporting overrides. Pure, and deliberately narrow:
+ *
+ *  - Only `classification` changes (to OVERRIDDEN). bomStatus, severity,
+ *    exceptions, lines, usableBom and soldWithoutUsableBom are left exactly as
+ *    the system found them, so an override can never claim a missing ingredient
+ *    or cost was repaired.
+ *  - Revenue at risk is NOT reduced. The part belonging to overridden rows is
+ *    disclosed separately as overriddenRevenueAtRisk.
+ *  - An override applies only while the system still finds the classification
+ *    and BOM it was recorded against. If either changed, it is reported as
+ *    stale and not applied — a user approved a different situation.
+ *  - A COMPLETE row is never overridden (there is nothing to override).
+ */
+export function applyBomCompletenessOverrides(
+  report: BomCompletenessReport,
+  overrides: BomCompletenessOverride[]
+): BomCompletenessReport {
+  const byProduct = new Map<string, BomCompletenessOverride>();
+  for (const o of overrides) {
+    const existing = byProduct.get(o.productId);
+    if (!existing || existing.createdAt < o.createdAt) byProduct.set(o.productId, o);
+  }
+  let stale = 0;
+  const rows = report.rows.map((row) => {
+    const o = byProduct.get(row.productId);
+    if (!o) return row;
+    if (row.bomStatus === "COMPLETE") {
+      stale += 1;
+      return { ...row, staleOverride: { ...o, staleReason: "The BOM is now system-verified complete; the override is no longer needed." } };
+    }
+    if (o.originalStatus !== row.bomStatus || (o.bomId ?? null) !== (row.bomId ?? null)) {
+      stale += 1;
+      const staleReason =
+        o.originalStatus !== row.bomStatus
+          ? `Recorded against ${o.originalStatus}; the system now finds ${row.bomStatus}. Review and override again if still valid.`
+          : `Recorded against BOM ${o.bomId ?? "none"}; the product now resolves to BOM ${row.bomId ?? "none"}.`;
+      return { ...row, staleOverride: { ...o, staleReason } };
+    }
+    return { ...row, classification: "OVERRIDDEN" as const, override: o };
+  });
+  const overridden = rows.filter((r) => r.classification === "OVERRIDDEN");
+  return {
+    ...report,
+    rows,
+    summary: {
+      ...report.summary,
+      systemIdentifiedIncomplete: rows.filter((r) => r.classification === "INCOMPLETE").length,
+      manuallyOverridden: overridden.length,
+      overriddenRevenueAtRisk: overridden.filter((r) => r.soldWithoutUsableBom).reduce((s, r) => s + r.revenue, 0),
+      staleOverrides: stale,
+    },
+  };
+}
+
+export const BOM_OVERRIDE_TABLE = "vyron_bom_completeness_overrides";
+export const BOM_OVERRIDE_MIN_REASON = 10;
+
+type OverrideDbRow = {
+  id: string;
+  product_id: string;
+  bom_id: string | null;
+  original_status: string;
+  original_severity: string;
+  original_reason: string | null;
+  reason: string;
+  created_by: string;
+  created_at: string;
+};
+
+const toOverride = (r: OverrideDbRow): BomCompletenessOverride => ({
+  id: String(r.id),
+  productId: String(r.product_id),
+  bomId: r.bom_id ? String(r.bom_id) : null,
+  originalStatus: r.original_status as BomStatus,
+  originalSeverity: r.original_severity as BomSeverity,
+  originalReason: r.original_reason,
+  reason: r.reason,
+  createdBy: r.created_by,
+  createdAt: r.created_at,
+});
+
+/** True when the error means the override table has not been created yet. */
+export function isMissingOverrideTable(message: string) {
+  const m = message.toLowerCase();
+  return m.includes(BOM_OVERRIDE_TABLE) && (m.includes("does not exist") || m.includes("could not find") || m.includes("schema cache"));
+}
+
+/** Active overrides for a company. Null when the table does not exist yet. */
+export async function loadActiveBomOverrides(
+  supabase: SupabaseClient,
+  companyId: string
+): Promise<BomCompletenessOverride[] | null> {
+  try {
+    return await readActiveBomOverrides(supabase, companyId);
+  } catch (err) {
+    // The report must never fail because overrides could not be read. Rows then
+    // show the system classification only — never a classification nobody approved.
+    console.error("[bom-completeness] overrides unavailable", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+async function readActiveBomOverrides(supabase: SupabaseClient, companyId: string): Promise<BomCompletenessOverride[] | null> {
+  const { data, error } = await supabase
+    .from(BOM_OVERRIDE_TABLE)
+    .select("id, product_id, bom_id, original_status, original_severity, original_reason, reason, created_by, created_at")
+    .eq("company_id", companyId)
+    .is("removed_at", null)
+    .order("created_at", { ascending: true })
+    .limit(5000);
+  if (error) {
+    if (isMissingOverrideTable(error.message) || error.code === "PGRST205" || error.code === "42P01") return null;
+    throw new Error(`${BOM_OVERRIDE_TABLE}: ${error.message}`);
+  }
+  return (data || []).map((r) => toOverride(r as OverrideDbRow));
 }
 
 /* ======================================================================= I/O */
@@ -636,13 +1076,13 @@ export async function getBomCompletenessReport(
     loadAll<BomLineRow>(
       supabase,
       "vyron_cost_bom_lines",
-      "id, bom_id, ingredient_id, child_bom_id, line_name, quantity, unit_cost, line_cost",
+      "id, bom_id, ingredient_id, child_bom_id, line_name, line_type, quantity, unit, unit_cost, line_cost",
       companyId
     ),
     loadAll<IngredientRow>(
       supabase,
       "vyron_cost_ingredients",
-      "id, ingredient_name, purchase_cost, true_unit_cost",
+      "id, ingredient_name, purchase_cost, true_unit_cost, recipe_unit",
       companyId
     ),
   ]);
@@ -711,5 +1151,10 @@ export async function getBomCompletenessReport(
     // A missing mapping table must not fail the report; the column simply shows "—".
   }
 
-  return buildBomCompletenessReport({ products, boms, bomLines, ingredients, sales, productCodes, from, to });
+  const report = buildBomCompletenessReport({ products, boms, bomLines, ingredients, sales, productCodes, from, to });
+  const overrides = await loadActiveBomOverrides(supabase, companyId);
+  return {
+    ...applyBomCompletenessOverrides(report, overrides ?? []),
+    overridesAvailable: overrides !== null,
+  };
 }

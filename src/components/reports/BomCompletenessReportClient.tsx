@@ -1,10 +1,17 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ReportDocument, { ReportTable, buildReportPayload } from "@/components/reports/ReportDocument";
 import { formatMoney, formatQty, type ReportFilter } from "@/lib/vyron-report-exports";
-import type { BomCompletenessReport, BomSeverity, BomStatus } from "@/lib/vyron-bom-completeness";
+import type {
+  BomClassification,
+  BomCompletenessReport,
+  BomCompletenessRow,
+  BomLineDetail,
+  BomSeverity,
+  BomStatus,
+} from "@/lib/vyron-bom-completeness";
 
 const ALL = "__all__";
 
@@ -17,6 +24,31 @@ const STATUSES: BomStatus[] = [
   "NO COST",
 ];
 const SEVERITIES: BomSeverity[] = ["Critical", "High", "Medium", "Low", "None"];
+
+const CLASSIFICATION_LABEL: Record<BomClassification, string> = {
+  VERIFIED_COMPLETE: "System-verified complete",
+  INCOMPLETE: "System-identified incomplete",
+  OVERRIDDEN: "Manually Overridden",
+};
+const CLASSIFICATION_TONE: Record<BomClassification, string> = {
+  VERIFIED_COMPLETE: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+  INCOMPLETE: "bg-rose-50 text-rose-700 ring-1 ring-rose-200",
+  OVERRIDDEN: "bg-violet-50 text-violet-800 ring-1 ring-violet-200",
+};
+
+const INGREDIENT_STATE_LABEL: Record<BomLineDetail["ingredientState"], string> = {
+  valid: "Linked — current record",
+  deleted: "Deleted ingredient record",
+  unlinked: "Unlinked (text only)",
+  "sub-bom": "Sub-BOM",
+  "sub-bom-deleted": "Deleted Sub-BOM",
+  blank: "Invalid (blank line)",
+};
+const COST_STATE_LABEL: Record<BomLineDetail["costState"], string> = {
+  costed: "Costed on line",
+  "ingredient-cost-only": "Cost from ingredient only",
+  zero: "Zero / missing cost",
+};
 
 const STATUS_TONE: Record<BomStatus, string> = {
   COMPLETE: "bg-emerald-50 text-emerald-700",
@@ -51,11 +83,13 @@ export default function BomCompletenessReportClient({
   companyName,
   generatedAt,
   loadError,
+  canOverride = false,
 }: {
   report: BomCompletenessReport | null;
   companyName: string;
   generatedAt: string;
   loadError: string | null;
+  canOverride?: boolean;
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -65,6 +99,20 @@ export default function BomCompletenessReportClient({
   const [status, setStatus] = useState<string>(ALL);
   const [severity, setSeverity] = useState<string>(ALL);
   const [attentionOnly, setAttentionOnly] = useState(false);
+  const [classification, setClassification] = useState<string>(ALL);
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [overrideTarget, setOverrideTarget] = useState<{ row: BomCompletenessRow; mode: "create" | "remove" } | null>(null);
+  const [overrideReason, setOverrideReason] = useState("");
+  const [overrideBusy, setOverrideBusy] = useState(false);
+  const [overrideError, setOverrideError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const toggle = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const from = report?.from || "";
   const to = report?.to || "";
@@ -92,10 +140,11 @@ export default function BomCompletenessReportClient({
       if (status !== ALL && row.bomStatus !== status) return false;
       if (severity !== ALL && row.severity !== severity) return false;
       if (attentionOnly && row.bomStatus === "COMPLETE") return false;
+      if (classification !== ALL && row.classification !== classification) return false;
       if (term && !`${row.productName} ${row.productCode ?? ""} ${row.category}`.toLowerCase().includes(term)) return false;
       return true;
     });
-  }, [allRows, search, category, status, severity, attentionOnly]);
+  }, [allRows, search, category, status, severity, attentionOnly, classification]);
 
   /** Totals are taken from the rows on screen so the footer cannot disagree. */
   /*
@@ -129,8 +178,10 @@ export default function BomCompletenessReportClient({
     if (status !== ALL) list.push({ key: "status", label: "BOM Status", value: status });
     if (severity !== ALL) list.push({ key: "severity", label: "Severity", value: severity });
     if (attentionOnly) list.push({ key: "attention", label: "View", value: "Needs attention only" });
+    if (classification !== ALL)
+      list.push({ key: "classification", label: "Classification", value: CLASSIFICATION_LABEL[classification as BomClassification] });
     return list;
-  }, [from, to, search, category, status, severity, attentionOnly]);
+  }, [from, to, search, category, status, severity, attentionOnly, classification]);
 
   const period = useMemo(() => ({ kind: "range" as const, from: from || null, to: to || null }), [from, to]);
 
@@ -139,6 +190,9 @@ export default function BomCompletenessReportClient({
       summary
         ? [
             { label: "Active Finished Goods", value: String(summary.totalFinishedGoods) },
+            { label: "System-Verified Complete", value: String(summary.systemVerifiedComplete) },
+            { label: "System-Identified Incomplete", value: String(summary.systemIdentifiedIncomplete) },
+            { label: "Manually Overridden", value: String(summary.manuallyOverridden) },
             { label: "Archived (Excluded)", value: String(summary.archivedExcluded) },
             { label: "Complete BOMs", value: String(summary.completeBoms) },
             { label: "No BOM", value: String(summary.noBom) },
@@ -146,7 +200,8 @@ export default function BomCompletenessReportClient({
             { label: "Missing Components", value: String(summary.missingComponents) },
             { label: "Products With No Cost", value: String(summary.productsWithNoCost) },
             { label: "Sold Without Usable BOM", value: String(summary.soldWithoutUsableBom) },
-            { label: "Revenue At Risk", value: formatMoney(summary.totalRevenueAtRisk) },
+            { label: "Revenue At Risk (incl. overridden)", value: formatMoney(summary.totalRevenueAtRisk) },
+            { label: "Of Which Overridden", value: formatMoney(summary.overriddenRevenueAtRisk) },
           ]
         : [],
     [summary]
@@ -159,7 +214,10 @@ export default function BomCompletenessReportClient({
       { key: "category", label: "Category" },
       { key: "selling_price", label: "Selling Price" },
       { key: "product_cost", label: "Product Cost" },
+      { key: "bom", label: "BOM (Name / ID / Status)" },
       { key: "bom_status", label: "BOM Status" },
+      { key: "classification", label: "Classification" },
+      { key: "reason", label: "Precise Reason" },
       { key: "severity", label: "Priority" },
       { key: "components", label: "Components" },
       { key: "missing", label: "Missing Components" },
@@ -172,6 +230,7 @@ export default function BomCompletenessReportClient({
       { key: "gp", label: "GP" },
       { key: "gp_pct", label: "GP %" },
       { key: "action", label: "Recommended Action" },
+      { key: "override", label: "Override (By / When / Reason)" },
     ],
     []
   );
@@ -193,7 +252,10 @@ export default function BomCompletenessReportClient({
           r.category,
           r.sellingPrice > 0 ? formatMoney(r.sellingPrice) : "Not priced",
           r.productCost > 0 ? formatMoney(r.productCost) : "No cost",
+          r.bomId ? `${r.bomName ?? "Unnamed"} / ${r.bomId} / ${r.bomRecordStatus ?? "no status"}` : "No BOM",
           r.bomStatus,
+          CLASSIFICATION_LABEL[r.classification],
+          r.classificationReason,
           r.severity,
           String(r.componentCount),
           String(r.missingComponents),
@@ -206,10 +268,45 @@ export default function BomCompletenessReportClient({
           r.gp === null ? "Cost unknown" : formatMoney(r.gp),
           r.gpPct === null ? "Cost unknown" : `${r.gpPct.toFixed(1)}%`,
           r.recommendedAction,
+          r.override
+            ? `${r.override.createdBy} / ${r.override.createdAt.slice(0, 16).replace("T", " ")} / ${r.override.reason}`
+            : r.staleOverride
+              ? `Not applied (stale): ${r.staleOverride.staleReason}`
+              : "—",
         ]),
       }),
     [filtered, companyName, generatedAt, period, activeFilters, summaryTiles, columns]
   );
+
+  const submitOverride = useCallback(async () => {
+    if (!overrideTarget) return;
+    setOverrideBusy(true);
+    setOverrideError(null);
+    try {
+      const { row, mode } = overrideTarget;
+      const res = await fetch("/api/reports/bom-completeness/overrides", {
+        method: mode === "create" ? "POST" : "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          mode === "create" ? { productId: row.productId, reason: overrideReason } : { overrideId: row.override?.id, reason: overrideReason }
+        ),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.ok) throw new Error(json.error || `Request failed (${res.status}).`);
+      setNotice(
+        mode === "create"
+          ? `"${row.productName}" is now reported as Manually Overridden. The BOM, its ingredients and its cost were not changed.`
+          : `Override removed for "${row.productName}". The report shows the system classification again.`
+      );
+      setOverrideTarget(null);
+      setOverrideReason("");
+      navigate({});
+    } catch (err) {
+      setOverrideError(err instanceof Error ? err.message : "The override could not be saved.");
+    } finally {
+      setOverrideBusy(false);
+    }
+  }, [overrideTarget, overrideReason, navigate]);
 
   const controlClass =
     "mt-1 w-full rounded-xl border border-[rgba(11,32,43,0.12)] bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none";
@@ -292,6 +389,17 @@ export default function BomCompletenessReportClient({
               ))}
             </select>
           </label>
+          <label className="min-w-[200px]">
+            <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Classification</span>
+            <select value={classification} onChange={(e) => setClassification(e.target.value)} className={controlClass}>
+              <option value={ALL}>All classifications</option>
+              {(Object.keys(CLASSIFICATION_LABEL) as BomClassification[]).map((c) => (
+                <option key={c} value={c}>
+                  {CLASSIFICATION_LABEL[c]}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="flex items-center gap-2 pb-2">
             <input
               type="checkbox"
@@ -306,7 +414,25 @@ export default function BomCompletenessReportClient({
         </>
       }
     >
-      <ReportTable minWidth={2040}>
+      <div className="mb-3 rounded-xl border border-violet-200 bg-violet-50/60 px-4 py-3 text-[12px] font-semibold leading-relaxed text-violet-900 print:hidden">
+        <span className="font-black">Classifications.</span> <b>System-verified complete</b>: every component resolves, has a
+        quantity and the BOM produces a cost. <b>System-identified incomplete</b>: the system found the exceptions listed on the
+        row. <b>Manually Overridden</b>: an authorised user confirmed the BOM is valid for operational purposes. An override
+        changes the reporting classification only — it does not repair the underlying data, it never changes costing or stock
+        deduction, and Revenue at Risk still includes overridden rows (disclosed separately). Open a row (+) to see the exact
+        exceptions and BOM lines.
+        {report?.overridesAvailable === false ? (
+          <span className="mt-1 block font-black text-rose-700">
+            Overrides cannot be recorded yet: the override table has not been created in this database.
+          </span>
+        ) : null}
+      </div>
+      {notice ? (
+        <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-[12px] font-bold text-emerald-800 print:hidden">
+          {notice}
+        </div>
+      ) : null}
+      <ReportTable minWidth={2200}>
         <thead className="bg-slate-950 text-xs font-black uppercase tracking-[0.10em] text-white">
           <tr>
             <th className="px-3 py-2.5">Finished Good</th>
@@ -315,6 +441,7 @@ export default function BomCompletenessReportClient({
             <th className="px-3 py-2.5 text-right">Selling Price</th>
             <th className="px-3 py-2.5 text-right">Product Cost</th>
             <th className="px-3 py-2.5">BOM Status</th>
+            <th className="px-3 py-2.5">Classification</th>
             <th className="px-3 py-2.5">Priority</th>
             <th className="px-3 py-2.5 text-right">Components</th>
             <th className="px-3 py-2.5 text-right">Missing</th>
@@ -331,14 +458,22 @@ export default function BomCompletenessReportClient({
         </thead>
         <tbody>
           {filtered.map((row) => (
-            <tr key={row.productId} className="border-t border-slate-100 align-top hover:bg-slate-50/70">
+            <Fragment key={row.productId}>
+            <tr className="border-t border-slate-100 align-top hover:bg-slate-50/70">
               <td className="px-3 py-2 font-black text-slate-900">
+                <button
+                  type="button"
+                  onClick={() => toggle(row.productId)}
+                  aria-expanded={expanded.has(row.productId)}
+                  className="mr-1 inline-flex h-5 w-5 items-center justify-center rounded border border-slate-300 text-[11px] font-black text-slate-600 print:hidden"
+                  title="Show exceptions and BOM lines"
+                >
+                  {expanded.has(row.productId) ? "−" : "+"}
+                </button>
                 {row.productName}
-                {row.issues.slice(0, 2).map((issue) => (
-                  <span key={issue} className="mt-0.5 block max-w-[280px] text-[11px] font-semibold leading-snug text-slate-500">
-                    {issue}
-                  </span>
-                ))}
+                <span className="mt-0.5 block max-w-[300px] text-[11px] font-semibold leading-snug text-slate-500">
+                  {row.classificationReason}
+                </span>
               </td>
               <td className="px-3 py-2 whitespace-nowrap font-semibold text-slate-600">{row.productCode ?? "—"}</td>
               <td className="px-3 py-2 whitespace-nowrap font-semibold text-slate-600">{row.category}</td>
@@ -354,6 +489,16 @@ export default function BomCompletenessReportClient({
                 >
                   {row.bomStatus}
                 </span>
+              </td>
+              <td className="px-3 py-2 whitespace-nowrap">
+                <span
+                  className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.06em] ${CLASSIFICATION_TONE[row.classification]}`}
+                >
+                  {CLASSIFICATION_LABEL[row.classification]}
+                </span>
+                {row.staleOverride ? (
+                  <span className="mt-1 block text-[10px] font-black uppercase text-amber-700">Override not applied (stale)</span>
+                ) : null}
               </td>
               <td className="px-3 py-2 whitespace-nowrap">
                 <span
@@ -415,10 +560,27 @@ export default function BomCompletenessReportClient({
                 {row.recommendedAction}
               </td>
             </tr>
+            {expanded.has(row.productId) ? (
+              <tr className="bg-slate-50/80">
+                <td colSpan={19} className="px-4 py-4">
+                  <BomExceptionDetail
+                    row={row}
+                    canOverride={canOverride && report?.overridesAvailable !== false}
+                    onOverride={(mode) => {
+                      setOverrideTarget({ row, mode });
+                      setOverrideReason("");
+                      setOverrideError(null);
+                      setNotice(null);
+                    }}
+                  />
+                </td>
+              </tr>
+            ) : null}
+            </Fragment>
           ))}
           {filtered.length === 0 ? (
             <tr>
-              <td colSpan={18} className="px-3 py-10 text-center text-sm font-bold text-slate-500">
+              <td colSpan={19} className="px-3 py-10 text-center text-sm font-bold text-slate-500">
                 No finished goods match these filters.
               </td>
             </tr>
@@ -426,7 +588,7 @@ export default function BomCompletenessReportClient({
         </tbody>
         <tfoot>
           <tr className="border-t-2 border-slate-900 bg-slate-50 font-black text-slate-900">
-            <td className="px-3 py-2.5" colSpan={7}>
+            <td className="px-3 py-2.5" colSpan={8}>
               Totals — {totals.count} finished good{totals.count === 1 ? "" : "s"}
               {totals.unknownCost ? ` · GP excludes ${totals.unknownCost} product${totals.unknownCost === 1 ? "" : "s"} with no cost` : ""}
             </td>
@@ -440,7 +602,7 @@ export default function BomCompletenessReportClient({
           </tr>
           {summary && (summary.archivedExcluded > 0 || summary.unattributedLines > 0) ? (
             <tr className="bg-slate-50 text-[11px] font-semibold text-slate-600">
-              <td className="px-3 py-2" colSpan={18}>
+              <td className="px-3 py-2" colSpan={19}>
                 Not included above:
                 {summary.archivedExcluded > 0
                   ? ` ${summary.archivedExcluded} archived product${summary.archivedExcluded === 1 ? "" : "s"} (${formatMoney(summary.archivedRevenue)} sales in this period) — archived products are not assessed and are never counted at risk.`
@@ -453,6 +615,214 @@ export default function BomCompletenessReportClient({
           ) : null}
         </tfoot>
       </ReportTable>
+      {overrideTarget ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 print:hidden" role="dialog" aria-modal="true">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl">
+            <h3 className="text-base font-black text-slate-900">
+              {overrideTarget.mode === "create" ? "Override BOM Completeness" : "Remove Override"}
+            </h3>
+            <p className="mt-1 text-sm font-bold text-slate-700">
+              {overrideTarget.row.productName} {overrideTarget.row.productCode ? `(${overrideTarget.row.productCode})` : ""}
+            </p>
+            <p className="mt-2 rounded-lg bg-slate-50 p-2 text-[12px] font-semibold text-slate-600">
+              System classification: <b>{overrideTarget.row.bomStatus}</b> ({overrideTarget.row.severity}). {overrideTarget.row.classificationReason}
+            </p>
+            {overrideTarget.mode === "create" ? (
+              <p className="mt-2 text-[12px] font-semibold leading-relaxed text-violet-900">
+                The report will show this BOM as <b>Manually Overridden</b>, recording you, the date and time, the system
+                classification above and your reason. The BOM, its lines, ingredients, costing and stock deduction are NOT
+                changed, the exceptions stay visible, and its revenue stays in Revenue at Risk. If the BOM changes later, the
+                override stops applying until it is reviewed again.
+              </p>
+            ) : (
+              <p className="mt-2 text-[12px] font-semibold text-slate-700">
+                Recorded by {overrideTarget.row.override?.createdBy} on {overrideTarget.row.override?.createdAt.slice(0, 16).replace("T", " ")}:
+                “{overrideTarget.row.override?.reason}”. The removal is recorded in the audit trail.
+              </p>
+            )}
+            <label className="mt-3 block">
+              <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                {overrideTarget.mode === "create" ? "Reason (mandatory, at least 10 characters)" : "Reason for removal (mandatory)"}
+              </span>
+              <textarea
+                value={overrideReason}
+                onChange={(e) => setOverrideReason(e.target.value)}
+                rows={3}
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-900 outline-none"
+              />
+            </label>
+            {overrideError ? <p className="mt-2 text-[12px] font-bold text-rose-700">{overrideError}</p> : null}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setOverrideTarget(null)}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={overrideBusy || overrideReason.trim().length < (overrideTarget.mode === "create" ? 10 : 5)}
+                onClick={submitOverride}
+                className="rounded-xl bg-violet-700 px-4 py-2 text-sm font-black text-white disabled:opacity-40"
+              >
+                {overrideBusy ? "Saving…" : overrideTarget.mode === "create" ? "Confirm Override" : "Remove Override"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </ReportDocument>
   );
 }
+
+function BomExceptionDetail({
+  row,
+  canOverride,
+  onOverride,
+}: {
+  row: BomCompletenessRow;
+  canOverride: boolean;
+  onOverride: (mode: "create" | "remove") => void;
+}) {
+  const affected = new Set(row.exceptions.flatMap((e) => e.lineIds));
+  return (
+    <div className="space-y-3 text-[12px] text-slate-700">
+      <div className="grid gap-2 md:grid-cols-4">
+        <Fact label="Finished Good" value={`${row.productName}${row.productCode ? ` — ${row.productCode}` : ""}`} />
+        <Fact label="BOM Name" value={row.bomName ?? "No BOM resolved"} />
+        <Fact label="BOM ID" value={row.bomId ?? "—"} />
+        <Fact
+          label="BOM Record Status"
+          value={`${row.bomRecordStatus ?? "—"}${row.bomIsDraft ? " (Draft)" : ""}${row.bomIsArchived ? " (Archived)" : ""}${
+            row.bomLink === "name"
+              ? " · linked by name only"
+              : row.bomLink === "linked"
+                ? " · via product BOM link"
+                : row.bomLink === "product"
+                  ? " · owned by this product"
+                  : ""
+          }`}
+        />
+      </div>
+      <div className="rounded-lg border border-slate-200 bg-white p-3">
+        <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Why this classification</div>
+        <p className="mt-1 font-semibold">{row.classificationReason}</p>
+        {row.override ? (
+          <p className="mt-2 rounded bg-violet-50 p-2 font-semibold text-violet-900">
+            <b>Manually Overridden</b> by {row.override.createdBy} on {row.override.createdAt.slice(0, 16).replace("T", " ")} — original
+            classification {row.override.originalStatus} ({row.override.originalSeverity}). Reason: “{row.override.reason}”. The exceptions
+            below are unchanged: the override does not repair them.
+          </p>
+        ) : null}
+        {row.staleOverride ? (
+          <p className="mt-2 rounded bg-amber-50 p-2 font-semibold text-amber-900">
+            An override by {row.staleOverride.createdBy} ({row.staleOverride.createdAt.slice(0, 10)}, “{row.staleOverride.reason}”) is NOT
+            applied: {row.staleOverride.staleReason}
+          </p>
+        ) : null}
+      </div>
+      {row.exceptions.length ? (
+        <div>
+          <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Exceptions and what to correct</div>
+          <ul className="mt-1 space-y-1.5">
+            {row.exceptions.map((e) => (
+              <li key={`${e.code}-${e.message}`} className="rounded-lg border border-slate-200 bg-white p-2">
+                <span
+                  className={`mr-2 inline-flex rounded px-1.5 py-0.5 text-[9px] font-black uppercase ${
+                    e.drivesClassification ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {e.drivesClassification ? "Causes classification" : "Also noted"}
+                </span>
+                <span className="font-bold text-slate-900">{e.message}</span>
+                <span className="mt-0.5 block font-semibold text-emerald-800">Correct by: {e.correction}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {row.lines.length ? (
+        <div className="overflow-x-auto">
+          <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">BOM lines ({row.lines.length})</div>
+          <table className="mt-1 w-full min-w-[980px] border border-slate-200 bg-white text-left text-[11px]">
+            <thead className="bg-slate-100 font-black uppercase text-slate-600">
+              <tr>
+                <th className="px-2 py-1.5">Component / Description</th>
+                <th className="px-2 py-1.5">Ingredient Reference</th>
+                <th className="px-2 py-1.5">Ingredient Record</th>
+                <th className="px-2 py-1.5 text-right">Required Qty</th>
+                <th className="px-2 py-1.5">Unit</th>
+                <th className="px-2 py-1.5 text-right">Unit Cost</th>
+                <th className="px-2 py-1.5 text-right">Line Cost</th>
+                <th className="px-2 py-1.5">Cost</th>
+                <th className="px-2 py-1.5">Problem</th>
+              </tr>
+            </thead>
+            <tbody>
+              {row.lines.map((l) => (
+                <tr key={l.lineId} className={`border-t border-slate-100 ${affected.has(l.lineId) || l.problems.length ? "bg-rose-50/60" : ""}`}>
+                  <td className="px-2 py-1.5 font-bold text-slate-900">{l.lineName}</td>
+                  <td className="px-2 py-1.5 font-mono text-[10px] text-slate-600">
+                    {l.ingredientId ?? (l.childBomId ? `Sub-BOM ${l.childBomId}` : "—")}
+                    {l.ingredientName && l.ingredientName !== l.lineName ? <span className="block font-sans">{l.ingredientName}</span> : null}
+                  </td>
+                  <td
+                    className={`px-2 py-1.5 font-bold ${
+                      l.ingredientState === "valid" || l.ingredientState === "sub-bom" ? "text-emerald-700" : "text-rose-700"
+                    }`}
+                  >
+                    {INGREDIENT_STATE_LABEL[l.ingredientState]}
+                  </td>
+                  <td className={`px-2 py-1.5 text-right tabular-nums ${l.zeroQuantity ? "font-black text-rose-700" : ""}`}>
+                    {formatQty(l.quantity, 4)}
+                  </td>
+                  <td className="px-2 py-1.5">{l.unit ?? <span className="text-rose-700">No unit</span>}</td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">{formatMoney(l.unitCost)}</td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">{formatMoney(l.lineCost)}</td>
+                  <td className={`px-2 py-1.5 ${l.costState === "zero" ? "font-bold text-amber-700" : ""}`}>{COST_STATE_LABEL[l.costState]}</td>
+                  <td className="px-2 py-1.5 font-semibold text-rose-800">{l.problems.join(" ") || <span className="text-slate-400">—</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="font-semibold text-slate-500">
+          {row.bomId ? "This BOM has no lines." : "No BOM is resolved, so there are no lines to show."}
+        </p>
+      )}
+      <p className="text-[11px] font-semibold text-slate-500">
+        Ingredient records carry no active/inactive flag in this system, so a component is reported as deleted (its record no longer
+        exists), unlinked (text only) or linked — never as “inactive”.
+      </p>
+      {canOverride && row.bomStatus !== "COMPLETE" ? (
+        <div className="flex gap-2 print:hidden">
+          {row.override ? (
+            <button
+              type="button"
+              onClick={() => onOverride("remove")}
+              className="rounded-xl border border-violet-300 px-3 py-1.5 text-[12px] font-black text-violet-800"
+            >
+              Remove Override
+            </button>
+          ) : (
+            <button type="button" onClick={() => onOverride("create")} className="rounded-xl bg-violet-700 px-3 py-1.5 text-[12px] font-black text-white">
+              Override BOM Completeness
+            </button>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-2">
+      <div className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</div>
+      <div className="mt-0.5 break-all font-bold text-slate-900">{value}</div>
+    </div>
+  );
+}
+

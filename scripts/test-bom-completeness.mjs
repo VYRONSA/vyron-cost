@@ -220,6 +220,8 @@ function fakeSupabase() {
         in(c, vs) { filters.push((r) => vs.includes(r[c])); return q; },
         order(c) { order = c; return q; },
         range(a, b) { range = [a, b]; return q; },
+        is(c, v) { filters.push((r) => (r[c] ?? null) === v); return q; },
+        limit(n) { range = [0, n - 1]; return q; },
         then(resolve) {
           let rows = (tables[table] || []).filter((r) => filters.every((f) => f(r)));
           if (order) rows = [...rows].sort((x, y) => String(x[order]).localeCompare(String(y[order])));

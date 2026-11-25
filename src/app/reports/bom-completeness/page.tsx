@@ -3,6 +3,9 @@ import BomCompletenessReportClient from "@/components/reports/BomCompletenessRep
 import VyronCostAiShell from "@/components/VyronCostAiShell";
 import { loadBomCompletenessReport } from "@/lib/vyron-reports-data";
 import { getReportCompanyName } from "@/lib/vyron-report-context";
+import { getServerWorkspaceSession } from "@/lib/vyron-workspace-admin-server";
+import { sessionHasPermission } from "@/lib/vyron-workspace-permissions";
+import { BOM_OVERRIDE_PERMISSION } from "@/lib/vyron-bom-completeness-overrides";
 
 export const dynamic = "force-dynamic";
 
@@ -21,10 +24,13 @@ export default async function BomCompletenessReportPage({
 }) {
   const { from = "", to = "" } = await searchParams;
 
-  const [load, companyName] = await Promise.all([
+  const [load, companyName, session] = await Promise.all([
     loadBomCompletenessReport({ from: from || undefined, to: to || undefined }),
     getReportCompanyName(),
+    getServerWorkspaceSession().catch(() => null),
   ]);
+  // Display only: the override API enforces the same permission on every write.
+  const canOverride = !!session && sessionHasPermission(session, BOM_OVERRIDE_PERMISSION);
 
   return (
     <VyronCostAiShell
@@ -39,6 +45,7 @@ export default async function BomCompletenessReportPage({
           companyName={companyName}
           generatedAt={new Date().toISOString()}
           loadError={load.error}
+          canOverride={canOverride}
         />
       </Suspense>
     </VyronCostAiShell>
