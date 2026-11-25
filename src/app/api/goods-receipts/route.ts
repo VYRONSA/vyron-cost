@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { memberDisplayName } from "@/lib/vyron-audit-actor";
+import { memberDisplayName, sessionAuditActor } from "@/lib/vyron-audit-actor";
 import { createGoodsReceipt, listGoodsReceipts } from "@/lib/vyron-procurement";
 import { getSupabaseAdmin, isSupabaseServiceRoleConfigured } from "@/lib/supabase-server";
 import { resolveApiCompanyIdWithContext } from "@/lib/vyron-api-workspace";
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       received_by: body.received_by,
       notes: body.notes,
       lines: Array.isArray(body.lines) ? body.lines : [],
-    }, await memberDisplayName(supabase, session));
+    }, await memberDisplayName(supabase, session), { userId: sessionAuditActor(session) });
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     return workspaceAccessErrorResponse(error, "GRN failed.");

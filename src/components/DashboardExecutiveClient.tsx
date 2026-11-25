@@ -6,6 +6,7 @@ import { ArrowRight, ArrowUpRight, Box, Calculator, ChevronRight, ClipboardList,
 import type { DashboardActivity, DashboardKpi, DashboardOverview } from "@/lib/vyron-dashboard-overview";
 import type { AttentionCentre } from "@/lib/vyron-attention-centre";
 import DashboardAttentionPanel from "@/components/dashboard/DashboardAttentionPanel";
+import DashboardGrnApprovals from "@/components/dashboard/DashboardGrnApprovals";
 
 /**
  * The VOLORA executive dashboard.
@@ -219,6 +220,9 @@ export default function DashboardExecutiveClient({ overview, attention = null }:
 
       {/* ------------------------------------- attention required + last production */}
       <DashboardAttentionPanel attention={attention} />
+
+      {/* ------------------------------------- GRN approvals (shown to members who can view GRNs) */}
+      <DashboardGrnApprovals />
 
       {/* ------------------------------------- key performance + profit trend */}
       <section className="grid gap-5 xl:grid-cols-[1.02fr_1fr]">

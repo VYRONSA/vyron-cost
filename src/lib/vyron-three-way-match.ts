@@ -60,6 +60,8 @@ export async function computeThreeWayMatch(
         .select("id")
         .eq("purchase_order_id", purchaseOrderId)
         .eq("company_id", companyId)
+        // Only GRNs that actually received stock. A GRN awaiting approval, rejected or reversed has not.
+        .not("status", "in", '("Pending Approval","Posting","Rejected","Reversed","Cancelled")')
         .order("received_at", { ascending: false })
         .limit(1),
     ]);

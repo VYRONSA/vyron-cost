@@ -132,6 +132,69 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ ok: false, error: "Reversed GRNs cannot be edited." }, { status: 409 });
     }
 
+    /*
+     * Approval workflow: a GRN awaiting approval (or being posted, or rejected)
+     * changes status ONLY through Approve / Reject, never through an edit — an
+     * edit must not be able to post stock or skip the approver.
+     */
+    const WORKFLOW = ["Pending Approval", "Posting", "Rejected"];
+    const currentStatus = String(grn.status);
+    if (WORKFLOW.includes(currentStatus) || WORKFLOW.includes(String(body.status ?? ""))) {
+      if (body.status !== undefined && String(body.status) !== currentStatus) {
+        return NextResponse.json(
+          { ok: false, error: "A GRN in the approval workflow changes status only through Approve or Reject." },
+          { status: 409 }
+        );
+      }
+      if (currentStatus !== "Pending Approval") {
+        return NextResponse.json({ ok: false, error: `A ${currentStatus} GRN cannot be edited.` }, { status: 409 });
+      }
+      // Pending: quantities and notes may be corrected before approval. The purchase order is not
+      // touched — it changes only when the GRN is approved and posted.
+      if (body.notes !== undefined) {
+        const { error } = await supabase
+          .from("vyron_cost_goods_receipts")
+          .update({ notes: body.notes || null, updated_at: new Date().toISOString() })
+          .eq("id", id)
+          .eq("company_id", companyId)
+          .eq("status", "Pending Approval");
+        if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+      }
+      for (const line of lines) {
+        if (!line.id) continue;
+        const receivedQty = Number(line.received_qty || 0);
+        const damagedQty = Number(line.damaged_qty || 0);
+        const rejectedQty = Number(line.rejected_qty || 0);
+        if (receivedQty < 0 || damagedQty < 0 || rejectedQty < 0) {
+          return NextResponse.json({ ok: false, error: "Negative quantities are not allowed." }, { status: 400 });
+        }
+        const { error } = await supabase
+          .from("vyron_cost_goods_receipt_lines")
+          .update({
+            received_qty: receivedQty,
+            damaged_qty: damagedQty,
+            rejected_qty: rejectedQty,
+            outstanding_qty: Math.max(0, Number(line.ordered_qty || 0) - receivedQty - damagedQty - rejectedQty),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", line.id)
+          .eq("company_id", companyId)
+          .eq("goods_receipt_id", id);
+        if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+      }
+      await writeProcurementAudit(supabase, {
+        companyId,
+        eventType: "GRN Updated",
+        entityType: "goods_receipt",
+        entityId: id,
+        entityLabel: String(grn.grn_number || id),
+        detail: `${grn.grn_number} corrected while awaiting approval. No stock or purchase order change.`,
+        actor: await memberDisplayName(supabase, session),
+        metadata: { pendingApproval: true },
+      });
+      return NextResponse.json({ ok: true, pendingApproval: true });
+    }
+
     const { data: existingLines } = await supabase
       .from("vyron_cost_goods_receipt_lines")
       .select("id, received_qty, damaged_qty, rejected_qty")
@@ -316,12 +379,15 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     const { data: grn, error: grnLoadError } = await supabase
       .from("vyron_cost_goods_receipts")
-      .select("id, grn_number")
+      .select("id, grn_number, status")
       .eq("id", id)
       .eq("company_id", companyId)
       .maybeSingle();
     if (grnLoadError) return NextResponse.json({ ok: false, error: grnLoadError.message }, { status: 500 });
     if (!grn) return NextResponse.json({ ok: false, error: "GRN not found." }, { status: 404 });
+    if (String(grn.status) === "Posting") {
+      return NextResponse.json({ ok: false, error: "This GRN is being approved and posted right now. Try again shortly." }, { status: 409 });
+    }
 
     const stockPosted = await hasGrnPostedStock(supabase, companyId, id);
     if (stockPosted) {

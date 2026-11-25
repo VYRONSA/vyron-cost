@@ -1266,6 +1266,173 @@ export async function reverseGoodsReceipt(
   return { grn: reversedGrn, grnNumber };
 }
 
+/**
+ * Post a saved GRN's lines: purchase-order received quantities, PO status and
+ * back orders, the procurement audit event, and stock receipt. Shared by direct
+ * receiving and by GRN approval so both post in exactly the same way. Throws on
+ * failure; the caller undoes its own work.
+ */
+export async function postGoodsReceiptLines(
+  supabase: SupabaseClient,
+  companyId: string,
+  ctx: {
+    grnId: string;
+    grnNumber: string;
+    po: PurchaseOrderRow;
+    lines: GrnLineInput[];
+    receiptType: string;
+    actor: string;
+    auditEventType: string;
+    auditDetail: string;
+    auditMetadata?: Record<string, unknown>;
+  }
+) {
+  const { po } = ctx;
+  for (const line of ctx.lines) {
+    if (!line.purchase_order_line_id) continue;
+    const poLine = po.lines?.find((l) => l.id === line.purchase_order_line_id);
+    if (!poLine) continue;
+    const newReceived = Number(poLine.received_qty) + line.received_qty;
+    const newDamaged = Number(poLine.damaged_qty) + (line.damaged_qty || 0);
+    const newRejected = Number(poLine.rejected_qty) + (line.rejected_qty || 0);
+    const outstanding = calcPoLineOutstanding({
+      ordered_qty: poLine.ordered_qty,
+      received_qty: newReceived,
+      damaged_qty: newDamaged,
+      rejected_qty: newRejected,
+    });
+    const { error: poLineError } = await supabase
+      .from("vyron_cost_purchase_order_lines")
+      .update({
+        received_qty: newReceived,
+        damaged_qty: newDamaged,
+        rejected_qty: newRejected,
+        outstanding_qty: outstanding,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", line.purchase_order_line_id)
+      .eq("company_id", companyId);
+    if (poLineError) throw new Error(poLineError.message);
+  }
+
+  await refreshPurchaseOrderReceiptState(supabase, companyId, String(po.id), po.supplier_id, po.supplier_name_snapshot);
+
+  await writeProcurementAudit(supabase, {
+    companyId,
+    eventType: ctx.auditEventType,
+    entityType: "goods_receipt",
+    entityId: ctx.grnId,
+    entityLabel: ctx.grnNumber,
+    detail: ctx.auditDetail,
+    actor: ctx.actor,
+    metadata: { receipt_type: ctx.receiptType, ...(ctx.auditMetadata || {}) },
+  });
+
+  await receiveStockFromGrn(supabase, {
+    companyId,
+    grnId: ctx.grnId,
+    grnNumber: ctx.grnNumber,
+    purchaseOrderId: String(po.id),
+    lines: ctx.lines.map((line) => {
+      const poLine = line.purchase_order_line_id ? po.lines?.find((l) => l.id === line.purchase_order_line_id) : null;
+      return {
+        purchase_order_line_id: line.purchase_order_line_id,
+        item_name: line.item_name,
+        received_qty: line.received_qty,
+        unit: line.unit,
+        item_type: poLine?.item_type,
+        item_id: poLine?.item_id,
+        unit_price: poLine ? Number(poLine.unit_price) : undefined,
+      };
+    }),
+    actor: ctx.actor,
+  });
+}
+
+export function poLineSnapshotsOf(po: PurchaseOrderRow): PoLineSnapshot[] {
+  return (po.lines || []).map((line) => ({
+    id: String(line.id),
+    received_qty: Number(line.received_qty || 0),
+    damaged_qty: Number(line.damaged_qty || 0),
+    rejected_qty: Number(line.rejected_qty || 0),
+    outstanding_qty: Number(line.outstanding_qty || 0),
+  }));
+}
+
+/** Undo the PO side of a failed posting (stock is undone by rollbackGrnStockPostings). */
+export async function restorePurchaseOrderAfterFailedPosting(
+  supabase: SupabaseClient,
+  companyId: string,
+  po: PurchaseOrderRow,
+  snapshots: PoLineSnapshot[],
+  poStatusBefore: string
+) {
+  for (const snap of snapshots) {
+    await supabase
+      .from("vyron_cost_purchase_order_lines")
+      .update({
+        received_qty: snap.received_qty,
+        damaged_qty: snap.damaged_qty,
+        rejected_qty: snap.rejected_qty,
+        outstanding_qty: snap.outstanding_qty,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", snap.id)
+      .eq("company_id", companyId);
+  }
+  await supabase
+    .from("vyron_cost_purchase_orders")
+    .update({ status: poStatusBefore, updated_at: new Date().toISOString() })
+    .eq("id", po.id)
+    .eq("company_id", companyId);
+  await refreshPurchaseOrderReceiptState(supabase, companyId, String(po.id), po.supplier_id, po.supplier_name_snapshot);
+}
+
+/**
+ * Quantities already waiting on OTHER pending GRNs of this PO, per PO line, so
+ * two pending receipts can never together exceed what is outstanding.
+ */
+export async function pendingGrnQuantities(
+  supabase: SupabaseClient,
+  companyId: string,
+  purchaseOrderId: string,
+  excludeGrnId?: string
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  const { data: pending, error } = await supabase
+    .from("vyron_cost_goods_receipts")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("purchase_order_id", purchaseOrderId)
+    .in("status", ["Pending Approval", "Posting"]);
+  if (error) throw new Error(error.message);
+  const ids = (pending || []).map((g) => String(g.id)).filter((id) => id !== excludeGrnId);
+  if (!ids.length) return out;
+  const { data: lines, error: lineError } = await supabase
+    .from("vyron_cost_goods_receipt_lines")
+    .select("purchase_order_line_id, received_qty, damaged_qty, rejected_qty")
+    .eq("company_id", companyId)
+    .in("goods_receipt_id", ids);
+  if (lineError) throw new Error(lineError.message);
+  for (const l of lines || []) {
+    if (!l.purchase_order_line_id) continue;
+    const k = String(l.purchase_order_line_id);
+    out.set(k, (out.get(k) || 0) + Number(l.received_qty || 0) + Number(l.damaged_qty || 0) + Number(l.rejected_qty || 0));
+  }
+  return out;
+}
+
+/** Whether this company requires GRN approval. False when not configured (or the table is absent). */
+export async function isGrnApprovalRequired(supabase: SupabaseClient, companyId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("vyron_grn_approval_settings")
+    .select("approval_required")
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (error) return false;
+  return data?.approval_required === true;
+}
+
 export async function createGoodsReceipt(
   supabase: SupabaseClient,
   companyId: string,
@@ -1276,24 +1443,38 @@ export async function createGoodsReceipt(
     notes?: string;
     lines: GrnLineInput[];
   },
-  actor = "user"
+  actor = "user",
+  submitter?: { userId: string }
 ) {
   const po = await getPurchaseOrderDetail(supabase, input.purchase_order_id, companyId);
   if (!po) throw new Error("Purchase order not found.");
 
   validateGoodsReceiptInput(po, input);
 
-  const poLineSnapshots: PoLineSnapshot[] = (po.lines || []).map((line) => ({
-    id: String(line.id),
-    received_qty: Number(line.received_qty || 0),
-    damaged_qty: Number(line.damaged_qty || 0),
-    rejected_qty: Number(line.rejected_qty || 0),
-    outstanding_qty: Number(line.outstanding_qty || 0),
-  }));
+  const approvalRequired = await isGrnApprovalRequired(supabase, companyId);
+  if (approvalRequired) {
+    /* Pending quantities of other GRNs count against what is outstanding. */
+    const pending = await pendingGrnQuantities(supabase, companyId, input.purchase_order_id);
+    for (const line of input.lines) {
+      if (!line.purchase_order_line_id) continue;
+      const poLine = po.lines?.find((l) => l.id === line.purchase_order_line_id);
+      if (!poLine) continue;
+      const lineTotal = line.received_qty + (line.damaged_qty || 0) + (line.rejected_qty || 0);
+      const available = calcPoLineOutstanding(poLine) - (pending.get(String(line.purchase_order_line_id)) || 0);
+      if (lineTotal > available + 0.001) {
+        throw new Error(
+          `Cannot receive ${lineTotal} for ${line.item_name}: ${Math.max(0, available)} outstanding after other GRNs awaiting approval.`
+        );
+      }
+    }
+  }
+
+  const poLineSnapshots = poLineSnapshotsOf(po);
   const poStatusBefore = String(po.status);
 
   const grnNumber = `GRN-${Date.now().toString().slice(-8)}`;
   let grnId: string | null = null;
+  const now = new Date().toISOString();
 
   try {
     const { data: grn, error: grnError } = await supabase
@@ -1305,9 +1486,12 @@ export async function createGoodsReceipt(
         supplier_id: po.supplier_id,
         supplier_name_snapshot: po.supplier_name_snapshot,
         receipt_type: input.receipt_type,
-        status: "Posted",
+        status: approvalRequired ? "Pending Approval" : "Posted",
         received_by: input.received_by || actor,
         notes: input.notes || null,
+        ...(approvalRequired
+          ? { submitted_by: actor, submitted_by_user_id: submitter?.userId ?? null, submitted_at: now }
+          : {}),
       })
       .select("*")
       .single();
@@ -1338,73 +1522,36 @@ export async function createGoodsReceipt(
     const { error: lineErr } = await supabase.from("vyron_cost_goods_receipt_lines").insert(grnLines);
     if (lineErr) throw new Error(lineErr.message);
 
-    for (const line of input.lines) {
-      if (!line.purchase_order_line_id) continue;
-      const poLine = po.lines?.find((l) => l.id === line.purchase_order_line_id);
-      if (!poLine) continue;
-      const newReceived = Number(poLine.received_qty) + line.received_qty;
-      const newDamaged = Number(poLine.damaged_qty) + (line.damaged_qty || 0);
-      const newRejected = Number(poLine.rejected_qty) + (line.rejected_qty || 0);
-      const outstanding = calcPoLineOutstanding({
-        ordered_qty: poLine.ordered_qty,
-        received_qty: newReceived,
-        damaged_qty: newDamaged,
-        rejected_qty: newRejected,
+    if (approvalRequired) {
+      /*
+       * Approval required: nothing is posted. Stock, the purchase order and back
+       * orders change only when an authorised approver approves this GRN.
+       */
+      await writeProcurementAudit(supabase, {
+        companyId,
+        eventType: "GRN Submitted for Approval",
+        entityType: "goods_receipt",
+        entityId: grnId,
+        entityLabel: grnNumber,
+        detail: `${grnNumber} received against ${po.po_number} and submitted for approval. No stock posted yet.`,
+        actor,
+        metadata: { receipt_type: input.receipt_type, submittedByUserId: submitter?.userId ?? null },
       });
-      const { error: poLineError } = await supabase
-        .from("vyron_cost_purchase_order_lines")
-        .update({
-          received_qty: newReceived,
-          damaged_qty: newDamaged,
-          rejected_qty: newRejected,
-          outstanding_qty: outstanding,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", line.purchase_order_line_id)
-        .eq("company_id", companyId);
-      if (poLineError) throw new Error(poLineError.message);
+      return { grn, grnNumber, pendingApproval: true as const };
     }
 
-    await refreshPurchaseOrderReceiptState(
-      supabase,
-      companyId,
-      input.purchase_order_id,
-      po.supplier_id,
-      po.supplier_name_snapshot
-    );
-
-    await writeProcurementAudit(supabase, {
-      companyId,
-      eventType: "Goods Received",
-      entityType: "goods_receipt",
-      entityId: grn.id as string,
-      entityLabel: grnNumber,
-      detail: `${grnNumber} posted for ${po.po_number}.`,
-      actor,
-      metadata: { receipt_type: input.receipt_type },
-    });
-
-    await receiveStockFromGrn(supabase, {
-      companyId,
-      grnId: grn.id as string,
+    await postGoodsReceiptLines(supabase, companyId, {
+      grnId,
       grnNumber,
-      purchaseOrderId: input.purchase_order_id,
-      lines: input.lines.map((line) => {
-        const poLine = line.purchase_order_line_id ? po.lines?.find((l) => l.id === line.purchase_order_line_id) : null;
-        return {
-          purchase_order_line_id: line.purchase_order_line_id,
-          item_name: line.item_name,
-          received_qty: line.received_qty,
-          unit: line.unit,
-          item_type: poLine?.item_type,
-          item_id: poLine?.item_id,
-          unit_price: poLine ? Number(poLine.unit_price) : undefined,
-        };
-      }),
+      po,
+      lines: input.lines,
+      receiptType: input.receipt_type,
       actor,
+      auditEventType: "Goods Received",
+      auditDetail: `${grnNumber} posted for ${po.po_number}.`,
     });
 
-    return { grn, grnNumber };
+    return { grn, grnNumber, pendingApproval: false as const };
   } catch (error) {
     if (grnId) {
       await rollbackFailedGrnCreation(supabase, companyId, {
