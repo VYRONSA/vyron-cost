@@ -10,6 +10,7 @@ import { VyronPremiumPageShell } from "@/components/vyron-premium/VyronPremiumPa
 import { VYRON_MASTER, VYRON_TABLE } from "@/components/vyron-ui";
 import { useModulePermissions } from "@/hooks/useModulePermissions";
 import { StoreOrderWarningBadges } from "@/components/vyron-cost/store-ordering/StoreOrderWarningBadges";
+import JobCardActions from "@/components/vyron-cost/production/JobCardActions";
 import { formatStoreOrderMoney } from "@/components/vyron-cost/store-ordering/store-order-ui";
 import type { StoreOrderWarning } from "@/lib/vyron-store-order-commercial";
 import {
@@ -264,12 +265,22 @@ export default function StoreOrderEditorClient({ orderId }: { orderId?: string }
         ],
       }}
       actions={
-        <Link
-          href="/store-orders"
-          className="rounded-xl border border-[#E2E8F0] px-4 py-2.5 text-sm font-bold text-[#334155]"
-        >
-          Back to orders
-        </Link>
+        <span className="inline-flex flex-wrap items-center gap-2">
+          {!isNew && order ? (
+            <JobCardActions
+              type="store_order"
+              orderId={order.id}
+              eligible={order.status !== "Draft" && order.status !== "Cancelled"}
+              canChangeStatus
+            />
+          ) : null}
+          <Link
+            href="/store-orders"
+            className="rounded-xl border border-[#E2E8F0] px-4 py-2.5 text-sm font-bold text-[#334155]"
+          >
+            Back to orders
+          </Link>
+        </span>
       }
     >
       <div className="space-y-6">

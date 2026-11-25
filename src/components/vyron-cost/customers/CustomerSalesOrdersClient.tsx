@@ -9,6 +9,10 @@ import type { ReactNode } from "react";
 import { useInvoicePermissions, useSalesOrderPermissions } from "@/hooks/useModulePermissions";
 import { ItemLookupField } from "@/components/vyron-platform/item-lookup/ItemLookupField";
 import { DocumentPdfActions } from "@/components/vyron-platform/documents/DocumentPdfActions";
+import JobCardActions, { openJobCards } from "@/components/vyron-cost/production/JobCardActions";
+
+/** Received orders: job cards are not printed for drafts or cancelled orders. */
+const jobCardEligible = (status: string) => status !== "Draft" && status !== "Cancelled";
 
 type SalesOrderStatus =
   | "Draft"
@@ -193,6 +197,7 @@ export default function CustomerSalesOrdersClient({
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [createOpen, setCreateOpen] = useState(initialCreateOpen);
   const [selectedOrder, setSelectedOrder] = useState<SalesOrderInsight | null>(null);
+  const [jobCardSelection, setJobCardSelection] = useState<Set<string>>(() => new Set());
   const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
 
   const [customerId, setCustomerId] = useState(initialCustomerId || "");
@@ -590,7 +595,38 @@ export default function CustomerSalesOrdersClient({
           </div>
         ) : null}
 
-        <div className="mt-5 w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden rounded-2xl border border-slate-100">
+        <div className="mt-5 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-600">
+          <span>Job cards:</span>
+          <button
+            type="button"
+            onClick={() => setJobCardSelection(new Set(orders.filter((o) => jobCardEligible(o.status)).map((o) => o.id)))}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700"
+          >
+            Select all eligible ({orders.filter((o) => jobCardEligible(o.status)).length})
+          </button>
+          {jobCardSelection.size ? (
+            <>
+              <button
+                type="button"
+                onClick={() => openJobCards("customer_sales_order", [...jobCardSelection])}
+                className="rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-black text-white"
+              >
+                Print Job Cards ({jobCardSelection.size} selected)
+              </button>
+              <button
+                type="button"
+                onClick={() => setJobCardSelection(new Set())}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700"
+              >
+                Clear selection
+              </button>
+            </>
+          ) : (
+            <span className="font-semibold text-slate-500">Tick orders to print several job cards at once — each order gets its own card.</span>
+          )}
+        </div>
+
+        <div className="mt-2 w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden rounded-2xl border border-slate-100">
           <div className="min-w-[1080px] max-w-none">
             <div className="grid min-w-0 grid-cols-[0.8fr_1.1fr_0.9fr_0.8fr_0.8fr_0.8fr_1.2fr] gap-3 bg-slate-50 px-4 py-3 text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
               <div>Order</div><div>Customer</div><div>Status</div><div>Total</div><div>Requested</div><div>GP</div><div>Workflow</div>
@@ -600,7 +636,25 @@ export default function CustomerSalesOrdersClient({
 
             {orders.map((order) => (
               <div key={order.id} className="grid min-w-0 grid-cols-[0.8fr_1.1fr_0.9fr_0.8fr_0.8fr_0.8fr_1.2fr] items-center gap-3 border-t border-slate-100 px-4 py-3 text-sm">
-                <div className="font-black text-blue-700">{order.order_number}</div>
+                <label className="flex items-center gap-2 font-black text-blue-700">
+                  <input
+                    type="checkbox"
+                    disabled={!jobCardEligible(order.status)}
+                    checked={jobCardSelection.has(order.id)}
+                    onChange={(e) =>
+                      setJobCardSelection((prev) => {
+                        const next = new Set(prev);
+                        if (e.target.checked) next.add(order.id);
+                        else next.delete(order.id);
+                        return next;
+                      })
+                    }
+                    aria-label={`Select ${order.order_number} for job card printing`}
+                    title={jobCardEligible(order.status) ? "Select for job card printing" : "Draft and cancelled orders have no job card"}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  {order.order_number}
+                </label>
                 <div>
                   <div className="font-bold text-slate-900">{order.customer_name}</div>
                   <div className="text-xs font-semibold text-slate-500">{order.salesperson || "No salesperson"}</div>
@@ -611,6 +665,7 @@ export default function CustomerSalesOrdersClient({
                 <div className={`font-bold ${Number(order.gp_percentage || 0) < 30 ? "text-[var(--vyron-warning-fg)]" : "text-blue-700"}`}>{Number(order.gp_percentage || 0).toFixed(1)}%</div>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={() => void loadInsight(order.id)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-700">Detail</button>
+                  <JobCardActions type="customer_sales_order" orderId={order.id} eligible={jobCardEligible(order.status)} compact />
                   {order.status === "Draft" ? <ActionButton icon={<ClipboardCheck size={14} />} label="Submit" onClick={() => void runAction(order.id, "submit")} /> : null}
                   {order.status === "Awaiting Approval" ? <ActionButton icon={<CheckCircle2 size={14} />} label="Approve" onClick={() => void runAction(order.id, "approve")} /> : null}
                   {order.status === "Approved" ? <ActionButton icon={<PackageCheck size={14} />} label="Start Pick" onClick={() => void runAction(order.id, "start_picking")} /> : null}
@@ -634,6 +689,13 @@ export default function CustomerSalesOrdersClient({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-lg font-black text-slate-900">Sales Order Detail: {selectedOrder.order.order_number}</h3>
               <div className="flex flex-wrap items-center gap-2">
+                <JobCardActions
+                  key={selectedOrder.order.id}
+                  type="customer_sales_order"
+                  orderId={selectedOrder.order.id}
+                  eligible={jobCardEligible(selectedOrder.order.status)}
+                  canChangeStatus
+                />
                 <DocumentPdfActions
                   pdfUrl={`/api/customer-sales-orders/${selectedOrder.order.id}/pdf`}
                   emailUrl={salesPermissions.canApprove ? `/api/customer-sales-orders/${selectedOrder.order.id}/email` : undefined}

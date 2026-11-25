@@ -582,7 +582,7 @@ export type CreateProductionRunInput = {
  * existing BOM takes exactly the code path it did before — same lines, same
  * quantities, same costs.
  */
-async function explodeForProduction(
+export async function explodeForProduction(
   supabase: SupabaseClient,
   companyId: string,
   bomId: string,

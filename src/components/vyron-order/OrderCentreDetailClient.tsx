@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Clock, Mail, MessageSquare, Bell, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { VYRON_MASTER } from "@/components/vyron-ui/style-tokens";
 import { STAFF_STATUS_TONE } from "@/components/vyron-order/OrderCentreClient";
+import JobCardActions from "@/components/vyron-cost/production/JobCardActions";
 
 const M = VYRON_MASTER;
 
@@ -46,6 +47,7 @@ const CHANNEL_ICON: Record<string, React.ReactNode> = {
 
 const DELIVERY_TONE: Record<string, string> = {
   Sent: "vyron-status vyron-status-success",
+  Delivered: "vyron-status vyron-status-success",
   Failed: "vyron-status vyron-status-error",
   "Not Configured": "vyron-status vyron-status-warning",
   Pending: "vyron-status vyron-status-neutral",
@@ -251,6 +253,21 @@ export default function OrderCentreDetailClient({ orderId }: { orderId: string }
                 ))}
               </div>
             )}
+          </section>
+
+          <section className={`${M.modulePanel} p-5`}>
+            <h2 className={`${M.label} text-[11px]`}>Production Job Card</h2>
+            <p className="mt-2 text-xs font-semibold text-[#64748B]">
+              Printing a job card reads this order only — it never creates an order or changes quantities.
+            </p>
+            <div className="mt-3">
+              <JobCardActions
+                type="customer_sales_order"
+                orderId={String(order.id)}
+                eligible={status !== "Draft" && status !== "Cancelled"}
+                canChangeStatus
+              />
+            </div>
           </section>
 
           <section className={`${M.modulePanel} p-5`}>
