@@ -16,6 +16,9 @@ export default function SettingsPage() {
             <Link href="/admin/users" className="rounded-xl border border-[rgba(11,32,43,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 px-4 py-3 font-bold transition hover:border-blue-300/40">
               Users & Roles
             </Link>
+            <Link href="/settings/document-numbering" className="rounded-xl border border-[rgba(11,32,43,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 px-4 py-3 font-bold transition hover:border-blue-300/40">
+              Document Numbering
+            </Link>
             <Link href="/import-centre" className="rounded-xl border border-[rgba(11,32,43,0.07)] bg-white/72 shadow-[var(--vyron-elev-2)] backdrop-blur-xl backdrop-saturate-150 px-4 py-3 font-bold transition hover:border-blue-300/40">
               Import Centre
             </Link>

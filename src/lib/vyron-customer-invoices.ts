@@ -7,6 +7,7 @@ import {
 } from "@/lib/vyron-customer-branches";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { round2, computeCostTotals } from "@/lib/vyron-invoice-cost-totals";
+import { isDraftReference, issueCustomerInvoiceNumber, newDraftInvoiceReference } from "@/lib/vyron-document-numbering";
 import {
   listCustomerContactsAsCustomers,
   updateContactRoles,
@@ -144,6 +145,11 @@ export type CustomerInvoiceRow = {
   source_reference?: string | null;
   /** Set on a credit note: the invoice it credits. */
   credited_invoice_id?: string | null;
+  /** When / by whom the official sequential number was issued (absent before the numbering migration). */
+  number_issued_at?: string | null;
+  number_issued_by?: string | null;
+  /** The provisional DRAFT- reference the invoice carried before its number was issued. */
+  draft_reference?: string | null;
 };
 
 export type { InvoiceStockPostingStatus } from "@/lib/vyron-invoice-stock-status";
@@ -449,9 +455,14 @@ export async function createCustomerInvoice(
     ...computeCostTotals(enrichedLines, toNumber(tax.subtotalExclTax, 2)),
   };
 
-  const invoiceNumber =
-    params.invoiceNumber ||
-    `SI-${String(Date.now()).slice(-8)}`;
+  /*
+   * A draft carries a provisional DRAFT- reference, never an invoice number: the
+   * official sequential number is issued when it leaves Draft (see
+   * vyron-document-numbering.ts). Only trusted server callers with their own
+   * external series (the online-store sync: WC-/SHP-) pass a number; the
+   * browser-facing route never forwards one.
+   */
+  const invoiceNumber = params.invoiceNumber || newDraftInvoiceReference();
 
   const { data: invoice, error } = await supabase
     .from("vyron_customer_invoices")
@@ -923,14 +934,24 @@ export async function setCustomerInvoiceBranch(
   return { ...loaded.invoice, branch_id: branch?.id ?? null };
 }
 
+export class InvoiceNotDeletableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvoiceNotDeletableError";
+  }
+}
+
 export async function updateCustomerInvoiceStatus(
   supabase: SupabaseClient,
   id: string,
   status: CustomerInvoiceStatus,
-  companyId?: string
+  companyId?: string,
+  actor = "system"
 ) {
   const now = new Date().toISOString();
   const patch: Record<string, unknown> = { status, updated_at: now };
+  let statusBefore: string | null = null;
+  let issuedDraft = false;
 
   /*
    * Freezing happens on the one transition that issues the document: Draft to
@@ -954,6 +975,7 @@ export async function updateCustomerInvoiceStatus(
     }
     const loaded = await getCustomerInvoice(supabase, id, companyId);
     if (!loaded) throw new Error("Invoice not found.");
+    statusBefore = loaded.invoice.status;
 
     if (loaded.invoice.status === "Draft" && !loaded.invoice.tax_snapshot) {
       const { snapshot, errors } = await buildInvoiceTaxSnapshot(
@@ -985,13 +1007,51 @@ export async function updateCustomerInvoiceStatus(
         patch.branch_snapshot_at = now;
       }
     }
+
+    /*
+     * Issue the official sequential number — only after every issue check above
+     * has passed, so a refused issue consumes nothing. The database function
+     * locks the invoice and the counter in one transaction and is idempotent: if
+     * the status write below fails, retrying returns the same number.
+     */
+    if (loaded.invoice.status === "Draft" && isDraftReference(loaded.invoice.invoice_number)) {
+      await issueCustomerInvoiceNumber(supabase, companyId, id, actor);
+      issuedDraft = true;
+    }
+  } else if (status === "Cancelled" && companyId) {
+    const loaded = await getCustomerInvoice(supabase, id, companyId);
+    if (!loaded) throw new Error("Invoice not found.");
+    statusBefore = loaded.invoice.status;
   }
 
   let query = supabase.from("vyron_customer_invoices").update(patch).eq("id", id);
   if (companyId) query = query.eq("company_id", companyId);
+  // The issuing transition only applies to a draft that is still a draft.
+  if (issuedDraft) query = query.eq("status", "Draft");
 
   const { data, error } = await query.select("*").single();
   if (error) throw new Error(error.message);
+
+  /* A cancellation keeps the invoice and its number on record; it is audited, never deleted. */
+  if (status === "Cancelled" && companyId && statusBefore && statusBefore !== "Cancelled") {
+    const row = data as CustomerInvoiceRow;
+    const { error: auditError } = await supabase.from("vyron_inventory_audit_log").insert({
+      company_id: companyId,
+      stock_item_id: null,
+      event_type: "customer_invoice_cancelled",
+      actor,
+      field_name: "status",
+      old_value: statusBefore,
+      new_value: "Cancelled",
+      detail: `Invoice ${row.invoice_number} cancelled (was ${statusBefore}). The invoice and its number are retained${
+        row.number_issued_at ? "; the issued number is never reused" : ""
+      }.`,
+      reference_type: "customer_invoice",
+      reference_id: id,
+      metadata: { at: now, invoiceNumber: row.invoice_number, numberIssuedAt: row.number_issued_at ?? null },
+    });
+    if (auditError) console.error("[customer-invoice] cancellation audit not written", { id, error: auditError.message });
+  }
   return data as CustomerInvoiceRow;
 }
 
@@ -1034,6 +1094,19 @@ export async function deleteCustomerInvoice(supabase: SupabaseClient, companyId:
   if (!loaded) throw new Error("Invoice not found.");
   if (loaded.invoice.stock_posted && !loaded.invoice.stock_reversed) {
     throw new Error("Posted invoice stock must be reversed before delete.");
+  }
+  /*
+   * An invoice that was ever issued is a tax document: it is cancelled, never
+   * deleted, so its number stays on record and can never be reused.
+   */
+  if (
+    loaded.invoice.number_issued_at ||
+    loaded.invoice.tax_snapshot ||
+    isIssuedInvoiceStatus(loaded.invoice.status)
+  ) {
+    throw new InvoiceNotDeletableError(
+      `Invoice ${loaded.invoice.invoice_number} has been issued and cannot be deleted. Cancel it instead — the invoice and its number are kept on record.`
+    );
   }
 
   const { error: linesError } = await supabase
@@ -1574,6 +1647,10 @@ export async function postCustomerInvoiceStock(
   };
   if (options.updateInvoiceStatus !== false && invoice.status !== "Posted") {
     patch.status = "Posted";
+  }
+  /* A draft moved straight to Posted is being issued: it takes its official number first. */
+  if (patch.status === "Posted" && invoice.status === "Draft" && isDraftReference(invoice.invoice_number)) {
+    await issueCustomerInvoiceNumber(supabase, companyId, String(invoice.id), String(actor || "system"));
   }
 
   const { data: posted, error } = await supabase

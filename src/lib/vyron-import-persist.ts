@@ -1085,7 +1085,7 @@ async function persistCustomerInvoices(
      */
     const { data: existingInvoice } = await supabase
       .from("vyron_customer_invoices")
-      .select("id, stock_posted")
+      .select("*")
       .eq("company_id", companyId)
       .eq("invoice_number", invoiceNumber)
       .limit(1);
@@ -1093,6 +1093,12 @@ async function persistCustomerInvoices(
     let invoiceId: string;
 
     if (existingInvoice?.length) {
+      /* An invoice VOLORA issued a sequential number to is a tax document: never rewritten by an import. */
+      if (existingInvoice[0].number_issued_at || existingInvoice[0].tax_snapshot_at) {
+        errors.push(`${invoiceNumber}: issued in VOLORA — left unchanged`);
+        skippedRows += 1;
+        continue;
+      }
       if (existingInvoice[0].stock_posted) {
         errors.push(`${invoiceNumber}: already posted to stock — left unchanged`);
         skippedRows += 1;

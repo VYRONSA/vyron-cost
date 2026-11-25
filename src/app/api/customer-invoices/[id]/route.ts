@@ -13,6 +13,7 @@ import { BranchNotSelectableError } from "@/lib/vyron-customer-branches";
 import { NextRequest, NextResponse } from "next/server";
 import {
   deleteCustomerInvoice,
+  InvoiceNotDeletableError,
   getCustomerInvoice,
   updateCustomerInvoiceStatus,
 } from "@/lib/vyron-customer-invoices";
@@ -123,28 +124,31 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     if (body.action === "approve") {
-      await requireWorkspacePermission("invoices.reverse");
-      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Approved", companyId);
+      const session = await requireWorkspacePermission("invoices.reverse");
+      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Approved", companyId, await memberDisplayName(supabase, session));
       return NextResponse.json({ ok: true, invoice });
     }
     if (body.action === "send" || body.action === "email") {
-      await requireWorkspacePermission("invoices.email");
-      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Sent", companyId);
+      const session = await requireWorkspacePermission("invoices.email");
+      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Sent", companyId, await memberDisplayName(supabase, session));
       return NextResponse.json({ ok: true, invoice });
     }
     if (body.action === "paid") {
-      await requireWorkspacePermission("invoices.create");
-      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Paid", companyId);
+      const session = await requireWorkspacePermission("invoices.create");
+      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Paid", companyId, await memberDisplayName(supabase, session));
       return NextResponse.json({ ok: true, invoice });
     }
     if (body.action === "cancel") {
-      await requireWorkspacePermission("invoices.create");
-      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Cancelled", companyId);
+      const session = await requireWorkspacePermission("invoices.create");
+      const invoice = await updateCustomerInvoiceStatus(supabase, id, "Cancelled", companyId, await memberDisplayName(supabase, session));
       return NextResponse.json({ ok: true, invoice });
     }
     if (body.status) {
-      await requireWorkspacePermission("invoices.create");
-      const invoice = await updateCustomerInvoiceStatus(supabase, id, body.status, companyId);
+      if (!["Draft", "Approved", "Posted", "Sent", "Paid", "Cancelled"].includes(String(body.status))) {
+        return NextResponse.json({ ok: false, error: "Unknown invoice status." }, { status: 400 });
+      }
+      const session = await requireWorkspacePermission("invoices.create");
+      const invoice = await updateCustomerInvoiceStatus(supabase, id, body.status, companyId, await memberDisplayName(supabase, session));
       return NextResponse.json({ ok: true, invoice });
     }
     if (body.action === "whatsapp" || body.action === "signature") {
@@ -210,6 +214,9 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     await deleteCustomerInvoice(supabase, companyId, id);
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (error instanceof InvoiceNotDeletableError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 409 });
+    }
     return workspaceAccessErrorResponse(error, "Delete failed.");
   }
 }

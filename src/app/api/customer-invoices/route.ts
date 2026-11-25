@@ -41,7 +41,8 @@ export async function POST(request: NextRequest) {
     const invoice = await createCustomerInvoice(supabase, companyId, {
       customerId: body.customerId || null,
       customerName: String(body.customerName || "Customer"),
-      invoiceNumber: body.invoiceNumber || undefined,
+      // Invoice numbers are never accepted from the browser: drafts get a DRAFT- reference and the
+      // official sequential number is issued server-side when the invoice leaves Draft.
       invoiceDate: body.invoiceDate || undefined,
       dueDate: body.dueDate || body.due_date || undefined,
       notes: body.notes || undefined,

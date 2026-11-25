@@ -79,7 +79,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     let invoiceStatus = statusBefore;
     if (delivery.outcome === "accepted" && statusBefore === "Approved") {
       try {
-        const updated = await updateCustomerInvoiceStatus(supabase, invoiceId, "Sent", companyId);
+        const updated = await updateCustomerInvoiceStatus(supabase, invoiceId, "Sent", companyId, auditActorFromSession(session));
         invoiceStatus = String(updated.status);
       } catch (error) {
         console.error("[document-email] invoice emailed but status not advanced to Sent", { invoiceId, error });
