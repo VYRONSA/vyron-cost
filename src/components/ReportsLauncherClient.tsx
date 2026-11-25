@@ -32,6 +32,7 @@ const reportCards = [
   { href: "/reports/customer-price-list", title: "Customer Price List Report", description: "The price each customer is entitled to for each product, from their assigned price lists.", icon: FileSpreadsheet, badge: "Pricing" },
   { href: "/reports/product-margins", title: "Product GP (Price Review)", description: "Product cost vs selling price, target GP and price-review status.", icon: Percent, badge: "Costing" },
   { href: "/reports/product-costings", title: "Recipe Cost Report", description: "Full product costing breakdowns and BOM-linked cost lines.", icon: FileSpreadsheet, badge: "Costing" },
+  { href: "/reports/production-control", title: "Daily Production Control Report", description: "Production schedule, planned vs actual, material readiness, performance and exceptions for any day, week or month.", icon: ClipboardList, badge: "Production" },
   { href: "/reports/bom-completeness", title: "Finished Goods — BOM Completeness", description: "Finished goods whose BOM is missing, empty, incomplete or cannot produce a cost, prioritised by sales exposure.", icon: ClipboardList, badge: "Costing" },
   { href: "/reports/ingredient-movement", title: "Ingredient Cost Report", description: "Ingredient price movement, yield impact and purchase cost trends.", icon: TrendingUp, badge: "Costing" },
   { href: "/reports/category-usage", title: "Category Usage Report", description: "Master-data category usage across suppliers, products and recipes.", icon: LineChart, badge: "Costing" },

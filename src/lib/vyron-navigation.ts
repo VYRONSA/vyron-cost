@@ -123,6 +123,7 @@ export const vyronNavSections: VyronNavSection[] = [
       { label: "Manufacturing History", icon: History, href: "/manufacturing/history" },
       { label: "Finished Goods", icon: PackageSearch, href: "/manufacturing/finished-goods" },
       { label: "Finished Goods Dashboard", icon: PackageSearch, href: "/reports/finished-goods" },
+      { label: "Daily Production Control", icon: ClipboardList, href: "/reports/production-control" },
     ],
   },
 

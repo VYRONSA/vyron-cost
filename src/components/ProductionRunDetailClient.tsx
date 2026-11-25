@@ -8,6 +8,7 @@ import { formatMoney } from "@/lib/vyron-cost-data";
 import { poApiWorkspaceContext } from "@/lib/vyron-po-api-context";
 import { WASTE_REASONS } from "@/lib/vyron-manufacturing";
 import { DocumentPdfActions } from "@/components/vyron-platform/documents/DocumentPdfActions";
+import ProductionRunControlPanel from "@/components/ProductionRunControlPanel";
 
 type Run = {
   id: string;
@@ -435,6 +436,8 @@ export default function ProductionRunDetailClient({ runId }: { runId: string }) 
           fileName={`${String(run.run_number || runId)}.pdf`}
         />
       </div>
+
+      <ProductionRunControlPanel key={String((run as unknown as Record<string, unknown>).updated_at ?? "")} run={run as unknown as Record<string, unknown>} runId={runId} canEdit={canCreate} onSaved={refresh} />
 
         {(run.audit || []).length > 0 ? (
         <div className="rounded-[2rem] bg-slate-50 p-6">
