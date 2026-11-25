@@ -780,7 +780,8 @@ export async function getProviderStatus(supabase: SupabaseClient, companyId: str
       .select("updated_at")
       .eq("company_id", companyId)
       .eq("channel", channel)
-      .eq("status", "Sent")
+      // A delivery report moves a row from Sent to Delivered; both are successful sends.
+      .in("status", ["Sent", "Delivered"])
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
