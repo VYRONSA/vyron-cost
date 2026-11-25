@@ -123,7 +123,8 @@
     "test:job-card-pdf": "node scripts/test-job-card-pdf.mjs",
     "test:sprint-e2e-qa": "node scripts/test-sprint-e2e-qa.mjs",
     "test:document-numbering-pg": "node scripts/test-document-numbering-pg.mjs",
-    "docs:whatsapp-guide": "node scripts/docs/build-whatsapp-guide.mjs"
+    "docs:whatsapp-guide": "node scripts/docs/build-whatsapp-guide.mjs",
+    "test:sprint-premigration-qa": "node scripts/test-sprint-premigration-qa.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.0",

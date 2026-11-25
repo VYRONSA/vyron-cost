@@ -7,7 +7,13 @@ import {
 } from "@/lib/vyron-customer-branches";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { round2, computeCostTotals } from "@/lib/vyron-invoice-cost-totals";
-import { isDraftReference, issueCustomerInvoiceNumber, newDraftInvoiceReference } from "@/lib/vyron-document-numbering";
+import {
+  isDraftReference,
+  isSequentialNumberingInstalled,
+  issueCustomerInvoiceNumber,
+  legacyInvoiceNumber,
+  newDraftInvoiceReference,
+} from "@/lib/vyron-document-numbering";
 import {
   listCustomerContactsAsCustomers,
   updateContactRoles,
@@ -460,9 +466,12 @@ export async function createCustomerInvoice(
    * official sequential number is issued when it leaves Draft (see
    * vyron-document-numbering.ts). Only trusted server callers with their own
    * external series (the online-store sync: WC-/SHP-) pass a number; the
-   * browser-facing route never forwards one.
+   * browser-facing route never forwards one. Until the numbering migration is
+   * installed, the previous SI- number is used so invoicing never breaks.
    */
-  const invoiceNumber = params.invoiceNumber || newDraftInvoiceReference();
+  const invoiceNumber =
+    params.invoiceNumber ||
+    ((await isSequentialNumberingInstalled(supabase)) ? newDraftInvoiceReference() : legacyInvoiceNumber());
 
   const { data: invoice, error } = await supabase
     .from("vyron_customer_invoices")

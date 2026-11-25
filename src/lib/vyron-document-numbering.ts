@@ -23,6 +23,33 @@ export const DRAFT_REFERENCE_PREFIX = "DRAFT-";
 export const CUSTOMER_INVOICE_SERIES = "customer_invoice";
 export const JOB_CARD_SERIES = "job_card";
 
+let installedCache: { value: boolean; at: number } | null = null;
+
+/**
+ * Whether sequential numbering is installed in this database (migration
+ * 20261124130000). Until it is, new invoices keep the previous SI- number so
+ * invoicing never breaks; once it is, drafts take DRAFT- references and the
+ * official number is issued on issue. A positive answer is cached; a negative
+ * one is re-checked after 60 seconds so the switch-over needs no redeploy.
+ */
+export async function isSequentialNumberingInstalled(supabase: SupabaseClient): Promise<boolean> {
+  if (installedCache && (installedCache.value || Date.now() - installedCache.at < 60_000)) return installedCache.value;
+  const { error } = await supabase.from("vyron_document_sequences").select("company_id").limit(1);
+  const value = !error;
+  installedCache = { value, at: Date.now() };
+  return value;
+}
+
+/** Test hook: forget the cached installation state. */
+export function resetNumberingInstalledCache() {
+  installedCache = null;
+}
+
+/** The number a new invoice is created with when numbering is not installed (previous behaviour). */
+export function legacyInvoiceNumber(): string {
+  return `SI-${String(Date.now()).slice(-8)}`;
+}
+
 export function newDraftInvoiceReference(): string {
   return `${DRAFT_REFERENCE_PREFIX}${randomBytes(5).toString("hex").toUpperCase()}`;
 }
