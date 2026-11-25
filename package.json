@@ -117,7 +117,13 @@
     "test:twilio-status": "node scripts/test-twilio-status.mjs",
     "test:inbound-email-webhook": "node scripts/test-inbound-email-webhook.mjs",
     "test:customer-invoice-box-qty-edit": "node scripts/test-customer-invoice-box-qty-edit.mjs",
-    "test:production-planning-customer-demand": "node scripts/test-production-planning-customer-demand.mjs"
+    "test:production-planning-customer-demand": "node scripts/test-production-planning-customer-demand.mjs",
+    "test:bom-completeness-overrides": "node scripts/test-bom-completeness-overrides.mjs",
+    "test:production-control": "node scripts/test-production-control.mjs",
+    "test:job-card-pdf": "node scripts/test-job-card-pdf.mjs",
+    "test:sprint-e2e-qa": "node scripts/test-sprint-e2e-qa.mjs",
+    "test:document-numbering-pg": "node scripts/test-document-numbering-pg.mjs",
+    "docs:whatsapp-guide": "node scripts/docs/build-whatsapp-guide.mjs"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.0",
