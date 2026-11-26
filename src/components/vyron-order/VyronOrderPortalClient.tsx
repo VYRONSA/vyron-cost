@@ -1459,6 +1459,8 @@ function ProductRow({
           <div className="text-right">
             {product.availability === "out_of_stock" ? (
               <span className="vyron-status vyron-status-warning">Out of stock</span>
+            ) : unavailable && !product.priceUnavailable && product.availability === "not_measured" ? (
+              <span className="vyron-status vyron-status-warning">Not available online</span>
             ) : unavailable ? (
               <span className="vyron-status vyron-status-warning">Price unavailable</span>
             ) : (
@@ -1491,7 +1493,11 @@ function ProductRow({
 
       {unavailable ? (
         <p className="vyron-alert vyron-alert-warning mt-3 text-xs font-medium">
-          Pricing is currently unavailable for this product. Please contact us to order it.
+          {product.priceUnavailable
+            ? "Pricing is currently unavailable for this product. Please contact us to order it."
+            : product.availability === "out_of_stock"
+              ? "This product is out of stock. Please contact us to order it."
+              : "This product cannot be ordered online yet. Please contact us to order it."}
         </p>
       ) : (
         <>

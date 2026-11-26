@@ -166,7 +166,9 @@ export async function getCart(supabase: SupabaseClient, scope: CartScope): Promi
         ? "Pricing is currently unavailable for this product."
         : product.availability === "out_of_stock"
           ? "This product is out of stock."
-          : exceedsAvailable
+          : product.availability === "not_measured"
+            ? "This product cannot be ordered online yet. Please contact us to order it."
+            : exceedsAvailable
             ? `Only ${availableQty} available.`
             : null,
       availableQty,

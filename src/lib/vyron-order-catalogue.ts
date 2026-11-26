@@ -57,7 +57,10 @@ export type CatalogueProduct = {
    */
   availableQty: number | null;
   availability: "available" | "limited" | "out_of_stock" | "not_measured";
-  /** True when nothing can be ordered: no price, or none available. */
+  /**
+   * True when nothing can be ordered: no price, none available, or no stock
+   * record (an order for it could not reserve stock and would be refused).
+   */
   unavailable: boolean;
 };
 
@@ -302,7 +305,16 @@ export async function getCustomerCatalogue(
       pricePerBox: unitsPerBox && price > 0 ? Math.round(price * unitsPerBox * 100) / 100 : null,
       availableQty,
       availability: state,
-      unavailable: priceUnavailable || state === "out_of_stock",
+      /*
+       * A product with no stock record cannot be ordered here. Placing an order
+       * reserves stock (reserveStockForSalesOrder), and the reservation counts
+       * a product with no stock record as nothing on hand — so such an order
+       * was created, refused and cancelled every time, and the customer was
+       * told to "check the quantities". Saying so up front is the same rule,
+       * applied before the customer builds the order rather than after.
+       * Availability stays "not_measured" (unknown is not zero).
+       */
+      unavailable: priceUnavailable || state === "out_of_stock" || state === "not_measured",
     };
   });
 

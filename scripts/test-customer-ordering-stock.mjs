@@ -199,7 +199,60 @@ section("What the Customer Ordering Application shows");
   // A product with no stock record at all: unknown is not zero.
   db.tables.vyron_cost_stock_items = db.tables.vyron_cost_stock_items.filter((r) => r.entity_id !== P.soup.id);
   const unmeasured = productOf(await catalogue.getCustomerCatalogue(db, CO, CUSTOMER_A.id), P.soup.id);
-  check("a product with no stock record is reported as not measured, not as zero", unmeasured.availability === "not_measured" && unmeasured.availableQty === null && unmeasured.unavailable === false);
+  check("a product with no stock record is reported as not measured, not as zero", unmeasured.availability === "not_measured" && unmeasured.availableQty === null);
+  check("…and it cannot be ordered online: placing it would reserve stock that has no record", unmeasured.unavailable === true && unmeasured.priceUnavailable === false);
+}
+
+// ---------------------------------------------------------------------------
+// Production 2026-11-26: "Vetkoek & Curry Mince 100g" was re-created as a new
+// product on the customer's price list, while its finished-goods stock record
+// stayed on the archived original. The catalogue offered it; every order that
+// included it was created, refused by the stock reservation and cancelled
+// ("vyron-order (stock no longer available)"), and the customer was told to
+// check the quantities. 8 orders between 20 and 26 Nov.
+section("A product on the price list with no stock record (production 2026-11-26)");
+{
+  const db = newDb();
+  db.tables.vyron_cost_stock_items = db.tables.vyron_cost_stock_items.filter((r) => r.entity_id !== P.soup.id);
+  const ordersBefore = db.tables.vyron_customer_sales_orders.length;
+  const view = await catalogue.getCustomerCatalogue(db, CO, CUSTOMER_A.id);
+  const soup = productOf(view, P.soup.id);
+  check("the catalogue still lists it, priced from the customer's own list", soup && soup.sellingPrice === 25 && soup.priceSource === "contract");
+  check("…marked not measured and not orderable", soup.availability === "not_measured" && soup.unavailable === true);
+  check("…and counted as not measured", view.notMeasuredCount === 1);
+
+  await cart.setCartLine(db, scopeA, { productId: P.soup.id, quantityUnits: 24 });
+  await cart.setCartLine(db, scopeA, { productId: P.pie.id, quantityUnits: 2 });
+  const basket = await cart.getCart(db, scopeA);
+  const soupLine = basket.lines.find((l) => l.productId === P.soup.id);
+  check("in the cart it is flagged with the real reason, not a quantity problem", soupLine.unavailable === true && /cannot be ordered online/i.test(soupLine.unavailableReason || ""), soupLine.unavailableReason);
+  check("…and it is not reported as a stock shortfall", !basket.shortfalls.some((s) => s.productId === P.soup.id));
+
+  await cart.setCartDelivery(db, scopeA, { requestedDeliveryDate: TOMORROW });
+  const result = await cart.submitCart(db, scopeA, {
+    idempotencyKey: "key-unmeasured",
+    acknowledgedPrices: basket.lines.map((l) => ({ productId: l.productId, sellingPrice: l.sellingPrice })),
+  });
+  check("submitting is refused as unavailable, naming the product", result.ok === false && result.reason === "unavailable" && (result.unavailable || []).includes(P.soup.product_name), JSON.stringify(result));
+  check("no sales order is created and then cancelled", db.tables.vyron_customer_sales_orders.length === ordersBefore);
+  check("no submission claim is left behind", db.tables.vyron_customer_order_submissions.length === 0);
+
+  // Without the unmeasured product the same customer orders normally.
+  await cart.setCartLine(db, scopeA, { productId: P.soup.id, quantityUnits: 0 });
+  const after = await cart.getCart(db, scopeA);
+  const ok = await cart.submitCart(db, scopeA, {
+    idempotencyKey: "key-without-unmeasured",
+    acknowledgedPrices: after.lines.map((l) => ({ productId: l.productId, sellingPrice: l.sellingPrice })),
+  });
+  check("removing it lets the rest of the order through", ok.ok === true, JSON.stringify(ok));
+
+  // Once the stock record exists, the product is orderable again — this is
+  // what the production data correction restores.
+  db.tables.vyron_cost_stock_items.push({ id: "si-soup-2", company_id: CO, entity_type: "finished_goods", entity_id: P.soup.id, item_code: P.soup.sku, qty_on_hand: 100, average_cost: 12, current_cost: 12, unit: "each" });
+  const restored = productOf(await catalogue.getCustomerCatalogue(db, CO, CUSTOMER_A.id), P.soup.id);
+  check("with a stock record it is orderable again", restored.unavailable === false && restored.availability === "available");
+  const placed = await order(db, scopeA, [[P.soup.id, 24]], "key-soup-restored");
+  check("…and an order for it is placed and holds its stock", placed.ok === true && db.tables.vyron_customer_sales_order_allocations.some((a) => a.product_id === P.soup.id && a.status === "Reserved"), JSON.stringify(placed));
 }
 
 // ---------------------------------------------------------------------------
