@@ -10,7 +10,8 @@ import {
 import { updateStockCostsFromApprovedInvoice } from "@/lib/vyron-inventory";
 import { getPoApprovalRules, writeProcurementAudit } from "@/lib/vyron-procurement";
 import { computeThreeWayMatch, upsertThreeWayMatch } from "@/lib/vyron-three-way-match";
-import { SUPPLIER_INVOICE_OVERRIDE_PERMISSION } from "@/lib/vyron-document-approval-audit";
+import { SUPPLIER_INVOICE_APPROVE_ACCESS_PERMISSION, SUPPLIER_INVOICE_OVERRIDE_PERMISSION } from "@/lib/vyron-document-approval-audit";
+import { overrideNoteProblem, rulesNeedingSupervisor } from "@/lib/vyron-invoice-warning-override";
 import {
   requireAuditActorName,
   requireWorkspacePermission,
@@ -173,39 +174,32 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const linkedRegisterInvoice = duplicate?.store === "register" ? duplicate : null;
 
   /*
-   * A supervisor override is authorised by the signed-in member's own
-   * permission (supplier_invoices.override), checked against the database on
-   * this request. It used to be a PIN shared by every tenant, which said
-   * nothing about who was overriding and blocked owners who never had it.
-   *
-   * An override that is not authorised is refused as such, never treated as
-   * "no override": the response must be distinguishable from the original
-   * policy block, or the dialog reopens blank with no explanation.
+   * Normal approval access is the permission that opens the invoice review
+   * screen. It is checked here, on the server, so an approval — with or without
+   * a note — can never come from a member who cannot review supplier invoices.
    */
-  if (overrideRequested && !overrideReason) {
-    return NextResponse.json(
-      { ok: false, supervisorOverrideRejected: true, error: "An override reason is required. The invoice was not approved." },
-      { status: 400 }
-    );
+  let approverSession: WorkspaceSession;
+  try {
+    approverSession = await requireWorkspacePermission(SUPPLIER_INVOICE_APPROVE_ACCESS_PERMISSION);
+  } catch (error) {
+    return workspaceAccessErrorResponse(error, "You do not have permission to approve supplier invoices.");
   }
-  let overrideSession: WorkspaceSession | null = null;
+
+  /*
+   * An approval over policy findings always carries a written note, validated
+   * here and not only in the browser. A refused note is reported as such, never
+   * treated as "no override": the response must be distinguishable from the
+   * original policy block, or the dialog reopens blank with no explanation.
+   */
   if (overrideRequested) {
-    try {
-      overrideSession = await requireWorkspacePermission(SUPPLIER_INVOICE_OVERRIDE_PERMISSION);
-    } catch (error) {
-      traceEvent("APPROVAL OVERRIDE REJECTED", documentId, { reason: "override permission not held" });
-      const status = error instanceof WorkspaceAccessError ? error.status : 403;
+    const noteProblem = overrideNoteProblem(overrideReason);
+    if (noteProblem) {
       return NextResponse.json(
-        {
-          ok: false,
-          supervisorOverrideRejected: true,
-          error: "You do not have permission to override company approval policy. The invoice was not approved.",
-        },
-        { status }
+        { ok: false, supervisorOverrideRejected: true, error: `${noteProblem} The invoice was not approved.` },
+        { status: 400 }
       );
     }
   }
-  const hasSupervisorOverride = Boolean(overrideSession);
 
   const rules = await getDocumentApprovalRules(supabase, tenantId);
   const poRules = await getPoApprovalRules(supabase, tenantId);
@@ -254,8 +248,41 @@ export async function POST(request: NextRequest, context: RouteContext) {
     validation.requiresSupervisorOverride = true;
   }
 
-  // A valid supervisor override authorises the exception; it does not erase the findings.
-  const overridingPolicy = validation.blocked && hasSupervisorOverride;
+  /*
+   * Who may authorise an exception depends on what is blocking the invoice.
+   *   - Only invoice-reading or invoice-total warnings: the member processing
+   *     the invoice, with the note above. No supervisor permission.
+   *   - Anything else (PO required, missing header fields, unmatched or ignored
+   *     lines, PO link): the signed-in member's own supplier_invoices.override
+   *     permission, checked against the database on this request, as before.
+   * Either way the exception authorises the approval; it does not erase the findings.
+   */
+  let overrideSession: WorkspaceSession | null = null;
+  let overrideKind: "approver_note" | "supervisor" | null = null;
+  if (validation.blocked && overrideRequested) {
+    const supervisorRules = rulesNeedingSupervisor(validation.violations);
+    if (supervisorRules.length === 0) {
+      overrideSession = approverSession;
+      overrideKind = "approver_note";
+    } else {
+      try {
+        overrideSession = await requireWorkspacePermission(SUPPLIER_INVOICE_OVERRIDE_PERMISSION);
+        overrideKind = "supervisor";
+      } catch (error) {
+        traceEvent("APPROVAL OVERRIDE REJECTED", documentId, { reason: "override permission not held", rules: supervisorRules.join("|") });
+        const status = error instanceof WorkspaceAccessError ? error.status : 403;
+        return NextResponse.json(
+          {
+            ok: false,
+            supervisorOverrideRejected: true,
+            error: `This invoice also breaks company policy that needs the “Override invoice approval policy” permission (${supervisorRules.join(", ")}). The invoice was not approved.`,
+          },
+          { status }
+        );
+      }
+    }
+  }
+  const overridingPolicy = validation.blocked && Boolean(overrideSession);
 
   if (validation.blocked && !overridingPolicy) {
     traceEvent("APPROVAL BLOCKED", documentId, { rules: validation.violations.map((v) => v.rule).join("|") });
@@ -286,21 +313,28 @@ export async function POST(request: NextRequest, context: RouteContext) {
     overriddenBy: string;
     overrideReason: string;
     rulesOverridden: string[];
+    overrideKind: "approver_note" | "supervisor";
   } | null = null;
-  if (overridingPolicy && overrideSession) {
+  if (overridingPolicy && overrideSession && overrideKind) {
     const session = overrideSession;
     const declaredBy = String(supervisorOverride?.overriddenBy || "").trim() || null;
     const overriddenBy = session.email || session.userId;
     const rulesOverridden = validation.violations.filter((v) => v.severity === "error").map((v) => v.rule);
     const overrideMetadata = {
+      overrideKind,
       sessionUserId: session.userId,
       sessionWorkspaceId: session.workspaceId,
       sessionRole: session.role,
-      authorisedBy: `permission:${SUPPLIER_INVOICE_OVERRIDE_PERMISSION}`,
+      authorisedBy:
+        overrideKind === "approver_note"
+          ? `approver-note:${SUPPLIER_INVOICE_APPROVE_ACCESS_PERMISSION}`
+          : `permission:${SUPPLIER_INVOICE_OVERRIDE_PERMISSION}`,
       declaredBy,
       approvedBy,
       resultingStatus: "archived",
       approvedAt,
+      // Every finding, blocking or not, exactly as the approver saw it.
+      warningsOverridden: validation.violations.map((v) => ({ rule: v.rule, severity: v.severity, message: v.message })),
     };
     try {
       const overrideAuditId = await recordApprovalOverride(supabase, {
@@ -321,14 +355,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
           metadata: overrideMetadata,
         });
       }
-      supervisorOverrideRecord = { overrideAuditId, overriddenBy, overrideReason, rulesOverridden };
+      supervisorOverrideRecord = { overrideAuditId, overriddenBy, overrideReason, rulesOverridden, overrideKind };
       traceEvent("APPROVAL OVERRIDE RECORDED", documentId, { rules: rulesOverridden.join("|") });
     } catch (overrideAuditError) {
       console.error("[approve] supervisor override could not be recorded", overrideAuditError);
       return NextResponse.json(
         {
           ok: false,
-          error: "The supervisor override could not be recorded, so the invoice was not approved. Try again.",
+          error: "The approval note could not be recorded, so the invoice was not approved. Try again.",
         },
         { status: 500 }
       );
@@ -752,7 +786,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       ? `Approved with rounding difference (within R${rules.majorMismatchThreshold.toFixed(2)}). ${reconciliationNote || ""}`.trim()
       : "Approved and cost updates applied.";
   const approvalNotesWithOverride = supervisorOverrideRecord
-    ? `${approvalNotes} Supervisor override by ${supervisorOverrideRecord.overriddenBy} of ${supervisorOverrideRecord.rulesOverridden.join(", ")}: ${supervisorOverrideRecord.overrideReason}`
+    ? `${approvalNotes} ${supervisorOverrideRecord.overrideKind === "approver_note" ? "Approved despite validation warnings" : "Supervisor override"} by ${supervisorOverrideRecord.overriddenBy} of ${supervisorOverrideRecord.rulesOverridden.join(", ")}: ${supervisorOverrideRecord.overrideReason}`
     : approvalNotes;
 
   try {

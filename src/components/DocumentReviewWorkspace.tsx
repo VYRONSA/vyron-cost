@@ -33,6 +33,7 @@ import {
   type ReviewDraft,
   type ReviewDraftLine,
 } from "@/lib/vyron-document-review-client";
+import { MIN_OVERRIDE_NOTE_CHARS, overrideNoteProblem, rulesNeedingSupervisor } from "@/lib/vyron-invoice-warning-override";
 import { computeLineAmounts, formatMoney, roundMoney, summarizeInvoiceTotals } from "@/lib/vyron-invoice-line-math";
 import { buildInitialLineMatchQuality, createEmptyLine, mergeMatchOption } from "@/lib/vyron-review-draft-hydrate";
 import { matchQualityFromSuggestion } from "@/lib/vyron-line-match-search";
@@ -664,8 +665,9 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
 
   async function submitSupervisorOverride() {
     if (!overrideModal?.draftToSave) return;
-    if (!overrideModal.reason.trim()) {
-      setOverrideModal({ ...overrideModal, error: "An override reason is required." });
+    const noteProblem = overrideNoteProblem(overrideModal.reason);
+    if (noteProblem) {
+      setOverrideModal({ ...overrideModal, error: noteProblem });
       return;
     }
     setOverrideModal({ ...overrideModal, error: undefined });
@@ -1661,10 +1663,19 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
           </div>
         </div>
       ) : null}
-      {overrideModal?.open ? (
+      {overrideModal?.open ? (() => {
+        // Reading/totals warnings only: the processing user approves with a note.
+        // Anything else still needs the supervisor permission (decided again on the server).
+        const supervisorRules = rulesNeedingSupervisor(overrideModal.violations);
+        const noteOnly = supervisorRules.length === 0;
+        const noteProblem = overrideNoteProblem(overrideModal.reason);
+        const canSubmit = !approving && !noteProblem && (noteOnly || canOverridePolicy);
+        return (
         <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/50 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-black text-rose-800">Approval blocked by company policy</h3>
+            <h3 className="text-lg font-black text-rose-800">
+              {noteOnly ? "This invoice has validation warnings" : "Approval blocked by company policy"}
+            </h3>
             <ul className="mt-3 max-h-40 space-y-1 overflow-y-auto text-xs font-semibold text-slate-700">
               {overrideModal.violations.map((v) => (
                 <li key={v.rule} className="rounded-lg bg-rose-50 px-2 py-1">
@@ -1672,21 +1683,35 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
                 </li>
               ))}
             </ul>
-            <p className="mt-4 text-xs font-bold text-slate-600">Supervisor override</p>
-            <p className="mt-1 text-xs font-semibold text-slate-500">
-              {canOverridePolicy
-                ? "You are authorised to override company approval policy. Your name, the reason and every finding above are recorded."
-                : "Overriding company approval policy needs the “Override invoice approval policy” permission. Ask an owner or supervisor to approve this invoice."}
-            </p>
+            {noteOnly ? (
+              <p className="mt-4 text-xs font-semibold text-slate-500">
+                Check the invoice against the document, then explain why you are approving it despite the warnings above.
+                Your note, your name, the date and time and every warning are recorded in the audit trail.
+              </p>
+            ) : (
+              <>
+                <p className="mt-4 text-xs font-bold text-slate-600">Supervisor override</p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">
+                  {canOverridePolicy
+                    ? "You are authorised to override company approval policy. Your name, the reason and every finding above are recorded."
+                    : "Overriding company approval policy needs the “Override invoice approval policy” permission. Ask an owner or supervisor to approve this invoice."}
+                </p>
+              </>
+            )}
             <label className="mt-2 block text-xs font-black uppercase text-slate-500">
-              Override reason
+              {noteOnly ? "Approval note (required)" : "Override reason"}
               <textarea
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold"
                 rows={3}
                 value={overrideModal.reason}
-                onChange={(e) => setOverrideModal({ ...overrideModal, reason: e.target.value })}
+                onChange={(e) => setOverrideModal({ ...overrideModal, reason: e.target.value, error: undefined })}
               />
             </label>
+            {noteProblem && overrideModal.reason.trim() ? (
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                Write at least {MIN_OVERRIDE_NOTE_CHARS} characters explaining the reason.
+              </p>
+            ) : null}
             {overrideModal.error ? (
               <p role="alert" className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs font-bold text-rose-800">
                 {overrideModal.error}
@@ -1702,16 +1727,17 @@ export default function DocumentReviewWorkspace({ documentId, embedded = false }
               </button>
               <button
                 type="button"
-                disabled={approving || !canOverridePolicy}
+                disabled={!canSubmit}
                 onClick={() => void submitSupervisorOverride()}
                 className="rounded-xl bg-[var(--vyron-warning-solid)] px-4 py-2 text-xs font-black text-[#F8FAFC] disabled:opacity-60"
               >
-                {approving ? "Approving…" : "Supervisor override & approve"}
+                {approving ? "Approving…" : noteOnly ? "Confirm & Approve" : "Supervisor override & approve"}
               </button>
             </div>
           </div>
         </div>
-      ) : null}
+        );
+      })() : null}
       <ConfirmDeleteDialog
         open={deleteConfirm.open}
         confirming={deleteConfirm.confirming}

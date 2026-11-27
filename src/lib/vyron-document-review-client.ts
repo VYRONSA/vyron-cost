@@ -379,7 +379,7 @@ export async function approveAndUpdateCosts(
     force?: boolean;
     forceTotalsMismatch?: boolean;
     reconciliationNote?: string;
-    /** Authorised server-side by the signed-in member's supplier_invoices.override permission. */
+    /** Reading/totals warnings only: authorised by normal approval access plus this note. Any other blocker: the supplier_invoices.override permission. Decided server-side. */
     supervisorOverride?: { reason: string; overriddenBy?: string };
   }
 ) {

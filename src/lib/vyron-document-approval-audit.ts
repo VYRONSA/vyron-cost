@@ -57,4 +57,10 @@ export async function listDocumentApprovalAudit(supabase: SupabaseClient, docume
  * and recorded nothing about who used it.
  */
 export const SUPPLIER_INVOICE_OVERRIDE_PERMISSION = "supplier_invoices.override";
+/**
+ * Normal supplier-invoice approval access: the permission that opens the invoice
+ * review screen (/document-intelligence). Approving, including approving over
+ * invoice-reading or invoice-total warnings with a note, needs this and nothing more.
+ */
+export const SUPPLIER_INVOICE_APPROVE_ACCESS_PERMISSION = "suppliers.view";
 export const SUPPLIER_INVOICE_COST_ROLLBACK_PERMISSION = "supplier_invoices.rollback_cost";

@@ -30,6 +30,13 @@
  * clerk does not, and no PIN — the old built-in default, or the old env value —
  * grants it.
  *
+ * 2026-11-27 — APPROVER NOTE. When the ONLY blockers are invoice-reading or
+ * invoice-total warnings, the member processing the invoice (normal approval
+ * access: suppliers.view) approves with a mandatory note — no supervisor
+ * permission. Every other blocker still needs supplier_invoices.override. The
+ * note is validated on the server; note, user, time, tenant, invoice and every
+ * warning are recorded before anything is costed. Sections N1–N7.
+ *
  * Drives the REAL approve / corrections / validate route handlers with the real
  * session, tenant and policy code. Only the process boundary is replaced (an
  * in-memory database, cookies). Family A: no network, no database, no
@@ -70,7 +77,7 @@ const CO_A = uuid("a", 1), CO_B = uuid("b", 1);
 const WS_A = uuid("a", 2), WS_B = uuid("b", 2);
 // U_SUPERVISOR is the tenant's OWNER (the Kingdom Foods shape: an owner, no PIN).
 const U_SUPERVISOR = uuid("a", 10), U_B = uuid("b", 10);
-const U_CLERK = uuid("a", 11), U_SUP_ROLE = uuid("a", 12), U_SUP_REVOKED = uuid("a", 13);
+const U_CLERK = uuid("a", 11), U_SUP_ROLE = uuid("a", 12), U_SUP_REVOKED = uuid("a", 13), U_NO_ACCESS = uuid("a", 14);
 const DOC = uuid("d", 1);
 const USERS = [
   { id: U_SUPERVISOR, email: "supervisor@qa-a.test", password: "qa-pass-supervisor" },
@@ -78,6 +85,7 @@ const USERS = [
   { id: U_CLERK, email: "clerk@qa-a.test", password: "qa-pass-clerk" },
   { id: U_SUP_ROLE, email: "sup@qa-a.test", password: "qa-pass-sup" },
   { id: U_SUP_REVOKED, email: "sup-revoked@qa-a.test", password: "qa-pass-sup-revoked" },
+  { id: U_NO_ACCESS, email: "no-access@qa-a.test", password: "qa-pass-no-access" },
 ];
 
 /** The extraction verdicts behind the three OCR blockers in the screenshots. */
@@ -106,6 +114,8 @@ function seed({ requirePoLinked = false, extraction = FAILED_EXTRACTION, lines, 
       { id: "m3", workspace_id: WS_A, user_id: U_CLERK, role: "PROCUREMENT", status: "Active", permissions: {} },
       { id: "m4", workspace_id: WS_A, user_id: U_SUP_ROLE, role: "SUPERVISOR", status: "Active", permissions: {} },
       { id: "m5", workspace_id: WS_A, user_id: U_SUP_REVOKED, role: "SUPERVISOR", status: "Active", permissions: { "supplier_invoices.override": false } },
+      // A member whose supplier-invoice access was switched off: cannot approve at all.
+      { id: "m6", workspace_id: WS_A, user_id: U_NO_ACCESS, role: "PROCUREMENT", status: "Active", permissions: { "suppliers.view": false } },
     ],
     vyron_documents: [
       {
@@ -233,9 +243,10 @@ const jarB = await login("owner@qa-b.test", "qa-pass-b");
 const jarClerk = await login("clerk@qa-a.test", "qa-pass-clerk");
 const jarSup = await login("sup@qa-a.test", "qa-pass-sup");
 const jarSupRevoked = await login("sup-revoked@qa-a.test", "qa-pass-sup-revoked");
+const jarNoAccess = await login("no-access@qa-a.test", "qa-pass-no-access");
 check(
   "synthetic members sign in through the real login route",
-  [jarA, jarB, jarClerk, jarSup, jarSupRevoked].every((jar) => Boolean(jar.vyron_workspace_user_session))
+  [jarA, jarB, jarClerk, jarSup, jarSupRevoked, jarNoAccess].every((jar) => Boolean(jar.vyron_workspace_user_session))
 );
 
 console.log("\n1. Invoice blocked by policy stays blocked");
@@ -266,13 +277,14 @@ console.log("\n10. Normal approval without override still respects every blocker
   check("a tenant with no PO rules row still requires a linked PO (default on)", ruleSet(d.json?.violations).includes("require_po_linked"));
 }
 
-console.log("\n6. A member without the override permission → override fails, and says so");
+console.log("\n6. A blocker beyond reading/totals still needs the override permission, and says so");
 {
-  useDb(seed());
+  // The PO-link rule is not a reading or totals warning: a note alone cannot clear it.
+  useDb(seed({ requirePoLinked: true }));
   const reason = "Checked every line against the paper invoice";
   const r = await approve(jarClerk, overrideBody(reason));
   check("PROCUREMENT clerk → 403 supervisorOverrideRejected", r.status === 403 && r.json?.supervisorOverrideRejected === true, JSON.stringify(r.json));
-  check("the refusal is distinguishable from a fresh policy block", r.json?.policyBlocked !== true && /permission to override/.test(r.json?.error || ""));
+  check("the refusal is distinguishable from a fresh policy block, and names the rule", r.json?.policyBlocked !== true && /Override invoice approval policy/.test(r.json?.error || "") && /require_po_linked/.test(r.json?.error || ""), r.json?.error);
   check("not approved, nothing recorded, no cost written", doc().status === "reviewed" && rows("vyron_document_approval_override_audit").length === 0 && costWrites() === 0);
   const revoked = await approve(jarSupRevoked, overrideBody(reason));
   check("a SUPERVISOR whose override permission was switched off → 403", revoked.status === 403 && revoked.json?.supervisorOverrideRejected === true);
@@ -289,23 +301,23 @@ console.log("\n7. Missing override reason → override fails");
 {
   useDb(seed());
   const r = await approve(jarA, overrideBody("   "));
-  check("owner, blank reason → 400 supervisorOverrideRejected", r.status === 400 && r.json?.supervisorOverrideRejected === true && /reason is required/.test(r.json?.error || ""), JSON.stringify(r.json));
+  check("owner, blank reason → 400 supervisorOverrideRejected", r.status === 400 && r.json?.supervisorOverrideRejected === true && /note is required/.test(r.json?.error || ""), JSON.stringify(r.json));
   check("not approved, nothing recorded", doc().status === "reviewed" && rows("vyron_document_approval_override_audit").length === 0 && costWrites() === 0);
 }
 
 console.log("\n8. Unauthorised callers cannot override");
 {
   useDb(seed());
-  const anon = await approve({}, overrideBody("reason"));
+  const anon = await approve({}, overrideBody("Checked every line against the paper invoice"));
   check("no session → refused (401/403)", anon.status === 401 || anon.status === 403, String(anon.status));
-  const otherTenant = await approve(jarB, overrideBody("reason"));
+  const otherTenant = await approve(jarB, overrideBody("Checked every line against the paper invoice"));
   check("another tenant's OWNER → refused (403)", otherTenant.status === 403, String(otherTenant.status));
   check("neither approved nor recorded anything", doc().status === "reviewed" && rows("vyron_document_approval_override_audit").length === 0 && costWrites() === 0);
 }
 
-console.log("\n8b. A SUPERVISOR-role member overrides by role default, without a PIN");
+console.log("\n8b. A SUPERVISOR-role member overrides a supervisor-only blocker by role default, without a PIN");
 {
-  useDb(seed());
+  useDb(seed({ requirePoLinked: true }));
   const reason = "Weight column misread; checked against the delivery note";
   const r = await approve(jarSup, overrideBody(reason));
   check("SUPERVISOR → approved (200)", r.status === 200 && doc().status === "archived", JSON.stringify(r.json).slice(0, 300));
@@ -334,7 +346,10 @@ for (const [label, requirePoLinked, expectedRules] of [
   check("3. overridden_by is the signed-in user, not the browser's label", o.overridden_by === U_SUPERVISOR, String(o.overridden_by));
   check("3. reason, tenant and document recorded", o.override_reason === reason && o.tenant_id === CO_A && o.document_id === DOC);
   check("3. resulting approval state recorded", o.metadata?.resultingStatus === "archived" && Boolean(o.metadata?.approvedAt) && o.metadata?.declaredBy === "supervisor");
-  check("3. the authorising role and permission are recorded", o.metadata?.sessionRole === "OWNER" && o.metadata?.authorisedBy === "permission:supplier_invoices.override");
+  // Screenshot 1 is reading warnings only: the processing member's note authorises it.
+  // Screenshot 2 adds the PO-link rule: the override permission authorises it.
+  const expectAuthorisedBy = requirePoLinked ? "permission:supplier_invoices.override" : "approver-note:suppliers.view";
+  check("3. the authorising role and path are recorded", o.metadata?.sessionRole === "OWNER" && o.metadata?.authorisedBy === expectAuthorisedBy && o.metadata?.overrideKind === (requirePoLinked ? "supervisor" : "approver_note"), `${o.metadata?.authorisedBy} ${o.metadata?.overrideKind}`);
   check("5. every original blocker is in rules_bypassed", [...(o.rules_bypassed || [])].sort().join(",") === expectedRules, [...(o.rules_bypassed || [])].sort().join(","));
   check("5. the findings' text is preserved", ruleSet(o.violations_snapshot) === expectedRules && (o.violations_snapshot || []).every((v) => v.message));
   const po = rows("vyron_document_po_link_override_audit");
@@ -343,7 +358,7 @@ for (const [label, requirePoLinked, expectedRules] of [
   check("5. the approval audit carries the findings and the override", ruleSet(approval.metadata?.policyFindings) === expectedRules && approval.metadata?.supervisorOverride?.overrideAuditId === o.id);
 
   check("4. invoice persisted as approved", doc().status === "archived" && Boolean(doc().approved_at));
-  check("4. the override is visible on the invoice record", /Supervisor override by/.test(doc().processing_notes || "") && (doc().processing_notes || "").includes(reason));
+  check("4. the override is visible on the invoice record", (requirePoLinked ? /Supervisor override by/ : /Approved despite validation warnings by/).test(doc().processing_notes || "") && (doc().processing_notes || "").includes(reason), doc().processing_notes);
 
   console.log("  — 9. reload / recalculation does not undo it");
   const recheck = await validate(jarA, {});
@@ -412,7 +427,7 @@ console.log("\nC. A clerk's \"Approve anyway?\" cannot bypass supervisor-only bl
 console.log("\nAn override that cannot be recorded does not approve");
 {
   useDb(seed(), { missingTables: ["vyron_document_approval_override_audit"] });
-  const r = await approve(jarA, overrideBody("reason"));
+  const r = await approve(jarA, overrideBody("Checked every line against the paper invoice"));
   check("audit table unavailable → 500, not approved", r.status === 500 && doc().status === "reviewed", JSON.stringify(r.json));
   check("no cost written", costWrites() === 0);
 }
@@ -426,6 +441,116 @@ console.log("\nA sound invoice needs no override");
   // The approver is the signed-in member (no profile row here, so the user id), never the body's approvedBy.
   check("approved_by is the signed-in member, not the browser's approvedBy", doc().approved_by === U_SUPERVISOR, String(doc().approved_by));
   check("no approval record carries the spoofed name", !JSON.stringify([db.tables.vyron_documents, rows("vyron_document_approval_audit")]).includes("spoofed"));
+}
+
+/* ---------------------------------------------------------------------------
+ * N. APPROVER NOTE (2026-11-27): reading/totals warnings are approved by the
+ *    member processing the invoice with a written note — no supervisor permission.
+ * ------------------------------------------------------------------------- */
+const NOTE = "Checked all 9 lines against the paper invoice; the scan cut off the last line, totals verified by hand.";
+const { overrideNoteProblem, rulesNeedingSupervisor, isNoteOverride } = await importFromRoot("src/lib/vyron-invoice-warning-override.ts");
+const UNREADABLE_ONLY = { classification: "Needs Review", quality: 60, completenessStatus: "Incomplete", reconciliationStatus: "Reconciled", columnMappingFailed: false };
+const overrides = () => rows("vyron_document_approval_override_audit");
+
+console.log("\nN1. Unreadable lines — the processing clerk enters a note and approves");
+{
+  useDb(seed({ extraction: UNREADABLE_ONLY }));
+  const blocked = await approve(jarClerk, { force: false, forceTotalsMismatch: false });
+  check("without a note the warning still blocks (400 policyBlocked)", blocked.status === 400 && blocked.json?.policyBlocked === true && ruleSet(blocked.json?.violations) === "extraction_incomplete", ruleSet(blocked.json?.violations));
+  check("the warning text is returned for the dialog", (blocked.json?.violations || []).every((v) => typeof v.message === "string" && v.message.length > 20));
+  const r = await approve(jarClerk, overrideBody(NOTE));
+  check("PROCUREMENT clerk (no override permission) + note → approved (200)", r.status === 200 && doc().status === "archived", JSON.stringify(r.json).slice(0, 300));
+  const o = overrides()[0] || {};
+  check("recorded as an approver-note approval, not a supervisor override", o.metadata?.overrideKind === "approver_note" && o.metadata?.authorisedBy === "approver-note:suppliers.view");
+  check("costs applied once", rows("vyron_document_cost_audit").length === 2);
+}
+
+console.log("\nN2. Line totals differ from the invoice totals by more than R1.00 — note, approve");
+{
+  useDb(seed({ extraction: SOUND_EXTRACTION, lines: SHORT_LINES }));
+  const blocked = await approve(jarClerk, { force: false, forceTotalsMismatch: true, reconciliationNote: "short" });
+  check("without the dialog note the totals warning blocks", blocked.status === 400 && ruleSet(blocked.json?.violations).includes("major_totals_mismatch"), ruleSet(blocked.json?.violations));
+  const r = await approve(jarClerk, { ...overrideBody(NOTE), forceTotalsMismatch: true });
+  check("clerk + note → approved (200)", r.status === 200 && doc().status === "archived", JSON.stringify(r.json).slice(0, 300));
+  const o = overrides()[0] || {};
+  check("major_totals_mismatch recorded as overridden", (o.rules_bypassed || []).includes("major_totals_mismatch"), JSON.stringify(o.rules_bypassed));
+}
+
+console.log("\nN3. Several warnings at once — every one is captured in the audit trail");
+{
+  useDb(seed({ lines: SHORT_LINES })); // failed extraction (3 reading rules) + R115 totals gap
+  const blocked = await approve(jarClerk, { force: false, forceTotalsMismatch: false });
+  const seen = blocked.json?.violations || [];
+  check("at least four warnings are raised", seen.length >= 4, ruleSet(seen));
+  check("…all of them reading or totals warnings (note path)", isNoteOverride(seen) && rulesNeedingSupervisor(seen).length === 0, ruleSet(seen));
+  const r = await approve(jarClerk, overrideBody(NOTE));
+  check("clerk + note → approved (200)", r.status === 200, JSON.stringify(r.json).slice(0, 300));
+  const o = overrides()[0] || {};
+  check("every blocking warning is in rules_bypassed", [...(o.rules_bypassed || [])].sort().join(",") === seen.filter((v) => v.severity === "error").map((v) => v.rule).sort().join(","), JSON.stringify(o.rules_bypassed));
+  check("every warning (rule, severity, text) is in the snapshot and metadata", ruleSet(o.violations_snapshot) === ruleSet(seen) && ruleSet(o.metadata?.warningsOverridden) === ruleSet(seen) && (o.metadata?.warningsOverridden || []).every((w) => w.message && w.severity));
+  const approval = rows("vyron_document_approval_audit")[0] || {};
+  check("the approval audit carries the same warnings and links the override", ruleSet(approval.metadata?.policyFindings) === ruleSet(seen) && approval.metadata?.supervisorOverride?.overrideAuditId === o.id && approval.metadata?.supervisorOverride?.overrideKind === "approver_note");
+}
+
+console.log("\nN4. Blank or meaningless note — approval blocked on the server");
+for (const [label, note] of [["empty", ""], ["spaces only", "      "], ["newlines/tabs only", "\n\t \n"], ["too short", "ok fine"], ["no words", "..........1111"]]) {
+  useDb(seed({ extraction: UNREADABLE_ONLY }));
+  const r = await approve(jarClerk, overrideBody(note));
+  check(`${label} → 400 supervisorOverrideRejected, not approved, nothing recorded`, r.status === 400 && r.json?.supervisorOverrideRejected === true && doc().status === "reviewed" && overrides().length === 0 && costWrites() === 0, `${r.status} ${r.json?.error}`);
+}
+check("the shared rule accepts a real note", overrideNoteProblem(NOTE) === null && overrideNoteProblem("  Scan cut off line 9  ") === null);
+check("the shared rule rejects null/undefined/non-string", [null, undefined, 42, {}].every((v) => overrideNoteProblem(v) !== null));
+
+console.log("\nN5. A member without normal invoice approval access stays blocked");
+{
+  useDb(seed({ extraction: UNREADABLE_ONLY }));
+  const withNote = await approve(jarNoAccess, overrideBody(NOTE));
+  check("suppliers.view switched off + note → 403", withNote.status === 403 && doc().status === "reviewed", `${withNote.status} ${JSON.stringify(withNote.json)}`);
+  useDb(seed({ extraction: SOUND_EXTRACTION }));
+  const clean = await approve(jarNoAccess, { force: false, forceTotalsMismatch: false });
+  check("…and cannot approve even a clean invoice (403)", clean.status === 403 && doc().status === "reviewed", String(clean.status));
+  check("nothing recorded, no cost written", overrides().length === 0 && costWrites() === 0);
+  // Mixed invoice: reading warnings + a supervisor-only rule. The note does not lift the supervisor rule.
+  useDb(seed({ extraction: UNREADABLE_ONLY, requirePoLinked: true }));
+  const mixed = await approve(jarClerk, overrideBody(NOTE));
+  check("reading warning + PO-link rule: clerk + note → 403, not approved", mixed.status === 403 && mixed.json?.supervisorOverrideRejected === true && doc().status === "reviewed", JSON.stringify(mixed.json));
+  const owner = await approve(jarA, overrideBody(NOTE));
+  check("…the owner (override permission) approves it, recorded as a supervisor override", owner.status === 200 && (overrides()[0] || {}).metadata?.overrideKind === "supervisor");
+}
+
+console.log("\nN6. The audit trail holds the note, user, timestamp, warnings, invoice and company");
+{
+  useDb(seed({ lines: SHORT_LINES }));
+  const before = Date.now();
+  const r = await approve(jarClerk, overrideBody(`  ${NOTE}  `));
+  check("approved (200)", r.status === 200);
+  const audit = overrides();
+  check("exactly one override audit row", audit.length === 1);
+  const o = audit[0] || {};
+  check("full note, trimmed only", o.override_reason === NOTE, JSON.stringify(o.override_reason));
+  check("user: the signed-in clerk (overridden_by and sessionUserId)", o.overridden_by === U_CLERK && o.metadata?.sessionUserId === U_CLERK && o.metadata?.sessionRole === "PROCUREMENT");
+  const at = Date.parse(o.metadata?.approvedAt || "");
+  check("timestamp: approval date/time recorded and equal to the invoice's approved_at", Number.isFinite(at) && at >= before - 1000 && o.metadata?.approvedAt === doc().approved_at, `${o.metadata?.approvedAt} vs ${doc().approved_at}`);
+  check("invoice ID and company ID", o.document_id === DOC && o.tenant_id === CO_A);
+  check("warnings overridden", (o.rules_bypassed || []).length >= 4 && (o.metadata?.warningsOverridden || []).length >= 4);
+  check("the browser's label is kept only as declared, never as identity", o.metadata?.declaredBy === "supervisor" && o.overridden_by !== "supervisor");
+  check("the invoice record shows the note and who approved", /Approved despite validation warnings by/.test(doc().processing_notes || "") && (doc().processing_notes || "").includes(NOTE));
+}
+
+console.log("\nN7. Another company's invoice cannot be accessed or approved");
+{
+  useDb(seed({ extraction: UNREADABLE_ONLY }));
+  const r = await approve(jarB, overrideBody(NOTE));
+  check("tenant B owner + valid note on tenant A's invoice → 403", r.status === 403 && doc().status === "reviewed", String(r.status));
+  const v = await validate(jarB, {});
+  check("tenant B cannot read tenant A's validation findings (403)", v.status === 403, String(v.status));
+  check("nothing recorded against tenant A, no cost written", overrides().length === 0 && costWrites() === 0);
+  // A forged active-company cookie does not move tenant B into tenant A.
+  // The real active-client cookie (JSON), pointed at tenant A, beside tenant B's genuine signed session.
+  const forged = { ...jarB, vyron_cost_active_client: JSON.stringify({ id: CO_A, companyId: CO_A, companyName: "QA Tenant A", packageName: "Enterprise" }) };
+  const f = await approve(forged, overrideBody(NOTE));
+  check("tenant B with a forged company cookie → refused, not approved", f.status === 401 || f.status === 403, String(f.status));
+  check("…still not approved", doc().status === "reviewed" && overrides().length === 0);
 }
 
 console.log(`\n${checks - failures}/${checks} checks passed`);

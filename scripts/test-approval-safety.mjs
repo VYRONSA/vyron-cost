@@ -179,9 +179,10 @@ check(
 );
 check(
   "approve route blocks when validation blocks",
-  // The only permitted exception is a verified supervisor override (see test-supervisor-override.mjs).
+  // The only permitted exception is an authorised, recorded override: an approver note on
+  // reading/totals warnings, or the override permission otherwise (see test-supervisor-override.mjs).
   /if \(validation\.blocked(?: && !overridingPolicy)?\)[\s\S]{0,800}status:\s*400/.test(approveSource) &&
-    /const overridingPolicy = validation\.blocked && hasSupervisorOverride;/.test(approveSource),
+    /const overridingPolicy = validation\.blocked && Boolean\(overrideSession\);/.test(approveSource),
   "no 400 response found for a blocked validation"
 );
 
